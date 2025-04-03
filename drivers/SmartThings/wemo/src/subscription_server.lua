@@ -93,7 +93,7 @@ function SubscriptionServer.new_server()
         end)
       else
         log.error_with({hub_logs = true},
-          "serve| shutting down tcp server due to unexpected accept error: " .. err)
+          string.format("serve| shutting down tcp server due to unexpected accept error: %s", err))
         break
       end
     end
@@ -114,7 +114,7 @@ function SubscriptionServer.new_server()
         shutdown_msg = "shutdown requested"
         break
       elseif msg.type == ControlMessageType.Subscribe then
-        log.trace("serve| subscribing to device " .. msg.device.label)
+        log.trace(string.format("serve| subscribing to device %s", msg.device.label))
         if msg.device:get_field("subscription_id") then
           local res = protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id])
           log.trace(string.format("serve| unsubscribed from %s successfully? %s", msg.device.label, res))
@@ -124,20 +124,20 @@ function SubscriptionServer.new_server()
         local sub_id = protocol.subscribe(msg.device, srv_addr, srv_port)
         if sub_id == nil then
           log.warn_with({hub_logs = true},
-            "serve| failed to subscribe to device " .. msg.device.label)
+            string.format("serve| failed to subscribe to device %s", msg.device.label))
         else
           log.info_with({hub_logs=true},
-            "serve| successfully subscribed to device " .. msg.device.label)
+            string.format("serve| successfully subscribed to device %s", msg.device.label))
           self.subscriptions[sub_id] = msg.device
           msg.device:set_field("subscription_id", sub_id)
         end
       elseif msg.type == ControlMessageType.Unsubscribe then
-        log.trace("serve| unsubscribing from device " .. msg.device.label)
+        log.trace(string.format("serve| unsubscribing from device %s", msg.device and msg.device.label or nil))
         if msg.device:get_field("subscription_id") then
-          log.warn("serve| no existing subscription for device" .. msg.device.label)
+          log.warn(string.format("serve| no existing subscription for device%s", msg.device and msg.device.label or nil))
         else
           local res = protocol.unsubscribe(msg.device, self.subscriptions[msg.device.id])
-          log.trace(string.format("serve| unsubscribed from %s successfully? %s", msg.device.label, res))
+          log.trace(string.format("serve| unsubscribed from %s successfully? %s", msg.device and msg.device.label or nil, res))
           self.subscriptions[msg.device:get_field("subscription_id")] = nil
           msg.device:set_field("subscription_id", nil)
         end
@@ -171,7 +171,7 @@ function SubscriptionServer.new_server()
           log.trace("serve| received notify event from deleted device")
           self.subscriptions[notification.id] = nil
         else
-          log.trace("serve| received notify event from " .. self.subscriptions[notification.id].label)
+          log.trace(string.format("serve| received notify event from %s", self.subscriptions[notification.id].label))
           --Parser emits events for device
           parser.parse_subscription_resp_xml(self.subscriptions[notification.id], notification.data)
         end

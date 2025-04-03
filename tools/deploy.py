@@ -65,7 +65,7 @@ response = requests.get(
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
-    "X-ST-LOG-LEVEL": "TRACE"
+    "X-ST-LOG-LEVEL": "DEBUG"
   }
 )
 if response.status_code != 200:
@@ -81,7 +81,7 @@ else:
       headers = {
         "Accept": "application/vnd.smartthings+json;v=20200810",
         "Authorization": "Bearer "+TOKEN,
-        "X-ST-LOG-LEVEL": "TRACE"
+        "X-ST-LOG-LEVEL": "DEBUG"
       },
       json = {
         DRIVERID: driver[DRIVERID],
@@ -139,7 +139,7 @@ for partner in partners:
               "Content-Type": "application/zip",
               "Accept": "application/vnd.smartthings+json;v=20200810",
               "Authorization": "Bearer "+TOKEN,
-              "X-ST-LOG-LEVEL": "TRACE"},
+              "X-ST-LOG-LEVEL": "DEBUG"},
             data=data)
           if response.status_code != 200:
             print("Failed to upload driver "+driver)
@@ -172,7 +172,7 @@ response = requests.put(
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
     "Content-Type": "application/json",
-    "X-ST-LOG-LEVEL": "TRACE"
+    "X-ST-LOG-LEVEL": "DEBUG"
   },
   data=json.dumps(driver_updates)
 )

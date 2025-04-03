@@ -22,7 +22,7 @@ clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
 clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("plug-power-energy-powerConsumption.yml"),
+  profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -51,6 +51,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = 2,
       clusters = {
         { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
       },
       device_types = {
         { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
@@ -94,6 +95,9 @@ local subscribed_attributes_periodic = {
 }
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
@@ -140,6 +144,8 @@ local function test_init()
   end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.mock_device.add_test_device(mock_device)
+  -- to test powerConsumptionReport
+  test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 end
 test.set_test_init_function(test_init)
 
@@ -152,11 +158,12 @@ local function test_init_periodic()
   end
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.mock_device.add_test_device(mock_device_periodic)
+  -- to test powerConsumptionReport
+  test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 end
 
 test.register_coroutine_test(
   "Check the power and energy meter when the device is added", function()
-    test.socket.matter:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
     for i, cluster in ipairs(subscribed_attributes) do
@@ -164,7 +171,6 @@ test.register_coroutine_test(
             subscribe_request:merge(cluster:subscribe(mock_device))
         end
     end
-    test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
     )
@@ -172,7 +178,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     )
-
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     test.wait_for_events()
   end
 )
@@ -256,72 +262,63 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Cumulative Energy measurement should generate correct messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_19)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 19.0, unit="Wh"}))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_19)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 19.0, unit="Wh"}))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_29)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
-        start = "1970-01-01T00:00:00Z",
-        ["end"] = "1969-12-31T23:59:59Z",
-        deltaEnergy = 0.0,
-        energy = 19.0
-      }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 29.0, unit="Wh"}))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(mock_device, 1, cumulative_report_val_39)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 39.0, unit="Wh"}))
-    },
-  }
+    function()
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+            mock_device, 1, cumulative_report_val_19
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
+      )
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+            mock_device, 1, cumulative_report_val_19
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
+      )
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+            mock_device, 1, cumulative_report_val_29
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
+      )
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+            mock_device, 1, cumulative_report_val_39
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 39.0, unit = "Wh" }))
+      )
+      test.mock_time.advance_time(2000)
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+          start = "1970-01-01T00:00:00Z",
+          ["end"] = "1970-01-01T00:33:19Z",
+          deltaEnergy = 0.0,
+          energy = 39.0
+        }))
+      )
+    end
 )
 
 test.register_message_test(
@@ -346,60 +343,53 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Periodic Energy measurement should generate correct messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 23.0, unit="Wh"}))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 46.0, unit="Wh"}))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device_periodic.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_periodic, 1, periodic_report_val_23)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
-        start = "1970-01-01T00:00:00Z",
-        ["end"] = "1969-12-31T23:59:59Z",
-        deltaEnergy = 0.0,
-        energy = 46.0
-      }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 69.0, unit="Wh"}))
-    },
-  },
-  { test_init = test_init_periodic }
+    function()
+      test.socket.matter:__queue_receive(
+        {
+          mock_device_periodic.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+            mock_device_periodic, 1, periodic_report_val_23
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 23.0, unit="Wh"}))
+      )
+      test.socket.matter:__queue_receive(
+        {
+          mock_device_periodic.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+            mock_device_periodic, 1, periodic_report_val_23
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 46.0, unit="Wh"}))
+      )
+      test.socket.matter:__queue_receive(
+        {
+          mock_device_periodic.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+            mock_device_periodic, 1, periodic_report_val_23
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 69.0, unit="Wh"}))
+      )
+      test.mock_time.advance_time(2000)
+      test.socket.capability:__expect_send(
+        mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+          start = "1970-01-01T00:00:00Z",
+          ["end"] = "1970-01-01T00:33:19Z",
+          deltaEnergy = 0.0,
+          energy = 69.0
+        }))
+      )
+    end,
+    { test_init = test_init_periodic }
 )
 
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
@@ -438,14 +428,6 @@ test.register_coroutine_test(
           mock_device, 1, cumulative_report_val_29
         )
       }
-    )
-    test.socket["capability"]:__expect_send(
-        mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
-            start = "1970-01-01T00:00:00Z",
-            ["end"] = "1970-01-01T00:14:58Z",
-            deltaEnergy = 0.0,
-            energy = 19.0
-        }))
     )
     test.socket["capability"]:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
@@ -495,15 +477,15 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
+    )
+    test.socket["capability"]:__expect_send(
         mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
             start = "1970-01-01T00:00:00Z",
             ["end"] = "1970-01-01T00:33:19Z",
             deltaEnergy = 0.0,
-            energy = 19.0
+            energy = 29.0
         }))
-    )
-    test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_import_poll_timer = mock_device:get_field("__recurring_import_report_poll_timer")
@@ -550,15 +532,15 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
+    )
+    test.socket["capability"]:__expect_send(
         mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
             start = "1970-01-01T00:00:00Z",
             ["end"] = "1970-01-01T00:33:19Z",
             deltaEnergy = 0.0,
-            energy = 19.0
+            energy = 29.0
         }))
-    )
-    test.socket["capability"]:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_import_poll_timer = mock_device:get_field("__recurring_import_report_poll_timer")
@@ -612,14 +594,6 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
-        deltaEnergy=0.0,
-        ["end"]="1970-01-01T00:14:58Z",
-        energy=46.0,
-        start="1970-01-01T00:00:00Z"
-      }))
-    )
-    test.socket["capability"]:__expect_send(
       mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69.0, unit = "Wh" }))
     )
     test.wait_for_events()
@@ -631,7 +605,6 @@ test.register_coroutine_test(
   end,
   { test_init = test_init_periodic }
 )
-
 
 test.register_coroutine_test(
   "Generated periodic import energy device poll timer (>15 minutes) gets correctly set", function()
@@ -668,15 +641,15 @@ test.register_coroutine_test(
       }
     )
     test.socket["capability"]:__expect_send(
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69.0, unit = "Wh" }))
+    )
+    test.socket["capability"]:__expect_send(
       mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
         deltaEnergy=0.0,
         ["end"] = "1970-01-01T00:33:19Z",
-        energy=46.0,
+        energy=69.0,
         start="1970-01-01T00:00:00Z"
       }))
-    )
-    test.socket["capability"]:__expect_send(
-      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 69.0, unit = "Wh" }))
     )
     test.wait_for_events()
     local report_import_poll_timer = mock_device_periodic:get_field("__recurring_import_report_poll_timer")
@@ -692,7 +665,7 @@ test.register_coroutine_test(
   "Test profile change on init for Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "plug-power-energy-powerConsumption" })
+    mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init }
@@ -706,6 +679,70 @@ test.register_coroutine_test(
     mock_device_periodic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_periodic }
+)
+
+test.register_message_test(
+  "Set level command should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 2, math.floor(20/100.0 * 254), 20, 0 ,0)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 2)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 2, 50)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 2, true)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    }
+  }
 )
 
 test.run_registered_tests()
