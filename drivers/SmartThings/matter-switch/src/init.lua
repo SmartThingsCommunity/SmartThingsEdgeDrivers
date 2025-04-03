@@ -700,6 +700,9 @@ local function device_init(driver, device)
   check_field_name_updates(device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
+  if device:get_field(IS_PARENT_CHILD_DEVICE) then
+    device:set_find_child(find_child)
+  end
   local main_endpoint = find_default_endpoint(device)
   -- ensure subscription to all endpoint attributes- including those mapped to child devices
   for _, ep in ipairs(device.endpoints) do
@@ -731,6 +734,7 @@ local function do_configure(driver, device)
       device:set_find_child(find_child)
     end
     if device:get_field(BUTTON_DEVICE_PROFILED) then
+      device:set_field(BUTTON_DEVICE_PROFILED, nil)
       return
     end
   end
