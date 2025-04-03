@@ -329,6 +329,14 @@ test.register_message_test(
     },
     {
       channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
+    },
+    {
+      channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
@@ -339,6 +347,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
     },
     {
       channel = "matter",
@@ -393,6 +409,14 @@ test.register_message_test(
     },
     {
       channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
+    },
+    {
+      channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
@@ -403,6 +427,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatMode.supportedThermostatModes({"off", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
     },
     {
       channel = "matter",
@@ -419,6 +451,14 @@ test.register_message_test(
     },
     {
       channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
+    },
+    {
+      channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
@@ -429,6 +469,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
     },
     {
       channel = "matter",
@@ -445,6 +493,14 @@ test.register_message_test(
     },
     {
       channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
+    },
+    {
+      channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
@@ -455,6 +511,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:read()
+      }
     },
   }
 )
