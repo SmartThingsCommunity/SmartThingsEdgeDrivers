@@ -658,7 +658,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   table.sort(button_eps)
 
   -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
-  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_BUTTON field
+  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
   try_build_button_component_map(device, main_endpoint, button_eps)
 
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
