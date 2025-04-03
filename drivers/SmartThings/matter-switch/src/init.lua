@@ -307,7 +307,6 @@ local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
 
-local HUE_MANUFACTURER_ID = 0x100B
 local AQARA_MANUFACTURER_ID = 0x115F
 local AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
@@ -623,7 +622,6 @@ local function build_mcd_profile(device, main_endpoint)
   elseif #button_eps > 0 and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
     profile_name = #button_eps .. "-button"
     battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
-    if device.manufacturer_info.vendor_id == HUE_MANUFACTURER_ID then battery_supported = false end -- no battery support in Hue case
     if battery_supported then
       local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
       attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())

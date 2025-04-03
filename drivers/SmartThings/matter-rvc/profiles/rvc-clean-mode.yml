@@ -1,4 +1,4 @@
-name: rvc
+name: rvc-clean-mode
 components:
   - id: main
     label: Main
@@ -18,6 +18,13 @@ components:
         version: 1
     categories:
     - name: RobotCleaner
+  - id: cleanMode
+    label: Clean mode
+    capabilities:
+      - id: mode
+        version: 1
+    categories:
+    - name: RobotCleaner
 deviceConfig:
   dashboard:
     states:
@@ -29,6 +36,13 @@ deviceConfig:
     capability: robotCleanerOperatingState
     version: 1
   - component: runMode
+    capability: mode
+    version: 1
+    patch:
+    - op: replace
+      path: /0/list/command/supportedValues
+      value: supportedArguments.value
+  - component: cleanMode
     capability: mode
     version: 1
     patch:
@@ -58,8 +72,38 @@ deviceConfig:
             value: supportedModes.value
       - op: remove
         path: /0/list
+    - component: cleanMode
+      capability: mode
+      version: 1
+      patch:
+      - op: replace
+        path: /0/displayType
+        value: dynamicList
+      - op: add
+        path: /0/dynamicList
+        value:
+          value: mode.value
+          supportedValues:
+            value: supportedModes.value
+      - op: remove
+        path: /0/list
     actions:
     - component: runMode
+      capability: mode
+      version: 1
+      patch:
+      - op: replace
+        path: /0/displayType
+        value: dynamicList
+      - op: add
+        path: /0/dynamicList
+        value:
+          command: setMode
+          supportedValues:
+            value: supportedModes.value
+      - op: remove
+        path: /0/list
+    - component: cleanMode
       capability: mode
       version: 1
       patch:

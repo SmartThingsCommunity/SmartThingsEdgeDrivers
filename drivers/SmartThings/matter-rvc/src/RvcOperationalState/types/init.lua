@@ -12,4 +12,3 @@ local RvcOperationalStateTypes = {}
 setmetatable(RvcOperationalStateTypes, types_mt)
 
 return RvcOperationalStateTypes
-
