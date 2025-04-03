@@ -286,8 +286,6 @@ local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
-local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
-
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
 -- the "held" capability event is generated when the LongPress event is received. The IGNORE_NEXT_MPC flag is used
@@ -593,7 +591,6 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
     profile_name = string.gsub(profile_name, "1%-", "") -- remove the "1-" in a device with 1 button ep
     device:try_update_metadata({profile = profile_name})
   end
-  device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
 local function try_build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
@@ -671,7 +668,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   if #button_eps > 0 then
     build_button_profile(device, main_endpoint, #button_eps)
     configure_buttons(device)
-    return
+    return true
   end
 
   -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
@@ -679,6 +676,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   -- Note: since their device type isn't supported, these devices join as a matter-thing.
   if num_switch_server_eps > 0 and detect_matter_thing(device) then
     handle_light_switch_with_onOff_server_clusters(device, main_endpoint, num_switch_server_eps)
+    return true
   end
 end
 
@@ -729,12 +727,11 @@ local function do_configure(driver, device)
   if not detect_bridge(device) then
     local main_endpoint = find_default_endpoint(device)
     -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-    initialize_buttons_and_switches(driver, device, main_endpoint)
+    local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
     if device:get_field(IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(find_child)
     end
-    if device:get_field(BUTTON_DEVICE_PROFILED) then
-      device:set_field(BUTTON_DEVICE_PROFILED, nil)
+    if profile_found then
       return
     end
   end
