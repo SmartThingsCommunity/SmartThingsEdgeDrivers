@@ -38,9 +38,26 @@ local DEFAULT_COOKING_MODE = 0
 local DEFAULT_COOKING_TIME = 30
 local MICROWAVE_OVEN_SUPPORTED_MODES_KEY = "__microwave_oven_supported_modes__"
 
+local find_default_endpoint = function(device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == MICROWAVE_OVEN_DEVICE_TYPE_ID then
+        return ep.endpoint_id
+      end
+    end
+  end
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
+local function component_to_endpoint(device, component)
+  return find_default_endpoint(device)
+end
+
 local function device_init(driver, device)
   device:subscribe()
-  device:send(clusters.MicrowaveOvenControl.attributes.MaxCookTime:read(device, device.MATTER_DEFAULT_ENDPOINT))
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  local microwave_oven_ep = find_default_endpoint(device)
+  device:send(clusters.MicrowaveOvenControl.attributes.MaxCookTime:read(device, microwave_oven_ep))
 end
 
 local function is_matter_mircowave_oven(opts, driver, device)
@@ -100,9 +117,9 @@ local function operational_state_attr_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.paused())
   end
   local event = capabilities.mode.supportedModes(supported_mode, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
   event = capabilities.mode.supportedArguments(supported_mode, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function operational_error_attr_handler(driver, device, ib, response)
@@ -121,9 +138,9 @@ local function operational_error_attr_handler(driver, device, ib, response)
   end
   if operationalError ~= clusters.OperationalState.types.ErrorStateEnum.NO_ERROR then
     local event = capabilities.mode.supportedModes({}, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+    device:emit_event_for_endpoint(ib.endpoint_id, event)
     event = capabilities.mode.supportedArguments({}, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+    device:emit_event_for_endpoint(ib.endpoint_id, event)
   end
 end
 
@@ -137,9 +154,9 @@ local function microwave_oven_supported_modes_handler(driver, device, ib, respon
     table.insert(microwaveOvenModeSupportedModes, mode.elements.label.value)
   end
   local event = capabilities.mode.supportedModes(microwaveOvenModeSupportedModes, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
   event = capabilities.mode.supportedArguments(microwaveOvenModeSupportedModes, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
   device:set_field(MICROWAVE_OVEN_SUPPORTED_MODES_KEY, microwaveOvenModeSupportedModes)
 end
 
@@ -152,7 +169,7 @@ local function microwave_oven_current_mode_handler(driver, device, ib, response)
 
   if microwaveOvenModeSupportedModes[currentMode + 1] then
     local mode = microwaveOvenModeSupportedModes[currentMode + 1]
-    device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, capabilities.mode.mode(mode))
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode))
     return
   end
   log.warn(string.format("Microwave oven mode %s not found in supported microwave oven modes", currentMode))
@@ -160,7 +177,7 @@ end
 
 local function microwave_oven_cook_time_handler(driver, device, ib, response)
   local cookingTime = (ib.data.value == 0) and DEFAULT_COOKING_TIME or ib.data.value
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, capabilities.cookTime.cookTime(cookingTime))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.cookTime.cookTime(cookingTime))
 end
 
 local function microwave_oven_max_cook_time_handler(driver, device, ib, response)
@@ -169,7 +186,7 @@ local function microwave_oven_max_cook_time_handler(driver, device, ib, response
     maximum = ib.data.value
   }
   local event = capabilities.cookTime.cookTimeRange(cook_time_range, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(device.MATTER_DEFAULT_ENDPOINT, event)
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 ---------------------
@@ -211,7 +228,8 @@ local function handle_microwave_oven_mode(driver, device, cmd)
   for i, mode in ipairs(microwaveOvenModeSupportedModes) do
     if cmd.args.mode == mode then
       local cookingTime, _ = get_last_set_cooking_parameters(device)
-      device:send(clusters.MicrowaveOvenControl.commands.SetCookingParameters(device, device.MATTER_DEFAULT_ENDPOINT,
+      local ep = component_to_endpoint(device, cmd.component)
+      device:send(clusters.MicrowaveOvenControl.commands.SetCookingParameters(device, ep,
         i - 1,
         cookingTime))
       return
@@ -223,7 +241,8 @@ end
 local function handle_set_cooking_time(driver, device, cmd)
   local cookingTime = cmd.args.time
   local _, mode_id = get_last_set_cooking_parameters(device)
-  device:send(clusters.MicrowaveOvenControl.commands.SetCookingParameters(device, device.MATTER_DEFAULT_ENDPOINT, mode_id,
+  local ep = component_to_endpoint(device, cmd.component)
+  device:send(clusters.MicrowaveOvenControl.commands.SetCookingParameters(device, ep, mode_id,
     cookingTime))
 end
 
