@@ -69,6 +69,12 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
+  # LG
+  - id: "4142/8208"
+    deviceLabel: LG Air Quality Sensor
+    vendorId: 0x102E
+    productId: 0x2010
+    deviceProfileName: aqs-temp-humidity-co2-pm1-pm25-pm10-meas
   # Neo
   - id: "4991/1122"
     deviceLabel: Door Sensor

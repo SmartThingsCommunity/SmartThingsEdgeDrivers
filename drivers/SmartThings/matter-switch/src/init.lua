@@ -65,13 +65,9 @@ local COLOR_TEMP_MAX = "__color_temp_max"
 local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
-local COLOR_MODE_ATTRS_BITMAP = "__color_mode_attrs_bitmap"
-local color_mode_attr_bits = {
-  HUE = 0x01, -- CurrentHue
-  SAT = 0x02, -- CurrentSaturation
-  X   = 0x04, -- CurrentX
-  Y   = 0x08  -- CurrentY
-}
+local COLOR_MODE = "__color_mode"
+local HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
+local X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
 local AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
@@ -295,7 +291,6 @@ local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
@@ -314,7 +309,6 @@ local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
 
-local HUE_MANUFACTURER_ID = 0x100B
 local AQARA_MANUFACTURER_ID = 0x115F
 local AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
@@ -389,21 +383,6 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
---- ignore_initial_color_read helper function used to ensure that we do not
---- process the CurrentHue, CurrentSaturation, CurrentX, and CurrentY attributes
---- from the initial subscription report, but instead wait until the current
---- ColorMode is known. Otherwise, attributes that are not currently controlling
---- the color of the device can override the colorControl capability with the
---- wrong hue and saturation values when subscribe is called during init.
-local function ignore_initial_color_read(device, attr_bit)
-  local color_attr_bitmap = device:get_field(COLOR_MODE_ATTRS_BITMAP)
-  if color_attr_bitmap ~= nil and color_attr_bitmap & attr_bit > 0 then
-    device:set_field(COLOR_MODE_ATTRS_BITMAP, color_attr_bitmap & ~attr_bit)
-    return true
-  end
-  return false
-end
-
 --- device_type_supports_button_switch_combination helper function used to check
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
@@ -473,6 +452,24 @@ local function find_default_endpoint(device)
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return device.MATTER_DEFAULT_ENDPOINT
+end
+
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
+  end
+  return find_default_endpoint(device)
+end
+
+local function endpoint_to_component(device, ep)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+      return component
+    end
+  end
+  return "main"
 end
 
 local function assign_child_profile(device, child_ep)
@@ -556,26 +553,31 @@ local function configure_buttons(device)
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
 
   for _, ep in ipairs(ms_eps) do
-    local supportedButtonValues_event
-    -- this ordering is important, since MSM & MSL devices must also support MSR
-    if tbl_contains(msm_eps, ep) then
-      supportedButtonValues_event = nil -- deferred to the max press handler
-      device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-      set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
-    elseif tbl_contains(msl_eps, ep) then
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-    elseif tbl_contains(msr_eps, ep) then
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-      set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
-    else -- this switch endpoint only supports momentary switch, no release events
-      supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
-      set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
-    end
+    if device.profile.components[endpoint_to_component(device, ep)] then
+      device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
+      local supportedButtonValues_event
+      -- this ordering is important, since MSM & MSL devices must also support MSR
+      if tbl_contains(msm_eps, ep) then
+        supportedButtonValues_event = nil -- deferred to the max press handler
+        device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
+        set_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
+      elseif tbl_contains(msl_eps, ep) then
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
+      elseif tbl_contains(msr_eps, ep) then
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
+        set_field_for_endpoint(device, EMULATE_HELD, ep, true, {persist = true})
+      else -- this switch endpoint only supports momentary switch, no release events
+        supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
+        set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
+      end
 
-    if supportedButtonValues_event then
-      device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      if supportedButtonValues_event then
+        device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      end
+      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
+    else
+      device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end
-    device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
   end
 end
 
@@ -606,7 +608,6 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
   else
     profile_name = num_button_eps .. "-button"
     battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
-    if device.manufacturer_info.vendor_id == HUE_MANUFACTURER_ID then battery_supported = false end -- no battery support in Hue case
     if battery_supported then
       local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
       attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
@@ -618,7 +619,6 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
     profile_name = string.gsub(profile_name, "1%-", "") -- remove the "1-" in a device with 1 button ep
     device:try_update_metadata({profile = profile_name})
   end
-  device:set_field(DEFERRED_CONFIGURE, true)
   device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
@@ -698,6 +698,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
 
   if #button_eps > 0 then
     build_button_profile(device, main_endpoint, #button_eps)
+    configure_buttons(device)
     return
   end
 
@@ -707,24 +708,6 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   if num_switch_server_eps > 0 and detect_matter_thing(device) then
     handle_light_switch_with_onOff_server_clusters(device, main_endpoint, num_switch_server_eps)
   end
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return find_default_endpoint(device)
-end
-
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
 end
 
 local function detect_bridge(device)
@@ -743,6 +726,9 @@ local function device_init(driver, device)
     return
   end
 
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+
   local main_endpoint = find_default_endpoint(device)
   if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and -- this field is only set for old MCD devices. See comments in the field def.
      not device:get_field(SWITCH_INITIALIZED) and
@@ -750,8 +736,6 @@ local function device_init(driver, device)
     -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
     initialize_buttons_and_switches(driver, device, main_endpoint)
   end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(find_child)
   end
@@ -772,11 +756,6 @@ local function device_init(driver, device)
         end
       end
     end
-  end
-
-  if device:supports_capability(capabilities.colorControl) then
-    device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
-    device:send(clusters.ColorControl.attributes.ColorMode:read())
   end
   device:subscribe()
 end
@@ -929,7 +908,7 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if ignore_initial_color_read(device, color_mode_attr_bits.HUE) or ib.data.value == nil then
+  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE  or ib.data.value == nil then
     return
   end
   local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -937,7 +916,7 @@ local function hue_attr_handler(driver, device, ib, response)
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if ignore_initial_color_read(device, color_mode_attr_bits.SAT) or ib.data.value == nil then
+  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE  or ib.data.value == nil then
     return
   end
   local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -1043,7 +1022,7 @@ end
 local color_utils = require "color_utils"
 
 local function x_attr_handler(driver, device, ib, response)
-  if ignore_initial_color_read(device, color_mode_attr_bits.X) then
+  if device:get_field(COLOR_MODE) == HUE_SAT_COLOR_MODE then
     return
   end
   local y = device:get_field(RECEIVED_Y)
@@ -1061,7 +1040,7 @@ local function x_attr_handler(driver, device, ib, response)
 end
 
 local function y_attr_handler(driver, device, ib, response)
-  if ignore_initial_color_read(device, color_mode_attr_bits.Y) then
+  if device:get_field(COLOR_MODE) == HUE_SAT_COLOR_MODE then
     return
   end
   local x = device:get_field(RECEIVED_X)
@@ -1077,11 +1056,15 @@ local function y_attr_handler(driver, device, ib, response)
 end
 
 local function color_mode_attr_handler(driver, device, ib, response)
+  if ib.data.value == device:get_field(COLOR_MODE) or (ib.data.value ~= HUE_SAT_COLOR_MODE and ib.data.value ~= X_Y_COLOR_MODE) then
+    return
+  end
+  device:set_field(COLOR_MODE, ib.data.value)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+  if ib.data.value == HUE_SAT_COLOR_MODE then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
+  elseif ib.data.value == X_Y_COLOR_MODE then
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
@@ -1285,15 +1268,10 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    if device:supports_capability(capabilities.colorControl) then
-      device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
-      device:send(clusters.ColorControl.attributes.ColorMode:read())
-    end
     device:subscribe()
-    if device:get_field(DEFERRED_CONFIGURE) and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-      -- profile has changed, and we deferred setting up our buttons, so do that now
+    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+    if #button_eps > 0 and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
       configure_buttons(device)
-      device:set_field(DEFERRED_CONFIGURE, nil)
     end
   end
 end
@@ -1443,6 +1421,7 @@ local matter_driver_template = {
       clusters.LevelControl.attributes.MinLevel,
     },
     [capabilities.colorControl.ID] = {
+      clusters.ColorControl.attributes.ColorMode,
       clusters.ColorControl.attributes.CurrentHue,
       clusters.ColorControl.attributes.CurrentSaturation,
       clusters.ColorControl.attributes.CurrentX,

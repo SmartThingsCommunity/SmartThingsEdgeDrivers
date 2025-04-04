@@ -181,6 +181,17 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.Switch.server.events.MultiPressComplete,
 }
 
+local function configure_buttons()
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
+
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
+
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+end
+
 local function test_init()
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
@@ -197,6 +208,7 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", mock_device_ep5)
   })
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   mock_device:expect_metadata_update({ profile = "light-level-3-button" })
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
@@ -204,15 +216,7 @@ local function test_init()
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
-
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+  configure_buttons()
 end
 
 local function test_init_mcd_unsupported_switch_device_type()

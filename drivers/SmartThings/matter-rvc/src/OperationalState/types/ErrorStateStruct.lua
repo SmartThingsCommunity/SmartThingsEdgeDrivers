@@ -1,26 +1,5 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 local data_types = require "st.matter.data_types"
 local StructureABC = require "st.matter.data_types.base_defs.StructureABC"
-
-
-
-
-
 
 local ErrorStateStruct = {}
 local new_mt = StructureABC.new_mt({NAME = "ErrorStateStruct", ID = data_types.name_to_id_map["Structure"]})
