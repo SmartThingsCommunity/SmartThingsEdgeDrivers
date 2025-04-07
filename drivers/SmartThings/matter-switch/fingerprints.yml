@@ -20,6 +20,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x1806
     deviceProfileName: light-level-colorTemperature-2700K-6500K
+  - id: "4447/8196"
+    deviceLabel: Climate Sensor W100
+    vendorId: 0x115F
+    productId: 0x2004
+    deviceProfileName: 3-button-battery-temperature-humidity
 #AiDot
   - id: "Linkind/Smart/Light/Bulb/A19/RGBTW"
     deviceLabel: Linkind Smart Light Bulb A19 RGBTW
@@ -234,6 +239,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x00B5
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/182"
+    deviceLabel: Cync Full Color A19 Clear Spiral
+    vendorId: 0x1339
+    productId: 0x00B6
+    deviceProfileName: light-color-level-2000K-7000K 
   - id: "4921/41"
     deviceLabel: Cync Full Color Undercabinet 12 Inch
     vendorId: 0x1339
@@ -442,6 +452,11 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0005
     deviceProfileName: switch-binary
+  - id: "4129/6"
+    deviceLabel: Radiant Smart LED Dimmer
+    vendorId: 0x1021
+    productId: 0x0006
+    deviceProfileName: switch-level  
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb

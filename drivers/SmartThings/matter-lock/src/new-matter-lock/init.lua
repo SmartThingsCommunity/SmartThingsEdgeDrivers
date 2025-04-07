@@ -164,7 +164,7 @@ local function do_configure(driver, device)
     req:merge(clusters.PowerSource.attributes.AttributeList:read())
     device:send(req)
   else
-    device.log.info(string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   end
 end
@@ -396,7 +396,7 @@ local function handle_power_source_attribute_list(driver, device, ib, response)
     elseif support_battery_level then
       profile_name = profile_name .. "-batteryLevel"
     end
-    device.log.info(string.format("Updating device profile to %s.", profile_name))
+    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
     device:try_update_metadata({profile = profile_name})
   end
 end

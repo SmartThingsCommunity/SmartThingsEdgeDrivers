@@ -22,8 +22,4 @@ components:
     version: 1
   categories:
   - name: Thermostat
-preferences:
-  - preferenceId: tempOffset
-    explicit: true
-  - preferenceId: humidityOffset
-    explicit: true
+
