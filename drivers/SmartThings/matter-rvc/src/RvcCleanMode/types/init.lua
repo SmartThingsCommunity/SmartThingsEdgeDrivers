@@ -12,4 +12,3 @@ local RvcCleanModeTypes = {}
 setmetatable(RvcCleanModeTypes, types_mt)
 
 return RvcCleanModeTypes
-
