@@ -682,16 +682,18 @@ local function match_profile(driver, device)
     local thermostat_modes = create_thermostat_modes_profile(device)
     if thermostat_modes == "" then
       profile_name = profile_name .. "-heating-cooling"
-    else
-      device.log.warn_with({hub_logs=true}, "Device does not support both heating and cooling. No matching profile")
+    elseif thermostat_modes == "No Heating nor Cooling Support" then
+      device.log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
       return
+    else
+      profile_name = profile_name .. thermostat_modes
     end
 
     if profile_name == "room-air-conditioner-humidity-fan-wind-heating-cooling" then
       profile_name = "room-air-conditioner"
     end
 
-    if not running_state_supported and profile_name == "room-air-conditioner-fan-heating-cooling" then
+    if not running_state_supported then
       profile_name = profile_name .. "-nostate"
     end
 
