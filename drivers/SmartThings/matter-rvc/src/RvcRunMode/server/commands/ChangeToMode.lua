@@ -84,4 +84,3 @@ end
 setmetatable(ChangeToMode, {__call = ChangeToMode.init})
 
 return ChangeToMode
-

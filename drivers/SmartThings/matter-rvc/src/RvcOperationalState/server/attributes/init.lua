@@ -21,4 +21,3 @@ end
 setmetatable(RvcOperationalStateServerAttributes, attr_mt)
 
 return RvcOperationalStateServerAttributes
-

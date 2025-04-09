@@ -12,4 +12,3 @@ local RvcRunModeTypes = {}
 setmetatable(RvcRunModeTypes, types_mt)
 
 return RvcRunModeTypes
-
