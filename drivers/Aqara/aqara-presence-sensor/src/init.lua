@@ -54,13 +54,22 @@ local function create_sse(driver, device, credential)
     end
 
     eventsource.onerror = function()
-      log.error(string.format("Eventsource error: dni= %s", device.device_network_id))
+      local DISCONNECTED_STATUS = "disconnected"
+      local connection_status = device:get_field(fields.CONNECTION_STATUS)
+      if connection_status and connection_status == DISCONNECTED_STATUS then
+        log.error(string.format("Eventsource error: dni= %s", device.device_network_id))
+      else
+        log.error_with({ hub_logs = true }, string.format("Eventsource error: disconnected, dni= %s", device.device_network_id))
+        device:set_field(fields.CONNECTION_STATUS, DISCONNECTED_STATUS)
+      end
       device:offline()
+
     end
 
     eventsource.onopen = function()
       log.info_with({ hub_logs = true }, string.format("Eventsource open: dni= %s", device.device_network_id))
       device:online()
+      device:set_field(fields.CONNECTION_STATUS, "connected")
       local success, err = status_update(driver, device)
       if not success then
         log.warn(string.format("Failed to status_update during eventsource.onopen, err = %s dni= %s", err, device.device_network_id))
