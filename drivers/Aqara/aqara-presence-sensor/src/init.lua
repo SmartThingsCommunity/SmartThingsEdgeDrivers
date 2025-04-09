@@ -125,7 +125,6 @@ local function create_monitoring_thread(driver, device, device_info)
   local monitoring_interval = DEFAULT_MONITORING_INTERVAL
   local new_timer = device.thread:call_on_schedule(monitoring_interval, function()
     check_and_update_connection(driver, device)
-    driver.device_manager.device_monitor(driver, device, device_info)
   end, "monitor_timer")
   device:set_field(fields.MONITORING_TIMER, new_timer)
 end
@@ -193,6 +192,13 @@ local function device_init(driver, device)
   create_monitoring_thread(driver, device, device_info)
 
   update_connection(driver, device, device_ip, device_info)
+
+  local eventsource = device:get_field(fields.EVENT_SOURCE)
+  if not eventsource then
+    log.error_with({ hub_logs = true }, "failed to create EVENT_SOURCE.")
+    device:offline()
+    return
+  end
 
   do_refresh(driver, device, nil)
 end
