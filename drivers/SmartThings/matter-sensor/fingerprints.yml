@@ -230,3 +230,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x0043
     deviceProfileName: leak-battery
+  - id: "matter/flow/sensor"
+    deviceLabel: Matter Flow Sensor
+    deviceTypes:
+      - id: 0x0306
+    deviceProfileName: flow-battery
