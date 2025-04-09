@@ -118,6 +118,11 @@ zigbeeManufacturer:
     manufacturer: Screen Innovations
     model: WM25/L-Z
     deviceProfileName: window-treatment-powerSource
+  - id: "Shade Revolution/Indoor Shade Motors"
+    deviceLabel: Smart Shade
+    manufacturer: Shade Revolution
+    model: Indoor Shade Motors
+    deviceProfileName: window-treatment-powerSource
 
 zigbeeGeneric:
   - id: "genericShade"

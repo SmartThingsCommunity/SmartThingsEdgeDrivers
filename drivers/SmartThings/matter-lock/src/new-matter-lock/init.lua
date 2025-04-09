@@ -33,9 +33,15 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
   {0x147F, 0x0001}, -- U-tec
+  {0x144F, 0x4002}, -- Yale, Linus Smart Lock L2
   {0x1533, 0x0001}, -- eufy, E31
   {0x1533, 0x0002}, -- eufy, E30
   {0x1533, 0x0003}, -- eufy, C34
+  {0x135D, 0x00B1}, -- Nuki, Smart Lock Pro
+  {0x135D, 0x00B2}, -- Nuki, Smart Lock
+  {0x135D, 0x00C1}, -- Nuki, Smart Lock
+  {0x135D, 0x00A1}, -- Nuki, Smart Lock
+  {0x135D, 0x00B0}, -- Nuki, Smart Lock
   {0x10E1, 0x2002}  -- VDA
 }
 

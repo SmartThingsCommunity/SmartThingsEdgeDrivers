@@ -42,6 +42,7 @@ if version.api < 10 then
   clusters.Thermostat.types.ThermostatSystemMode.SLEEP = 0x9
 end
 
+local SAVED_SYSTEM_MODE_IB = "__saved_system_mode_ib"
 local DISALLOWED_THERMOSTAT_MODES = "__DISALLOWED_CONTROL_OPERATIONS"
 local OPTIONAL_THERMOSTAT_MODES_SEEN = "__OPTIONAL_THERMOSTAT_MODES_SEEN"
 
@@ -1074,7 +1075,8 @@ end
 
 local function system_mode_handler(driver, device, ib, response)
   if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then -- this being nil means the sequence_of_operation_handler hasn't run.
-    device.log.info_with({hub_logs = true}, "In the SystemMode handler, ControlSequenceOfOperation has not run yet. Aborting.")
+    device.log.info_with({hub_logs = true}, "In the SystemMode handler: ControlSequenceOfOperation has not run yet. Exiting early.")
+    device:set_field(SAVED_SYSTEM_MODE_IB, ib)
     return
   end
 
@@ -1167,8 +1169,11 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 
-  -- do an extra SystemMode read in case of out of order attribute handling
-  device:send(clusters.Thermostat.attributes.SystemMode:read(device))
+  -- will be set by the SystemMode handler if this handler hasn't run yet.
+  if device:get_field(SAVED_SYSTEM_MODE_IB) then
+    system_mode_handler(driver, device, device:get_field(SAVED_SYSTEM_MODE_IB), response)
+    device:set_field(SAVED_SYSTEM_MODE_IB, nil)
+  end
 end
 
 local function min_deadband_limit_handler(driver, device, ib, response)
