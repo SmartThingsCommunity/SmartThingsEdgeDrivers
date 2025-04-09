@@ -583,17 +583,20 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function build_component_map(device, main_endpoint, endpoints)
+local function build_component_map(device, main_endpoint)
+  local component_name, endpoints
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local component_name
+  table.sort(button_eps)
+  table.sort(fan_eps)
 
   if #button_eps > 0 and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
     component_name = "button"
+    endpoints = button_eps
   elseif #fan_eps > 0 then
     component_name = "fan"
+    endpoints = fan_eps
   else
-    device.log.warn_with({hub_logs = true}, "Device is not supported by a multicomponent configuration")
     return
   end
 
@@ -617,10 +620,11 @@ local function build_mcd_profile(device, main_endpoint)
   local profile_name
   local battery_supported
 
-  if device_type_supports_button_switch_combination(device, main_endpoint) then
-    profile_name = "light-level-" .. #button_eps .. "-button"
-  elseif #button_eps > 0 and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
-    profile_name = #button_eps .. "-button"
+  if #button_eps > 0 and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
+    profile_name = string.gsub(#button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
+    if device_type_supports_button_switch_combination(device, main_endpoint) then
+      profile_name = "light-level-" .. profile_name
+    end
     battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
     if battery_supported then
       local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -630,20 +634,20 @@ local function build_mcd_profile(device, main_endpoint)
   elseif #fan_eps > 0 then
     profile_name = "light-color-level-fan"
   else
-    device.log.warn_with({hub_logs = true}, "Device is not supported by a multicomponent profile")
     return
   end
 
   if not battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
-    profile_name = string.gsub(profile_name, "1%-", "") -- remove the "1-" in a device with 1 button ep
     device:try_update_metadata({profile = profile_name})
   end
   device:set_field(DEVICE_PROFILED, true)
 end
 
-local function build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
+local function build_child_switch_profiles(driver, device, main_endpoint)
   local num_switch_server_eps = 0
   local parent_child_device = false
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  table.sort(switch_eps)
   for _, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
@@ -669,13 +673,13 @@ local function build_child_switch_profiles(driver, device, switch_eps, main_endp
     end
   end
 
-  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_buttons_and_switches
+  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_switch
   -- is only run once, but find_child function should be set on each driver init.
   if parent_child_device then
     device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
   end
 
-  -- this is needed in initialize_buttons_and_switches
+  -- this is needed in initialize_switch
   return num_switch_server_eps
 end
 
@@ -699,36 +703,20 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
   end
 end
 
-local function initialize_buttons_and_switches(driver, device, main_endpoint)
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  table.sort(switch_eps)
-  table.sort(button_eps)
-  table.sort(fan_eps)
+local function initialize_switch(driver, device, main_endpoint)
+  build_mcd_profile(device, main_endpoint)
+  build_component_map(device, main_endpoint)
+  configure_buttons(device)
 
-  -- Button/fan endpoints will be added as additional components in the profile containing the main_endpoint.
-  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_NEW_DEVICES field
-  if #button_eps > 0 then
-    build_mcd_profile(device, main_endpoint)
-    build_component_map(device, main_endpoint, button_eps)
-    configure_buttons(device)
-  elseif #fan_eps > 0 then
-    build_mcd_profile(device, main_endpoint)
-    build_component_map(device, main_endpoint, fan_eps)
-  end
+  -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
+  -- while building switch child profiles
+  local num_switch_server_eps = build_child_switch_profiles(driver, device, main_endpoint)
 
-  if #switch_eps > 0 then
-    -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
-    -- while building switch child profiles
-    local num_switch_server_eps = build_child_switch_profiles(driver, device, switch_eps, main_endpoint)
-
-    -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
-    -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
-    -- Note: since their device type isn't supported, these devices join as a matter-thing.
-    if num_switch_server_eps > 0 and detect_matter_thing(device) then
-      handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
-    end
+  -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
+  -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
+  -- Note: since their device type isn't supported, these devices join as a matter-thing.
+  if num_switch_server_eps > 0 and detect_matter_thing(device) then
+    handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
   end
 
   device:set_field(SWITCH_INITIALIZED, true, {persist = true})
@@ -758,7 +746,7 @@ local function device_init(driver, device)
      not device:get_field(SWITCH_INITIALIZED) and
      not detect_bridge(device) then
     -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-    initialize_buttons_and_switches(driver, device, main_endpoint)
+    initialize_switch(driver, device, main_endpoint)
   end
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(find_child)
