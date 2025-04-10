@@ -2587,12 +2587,6 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0001
     deviceProfileName: "button-battery"
-#JUNG
-  - id: "5161/1"
-    deviceLabel: Matter Push button 2-gang
-    vendorId: 0x1429
-    productId: 0x0001
-    deviceProfileName: 4-button-battery
 
 
 #Bridge devices need manufacturer specific fingerprints until
