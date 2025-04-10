@@ -606,8 +606,8 @@ local function build_button_component_map(device, main_endpoint, button_eps)
   device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
 end
 
-local function build_button_profile(device, main_endpoint, button_eps)
-  local profile_name = string.gsub(#button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
+local function build_button_profile(device, main_endpoint, num_button_eps)
+  local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
   if device_type_supports_button_switch_combination(device, main_endpoint) then
     profile_name = "light-level-" .. profile_name
   end
@@ -652,13 +652,13 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
     end
   end
 
-  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_switch
+  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_buttons_and_switches
   -- is only run once, but find_child function should be set on each driver init.
   if parent_child_device then
     device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
   end
 
-  -- this is needed in initialize_switch
+  -- this is needed in initialize_buttons_and_switches
   return num_switch_server_eps
 end
 
@@ -682,10 +682,12 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
   end
 end
 
-local function initialize_switch(driver, device, main_endpoint)
+local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    build_button_profile(device, main_endpoint, button_eps)
+    build_button_profile(device, main_endpoint, #button_eps)
+    -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
+    -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_BUTTON field
     build_button_component_map(device, main_endpoint, button_eps)
     configure_buttons(device)
   end
@@ -728,7 +730,7 @@ local function device_init(driver, device)
      not device:get_field(SWITCH_INITIALIZED) and
      not detect_bridge(device) then
     -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-    initialize_switch(driver, device, main_endpoint)
+    initialize_buttons_and_switches(driver, device, main_endpoint)
   end
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(find_child)
