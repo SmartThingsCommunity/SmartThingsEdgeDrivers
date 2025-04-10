@@ -137,8 +137,8 @@ matterManufacturer:
     deviceLabel: Smart Bridge MZ1
     vendorId: 0x1407
     productId: 0x1288
-    deviceProfileName: matter-bridge 
-    
+    deviceProfileName: matter-bridge
+
 #ELEGRP
   - id: "5158/3"
     deviceLabel: ELEGRP Smart Mini Plug
@@ -243,7 +243,7 @@ matterManufacturer:
     deviceLabel: Cync Full Color A19 Clear Spiral
     vendorId: 0x1339
     productId: 0x00B6
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/41"
     deviceLabel: Cync Full Color Undercabinet 12 Inch
     vendorId: 0x1339
@@ -420,6 +420,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x055C
     deviceProfileName: plug-binary
+  - id: 4489/2473
+    deviceLabel: MATTER FLEX RGBTW EU
+    vendorId: 0x1189
+    productId: 0x09A9
+    deviceProfileName: light-color-level
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
@@ -456,7 +461,7 @@ matterManufacturer:
     deviceLabel: Radiant Smart LED Dimmer
     vendorId: 0x1021
     productId: 0x0006
-    deviceProfileName: switch-level  
+    deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
@@ -539,7 +544,7 @@ matterManufacturer:
     deviceLabel: LIFX Downlight (Retrofit 4)
     vendorId: 0x1423
     productId: 0x00B3
-    deviceProfileName: light-level-colorTemperature-1500k-9000k   
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/180"
     deviceLabel: LIFX Downlight (Canless 4)
     vendorId: 0x1423
