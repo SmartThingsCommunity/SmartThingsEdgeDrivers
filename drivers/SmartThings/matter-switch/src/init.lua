@@ -589,12 +589,8 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function build_button_component_map(device, main_endpoint)
+local function build_button_component_map(device, main_endpoint, button_eps)
   -- create component mapping on the main profile button endpoints
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if not tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    return
-  end
   table.sort(button_eps)
   local component_map = {}
   component_map["main"] = main_endpoint
@@ -610,11 +606,7 @@ local function build_button_component_map(device, main_endpoint)
   device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
 end
 
-local function build_button_profile(device, main_endpoint)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if not tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    return
-  end
+local function build_button_profile(device, main_endpoint, button_eps)
   local profile_name = string.gsub(#button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
   if device_type_supports_button_switch_combination(device, main_endpoint) then
     profile_name = "light-level-" .. profile_name
@@ -691,9 +683,12 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
 end
 
 local function initialize_switch(driver, device, main_endpoint)
-  build_button_profile(device, main_endpoint)
-  build_button_component_map(device, main_endpoint)
-  configure_buttons(device)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+    build_button_profile(device, main_endpoint, button_eps)
+    build_button_component_map(device, main_endpoint, button_eps)
+    configure_buttons(device)
+  end
 
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
   -- while building switch child profiles
