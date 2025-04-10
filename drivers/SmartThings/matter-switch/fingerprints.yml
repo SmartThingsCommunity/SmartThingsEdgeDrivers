@@ -420,11 +420,16 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x055C
     deviceProfileName: plug-binary
-  - id: 4489/2473
+  - id: "4489/2473"
     deviceLabel: MATTER FLEX RGBTW EU
     vendorId: 0x1189
     productId: 0x09A9
     deviceProfileName: light-color-level
+  - id: "4489/2176"
+    deviceLabel: MATTER PLUG EU BK
+    vendorId: 0x1189
+    productId: 0x0880
+    deviceProfileName: plug-binary
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
@@ -488,7 +493,7 @@ matterManufacturer:
     deviceLabel: LG Smart Button (2 Button)
     vendorId: 0x102E
     productId: 0x2251
-    deviceProfileName: 2-button-battery  
+    deviceProfileName: 2-button-battery
 #Lifx
   - id: "5155/161"
     deviceLabel: LIFX Neon Outdoor
