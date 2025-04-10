@@ -204,11 +204,25 @@ function device_manager.handle_status(driver, device, status)
     return
   end
 
+  local need_time_log = false
   for k, _ in pairs(status) do
     if resource_id[k] then
       resource_id[k].event_handler(driver, device, resource_id[k].zone, tonumber(status[k]))
+      if k ~= "0.4.85" then -- ignore illuminance event
+        need_time_log = true
+      end
     else
       log.warn("device_manager.handle_status : resource id status is nil")
+    end
+  end
+
+  if status["time"] then
+    local event_time = tonumber(status["time"])
+    local time_log = string.format("device_manager.handle_status : event_time = %s, dni= %s", event_time, device.device_network_id)
+    if need_time_log then
+      log.info_with({ hub_logs = true }, time_log)
+    else
+      log.trace(time_log)
     end
   end
 end
