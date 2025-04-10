@@ -430,6 +430,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x09A9
     deviceProfileName: light-color-level
+  - id: "4489/2176"
+    deviceLabel: MATTER PLUG EU BK
+    vendorId: 0x1189
+    productId: 0x0880
+    deviceProfileName: plug-binary
   - id: "4489/1587"
     deviceLabel: MATTER COMP OUT PLUG EU
     vendorId: 0x1189
