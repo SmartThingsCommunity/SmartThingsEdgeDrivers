@@ -292,7 +292,7 @@ local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
 local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 
-local DEVICE_PROFILED = "__button_device_profiled"
+local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -513,10 +513,11 @@ local function assign_child_profile(device, child_ep)
 end
 
 local function do_configure(driver, device)
-  if device:get_field(DEVICE_PROFILED) then
+  if device:get_field(BUTTON_DEVICE_PROFILED) then
     return
   end
-  local level_eps = embedded_cluster_utils.get_endpoints(device, clusters.LevelControl.ID)
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
   local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
   local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
@@ -537,6 +538,8 @@ local function do_configure(driver, device)
       {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
       profile_name = profile_name .. "-level"
     end
+  elseif #fan_eps > 0 then
+    profile_name = "light-color-level-fan"
   end
 
   if profile_name then
@@ -586,53 +589,45 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function build_component_map(device, main_endpoint)
+local function build_button_component_map(device, main_endpoint)
   -- create component mapping on the main profile button endpoints
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    table.sort(button_eps)
-    local component_map = {}
-    component_map["main"] = main_endpoint
-    for component_num, ep in ipairs(button_eps) do
-      if ep ~= main_endpoint then
-        local button_component = "button"
-        if #button_eps > 1 then
-          button_component = button_component .. component_num
-        end
-        component_map[button_component] = ep
-      end
-    end
-    device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
-  end
-end
-
-local function build_profile(device, main_endpoint)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local profile_name
-  local battery_supported
-
-  if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    profile_name = string.gsub(#button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
-    if device_type_supports_button_switch_combination(device, main_endpoint) then
-      profile_name = "light-level-" .. profile_name
-    end
-    battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
-    if battery_supported then
-      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-      device:send(attribute_list_read)
-    end
-  elseif #fan_eps > 0 then
-    profile_name = "light-color-level-fan" -- currently the only supported fan+light configuration
-  else
+  if not tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     return
   end
+  table.sort(button_eps)
+  local component_map = {}
+  component_map["main"] = main_endpoint
+  for component_num, ep in ipairs(button_eps) do
+    if ep ~= main_endpoint then
+      local button_component = "button"
+      if #button_eps > 1 then
+        button_component = button_component .. component_num
+      end
+      component_map[button_component] = ep
+    end
+  end
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+end
 
-  if not battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
+local function build_button_profile(device, main_endpoint)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  if not tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+    return
+  end
+  local profile_name = string.gsub(#button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
+  if device_type_supports_button_switch_combination(device, main_endpoint) then
+    profile_name = "light-level-" .. profile_name
+  end
+  local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
+  if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
+    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(attribute_list_read)
+  else
     device:try_update_metadata({profile = profile_name})
   end
-  device:set_field(DEVICE_PROFILED, true)
+  device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
 local function build_child_switch_profiles(driver, device, main_endpoint)
@@ -696,8 +691,8 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
 end
 
 local function initialize_switch(driver, device, main_endpoint)
-  build_profile(device, main_endpoint)
-  build_component_map(device, main_endpoint)
+  build_button_profile(device, main_endpoint)
+  build_button_component_map(device, main_endpoint)
   configure_buttons(device)
 
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
