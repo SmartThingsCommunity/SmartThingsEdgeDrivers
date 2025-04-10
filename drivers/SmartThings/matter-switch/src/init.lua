@@ -51,9 +51,12 @@ local SWITCH_INITIALIZED = "__switch_intialized"
 -- in the device table for devices that joined prior to this transition, and it
 -- will not be set for new devices.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
--- COMPONENT_TO_ENDPOINT_MAP_NEW_DEVICES is for new devices that can be supported
--- by a MCD configuration.
-local COMPONENT_TO_ENDPOINT_MAP_NEW_DEVICES = "__component_to_endpoint_map_button"
+-- COMPONENT_TO_ENDPOINT_MAP_BUTTON is for devices with button endpoints, to
+-- preserve the MCD functionality for button devices from the matter-button
+-- driver after it was merged into the matter-switch driver. Note that devices
+-- containing both button endpoints and switch endpoints will use this field
+-- rather than COMPONENT_TO_ENDPOINT_MAP.
+local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
 local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
@@ -453,7 +456,7 @@ local function find_default_endpoint(device)
 end
 
 local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_NEW_DEVICES) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
     return map[component]
   end
@@ -461,7 +464,7 @@ local function component_to_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_NEW_DEVICES) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
     if endpoint == ep then
       return component
@@ -584,43 +587,32 @@ local function find_child(parent, ep_id)
 end
 
 local function build_component_map(device, main_endpoint)
-  local component_name, endpoints
+  -- create component mapping on the main profile button endpoints
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  table.sort(button_eps)
-  table.sort(fan_eps)
-
-  if #button_eps > 0 and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
-    component_name = "button"
-    endpoints = button_eps
-  elseif #fan_eps > 0 then
-    component_name = "fan"
-    endpoints = fan_eps
-  else
-    return
-  end
-
-  local component_map = {}
-  component_map["main"] = main_endpoint
-  for component_num, ep in ipairs(endpoints) do
-    if ep ~= main_endpoint then
-      local component = component_name
-      if #endpoints > 1 then
-        component = component .. component_num
+  if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
+    table.sort(button_eps)
+    local component_map = {}
+    component_map["main"] = main_endpoint
+    for component_num, ep in ipairs(button_eps) do
+      if ep ~= main_endpoint then
+        local button_component = "button"
+        if #button_eps > 1 then
+          button_component = button_component .. component_num
+        end
+        component_map[button_component] = ep
       end
-      component_map[component] = ep
     end
+    device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   end
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP_NEW_DEVICES, component_map, {persist = true})
 end
 
-local function build_mcd_profile(device, main_endpoint)
+local function build_profile(device, main_endpoint)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local profile_name
   local battery_supported
 
-  if #button_eps > 0 and STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
+  if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     profile_name = string.gsub(#button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
     if device_type_supports_button_switch_combination(device, main_endpoint) then
       profile_name = "light-level-" .. profile_name
@@ -632,7 +624,7 @@ local function build_mcd_profile(device, main_endpoint)
       device:send(attribute_list_read)
     end
   elseif #fan_eps > 0 then
-    profile_name = "light-color-level-fan"
+    profile_name = "light-color-level-fan" -- currently the only supported fan+light configuration
   else
     return
   end
@@ -704,7 +696,7 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
 end
 
 local function initialize_switch(driver, device, main_endpoint)
-  build_mcd_profile(device, main_endpoint)
+  build_profile(device, main_endpoint)
   build_component_map(device, main_endpoint)
   configure_buttons(device)
 
@@ -907,13 +899,15 @@ local function set_fan_mode(driver, device, cmd)
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    local fan_ep = device:get_endpoints(clusters.FanControl.ID)[1]
+    device:send(clusters.FanControl.attributes.FanMode:write(device, fan_ep, fan_mode_id))
   end
 end
 
 local function set_fan_speed_percent(driver, device, cmd)
   local speed = math.floor(cmd.args.percent)
-  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), speed))
+  local fan_ep = device:get_endpoints(clusters.FanControl.ID)[1]
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device, fan_ep, speed))
 end
 
 local function handle_refresh(driver, device, cmd)
@@ -1618,7 +1612,7 @@ local matter_driver_template = {
       [capabilities.fanMode.commands.setFanMode.NAME] = set_fan_mode
     },
     [capabilities.fanSpeedPercent.ID] = {
-      [capabilities.fanSpeedPercent.commands.setPercent.NAME] = set_fan_speed_percent,
+      [capabilities.fanSpeedPercent.commands.setPercent.NAME] = set_fan_speed_percent
     }
   },
   supported_capabilities = {

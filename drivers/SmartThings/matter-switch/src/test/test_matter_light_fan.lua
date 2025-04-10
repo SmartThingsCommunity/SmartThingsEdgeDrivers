@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.generated.zap_clusters"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
+local version = require "version"
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
@@ -94,43 +95,44 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-  "Main switch component: switch capability should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Switch capability should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_device.id,
         { capability = "switch", component = "main", command = "on", args = { } }
       }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
-        clusters.OnOff.server.commands.On(mock_device, mock_device_ep1)
-      },
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+        clusters.OnOff.server.commands.On(mock_device, 1)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, mock_device_ep1, true)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.switch.switch.on()
+      )
+    )
+  end
 )
 
 test.register_message_test(
-  "Main switch component: Set color temperature should send the appropriate commands",
+  "Set color temperature should send the appropriate commands",
   {
     {
       channel = "capability",
@@ -187,7 +189,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("fan", capabilities.fanMode.fanMode.auto())
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode.auto())
     },
     {
       channel = "matter",
@@ -200,7 +202,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("fan", capabilities.fanMode.fanMode.auto())
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode.auto())
     },
     {
       channel = "matter",
@@ -213,7 +215,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("fan", capabilities.fanMode.fanMode("medium"))
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("medium"))
     }
   }
 )
@@ -233,7 +235,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("fan", capabilities.fanMode.supportedFanModes({"off", "high"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "high"}, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -246,8 +248,52 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("fan", capabilities.fanMode.supportedFanModes({"off", "low", "medium", "high", "auto"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "medium", "high", "auto"}, {visibility={displayed=false}}))
     },
+  }
+)
+
+test.register_message_test(
+  "Capability command setFanMode should be handled",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "fanMode", component = "main", command = "setFanMode", args = { "low" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.LOW)
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Capability command setPercent should be handled",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "fanSpeedPercent", component = "main", command = "setPercent", args = { 64 } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.PercentSetting:write(mock_device, mock_device_ep2, 64)
+      }
+    }
   }
 )
 
