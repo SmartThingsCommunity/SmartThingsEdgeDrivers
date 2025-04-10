@@ -425,6 +425,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0949
     deviceProfileName: plug-binary
+  - id: "4489/2473"
+    deviceLabel: MATTER FLEX RGBTW EU
+    vendorId: 0x1189
+    productId: 0x09A9
+    deviceProfileName: light-color-level
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
