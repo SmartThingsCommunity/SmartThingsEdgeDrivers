@@ -10,6 +10,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
+  #Bosch
+  - id: 4617/12309
+    deviceLabel: "Door/window contact II [M]"
+    vendorId: 0x1209
+    productId: 0x3015
+    deviceProfileName: contact-button-battery  
   #Elko
   - id: "5170/4098"
     deviceLabel: RFWD-100/MT

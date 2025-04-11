@@ -161,6 +161,10 @@ local function match_profile(driver, device, battery_supported)
     profile_name = profile_name .. "-batteryLevel"
   end
 
+  if device:supports_capability(capabilities.button) then
+    profile_name = profile_name .. "-button"
+  end
+
   if device:supports_capability(capabilities.hardwareFault) then
     profile_name = profile_name .. "-fault"
   end
@@ -574,6 +578,13 @@ local matter_driver_template = {
       clusters.FlowMeasurement.attributes.MaxMeasuredValue
     },
   },
+  subscribed_events = {
+    [capabilities.button.ID] = {
+      clusters.Switch.events.InitialPress,
+      clusters.Switch.events.LongPress,
+      clusters.Switch.events.ShortRelease,
+      clusters.Switch.events.MultiPressComplete,
+  }},
   capability_handlers = {
   },
   supported_capabilities = {
@@ -593,7 +604,8 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("air-quality-sensor"),
-    require("smoke-co-alarm")
+    require("smoke-co-alarm"),
+    require("bosch-button-contact")
   }
 }
 
