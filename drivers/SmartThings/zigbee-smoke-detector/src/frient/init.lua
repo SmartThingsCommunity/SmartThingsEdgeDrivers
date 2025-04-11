@@ -1,9 +1,22 @@
+-- Copyright 2025 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local data_types = require "st.zigbee.data_types"
-local device_management = require "st.zigbee.device_management"
 local alarm = capabilities.alarm
 local smokeDetector = capabilities.smokeDetector
 
@@ -12,32 +25,80 @@ local IASZone = zcl_clusters.IASZone
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 
 local ALARM_COMMAND = "alarmCommand"
-local ALARM_LAST_DURATION = "Custom_Alarm_Duration" 
-local ALARM_DEFAULT_MAX_DURATION = 0x00B4
-local DEFAULT_WARNING_DURATION = 240  
+local ALARM_LAST_DURATION = "Custom_Alarm_Duration"
+local ALARM_DEFAULT_MAX_DURATION = 0x00F0
+local DEFAULT_WARNING_DURATION = 240
 local BATTERY_MIN_VOLTAGE = 2.3
 local BATTERY_MAX_VOLTAGE = 3.0
 
+local TEMPERATURE_MEASUREMENT_ENDPOINT = 0x26
 
 local alarm_command = {
   OFF = 0,
   SIREN = 1
 }
 
-local function device_init(driver, device)
-  device:send(IASZone.attributes.ZoneStatus:read(device)) -- read the initial status of the smoke detector
+local CONFIGURATIONS = {
+  {
+    cluster = IASZone.ID,
+    attribute = IASZone.attributes.ZoneStatus.ID,
+    minimum_interval = 30,
+    maximum_interval = 300,
+    data_type = IASZone.attributes.ZoneStatus.base_type,
+    reportable_change = 1
+  },
+  {
+    cluster = TemperatureMeasurement.ID,
+    attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
+    minimum_interval = 60,
+    maximum_interval = 600,
+    data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
+    reportable_change = 100
+  }
+}
+
+local function device_added(driver, device)
   device:emit_event(alarm.alarm.off())
+  device:emit_event(smokeDetector.smoke.clear())
+end
+
+local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(BATTERY_MIN_VOLTAGE, BATTERY_MAX_VOLTAGE)(driver, device)
+  if CONFIGURATIONS ~= nil then
+    for _, attribute in ipairs(CONFIGURATIONS) do
+      device:add_configured_attribute(attribute)
+      device:add_monitored_attribute(attribute)
+    end
+  end
+end
+
+local function do_configure(self, device)
+  device:configure()
+  device:send(IASWD.attributes.MaxDuration:write(device, ALARM_DEFAULT_MAX_DURATION))
+end
+
+local info_changed = function (driver, device, event, args)
+  for name, info in pairs(device.preferences) do
+    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
+      local input = device.preferences[name]
+      local payload
+      if (name == "tempSensitivity") then
+        local sensitivity = math.floor((device.preferences.tempSensitivity or 0.1)*100 + 0.5)
+        device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 60, 600, sensitivity):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT))
+      elseif (name == "warningDuration") then
+        device:set_field(ALARM_LAST_DURATION, input, {persist = true})
+        device:send(IASWD.attributes.MaxDuration:write(device, tonumber(input)))
+      end
+    end
+  end
 end
 
 local function generate_event_from_zone_status(driver, device, zone_status, zigbee_message)
    print("Received ZoneStatus:", zone_status.value)
-   
+
    if zone_status:is_test_set() then
       print("Test mode detected!")
       device:emit_event(smokeDetector.smoke.tested())
-        
-  
    elseif zone_status:is_alarm1_set() then
       print("Smoke detected!")
       device:emit_event(smokeDetector.smoke.detected())
@@ -46,7 +107,6 @@ local function generate_event_from_zone_status(driver, device, zone_status, zigb
         print("Smoke cleared!")
       device:emit_event(smokeDetector.smoke.clear())
       end)
-      
    end
 end
 
@@ -60,11 +120,11 @@ local function ias_zone_status_change_handler(driver, device, zb_rx)
 end
 
 local function send_siren_command(device)
-  local warning_duration = device:get_field(ALARM_LAST_DURATION) or DEFAULT_WARNING_DURATION 
+  local warning_duration = device:get_field(ALARM_LAST_DURATION) or DEFAULT_WARNING_DURATION
   local sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
-  
+
   sirenConfiguration:set_warning_mode(0x01)
-  
+
   device:send(
     IASWD.server.commands.StartWarning(
       device,
@@ -101,26 +161,6 @@ local default_response_handler = function(driver, device, zigbee_message)
   end
 end
 
-local function do_configure(self, device)
-  device:configure()
-  device:send(TemperatureMeasurement.server.attributes.MeasuredValue:configure_reporting(device, 60, 600, 100):to_endpoint(0x26))
-end
-
-local info_changed = function (driver, device, event, args)
-  for name, info in pairs(device.preferences) do 
-    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
-      local input = device.preferences[name]
-      local payload
-      if (name == "tempSensitivity") then
-        payload = (input * 100) + 0.5
-        device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 3600, data_types.Int16(payload)))
-      elseif (name == "warningDuration") then
-        device:set_field(ALARM_LAST_DURATION, input, {persist = true})
-      end
-    end
-  end
-end
-
 local siren_alarm_siren_handler = function(driver, device, command)
   device:set_field(ALARM_COMMAND, alarm_command.SIREN, {persist = true})
   send_siren_command(device)
@@ -143,12 +183,10 @@ end
 local frient_smoke_sensor = {
   NAME = "frient smoke sensor",
   lifecycle_handlers = {
-    init = device_init,
+    added = device_added,
     doConfigure = do_configure,
+    init = device_init,
     infoChanged = info_changed
-  },
-  supported_capabilities = {
-    alarm
   },
   capability_handlers = {
     [alarm.ID] = {
