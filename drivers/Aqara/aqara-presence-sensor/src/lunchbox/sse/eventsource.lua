@@ -7,6 +7,8 @@ local util = require "lunchbox.util"
 local Request = require "luncheon.request"
 local Response = require "luncheon.response"
 
+local MAX_RECONNECT_TIME_SEC = 60
+
 --- A pure Lua implementation of the EventSource interface.
 --- The EventSource interface represents the client end of an HTTP(S)
 --- connection that receives an event stream following the Server-Sent events
@@ -302,6 +304,11 @@ local function connecting_action(source)
     return nil, err or "nil response from Response.tcp_source"
   end
 
+  if response.status == 401 then
+    source._reconnect = false
+    return nil, "Server response is 401 Unauthorized, stop reconnect", { response.status, response.status_msg }
+  end
+
   if response.status ~= 200 then
     return nil, "Server responded with status other than 200 OK", { response.status, response.status_msg }
   end
@@ -317,6 +324,8 @@ local function connecting_action(source)
   end
 
   source.ready_state = EventSource.ReadyStates.OPEN
+  source._reconnect = true
+  source._reconnect_time_millis = 1000
 
   if type(source.onopen) == "function" then
     source.onopen()
@@ -418,7 +427,9 @@ local function closed_action(source)
 
     local sleep_time_secs = source._reconnect_time_millis / 1000.0
     socket.sleep(sleep_time_secs)
-
+    if source._reconnect_time_millis  <= MAX_RECONNECT_TIME_SEC * 1000 then
+      source._reconnect_time_millis = source._reconnect_time_millis + 1000.0
+    end
     source.ready_state = EventSource.ReadyStates.CONNECTING
   end
 end
