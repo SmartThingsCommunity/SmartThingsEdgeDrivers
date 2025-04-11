@@ -66,4 +66,3 @@ end
 
 setmetatable(OperationalState, {__call = OperationalState.new_value, __index = OperationalState.base_type})
 return OperationalState
-
