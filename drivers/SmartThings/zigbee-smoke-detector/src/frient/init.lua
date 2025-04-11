@@ -81,7 +81,6 @@ local info_changed = function (driver, device, event, args)
   for name, info in pairs(device.preferences) do
     if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
       local input = device.preferences[name]
-      local payload
       if (name == "tempSensitivity") then
         local sensitivity = math.floor((device.preferences.tempSensitivity or 0.1)*100 + 0.5)
         device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 60, 600, sensitivity):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT))
