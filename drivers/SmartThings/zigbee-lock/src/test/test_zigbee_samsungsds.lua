@@ -143,7 +143,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
     }
@@ -169,7 +169,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
     }
@@ -195,7 +195,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
     }
@@ -221,7 +221,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
     }
@@ -247,7 +247,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
     }
@@ -273,7 +273,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "auto"} })
         )
       }
     }
@@ -299,7 +299,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({data = { method = "keypad"} })
         )
       }
     }
@@ -325,7 +325,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
     }
