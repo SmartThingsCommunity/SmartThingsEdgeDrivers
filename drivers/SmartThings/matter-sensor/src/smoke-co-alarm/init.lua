@@ -195,9 +195,8 @@ local function carbon_monoxide_unit_attr_handler(driver, device, ib, response)
 end
 
 local function hardware_fault_capability_handler(device)
-  local batLevelOk  = device:get_field(BatteryLevel) == clusters.PowerSource.types.BatChargeLevelEnum.OK
-  local batAlertWarnOrCrit  = device:get_field(BatteryAlert) ~= nil and device:get_field(BatteryAlert) ~= clusters.SmokeCoAlarm.types.AlarmStateEnum.NORMAL
-  if (batLevelOk and batAlertWarnOrCrit) or device:get_field(HardwareFaultAlert) == true then
+  local batLevel, batAlert  = device:get_field(BatteryLevel), device:get_field(BatteryAlert)
+  if device:get_field(HardwareFaultAlert) == true or (batLevel and batAlert and (batAlert > batLevel)) then
     device:emit_event(capabilities.hardwareFault.hardwareFault.detected())
   else
     device:emit_event(capabilities.hardwareFault.hardwareFault.clear())

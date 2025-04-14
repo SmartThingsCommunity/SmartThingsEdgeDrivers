@@ -283,6 +283,64 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Test hardwareFault handler with BatteryAlert and Warning PowerSource BatChargeLevel state",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.attributes.BatChargeLevel.WARNING),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning()),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.NORMAL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.CRITICAL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
+    },
+  }
+)
+
+test.register_message_test(
   "Test batteryLevel handler with PowerSource BatChargeLevel state",
   {
     {
