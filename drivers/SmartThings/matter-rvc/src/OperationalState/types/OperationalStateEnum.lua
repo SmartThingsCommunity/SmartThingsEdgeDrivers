@@ -1,30 +1,5 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
-
-
-
-
-
-
-
-
-
 
 local OperationalStateEnum = {}
 local new_mt = UintABC.new_mt({NAME = "OperationalStateEnum", ID = data_types.name_to_id_map["Uint8"]}, 1)

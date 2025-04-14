@@ -77,4 +77,3 @@ end
 setmetatable(Pause, {__call = Pause.init})
 
 return Pause
-
