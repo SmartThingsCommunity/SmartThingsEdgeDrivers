@@ -77,4 +77,3 @@ end
 setmetatable(Resume, {__call = Resume.init})
 
 return Resume
-

@@ -20,4 +20,3 @@ end
 setmetatable(RvcOperationalStateServerCommands, command_mt)
 
 return RvcOperationalStateServerCommands
-
