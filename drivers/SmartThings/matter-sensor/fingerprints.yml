@@ -75,11 +75,6 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2010
     deviceProfileName: aqs-temp-humidity-co2-pm1-pm25-pm10-meas
-  - id: "4142/8240"
-    deviceLabel: LG Motion Sensor
-    vendorId: 0x102E
-    productId: 0x2030
-    deviceProfileName: motion-illuminance-battery
   # Neo
   - id: "4991/1122"
     deviceLabel: Door Sensor
