@@ -73,8 +73,6 @@ local cluster_subscribe_list = {
 }
 
 local function test_init()
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -82,6 +80,10 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -178,7 +180,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Test battery alert handler",
+  "Test hardwareFault handler with BatteryAlert and No PowerSource BatChargeLevel messages",
   {
     {
       channel = "matter",
@@ -191,7 +193,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.normal())
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     },
     {
       channel = "matter",
@@ -204,7 +206,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning())
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     },
     {
       channel = "matter",
@@ -217,8 +219,111 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical())
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     },
+  }
+)
+
+test.register_message_test(
+  "Test hardwareFault handler with BatteryAlert and OK PowerSource BatChargeLevel state",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.attributes.BatChargeLevel.OK),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.normal()),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.NORMAL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.SmokeCoAlarm.attributes.BatteryAlert:build_test_report_data(mock_device, 1, clusters.SmokeCoAlarm.attributes.BatteryAlert.CRITICAL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
+    },
+  }
+)
+
+test.register_message_test(
+  "Test batteryLevel handler with PowerSource BatChargeLevel state",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.attributes.BatChargeLevel.OK),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.normal()),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.attributes.BatChargeLevel.WARNING),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning()),
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.attributes.BatChargeLevel.CRITICAL),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical()),
+    }
   }
 )
 

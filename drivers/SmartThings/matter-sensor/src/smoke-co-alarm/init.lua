@@ -25,6 +25,7 @@ local BatteryLevel = "__BatteryLevel"
 
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
 
@@ -215,9 +216,13 @@ end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
       match_profile(device, battery_support.BATTERY_PERCENTAGE)
+      return
+    elseif attr.value == 0x0E then
+      match_profile(device, battery_support.BATTERY_LEVEL)
       return
     end
   end
@@ -225,7 +230,7 @@ end
 
 local function handle_battery_charge_level(driver, device, ib, response)
   device:set_field(BatteryLevel, ib.data.value, {persist = true}) -- value used in hardware_fault_capability_handler
-  if device.supports_capability(capabilities.batteryLevel) then -- check required since attribute is subscribed to even without batteryLevel support, to set the field above
+  if device:supports_capability(capabilities.batteryLevel) then -- check required since attribute is subscribed to even without batteryLevel support, to set the field above
     if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
       device:emit_event(capabilities.batteryLevel.battery.normal())
     elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
