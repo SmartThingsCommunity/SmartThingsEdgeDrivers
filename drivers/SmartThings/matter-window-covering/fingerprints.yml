@@ -5,6 +5,26 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x55
     deviceProfileName: window-covering-battery
+   - id: "4874/109"
+    deviceLabel: Eve MotionBlinds for Roller Blinds
+    vendorId: 0x130A
+    productId: 0x006D
+    deviceProfileName: window-covering-profile
+  - id: "4874/98"
+    deviceLabel: Eve MotionBlinds for Honeycomb Blinds
+    vendorId: 0x130A
+    productId: 0x0062
+    deviceProfileName: window-covering-profile
+  - id: "4874/99"
+    deviceLabel: Eve MotionBlinds for Venetian Blinds
+    vendorId: 0x130A
+    productId: 0x0063
+    deviceProfileName: window-covering-profile
+  - id: "4874/100"
+    deviceLabel: Eve MotionBlinds for Curtains
+    vendorId: 0x130A
+    productId: 0x0064
+    deviceProfileName: window-covering-profile  
 #Zemismart
   - id: "Zemismart MT01 Slide Curtain"
     deviceLabel: Zemismart MT01 Slide Curtain
