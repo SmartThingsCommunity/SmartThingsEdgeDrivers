@@ -325,6 +325,14 @@ function PhilipsHueApi:get_devices() return self:get_all_reprs_for_rtype("device
 ---@return string? err nil on success
 function PhilipsHueApi:get_connectivity_status() return self:get_all_reprs_for_rtype("zigbee_connectivity") end
 
+---@return HueResourceResponse<HueZoneInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_zones() return self:get_all_reprs_for_rtype("zone") end
+
+---@return HueResourceResponse<HueRoomInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_rooms() return self:get_all_reprs_for_rtype("room") end
+
 ---@param light_resource_id string
 ---@return HueResourceResponse<HueLightInfo>?
 ---@return string? err nil on success
