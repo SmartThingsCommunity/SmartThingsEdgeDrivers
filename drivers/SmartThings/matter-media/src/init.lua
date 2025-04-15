@@ -22,7 +22,7 @@ local MatterDriver = require "st.matter.driver"
 local version = require "version"
 
 local MediaPlaybackClusterAcceptedCommandList
-if version.api >= 1 then
+if version.rpc >= 1 then
   MediaPlaybackClusterAcceptedCommandList = clusters.MediaPlayback.attributes.AcceptedCommandList
 end
 
@@ -55,11 +55,11 @@ local function device_init(driver, device)
   device:subscribe()
 end
 
-local do_configure = function(self, device)
+local function do_configure(driver, device)
   local variable_speed_eps = device:get_endpoints(clusters.MediaPlayback.ID, {feature_bitmap = clusters.MediaPlayback.types.MediaPlaybackFeature.VARIABLE_SPEED})
   local media_playback_eps = device:get_endpoints(clusters.MediaPlayback.ID)
 
-  if version.api >= 1 then
+  if version.rpc >= 1 then
     device:send(MediaPlaybackClusterAcceptedCommandList:read(device, media_playback_eps[1]))
   end
 
@@ -143,19 +143,25 @@ local function media_playback_state_attr_handler(driver, device, ib, response)
 end
 
 local function accepted_command_list_attr_handler(driver, device, ib, response)
-  for _, accepted_command_id in ipairs (ib.data.elements or {}) do
-    local new_profile = "media-video-player"
+  if not ib.data.elements then
+    return
+  end
+  local track_control = false
+  for _, accepted_command_id in ipairs (ib.data.elements) do
     if accepted_command_id.value == clusters.MediaPlayback.commands.Next.ID then
-      if device:supports_capability(capabilities.audioMute, device:endpoint_to_component(ib.endpoint_id)) then
-        new_profile = new_profile .. "-speaker"
-      end
-      new_profile = new_profile .. "-track-control"
-
-      device.log.info(string.format("Updating device profile to %s.", new_profile))
-      device:try_update_metadata({profile = new_profile})
-      return
+      track_control = true
+      break
     end
   end
+  local new_profile = "media-video-player"
+  if device:supports_capability(capabilities.audioMute, device:endpoint_to_component(ib.endpoint_id)) then
+    new_profile = new_profile .. "-speaker"
+  end
+  if not track_control then
+    new_profile = new_profile .. "-no-track-control"
+  end
+  device.log.info(string.format("Updating device profile to %s.", new_profile))
+  device:try_update_metadata({profile = new_profile})
 end
 
 local function handle_mute(driver, device, cmd)

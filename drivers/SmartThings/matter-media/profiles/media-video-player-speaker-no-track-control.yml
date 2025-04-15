@@ -1,10 +1,8 @@
-name: media-video-player-speaker-track-control
+name: media-video-player-speaker-no-track-control
 components:
 - id: main
   capabilities:
   - id: mediaPlayback
-    version: 1
-  - id: mediaTrackControl
     version: 1
   - id: keypadInput
     version: 1

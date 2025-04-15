@@ -4,6 +4,8 @@ components:
   capabilities:
   - id: mediaPlayback
     version: 1
+  - id: mediaTrackControl
+    version: 1
   - id: keypadInput
     version: 1
   - id: switch
