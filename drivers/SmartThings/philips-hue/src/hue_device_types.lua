@@ -4,6 +4,7 @@ local HueDeviceTypes = {
   BUTTON = "button",
   CONTACT = "contact",
   DEVICE_POWER = "device_power",
+  GROUPED_LIGHT = "grouped_light",
   LIGHT = "light",
   LIGHT_LEVEL = "light_level",
   MOTION = "motion",
