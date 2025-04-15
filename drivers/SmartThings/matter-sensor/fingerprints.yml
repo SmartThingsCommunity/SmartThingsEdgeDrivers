@@ -119,7 +119,12 @@ matterManufacturer:
     deviceLabel: LG Door and Window Sensor
     vendorId: 0x102E
     productId: 0x2020
-    deviceProfileName: contact-battery  
+    deviceProfileName: contact-battery
+  - id: "4142/8240"
+    deviceLabel: LG Motion Sensor
+    vendorId: 0x102E
+    productId: 0x2030
+    deviceProfileName: motion-illuminance-battery  
   # Siterwell
   - id: "4736/847"
     deviceLabel: Siterwell Door Window Sensor
