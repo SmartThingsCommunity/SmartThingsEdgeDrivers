@@ -155,14 +155,14 @@ local function match_profile(driver, device, battery_supported)
     profile_name = profile_name .. "-flow"
   end
 
+  if device:supports_capability(capabilities.button) then
+    profile_name = profile_name .. "-button"
+  end
+
   if battery_supported == battery_support.BATTERY_PERCENTAGE then
     profile_name = profile_name .. "-battery"
   elseif battery_supported == battery_support.BATTERY_LEVEL then
     profile_name = profile_name .. "-batteryLevel"
-  end
-
-  if device:supports_capability(capabilities.button) then
-    profile_name = profile_name .. "-button"
   end
 
   if device:supports_capability(capabilities.hardwareFault) then
@@ -584,7 +584,8 @@ local matter_driver_template = {
       clusters.Switch.events.LongPress,
       clusters.Switch.events.ShortRelease,
       clusters.Switch.events.MultiPressComplete,
-  }},
+    }
+  },
   capability_handlers = {
   },
   supported_capabilities = {
