@@ -1,5 +1,7 @@
 SONOS_API_KEY = require 'app_key'
 local old_log = require "log"
+local json = require "st.json"
+local security = require "st.security"
 
 -- Print all errors, warnings, and info to hubcore for now
 old_log.error = function(...)
@@ -178,12 +180,22 @@ local function scan_for_ssdp_updates(driver)
   end)
 end
 
+local startup_state_received = false
+local devices_waiting_for_startup_state = setmetatable({}, {__mode="kv"})
 -- We use the same handler for added and init here because at the time of authoring
 -- this driver, there is a bug with LAN Edge Drivers where `init` may not be called
 -- on every device that gets created using `try_create_device`. This makes sure that
 -- a device is fully initialized whether we come from fresh join or restart.
 -- See: https://smartthings.atlassian.net/browse/CHAD-9683
 local function _initialize_device(driver, device)
+  if not startup_state_received then
+    log.warn(string.format("startup state not yet received, delaying init for %s", (device and device.label or "<unknown device>")))
+    if device and device.id then
+      devices_waiting_for_startup_state[device.id] = device
+    end
+    return
+  end
+  log.info(st_utils.stringify_table(driver.hub_augmented_driver_data, "[AUG] Aug Data during Init", false))
   if not (
         driver:get_device_by_dni(device.device_network_id)
         and driver:get_device_by_dni(device.device_network_id).id == device.id
@@ -362,8 +374,82 @@ local function handle_ssdp_discovery(self, ssdp_group_info, callback)
   end
 end
 
+local ONE_HOUR_IN_SECONDS = 3600
+
+local oauth_token_tx, _ = cosock.channel.new()
+
 --- @type SonosDriver
 local driver = Driver("Sonos", {
+  waiting_for_token = false,
+  oauth_token_tx = oauth_token_tx,
+  oauth = {},
+  get_oauth_token_receive_handle = function(self)
+    oauth_token_tx:subscribe()
+  end,
+  get_oauth_token = function(self)
+    local token = self.hub_augmented_driver_data.sonosOAuthToken
+    if not (token or self.waiting_for_token) then
+      local result, err = security.get_sonos_oauth()
+      if not result then
+        return nil, err
+      end
+      return nil, "no token"
+    end
+
+    local now = os.time()
+    -- Viper uses millisecond resolution, lua dates are second resolution
+    local expiration_timestamp = math.floor(token.expires_at / 1000)
+    if expiration_timestamp < now and not self.waiting_for_token then
+      -- get new token
+      local result, err = security.get_sonos_oauth()
+      if not result then
+        return nil, string.format("Error requesting OAuth token via Security API: %s", err)
+      end
+      self.waiting_for_token = true
+      return nil, "token expired"
+    else
+      if math.abs(now - token.expires_at) < ONE_HOUR_IN_SECONDS and not self.waiting_for_token then
+        local result, err = security.get_sonos_oauth()
+        if not result then
+          log.warn(string.format("Error refreshing token: %s. Current token is still valid, continuing.", err))
+        else
+          self.waiting_for_token = true
+        end
+      end
+    end
+    return token
+  end,
+  notify_augmented_data_changed = function(self)
+    log.info(st_utils.stringify_table(self.hub_augmented_driver_data, "[AUG] Augmented Data Changed", false))
+
+    local decode_success, decoded = pcall(json.decode, self.hub_augmented_driver_data.endpointAppInfo or "{}")
+    if decode_success then
+      log.info(st_utils.stringify_table(decoded, "[AUG] Endpoint App Info", true))
+      self.oauth.endpoint_app_info = decoded
+    else
+      log.warn(st_utils.stringify_table(decoded, "JSON Decode Error while parsing Endpoint App Info", false))
+    end
+
+    if self.hub_augmented_driver_data.sonosOAuthToken then
+      decode_success, decoded = pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
+      if decode_success then
+        self.oauth.token = decoded
+        self.waiting_for_token = false
+        self.oauth_token_tx:send(decoded)
+      else
+        log.warn(st_utils.stringify_table(decoded, "JSON Decode Error while parsing OAuth Token Info", false))
+      end
+    end
+
+  end,
+  handle_startup_state_received = function(self)
+    self:notify_augmented_data_changed()
+    startup_state_received = true
+    for _, device in pairs(devices_waiting_for_startup_state) do
+      _initialize_device(self, device)
+    end
+    devices_waiting_for_startup_state = {}
+  end,
   discovery = SonosDisco.discover,
   lifecycle_handlers = {
     added = device_added,

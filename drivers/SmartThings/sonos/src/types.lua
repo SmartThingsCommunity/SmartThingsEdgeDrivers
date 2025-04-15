@@ -168,13 +168,13 @@ function SonosState.new()
   --- @param groups_event SonosGroupsResponseBody
   --- @param device SonosDevice|nil
   ret.update_household_info = function(self, id, groups_event, device)
-    log.debug_with({ hub_logs = true },
-      st_utils.stringify_table(
-        {name = (device or { label = "<no device>" }).label, event = groups_event },
-        string.format("Update household info for household %s", id),
-        true
-      )
-    )
+    -- log.trace_with({ hub_logs = false },
+    --   st_utils.stringify_table(
+    --     {name = (device or { label = "<no device>" }).label, event = groups_event },
+    --     string.format("Update household info for household %s", id),
+    --     true
+    --   )
+    -- )
     if device and device.label then
       log.debug(string.format("Household update triggered by device %s to update capabilities", device.label))
     end

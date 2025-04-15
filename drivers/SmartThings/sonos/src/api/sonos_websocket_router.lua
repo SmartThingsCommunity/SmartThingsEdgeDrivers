@@ -107,7 +107,10 @@ cosock.spawn(function()
               end
 
               log.trace(string.format("Sending message over websocket for target %s", target))
-              wss:send(Message.new(Message.TEXT, msg.body))
+              local response = table.pack(wss:send(Message.new(Message.TEXT, msg.body)))
+              if msg.header.reply_tx then
+                msg.header.reply_tx:send(response)
+              end
             end
           elseif msg.type and msg.data and recv.id then -- websocket message received
             log.trace(string.format("Received WebSocket message, fanning out to listeners"))
@@ -229,9 +232,9 @@ function SonosWebSocketRouter.open_socket_for_player(player_id, wss_url)
   end
 end
 
-function SonosWebSocketRouter.send_message_to_player(target, json_payload)
+function SonosWebSocketRouter.send_message_to_player(target, json_payload, reply_tx)
   local websocket_message = {
-    header = { type = "WebSocket", target = target },
+    header = { type = "WebSocket", target = target, reply_tx = reply_tx},
     body = json_payload
   }
 
