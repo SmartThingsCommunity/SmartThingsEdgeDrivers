@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -93,17 +93,13 @@ local info_changed = function (driver, device, event, args)
 end
 
 local function generate_event_from_zone_status(driver, device, zone_status, zigbee_message)
-   print("Received ZoneStatus:", zone_status.value)
 
    if zone_status:is_test_set() then
-      print("Test mode detected!")
       device:emit_event(smokeDetector.smoke.tested())
    elseif zone_status:is_alarm1_set() then
-      print("Smoke detected!")
       device:emit_event(smokeDetector.smoke.detected())
    else
       device.thread:call_with_delay(6, function ()
-        print("Smoke cleared!")
       device:emit_event(smokeDetector.smoke.clear())
       end)
    end
