@@ -1632,7 +1632,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
     local credData = issuerKey
     if credData == nil then
       credType = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY
-      credData = nonEvictableEndPointKey
+      credData = device:get_field(lock_utils.NON_EVICTABLE_ENDPOINT_KEY)
     end
     local credential = {
       credential_type = credType,
@@ -2385,6 +2385,9 @@ local function handle_set_reader_key(driver, device, command)
     return
   end
 
+  -- Save values to field
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+
   -- Send command
   local ep = device:component_to_endpoint(command.component)
   device:send(
@@ -2395,16 +2398,30 @@ local function handle_set_reader_key(driver, device, command)
       hex_string_to_octet_string(groupId)     -- Group identification
     )
   )
+end
 
-  device:emit_event(aliroSetting.aliroReaderVerificationKey(publicKey))
-  device:emit_event(aliroSetting.aliroReaderGroupIdentifier(groupId))
-  device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0"))
-  device:emit_event(aliroSetting.aliroGroupResolvingKey(groupResolvingKey))
+local function set_aliro_reader_config_handler(driver, device, ib, response)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! set_aliro_reader_config_handler: %s !!!!!!!!!!!!!", ib.status)) -- needs to be removed
+
+  -- Get result
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local status = "success"
+  if ib.status == DoorLock.types.DlStatus.FAILURE then
+    status = "failure"
+  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
+    status = "invalidCommand"
+  elseif ib.status == DoorLock.types.DlStatus.SUCCESS then
+    device:emit_event(aliroSetting.aliroReaderVerificationKey(publicKey))
+    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(groupId))
+    device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0"))
+    device:emit_event(aliroSetting.aliroGroupResolvingKey(groupResolvingKey))
+  end
   
   -- Update commandResult
   local result = {
     commandName = cmdName,
-    statusCode = "success"
+    statusCode = status
   }
   local event = aliroSetting.commandResult(
     result,
@@ -2424,15 +2441,6 @@ local function handle_set_card_id(driver, device, command)
     device:emit_event(aliroSetting.cardId(command.args.cardId))
   end
 end
-
-
-
-
-
-
-
-
-
 
 
 
@@ -2666,6 +2674,7 @@ local new_matter_lock_handler = {
         [DoorLock.server.commands.ClearCredential.ID] = clear_credential_response_handler,
         [DoorLock.server.commands.SetWeekDaySchedule.ID] = set_week_day_schedule_handler,
         [DoorLock.server.commands.ClearWeekDaySchedule.ID] = clear_week_day_schedule_handler,
+        [DoorLock.server.commands.SetAliroReaderConfig.ID] = set_aliro_reader_config_handler,
       },
     },
   },
