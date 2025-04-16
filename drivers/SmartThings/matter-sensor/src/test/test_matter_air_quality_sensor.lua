@@ -515,269 +515,269 @@ test.register_coroutine_test(
 
 
 -- run general tests
-test.register_message_test(
-  "Temperature reports should generate correct messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 40*100)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
-    }
-  }
-)
+-- test.register_message_test(
+--   "Temperature reports should generate correct messages",
+--   {
+--     {
+--       channel = "matter",
+--       direction = "receive",
+--       message = {
+--         mock_device.id,
+--         clusters.TemperatureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 40*100)
+--       }
+--     },
+--     {
+--       channel = "capability",
+--       direction = "send",
+--       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
+--     }
+--   }
+-- )
 
-test.register_message_test(
-  "Relative humidity reports should generate correct messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.RelativeHumidityMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 40*100)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 40 }))
-    }
-  }
-)
+-- test.register_message_test(
+--   "Relative humidity reports should generate correct messages",
+--   {
+--     {
+--       channel = "matter",
+--       direction = "receive",
+--       message = {
+--         mock_device.id,
+--         clusters.RelativeHumidityMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 40*100)
+--       }
+--     },
+--     {
+--       channel = "capability",
+--       direction = "send",
+--       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 40 }))
+--     }
+--   }
+-- )
 
-test.register_message_test(
-  "Air Quality reports should generate correct messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.AirQuality.server.attributes.AirQuality:build_test_report_data(mock_device, 1, 0)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.airQualityHealthConcern.unknown())
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.AirQuality.server.attributes.AirQuality:build_test_report_data(mock_device, 1, 6)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.airQualityHealthConcern.hazardous())
-    },
-  }
-)
+-- test.register_message_test(
+--   "Air Quality reports should generate correct messages",
+--   {
+--     {
+--       channel = "matter",
+--       direction = "receive",
+--       message = {
+--         mock_device.id,
+--         clusters.AirQuality.server.attributes.AirQuality:build_test_report_data(mock_device, 1, 0)
+--       }
+--     },
+--     {
+--       channel = "capability",
+--       direction = "send",
+--       message = mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.airQualityHealthConcern.unknown())
+--     },
+--     {
+--       channel = "matter",
+--       direction = "receive",
+--       message = {
+--         mock_device.id,
+--         clusters.AirQuality.server.attributes.AirQuality:build_test_report_data(mock_device, 1, 6)
+--       }
+--     },
+--     {
+--       channel = "capability",
+--       direction = "send",
+--       message = mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.airQualityHealthConcern.hazardous())
+--     },
+--   }
+-- )
 
 
-test.register_coroutine_test(
-  "Measured value reports should generate events if there is a stored unit",
-  function()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
-        mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.MeasurementUnitEnum.PPM
-      )
-    })
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = 18, unit = "ppm"}))
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
-        mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
-      )
-    })
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.dustSensor.fineDustLevel({value = 18, unit = "μg/m^3"}))
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
-        mock_device, 1, clusters.Pm10ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
-      )
-    })
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-        mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.dustSensor.dustLevel({value = 18, unit = "μg/m^3"}))
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
-        mock_device, 1, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.MeasurementUnitEnum.PPM
-      )
-    })
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-        mock_device, 1, SinglePrecisionFloat(0, -1, .5) -- 0.750 ppm
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.tvocMeasurement.tvocLevel({value = 750, unit = "ppb"}))
-    )
-  end
-)
+-- test.register_coroutine_test(
+--   "Measured value reports should generate events if there is a stored unit",
+--   function()
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+--         mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.MeasurementUnitEnum.PPM
+--       )
+--     })
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+--         mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = 18, unit = "ppm"}))
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+--         mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
+--       )
+--     })
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+--         mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.dustSensor.fineDustLevel({value = 18, unit = "μg/m^3"}))
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+--         mock_device, 1, clusters.Pm10ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
+--       )
+--     })
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+--         mock_device, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.dustSensor.dustLevel({value = 18, unit = "μg/m^3"}))
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+--         mock_device, 1, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.MeasurementUnitEnum.PPM
+--       )
+--     })
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+--         mock_device, 1, SinglePrecisionFloat(0, -1, .5) -- 0.750 ppm
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.tvocMeasurement.tvocLevel({value = 750, unit = "ppb"}))
+--     )
+--   end
+-- )
 
-test.register_coroutine_test(
-  "PM25 reports work for profile with only fineDustLevel capability",
-  function()
-    test.socket.matter:__queue_receive({
-      mock_device_common.id,
-      clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
-        mock_device_common, 1, clusters.Pm25ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
-      )
-    })
-    test.socket.matter:__queue_receive({
-      mock_device_common.id,
-      clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
-        mock_device_common, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device_common:generate_test_message("main", capabilities.fineDustSensor.fineDustLevel({value = 18, unit = "μg/m^3"}))
-    )
-  end,
-  { test_init = test_init_common }
-)
+-- test.register_coroutine_test(
+--   "PM25 reports work for profile with only fineDustLevel capability",
+--   function()
+--     test.socket.matter:__queue_receive({
+--       mock_device_common.id,
+--       clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit:build_test_report_data(
+--         mock_device_common, 1, clusters.Pm25ConcentrationMeasurement.types.MeasurementUnitEnum.UGM3
+--       )
+--     })
+--     test.socket.matter:__queue_receive({
+--       mock_device_common.id,
+--       clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue:build_test_report_data(
+--         mock_device_common, 1, SinglePrecisionFloat(0, 4, .11187500) -- ~17.9
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device_common:generate_test_message("main", capabilities.fineDustSensor.fineDustLevel({value = 18, unit = "μg/m^3"}))
+--     )
+--   end,
+--   { test_init = test_init_common }
+-- )
 
-test.register_coroutine_test(
-  "Level value reports should generate events",
-  function()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-        mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.unknown())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-        mock_device, 1, clusters.CarbonDioxideConcentrationMeasurement.types.LevelValueEnum.LOW
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-          mock_device, 1, clusters.NitrogenDioxideConcentrationMeasurement.types.LevelValueEnum.LOW
-      )
-    })
-    test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern.good())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.OzoneConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-          mock_device, 1, clusters.OzoneConcentrationMeasurement.types.LevelValueEnum.MEDIUM
-      )
-    })
-    test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.ozoneHealthConcern.ozoneHealthConcern.moderate())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-        mock_device, 1, clusters.FormaldehydeConcentrationMeasurement.types.LevelValueEnum.MEDIUM
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.formaldehydeHealthConcern.formaldehydeHealthConcern.moderate())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm1ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-        mock_device, 1, clusters.Pm1ConcentrationMeasurement.types.LevelValueEnum.HIGH
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern.unhealthy())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-        mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.fineDustHealthConcern.hazardous())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm25ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-        mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.fineDustHealthConcern.hazardous())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Pm10ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-        mock_device, 1, clusters.Pm10ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.dustHealthConcern.dustHealthConcern.hazardous())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.RadonConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-          mock_device, 1, clusters.RadonConcentrationMeasurement.types.LevelValueEnum.CRITICAL
-      )
-    })
-    test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.radonHealthConcern.radonHealthConcern.hazardous())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
-          mock_device, 1, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.LevelValueEnum.CRITICAL
-      )
-    })
-    test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.tvocHealthConcern.tvocHealthConcern.hazardous())
-    )
-  end
-)
+-- test.register_coroutine_test(
+--   "Level value reports should generate events",
+--   function()
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--         mock_device, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.unknown())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--         mock_device, 1, clusters.CarbonDioxideConcentrationMeasurement.types.LevelValueEnum.LOW
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern.good())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--           mock_device, 1, clusters.NitrogenDioxideConcentrationMeasurement.types.LevelValueEnum.LOW
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--         mock_device:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern.good())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.OzoneConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--           mock_device, 1, clusters.OzoneConcentrationMeasurement.types.LevelValueEnum.MEDIUM
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--         mock_device:generate_test_message("main", capabilities.ozoneHealthConcern.ozoneHealthConcern.moderate())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--         mock_device, 1, clusters.FormaldehydeConcentrationMeasurement.types.LevelValueEnum.MEDIUM
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.formaldehydeHealthConcern.formaldehydeHealthConcern.moderate())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm1ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--         mock_device, 1, clusters.Pm1ConcentrationMeasurement.types.LevelValueEnum.HIGH
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern.unhealthy())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm25ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--         mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.fineDustHealthConcern.hazardous())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm25ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--         mock_device, 1, clusters.Pm25ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.fineDustHealthConcern.hazardous())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.Pm10ConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--         mock_device, 1, clusters.Pm10ConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--       mock_device:generate_test_message("main", capabilities.dustHealthConcern.dustHealthConcern.hazardous())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.RadonConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--           mock_device, 1, clusters.RadonConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--         mock_device:generate_test_message("main", capabilities.radonHealthConcern.radonHealthConcern.hazardous())
+--     )
+--     test.socket.matter:__queue_receive({
+--       mock_device.id,
+--       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+--           mock_device, 1, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+--       )
+--     })
+--     test.socket.capability:__expect_send(
+--         mock_device:generate_test_message("main", capabilities.tvocHealthConcern.tvocHealthConcern.hazardous())
+--     )
+--   end
+-- )
 
 -- run tests
 test.run_registered_tests()

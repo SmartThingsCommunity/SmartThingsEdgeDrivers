@@ -726,37 +726,62 @@ local function device_init(driver, device)
     return
   end
 
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
+  -- device:set_component_to_endpoint_fn(component_to_endpoint)
+  -- device:set_endpoint_to_component_fn(endpoint_to_component)
 
-  local main_endpoint = find_default_endpoint(device)
-  if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and -- this field is only set for old MCD devices. See comments in the field def.
-     not device:get_field(SWITCH_INITIALIZED) and
-     not detect_bridge(device) then
-    -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-    initialize_buttons_and_switches(driver, device, main_endpoint)
-  end
-  if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
-  end
-  -- ensure subscription to all endpoint attributes- including those mapped to child devices
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id ~= main_endpoint then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      for _, attr in pairs(device_type_attribute_map[id] or {}) do
-        if id == GENERIC_SWITCH_ID and
-          attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-          attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-          device:add_subscribed_event(attr)
-        else
-          device:add_subscribed_attribute(attr)
-        end
-      end
-    end
-  end
+  -- local main_endpoint = find_default_endpoint(device)
+  -- if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and -- this field is only set for old MCD devices. See comments in the field def.
+  --    not device:get_field(SWITCH_INITIALIZED) and
+  --    not detect_bridge(device) then
+  --   -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
+  --   initialize_buttons_and_switches(driver, device, main_endpoint)
+  -- end
+  -- if device:get_field(IS_PARENT_CHILD_DEVICE) then
+  --   device:set_find_child(find_child)
+  -- end
+  -- -- ensure subscription to all endpoint attributes- including those mapped to child devices
+  -- for _, ep in ipairs(device.endpoints) do
+  --   if ep.endpoint_id ~= main_endpoint then
+  --     local id = 0
+  --     for _, dt in ipairs(ep.device_types) do
+  --       id = math.max(id, dt.device_type_id)
+  --     end
+  --     for _, attr in pairs(device_type_attribute_map[id] or {}) do
+  --       if id == GENERIC_SWITCH_ID and
+  --         attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+  --         attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+  --         device:add_subscribed_event(attr)
+  --       else
+  --         device:add_subscribed_attribute(attr)
+  --       end
+  --     end
+  --   end
+  -- end
+
+  -- local supported_component_capabilities["main"] = {}
+  -- table.insert(supported_capabilites["main"], temperatureMeasurement.ID)
+
+  -- log.info_with({hub_logs = true}, "CHT Sending optional temperatureMeasurement capability from driver")
+  -- device:try_update_metadata({optional_component_capabilities = supported_component_capabilities})
+
+  -- local supported_component_capabilities = {}
+  -- main_component_capabilities = {}
+  -- table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+  -- table.insert(supported_component_capabilities, {"main", main_component_capabilities})
+
+  -- log.info_with({hub_logs = true}, string.format("CHT Sending optional temperatureMeasurement capability from driver: %s", utils.stringify_table(supported_component_capabilities)))
+  -- device.log.info_with({hub_logs = true}, string.format("CHT state before initial profile switch. Device: %s", utils.stringify_table(device)));
+  local supported_component_capabilities = {}
+  main_component_capabilities = {}
+  table.insert(main_component_capabilities, capabilities.switchLevel.ID)
+  table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+  table.insert(supported_component_capabilities, {"main", main_component_capabilities})
+  
+
+  log.info_with({hub_logs = true}, string.format("CHT Sending optional capabilities from driver: %s", utils.stringify_table(supported_component_capabilities)))
+  log.info_with({hub_logs = true}, "CHT Switching to modular profile")
+  device:try_update_metadata({profile = "modular-test", optional_component_capabilities = supported_component_capabilities})
+
   device:subscribe()
 end
 
@@ -766,22 +791,38 @@ local function device_removed(driver, device)
 end
 
 local function handle_switch_on(driver, device, cmd)
-  if type(device.register_native_capability_cmd_handler) == "function" then
-    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
-  end
+  -- if type(device.register_native_capability_cmd_handler) == "function" then
+  --   device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  -- end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   --TODO use OnWithRecallGlobalScene for devices with the LT feature
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
+
+  local supported_component_capabilities = {}
+  main_component_capabilities = {}
+  table.insert(main_component_capabilities, capabilities.switchLevel.ID)
+  table.insert(supported_component_capabilities, {"main", main_component_capabilities})
+
+  log.info_with({hub_logs = true}, string.format("CHT Sending optional capabilities from driver: %s", utils.stringify_table(supported_component_capabilities)))
+  device:try_update_metadata({optional_component_capabilities = supported_component_capabilities})
 end
 
 local function handle_switch_off(driver, device, cmd)
-  if type(device.register_native_capability_cmd_handler) == "function" then
-    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
-  end
+  -- if type(device.register_native_capability_cmd_handler) == "function" then
+  --   device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  -- end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)
+
+  local supported_component_capabilities = {}
+  -- main_component_capabilities = {}
+  -- table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+  -- table.insert(supported_component_capabilities, {"main", main_component_capabilities})
+
+  -- log.info_with({hub_logs = true}, string.format("CHT Sending EMPTY optional temperatureMeasurement capability from driver: %s", utils.stringify_table(supported_component_capabilities)))
+  -- device:try_update_metadata({optional_component_capabilities = supported_component_capabilities})
 end
 
 local function handle_set_switch_level(driver, device, cmd)
@@ -1267,7 +1308,10 @@ local function max_press_handler(driver, device, ib, response)
 end
 
 local function info_changed(driver, device, event, args)
+  device.log.info_with({hub_logs = true}, string.format("CHT info changed received."))
+
   if device.profile.id ~= args.old_st_store.profile.id then
+    device.log.info_with({hub_logs = true}, "CHT new profile ID")
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     if #button_eps > 0 and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then

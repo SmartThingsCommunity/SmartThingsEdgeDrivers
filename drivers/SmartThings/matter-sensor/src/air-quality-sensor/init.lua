@@ -20,6 +20,9 @@ local embedded_cluster_utils = require "embedded-cluster-utils"
 local log = require "log"
 local AIR_QUALITY_SENSOR_DEVICE_TYPE_ID = 0x002C
 
+local SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
+
+
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
 if version.api < 10 then
@@ -141,10 +144,6 @@ local units_required = {
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement
 }
 
-local function device_init(driver, device)
-  device:subscribe()
-end
-
 local tbl_contains = function(t, val)
   for _, v in pairs(t) do
     if v == val then
@@ -210,7 +209,30 @@ local function create_level_measurement_profile(device)
   return meas_name, level_name
 end
 
-local function do_configure(driver, device)
+local function supported_level_measurements(device)
+  local measurement_caps, level_caps = {}, {}
+  for _, details in ipairs(AIR_QUALITY_MAP) do
+    local cap_id  = details[1]
+    local cluster = details[3]
+    -- capability describes either a HealthConcern or Measurement/Sensor
+    if (cap_id:match("HealthConcern$")) then
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
+      if #attr_eps > 0 then
+        device.log.info(string.format("Adding %s cap to table", cap_id))
+        table.insert(level_caps, cap_id)
+      end
+    elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
+      if #attr_eps > 0 then
+        device.log.info(string.format("Adding %s cap to table", cap_id))
+        table.insert(measurement_caps, cap_id)
+      end
+    end
+  end
+  return measurement_caps, level_caps
+end
+
+local function match_profile_switch(driver, device)
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
@@ -269,6 +291,80 @@ local function do_configure(driver, device)
   end
   device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s", profile_name))
   device:try_update_metadata({profile = profile_name})
+end
+
+local function supports_capability_by_id_modular(device, capability, component)
+  for _, component_capabilities in ipairs(device:get_field(SUPPORTED_COMPONENT_CAPABILITIES)) do
+    local comp_id = component_capabilities[1]
+    local capability_ids = component_capabilities[2]
+    if (component == nil) or (component == comp_id) then
+        for _, cap in ipairs(capability_ids) do
+          if cap == capability then
+            return true
+          end
+        end
+    end
+  end
+  return false
+end
+
+local function match_modular_profile(driver, device)
+  local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
+  local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
+
+  -- we have to read the unit before reports of values will do anything
+  for _, cluster in ipairs(units_required) do
+    device:send(cluster.attributes.MeasurementUnit:read(device))
+  end
+
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+
+  if #temp_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+  end
+  if #humidity_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  end
+
+  local measurement_caps, level_caps = supported_level_measurements(device)
+
+  for _, cap_id in ipairs(measurement_caps) do
+    table.insert(main_component_capabilities, cap_id)
+  end
+
+  for _, cap_id in ipairs(level_caps) do
+    table.insert(main_component_capabilities, cap_id)
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, optional_supported_component_capabilities)
+
+  device:try_update_metadata({profile = "aqs-modular", optional_component_capabilities = optional_supported_component_capabilities})
+
+  -- add mandatory capabilities for subscription
+  local total_supported_capabilities = optional_supported_component_capabilities
+  table.insert(total_supported_capabilities[1][2], capabilities.airQualityHealthConcern.ID)
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities)
+
+  --re-up subscription with new capabiltiies using the moudlar supports_capability override
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  device:subscribe()
+end
+
+local function do_configure(driver, device)
+  if version.api < 14 then
+    match_profile_switch(driver, device)
+  else
+    match_modular_profile(driver, device)
+  end
+end
+
+local function device_init(driver, device)
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  device:subscribe()
 end
 
 local function store_unit_factory(capability_name)
