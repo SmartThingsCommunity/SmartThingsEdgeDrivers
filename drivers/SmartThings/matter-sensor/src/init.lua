@@ -582,7 +582,6 @@ local matter_driver_template = {
     [capabilities.button.ID] = {
       clusters.Switch.events.InitialPress,
       clusters.Switch.events.LongPress,
-      clusters.Switch.events.ShortRelease,
       clusters.Switch.events.MultiPressComplete,
     }
   },
@@ -592,6 +591,7 @@ local matter_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.contactSensor,
     capabilities.motionSensor,
+    capabilities.button,
     capabilities.battery,
     capabilities.batteryLevel,
     capabilities.relativeHumidityMeasurement,
@@ -601,7 +601,7 @@ local matter_driver_template = {
     capabilities.temperatureAlarm,
     capabilities.rainSensor,
     capabilities.hardwareFault,
-    capabilities.flowMeasurement
+    capabilities.flowMeasurement,
   },
   sub_drivers = {
     require("air-quality-sensor"),
