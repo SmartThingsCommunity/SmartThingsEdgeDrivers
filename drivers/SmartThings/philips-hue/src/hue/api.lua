@@ -11,6 +11,8 @@ st_utils.stringify_table = st_utils.stringify_table
 
 local HueDeviceTypes = require "hue_device_types"
 
+local GROUPED_LIGHT = "grouped_light"
+
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
@@ -412,7 +414,7 @@ function PhilipsHueApi:set_light_on_state(id, on)
 end
 
 function PhilipsHueApi:set_grouped_light_on_state(id, on)
-  return self:set_light_on_state_by_device_type(id, on, HueDeviceTypes.GROUPED_LIGHT)
+  return self:set_light_on_state_by_device_type(id, on, GROUPED_LIGHT)
 end
 
 function PhilipsHueApi:set_light_on_state_by_device_type(id, on, device_type)
@@ -440,7 +442,7 @@ function PhilipsHueApi:set_light_level(id, level)
 end
 
 function PhilipsHueApi:set_grouped_light_level(id, level)
-  return self:set_light_level_by_device_type(id, level, HueDeviceTypes.GROUPED_LIGHT)
+  return self:set_light_level_by_device_type(id, level, GROUPED_LIGHT)
 end
 
 function PhilipsHueApi:set_light_level_by_device_type(id, level, device_type)
@@ -464,7 +466,7 @@ function PhilipsHueApi:set_light_color_xy(id, xy_table)
 end
 
 function PhilipsHueApi:set_grouped_light_color_xy(id, xy_table)
-  return self:set_light_color_xy_by_device_type(id, xy_table, HueDeviceTypes.GROUPED_LIGHT)
+  return self:set_light_color_xy_by_device_type(id, xy_table, GROUPED_LIGHT)
 end
 
 function PhilipsHueApi:set_light_color_xy_by_device_type(id, xy_table, device_type)
@@ -490,7 +492,7 @@ function PhilipsHueApi:set_light_color_temp(id, mirek)
 end
 
 function PhilipsHueApi:set_grouped_light_color_temp(id, mirek)
-  return self:set_light_color_temp_by_device_type(id, mirek, HueDeviceTypes.GROUPED_LIGHT)
+  return self:set_light_color_temp_by_device_type(id, mirek, GROUPED_LIGHT)
 end
 
 function PhilipsHueApi:set_light_color_temp_by_device_type(id, mirek, device_type)
