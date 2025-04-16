@@ -26,7 +26,7 @@ zigbeeManufacturer:
     model: SLA02
     deviceProfileName: basic-switch
   - id: "SMARTvill/SLA01"
-    deviceLabel: SMARTvill Switch 1
+    deviceLabel: SMARTvill Switch
     manufacturer: SMARTvill
     model: SLA01
     deviceProfileName: basic-switch
