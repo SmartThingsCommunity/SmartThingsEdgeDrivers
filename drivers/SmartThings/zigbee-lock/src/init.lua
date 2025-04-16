@@ -357,7 +357,7 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
   local event = STATUS[event_code]
   if (event ~= nil) then
     event["data"] = {}
-    if (event_code == OperationEventCode.AUTO_LOCK or
+    if (source ~= 0 and event_code == OperationEventCode.AUTO_LOCK or
         event_code == OperationEventCode.SCHEDULE_LOCK or
         event_code == OperationEventCode.SCHEDULE_UNLOCK
       ) then
