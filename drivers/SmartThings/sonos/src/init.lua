@@ -1,7 +1,5 @@
 SONOS_API_KEY = require 'app_key'
 local old_log = require "log"
-local json = require "st.json"
-local security = require "st.security"
 
 -- Print all errors, warnings, and info to hubcore for now
 old_log.error = function(...)
@@ -32,11 +30,9 @@ local st_utils = require "st.utils"
 
 local CmdHandlers = require "api.cmd_handlers"
 local PlayerFields = require "fields".SonosPlayerFields
-local SonosApi = require "api"
 local SonosConnection = require "api.sonos_connection"
 local SonosDisco = require "disco"
-local SonosRestApi = require "api.rest"
-local SonosState = require "types".SonosState
+local new_driver_template = require "types".new_driver_template
 local SSDP = require "ssdp"
 local utils = require "utils"
 
@@ -69,12 +65,12 @@ local function find_player_for_device(driver, device, should_continue)
         if dni_equal(dni, device.device_network_id) then
           device.log.info(string.format("Found Sonos Player match for device"))
 
-          driver._field_cache[dni] = {
+          driver:cache_fields_for_dni(dni, {
             household_id = inner_ssdp_group_info.household_id,
             player_id = player_info.playerId,
             wss_url = player_info.websocketUrl,
             swGen = player_info.device.swGen
-          }
+          })
 
           driver.sonos:update_household_info(player_info.householdId, group_info)
           player_found = true
@@ -108,11 +104,11 @@ local function update_fields_from_ssdp_scan(driver, device, fields)
 
   if current_player_id ~= fields.player_id then
     if current_player_id ~= nil then
-      driver._player_id_to_device[current_player_id] = nil
+      driver:update_device_for_player_id(current_player_id, nil)
       driver.sonos:mark_player_as_removed(current_player_id)
       refresh = true
     end
-    driver._player_id_to_device[fields.player_id] = device -- quickly look up device from player id string
+    driver:update_device_for_player_id(fields.player_id, device)
     driver.sonos:mark_player_as_joined(fields.player_id)
     device:set_field(PlayerFields.PLAYER_ID, fields.player_id, { persist = true })
   end
@@ -157,7 +153,7 @@ end
 local function scan_for_ssdp_updates(driver)
   SSDP.search(SONOS_SSDP_SEARCH_TERM, function(ssdp_group_info)
     driver:handle_ssdp_discovery(ssdp_group_info, function(dni, inner_ssdp_group_info, player_info, group_info)
-      local current_cached_fields = driver._field_cache[dni] or {}
+      local current_cached_fields = driver:get_cached_fields_for_dni(dni) or {}
 
       ---@type SonosFieldCacheTable
       local updated_fields = {
@@ -167,7 +163,8 @@ local function scan_for_ssdp_updates(driver)
         swGen = player_info.device.swGen
       }
 
-      driver._field_cache[dni] = updated_fields
+      driver:cache_fields_for_dni(dni, updated_fields)
+
       driver.sonos:update_household_info(player_info.householdId, group_info)
 
       if not utils.deep_table_eq(current_cached_fields, updated_fields) then
@@ -313,7 +310,7 @@ local function device_removed(driver, device)
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
   if sonos_conn and sonos_conn:is_running() then sonos_conn:stop() end
   driver.sonos:mark_player_as_removed(device:get_field(PlayerFields.PLAYER_ID))
-  driver._player_id_to_device[player_id] = nil
+  driver:update_device_for_player_id(player_id, nil)
 end
 
 local function do_refresh(driver, device, cmd)
@@ -333,187 +330,70 @@ local function do_refresh(driver, device, cmd)
   sonos_conn:refresh_subscriptions()
 end
 
----@param self SonosDriver
----@param header SonosResponseHeader
----@param body SonosGroupsResponseBody
-local function update_group_state(self, header, body)
-  self.sonos:update_household_info(header.householdId, body)
-end
-
---- @param self SonosDriver
---- @param ssdp_group_info SonosSSDPInfo
---- @param callback? DiscoCallback
-local function handle_ssdp_discovery(self, ssdp_group_info, callback)
-  log.debug(string.format("Looking for player info for SSDP search results %s", st_utils.stringify_table(ssdp_group_info)))
-  local player_info, err = SonosRestApi.get_player_info(ssdp_group_info.ip, SonosApi.DEFAULT_SONOS_PORT)
-
-  if err then
-    log.error("Error querying player info: " .. err)
-  elseif player_info and player_info.playerId and player_info.householdId then
-    log.debug(string.format("Looking for group info for player info %s", st_utils.stringify_table(player_info)))
-    local group_info, err = SonosRestApi.get_groups_info(
-      ssdp_group_info.ip,
-      SonosApi.DEFAULT_SONOS_PORT,
-      player_info.householdId
-    )
-
-    if err or not group_info then
-      log.error("Error querying group info: " .. err)
-      return
-    end
-
-    log.trace(string.format("Device %s serial number: %s", player_info.device.name, player_info.device.serialNumber))
-    -- Extract the MAC Address from the serial number
-    local mac_addr, _ = player_info.device.serialNumber:match("(.*):.*"):gsub("-", "")
-    local dni = mac_addr
-    log.trace(string.format("MAC of %s computed from serial number: %s", player_info.device.name, mac_addr))
-
-    if type(callback) == "function" then
-      callback(dni, ssdp_group_info, player_info, group_info)
-    end
+local template = new_driver_template()
+template.handle_startup_state_received = function(driver)
+  driver:notify_augmented_data_changed()
+  startup_state_received = true
+  for _, device in pairs(devices_waiting_for_startup_state) do
+    _initialize_device(driver, device)
   end
+  devices_waiting_for_startup_state = {}
 end
 
-local ONE_HOUR_IN_SECONDS = 3600
-
-local oauth_token_tx, _ = cosock.channel.new()
+template.discovery = SonosDisco.discover
+template.lifecycle_handlers = {
+  added = device_added,
+  init = device_init,
+  removed = device_removed,
+}
+template.capability_handlers = {
+  [capabilities.refresh.ID] = {
+    [capabilities.refresh.commands.refresh.NAME] = do_refresh,
+  },
+  [capabilities.audioMute.ID] = {
+    [capabilities.audioMute.commands.mute.NAME] = CmdHandlers.handle_mute,
+    [capabilities.audioMute.commands.unmute.NAME] = CmdHandlers.handle_unmute,
+    [capabilities.audioMute.commands.setMute.NAME] = CmdHandlers.handle_set_mute,
+  },
+  [capabilities.audioNotification.ID] = {
+    [capabilities.audioNotification.commands.playTrack.NAME] = CmdHandlers
+    .handle_audio_notification,
+    [capabilities.audioNotification.commands.playTrackAndResume.NAME] = CmdHandlers
+    .handle_audio_notification,
+    [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = CmdHandlers
+    .handle_audio_notification,
+  },
+  [capabilities.audioVolume.ID] = {
+    [capabilities.audioVolume.commands.volumeUp.NAME] = CmdHandlers.handle_volume_up,
+    [capabilities.audioVolume.commands.volumeDown.NAME] = CmdHandlers.handle_volume_down,
+    [capabilities.audioVolume.commands.setVolume.NAME] = CmdHandlers.handle_set_volume,
+  },
+  [capabilities.mediaGroup.ID] = {
+    [capabilities.mediaGroup.commands.groupVolumeUp.NAME] = CmdHandlers.handle_group_volume_up,
+    [capabilities.mediaGroup.commands.groupVolumeDown.NAME] = CmdHandlers
+    .handle_group_volume_down,
+    [capabilities.mediaGroup.commands.setGroupVolume.NAME] = CmdHandlers.handle_group_set_volume,
+    [capabilities.mediaGroup.commands.muteGroup.NAME] = CmdHandlers.handle_group_mute,
+    [capabilities.mediaGroup.commands.unmuteGroup.NAME] = CmdHandlers.handle_group_unmute,
+    [capabilities.mediaGroup.commands.setGroupMute.NAME] = CmdHandlers.handle_group_set_mute,
+  },
+  [capabilities.mediaPlayback.ID] = {
+    [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
+    [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
+    [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
+  },
+  [capabilities.mediaPresets.ID] = {
+    [capabilities.mediaPresets.commands.playPreset.NAME] = CmdHandlers.handle_play_preset,
+  },
+  [capabilities.mediaTrackControl.ID] = {
+    [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
+    [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers
+    .handle_previous_track,
+  }
+}
 
 --- @type SonosDriver
-local driver = Driver("Sonos", {
-  waiting_for_token = false,
-  oauth_token_tx = oauth_token_tx,
-  oauth = {},
-  get_oauth_token_receive_handle = function(self)
-    oauth_token_tx:subscribe()
-  end,
-  get_oauth_token = function(self)
-    local token = self.hub_augmented_driver_data.sonosOAuthToken
-    if not (token or self.waiting_for_token) then
-      local result, err = security.get_sonos_oauth()
-      if not result then
-        return nil, err
-      end
-      return nil, "no token"
-    end
-
-    local now = os.time()
-    -- Viper uses millisecond resolution, lua dates are second resolution
-    local expiration_timestamp = math.floor(token.expires_at / 1000)
-    if expiration_timestamp < now and not self.waiting_for_token then
-      -- get new token
-      local result, err = security.get_sonos_oauth()
-      if not result then
-        return nil, string.format("Error requesting OAuth token via Security API: %s", err)
-      end
-      self.waiting_for_token = true
-      return nil, "token expired"
-    else
-      if math.abs(now - token.expires_at) < ONE_HOUR_IN_SECONDS and not self.waiting_for_token then
-        local result, err = security.get_sonos_oauth()
-        if not result then
-          log.warn(string.format("Error refreshing token: %s. Current token is still valid, continuing.", err))
-        else
-          self.waiting_for_token = true
-        end
-      end
-    end
-    return token
-  end,
-  notify_augmented_data_changed = function(self)
-    log.info(st_utils.stringify_table(self.hub_augmented_driver_data, "[AUG] Augmented Data Changed", false))
-
-    local decode_success, decoded = pcall(json.decode, self.hub_augmented_driver_data.endpointAppInfo or "{}")
-    if decode_success then
-      log.info(st_utils.stringify_table(decoded, "[AUG] Endpoint App Info", true))
-      self.oauth.endpoint_app_info = decoded
-    else
-      log.warn(st_utils.stringify_table(decoded, "JSON Decode Error while parsing Endpoint App Info", false))
-    end
-
-    if self.hub_augmented_driver_data.sonosOAuthToken then
-      decode_success, decoded = pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
-      if decode_success then
-        self.oauth.token = decoded
-        self.waiting_for_token = false
-        self.oauth_token_tx:send(decoded)
-      else
-        log.warn(st_utils.stringify_table(decoded, "JSON Decode Error while parsing OAuth Token Info", false))
-      end
-    end
-
-  end,
-  handle_startup_state_received = function(self)
-    self:notify_augmented_data_changed()
-    startup_state_received = true
-    for _, device in pairs(devices_waiting_for_startup_state) do
-      _initialize_device(self, device)
-    end
-    devices_waiting_for_startup_state = {}
-  end,
-  discovery = SonosDisco.discover,
-  lifecycle_handlers = {
-    added = device_added,
-    init = device_init,
-    removed = device_removed,
-  },
-  capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh,
-    },
-    [capabilities.audioMute.ID] = {
-      [capabilities.audioMute.commands.mute.NAME] = CmdHandlers.handle_mute,
-      [capabilities.audioMute.commands.unmute.NAME] = CmdHandlers.handle_unmute,
-      [capabilities.audioMute.commands.setMute.NAME] = CmdHandlers.handle_set_mute,
-    },
-    [capabilities.audioNotification.ID] = {
-      [capabilities.audioNotification.commands.playTrack.NAME] = CmdHandlers.handle_audio_notification,
-      [capabilities.audioNotification.commands.playTrackAndResume.NAME] = CmdHandlers.handle_audio_notification,
-      [capabilities.audioNotification.commands.playTrackAndRestore.NAME] = CmdHandlers.handle_audio_notification,
-    },
-    [capabilities.audioVolume.ID] = {
-      [capabilities.audioVolume.commands.volumeUp.NAME] = CmdHandlers.handle_volume_up,
-      [capabilities.audioVolume.commands.volumeDown.NAME] = CmdHandlers.handle_volume_down,
-      [capabilities.audioVolume.commands.setVolume.NAME] = CmdHandlers.handle_set_volume,
-    },
-    [capabilities.mediaGroup.ID] = {
-      [capabilities.mediaGroup.commands.groupVolumeUp.NAME] = CmdHandlers.handle_group_volume_up,
-      [capabilities.mediaGroup.commands.groupVolumeDown.NAME] = CmdHandlers.handle_group_volume_down,
-      [capabilities.mediaGroup.commands.setGroupVolume.NAME] = CmdHandlers.handle_group_set_volume,
-      [capabilities.mediaGroup.commands.muteGroup.NAME] = CmdHandlers.handle_group_mute,
-      [capabilities.mediaGroup.commands.unmuteGroup.NAME] = CmdHandlers.handle_group_unmute,
-      [capabilities.mediaGroup.commands.setGroupMute.NAME] = CmdHandlers.handle_group_set_mute,
-    },
-    [capabilities.mediaPlayback.ID] = {
-      [capabilities.mediaPlayback.commands.play.NAME] = CmdHandlers.handle_play,
-      [capabilities.mediaPlayback.commands.pause.NAME] = CmdHandlers.handle_pause,
-      [capabilities.mediaPlayback.commands.stop.NAME] = CmdHandlers.handle_pause,
-    },
-    [capabilities.mediaPresets.ID] = {
-      [capabilities.mediaPresets.commands.playPreset.NAME] = CmdHandlers.handle_play_preset,
-    },
-    [capabilities.mediaTrackControl.ID] = {
-      [capabilities.mediaTrackControl.commands.nextTrack.NAME] = CmdHandlers.handle_next_track,
-      [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
-    }
-  },
-  sonos = SonosState.new(),
-  update_group_state = update_group_state,
-  handle_ssdp_discovery = handle_ssdp_discovery,
-  _player_id_to_device = {},
-  _field_cache = {},
-  dni_to_device_id = {},
-  is_same_mac_address = function(dni, other)
-    if not (type(dni) == "string" and type(other) == "string") then return false end
-    local dni_normalized = dni:gsub("-", ""):gsub(":", ""):lower()
-    local other_normalized = other:gsub("-", ""):gsub(":", ""):lower()
-    return dni_normalized == other_normalized
-  end,
-  get_device_by_dni = function(self, dni)
-    local device_uuid = self.dni_to_device_id[dni]
-    if not device_uuid then return nil end
-    return self:get_device_info(device_uuid)
-  end
-})
+local driver = Driver("Sonos", template)
 
 -- Clean these up, as we no longer want them persisting.
 if driver.datastore["_field_cache"] ~= nil then

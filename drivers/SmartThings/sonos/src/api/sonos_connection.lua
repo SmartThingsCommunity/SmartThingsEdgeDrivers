@@ -22,9 +22,12 @@ local SonosRestApi = require "api.rest"
 --- @class SonosConnection
 --- @field public driver SonosDriver reference to the Edge Driver
 --- @field public device SonosDevice the player for this connection
---- @field private _self_listener_uuid string
---- @field private _coord_listener_uuid string
---- @field private _initialized boolean
+--- @field package _self_listener_uuid string
+--- @field package _coord_listener_uuid string
+--- @field package _initialized boolean
+--- @field package on_message fun(...)?
+--- @field package on_error fun(...)?
+--- @field package on_close fun(...)?
 local SonosConnection = {}
 SonosConnection.__index = SonosConnection
 
@@ -175,7 +178,7 @@ local function _spawn_reconnect_task(sonos_conn)
   cosock.spawn(function()
     local backoff = backoff_builder(60, 1, 0.1)
     while not sonos_conn:is_running() do
-      if sonos_conn.driver.waiting_for_token and token_receive_handle then
+      if sonos_conn.driver.is_waiting_for_token() and token_receive_handle then
         local token, channel_error = token_receive_handle:receive()
         if not token then
           log.warn(string.format("Error requesting token: %s", channel_error))
@@ -264,7 +267,7 @@ function SonosConnection.new(driver, device)
           end
           local group = household.groups[header.groupId] or { playerIds = {} }
           for _, player_id in ipairs(group.playerIds) do
-            local device_for_player = self.driver._player_id_to_device[player_id]
+            local device_for_player = self.driver:device_for_player_id(player_id)
             --- we've seen situations where these messages can be processed while a device
             --- is being deleted so we check for the presence of emit event as a proxy for
             --- whether or not this device is currently capable of emitting events.
@@ -286,7 +289,7 @@ function SonosConnection.new(driver, device)
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
         for _, player_id in ipairs(group.playerIds) do
-          local device_for_player = self.driver._player_id_to_device[player_id]
+          local device_for_player = self.driver:device_for_player_id(player_id)
           --- we've seen situations where these messages can be processed while a device
           --- is being deleted so we check for the presence of emit event as a proxy for
           --- whether or not this device is currently capable of emitting events.
@@ -307,7 +310,7 @@ function SonosConnection.new(driver, device)
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
         for _, player_id in ipairs(group.playerIds) do
-          local device_for_player = self.driver._player_id_to_device[player_id]
+          local device_for_player = self.driver:device_for_player_id(player_id)
           --- we've seen situations where these messages can be processed while a device
           --- is being deleted so we check for the presence of emit event as a proxy for
           --- whether or not this device is currently capable of emitting events.
@@ -355,7 +358,7 @@ function SonosConnection.new(driver, device)
               self.driver.sonos:update_household_favorites(header.householdId, new_favorites)
 
               for _, player_id in ipairs(group.playerIds) do
-                local device_for_player = self.driver._player_id_to_device[player_id]
+                local device_for_player = self.driver:device_for_player_id(player_id)
                 --- we've seen situations where these messages can be processed while a device
                 --- is being deleted so we check for the presence of emit event as a proxy for
                 --- whether or not this device is currently capable of emitting events.
@@ -479,12 +482,11 @@ function SonosConnection:start()
   -- once we know what a forbidden/unauthorized error will look like.
   local connection_successful = true
   if not connection_successful then
-    if not self.driver.waiting_for_token then
+    if not self.driver.is_waiting_for_token() then
       local err = self.driver:get_oauth_token()
       if err then
         log.warn(string.format("notice: get_oauth_token -> %s", err))
       end
-      self.driver.waiting_for_token = true
       self.on_close()
     end
     return false

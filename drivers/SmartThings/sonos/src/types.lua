@@ -1,10 +1,15 @@
 local handlers = require "api.event_handlers"
+local cosock = require "cosock"
 local log = require "log"
+local security = require "st.security"
 local st_utils = require "st.utils"
 
 local PlayerFields = require "fields".SonosPlayerFields
+local SonosApi = require "api"
+local SonosRestApi = require "api.rest"
 
---- @module 'sonos.types'
+
+--- @class sonos.types
 local Types = {}
 
 --- @enum SonosCapabilities
@@ -148,7 +153,9 @@ function SonosState.new()
   end
 
   ret.is_player_joined = function(self, dni)
-    return private.joined_players[dni] ~= nil and private.joined_players[dni] -- we want a boolean return, not nil
+    return private.joined_players[dni] ~= nil and
+        private.joined_players
+        [dni]                   -- we want a boolean return, not nil
   end
 
   ret.get_household = function(self, id)
@@ -176,7 +183,8 @@ function SonosState.new()
     --   )
     -- )
     if device and device.label then
-      log.debug(string.format("Household update triggered by device %s to update capabilities", device.label))
+      log.debug(string.format("Household update triggered by device %s to update capabilities",
+        device.label))
     end
     local household = private.households[id] or {}
     local groups, players = groups_event.groups, groups_event.players
@@ -233,7 +241,7 @@ function SonosState.new()
         handlers.handle_group_update(device, group_update_payload)
       else
         log.warn(
-        st_utils.stringify_table(
+          st_utils.stringify_table(
             { household = household, group_update_payload = group_update_payload },
             "Household update with invalid data",
             false
@@ -255,8 +263,11 @@ function SonosState.new()
     )
     local household = private.households[household_id]
     if household == nil then
-      log.error(st_utils.stringify_table({ household = household }, "Get group for invalid household", false))
-      return nil, st_utils.stringify_table({ household = household }, "Get group for invalid household", false)
+      log.error(st_utils.stringify_table({ household = household }, "Get group for invalid household",
+        false))
+      return nil,
+          st_utils.stringify_table({ household = household }, "Get group for invalid household",
+            false)
     end
     return household.player_to_group_map[player_id]
   end
@@ -273,8 +284,11 @@ function SonosState.new()
     )
     local household = private.households[household_id]
     if household == nil then
-      log.error(st_utils.stringify_table({ household = household }, "Get coordinator for invalid household", false))
-      return nil, st_utils.stringify_table({ household = household }, "Get coordinator for invalid household", false)
+      log.error(st_utils.stringify_table({ household = household },
+        "Get coordinator for invalid household", false))
+      return nil,
+          st_utils.stringify_table({ household = household }, "Get coordinator for invalid household",
+            false)
     end
     return household.group_to_coordinator_map[group_id]
   end
@@ -302,10 +316,15 @@ function SonosState.new()
   --- @return nil|string error nil on success
   ret.get_player_for_device = function(self, device)
     local household_id, player_id = device:get_field(PlayerFields.HOUSEHOULD_ID),
-      device:get_field(PlayerFields.PLAYER_ID)
+        device:get_field(PlayerFields.PLAYER_ID)
     log.debug_with({ hub_logs = true },
       st_utils.stringify_table(
-        { name = (device or {label = "<no device>"}).label, household_id = household_id, player_id = player_id },
+        {
+          name = (device or { label = "<no device>" }).label,
+          household_id = household_id,
+          player_id =
+              player_id
+        },
         "Get Player For Device",
         true
       )
@@ -328,7 +347,12 @@ function SonosState.new()
     local household_id, player_id, err = self:get_player_for_device(device)
     log.debug_with({ hub_logs = true },
       st_utils.stringify_table(
-        { name = (device or {label = "<no device>"}).label, household_id = household_id, player_id = player_id },
+        {
+          name = (device or { label = "<no device>" }).label,
+          household_id = household_id,
+          player_id =
+              player_id
+        },
         "Get Coordinator For Device",
         true
       )
@@ -355,7 +379,12 @@ function SonosState.new()
     local household_id, player_id, err = self:get_player_for_device(device)
     log.debug_with({ hub_logs = true },
       st_utils.stringify_table(
-        { name = (device or {label = "<no device>"}).label, household_id = household_id, player_id = player_id },
+        {
+          name = (device or { label = "<no device>" }).label,
+          household_id = household_id,
+          player_id =
+              player_id
+        },
         "Get Group For Device",
         true
       )
@@ -388,16 +417,38 @@ Types.SonosState = SonosState
 
 
 --- Sonos Edge Driver extensions
---- @class SonosDriver : Driver
+--- @class SonosDriverTemplate
+--- @field package oauth_token_bus cosock.Bus.Sender bus for broadcasting new oauth tokens that arrive on the environment channel
+--- @field package oauth { token: table, endpoint_app_info: table } cached OAuth info
+--- @field package _player_id_to_device table<string,SonosDevice>
+--- @field package _field_cache table<string,SonosFieldCacheTable>
+--- @field package waiting_for_token boolean
 --- @field public sonos SonosState Local state related to the sonos systems
---- @field public _player_id_to_device table<string,SonosDevice>
---- @field public _field_cache table<string,SonosFieldCacheTable>
+--- @field public dni_to_device_id table<string,string>
 --- @field public update_group_state fun(self: SonosDriver, header: SonosResponseHeader, body: SonosGroupsResponseBody)
 --- @field public handle_ssdp_discovery fun(self: SonosDriver, ssdp_group_info: SonosSSDPInfo, callback?: DiscoCallback)
 --- @field public is_same_mac_address fun(dni: string, other: string): boolean
+--- @field public get_oauth_token_receive_handle fun(self: SonosDriver): cosock.Bus.Subscription?,string?
+--- @field public get_oauth_token fun(self: SonosDriver): table?,string?
+--- @field public notify_augmented_data_changed fun(self: SonosDriver, update_kind: "upsert"|"delete", update_value: table|string)?
+--- @field public handle_startup_state_received fun(self: SonosDriver)?
+--- @field public discovery fun(...)?
+--- @field public lifecycle_handlers table<string,fun(...)>?
+--- @field public capability_handlers table<string,table<string,fun(...)>>?
+--- @field public is_waiting_for_token fun(self: SonosDriver): boolean
+--- @field public device_for_player_id fun(self: SonosDriver, player_id: PlayerId): SonosDevice?
+--- @field public update_device_for_player_id fun(self: SonosDriver, player_id: PlayerId, device: SonosDevice?)
+--- @field public get_device_by_dni fun(self: SonosDriver, dni: string): SonosDevice
+--- @field public cache_fields_for_dni fun(self: SonosDriver, dni: string, fields: SonosFieldCacheTable)
+--- @field public get_cached_fields_for_dni fun(self: SonosDriver, dni: string): SonosFieldCacheTable?
+
+--- Sonos Edge Driver Concrete Type
+--- @class SonosDriver: SonosDriverTemplate, Driver
+--- @field public datastore table<string, any> driver persistent store
 
 --- Sonos Player device
 --- @class SonosDevice : st.Device
+--- @field public log table device-scoped logging module
 --- @field public label string Device label set at `try_create_device`
 --- @field public device_network_id string the DNI of the device
 --- @field public type string Network type. Should be "LAN".
@@ -407,8 +458,149 @@ Types.SonosState = SonosState
 --- @field public vendor_provided_label string The vendor's model string
 --- @field public get_field fun(self: SonosDevice, key: string):any
 --- @field public set_field fun(self: SonosDevice, key: string, value: any, args?: table)
+--- @field public emit_event fun(self: SonosDevice, event: any)
 
 --- Sonos JSON commands
 --- @class SonosCommand
+
+local ONE_HOUR_IN_SECONDS = 3600
+---@return SonosDriverTemplate
+Types.new_driver_template = function()
+  local oauth_token_tx = cosock.bus()
+
+  ---@type SonosDriverTemplate
+  return {
+    waiting_for_token = false,
+    is_waiting_for_token = function(self)
+      return self.waiting_for_token
+    end,
+    oauth_token_bus = oauth_token_tx,
+    oauth = {},
+    get_oauth_token_receive_handle = function(self)
+      oauth_token_tx:subscribe()
+    end,
+    get_oauth_token = function(self)
+      if st_utils.stringify_table(self.oauth.token) ~= st_utils.stringify_table(self.hub_augmented_driver_data.sonosOAuthToken) then
+        self.oauth.token = self.hub_augmented_driver_data.sonosOAuthToken
+      end
+
+      if not (self.oauth.token or self.waiting_for_token) then
+        local result, err = security.get_sonos_oauth()
+        if not result then
+          return nil, err
+        end
+        return nil, "no token"
+      end
+
+      local now = os.time()
+      -- Viper uses millisecond resolution, lua dates are second resolution
+      local expiration_timestamp = math.floor(self.oauth.token.expires_at / 1000)
+      if expiration_timestamp < now and not self.waiting_for_token then
+        -- get new token
+        local result, err = security.get_sonos_oauth()
+        if not result then
+          return nil, string.format("Error requesting OAuth token via Security API: %s", err)
+        end
+        self.waiting_for_token = true
+        return nil, "token expired"
+      else
+        if math.abs(now - self.oauth.token.expires_at) < ONE_HOUR_IN_SECONDS and not self.waiting_for_token then
+          local result, err = security.get_sonos_oauth()
+          if not result then
+            log.warn(string.format(
+              "Error refreshing token: %s. Current token is still valid, continuing.", err))
+          else
+            self.waiting_for_token = true
+          end
+        end
+      end
+      return self.oauth.token
+    end,
+    notify_augmented_data_changed = function(self, update_kind, update_value)
+      log.info(st_utils.stringify_table(self.hub_augmented_driver_data,
+        "[AUG] Augmented Data Changed", false))
+
+
+      if update_kind == "upsert" and type(update_value) == "table" then
+        if update_value.data_key == "endpointAppInfo" then
+          log.info(st_utils.stringify_table(update_value.data_value, "[AUG] Endpoint App Info", true))
+          self.oauth.endpoint_app_info = update_value.data_value
+        end
+
+        if update_value.data_key == "sonosOAuthToken" then
+          self.oauth.token = update_value.data_value
+          self.waiting_for_token = false
+          self.oauth_token_bus:send(update_value.data_value)
+        end
+      end
+    end,
+    sonos = SonosState.new(),
+    update_group_state = function(self, header, body)
+      self.sonos:update_household_info(header.householdId, body)
+    end,
+    handle_ssdp_discovery = function(self, ssdp_group_info, callback)
+      log.debug(string.format("Looking for player info for SSDP search results %s",
+        st_utils.stringify_table(ssdp_group_info)))
+      local player_info, err = SonosRestApi.get_player_info(ssdp_group_info.ip,
+        SonosApi.DEFAULT_SONOS_PORT)
+
+      if err then
+        log.error("Error querying player info: " .. err)
+      elseif player_info and player_info.playerId and player_info.householdId then
+        log.debug(string.format("Looking for group info for player info %s",
+          st_utils.stringify_table(player_info)))
+        local group_info, err = SonosRestApi.get_groups_info(
+          ssdp_group_info.ip,
+          SonosApi.DEFAULT_SONOS_PORT,
+          player_info.householdId
+        )
+
+        if err or not group_info then
+          log.error("Error querying group info: " .. err)
+          return
+        end
+
+        log.trace(string.format("Device %s serial number: %s", player_info.device.name,
+          player_info.device.serialNumber))
+        -- Extract the MAC Address from the serial number
+        local mac_addr, _ = player_info.device.serialNumber:match("(.*):.*"):gsub("-", "")
+        local dni = mac_addr
+        log.trace(string.format("MAC of %s computed from serial number: %s", player_info.device.name,
+          mac_addr))
+
+        if type(callback) == "function" then
+          callback(dni, ssdp_group_info, player_info, group_info)
+        end
+      end
+    end,
+
+    _player_id_to_device = {},
+    device_for_player_id = function(self, player_id)
+      return self._player_id_to_device[player_id]
+    end,
+    update_device_for_player_id = function(self, player_id, device)
+      self._player_id_to_device[player_id] = device
+    end,
+    _field_cache = {},
+    cache_fields_for_dni = function(self, dni, fields)
+      self._field_cache[dni] = fields
+    end,
+    get_cached_fields_for_dni = function(self, dni)
+      return self._field_cache[dni]
+    end,
+    dni_to_device_id = {},
+    is_same_mac_address = function(dni, other)
+      if not (type(dni) == "string" and type(other) == "string") then return false end
+      local dni_normalized = dni:gsub("-", ""):gsub(":", ""):lower()
+      local other_normalized = other:gsub("-", ""):gsub(":", ""):lower()
+      return dni_normalized == other_normalized
+    end,
+    get_device_by_dni = function(self, dni)
+      local device_uuid = self.dni_to_device_id[dni]
+      if not device_uuid then return nil end
+      return self:get_device_info(device_uuid)
+    end
+  }
+end
 
 return Types

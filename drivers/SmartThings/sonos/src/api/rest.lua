@@ -49,7 +49,7 @@ local function process_rest_response(response, err, partial, err_callback)
 
       if not success then
         return nil, st_utils.stringify_table(
-          {response_body = body, json = json_result}, "Couldn't decode JSON in SSE callback", false
+          {response_body = body, json = json_result}, "Couldn't decode JSON in REST API Response", false
         )
       end
 
