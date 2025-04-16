@@ -15,10 +15,9 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
-
 local log = require "log"
-
 local version = require "version"
+
 if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
@@ -53,6 +52,14 @@ local function table_contains(tab, val)
   return false
 end
 
+local function find_default_endpoint(device)
+  local cook_top_endpoints = get_endpoints_for_dt(device, COOK_TOP_DEVICE_TYPE_ID)
+  if #cook_top_endpoints > 0 then
+    return cook_top_endpoints[1]
+  end
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
 local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
@@ -68,7 +75,7 @@ local function component_to_endpoint(device, component)
   if map[component] then
     return map[component]
   end
-  return device.MATTER_DEFAULT_ENDPOINT
+  return find_default_endpoint(device)
 end
 
 local function device_init(driver, device)
@@ -139,10 +146,11 @@ local function selected_temperature_level_attr_handler(driver, device, ib, respo
 
   local temperatureLevel = ib.data.value
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
-  local supportedTemperatureLevels = supportedTemperatureLevelsMap[ib.endpoint_id] or {}
+  local supportedTemperatureLevels = supportedTemperatureLevelsMap[tostring(ib.endpoint_id)] or {}
   if supportedTemperatureLevels[temperatureLevel+1] then
     local tempLevel = supportedTemperatureLevels[temperatureLevel+1]
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
+    return
   end
   log.warn("Received unsupported temperature level for endpoint "..(ib.endpoint_id))
 end
@@ -161,7 +169,7 @@ local function supported_temperature_levels_attr_handler(driver, device, ib, res
     log.info(string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
     table.insert(supportedTemperatureLevels, tempLevel.value)
   end
-  supportedTemperatureLevelsMap[ib.endpoint_id] = supportedTemperatureLevels
+  supportedTemperatureLevelsMap[tostring(ib.endpoint_id)] = supportedTemperatureLevels
   device:set_field(SUPPORTED_TEMPERATURE_LEVELS_MAP, supportedTemperatureLevelsMap, { persist = true })
   local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels,
     { visibility = { displayed = false } })
@@ -187,7 +195,7 @@ local function handle_temperature_level(driver, device, cmd)
 
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
-  local supportedTemperatureLevels = supportedTemperatureLevelsMap[endpoint_id] or {}
+  local supportedTemperatureLevels = supportedTemperatureLevelsMap[tostring(endpoint_id)] or {}
   for i, tempLevel in ipairs(supportedTemperatureLevels) do
     if cmd.args.temperatureLevel == tempLevel then
       device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, nil, i - 1))

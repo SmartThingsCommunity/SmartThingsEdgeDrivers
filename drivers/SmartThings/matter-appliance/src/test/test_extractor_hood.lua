@@ -18,6 +18,8 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 
+local APPLICATION_ENDPOINT = 70
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("extractor-hood-hepa-ac-wind.yml"),
   manufacturer_info = {
@@ -35,7 +37,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = 1,
+      endpoint_id = APPLICATION_ENDPOINT,
       clusters = {
         {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
@@ -152,7 +154,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.server.attributes.PercentCurrent:build_test_report_data(mock_device, 1, 10)
+        clusters.FanControl.server.attributes.PercentCurrent:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 10)
       }
     },
     {
@@ -173,7 +175,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.PercentSetting:write(mock_device, 1, 50)
+        clusters.FanControl.attributes.PercentSetting:write(mock_device, APPLICATION_ENDPOINT, 50)
       }
     }
   }
@@ -187,7 +189,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.types.FanModeEnum.OFF)
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.OFF)
       }
     },
     {
@@ -200,7 +202,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.types.FanModeEnum.LOW)
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.LOW)
       }
     },
     {
@@ -213,7 +215,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.types.FanModeEnum.MEDIUM)
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.MEDIUM)
       }
     },
     {
@@ -226,7 +228,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.types.FanModeEnum.HIGH)
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.HIGH)
       }
     },
     {
@@ -239,7 +241,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.types.FanModeEnum.AUTO)
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.AUTO)
       }
     },
     {
@@ -266,7 +268,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.types.FanModeEnum.OFF)
+        clusters.FanControl.attributes.FanMode:write(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.OFF)
       }
     },
     {
@@ -282,7 +284,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.types.FanModeEnum.LOW)
+        clusters.FanControl.attributes.FanMode:write(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.LOW)
       }
     },
     {
@@ -298,7 +300,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.types.FanModeEnum.MEDIUM)
+        clusters.FanControl.attributes.FanMode:write(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.MEDIUM)
       }
     },
     {
@@ -314,7 +316,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.types.FanModeEnum.HIGH)
+        clusters.FanControl.attributes.FanMode:write(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.HIGH)
       }
     },
     {
@@ -330,7 +332,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.types.FanModeEnum.AUTO)
+        clusters.FanControl.attributes.FanMode:write(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.FanModeEnum.AUTO)
       }
     }
   }
@@ -343,7 +345,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH)
+        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH)
       }
     },
     {
@@ -361,7 +363,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH)
+        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH)
       }
     },
     {
@@ -378,7 +380,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO)
+        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO)
       }
     },
     {
@@ -397,7 +399,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO)
+        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO)
       }
     },
     {
@@ -415,7 +417,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO)
+        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO)
       }
     },
     {
@@ -432,7 +434,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanModeSequence.OFF_HIGH)
+        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.attributes.FanModeSequence.OFF_HIGH)
       }
     },
     {
@@ -454,7 +456,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, 1, 0x02) -- NoWind and NaturalWind
+        clusters.FanControl.attributes.WindSupport:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 0x02) -- NoWind and NaturalWind
       }
     },
     {
@@ -470,7 +472,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
+        clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
       }
     },
     {
@@ -497,7 +499,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)
+        clusters.FanControl.attributes.WindSetting:write(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)
       }
     },
     {
@@ -513,7 +515,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
+        clusters.FanControl.attributes.WindSetting:write(mock_device, APPLICATION_ENDPOINT, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
       }
     }
   }
@@ -527,7 +529,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.HepaFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, 1, 3)
+        clusters.HepaFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 3)
       }
     },
     {
@@ -540,7 +542,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.OK)
+        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.HepaFilterMonitoring.attributes.ChangeIndication.OK)
       }
     },
     {
@@ -553,7 +555,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.WARNING)
+        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.HepaFilterMonitoring.attributes.ChangeIndication.WARNING)
       }
     },
     {
@@ -566,7 +568,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.CRITICAL)
+        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.HepaFilterMonitoring.attributes.ChangeIndication.CRITICAL)
       }
     },
     {
@@ -585,7 +587,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ActivatedCarbonFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, 1, 5)
+        clusters.ActivatedCarbonFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, APPLICATION_ENDPOINT, 5)
       }
     },
     {
@@ -598,7 +600,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.OK)
+        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.OK)
       }
     },
     {
@@ -611,7 +613,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.WARNING)
+        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.WARNING)
       }
     },
     {
@@ -624,7 +626,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.CRITICAL)
+        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, APPLICATION_ENDPOINT, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.CRITICAL)
       }
     },
     {
