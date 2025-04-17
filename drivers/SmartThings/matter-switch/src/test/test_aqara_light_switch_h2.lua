@@ -277,7 +277,7 @@ test.register_coroutine_test(
           -- don't use "aqara_mock_children[aqara_child1_ep].id,"
           -- because energy management is at the root endpoint.
           aqara_mock_device.id,
-          clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(aqara_mock_device, 1, 17000)
+          clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(aqara_mock_device, 0, 17000)
         }
       )
 
@@ -289,7 +289,7 @@ test.register_coroutine_test(
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
-          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_19)
+          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 0, cumulative_report_val_19)
         }
       )
 
@@ -302,7 +302,7 @@ test.register_coroutine_test(
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
-          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_29)
+          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 0, cumulative_report_val_29)
         }
       )
 
@@ -314,7 +314,7 @@ test.register_coroutine_test(
         {
           aqara_mock_device.id,
           clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
-            aqara_mock_device, 1, cumulative_report_val_39
+            aqara_mock_device, 0, cumulative_report_val_39
           )
         }
       )

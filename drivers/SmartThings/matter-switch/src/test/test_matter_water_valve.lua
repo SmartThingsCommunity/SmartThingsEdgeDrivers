@@ -161,6 +161,20 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Set level command should have no effect when no argument is provided",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "level", component = "main", command = "setLevel", args = { } }
+      }
+    }
+  }
+)
+
+test.register_message_test(
   "Current state reports should generate appropriate events",
   {
     {

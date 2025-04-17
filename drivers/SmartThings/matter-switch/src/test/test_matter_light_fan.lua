@@ -273,7 +273,71 @@ test.register_message_test(
         mock_device.id,
         clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.LOW)
       }
-    }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "fanMode", component = "main", command = "setFanMode", args = { "medium" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.MEDIUM)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "fanMode", component = "main", command = "setFanMode", args = { "high" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "fanMode", component = "main", command = "setFanMode", args = { "auto" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "fanMode", component = "main", command = "setFanMode", args = { "off" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.OFF)
+      }
+    },
   }
 )
 

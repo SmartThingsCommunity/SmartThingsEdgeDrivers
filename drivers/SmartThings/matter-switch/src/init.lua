@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -363,10 +363,6 @@ local function convert_huesat_st_to_matter(val)
 end
 
 local function mired_to_kelvin(value, minOrMax)
-  if value == 0 then -- shouldn't happen, but has
-    value = 1
-    log.warn(string.format("Received a color temperature of 0 mireds. Using a color temperature of 1 mired to avoid divide by zero"))
-  end
   -- We divide inside the rounding and multiply outside of it because we expect these
   -- bounds to be multiples of 100. For the maximum mired value (minimum K value),
   -- add 1 before converting and round up to nearest hundreds. For the minimum mired
@@ -377,10 +373,8 @@ local function mired_to_kelvin(value, minOrMax)
   local rounding_value = 0.5
   if minOrMax == COLOR_TEMP_MIN then
     return utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value + 1)) + rounding_value) * kelvin_step_size
-  elseif minOrMax == COLOR_TEMP_MAX then
+  else -- minOrMax = COLOR_TEMP_MAX
     return utils.round(MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value - 1)) - rounding_value) * kelvin_step_size
-  else
-    log.warn_with({hub_logs = true}, "Attempted to convert temperature unit for an undefined value")
   end
 end
 
@@ -392,11 +386,6 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
     if ep.endpoint_id == endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
-          for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
-            if device.manufacturer_info.product_id == fingerprint.product_id then
-              return false -- For Aqara Dimmer Switch with Button.
-            end
-          end
           return true
         end
       end
@@ -411,7 +400,6 @@ local function get_first_non_zero_endpoint(endpoints)
       return ep
     end
   end
-  return nil
 end
 
 --- find_default_endpoint is a helper function to handle situations where
@@ -548,9 +536,6 @@ local function do_configure(driver, device)
 end
 
 local function configure_buttons(device)
-  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    return
-  end
   local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
@@ -946,11 +931,8 @@ end
 
 local function temp_attr_handler(driver, device, ib, response)
   local temp_in_mired = ib.data.value
-  if temp_in_mired == nil then
-    return
-  end
-  if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
-    device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+  if temp_in_mired == nil or (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %s mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
     return
   end
   local min_temp_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, ib.endpoint_id)
@@ -980,11 +962,8 @@ end
 local mired_bounds_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
     local temp_in_mired = ib.data.value
-    if temp_in_mired == nil then
-      return
-    end
-    if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+    if temp_in_mired == nil or (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %s mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
       return
     end
     local temp_in_kelvin = mired_to_kelvin(temp_in_mired, minOrMax)
@@ -1009,14 +988,11 @@ end
 
 local level_bounds_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
-      return
-    end
     local lighting_endpoints = device:get_endpoints(clusters.LevelControl.ID, {feature_bitmap = clusters.LevelControl.FeatureMap.LIGHTING})
     local lighting_support = tbl_contains(lighting_endpoints, ib.endpoint_id)
     -- If the lighting feature is supported then we should check if the reported level is at least 1.
-    if lighting_support and ib.data.value < SWITCH_LEVEL_LIGHTING_MIN then
-      device.log.warn_with({hub_logs = true}, string.format("Lighting device reported a switch level %d outside of supported capability range", ib.data.value))
+    if ib.data.value == nil or (lighting_support and ib.data.value < SWITCH_LEVEL_LIGHTING_MIN) then
+      device.log.warn_with({hub_logs = true}, string.format("Lighting device reported a switch level %s outside of supported capability range", ib.data.value))
       return
     end
     -- Convert level from given range of 0-254 to range of 0-100.

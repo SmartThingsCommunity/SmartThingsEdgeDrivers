@@ -62,6 +62,34 @@ local mock_device = test.mock_device.build_test_matter_device({
   },
 })
 
+local mock_device_power_plug = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("plug-power.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+        { cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", feature_map = 10, }
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
+      }
+    }
+  }
+})
 
 local mock_device_periodic = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-energy-powerConsumption.yml"),
@@ -91,10 +119,6 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
   },
 })
 
-local subscribed_attributes_periodic = {
-  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
-  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-}
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
@@ -103,6 +127,16 @@ local subscribed_attributes = {
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+}
+
+local subscribed_attributes_power_plug = {
+  clusters.OnOff.attributes.OnOff,
+  clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+}
+
+local subscribed_attributes_periodic = {
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
 }
 
 local cumulative_report_val_19 = {
@@ -150,6 +184,17 @@ local function test_init()
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 end
 test.set_test_init_function(test_init)
+
+local function test_init_power_plug()
+  local subscribe_request = subscribed_attributes[1]:subscribe(mock_device_power_plug)
+  for i, cluster in ipairs(subscribed_attributes_power_plug) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_power_plug))
+    end
+  end
+  test.socket.matter:__expect_send({ mock_device_power_plug.id, subscribe_request })
+  test.mock_device.add_test_device(mock_device_power_plug)
+end
 
 local function test_init_periodic()
   local subscribe_request = subscribed_attributes_periodic[1]:subscribe(mock_device_periodic)
@@ -306,6 +351,16 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
           start = "1970-01-01T00:00:00Z",
           ["end"] = "1970-01-01T00:33:19Z",
+          deltaEnergy = 0.0,
+          energy = 39.0
+        }))
+      )
+      test.wait_for_events()
+      test.mock_time.advance_time(1500)
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+          start = "1970-01-01T00:33:20Z",
+          ["end"] = "1970-01-01T00:58:19Z",
           deltaEnergy = 0.0,
           energy = 39.0
         }))
@@ -661,6 +716,16 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init }
+)
+
+test.register_coroutine_test(
+  "Test profile change on init for Power Plug device type",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_power_plug.id, "doConfigure" })
+    mock_device_power_plug:expect_metadata_update({ profile = "plug-power" })
+    mock_device_power_plug:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { test_init = test_init_power_plug }
 )
 
 test.register_coroutine_test(
