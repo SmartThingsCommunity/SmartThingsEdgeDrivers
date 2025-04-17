@@ -25,12 +25,14 @@ function discovery_helper.get_service_type_and_domain()
   return SERVICE_TYPE, DOMAIN
 end
 
-function discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
-  local device_info = fp2_api.get_info(device_ip, fp2_api.labeled_socket_builder(device_dni))
-
+function discovery_helper.get_device_create_msg(driver, device_dni, device_ip, device_info)
   if not device_info then
-    log.warn("failed to create device create msg. device_info is nil.")
-    return nil
+    device_info = fp2_api.get_info(device_ip, fp2_api.labeled_socket_builder(device_dni))
+
+    if not device_info then
+      log.warn("failed to create device create msg. device_info is nil.")
+      return nil
+    end
   end
 
   local device_label = device_info.label or "Aqara-FP2"
