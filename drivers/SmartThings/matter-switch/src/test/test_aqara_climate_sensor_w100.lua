@@ -133,10 +133,6 @@ local function test_init()
     clusters.Switch.server.events.MultiPressComplete,
   }
 
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
-  test.socket.matter:__queue_receive({aqara_mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(aqara_mock_device, 6, {uint32(0x0C)})})
-
   local subscribe_request = cluster_subscribe_list[1]:subscribe(aqara_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -144,16 +140,17 @@ local function test_init()
     end
   end
 
-  configure_buttons()
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
+  configure_buttons()
+  aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(aqara_mock_device)
   test.set_rpc_version(5)
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
-  test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
-  test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="3-button-battery-temperature-humidity"}
 
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
   device_info_copy.profile.id = "3-button-battery-temperature-humidity"
@@ -165,9 +162,15 @@ end
 
 test.set_test_init_function(test_init)
 
+local function update_profile()
+  test.socket.matter:__queue_receive({aqara_mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(aqara_mock_device, 6, {uint32(0x0C)})})
+  aqara_mock_device:expect_metadata_update({ profile = "3-button-battery-temperature-humidity" })
+end
+
 test.register_coroutine_test(
   "Temperature reports should generate correct messages",
   function ()
+    update_profile()
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -183,6 +186,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Min and max temperature attributes set capability constraint",
   function ()
+    update_profile()
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -204,6 +208,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Relative humidity reports should generate correct messages",
   function ()
+    update_profile()
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -228,6 +233,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Battery percent reports should generate correct messages",
   function ()
+    update_profile()
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -243,6 +249,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle single press sequence for a long hold on long-release-capable button", -- only a long press event should generate a held event
   function ()
+    update_profile()
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
@@ -264,6 +271,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle single press sequence for a long hold on multi button", -- pushes should only be generated from multiPressComplete events
   function ()
+    update_profile()
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
@@ -285,6 +293,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle single press sequence for a multi press on multi button",
     function()
+      update_profile()
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
@@ -322,6 +331,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle long press sequence for a long hold on long-release-capable button", -- only a long press event should generate a held event
   function ()
+    update_profile()
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -347,6 +357,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle long press sequence for a long hold on multi button",
   function ()
+    update_profile()
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -372,6 +383,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle double press",
   function()
+    update_profile()
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -387,6 +399,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Receiving a max press attribute of 2 should emit correct event",
     function()
+      update_profile()
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
@@ -402,6 +415,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle single press sequence for emulated hold on short-release-only button",
   function ()
+    update_profile()
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
@@ -420,46 +434,44 @@ test.register_coroutine_test(
   end
 )
 
-test.register_message_test(
-  "Receiving a max press attribute of 3 should emit correct event", {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Receiving a max press attribute of 3 should emit correct event",
+  function ()
+    update_profile()
+    test.socket.matter:__queue_receive(
+      {
         aqara_mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
           aqara_mock_device, 5, 3
         )
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = aqara_mock_device:generate_test_message("button3",
-        capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
-    },
-  }
+      }
+    )
+    test.socket.capability:__expect_send(
+      aqara_mock_device:generate_test_message(
+        "button3", capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}})
+      )
+    )
+  end
 )
 
-test.register_message_test(
-  "Receiving a max press attribute of greater than 6 should only emit up to pushed_6x", {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Receiving a max press attribute of 3 should emit correct event",
+  function ()
+    update_profile()
+    test.socket.matter:__queue_receive(
+      {
         aqara_mock_device.id,
         clusters.Switch.attributes.MultiPressMax:build_test_report_data(
           aqara_mock_device, 3, 7
         )
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = aqara_mock_device:generate_test_message("button1",
-        capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}}))
-    },
-  }
+      }
+    )
+    test.socket.capability:__expect_send(
+      aqara_mock_device:generate_test_message(
+        "button1", capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}})
+      )
+    )
+  end
 )
 
 test.run_registered_tests()
