@@ -1449,7 +1449,9 @@ local function set_pin_response_handler(driver, device, ib, response)
     local userIdx = device:get_field(lock_utils.USER_INDEX)
     local userType = device:get_field(lock_utils.USER_TYPE)
     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
-    if userType == "guest" then
+    if userIdx ~= nil then
+      userTypeMatter = nil
+    elseif userType == "guest" then
       userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
     elseif userType == "remote" then
       userTypeMatter = DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER
@@ -1497,6 +1499,9 @@ end
 -- Set Aliro Credential Response --
 -----------------------------------
 local function hex_string_to_octet_string(hex_string)
+  if hex_string == nil then
+    return nil
+  end
   local octet_string = ""
   for i = 1, #hex_string, 2 do
       local hex = hex_string:sub(i, i + 1)
@@ -1505,6 +1510,17 @@ local function hex_string_to_octet_string(hex_string)
   return octet_string
 end
 
+local function octet_string_to_hex_string(octet_string)
+  if octet_string == nil then
+    return nil
+  end
+  local hex_string = ""
+  for i = 1, #octet_string do
+      local byte = octet_string:byte(i)
+      hex_string = hex_string .. string.format("%02x", byte)
+  end
+  return hex_string
+end
 
 local function set_aliro_response_handler(driver, device, ib, response)
   local cmdName = "setAliroCredential"
@@ -1627,6 +1643,9 @@ local function set_aliro_response_handler(driver, device, ib, response)
 
   if elements.next_credential_index.value ~= nil then
     -- Get parameters
+    if userIdx ~= nil then
+      userType = nil
+    end
     local credIdx = elements.next_credential_index.value
     local credType = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY
     local credData = issuerKey
@@ -1652,7 +1671,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
         hex_string_to_octet_string(credData),      -- Credential Data
         userIdx,       -- User Index
         nil,           -- User Status
-        nil            -- User Type
+        userType       -- User Type
       )
     )
   else
@@ -2283,25 +2302,20 @@ end
 local function aliro_reader_verification_key_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_verification_key_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
+
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroReaderVerificationKey(ib.data.value))
+    device:emit_event(aliroSetting.aliroReaderVerificationKey(octet_string_to_hex_string(ib.data.value)))
   end
 end
 
 local function aliro_reader_group_id_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_id_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(ib.data.value))
+    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(octet_string_to_hex_string(ib.data.value)))
   end
-end
-
-local function aliro_reader_group_sub_id_handler(driver, device, ib, response)
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_reader_group_sub_id_handler !!!!!!!!!!!!!"))
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
-
-  -- Default cardId, Needs to be removed
-  device:emit_event(aliroSetting.cardId("default"))
 end
 
 local function max_aliro_credential_issuer_key_handler(driver, device, ib, response)
@@ -2323,8 +2337,9 @@ end
 local function aliro_group_resolving_key_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_group_resolving_key_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroGroupResolvingKey(ib.data.value))
+    device:emit_event(aliroSetting.aliroGroupResolvingKey(octet_string_to_hex_string(ib.data.value)))
   end
 end
 
@@ -2356,16 +2371,21 @@ local function handle_set_reader_key(driver, device, command)
   local privateKey = command.args.privKey
   local publicKey = command.args.pubKey
   local groupId = command.args.groupId
-  local groupResolvingKey = command.args.groupResolvingKey
+  local groupResolvingKey = nil
+  local aliro_ble_uwb_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.ALIROBLEUWB})
+  if #aliro_ble_uwb_eps > 0 then
+    groupResolvingKey = command.args.groupResolvingKey
+  end
 
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!! privateKey: %s !!!!!!!!", privateKey))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!! publicKey: %s !!!!!!!!", publicKey))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!! groupId: %s !!!!!!!!", groupId))
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!! groupId: %s !!!!!!!!", groupResolvingKey))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!! groupResolvingKey: %s !!!!!!!!", groupResolvingKey))
 
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!! convert privateKey: %s !!!!!!!!", hex_string_to_octet_string(privateKey)))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!! convert publicKey: %s !!!!!!!!", hex_string_to_octet_string(publicKey)))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!! convert groupId: %s !!!!!!!!", hex_string_to_octet_string(groupId)))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!! convert groupResolvingKey: %s !!!!!!!!", hex_string_to_octet_string(groupResolvingKey)))
 
   -- Check busy state
   local busy = check_busy_state(device)
@@ -2387,6 +2407,10 @@ local function handle_set_reader_key(driver, device, command)
 
   -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.PRIVATE_KEY, privateKey, {persist = true})
+  device:set_field(lock_utils.PUBLIC_KEY, publicKey, {persist = true})
+  device:set_field(lock_utils.GROUP_ID, groupId, {persist = true})
+  device:set_field(lock_utils.GROUP_RESOLVING_KEY, groupResolvingKey, {persist = true})
 
   -- Send command
   local ep = device:component_to_endpoint(command.component)
@@ -2394,8 +2418,9 @@ local function handle_set_reader_key(driver, device, command)
     DoorLock.server.commands.SetAliroReaderConfig(
       device, ep,
       hex_string_to_octet_string(privateKey), -- Signing key
-      hex_string_to_octet_string(publicKey),  -- Verification key
-      hex_string_to_octet_string(groupId)     -- Group identification
+      hex_string_to_octet_string(publicKey), -- Verification key
+      hex_string_to_octet_string(groupId), -- Group identification
+      hex_string_to_octet_string(groupResolvingKey) -- Group resolving key
     )
   )
 end
@@ -2405,16 +2430,20 @@ local function set_aliro_reader_config_handler(driver, device, ib, response)
 
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local privateKey = device:get_field(lock_utils.PRIVATE_KEY)
+  local publicKey = device:get_field(lock_utils.PUBLIC_KEY)
+  local groupId = device:get_field(lock_utils.GROUP_ID)
+  local groupResolvingKey = device:get_field(lock_utils.GROUP_RESOLVING_KEY)
+
   local status = "success"
   if ib.status == DoorLock.types.DlStatus.FAILURE then
     status = "failure"
   elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
     status = "invalidCommand"
   elseif ib.status == DoorLock.types.DlStatus.SUCCESS then
-    device:emit_event(aliroSetting.aliroReaderVerificationKey(publicKey))
-    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(groupId))
-    device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0"))
+    device:emit_event(aliroSetting.aliroReaderVerificationKey(privateKey))
+    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(publicKey))
+    device:emit_event(aliroSetting.aliroExpeditedProtocolVersions(groupId))
     device:emit_event(aliroSetting.aliroGroupResolvingKey(groupResolvingKey))
   end
   
@@ -2459,6 +2488,10 @@ local function handle_set_aliro_credential(driver, device, command)
   -- Get parameters
   local cmdName = "setAliroCredential"
   local userIdx = command.args.userIndex
+  local userType = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+  if userIdx ~= nil then
+    userType = nil
+  end
   local keyId = command.args.keyId
   local issuerKey = command.args.issuerKey
   local evictableEndPointKey = command.args.evictableEndPointKey
@@ -2555,7 +2588,7 @@ local function handle_set_aliro_credential(driver, device, command)
       hex_string_to_octet_string(issuerKey), -- Credential Data
       userIdx,    -- User Index
       nil,        -- User Status
-      DoorLock.types.UserTypeEnum.UNRESTRICTED_USER -- User Type
+      userType    -- User Type
     )
   )
 end
@@ -2646,7 +2679,6 @@ local new_matter_lock_handler = {
         [DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser.ID] = max_year_schedule_of_user_handler,
         [DoorLock.attributes.AliroReaderVerificationKey.ID] = aliro_reader_verification_key_handler,
         [DoorLock.attributes.AliroReaderGroupIdentifier.ID] = aliro_reader_group_id_handler,
-        [DoorLock.attributes.AliroReaderGroupSubIdentifier.ID] = aliro_reader_group_sub_id_handler,
         [DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported.ID] = max_aliro_credential_issuer_key_handler,
         [DoorLock.attributes.NumberOfAliroEndpointKeysSupported.ID] = max_aliro_endpoint_key_handler,
         [DoorLock.attributes.AliroGroupResolvingKey.ID] = aliro_group_resolving_key_handler,
