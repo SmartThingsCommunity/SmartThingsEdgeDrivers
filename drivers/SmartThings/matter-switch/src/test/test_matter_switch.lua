@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local uint16 = require "st.matter.data_types.Uint16"
 local version = require "version"
 
 local TRANSITION_TIME = 0
@@ -1037,7 +1036,7 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
-        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE_MIREDS)
+        clusters.ColorControl.attributes.ColorMode:build_test_report_data(mock_device, 1, clusters.ColorControl.types.ColorMode.COLOR_TEMPERATURE)
       }
     )
     local color_mode = mock_device:get_field("__color_mode")

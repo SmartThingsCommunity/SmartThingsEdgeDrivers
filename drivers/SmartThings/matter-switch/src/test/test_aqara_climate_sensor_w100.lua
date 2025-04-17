@@ -202,6 +202,24 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Min measured temperature value attribute higher than max, don't send capability",
+  function ()
+    test.socket.matter:__queue_receive(
+      {
+        aqara_mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(aqara_mock_device, 1, 1500)
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        aqara_mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(aqara_mock_device, 1, 650)
+      }
+    )
+  end
+)
+
+test.register_coroutine_test(
   "Relative humidity reports should generate correct messages",
   function ()
     test.socket.matter:__queue_receive(

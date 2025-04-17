@@ -211,6 +211,32 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
+        FanMode:build_test_report_data(mock_device, mock_device_ep2, FanMode.OFF)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("off"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanMode:build_test_report_data(mock_device, mock_device_ep2, FanMode.LOW)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("low"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
         FanMode:build_test_report_data(mock_device, mock_device_ep2, FanMode.MEDIUM)
       }
     },
@@ -218,7 +244,20 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("medium"))
-    }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanMode:build_test_report_data(mock_device, mock_device_ep2, FanMode.HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("high"))
+    },
   }
 )
 
@@ -244,6 +283,32 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, mock_device_ep2, FanModeSequence.OFF_LOW_HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "high"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, mock_device_ep2, FanModeSequence.OFF_LOW_MED_HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "medium", "high"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
         FanModeSequence:build_test_report_data(mock_device, mock_device_ep2, FanModeSequence.OFF_LOW_MED_HIGH_AUTO)
       }
     },
@@ -251,6 +316,32 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "medium", "high", "auto"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, mock_device_ep2, FanModeSequence.OFF_LOW_HIGH_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "high", "auto"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, mock_device_ep2, FanModeSequence.OFF_ON_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "high", "auto"}, {visibility={displayed=false}}))
     },
   }
 )
@@ -358,6 +449,39 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.FanControl.attributes.PercentSetting:write(mock_device, mock_device_ep2, 64)
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Fan speed reports should generate the appropriate events",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, mock_device_ep2, 65)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.fanSpeedPercent.percent(65))
+    }
+  }
+)
+
+test.register_message_test(
+  "Fan speed reports with bad values should not generate events",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, mock_device_ep2, 162)
       }
     }
   }

@@ -1311,25 +1311,24 @@ end
 
 local temp_attr_handler_factory = function(minOrMax)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
-      return
-    end
-    local temp = ib.data.value / 100.0
-    local unit = "C"
-    set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
-    local min = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id)
-    if min ~= nil and max ~= nil then
-      if min < max then
-        -- Only emit the capability for RPC version >= 5 (unit conversion for
-        -- temperature range capability is only supported for RPC >= 5)
-        if version.rpc >= 5 then
-          device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
+    if ib.data.value ~= nil then
+      local temp = ib.data.value / 100.0
+      local unit = "C"
+      set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
+      local min = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id)
+      local max = get_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id)
+      if min ~= nil and max ~= nil then
+        if min < max then
+          -- Only emit the capability for RPC version >= 5 (unit conversion for
+          -- temperature range capability is only supported for RPC >= 5)
+          if version.rpc >= 5 then
+            device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
+          end
+          set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id, nil)
+          set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id, nil)
+        else
+          device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %s that is not lower than the reported max temperature %s", min, max))
         end
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MIN, ib.endpoint_id, nil)
-        set_field_for_endpoint(device, TEMP_BOUND_RECEIVED..TEMP_MAX, ib.endpoint_id, nil)
-      else
-        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
       end
     end
   end

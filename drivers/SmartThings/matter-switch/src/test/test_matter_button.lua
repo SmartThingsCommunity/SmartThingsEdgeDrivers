@@ -554,5 +554,13 @@ test.register_coroutine_test(
   { test_init = test_init_batteryLevel }
 )
 
+test.register_coroutine_test(
+  "Test doConfigure has no effect if button device has already been profiled",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
 -- run the tests
 test.run_registered_tests()
