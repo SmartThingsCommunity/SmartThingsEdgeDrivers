@@ -70,15 +70,7 @@ local cluster_subscribe = {
 }
 
 local function test_init()
-  local subscribe_request= cluster_subscribe[1]:subscribe(mock_device)
-  for i, cluster in ipairs(cluster_subscribe) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device))
-    end
-  end
-
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
+  test.enable_startup_messages(false)
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
@@ -89,6 +81,18 @@ local function test_init()
   read_req:merge(clusters.Thermostat.attributes.AttributeList:read())
   read_req:merge(clusters.PowerSource.attributes.AttributeList:read())
   test.socket.matter:__expect_send({mock_device.id, read_req})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  local subscribe_request= cluster_subscribe[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device))
+    end
+  end
+
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device)
+
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end

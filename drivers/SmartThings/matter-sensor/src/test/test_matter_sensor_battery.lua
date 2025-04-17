@@ -56,6 +56,7 @@ local cluster_subscribe_list_humidity_battery = {
 }
 
 local function test_init()
+  test.enable_startup_messages(false)
   local subscribe_request_humidity_battery = cluster_subscribe_list_humidity_battery[1]:subscribe(mock_device_humidity_battery)
   for i, cluster in ipairs(cluster_subscribe_list_humidity_battery) do
     if i > 1 then
@@ -67,6 +68,7 @@ local function test_init()
   test.mock_device.add_test_device(mock_device_humidity_battery)
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "init" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device_humidity_battery.id, read_attribute_list})
   test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "doConfigure" })
