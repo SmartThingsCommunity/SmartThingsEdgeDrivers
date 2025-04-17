@@ -19,12 +19,12 @@ local ssdp_discovery_callback = function(driver, ssdp_group_info, known_devices_
         local name = player_info.device.name or player_info.device.modelDisplayName or "Unknown Sonos Player"
         local model = player_info.device.modelDisplayName or "Unknown Sonos Model"
 
-        driver._field_cache[dni] = {
+        driver:cache_fields_for_dni(dni, {
           household_id = inner_ssdp_group_info.household_id,
           player_id = player_info.playerId,
           wss_url = player_info.websocketUrl,
           swGen = player_info.device.swGen
-        }
+        })
 
         driver.sonos:update_household_info(player_info.householdId, group_info)
 

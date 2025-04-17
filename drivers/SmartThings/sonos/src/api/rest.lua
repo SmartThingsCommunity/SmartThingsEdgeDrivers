@@ -49,7 +49,7 @@ local function process_rest_response(response, err, partial, err_callback)
 
       if not success then
         return nil, st_utils.stringify_table(
-          {response_body = body, json = json_result}, "Couldn't decode JSON in SSE callback", false
+          {response_body = body, json = json_result}, "Couldn't decode JSON in REST API Response", false
         )
       end
 
@@ -72,21 +72,43 @@ local SonosRestApi = {}
 --- Query a Sonos Group IP address for individual player info
 --- @param ip string the IP address of the player
 --- @param port integer the port number of the player
+--- @param access_token string? the OAuth Access Token
 --- @return SonosDiscoveryInfo|nil
 --- @return string|nil error
-function SonosRestApi.get_player_info(ip, port)
+function SonosRestApi.get_player_info(ip, port, access_token)
   local url = "https://" .. ip .. ":" .. port .. "/api/v1/players/local/info"
-  return process_rest_response(RestClient.one_shot_get(url, HEADERS))
+  local headers = {}
+  for k,v in pairs(HEADERS) do
+    headers[k] = v
+  end
+  if type(access_token) == "string" then
+    headers['Authorization'] = string.format("Bearer %s", access_token)
+  end
+  return process_rest_response(RestClient.one_shot_get(url, headers))
 end
 
-function SonosRestApi.get_groups_info(ip, port, household)
+function SonosRestApi.get_groups_info(ip, port, household, access_token)
   local url = string.format("https://%s:%s/api/v1/households/%s/groups", ip, port, household)
-  return process_rest_response(RestClient.one_shot_get(url, HEADERS))
+  local headers = {}
+  for k,v in pairs(HEADERS) do
+    headers[k] = v
+  end
+  if type(access_token) == "string" then
+    headers['Authorization'] = string.format("Bearer %s", access_token)
+  end
+  return process_rest_response(RestClient.one_shot_get(url, headers))
 end
 
-function SonosRestApi.get_favorites(ip, port, household)
+function SonosRestApi.get_favorites(ip, port, household, access_token)
   local url = string.format("https://%s:%s/api/v1/households/%s/favorites", ip, port, household)
-  return process_rest_response(RestClient.one_shot_get(url, HEADERS))
+  local headers = {}
+  for k,v in pairs(HEADERS) do
+    headers[k] = v
+  end
+  if type(access_token) == "string" then
+    headers['Authorization'] = string.format("Bearer %s", access_token)
+  end
+  return process_rest_response(RestClient.one_shot_get(url, headers))
 end
 
 return SonosRestApi
