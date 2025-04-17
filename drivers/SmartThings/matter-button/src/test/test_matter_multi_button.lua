@@ -74,6 +74,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
 }
 
 local function test_init()
+  test.enable_startup_messages(false)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
@@ -81,6 +82,7 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   mock_device:expect_metadata_update({ profile = "4-button-battery" })
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "4-buttons-battery"

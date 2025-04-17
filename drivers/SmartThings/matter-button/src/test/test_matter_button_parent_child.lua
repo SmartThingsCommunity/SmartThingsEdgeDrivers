@@ -74,6 +74,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
 }
 
 local function test_init()
+  test.enable_startup_messages(false)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
@@ -85,6 +86,7 @@ local function test_init()
     test.mock_device.add_test_device(child)
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
 
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))

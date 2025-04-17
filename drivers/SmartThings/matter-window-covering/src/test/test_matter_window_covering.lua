@@ -130,21 +130,25 @@ local CLUSTER_SUBSCRIBE_LIST_NO_BATTERY = {
 }
 
 local function test_init()
+  test.enable_startup_messages(false)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
 end
 
 local function test_init_switch_to_battery()
+  test.enable_startup_messages(false)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST_NO_BATTERY[1]:subscribe(mock_device_switch_to_battery)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_BATTERY) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_switch_to_battery)) end
   end
   test.socket.matter:__expect_send({mock_device_switch_to_battery.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_switch_to_battery)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch_to_battery.id, "init" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_switch_to_battery.id, "doConfigure" })
   mock_device_switch_to_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
@@ -152,12 +156,14 @@ local function test_init_switch_to_battery()
 end
 
 local function test_init_mains_powered()
+  test.enable_startup_messages(false)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST_NO_BATTERY[1]:subscribe(mock_device_mains_powered)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_BATTERY) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_mains_powered)) end
   end
   test.socket.matter:__expect_send({mock_device_mains_powered.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_mains_powered)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_mains_powered.id, "init" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_mains_powered.id, "doConfigure" })
   mock_device_mains_powered:expect_metadata_update({ profile = "window-covering" })
   mock_device_mains_powered:expect_metadata_update({ provisioning_state = "PROVISIONED" })
