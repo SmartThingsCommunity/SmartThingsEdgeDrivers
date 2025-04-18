@@ -56,6 +56,8 @@ local mock_device_washer = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_washer)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LaundryWasherMode.attributes.CurrentMode,
@@ -69,7 +71,6 @@ local function test_init()
     clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
     clusters.TemperatureControl.attributes.SupportedTemperatureLevels
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request_washer = cluster_subscribe_list[1]:subscribe(mock_device_washer)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -77,8 +78,9 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({ mock_device_washer.id, subscribe_request_washer })
-  test.mock_device.add_test_device(mock_device_washer)
   test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_washer.id, subscribe_request_washer })
   test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "doConfigure"})
   local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
   read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
