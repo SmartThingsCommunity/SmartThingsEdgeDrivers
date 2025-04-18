@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -143,5 +144,45 @@ test.register_coroutine_test(
     )
   end
 )
+
+test.register_coroutine_test(
+  "Test battery level attribute handler",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.types.BatChargeLevelEnum.OK)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.batteryLevel.battery.normal()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.types.BatChargeLevelEnum.WARNING)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.batteryLevel.battery.warning()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(mock_device, 1, clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.batteryLevel.battery.critical()
+      )
+    )
+  end
+)
+
 
 test.run_registered_tests()

@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,59 +17,59 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
-    profile = t_utils.get_profile_definition("fan-rock-wind.yml"),
-    manufacturer_info = {
-      vendor_id = 0x0000,
-      product_id = 0x0000,
-    },
-    endpoints = {
-      {
-        endpoint_id = 0,
-        clusters = {
-          {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
-        },
-        device_types = {
-          {device_type_id = 0x0016, device_type_revision = 1,} -- RootNode
-        }
+  profile = t_utils.get_profile_definition("fan-rock-wind.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
-      {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 15},
-        },
-        device_types = {
-          {device_type_id = 0x002B, device_type_revision = 1,} -- Fan
-        }
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1,} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 15},
+      },
+      device_types = {
+        {device_type_id = 0x002B, device_type_revision = 1,} -- Fan
       }
     }
+  }
 })
 
 local mock_device_generic = test.mock_device.build_test_matter_device({
-    profile = t_utils.get_profile_definition("fan-generic.yml"),
-    manufacturer_info = {
-      vendor_id = 0x0000,
-      product_id = 0x0000,
-    },
-    endpoints = {
-      {
-        endpoint_id = 0,
-        clusters = {
-          {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
-        },
-        device_types = {
-          {device_type_id = 0x0016, device_type_revision = 1,} -- RootNode
-        }
+  profile = t_utils.get_profile_definition("fan-generic.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
       },
-      {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
-        },
-        device_types = {
-            {device_type_id = 0x002B, device_type_revision = 1,} -- Fan
-        }
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1,} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
+      },
+      device_types = {
+          {device_type_id = 0x002B, device_type_revision = 1,} -- Fan
       }
     }
+  }
 })
 
 local cluster_subscribe_list = {
