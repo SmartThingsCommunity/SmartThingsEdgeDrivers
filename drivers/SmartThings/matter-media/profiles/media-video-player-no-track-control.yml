@@ -1,0 +1,16 @@
+name: media-video-player-no-track-control
+components:
+- id: main
+  capabilities:
+  - id: mediaPlayback
+    version: 1
+  - id: keypadInput
+    version: 1
+  - id: switch
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Television
