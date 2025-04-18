@@ -25,6 +25,7 @@ end
 
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
 end
 
 local WATER_HEATER_EP = 10
