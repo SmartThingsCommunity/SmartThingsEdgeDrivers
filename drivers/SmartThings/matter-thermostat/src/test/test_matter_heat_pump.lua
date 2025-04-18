@@ -83,7 +83,7 @@ local device_desc = {
 }
 
 local test_init_common = function(device)
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local cluster_subscribe_list = {
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ControlSequenceOfOperation,

@@ -125,7 +125,7 @@ local cluster_subscribe_list_temp_humidity = {
 }
 
 local function test_init_humidity_battery()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request_humidity_battery = cluster_subscribe_list_humidity_battery[1]:subscribe(mock_device_humidity_battery)
   for i, cluster in ipairs(cluster_subscribe_list_humidity_battery) do
     if i > 1 then
@@ -145,7 +145,7 @@ local function test_init_humidity_battery()
 end
 
 local function test_init_humidity_no_battery()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request_humidity_no_battery = cluster_subscribe_list_humidity_no_battery[1]:subscribe(mock_device_humidity_no_battery)
   for i, cluster in ipairs(cluster_subscribe_list_humidity_no_battery) do
     if i > 1 then
@@ -164,7 +164,7 @@ local function test_init_humidity_no_battery()
 end
 
 local function test_init_temp_humidity()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request_temp_humidity = cluster_subscribe_list_temp_humidity[1]:subscribe(mock_device_temp_humidity)
   for i, cluster in ipairs(cluster_subscribe_list_temp_humidity) do
     if i > 1 then

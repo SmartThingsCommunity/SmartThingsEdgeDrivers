@@ -74,7 +74,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
 }
 
 local function test_init()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end

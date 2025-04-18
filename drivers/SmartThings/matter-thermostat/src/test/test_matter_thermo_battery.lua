@@ -70,7 +70,7 @@ local cluster_subscribe = {
 }
 
 local function test_init()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
