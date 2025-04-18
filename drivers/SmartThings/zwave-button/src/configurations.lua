@@ -133,6 +133,28 @@ local devices = {
       number_of_buttons = 1,
       supported_button_values = {"pushed", "held"}
     }
+  },
+  SHELLY_WAVE_i4 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0460,
+      product_types = {0x0009},
+      product_ids = 0x0081
+    },
+    CONFIGS = {
+      number_of_buttons = 4,
+      supported_button_values = {"pushed", "held", "down_hold", "double"}
+    }
+  },
+  SHELLY_WAVE_i4DC = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0460,
+      product_types = {0x0009},
+      product_ids = 0x0082
+    },
+    CONFIGS = {
+      number_of_buttons = 4,
+      supported_button_values = {"pushed", "held", "down_hold", "double"}
+    }
   }
 }
 

@@ -34,7 +34,9 @@ local ZWAVE_MULTI_BUTTON_FINGERPRINTS = {
   {mfr = 0x0086, prod = 0x0102, model = 0x0081}, -- Aeotec Wallmote US
   {mfr = 0x0060, prod = 0x000A, model = 0x0003}, -- Everspring Remote Control
   {mfr = 0x0086, prod = 0x0001, model = 0x0003}, -- Aeotec Mimimote,
-  {mfr = 0x0371, prod = 0x0102, model = 0x0016}  -- Aeotec illumino Wallmote 7,
+  {mfr = 0x0371, prod = 0x0102, model = 0x0016}, -- Aeotec illumino Wallmote 7,
+  {mfr = 0x0460, prod = 0x0009, model = 0x0081}, -- Shelly Wave i4,
+  {mfr = 0x0460, prod = 0x0009, model = 0x0082}  -- Shelly Wave i4DC,
 }
 
 local function can_handle_zwave_multi_button(opts, driver, device, ...)
