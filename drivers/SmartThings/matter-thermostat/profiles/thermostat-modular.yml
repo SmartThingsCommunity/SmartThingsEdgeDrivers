@@ -1,0 +1,29 @@
+name: thermostat-modular
+components:
+  - id: main
+    capabilities:
+      - id: temperatureMeasurement
+      - id: thermostatMode
+      - id: thermostatHeatingSetpoint
+        optional: true
+      - id: thermostatCoolingSetpoint
+        optional: true
+      - id: thermostatOperatingState
+        optional: true
+      - id: batteryLevel
+        optional: true
+      - id: firmwareUpdate
+      - id: refresh
+      - id: battery
+        optional: true
+      - id: thermostatFanMode
+        optional: true
+      - id: relativeHumidityMeasurement
+        optional: true
+    categories:
+    - name: Thermostat
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true
