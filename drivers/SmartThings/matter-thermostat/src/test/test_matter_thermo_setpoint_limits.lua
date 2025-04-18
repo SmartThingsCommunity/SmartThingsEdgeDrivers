@@ -238,6 +238,36 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Min heat setpoint higher than max",
+  function()
+    configure(mock_device)
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:build_test_report_data(mock_device, 1, 5000)
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 3444)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Min cool setpoint higher than max",
+  function()
+    configure(mock_device)
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Thermostat.attributes.AbsMinCoolSetpointLimit:build_test_report_data(mock_device, 1, 4000)
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(mock_device, 1, 1200)
+    })
+  end
+)
+
+test.register_coroutine_test(
   "Heat setpoint inside deadband",
   function()
     configure(mock_device)
@@ -289,7 +319,7 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "Min and max heating setpoint attributes set capability constraint",
+  "Min and max cooling setpoint attributes set capability constraint",
   {
     {
       channel = "matter",
@@ -316,7 +346,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Min and max cooling setpoint attributes set capability constraint",
+  "Min and max heating setpoint attributes set capability constraint",
   {
     {
       channel = "matter",
@@ -367,6 +397,40 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 39.00 }, unit = "C" }))
     }
   }
+)
+
+test.register_coroutine_test("Heating setpoint capability cached as Fahrenheit value",
+  function()
+  mock_device.wrapped_device.state_cache.main = {
+    [capabilities.thermostatHeatingSetpoint.ID] = {
+      [capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME] = { unit = "F", value = 56.67 }
+    }
+  }
+  test.socket.capability:__queue_receive({
+    mock_device.id,
+    { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 9 } }
+  })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 40.00, unit = "C" }, {state_change = true }))
+  )
+  end
+)
+
+test.register_coroutine_test("Cooling setpoint capability cached as Fahrenheit value",
+  function()
+  mock_device.wrapped_device.state_cache.main = {
+    [capabilities.thermostatCoolingSetpoint.ID] = {
+      [capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME] = { unit = "F", value = 46.67 }
+    }
+  }
+  test.socket.capability:__queue_receive({
+    mock_device.id,
+    { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 9 } }
+  })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 5.00, unit = "C" }, {state_change = true }))
+  )
+  end
 )
 
 test.run_registered_tests()

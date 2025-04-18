@@ -513,7 +513,87 @@ test.register_message_test(
         clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
       }
     },
-      {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "airPurifierFanMode", component = "main", command = "setAirPurifierFanMode", args = { "quiet" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "airPurifierFanMode", component = "main", command = "setAirPurifierFanMode", args = { "windFree" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "airPurifierFanMode", component = "main", command = "setAirPurifierFanMode", args = { "medium" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.MEDIUM)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "airPurifierFanMode", component = "main", command = "setAirPurifierFanMode", args = { "high" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "airPurifierFanMode", component = "main", command = "setAirPurifierFanMode", args = { "off" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.OFF)
+      }
+    },
+    {
       channel = "capability",
       direction = "receive",
       message = {
@@ -674,6 +754,19 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
+        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("hepaFilter", capabilities.filterStatus.filterStatus.normal())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
         clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.CRITICAL)
       }
     },
@@ -700,6 +793,19 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
+        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.normal())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
         clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.CRITICAL)
       }
     },
@@ -708,6 +814,38 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.replace())
     },
+  }
+)
+
+test.register_message_test(
+  "Test filter condition for HEPA and Activated Carbon filters",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.HepaFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, 1, 65)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("hepaFilter", capabilities.filterState.filterLifeRemaining(65))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ActivatedCarbonFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, 1, 28)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterState.filterLifeRemaining(28))
+    }
   }
 )
 
@@ -746,6 +884,19 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.windMode.windMode.sleepWind())
     },
     {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, 0)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.windMode.windMode.noWind())
+    },
+    {
       channel = "capability",
       direction = "receive",
       message = {
@@ -760,7 +911,23 @@ test.register_message_test(
         mock_device.id,
         clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
       }
-    }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "windMode", component = "main", command = "setWindMode", args = { "sleepWind" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.SLEEP_WIND)
+      }
+    },
   }
 )
 
@@ -833,6 +1000,19 @@ test.register_message_test(
       message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.fanOscillationMode.horizontal())
     },
     {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:build_test_report_data(mock_device_rock, 1, 0)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.fanOscillationMode.off())
+    },
+    {
       channel = "capability",
       direction = "receive",
       message = {
@@ -846,6 +1026,38 @@ test.register_message_test(
       message = {
         mock_device_rock.id,
         clusters.FanControl.attributes.RockSetting:write(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_UP_DOWN)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        { capability = "fanOscillationMode", component = "main", command = "setFanOscillationMode", args = { "horizontal" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:write(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_LEFT_RIGHT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        { capability = "fanOscillationMode", component = "main", command = "setFanOscillationMode", args = { "swing" } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:write(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_ROUND)
       }
     }
   }

@@ -13,12 +13,13 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-test.set_rpc_version(5)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local version = require "version"
 local clusters = require "st.matter.clusters"
+
+version.api = 9
 
 if version.api < 13 then
   clusters.WaterHeaterMode = require "WaterHeaterMode"
@@ -77,22 +78,68 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local function test_init()
-  local cluster_subscribe_list = {
-    clusters.Thermostat.attributes.SystemMode,
-    clusters.Thermostat.attributes.ControlSequenceOfOperation,
-    clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
-    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
-    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
-    clusters.Thermostat.attributes.LocalTemperature,
-    clusters.TemperatureMeasurement.attributes.MeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
-    clusters.WaterHeaterMode.attributes.CurrentMode,
-    clusters.WaterHeaterMode.attributes.SupportedModes,
-    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+local mock_device_periodic = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("water-heater-power-energy-powerConsumption.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode
+      }
+    },
+    {
+      endpoint_id = WATER_HEATER_EP,
+      clusters = {
+        {
+          cluster_id = clusters.Thermostat.ID,
+          cluster_revision = 5,
+          cluster_type = "SERVER",
+          feature_map = 9, -- Heat and SCH features
+        },
+        { cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER" },
+        { cluster_id = clusters.WaterHeaterMode.ID,        cluster_type = "SERVER" },
+      },
+      device_types = {
+        {device_type_id = 0x050F, device_type_revision = 1}, -- Water Heater
+      }
+    },
+    {
+      endpoint_id = ELECTRICAL_SENSOR_EP,
+      clusters = {
+        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 10 },
+        { cluster_id = clusters.ElectricalPowerMeasurement.ID,  cluster_type = "SERVER" },
+      },
+      device_types = {
+        {device_type_id = 0x0510, device_type_revision = 1}, -- Electrical Sensor
+      }
+    }
   }
+})
+
+local cluster_subscribe_list = {
+  clusters.Thermostat.attributes.SystemMode,
+  clusters.Thermostat.attributes.ControlSequenceOfOperation,
+  clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+  clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
+  clusters.Thermostat.attributes.LocalTemperature,
+  clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+  clusters.WaterHeaterMode.attributes.CurrentMode,
+  clusters.WaterHeaterMode.attributes.SupportedModes,
+  clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+}
+
+local function test_init()
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -108,96 +155,17 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-  "Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 90 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, WATER_HEATER_EP,
-          utils.round((90 - 32) * (5 / 9.0) * 100))
-      }
-    }
-  }
-)
-
-test.register_message_test(
-  "Heating setpoint reports should generate correct messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.server.attributes.OccupiedHeatingSetpoint:build_test_report_data(mock_device, 1, 70*100)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 30.00, maximum = 80.00, step = 0.1 }, unit = "C" }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 70.0, unit = "C" }))
-    }
-  }
-)
-
-test.register_message_test(
-  "Setting the heating setpoint should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 80 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, WATER_HEATER_EP, 80*100)
-      }
-    }
-  }
-)
-
-test.register_message_test(
-  "Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 100 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, WATER_HEATER_EP, utils.round((100 - 32) * (5 / 9.0) * 100))
-      }
-    }
-  }
-)
+local function test_init_periodic()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_periodic)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_periodic))
+    end
+  end
+  test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
+  test.mock_device.add_test_device(mock_device_periodic)
+end
 
 test.register_message_test(
   "Ensure WaterHeaderMode supportedModes are registered and setting Oven mode should send appropriate commands",
@@ -254,27 +222,6 @@ test.register_message_test(
         mock_device.id,
         clusters.WaterHeaterMode.commands.ChangeToMode(mock_device, WATER_HEATER_EP, 0) -- Index where Mode 1 is stored)
       }
-    }
-  }
-)
-
-test.register_message_test(
-  "Appropriate powerMeter capability events must be sent in 'W' on receiving ActivePower events",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(mock_device,
-          ELECTRICAL_SENSOR_EP,
-          15000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 15.0, unit = "W" }))
     }
   }
 )
@@ -373,130 +320,21 @@ test.register_coroutine_test(
   }
 )
 
-test.register_message_test(
-  "WaterHeaterMode SupportedModes must be registered. CurrentMode reports should report appropriate mode capability event. Command to setMode should send appropriate changeToMode matter command",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.WaterHeaterMode.attributes.SupportedModes:build_test_report_data(mock_device,
-          WATER_HEATER_EP, {
-          clusters.WaterHeaterMode.types.ModeOptionStruct({
-            ["label"] = "Water Heater Mode 1",
-            ["mode"] = 0,
-            ["mode_tags"] = {
-              clusters.WaterHeaterMode.types.ModeTagStruct({ ["mfg_code"] = 256, ["value"] = 0 })
-            }
-          }),
-          clusters.WaterHeaterMode.types.ModeOptionStruct({
-            ["label"] = "Water Heater Mode 2",
-            ["mode"] = 1,
-            ["mode_tags"] = {
-              clusters.WaterHeaterMode.types.ModeTagStruct({ ["mfg_code"] = 256, ["value"] = 1 })
-            }
-          }),
-          clusters.WaterHeaterMode.types.ModeOptionStruct({
-            ["label"] = "Water Heater Mode 3",
-            ["mode"] = 2,
-            ["mode_tags"] = {
-              clusters.WaterHeaterMode.types.ModeTagStruct({ ["mfg_code"] = 256, ["value"] = 2 })
-            }
-          })
-        })
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.mode.supportedModes(
-        { "Water Heater Mode 1", "Water Heater Mode 2", "Water Heater Mode 3" },
-          { visibility = { displayed = false } }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.mode.supportedArguments(
-        { "Water Heater Mode 1", "Water Heater Mode 2", "Water Heater Mode 3" },
-          { visibility = { displayed = false } }))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.WaterHeaterMode.attributes.CurrentMode:build_test_report_data(mock_device, WATER_HEATER_EP, 1) -- 1 is the index for Water Heater Mode 2 mode
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.mode.mode("Water Heater Mode 2"))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "mode", component = "main", command = "setMode", args = { "Water Heater Mode 3" } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.WaterHeaterMode.commands.ChangeToMode(mock_device, WATER_HEATER_EP, 2) -- Index is Water Heater Mode 3
-      }
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "mode", component = "main", command = "setMode", args = { "Water Heater Mode 1" } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.WaterHeaterMode.commands.ChangeToMode(mock_device, WATER_HEATER_EP, 0) -- Index is Water Heater Mode 1
-      }
-    }
-  }
-)
+test.register_coroutine_test(
+  "PeriodicEnergyImported should report the energyMeter values",
+  function()
+    test.socket.matter:__queue_receive({ mock_device_periodic.id, clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_periodic,
+      ELECTRICAL_SENSOR_EP,
+      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 30000, start_timestamp = 0, end_timestamp = 100, start_systime = 0, end_systime = 0 })) }) -- 30Wh
 
-test.register_message_test(
-  "Min and max heating setpoint attributes set capability constraint",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.AbsMinHeatSetpointLimit:build_test_report_data(mock_device, 1, 2800)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 6222)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 30.00, maximum = 62.22, step = 0.1 }, unit = "C" }))
-    }
-  }
+    test.socket.capability:__expect_send(
+      mock_device_periodic:generate_test_message("main",
+        capabilities.energyMeter.energy({
+          value = 30, unit = "Wh"
+        }))
+    )
+  end,
+  { test_init = test_init_periodic }
 )
 
 test.run_registered_tests()
