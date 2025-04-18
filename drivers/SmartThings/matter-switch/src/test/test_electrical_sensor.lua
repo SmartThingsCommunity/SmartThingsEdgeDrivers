@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
+local version = require "version"
 
-clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
@@ -60,6 +62,34 @@ local mock_device = test.mock_device.build_test_matter_device({
   },
 })
 
+local mock_device_power_plug = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("plug-power.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+        { cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", feature_map = 10, }
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
+      }
+    }
+  }
+})
 
 local mock_device_periodic = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-energy-powerConsumption.yml"),
@@ -89,10 +119,6 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
   },
 })
 
-local subscribed_attributes_periodic = {
-  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
-  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-}
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
@@ -101,6 +127,16 @@ local subscribed_attributes = {
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+}
+
+local subscribed_attributes_power_plug = {
+  clusters.OnOff.attributes.OnOff,
+  clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+}
+
+local subscribed_attributes_periodic = {
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
 }
 
 local cumulative_report_val_19 = {
@@ -149,6 +185,17 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
+local function test_init_power_plug()
+  local subscribe_request = subscribed_attributes[1]:subscribe(mock_device_power_plug)
+  for i, cluster in ipairs(subscribed_attributes_power_plug) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_power_plug))
+    end
+  end
+  test.socket.matter:__expect_send({ mock_device_power_plug.id, subscribe_request })
+  test.mock_device.add_test_device(mock_device_power_plug)
+end
+
 local function test_init_periodic()
   local subscribe_request = subscribed_attributes_periodic[1]:subscribe(mock_device_periodic)
   for i, cluster in ipairs(subscribed_attributes_periodic) do
@@ -183,64 +230,54 @@ test.register_coroutine_test(
   end
 )
 
-test.register_message_test(
-	"On command should send the appropriate commands",
-  {
-    channel = "devices",
-    direction = "send",
-    message = {
-      "register_native_capability_cmd_handler",
-      { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
-    }
-  },
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "switch", component = "main", command = "on", args = { } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.OnOff.server.commands.On(mock_device, 2)
-			}
-		}
-	}
+test.register_coroutine_test(
+  "On command should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        clusters.OnOff.server.commands.On(mock_device, 2)
+      }
+    )
+  end
 )
 
-test.register_message_test(
-  "Off command should send the appropriate commands",
-  {
-    channel = "devices",
-    direction = "send",
-    message = {
-      "register_native_capability_cmd_handler",
-      { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
-    }
-  },
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Off command should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_device.id,
         { capability = "switch", component = "main", command = "off", args = { } }
       }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
         clusters.OnOff.server.commands.Off(mock_device, 2)
       }
-    }
-  }
+    )
+  end
 )
 
 test.register_message_test(
@@ -314,6 +351,16 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
           start = "1970-01-01T00:00:00Z",
           ["end"] = "1970-01-01T00:33:19Z",
+          deltaEnergy = 0.0,
+          energy = 39.0
+        }))
+      )
+      test.wait_for_events()
+      test.mock_time.advance_time(1500)
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+          start = "1970-01-01T00:33:20Z",
+          ["end"] = "1970-01-01T00:58:19Z",
           deltaEnergy = 0.0,
           energy = 39.0
         }))
@@ -672,6 +719,16 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Test profile change on init for Power Plug device type",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_power_plug.id, "doConfigure" })
+    mock_device_power_plug:expect_metadata_update({ profile = "plug-power" })
+    mock_device_power_plug:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  { test_init = test_init_power_plug }
+)
+
+test.register_coroutine_test(
   "Test profile change on init for only Periodic Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "doConfigure" })
@@ -681,68 +738,57 @@ test.register_coroutine_test(
   { test_init = test_init_periodic }
 )
 
-test.register_message_test(
-  "Set level command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Set level command should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_device.id,
         { capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
       }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
         clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 2, math.floor(20/100.0 * 254), 20, 0 ,0)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 2)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 2, 50)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.switchLevel.level(20)
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 2, true)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.switch.switch.on()
+      )
+    )
+  end
 )
 
 test.run_registered_tests()
