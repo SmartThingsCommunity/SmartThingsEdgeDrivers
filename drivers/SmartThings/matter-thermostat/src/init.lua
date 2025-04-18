@@ -305,6 +305,21 @@ local subscribed_attributes = {
   },
 }
 
+local function supports_capability_by_id_modular(device, capability, component)
+  for _, component_capabilities in ipairs(device:get_field(SUPPORTED_COMPONENT_CAPABILITIES)) do
+    local comp_id = component_capabilities[1]
+    local capability_ids = component_capabilities[2]
+    if (component == nil) or (component == comp_id) then
+        for _, cap in ipairs(capability_ids) do
+          if cap == capability then
+            return true
+          end
+        end
+    end
+  end
+  return false
+end
+
 local function epoch_to_iso8601(time)
   return os.date("!%Y-%m-%dT%H:%M:%SZ", time)
 end
@@ -576,6 +591,29 @@ local function create_level_measurement_profile(device)
   return meas_name, level_name
 end
 
+local function supported_level_measurements(device)
+  local measurement_caps, level_caps = {}, {}
+  for _, details in ipairs(AIR_QUALITY_MAP) do
+    local cap_id  = details[1]
+    local cluster = details[3]
+    -- capability describes either a HealthConcern or Measurement/Sensor
+    if (cap_id:match("HealthConcern$")) then
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
+      if #attr_eps > 0 then
+        device.log.info(string.format("Adding %s cap to table", cap_id))
+        table.insert(level_caps, cap_id)
+      end
+    elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
+      if #attr_eps > 0 then
+        device.log.info(string.format("Adding %s cap to table", cap_id))
+        table.insert(measurement_caps, cap_id)
+      end
+    end
+  end
+  return measurement_caps, level_caps
+end
+
 local function create_air_quality_sensor_profile(device)
   local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
   local profile_name = ""
@@ -657,7 +695,7 @@ local function profiling_data_still_required(device)
   return false
 end
 
-local function match_profile(driver, device)
+local function match_profile_switch(driver, device)
   if profiling_data_still_required(device) then return end
 
   local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
@@ -791,6 +829,336 @@ local function match_profile(driver, device)
   -- clear all profiling data fields after profiling is complete.
   for _, field in pairs(profiling_data) do
     device:set_field(field, nil)
+  end
+end
+
+local function get_thermostat_optional_capabilities(device)
+  local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
+  local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
+  local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
+
+  local supported_thermostat_capabilities = {}
+
+  if #heat_eps > 0 then
+    table.insert(supported_thermostat_capabilities, capabilities.thermostatHeatingSetpoint.ID)
+  if #cool_eps > 0  then
+    table.insert(supported_thermostat_capabilities, capabilities.thermostatCoolingSetpoint.ID)
+  end
+
+  if running_state_supported then
+    table.insert(supported_thermostat_capabilities, capabilities.thermostatOperatingState.ID)
+  end
+
+  return supported_thermostat_capabilities
+end
+
+local function match_modular_profile_room_ac(driver, device)
+  -- Mandatory capabilities for room AC:
+  --
+  -- Possible supported capabilites for room AC:
+  --
+  local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  local profile_name = "room-air-conditioner-modular"
+
+  if #humidity_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  end
+
+  -- determine fan capabilities
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+  -- Room AC does not support the rocking feature of FanControl.
+  -- local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
+
+  if #fan_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.airConditionerFanMode.ID)
+  end
+  if #wind_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.windMode.ID)
+  end
+
+  local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
+  local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
+
+  if #heat_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.thermostatHeatingSetpoint.ID)
+  if #cool_eps > 0  then
+    table.insert(main_component_capabilities, capabilities.thermostatCoolingSetpoint.ID)
+  end
+
+  if running_state_supported then
+    table.insert(main_component_capabilities, capabilities.thermostatOperatingState.ID)
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+
+  -- add mandatory capabilities for subscription
+  local total_supported_capabilities = optional_supported_component_capabilities
+  table.insert(total_supported_capabilities[1][2], capabilities.temperatureMeasurement.ID)
+  table.insert(total_supported_capabilities[1][2], capabilities.switch.ID)
+  table.insert(total_supported_capabilities[1][2], capabilities.thermostatMode.ID)
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+
+  --re-up subscription with new capabiltiies using the moudlar supports_capability override
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  device:subscribe()
+end
+
+local function match_modular_profile_fan(driver, device)
+  -- Mandatory capabilities for fan:
+  --
+  -- Possible supported capabilites for fan:
+  --
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  local profile_name = "fan-modular"
+
+  if #humidity_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  end
+
+  -- determine fan capabilities
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+
+  if #fan_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.airConditionerFanMode.ID)
+  end
+  if #rock_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
+  end
+  if #wind_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.windMode.ID)
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+
+  -- add mandatory capabilities for subscription
+  local total_supported_capabilities = optional_supported_component_capabilities
+  table.insert(total_supported_capabilities[1][2], capabilities.airConditionerFanMode.ID)
+  table.insert(total_supported_capabilities[1][2], capabilities.fanSpeedPercent.ID)
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+
+  --re-up subscription with new capabiltiies using the moudlar supports_capability override
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  device:subscribe()
+end
+
+local function get_air_quality_optional_capabilities(device)
+  local optional_supported_component_capabilities = {}
+  local supported_air_quality_capabilities = {}
+
+  local measurement_caps, level_caps = supported_level_measurements(device)
+
+  for _, cap_id in ipairs(measurement_caps) do
+    table.insert(supported_air_quality_capabilities, cap_id)
+  end
+
+  for _, cap_id in ipairs(level_caps) do
+    table.insert(supported_air_quality_capabilities, cap_id)
+  end
+
+  return supported_air_quality_capabilities
+end
+
+local function match_modular_profile_air_purifer(driver, device)
+  -- Mandatory capabilities for air purifier:
+  --
+  -- Possible supported capabilites for air purifier:
+  --
+  local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
+  local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  local hepa_filter_component_capabilities = {}
+  local ac_filter_component_capabiltiies = {}
+  local profile_name = "air-purifier-modular"
+
+  if #humidity_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  end
+
+  local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
+  local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
+
+  if #hepa_filter_eps > 0 then
+    -- TODO: only one of these is required by spec
+    table.insert(hepa_filter_component_capabilities, capabilites.filterState.ID)
+    table.insert(hepa_filter_component_capabilities, capabilites.filterStatus.ID)
+  end
+  if #ac_filter_eps > 0 then
+    -- TODO: only one of these is required by spec
+    table.insert(ac_filter_component_capabiltiies, capabilites.filterState.ID)
+    table.insert(ac_filter_component_capabiltiies, capabilites.filterStatus.ID)
+  end
+
+  -- determine fan capabilities
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+
+  if #fan_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.airConditionerFanMode.ID)
+  end
+  if #rock_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
+  end
+  if #wind_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.windMode.ID)
+  end
+
+  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
+
+  if #thermostat_eps > 0 then
+    -- thermostatMode and temperatureMeasurement are mandatory if thermostat is present?
+    table.insert(main_component_capabilities, capabilites.thermostatMode.ID)
+    table.insert(main_component_capabilities, capabilites.temperatureMeasurement.ID)
+    local thermostat_capabilities = get_thermostat_optional_capabilities(device)
+    for _, capability_id in pairs(supported_capabilities) do
+      table.insert(main_component_capabilities, capability_id)
+    end
+  end
+
+  local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
+  if battery_supported == battery_support.BATTERY_LEVEL then
+    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+  elseif battery_supported == battery_support.BATTERY_PERCENTAGE then
+    table.insert(main_component_capabilities, capabilities.battery.ID)
+  end
+
+  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
+  if #aqs_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.airQualityHealthConcern.ID)
+  end
+
+  local supported_air_quality_capabilities = get_air_quality_optional_capabilities(device)
+  for _, capability_id in pairs(supported_capabilities) do
+    table.insert(main_component_capabilities, capability_id)
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+
+  -- add mandatory capabilities for subscription
+  local total_supported_capabilities = optional_supported_component_capabilities
+  -- TODO: make sure these are added to the main component list, even though it theoretically shouldn't matter
+  -- however, the numbering is thrown off if there are other components for hepa/AC filter
+  table.insert(total_supported_capabilities[1][2], capabilities.airPurifierFanMode.ID)
+  table.insert(total_supported_capabilities[1][2], capabilities.fanSpeedPercent.ID)
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+
+  --re-up subscription with new capabiltiies using the moudlar supports_capability override
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  device:subscribe()
+end
+
+local function match_modular_profile_thermostat(driver, device)
+  -- Mandatory capabilities for thermostat:
+  --
+  -- Possible supported capabilites for thermostat:
+  --
+  local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
+  local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  local hepa_filter_component_capabilities = {}
+  local ac_filter_component_capabiltiies = {}
+  local profile_name = "thermostat-modular"
+
+  if #humidity_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  end
+
+  -- determine fan capabilities
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+
+  if #fan_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.airConditionerFanMode.ID)
+  end
+  if #rock_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
+  end
+  if #wind_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.windMode.ID)
+  end
+
+
+  local thermostat_capabilities = get_thermostat_optional_capabilities(device)
+  for _, capability_id in pairs(supported_capabilities) do
+    table.insert(main_component_capabilities, capability_id)
+  end
+
+  local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
+  if battery_supported == battery_support.BATTERY_LEVEL then
+    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+  elseif battery_supported == battery_support.BATTERY_PERCENTAGE then
+    table.insert(main_component_capabilities, capabilities.battery.ID)
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+
+  -- add mandatory capabilities for subscription
+  local total_supported_capabilities = optional_supported_component_capabilities
+  -- TODO: make sure these are added to the main component list, even though it theoretically shouldn't matter
+  -- however, the numbering is thrown off if there are other components for hepa/AC filter
+  table.insert(main_component_capabilities, capabilites.thermostatMode.ID)
+  table.insert(main_component_capabilities, capabilites.temperatureMeasurement.ID)
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+
+  --re-up subscription with new capabiltiies using the moudlar supports_capability override
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  device:subscribe()
+end
+
+local function match_modular_profile(driver, device)
+  if profiling_data_still_required(device) then return end
+
+  if device_type == RAC_DEVICE_TYPE_ID then
+    match_modular_profile_room_ac(driver, device)
+  elseif device_type == FAN_DEVICE_TYPE_ID then
+    match_modular_profile_fan(driver, device)
+  elseif device_type == AP_DEVICE_TYPE_ID then
+    match_modular_profile_air_purifer(driver, device)
+  elseif device_type == WATER_HEATER_DEVICE_TYPE_ID then
+    -- TODO
+  elseif device_type == HEAT_PUMP_DEVICE_TYPE_ID then
+    -- TODO
+  elseif #thermostat_eps > 0 then
+   match_modular_profile_thermostat(driver, device)
+  else
+    device.log.warn_with({hub_logs=true}, "Device type is not supported in thermostat driver")
+    return
+  end
+
+  -- clear all profiling data fields after profiling is complete.
+  for _, field in pairs(profiling_data) do
+    device:set_field(field, nil)
+  end
+end
+
+local function match_profile(driver, device)
+  -- must use profile switching on older hubs
+  if version.api < 14 and version.rpc < 7 then
+    match_profile_switch(driver, device)
+  else
+    match_modular_profile(driver, device)
   end
 end
 
