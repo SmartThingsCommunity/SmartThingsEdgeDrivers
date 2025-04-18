@@ -130,7 +130,7 @@ local CLUSTER_SUBSCRIBE_LIST_NO_BATTERY = {
 }
 
 local function test_init()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
@@ -141,7 +141,7 @@ local function test_init()
 end
 
 local function test_init_switch_to_battery()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST_NO_BATTERY[1]:subscribe(mock_device_switch_to_battery)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_BATTERY) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_switch_to_battery)) end
@@ -156,7 +156,7 @@ local function test_init_switch_to_battery()
 end
 
 local function test_init_mains_powered()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST_NO_BATTERY[1]:subscribe(mock_device_mains_powered)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_BATTERY) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_mains_powered)) end

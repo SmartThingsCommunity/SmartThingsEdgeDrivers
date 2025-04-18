@@ -56,7 +56,7 @@ local cluster_subscribe_list_humidity_battery = {
 }
 
 local function test_init()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request_humidity_battery = cluster_subscribe_list_humidity_battery[1]:subscribe(mock_device_humidity_battery)
   for i, cluster in ipairs(cluster_subscribe_list_humidity_battery) do
     if i > 1 then

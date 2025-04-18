@@ -67,7 +67,7 @@ local mock_device_no_battery_record = {
 local mock_device_no_battery = test.mock_device.build_test_matter_device(mock_device_no_battery_record)
 
 local function test_init()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
@@ -84,7 +84,7 @@ end
 test.set_test_init_function(test_init)
 
 local function test_init_no_battery()
-  test.enable_startup_messages(false)
+  test.disable_startup_messages()
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device_no_battery)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device_no_battery))
