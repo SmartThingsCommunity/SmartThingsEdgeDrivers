@@ -503,4 +503,42 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "On/off commands should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.OnOff.server.commands.On(mock_device, 1)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "switch", component = "main", command = "off", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.OnOff.server.commands.Off(mock_device, 1)
+      }
+    }
+  }
+)
+
 test.run_registered_tests()

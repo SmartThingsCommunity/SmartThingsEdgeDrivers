@@ -754,6 +754,19 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
+        clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("hepaFilter", capabilities.filterStatus.filterStatus.normal())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
         clusters.HepaFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.HepaFilterMonitoring.attributes.ChangeIndication.CRITICAL)
       }
     },
@@ -780,6 +793,19 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
+        clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.WARNING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.normal())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
         clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication:build_test_report_data(mock_device, 1, clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication.CRITICAL)
       }
     },
@@ -788,6 +814,38 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.replace())
     },
+  }
+)
+
+test.register_message_test(
+  "Test filter condition for HEPA and Activated Carbon filters",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.HepaFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, 1, 65)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("hepaFilter", capabilities.filterState.filterLifeRemaining(65))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ActivatedCarbonFilterMonitoring.attributes.Condition:build_test_report_data(mock_device, 1, 28)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterState.filterLifeRemaining(28))
+    }
   }
 )
 
@@ -824,6 +882,19 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.windMode.windMode.sleepWind())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.WindSetting:build_test_report_data(mock_device, 1, 0)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.windMode.windMode.noWind())
     },
     {
       channel = "capability",
@@ -927,6 +998,19 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.fanOscillationMode.horizontal())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device_rock.id,
+        clusters.FanControl.attributes.RockSetting:build_test_report_data(mock_device_rock, 1, 0)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device_rock:generate_test_message("main", capabilities.fanOscillationMode.fanOscillationMode.off())
     },
     {
       channel = "capability",
