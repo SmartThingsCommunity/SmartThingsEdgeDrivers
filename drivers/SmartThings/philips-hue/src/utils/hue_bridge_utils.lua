@@ -21,6 +21,7 @@ local lifecycle_handlers = require "handlers.lifecycle_handlers"
 local hue_multi_service_device_utils = require "utils.hue_multi_service_device_utils"
 local lunchbox_util = require "lunchbox.util"
 local utils = require "utils"
+local grouped_utils = require "utils.grouped_utils"
 
 ---@class hue_bridge_utils
 local hue_bridge_utils = {}
@@ -125,7 +126,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
 
           ::continue::
         end
-      end, string.format("Hue Bridge %s Zigbee Scan Task", bridge_device.label))
+        grouped_utils.scan_groups(driver, bridge_device, bridge_api, child_device_map)
+      end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
     end
 
     eventsource.onerror = function()
@@ -174,6 +176,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                     table.insert(resource_ids, rid)
                   end
                 end
+              elseif grouped_utils.GROUP_TYPES[update_data.type] then
+                grouped_utils.group_update(driver, bridge_device, update_data)
               else
                 --- for a regular message from a device doing something normal,
                 --- you get the resource id of the device service for that device in
@@ -211,6 +215,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                   child_device.log.trace("Attempting to delete Device UUID " .. tostring(child_device.id))
                   driver:do_hue_child_delete(child_device)
                 end
+              elseif grouped_utils.GROUP_TYPES[delete_data.type] then
+                grouped_utils.group_delete(driver, bridge_device, delete_data)
               end
             end
           elseif event.type == "add" then
@@ -234,6 +240,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                     bridge_device
                   )
                 end, "New Device Event Task")
+              elseif grouped_utils.GROUP_TYPES[add_data.type] then
+                grouped_utils.group_add(driver, bridge_device, add_data)
               end
             end
           end

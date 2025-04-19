@@ -108,3 +108,11 @@
 
 --- @class HueChildDevice:HueDevice
 --- @field public parent_assigned_child_key string
+
+--- @class HueGroupInfo:HueResourceInfo
+--- @field public services HueServiceInfo[]
+--- @field public children HueServiceInfo[]
+
+--- @class HueZoneInfo:HueGroupInfo
+
+--- @class HueRoomInfo:HueResourceInfo
