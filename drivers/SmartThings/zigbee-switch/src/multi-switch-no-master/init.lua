@@ -36,6 +36,7 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "eWeLink", model = "ZB-SW02", children = 1 },
   { mfr = "eWeLink", model = "ZB-SW03", children = 2 },
   { mfr = "eWeLink", model = "ZB-SW04", children = 3 },
+  { mfr = "SMARTvill", model = "SLA01", children = 0 },
   { mfr = "SMARTvill", model = "SLA02", children = 1 },
   { mfr = "SMARTvill", model = "SLA03", children = 2 },
   { mfr = "SMARTvill", model = "SLA04", children = 3 },
