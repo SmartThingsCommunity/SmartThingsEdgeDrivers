@@ -183,6 +183,7 @@ local subscribed_attributes = {
     clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
   },
   [capabilities.airConditionerFanMode.ID] = {
+    clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.airPurifierFanMode.ID] = {

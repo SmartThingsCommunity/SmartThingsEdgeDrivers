@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -11,11 +11,11 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
-
 local clusters = require "st.matter.clusters"
 
 clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
@@ -612,6 +612,7 @@ test.register_message_test(
   }
 )
 
+local FanModeSequence = clusters.FanControl.attributes.FanModeSequence
 test.register_message_test(
   "FanModeSequence send the appropriate commands",
   {
@@ -620,7 +621,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, 0)
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_MED_HIGH)
       }
     },
     {
@@ -638,7 +639,26 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.FanModeSequence:build_test_report_data(mock_device, 1, 1)
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_MED_HIGH_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.supportedAirPurifierFanModes({
+        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.medium.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
+      }, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_HIGH)
       }
     },
     {
@@ -650,6 +670,57 @@ test.register_message_test(
         capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
       }, {visibility={displayed=false}}))
     },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_HIGH_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.supportedAirPurifierFanModes({
+        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
+      }, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_ON_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.supportedAirPurifierFanModes({
+        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
+      }, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_ON)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.supportedAirPurifierFanModes({
+        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
+        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
+      }, {visibility={displayed=false}}))
+    }
   }
 )
 
@@ -722,6 +793,19 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.MEDIUM)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.airPurifierFanMode.medium())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
         clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.HIGH)
       }
     },
@@ -730,6 +814,19 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.airPurifierFanMode.high())
     },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.airPurifierFanMode.auto())
+    }
   }
 )
 

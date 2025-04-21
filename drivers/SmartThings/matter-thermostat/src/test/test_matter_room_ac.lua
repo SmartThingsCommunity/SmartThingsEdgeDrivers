@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -11,11 +11,11 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -142,6 +142,7 @@ local function test_init()
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
     },
     [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
@@ -199,6 +200,7 @@ local function test_init_configure()
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
     },
     [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
@@ -253,6 +255,7 @@ local function test_init_nostate()
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
     },
     [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
@@ -537,6 +540,189 @@ test.register_message_test(
         mock_device.id,
         clusters.OnOff.server.commands.Off(mock_device, 1)
       }
+    }
+  }
+)
+
+local FanModeSequence = clusters.FanControl.attributes.FanModeSequence
+test.register_message_test(
+  "FanModeSequence send the appropriate commands",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_MED_HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.supportedAcFanModes({
+        "off",
+        "low",
+        "medium",
+        "high"
+      }, { visibility = { displayed = false } }))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.supportedAcFanModes({
+        "off",
+        "low",
+        "high"
+      }, { visibility = { displayed = false } }))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_MED_HIGH_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.supportedAcFanModes({
+        "off",
+        "low",
+        "medium",
+        "high",
+        "auto"
+      }, { visibility = { displayed = false } }))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_LOW_HIGH_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.supportedAcFanModes({
+        "off",
+        "low",
+        "high",
+        "auto"
+      }, { visibility = { displayed = false } }))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_ON_AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.supportedAcFanModes({
+        "off",
+        "high",
+        "auto"
+      }, { visibility = { displayed = false } }))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanModeSequence:build_test_report_data(mock_device, 1, FanModeSequence.OFF_ON)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.supportedAcFanModes({
+        "off",
+        "high"
+      }, { visibility = { displayed = false } }))
+    }
+  }
+)
+
+test.register_message_test(
+  "Test fan mode handler",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.OFF)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("off"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("low"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.MEDIUM)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("medium"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.HIGH)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("high"))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.FanControl.attributes.FanMode:build_test_report_data(mock_device, 1, clusters.FanControl.attributes.FanMode.AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("auto"))
     }
   }
 )

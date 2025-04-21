@@ -11,9 +11,9 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -73,17 +73,19 @@ local mock_device_generic = test.mock_device.build_test_matter_device({
 })
 
 local cluster_subscribe_list = {
-    clusters.FanControl.attributes.FanMode,
-    clusters.FanControl.attributes.PercentCurrent,
-    clusters.FanControl.attributes.WindSupport,
-    clusters.FanControl.attributes.WindSetting,
-    clusters.FanControl.attributes.RockSupport,
-    clusters.FanControl.attributes.RockSetting,
+  clusters.FanControl.attributes.FanModeSequence,
+  clusters.FanControl.attributes.FanMode,
+  clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.WindSupport,
+  clusters.FanControl.attributes.WindSetting,
+  clusters.FanControl.attributes.RockSupport,
+  clusters.FanControl.attributes.RockSetting,
 }
 
 local cluster_subscribe_list_generic = {
-    clusters.FanControl.attributes.FanMode,
-    clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.FanModeSequence,
+  clusters.FanControl.attributes.FanMode,
+  clusters.FanControl.attributes.PercentCurrent,
 }
 
 local function test_init()
