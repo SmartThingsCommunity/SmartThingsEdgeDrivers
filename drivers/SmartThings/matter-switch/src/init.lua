@@ -919,12 +919,18 @@ local function on_off_attr_handler(driver, device, ib, response)
   else
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
   end
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("switch", "switch")
+  end
 end
 
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("switchLevel", "level")
+    end
   end
 end
 
