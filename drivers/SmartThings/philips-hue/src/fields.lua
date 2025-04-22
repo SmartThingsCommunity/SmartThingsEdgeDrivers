@@ -20,6 +20,7 @@ local Fields = {
   EVENT_SOURCE = "eventsource",
   GAMUT = "gamut",
   GROUPS = "groups",
+  GROUPS_SCAN_QUEUE = "groups_scan_queue",
   HUE_DEVICE_ID = "hue_device_id",
   IPV4 = "ipv4",
   IS_ONLINE = "is_online",

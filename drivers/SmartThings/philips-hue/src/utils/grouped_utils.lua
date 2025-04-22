@@ -1,5 +1,6 @@
 local log = require "log"
 local Fields = require "fields"
+local cosock = require "cosock"
 
 --- Room or zone with the children translated from their hue device id or light resource id to
 --- their SmartThings represented device object. The grouped light resource id is also moved into
@@ -270,5 +271,47 @@ function grouped_utils.set_field_on_group_devices(group, field, v)
   end
 end
 
+
+function grouped_utils.queue_group_scan(driver, bridge_device)
+  local queue = bridge_device:get_field(Fields.GROUPS_SCAN_QUEUE)
+  if queue == nil then
+    local tx, rx = cosock.channel.new()
+    -- Set timeout to 30 seconds to allow for other queued scans to come in.
+    rx:settimeout(30)
+    cosock.spawn(function()
+      while true do
+        -- The goal here is to timeout on the receive. If we receive a message then another request
+        -- to scan came in. This queuing is to prevent a bunch of added devices from causing to have
+        -- to keep scanning over and over.
+        local _, err = rx:receive()
+        if err then
+          -- err is most likely a timeout but break for all errs
+          break
+        end
+      end
+
+      -- Finally do the scan
+      local hue_device_table = build_hue_id_to_device_map(bridge_device)
+      local api = bridge_device:get_field(Fields.BRIDGE_API)
+
+      if api == nil then
+        log.warn("Bridge api is nil, unable to do group scan")
+        -- Clear out tx for the next request
+        bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, nil)
+        return
+      end
+
+      grouped_utils.scan_groups(driver, bridge_device, api, hue_device_table)
+
+      -- Clear out tx for the next request
+      bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, nil)
+    end)
+    -- Set the queue to the tx
+    bridge_device:set_field(Fields.GROUPS_SCAN_QUEUE, tx)
+  else
+    -- Send on the tx that another request has come in.
+    queue:send(nil)
+  end
+end
 
 return grouped_utils

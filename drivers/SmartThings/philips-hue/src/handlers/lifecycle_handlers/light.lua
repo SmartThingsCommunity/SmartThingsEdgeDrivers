@@ -13,6 +13,7 @@ local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
+local grouped_utils = require "utils.grouped_utils"
 
 ---@class LightLifecycleHandlers
 local LightLifecycleHandlers = {}
@@ -197,6 +198,13 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
+
+  local bridge_device = utils.get_hue_bridge_for_device(driver, device, parent_device_id)
+  if bridge_device then
+    grouped_utils.queue_group_scan(driver, bridge_device)
+  else
+    log.warn("Unable to queue group scan on device added, missing bridge device")
+  end
 end
 
 ---@param driver HueDriver

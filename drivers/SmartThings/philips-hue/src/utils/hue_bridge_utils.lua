@@ -126,7 +126,7 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
 
           ::continue::
         end
-        grouped_utils.scan_groups(driver, bridge_device, bridge_api, child_device_map)
+        grouped_utils.queue_group_scan(driver, bridge_device)
       end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
     end
 
