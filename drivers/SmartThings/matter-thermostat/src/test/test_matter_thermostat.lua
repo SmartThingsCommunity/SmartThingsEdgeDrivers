@@ -343,6 +343,124 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Thermostat mode reports should generate correct messages when SystemMode is received first",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.PRECOOLING)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "precooling"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.precooling())
+    }
+  }
+)
+
+test.register_message_test(
+  "Thermostat mode reports should generate correct messages when the ControlSequenceOfOperation attribute changes",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.PRECOOLING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "precooling"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.precooling())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.HEATING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.EMERGENCY_HEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "heat", "emergency heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "precooling", "cool"}, {visibility={displayed=false}}))
+    }
+  }
+)
+
+test.register_message_test(
   "Thermostat mode capability commands should generate correct messages",
   {
     {

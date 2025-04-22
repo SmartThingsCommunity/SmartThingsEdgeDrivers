@@ -940,7 +940,7 @@ local function unit_conversion(value, from_unit, to_unit, capability_name)
   return conversion_function(value, molecular_weights[capability_name])
 end
 
-local function measurementHandlerFactory(capability_name, attribute, target_unit)
+local function measurement_handler_factory(capability_name, attribute, target_unit)
   return function(driver, device, ib, response)
     local reporting_unit = device:get_field(capability_name.."_unit")
 
@@ -964,7 +964,7 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
   end
 end
 
-local function levelHandlerFactory(attribute)
+local function level_handler_factory(attribute)
   return function(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, attribute(level_strings[ib.data.value]))
   end
@@ -1119,6 +1119,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
     device:set_field(OPTIONAL_THERMOSTAT_MODES_SEEN, {capabilities.thermostatMode.thermostatMode.off.NAME}, {persist=true})
   end
   local supported_modes = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN))
+  print(utils.stringify_table(supported_modes, "", true))
   local disallowed_mode_operations = {}
 
   local modes_for_inclusion = {}
@@ -1879,54 +1880,54 @@ local matter_driver_template = {
         [clusters.AirQuality.attributes.AirQuality.ID] = air_quality_attr_handler,
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
-        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.carbonMonoxideMeasurement.NAME, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel, units.PPM),
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.carbonMonoxideMeasurement.NAME, capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel, units.PPM),
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonMonoxideMeasurement.NAME),
-        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern),
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern),
       },
       [clusters.CarbonDioxideConcentrationMeasurement.ID] = {
-        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.carbonDioxideMeasurement.NAME, capabilities.carbonDioxideMeasurement.carbonDioxide, units.PPM),
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.carbonDioxideMeasurement.NAME, capabilities.carbonDioxideMeasurement.carbonDioxide, units.PPM),
         [clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.carbonDioxideMeasurement.NAME),
-        [clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern),
+        [clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern),
       },
       [clusters.NitrogenDioxideConcentrationMeasurement.ID] = {
-        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.nitrogenDioxideMeasurement.NAME, capabilities.nitrogenDioxideMeasurement.nitrogenDioxide, units.PPM),
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.nitrogenDioxideMeasurement.NAME, capabilities.nitrogenDioxideMeasurement.nitrogenDioxide, units.PPM),
         [clusters.NitrogenDioxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.nitrogenDioxideMeasurement.NAME),
-        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern)
+        [clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern)
       },
       [clusters.OzoneConcentrationMeasurement.ID] = {
-        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.ozoneMeasurement.NAME, capabilities.ozoneMeasurement.ozone, units.PPM),
+        [clusters.OzoneConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.ozoneMeasurement.NAME, capabilities.ozoneMeasurement.ozone, units.PPM),
         [clusters.OzoneConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.ozoneMeasurement.NAME),
-        [clusters.OzoneConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.ozoneHealthConcern.ozoneHealthConcern)
+        [clusters.OzoneConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.ozoneHealthConcern.ozoneHealthConcern)
       },
       [clusters.FormaldehydeConcentrationMeasurement.ID] = {
-        [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.formaldehydeMeasurement.NAME, capabilities.formaldehydeMeasurement.formaldehydeLevel, units.PPM),
+        [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.formaldehydeMeasurement.NAME, capabilities.formaldehydeMeasurement.formaldehydeLevel, units.PPM),
         [clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.formaldehydeMeasurement.NAME),
-        [clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.formaldehydeHealthConcern.formaldehydeHealthConcern),
+        [clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.formaldehydeHealthConcern.formaldehydeHealthConcern),
       },
       [clusters.Pm1ConcentrationMeasurement.ID] = {
-        [clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.veryFineDustSensor.NAME, capabilities.veryFineDustSensor.veryFineDustLevel, units.UGM3),
+        [clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.veryFineDustSensor.NAME, capabilities.veryFineDustSensor.veryFineDustLevel, units.UGM3),
         [clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.veryFineDustSensor.NAME),
-        [clusters.Pm1ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern),
+        [clusters.Pm1ConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern),
       },
       [clusters.Pm25ConcentrationMeasurement.ID] = {
-        [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.fineDustSensor.NAME, capabilities.fineDustSensor.fineDustLevel, units.UGM3),
+        [clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.fineDustSensor.NAME, capabilities.fineDustSensor.fineDustLevel, units.UGM3),
         [clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.fineDustSensor.NAME),
-        [clusters.Pm25ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.fineDustHealthConcern.fineDustHealthConcern),
+        [clusters.Pm25ConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.fineDustHealthConcern.fineDustHealthConcern),
       },
       [clusters.Pm10ConcentrationMeasurement.ID] = {
-        [clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.dustSensor.NAME, capabilities.dustSensor.dustLevel, units.UGM3),
+        [clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.dustSensor.NAME, capabilities.dustSensor.dustLevel, units.UGM3),
         [clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.dustSensor.NAME),
-        [clusters.Pm10ConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.dustHealthConcern.dustHealthConcern),
+        [clusters.Pm10ConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.dustHealthConcern.dustHealthConcern),
       },
       [clusters.RadonConcentrationMeasurement.ID] = {
-        [clusters.RadonConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.radonMeasurement.NAME, capabilities.radonMeasurement.radonLevel, units.PCIL),
+        [clusters.RadonConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.radonMeasurement.NAME, capabilities.radonMeasurement.radonLevel, units.PCIL),
         [clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.radonMeasurement.NAME),
-        [clusters.RadonConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.radonHealthConcern.radonHealthConcern)
+        [clusters.RadonConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.radonHealthConcern.radonHealthConcern)
       },
       [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID] = {
-        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurementHandlerFactory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPB),
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue.ID] = measurement_handler_factory(capabilities.tvocMeasurement.NAME, capabilities.tvocMeasurement.tvocLevel, units.PPB),
         [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit.ID] = store_unit_factory(capabilities.tvocMeasurement.NAME),
-        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = levelHandlerFactory(capabilities.tvocHealthConcern.tvocHealthConcern)
+        [clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue.ID] = level_handler_factory(capabilities.tvocHealthConcern.tvocHealthConcern)
       },
       [clusters.ElectricalPowerMeasurement.ID] = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler

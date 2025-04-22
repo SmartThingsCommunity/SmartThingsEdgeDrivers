@@ -399,20 +399,42 @@ test.register_message_test(
   }
 )
 
-test.register_coroutine_test("Heating setpoint capability cached as Fahrenheit value",
-  function()
-  mock_device.wrapped_device.state_cache.main = {
-    [capabilities.thermostatHeatingSetpoint.ID] = {
-      [capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME] = { unit = "F", value = 56.67 }
+test.register_message_test(
+  "Max temperature reported as lower than min temperature, don't emit temperatureRange capability",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MinMeasuredValue:build_test_report_data(mock_device, 1, 5000)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 2900)
+      }
     }
   }
-  test.socket.capability:__queue_receive({
-    mock_device.id,
-    { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 9 } }
-  })
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 40.00, unit = "C" }, {state_change = true }))
-  )
+)
+
+test.register_coroutine_test("Heating setpoint capability cached as Fahrenheit value",
+  function()
+    mock_device.wrapped_device.state_cache.main = {
+      [capabilities.thermostatHeatingSetpoint.ID] = {
+        [capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME] = { unit = "F", value = 56.67 }
+      }
+    }
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 9 } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 40.00, unit = "C" }, {state_change = true }))
+    )
   end
 )
 

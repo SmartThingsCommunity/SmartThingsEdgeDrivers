@@ -1160,4 +1160,149 @@ test.register_message_test(
   }
 )
 
+
+test.register_coroutine_test("Test air quality handler",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.AirQuality.attributes.AirQuality:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, 0)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.airQualityHealthConcern.airQualityHealthConcern.unknown()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.AirQuality.attributes.AirQuality:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, 1)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.airQualityHealthConcern.airQualityHealthConcern.good()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.AirQuality.attributes.AirQuality:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, 2)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.airQualityHealthConcern.airQualityHealthConcern.moderate()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.AirQuality.attributes.AirQuality:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, 3)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.airQualityHealthConcern.airQualityHealthConcern.slightlyUnhealthy()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.AirQuality.attributes.AirQuality:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, 4)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.airQualityHealthConcern.airQualityHealthConcern.unhealthy()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.AirQuality.attributes.AirQuality:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, 5)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.airQualityHealthConcern.airQualityHealthConcern.veryUnhealthy()
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.AirQuality.attributes.AirQuality:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, 6)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.airQualityHealthConcern.airQualityHealthConcern.hazardous()
+      )
+    )
+  end,
+  { test_init = test_init_ap_thermo_aqs_preconfigured }
+)
+
+test.register_coroutine_test("Test level value handler",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern("unknown")
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.LOW)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern("good")
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.MEDIUM)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern("moderate")
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.HIGH)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern("unhealthy")
+      )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_ap_thermo_aqs_preconfigured.id,
+        clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(mock_device_ap_thermo_aqs_preconfigured, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.CRITICAL)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_ap_thermo_aqs_preconfigured:generate_test_message(
+        "main", capabilities.nitrogenDioxideHealthConcern.nitrogenDioxideHealthConcern("hazardous")
+      )
+    )
+  end,
+  { test_init = test_init_ap_thermo_aqs_preconfigured }
+)
+
 test.run_registered_tests()
