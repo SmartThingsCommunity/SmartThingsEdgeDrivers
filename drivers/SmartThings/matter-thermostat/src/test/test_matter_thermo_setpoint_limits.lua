@@ -440,18 +440,18 @@ test.register_coroutine_test("Heating setpoint capability cached as Fahrenheit v
 
 test.register_coroutine_test("Cooling setpoint capability cached as Fahrenheit value",
   function()
-  mock_device.wrapped_device.state_cache.main = {
-    [capabilities.thermostatCoolingSetpoint.ID] = {
-      [capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME] = { unit = "F", value = 46.67 }
+    mock_device.wrapped_device.state_cache.main = {
+      [capabilities.thermostatCoolingSetpoint.ID] = {
+        [capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME] = { unit = "F", value = 46.67 }
+      }
     }
-  }
-  test.socket.capability:__queue_receive({
-    mock_device.id,
-    { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 9 } }
-  })
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 5.00, unit = "C" }, {state_change = true }))
-  )
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 9 } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 5.00, unit = "C" }, {state_change = true }))
+    )
   end
 )
 

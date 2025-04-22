@@ -21,6 +21,7 @@ local version = require "version"
 
 if version.api < 11 then
   clusters.Thermostat.types.SystemModeEnum = clusters.Thermostat.types.ThermostatSystemMode
+  clusters.Thermostat.types.ControlSequenceOfOperationEnum = clusters.Thermostat.types.ThermostatControlSequence
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
