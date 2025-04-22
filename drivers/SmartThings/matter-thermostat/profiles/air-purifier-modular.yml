@@ -1,0 +1,54 @@
+name: air-purifier-modular
+components:
+  - id: main
+    capabilities:
+      - id: airPurifierFanMode
+      - id: fanSpeedPercent
+      - id: fanOscillationMode
+        optional: true
+      - id: windMode
+        optional: true
+      - id: firmwareUpdate
+      - id: refresh
+      - id: thermostatHeatingSetpoint
+        optional: true
+      - id: thermostatMode
+        optional: true
+      - id: temperatureMeasurement
+        optional: true
+      - id: dustSensor
+        optional: true
+      - id: formaldehydeMeasurement
+        optional: true
+      - id: relativeHumidityMeasurement
+        optional: true
+      - id: airQualityHealthConcern
+        optional: true
+      - id: dustHealthConcern
+        optional: true
+      - id: fineDustHealthConcern
+        optional: true
+      - id: formaldehydeHealthConcern
+        optional: true
+      - id: nitrogenDioxideHealthConcern
+        optional: true
+      - id: tvocHealthConcern
+        optional: true
+      - id: thermostatOperatingState
+        optional: true
+      - id: fineDustSensor
+        optional: true
+  - id: activatedCarbonFilter
+    optional: true
+    capabilities:
+      - id: filterState
+        optional: true
+      - id: filterStatus
+        optional: true
+  - id: hepaFilter
+    optional: true
+    capabilities:
+      - id: filterState
+        optional: true
+      - id: filterStatus
+        optional: true

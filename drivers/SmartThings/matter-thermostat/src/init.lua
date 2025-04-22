@@ -21,6 +21,9 @@ local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 
+local match_profile
+local SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
+
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
 if version.api < 10 then
@@ -495,6 +498,8 @@ local function device_init(driver, device)
     end
   end
   schedule_polls_for_cumulative_energy_imported(device)
+
+  match_profile(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
@@ -841,6 +846,7 @@ local function get_thermostat_optional_capabilities(device)
 
   if #heat_eps > 0 then
     table.insert(supported_thermostat_capabilities, capabilities.thermostatHeatingSetpoint.ID)
+  end
   if #cool_eps > 0  then
     table.insert(supported_thermostat_capabilities, capabilities.thermostatCoolingSetpoint.ID)
   end
@@ -885,6 +891,7 @@ local function match_modular_profile_room_ac(driver, device)
 
   if #heat_eps > 0 then
     table.insert(main_component_capabilities, capabilities.thermostatHeatingSetpoint.ID)
+  end
   if #cool_eps > 0  then
     table.insert(main_component_capabilities, capabilities.thermostatCoolingSetpoint.ID)
   end
@@ -974,8 +981,6 @@ local function match_modular_profile_air_purifer(driver, device)
   --
   -- Possible supported capabilites for air purifier:
   --
-  local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
-  local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
 
   local optional_supported_component_capabilities = {}
@@ -993,13 +998,13 @@ local function match_modular_profile_air_purifer(driver, device)
 
   if #hepa_filter_eps > 0 then
     -- TODO: only one of these is required by spec
-    table.insert(hepa_filter_component_capabilities, capabilites.filterState.ID)
-    table.insert(hepa_filter_component_capabilities, capabilites.filterStatus.ID)
+    table.insert(hepa_filter_component_capabilities, capabilities.filterState.ID)
+    table.insert(hepa_filter_component_capabilities, capabilities.filterStatus.ID)
   end
   if #ac_filter_eps > 0 then
     -- TODO: only one of these is required by spec
-    table.insert(ac_filter_component_capabiltiies, capabilites.filterState.ID)
-    table.insert(ac_filter_component_capabiltiies, capabilites.filterStatus.ID)
+    table.insert(ac_filter_component_capabiltiies, capabilities.filterState.ID)
+    table.insert(ac_filter_component_capabiltiies, capabilities.filterStatus.ID)
   end
 
   -- determine fan capabilities
@@ -1007,9 +1012,10 @@ local function match_modular_profile_air_purifer(driver, device)
   local rock_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.ROCKING})
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
 
-  if #fan_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.airConditionerFanMode.ID)
-  end
+  -- This capability will be mandatory
+  -- if #fan_eps > 0 then
+  --   table.insert(main_component_capabilities, capabilities.airPurifierFanMode.ID)
+  -- end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
   end
@@ -1021,10 +1027,10 @@ local function match_modular_profile_air_purifer(driver, device)
 
   if #thermostat_eps > 0 then
     -- thermostatMode and temperatureMeasurement are mandatory if thermostat is present?
-    table.insert(main_component_capabilities, capabilites.thermostatMode.ID)
-    table.insert(main_component_capabilities, capabilites.temperatureMeasurement.ID)
+    table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
     local thermostat_capabilities = get_thermostat_optional_capabilities(device)
-    for _, capability_id in pairs(supported_capabilities) do
+    for _, capability_id in pairs(thermostat_capabilities) do
       table.insert(main_component_capabilities, capability_id)
     end
   end
@@ -1042,11 +1048,18 @@ local function match_modular_profile_air_purifer(driver, device)
   end
 
   local supported_air_quality_capabilities = get_air_quality_optional_capabilities(device)
-  for _, capability_id in pairs(supported_capabilities) do
+  for _, capability_id in pairs(supported_air_quality_capabilities) do
     table.insert(main_component_capabilities, capability_id)
   end
 
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  if #ac_filter_component_capabiltiies > 0 then
+    table.insert(optional_supported_component_capabilities, {"activatedCarbonFilter", ac_filter_component_capabiltiies})
+  end
+  if #hepa_filter_component_capabilities > 0 then
+    table.insert(optional_supported_component_capabilities, {"hepaFilter", hepa_filter_component_capabilities})
+  end
+
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
   -- add mandatory capabilities for subscription
@@ -1068,16 +1081,11 @@ local function match_modular_profile_thermostat(driver, device)
   --
   -- Possible supported capabilites for thermostat:
   --
-  local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
-  local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
-  local hepa_filter_component_capabilities = {}
-  local ac_filter_component_capabiltiies = {}
   local profile_name = "thermostat-modular"
 
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   if #humidity_eps > 0 then
     table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
   end
@@ -1099,7 +1107,7 @@ local function match_modular_profile_thermostat(driver, device)
 
 
   local thermostat_capabilities = get_thermostat_optional_capabilities(device)
-  for _, capability_id in pairs(supported_capabilities) do
+  for _, capability_id in pairs(thermostat_capabilities) do
     table.insert(main_component_capabilities, capability_id)
   end
 
@@ -1117,8 +1125,8 @@ local function match_modular_profile_thermostat(driver, device)
   local total_supported_capabilities = optional_supported_component_capabilities
   -- TODO: make sure these are added to the main component list, even though it theoretically shouldn't matter
   -- however, the numbering is thrown off if there are other components for hepa/AC filter
-  table.insert(main_component_capabilities, capabilites.thermostatMode.ID)
-  table.insert(main_component_capabilities, capabilites.temperatureMeasurement.ID)
+  table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
+  table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
 
@@ -1128,7 +1136,14 @@ local function match_modular_profile_thermostat(driver, device)
 end
 
 local function match_modular_profile(driver, device)
-  if profiling_data_still_required(device) then return end
+  -- commented out for testing
+  -- if profiling_data_still_required(device) then return end
+
+  -- TODO: test device refresh
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+
+  local device_type = get_device_type(driver, device)
+  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
 
   if device_type == RAC_DEVICE_TYPE_ID then
     match_modular_profile_room_ac(driver, device)
@@ -1153,9 +1168,10 @@ local function match_modular_profile(driver, device)
   end
 end
 
-local function match_profile(driver, device)
+function match_profile(driver, device)
   -- must use profile switching on older hubs
-  if version.api < 14 and version.rpc < 7 then
+  -- TODO update to RPC version 8
+  if version.api < 14 or version.rpc < 7 then
     match_profile_switch(driver, device)
   else
     match_modular_profile(driver, device)
