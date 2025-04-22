@@ -27,6 +27,7 @@ local zigbee_carbon_monoxide_driver_template = {
     sub_drivers = { require("ClimaxTechnology") }
 }
 
-defaults.register_for_default_handlers(zigbee_carbon_monoxide_driver_template, zigbee_carbon_monoxide_driver_template.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_carbon_monoxide_driver_template,
+    zigbee_carbon_monoxide_driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
 local zigbee_carbon_monoxide_driver = ZigbeeDriver("zigbee-carbon-monoxide-detector", zigbee_carbon_monoxide_driver_template)
 zigbee_carbon_monoxide_driver:run()
