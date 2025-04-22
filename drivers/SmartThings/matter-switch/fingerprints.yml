@@ -121,6 +121,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1000
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "5014/4101"
+    deviceLabel: Linkind Smart Plug with Light
+    vendorId: 0x1396
+    productId: 0x1005
+    deviceProfileName: plug-binary
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
