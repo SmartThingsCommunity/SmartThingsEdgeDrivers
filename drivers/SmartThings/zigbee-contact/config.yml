@@ -1,4 +1,4 @@
-name: 'Zigbee Contact'
+name: '111Zigbee Contact'
 packageKey: 'zigbee-contact'
 permissions:
   zigbee: {}
