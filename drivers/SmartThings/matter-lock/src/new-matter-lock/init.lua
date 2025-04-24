@@ -84,11 +84,12 @@ local subscribed_attributes = {
     DoorLock.attributes.AliroReaderVerificationKey,
     DoorLock.attributes.AliroReaderGroupIdentifier,
     DoorLock.attributes.AliroReaderGroupSubIdentifier,
-    DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported,
-    DoorLock.attributes.NumberOfAliroEndpointKeysSupported,
+    DoorLock.attributes.AliroExpeditedTransactionSupportedProtocolVersions,
     DoorLock.attributes.AliroGroupResolvingKey.ID,
     DoorLock.attributes.AliroSupportedBLEUWBProtocolVersions.ID,
-    DoorLock.attributes.AliroBLEAdvertisingVersion.ID
+    DoorLock.attributes.AliroBLEAdvertisingVersion.ID,
+    DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported,
+    DoorLock.attributes.NumberOfAliroEndpointKeysSupported,
   },
   [capabilities.battery.ID] = {
     PowerSource.attributes.BatPercentRemaining
@@ -2318,20 +2319,17 @@ local function aliro_reader_group_id_handler(driver, device, ib, response)
   end
 end
 
-local function max_aliro_credential_issuer_key_handler(driver, device, ib, response)
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_credential_issuer_key_handler !!!!!!!!!!!!!"))
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
-  if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.maxAliroCredentialIssuerKeys(ib.data.value))
+local function aliro_protocol_versions_handler(driver, device, ib, response)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_protocol_versions_handler !!!!!!!!!!!!!"))
+  if ib.data.elements == nil then
+    return
   end
-end
-
-local function max_aliro_endpoint_key_handler(driver, device, ib, response)
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
-  if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.maxAliroEndpointKeys(ib.data.value))
+  local version = nil
+  for _, entry in ipairs(ib.data.elements) do
+    version = entry.value
   end
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.elements[1].value))
+  device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0"))
 end
 
 local function aliro_group_resolving_key_handler(driver, device, ib, response)
@@ -2356,6 +2354,22 @@ local function aliro_ble_advertising_version_handler(driver, device, ib, respons
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
     device:emit_event(aliroSetting.aliroBLEAdvertisingVersion(ib.data.value))
+  end
+end
+
+local function max_aliro_credential_issuer_key_handler(driver, device, ib, response)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_credential_issuer_key_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value ~= nil then
+    device:emit_event(aliroSetting.maxAliroCredentialIssuerKeys(ib.data.value))
+  end
+end
+
+local function max_aliro_endpoint_key_handler(driver, device, ib, response)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  if ib.data.value ~= nil then
+    device:emit_event(aliroSetting.maxAliroEndpointKeys(ib.data.value))
   end
 end
 
@@ -2441,9 +2455,8 @@ local function set_aliro_reader_config_handler(driver, device, ib, response)
   elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
     status = "invalidCommand"
   elseif ib.status == DoorLock.types.DlStatus.SUCCESS then
-    device:emit_event(aliroSetting.aliroReaderVerificationKey(privateKey))
-    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(publicKey))
-    device:emit_event(aliroSetting.aliroExpeditedProtocolVersions(groupId))
+    device:emit_event(aliroSetting.aliroReaderVerificationKey(publicKey))
+    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(groupId))
     device:emit_event(aliroSetting.aliroGroupResolvingKey(groupResolvingKey))
   end
   
@@ -2679,11 +2692,12 @@ local new_matter_lock_handler = {
         [DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser.ID] = max_year_schedule_of_user_handler,
         [DoorLock.attributes.AliroReaderVerificationKey.ID] = aliro_reader_verification_key_handler,
         [DoorLock.attributes.AliroReaderGroupIdentifier.ID] = aliro_reader_group_id_handler,
-        [DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported.ID] = max_aliro_credential_issuer_key_handler,
-        [DoorLock.attributes.NumberOfAliroEndpointKeysSupported.ID] = max_aliro_endpoint_key_handler,
+        [DoorLock.attributes.AliroExpeditedTransactionSupportedProtocolVersions.ID] = aliro_protocol_versions_handler,
         [DoorLock.attributes.AliroGroupResolvingKey.ID] = aliro_group_resolving_key_handler,
         [DoorLock.attributes.AliroSupportedBLEUWBProtocolVersions.ID] = aliro_supported_ble_uwb_protocol_version_handler,
         [DoorLock.attributes.AliroBLEAdvertisingVersion.ID] = aliro_ble_advertising_version_handler,
+        [DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported.ID] = max_aliro_credential_issuer_key_handler,
+        [DoorLock.attributes.NumberOfAliroEndpointKeysSupported.ID] = max_aliro_endpoint_key_handler,
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.AttributeList.ID] = handle_power_source_attribute_list,
