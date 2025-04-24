@@ -20,4 +20,3 @@ end
 setmetatable(RvcCleanModeClientCommands, command_mt)
 
 return RvcCleanModeClientCommands
-

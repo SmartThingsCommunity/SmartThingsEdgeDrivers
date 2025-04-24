@@ -11,7 +11,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: RemoteController
+  - name: Button
 preferences:
 - name: "holdTime"
   title: "Hold time"

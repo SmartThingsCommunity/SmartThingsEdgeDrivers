@@ -26,6 +26,26 @@ matterManufacturer:
     vendorId: 0x1533
     productId: 0x0003
     deviceProfileName: lock-user-pin-battery
+  - id: "5427/15"
+    deviceLabel: eufy FamiLock S3 Max
+    vendorId: 0x1533
+    productId: 0x000F
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/16"
+    deviceLabel: eufy FamiLock S3
+    vendorId: 0x1533
+    productId: 0x0010
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/17"
+    deviceLabel: eufy FamiLock E34
+    vendorId: 0x1533
+    productId: 0x0011
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/18"
+    deviceLabel: eufy FamiLock E35
+    vendorId: 0x1533
+    productId: 0x0012
+    deviceProfileName: lock-user-pin-battery
   #Level
   - id: "4767/1"
     deviceLabel: Level Lock Plus (Matter)
@@ -37,6 +57,11 @@ matterManufacturer:
     vendorId: 0x129F
     productId: 0x0003
     deviceProfileName: lock-nocodes-notamper-batteryLevel
+  - id: "4767/4"
+    deviceLabel: Level Lock Pro
+    vendorId: 0x129F
+    productId: 0x0004
+    deviceProfileName: lock-nocodes-notamper  
   #Nuki
   - id: "4957/161"
     deviceLabel: Nuki Smart Lock Ultra

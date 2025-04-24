@@ -49,11 +49,6 @@ components:
     version: 1
   categories:
   - name: AirPurifier
-  preferences:
-  - preferenceId: tempOffset
-    explicit: true
-  - preferenceId: humidityOffset
-    explicit: true
 - id: hepaFilter
   label: Hepa Filter
   capabilities:

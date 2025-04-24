@@ -4,12 +4,18 @@ matterManufacturer:
     vendorId: 0x10e1
     productId: 0x1023
     deviceProfileName: room-air-conditioner
-
+  #Aidot
   - id: "Leedarson AiDot Air Purifier"
     deviceLabel: AiDot Air Purifier
     vendorId: 0x1396
     productId: 0x043A
     deviceProfileName: air-purifier-hepa
+  #Bosch
+  - id: "4617/12306"
+    deviceLabel: Radiator Thermostat II [M]
+    vendorId: 0x1209
+    productId: 0x3012
+    deviceProfileName: thermostat-heating-only-nostate
   #Eve
   - id: "4874/79"
     deviceLabel: Eve Thermo
@@ -103,6 +109,20 @@ matterGeneric:
     deviceTypes:
       - id: 0x002D # Air Purifier
     deviceProfileName: air-purifier-hepa-ac-wind
+  - id: "matter/air-purifier/quality-sensor"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+    deviceProfileName: air-purifier-aqs
+  - id: "matter/ap/aqs/thermostat/humidity"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+      - id: 0x0301 # Thermostat
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: air-purifier-thermostat-humidity-aqs
   - id: "matter/water-heater"
     deviceLabel: Matter Water Heater
     deviceTypes:

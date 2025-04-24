@@ -42,6 +42,7 @@ if version.api < 10 then
   clusters.Thermostat.types.ThermostatSystemMode.SLEEP = 0x9
 end
 
+local SAVED_SYSTEM_MODE_IB = "__saved_system_mode_ib"
 local DISALLOWED_THERMOSTAT_MODES = "__DISALLOWED_CONTROL_OPERATIONS"
 local OPTIONAL_THERMOSTAT_MODES_SEEN = "__OPTIONAL_THERMOSTAT_MODES_SEEN"
 
@@ -638,7 +639,6 @@ local function create_thermostat_modes_profile(device)
 
   local thermostat_modes = ""
   if #heat_eps == 0 and #cool_eps == 0 then
-    device.log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
     return "No Heating nor Cooling Support"
   elseif #heat_eps > 0 and #cool_eps == 0 then
     thermostat_modes = thermostat_modes .. "-heating-only"
@@ -718,9 +718,7 @@ local function match_profile(driver, device)
       end
 
       local thermostat_modes = create_thermostat_modes_profile(device)
-      if thermostat_modes == "No Heating nor Cooling Support" then
-        return
-      else
+      if thermostat_modes ~= "No Heating nor Cooling Support" then
         profile_name = profile_name .. thermostat_modes
       end
 
@@ -766,6 +764,7 @@ local function match_profile(driver, device)
 
     local thermostat_modes = create_thermostat_modes_profile(device)
     if thermostat_modes == "No Heating nor Cooling Support" then
+      device.log.warn_with({hub_logs=true}, "Device does not support either heating or cooling. No matching profile")
       return
     else
       profile_name = profile_name .. thermostat_modes
@@ -1075,6 +1074,12 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function system_mode_handler(driver, device, ib, response)
+  if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then -- this being nil means the sequence_of_operation_handler hasn't run.
+    device.log.info_with({hub_logs = true}, "In the SystemMode handler: ControlSequenceOfOperation has not run yet. Exiting early.")
+    device:set_field(SAVED_SYSTEM_MODE_IB, ib)
+    return
+  end
+
   local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
   -- check that the given mode was in the supported modes list
   if tbl_contains(supported_modes, THERMOSTAT_MODE_MAP[ib.data.value].NAME) then
@@ -1163,6 +1168,12 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   device:set_field(DISALLOWED_THERMOSTAT_MODES, disallowed_mode_operations)
   local event = capabilities.thermostatMode.supportedThermostatModes(supported_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+
+  -- will be set by the SystemMode handler if this handler hasn't run yet.
+  if device:get_field(SAVED_SYSTEM_MODE_IB) then
+    system_mode_handler(driver, device, device:get_field(SAVED_SYSTEM_MODE_IB), response)
+    device:set_field(SAVED_SYSTEM_MODE_IB, nil)
+  end
 end
 
 local function min_deadband_limit_handler(driver, device, ib, response)
