@@ -15,7 +15,22 @@ local devices = {
       imWPctThresholdPhaseA = {parameter_number = 13, size = 1},
       exWPctThresholdTotal = {parameter_number = 16, size = 1},
       exWPctThresholdPhaseA = {parameter_number = 17, size = 1},
-      autoRootDeviceReport = {parameter_number = 32, size = 1}
+      autoRootDeviceReport = {parameter_number = 32, size = 1},
+      defaultReport = {parameter_number = 100, size = 1},
+      autoReportImp1 = {parameter_number = 101, size = 4},
+      autoReportImp2 = {parameter_number = 102, size = 4},
+      autoReportImp3 = {parameter_number = 103, size = 4},
+      autoReportExp1 = {parameter_number = 104, size = 4},
+      autoReportExp2 = {parameter_number = 105, size = 4},
+      autoReportExp3 = {parameter_number = 106, size = 4},
+      defaultTime = {parameter_number = 110, size = 1},
+      autoTimeImp1 = {parameter_number = 111, size = 4},
+      autoTimeImp2 = {parameter_number = 112, size = 4},
+      autoTimeImp3 = {parameter_number = 113, size = 4},
+      autoTimeExp1 = {parameter_number = 114, size = 4},
+      autoTimeExp2 = {parameter_number = 115, size = 4},
+      autoTimeExp3 = {parameter_number = 116, size = 4},
+      lockConfig = {parameter_number = 252, size = 1}
     }
   },
   AEOTEC_HOME_ENERGY_METER_GEN8_2_PHASE = {
@@ -38,7 +53,22 @@ local devices = {
       exWPctThresholdTotal = {parameter_number = 16, size = 1},
       exWPctThresholdPhaseA = {parameter_number = 17, size = 1},
       exWPctThresholdPhaseB = {parameter_number = 18, size = 1},
-      autoRootDeviceReport = {parameter_number = 32, size = 1}
+      autoRootDeviceReport = {parameter_number = 32, size = 1},
+      defaultReport = {parameter_number = 100, size = 1},
+      autoReportImp1 = {parameter_number = 101, size = 4},
+      autoReportImp2 = {parameter_number = 102, size = 4},
+      autoReportImp3 = {parameter_number = 103, size = 4},
+      autoReportExp1 = {parameter_number = 104, size = 4},
+      autoReportExp2 = {parameter_number = 105, size = 4},
+      autoReportExp3 = {parameter_number = 106, size = 4},
+      defaultTime = {parameter_number = 110, size = 1},
+      autoTimeImp1 = {parameter_number = 111, size = 4},
+      autoTimeImp2 = {parameter_number = 112, size = 4},
+      autoTimeImp3 = {parameter_number = 113, size = 4},
+      autoTimeExp1 = {parameter_number = 114, size = 4},
+      autoTimeExp2 = {parameter_number = 115, size = 4},
+      autoTimeExp3 = {parameter_number = 116, size = 4},
+      lockConfig = {parameter_number = 252, size = 1}
     }
   },
   AEOTEC_HOME_ENERGY_METER_GEN8_3_PHASE = {
@@ -65,7 +95,22 @@ local devices = {
       exWPctThresholdPhaseA = {parameter_number = 17, size = 1},
       exWPctThresholdPhaseB = {parameter_number = 18, size = 1},
       exWPctThresholdPhaseC = {parameter_number = 19, size = 1},
-      autoRootDeviceReport = {parameter_number = 32, size = 1}
+      autoRootDeviceReport = {parameter_number = 32, size = 1},
+      defaultReport = {parameter_number = 100, size = 1},
+      autoReportImp1 = {parameter_number = 101, size = 4},
+      autoReportImp2 = {parameter_number = 102, size = 4},
+      autoReportImp3 = {parameter_number = 103, size = 4},
+      autoReportExp1 = {parameter_number = 104, size = 4},
+      autoReportExp2 = {parameter_number = 105, size = 4},
+      autoReportExp3 = {parameter_number = 106, size = 4},
+      defaultTime = {parameter_number = 110, size = 1},
+      autoTimeImp1 = {parameter_number = 111, size = 4},
+      autoTimeImp2 = {parameter_number = 112, size = 4},
+      autoTimeImp3 = {parameter_number = 113, size = 4},
+      autoTimeExp1 = {parameter_number = 114, size = 4},
+      autoTimeExp2 = {parameter_number = 115, size = 4},
+      autoTimeExp3 = {parameter_number = 116, size = 4},
+      lockConfig = {parameter_number = 252, size = 1}
     }
   }
 }

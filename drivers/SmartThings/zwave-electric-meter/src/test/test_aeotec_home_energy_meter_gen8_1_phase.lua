@@ -505,6 +505,366 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Handle preference: defaultReport (parameter 100) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          defaultReport = 1
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 100,
+          configuration_value = 1,
+          size = 1
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoReportImp1 (parameter 101) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          autoReportImp1 = 300
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 101,
+          configuration_value = 300,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoReportImp2 (parameter 102) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          autoReportImp2 = 2021161
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 102,
+          configuration_value = 2021161,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoReportImp3 (parameter 103) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          autoReportImp3 = 40423221
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 103,
+          configuration_value = 40423221,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoReportExp1 (parameter 104) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          autoReportExp1 = 505290
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 104,
+          configuration_value = 505290,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoReportExp2 (parameter 105) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          autoReportExp2 = 2021161
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 105,
+          configuration_value = 2021161,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoReportExp3 (parameter 106) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          autoReportExp3 = 40423221
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 106,
+          configuration_value = 40423221,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: defaultTime (parameter 110) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          defaultTime = 1
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 110,
+          configuration_value = 1,
+          size = 1
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoTimeImp1 (parameter 111) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+      mock_parent:generate_info_changed({
+        preferences = {
+          autoTimeImp1 = 300
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 111,
+          configuration_value = 300,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoTimeImp2 (parameter 112) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+      mock_parent:generate_info_changed({
+        preferences = {
+          autoTimeImp2 = 7200
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 112,
+          configuration_value = 7200,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoTimeImp3 (parameter 113) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+        mock_parent:generate_info_changed({
+        preferences = {
+          autoTimeImp3 = 7200
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 113,
+          configuration_value = 7200,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoTimeExp1 (parameter 114) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+      mock_parent:generate_info_changed({
+        preferences = {
+          autoTimeExp1 = 300
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 114,
+          configuration_value = 300,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoTimeExp2 (parameter 115) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+      mock_parent:generate_info_changed({
+        preferences = {
+          autoTimeExp2 = 3600
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 115,
+          configuration_value = 3600,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: autoTimeExp3 (parameter 116) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+      mock_parent:generate_info_changed({
+        preferences = {
+          autoTimeExp3 = 3600
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 116,
+          configuration_value = 3600,
+          size = 4
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle preference: lockConfig (parameter 252) in infoChanged",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+      mock_parent:generate_info_changed({
+        preferences = {
+          lockConfig = 1
+        }
+      })
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_parent,
+        Configuration:Set({
+          parameter_number = 252,
+          configuration_value = 1,
+          size = 1
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
   "Refresh sends commands to all components including base device",
   function()
     -- refresh commands for zwave devices do not have guaranteed ordering
