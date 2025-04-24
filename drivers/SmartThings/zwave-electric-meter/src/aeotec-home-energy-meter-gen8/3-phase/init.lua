@@ -11,7 +11,6 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Configuration
@@ -72,13 +71,13 @@ local function emit_power_consumption_report_event(device, value, channel)
 
   local delta_energy = 0.0
   local current_power_consumption = device:get_latest_state('main', capabilities.powerConsumptionReport.ID,
-      capabilities.powerConsumptionReport.powerConsumption.NAME)
+    capabilities.powerConsumptionReport.powerConsumption.NAME)
   if current_power_consumption ~= nil then
-      delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
+    delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
   end
   device:emit_event_for_endpoint(channel, capabilities.powerConsumptionReport.powerConsumption({
-      energy = raw_value,
-      deltaEnergy = delta_energy
+    energy = raw_value,
+    deltaEnergy = delta_energy
   }))
 end
 

@@ -14,6 +14,8 @@
 
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version=4 })
 --- @type st.zwave.CommandClass
@@ -74,8 +76,8 @@ local function emit_power_consumption_report_event(device, value, channel)
     delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
   end
   device:emit_event_for_endpoint(channel, capabilities.powerConsumptionReport.powerConsumption({
-      energy = raw_value,
-      deltaEnergy = delta_energy
+    energy = raw_value,
+    deltaEnergy = delta_energy
   }))
 end
 
