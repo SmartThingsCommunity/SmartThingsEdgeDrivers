@@ -14,6 +14,8 @@
 
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
+--- @type st.zwave.CommandClass.Configuration
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version=4 })
 --- @type st.zwave.CommandClass
@@ -161,6 +163,12 @@ local function device_added(driver, device)
   do_refresh(driver, device)
 end
 
+local do_configure = function (self, device)
+  device:send(Configuration:Set({parameter_number = 111, configuration_value = 300, size = 4})) -- ...every 5 min
+  device:send(Configuration:Set({parameter_number = 112, configuration_value = 300, size = 4})) -- ...every 5 min
+  device:send(Configuration:Set({parameter_number = 113, configuration_value = 300, size = 4})) -- ...every 5 min
+end
+
 local aeotec_home_energy_meter_gen8_2_phase = {
   NAME = "Aeotec Home Energy Meter Gen8",
   supported_capabilities = {
@@ -177,6 +185,7 @@ local aeotec_home_energy_meter_gen8_2_phase = {
       }
     },
   lifecycle_handlers = {
+    doConfigure = do_configure,
     added = device_added,
     init = device_init
   },

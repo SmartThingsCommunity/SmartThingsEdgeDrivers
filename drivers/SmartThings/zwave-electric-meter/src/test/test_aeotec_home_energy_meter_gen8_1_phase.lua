@@ -143,6 +143,28 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Configure should configure all necessary attributes",
+  function()
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_parent.id, "doConfigure" })
+
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_parent,
+      Configuration:Set({parameter_number = 111, size = 4, configuration_value = 300})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_parent,
+      Configuration:Set({parameter_number = 112, size = 4, configuration_value = 300})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_parent,
+      Configuration:Set({parameter_number = 113, size = 4, configuration_value = 300})
+    ))
+    mock_parent:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+test.register_coroutine_test(
   "Power meter report should be handled",
   function()
     for _, device in ipairs(HEM8_DEVICES) do

@@ -17,7 +17,7 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Meter = (require "st.zwave.CommandClass.Meter")({version=4})
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
 local t_utils = require "integration_test.utils"
 
 local AEOTEC_MFR_ID = 0x0371
@@ -139,6 +139,28 @@ test.register_coroutine_test(
         )
       end
     end
+  end
+)
+
+test.register_coroutine_test(
+  "Configure should configure all necessary attributes",
+  function()
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_parent.id, "doConfigure" })
+
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_parent,
+      Configuration:Set({parameter_number = 111, size = 4, configuration_value = 300})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_parent,
+      Configuration:Set({parameter_number = 112, size = 4, configuration_value = 300})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_parent,
+      Configuration:Set({parameter_number = 113, size = 4, configuration_value = 300})
+    ))
+    mock_parent:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
