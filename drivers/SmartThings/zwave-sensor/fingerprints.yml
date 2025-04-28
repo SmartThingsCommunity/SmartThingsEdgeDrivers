@@ -542,6 +542,12 @@ zwaveManufacturer:
     productType: 0x0000
     productId: 0x0001
     deviceProfileName: base-water
+  - id: Eurotronic EURE700088
+    deviceLabel: Eurotronic Air Quality Sensor
+    manufacturerId: 0x0148
+    productType: 0x0005
+    productId: 0x0001
+    deviceProfileName: air-quality-sensor
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor
