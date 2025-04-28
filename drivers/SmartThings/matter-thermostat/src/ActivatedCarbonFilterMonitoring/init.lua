@@ -1,5 +1,6 @@
 local cluster_base = require "st.matter.cluster_base"
 local ActivatedCarbonFilterMonitoringServerAttributes = require "ActivatedCarbonFilterMonitoring.server.attributes"
+local ActivatedCarbonFilterMonitoringServerCommands = require "ActivatedCarbonFilterMonitoring.server.commands"
 local ActivatedCarbonFilterMonitoringTypes = require "ActivatedCarbonFilterMonitoring.types"
 
 local ActivatedCarbonFilterMonitoring = {}
@@ -9,6 +10,7 @@ ActivatedCarbonFilterMonitoring.NAME = "ActivatedCarbonFilterMonitoring"
 ActivatedCarbonFilterMonitoring.server = {}
 ActivatedCarbonFilterMonitoring.client = {}
 ActivatedCarbonFilterMonitoring.server.attributes = ActivatedCarbonFilterMonitoringServerAttributes:set_parent_cluster(ActivatedCarbonFilterMonitoring)
+ActivatedCarbonFilterMonitoring.server.commands = ActivatedCarbonFilterMonitoringServerCommands:set_parent_cluster(ActivatedCarbonFilterMonitoring)
 ActivatedCarbonFilterMonitoring.types = ActivatedCarbonFilterMonitoringTypes
 
 function ActivatedCarbonFilterMonitoring:get_attribute_by_id(attr_id)
@@ -52,6 +54,9 @@ ActivatedCarbonFilterMonitoring.attribute_direction_map = {
   ["AttributeList"] = "server",
 }
 
+ActivatedCarbonFilterMonitoring.command_direction_map = {
+  ["ResetCondition"] = "server",
+}
 
 ActivatedCarbonFilterMonitoring.FeatureMap = ActivatedCarbonFilterMonitoring.types.Feature
 
@@ -72,6 +77,24 @@ attribute_helper_mt.__index = function(self, key)
 end
 ActivatedCarbonFilterMonitoring.attributes = {}
 setmetatable(ActivatedCarbonFilterMonitoring.attributes, attribute_helper_mt)
+
+local command_helper_mt = {}
+command_helper_mt.__index = function(self, key)
+  local direction = ActivatedCarbonFilterMonitoring.command_direction_map[key]
+  if direction == nil then
+    error(string.format("Referenced unknown command %s on cluster %s", key, ActivatedCarbonFilterMonitoring.NAME))
+  end
+  return ActivatedCarbonFilterMonitoring[direction].commands[key]
+end
+ActivatedCarbonFilterMonitoring.commands = {}
+setmetatable(ActivatedCarbonFilterMonitoring.commands, command_helper_mt)
+
+local event_helper_mt = {}
+event_helper_mt.__index = function(self, key)
+  return ActivatedCarbonFilterMonitoring.server.events[key]
+end
+ActivatedCarbonFilterMonitoring.events = {}
+setmetatable(ActivatedCarbonFilterMonitoring.events, event_helper_mt)
 
 setmetatable(ActivatedCarbonFilterMonitoring, {__index = cluster_base})
 
