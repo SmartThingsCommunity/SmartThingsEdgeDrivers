@@ -1,6 +1,0 @@
-zigbeeManufacturer:
-  - id: "MultiIR/PMT1006S-SGM-ZTN"
-    deviceLabel: MultiIR Air Quality Detector
-    manufacturer: MultiIR
-    model: PMT1006S-SGM-ZTN
-    deviceProfileName: air-quality-detector-MultiIR
