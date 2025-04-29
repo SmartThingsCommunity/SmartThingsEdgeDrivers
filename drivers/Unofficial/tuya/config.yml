@@ -1,0 +1,6 @@
+name: 'Tuya devices'
+packageKey: 'tuya_devices'
+permissions:
+  zigbee: {}
+description: "Driver for uncertificed Tuya devices"
+isWWST: false
