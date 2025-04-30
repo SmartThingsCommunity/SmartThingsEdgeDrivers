@@ -2346,6 +2346,16 @@ zigbeeGeneric:
     deviceIdentifiers:
       - 0x0220
     deviceProfileName: color-temp-bulb-2700K-6500K
+  - id: "genericZHAColorTempBulb"
+    deviceLabel: Zigbee Light
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0300 #Color Control
+    deviceIdentifiers:
+      - 0x010C
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "genericMeteredSwitch"
     deviceLabel: Zigbee Switch
     clusters:

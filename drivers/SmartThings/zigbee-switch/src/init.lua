@@ -84,6 +84,9 @@ local device_init = function(driver, device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)
   end
+  if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    device:set_find_child(find_child)
+  end
 end
 
 local function is_mcd_device(device)
@@ -169,6 +172,8 @@ local zigbee_switch_driver_template = {
   }
 }
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
-  zigbee_switch_driver_template.supported_capabilities,  {native_capability_cmds_enabled = true})
+  zigbee_switch_driver_template.supported_capabilities,
+  {native_capability_cmds_enabled = true, native_capability_attrs_enabled = true}
+)
 local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
 zigbee_switch:run()
