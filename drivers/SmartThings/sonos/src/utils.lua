@@ -1,5 +1,86 @@
----@module 'utils'
+local log = require "log"
+
+---@class utils
 local utils = {}
+
+---@param device SonosDevice
+---@param field_key string
+---@param new_value any
+---@param opts table?
+---@return boolean
+function utils.update_field_if_changed(device, field_key, new_value, opts)
+  if not (device and device.id and type(device.get_field) == "function" and type(device.set_field) == "function") then
+    log.error(string.format("[device %s] table is incomplete",
+      (device and device.label or device.id or "<unknown device>")))
+  end
+
+  local old_value = device:get_field(field_key)
+  local changed = (type(old_value) ~= type(new_value)) or (not utils.deep_table_eq(old_value, new_value))
+  if changed then
+    device:set_field(field_key, new_value, opts)
+    return true
+  end
+  return false
+end
+
+local function __normalize_mac_key_index(tbl, key)
+  assert(type(key) == "string", "DNI must be a string!")
+  return rawget(tbl, utils.normalize_mac_address(key))
+end
+
+local function __normalize_mac_key_newindex(tbl, key, value)
+  assert(type(key) == "string", "DNI must be a string!")
+  rawset(tbl, utils.normalize_mac_address(key), value)
+end
+
+local _mac_addr_key_mt = {
+  __index = __normalize_mac_key_index,
+  __newindex = __normalize_mac_key_newindex
+}
+
+---creates a table that takes MAC addresses as a key. The table itself is mostly normal,
+---but it uses special `__index` and `__newindex` metamethods to perform MAC address normalization
+---on the keys before performing lookups.
+function utils.new_mac_address_keyed_table()
+  return setmetatable({}, _mac_addr_key_mt)
+end
+
+---@param sonos_device_info SonosDeviceInfo
+function utils.extract_mac_addr(sonos_device_info)
+  local mac, _ = sonos_device_info.serialNumber:match("(.*):.*"):gsub("-", "")
+  return utils.normalize_mac_address(mac)
+end
+
+---normalizes a MAC address by removing all `-` and `:` characters, then
+---unifying on uppercase letters.
+---
+---@param mac_addr string
+---@return string
+function utils.normalize_mac_address(mac_addr)
+  return mac_addr:gsub("-", ""):gsub(":", ""):upper()
+end
+
+function utils.mac_address_eq(a, b)
+  if not (type(a) == "string" and type(b) == "string") then return false end
+  local a_normalized = utils.normalize_mac_address(a)
+  local b_normalized = utils.normalize_mac_address(b)
+  return a_normalized == b_normalized
+end
+
+function utils.read_only(tbl)
+  if type(tbl) == "table" then
+    local proxy = {}
+    local mt = { -- create metatable
+      __index = tbl,
+      __newindex = function(t, k, v) error("attempt to update a read-only table", 2) end,
+    }
+    setmetatable(proxy, mt)
+    return proxy
+  else
+    return tbl
+  end
+end
+
 -- build a exponential backoff time value generator
 --
 -- max: the maximum wait interval (not including `rand factor`)
@@ -26,7 +107,6 @@ function utils.backoff_builder(max, inc, rand)
 end
 
 function utils.labeled_socket_builder(label)
-  local log = require "log"
   local socket = require "cosock.socket"
   local ssl = require "cosock.ssl"
 
@@ -66,6 +146,16 @@ function utils.labeled_socket_builder(label)
 
     if err then return nil, err end
 
+    log.trace(
+      string.format(
+        "%sSet Keepalive for TCP socket for REST Connection", label
+      )
+    )
+    err = select(2, sock:setoption("keepalive", true))
+    if err ~= nil then
+      return nil, "Setoption error: " .. err
+    end
+
     if wrap_ssl then
       log.trace(
         string.format(
@@ -76,6 +166,16 @@ function utils.labeled_socket_builder(label)
           ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
       if err ~= nil then
         return nil, "SSL wrap error: " .. err
+      end
+      log.trace(
+        string.format(
+          "%sSetting SSL socket timeout for REST Connection", label
+        )
+      )
+      -- Re-set timeout due to cosock not carrying timeout over in some Lua library versions
+      err = select(2, sock:settimeout(60))
+      if err ~= nil then
+        return nil, "settimeout error: " .. err
       end
       log.trace(
         string.format(
