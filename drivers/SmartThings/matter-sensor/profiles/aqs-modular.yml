@@ -1,0 +1,58 @@
+name: aqs-modular
+components:
+  - id: main
+    capabilities:
+      - id: airQualityHealthConcern
+      - id: temperatureMeasurement
+        optional: true
+      - id: relativeHumidityMeasurement
+        optional: true
+      - id: carbonMonoxideMeasurement
+        optional: true
+      - id: carbonMonoxideHealthConcern
+        optional: true
+      - id: carbonDioxideMeasurement
+        optional: true
+      - id: carbonDioxideHealthConcern
+        optional: true
+      - id: nitrogenDioxideMeasurement
+        optional: true
+      - id: ozoneMeasurement
+        optional: true
+      - id: formaldehydeMeasurement
+        optional: true
+      - id: formaldehydeHealthConcern
+        optional: true
+      - id: veryFineDustSensor
+        optional: true
+      - id: veryFineDustHealthConcern
+        optional: true
+      - id: fineDustHealthConcern
+        optional: true
+      - id: dustSensor
+        optional: true
+      - id: dustHealthConcern
+        optional: true
+      - id: radonMeasurement
+        optional: true
+      - id: tvocMeasurement
+        optional: true
+      - id: firmwareUpdate
+      - id: refresh
+      - id: nitrogenDioxideHealthConcern
+        optional: true
+      - id: ozoneHealthConcern
+        optional: true
+      - id: radonHealthConcern
+        optional: true
+      - id: tvocHealthConcern
+        optional: true
+      - id: fineDustSensor
+        optional: true
+    categories:
+    - name: AirQualityDetector
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true
