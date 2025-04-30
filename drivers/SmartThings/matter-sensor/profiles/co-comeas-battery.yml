@@ -1,14 +1,18 @@
-name: button-profile
+name: co-comeas-battery
 components:
 - id: main
   capabilities:
-  - id: button
+  - id: carbonMonoxideDetector
+    version: 1
+  - id: carbonMonoxideMeasurement
     version: 1
   - id: battery
+    version: 1
+  - id: hardwareFault
     version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: Button
+  - name: SmokeDetector

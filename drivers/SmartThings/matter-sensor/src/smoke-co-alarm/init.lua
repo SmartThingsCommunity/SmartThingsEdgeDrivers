@@ -18,7 +18,16 @@ local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
 local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
-local PROFILE_MATCHED = "__profile_matched"
+
+local HardwareFaultAlert = "__HardwareFaultAlert"
+local BatteryAlert = "__BatteryAlert"
+local BatteryLevel = "__BatteryLevel"
+
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
 
 local version = require "version"
 if version.api < 10 then
@@ -49,13 +58,18 @@ end
 local supported_profiles =
 {
   "co",
+  "co-battery",
   "co-comeas",
+  "co-comeas-battery",
   "smoke",
+  "smoke-battery",
   "smoke-co-comeas",
-  "smoke-co-temp-humidity-comeas"
+  "smoke-co-comeas-battery",
+  "smoke-co-temp-humidity-comeas",
+  "smoke-co-temp-humidity-comeas-battery"
 }
 
-local function match_profile(device)
+local function match_profile(device, battery_supported)
   local smoke_eps = embedded_cluster_utils.get_endpoints(device, clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.SMOKE_ALARM})
   local co_eps = embedded_cluster_utils.get_endpoints(device, clusters.SmokeCoAlarm.ID, {feature_bitmap = clusters.SmokeCoAlarm.types.Feature.CO_ALARM})
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
@@ -84,6 +98,9 @@ local function match_profile(device)
   if #co_level_eps > 0 then
     profile_name = profile_name .. "-colevel"
   end
+  if battery_supported == battery_support.BATTERY_PERCENTAGE then
+    profile_name = profile_name .. "-battery"
+  end
 
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
@@ -103,13 +120,9 @@ local function match_profile(device)
     device.log.info_with({hub_logs=true}, string.format("Using generic device profile %s.", profile_name))
   end
   device:try_update_metadata({profile = profile_name})
-  device:set_field(PROFILE_MATCHED, 1 , {persist = true})
 end
 
 local function device_init(driver, device)
-  if not device:get_field(PROFILE_MATCHED) then
-    match_profile(device)
-  end
   device:subscribe()
 end
 
@@ -143,16 +156,6 @@ local function binary_state_handler_factory(zeroEvent, nonZeroEvent)
       device:emit_event_for_endpoint(ib.endpoint_id, zeroEvent)
     elseif nonZeroEvent ~= nil then
       device:emit_event_for_endpoint(ib.endpoint_id, nonZeroEvent)
-    end
-  end
-end
-
-local function bool_handler_factory(trueEvent, falseEvent)
-  return function(driver, device, ib, response)
-    if ib.data.value and trueEvent ~= nil then
-      device:emit_event_for_endpoint(ib.endpoint_id, trueEvent)
-    elseif falseEvent ~= nil then
-      device:emit_event_for_endpoint(ib.endpoint_id, falseEvent)
     end
   end
 end
@@ -191,13 +194,64 @@ local function carbon_monoxide_unit_attr_handler(driver, device, ib, response)
   device:set_field(CARBON_MONOXIDE_MEASUREMENT_UNIT, unit, { persist = true })
 end
 
+local function hardware_fault_capability_handler(device)
+  local batLevel, batAlert  = device:get_field(BatteryLevel), device:get_field(BatteryAlert)
+  if device:get_field(HardwareFaultAlert) == true or (batLevel and batAlert and (batAlert > batLevel)) then
+    device:emit_event(capabilities.hardwareFault.hardwareFault.detected())
+  else
+    device:emit_event(capabilities.hardwareFault.hardwareFault.clear())
+  end
+end
+
+local function hardware_fault_alert_handler(driver, device, ib, response)
+  device:set_field(HardwareFaultAlert, ib.data.value, {persist = true})
+  hardware_fault_capability_handler(device)
+end
+
 local function battery_alert_attr_handler(driver, device, ib, response)
-  if ib.data.value == clusters.SmokeCoAlarm.types.AlarmStateEnum.NORMAL then
-    device:emit_event(capabilities.batteryLevel.battery.normal())
-  elseif ib.data.value == clusters.SmokeCoAlarm.types.AlarmStateEnum.WARNING then
-    device:emit_event(capabilities.batteryLevel.battery.warning())
-  elseif ib.data.value == clusters.SmokeCoAlarm.types.AlarmStateEnum.CRITICAL then
-    device:emit_event(capabilities.batteryLevel.battery.critical())
+  device:set_field(BatteryAlert, ib.data.value, {persist = true})
+  hardware_fault_capability_handler(device)
+end
+
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    if attr.value == 0x0C then
+      match_profile(device, battery_support.BATTERY_PERCENTAGE)
+      return
+    elseif attr.value == 0x0E then
+      match_profile(device, battery_support.BATTERY_LEVEL)
+      return
+    end
+  end
+end
+
+local function handle_battery_charge_level(driver, device, ib, response)
+  device:set_field(BatteryLevel, ib.data.value, {persist = true}) -- value used in hardware_fault_capability_handler
+  if device:supports_capability(capabilities.batteryLevel) then -- check required since attribute is subscribed to even without batteryLevel support, to set the field above
+    if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+      device:emit_event(capabilities.batteryLevel.battery.normal())
+    elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+      device:emit_event(capabilities.batteryLevel.battery.warning())
+    elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+      device:emit_event(capabilities.batteryLevel.battery.critical())
+    end
+  end
+end
+
+local function handle_battery_percent_remaining(driver, device, ib, response)
+  if ib.data.value ~= nil then
+    device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
+  end
+end
+
+local function do_configure(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    device:send(clusters.PowerSource.attributes.AttributeList:read())
+  else
+    match_profile(device, battery_support.NO_BATTERY)
   end
 end
 
@@ -205,7 +259,8 @@ local matter_smoke_co_alarm_handler = {
   NAME = "matter-smoke-co-alarm",
   lifecycle_handlers = {
     init = device_init,
-    infoChanged = info_changed
+    infoChanged = info_changed,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
@@ -214,12 +269,17 @@ local matter_smoke_co_alarm_handler = {
         [clusters.SmokeCoAlarm.attributes.COState.ID] = binary_state_handler_factory(capabilities.carbonMonoxideDetector.carbonMonoxide.clear(), capabilities.carbonMonoxideDetector.carbonMonoxide.detected()),
         [clusters.SmokeCoAlarm.attributes.BatteryAlert.ID] = battery_alert_attr_handler,
         [clusters.SmokeCoAlarm.attributes.TestInProgress.ID] = test_in_progress_event_handler,
-        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = bool_handler_factory(capabilities.hardwareFault.hardwareFault.detected(), capabilities.hardwareFault.hardwareFault.clear()),
+        [clusters.SmokeCoAlarm.attributes.HardwareFaultAlert.ID] = hardware_fault_alert_handler,
       },
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = carbon_monoxide_unit_attr_handler,
-      }
+      },
+      [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = handle_battery_percent_remaining,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = handle_battery_charge_level,
+      },
     },
   },
   subscribed_attributes = {
@@ -232,7 +292,9 @@ local matter_smoke_co_alarm_handler = {
       clusters.SmokeCoAlarm.attributes.TestInProgress,
     },
     [capabilities.hardwareFault.ID] = {
-      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
+      clusters.PowerSource.attributes.BatChargeLevel,
     },
     [capabilities.temperatureMeasurement.ID] = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue
@@ -245,7 +307,10 @@ local matter_smoke_co_alarm_handler = {
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
     },
     [capabilities.batteryLevel.ID] = {
-      clusters.SmokeCoAlarm.attributes.BatteryAlert,
+      clusters.PowerSource.attributes.BatChargeLevel,
+    },
+    [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.BatPercentRemaining,
     }
   },
   can_handle = is_matter_smoke_co_alarm
