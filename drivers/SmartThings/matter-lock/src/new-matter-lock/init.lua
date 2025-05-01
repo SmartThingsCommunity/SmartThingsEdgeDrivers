@@ -1975,7 +1975,7 @@ local function clear_aliro_response_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
-  local credIdx = device:get_field(lock_utils.CRED_INDEX)
+  local deviceKeyId = device:get_field(lock_utils.DEVICE_KEY_ID)
   local status = "success"
   if ib.status == DoorLock.types.DlStatus.FAILURE then
     status = "failure"
@@ -1983,38 +1983,41 @@ local function clear_aliro_response_handler(driver, device, ib, response)
     status = "invalidCommand"
   end
 
-  -- Delete Aliro in table
-  local credType = ""
-  if status == "success" then
-    credType = delete_aliro_from_table(device, credIdx)
-  else
-    device.log.warn(string.format("Failed to clear credential: %s", status))
-  end
-
   -- needs to be removed
   device.log.info_with({hub_logs=true}, string.format("clear_aliro_response_handler: userIdx: %s", userIdx))
-  device.log.info_with({hub_logs=true}, string.format("clear_aliro_response_handler: credType: %s", credType))
+  device.log.info_with({hub_logs=true}, string.format("clear_aliro_response_handler: deviceKeyId: %s", deviceKeyId))
 
-  -- Update commandResult
-  local result = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    credentialIndex = credIdx,
-    statusCode = status
-  }
-  local event = aliroSetting.commandResult(
-    result,
-    {
-      state_change = true,
-      visibility = {displayed = false}
+  if cmdName == "clearAliroCredentialEndpointKey" or status ~= "success" then
+    -- Delete Aliro in table
+    local credType = ""
+    if status == "success" then
+      credType = delete_aliro_from_table(device, deviceKeyId)
+    else
+      device.log.warn(string.format("Failed to clear credential: %s", status))
+    end
+
+    -- Update commandResult
+    local result = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      keyId = deviceKeyId,
+      statusCode = status
     }
-  )
-  device:emit_event(event)
-  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-
-  if credType == "nonEvictableKey" then
+    local event = aliroSetting.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     return
   end
+
+  -- Save values to field
+  cmdName = "clearAliroCredentialEndpointKey"
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
 
   -- Delete rest of Aliro credential "Non Evictable Endpoint Key"
   -- Get latest aliro table
@@ -2029,17 +2032,12 @@ local function clear_aliro_response_handler(driver, device, ib, response)
   for index, entry in pairs(aliro_table) do
     device.log.info_with({hub_logs=true}, string.format("entry.userIndex: %s", entry.userIndex))
     device.log.info_with({hub_logs=true}, string.format("userIdx: %s", userIdx))
-    device.log.info_with({hub_logs=true}, string.format("entry.credentialType: %s", entry.credentialType))
-    if entry.userIndex == userIdx and entry.credentialType == "nonEvictableKey" then
+    if entry.userIndex == userIdx and entry.keyId == deviceKeyId then
       -- Set parameters
       local credential = {
-        credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
-        credential_index = entry.credentialIndex,
+        credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY,
+        credential_index = entry.endPointKeyIndex,
       }
-
-      -- Save values to field
-      device:set_field(lock_utils.CRED_INDEX, entry.credentialIndex, {persist = true})
-
       -- Send command
       local ep = find_default_endpoint(device, DoorLock.ID)
       device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
@@ -2731,7 +2729,6 @@ local function handle_set_reader_key(driver, device, command)
 
   -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
-  device:set_field(lock_utils.PRIVATE_KEY, privateKey, {persist = true})
   device:set_field(lock_utils.PUBLIC_KEY, publicKey, {persist = true})
   device:set_field(lock_utils.GROUP_ID, groupId, {persist = true})
   device:set_field(lock_utils.GROUP_RESOLVING_KEY, groupResolvingKey, {persist = true})
@@ -2754,11 +2751,9 @@ local function set_aliro_reader_config_handler(driver, device, ib, response)
 
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  local privateKey = device:get_field(lock_utils.PRIVATE_KEY)
   local publicKey = device:get_field(lock_utils.PUBLIC_KEY)
   local groupId = device:get_field(lock_utils.GROUP_ID)
   local groupResolvingKey = device:get_field(lock_utils.GROUP_RESOLVING_KEY)
-
 
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! publicKey: %s !!!!!!!!!!!!!", publicKey)) -- needs to be removed
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! groupId: %s !!!!!!!!!!!!!", groupId)) -- needs to be removed
@@ -2849,6 +2844,24 @@ local function handle_set_aliro_credential(driver, device, command)
   local evictableEndPointKey = command.args.evictableEndPointKey
   local nonEvictableEndPointKey = command.args.nonEvictableEndPointKey
   
+  -- Check busy state
+  local busy = check_busy_state(device)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = aliroSetting.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    return
+  end
+
   -- Adjustment
   local dataOpType = DoorLock.types.DataOperationTypeEnum.ADD -- Data Operation Type: Add(0), Modify(2)
   local credIndexForIssuerKey = INITIAL_COTA_INDEX
@@ -2882,29 +2895,6 @@ local function handle_set_aliro_credential(driver, device, command)
     credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
     credential_index = credIndexForIssuerKey
   }
-
-  -- needs to be removed
-  device.log.info_with({hub_logs=true}, string.format("hex_string_to_octet_string(issuerKey): %s", hex_string_to_octet_string(command.args.issuerKey)))
-  device.log.info_with({hub_logs=true}, string.format("evictableEndPointKey: %s", command.args.evictableEndPointKey))
-  device.log.info_with({hub_logs=true}, string.format("nonEvictableEndPointKey: %s", command.args.nonEvictableEndPointKey))
-
-  -- Check busy state
-  local busy = check_busy_state(device)
-  if busy == true then
-    local result = {
-      commandName = cmdName,
-      statusCode = "busy"
-    }
-    local event = aliroSetting.commandResult(
-      result,
-      {
-        state_change = true,
-        visibility = {displayed = false}
-      }
-    )
-    device:emit_event(event)
-    return
-  end
 
   -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
@@ -2951,12 +2941,14 @@ end
 local function handle_clear_aliro_credential(driver, device, command)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_clear_aliro_credential !!!!!!!!!!!!!"))
   -- Get parameters
-  local cmdName = "clearAliroCredential"
+  local cmdName = "clearAliroCredentialIssuerKey"
   local userIdx = command.args.userIndex
+  local keyId = command.args.keyId
 
   -- needs to be removed
   device.log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
   device.log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+  device.log.info_with({hub_logs=true}, string.format("keyId: %s", keyId))
 
   -- Check busy state
   local busy = check_busy_state(device)
@@ -2979,6 +2971,7 @@ local function handle_clear_aliro_credential(driver, device, command)
   -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+  device:set_field(lock_utils.DEVICE_KEY_ID, keyId, {persist = true})
 
   -- Get latest aliro table
   local aliro_table = utils.deep_copy(device:get_latest_state(
@@ -2990,14 +2983,12 @@ local function handle_clear_aliro_credential(driver, device, command)
 
   -- Find aliro credential
   for index, entry in pairs(aliro_table) do
-    if entry.userIndex == userIdx and entry.credentialType == "issuerKey" then
+    if entry.userIndex == userIdx and entry.keyId == keyId then
       -- Set parameters
       local credential = {
         credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
-        credential_index = entry.credentialIndex,
+        credential_index = entry.issuerKeyIndex,
       }
-      -- Save values to field
-      device:set_field(lock_utils.CRED_INDEX, entry.credentialIndex, {persist = true})
       -- Send command
       local ep = device:component_to_endpoint(command.component)
       device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
