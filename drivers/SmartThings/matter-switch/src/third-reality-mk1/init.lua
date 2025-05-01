@@ -27,14 +27,15 @@ local THIRD_REALITY_MANUFACTURER_ID = 0x1407
 local THIRD_REALITY_MK1_PRODUCT_ID = 0x1388
 
 local function is_third_reality_mk1(opts, driver, device)
-  if not device.manufacturer_info then return false end
+  return true
+  --if not device.manufacturer_info then return false end
   -- this sub driver does not support child devices
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-     device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
-     device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
-    return true
-  end
-  return false
+  --if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+  --   device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
+  --   device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
+  --  return true
+  --end
+  --return false
 end
 
 local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
