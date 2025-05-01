@@ -210,7 +210,9 @@ local function test_init()
   for i, clus in ipairs(cluster_subscribe_list) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "12-button-keyboard" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)

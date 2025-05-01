@@ -16,10 +16,8 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
 
-local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local INITIAL_PRESS_ONLY = "__initial_press_only"
-local SWITCH_INITIALIZED = "__switch_initialized"
 
 -------------------------------------------------------------------------------------
 -- Third Reality MK1 specifics
@@ -92,8 +90,9 @@ local function configure_buttons(device)
   end
 end
 
-local function build_button_component_map(device, button_eps)
+local function build_button_component_map(device)
   -- create component mapping on the main profile button endpoints
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   table.sort(button_eps)
   local component_map = {}
   for component_num, ep in ipairs(button_eps) do
@@ -103,33 +102,28 @@ local function build_button_component_map(device, button_eps)
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
-local function initialize_buttons(driver, device)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  device:try_update_metadata({profile = "12-button-keyboard"})
-  device:set_field(BUTTON_DEVICE_PROFILED, true)
-  -- All button endpoints found will be added as components in the 12-button-keyboard profile.
-  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
-  build_button_component_map(device, button_eps)
-  configure_buttons(device)
-  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
-end
-
 local function device_init(driver, device)
   if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
     return
   end
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
-  if not device:get_field(SWITCH_INITIALIZED) then
-    initialize_buttons(driver, device)
-  end
   device:subscribe()
+end
+
+local function do_configure(driver, device)
+  device:try_update_metadata({profile = "12-button-keyboard"})
+  -- All button endpoints found will be added as components in the 12-button-keyboard profile.
+  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
+  build_button_component_map(device)
+  configure_buttons(device)
 end
 
 local third_reality_mk1_handler = {
   NAME = "Third Reality Handler",
   lifecycle_handlers = {
-    init = device_init
+    init = device_init,
+    doConfigure = do_configure
   },
   supported_capabilities = {
     capabilities.button
