@@ -15,9 +15,11 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
+local im = require "st.matter.interaction_model"
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local INITIAL_PRESS_ONLY = "__initial_press_only"
+local SUBSCRIBED_EVENTS_KEY = "__subscribed_events"
 
 -------------------------------------------------------------------------------------
 -- Third Reality MK1 specifics
@@ -26,10 +28,16 @@ local INITIAL_PRESS_ONLY = "__initial_press_only"
 local THIRD_REALITY_MANUFACTURER_ID = 0x1407
 local THIRD_REALITY_MK1_PRODUCT_ID = 0x1388
 
+local subscribed_events = {
+  [capabilities.button.ID] = {
+    clusters.Switch.events.InitialPress
+  }
+}
+
 local function is_third_reality_mk1(opts, driver, device)
   return true
   --if not device.manufacturer_info then return false end
-  -- this sub driver does not support child devices
+  ---- this sub driver does not support child devices
   --if device.network_type == device_lib.NETWORK_TYPE_MATTER and
   --   device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
   --   device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
@@ -42,27 +50,6 @@ local function set_field_for_endpoint(device, field, endpoint, value, additional
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
 end
 
---- find_default_endpoint is a helper function to handle situations where
---- device does not have endpoint ids in sequential order from 1
-local function find_default_endpoint(device)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  table.sort(button_eps)
-  for _,ep in ipairs(button_eps) do
-    if ep ~= 0 then -- 0 is the matter RootNode endpoint
-      return ep
-    end
-  end
-  return device.MATTER_DEFAULT_ENDPOINT
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return find_default_endpoint(device)
-end
-
 local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
@@ -73,10 +60,28 @@ local function endpoint_to_component(device, ep)
   return "F1"
 end
 
-local function configure_buttons(device)
-  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    return
+-- Override subscribe function to prevent subscribing to additional events from the main driver
+local function subscribe(device)
+  for cap_id, events in pairs(subscribed_events or {}) do
+    if device:supports_capability_by_id(cap_id) then
+      for _, evnt in ipairs(events) do
+        device:add_subscribed_event(evnt)
+      end
+    end
   end
+  local sub_evnts = device:get_field(SUBSCRIBED_EVENTS_KEY) or {}
+  local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
+  for _, events in pairs(sub_evnts) do
+    for _, ib in pairs(events) do
+      subscribe_request:with_info_block(ib)
+    end
+  end
+  if #subscribe_request.info_blocks > 0 then
+    device:send(subscribe_request)
+  end
+end
+
+local function configure_buttons(device)
   local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   for _, ep in ipairs(ms_eps) do
     if device.profile.components[endpoint_to_component(device, ep)] then
@@ -92,7 +97,6 @@ local function configure_buttons(device)
 end
 
 local function build_button_component_map(device)
-  -- create component mapping on the main profile button endpoints
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   table.sort(button_eps)
   local component_map = {}
@@ -104,28 +108,33 @@ local function build_button_component_map(device)
 end
 
 local function device_init(driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
-    return
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    subscribe(device)
   end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:subscribe()
+end
+
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    subscribe(device)
+    configure_buttons(device)
+  end
 end
 
 local function do_configure(driver, device)
   device:try_update_metadata({profile = "12-button-keyboard"})
-  -- All button endpoints found will be added as components in the 12-button-keyboard profile.
-  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
   build_button_component_map(device)
   configure_buttons(device)
 end
 
 local third_reality_mk1_handler = {
-  NAME = "Third Reality Handler",
+  NAME = "ThirdReality MK1 Handler",
   lifecycle_handlers = {
     init = device_init,
+    infoChanged = info_changed,
     doConfigure = do_configure
   },
+  subscribed_events = subscribed_events,
   supported_capabilities = {
     capabilities.button
   },

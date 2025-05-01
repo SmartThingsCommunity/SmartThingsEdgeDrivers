@@ -201,10 +201,7 @@ end
 
 local function test_init()
   local cluster_subscribe_list = {
-    clusters.Switch.events.InitialPress,
-    clusters.Switch.events.LongPress,
-    clusters.Switch.events.ShortRelease,
-    clusters.Switch.events.MultiPressComplete
+    clusters.Switch.events.InitialPress
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, clus in ipairs(cluster_subscribe_list) do
