@@ -1,0 +1,140 @@
+-- Copyright 2025 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
+local capabilities = require "st.capabilities"
+local clusters = require "st.matter.clusters"
+local device_lib = require "st.device"
+
+local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local INITIAL_PRESS_ONLY = "__initial_press_only"
+local SWITCH_INITIALIZED = "__switch_initialized"
+
+-------------------------------------------------------------------------------------
+-- Third Reality MK1 specifics
+-------------------------------------------------------------------------------------
+
+local THIRD_REALITY_MANUFACTURER_ID = 0x1407
+local THIRD_REALITY_MK1_PRODUCT_ID = 0x1388
+
+local function is_third_reality_mk1(opts, driver, device)
+  if not device.manufacturer_info then return false end
+  -- this sub driver does not support child devices
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+     device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
+     device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
+    return true
+  end
+  return false
+end
+
+local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
+  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+end
+
+--- find_default_endpoint is a helper function to handle situations where
+--- device does not have endpoint ids in sequential order from 1
+local function find_default_endpoint(device)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  table.sort(button_eps)
+  for _,ep in ipairs(button_eps) do
+    if ep ~= 0 then -- 0 is the matter RootNode endpoint
+      return ep
+    end
+  end
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
+local function component_to_endpoint(device, component)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  if map[component] then
+    return map[component]
+  end
+  return find_default_endpoint(device)
+end
+
+local function endpoint_to_component(device, ep)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+      return component
+    end
+  end
+  return "F1"
+end
+
+local function configure_buttons(device)
+  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    return
+  end
+  local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  for _, ep in ipairs(ms_eps) do
+    if device.profile.components[endpoint_to_component(device, ep)] then
+      set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
+      device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
+      local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
+      device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
+    else
+      device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
+    end
+  end
+end
+
+local function build_button_component_map(device, button_eps)
+  -- create component mapping on the main profile button endpoints
+  table.sort(button_eps)
+  local component_map = {}
+  for component_num, ep in ipairs(button_eps) do
+    local button_component = "F" .. component_num
+    component_map[button_component] = ep
+  end
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
+end
+
+local function initialize_buttons(driver, device)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  device:try_update_metadata({profile = "12-button-keyboard"})
+  device:set_field(BUTTON_DEVICE_PROFILED, true)
+  -- All button endpoints found will be added as components in the 12-button-keyboard profile.
+  -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
+  build_button_component_map(device, button_eps)
+  configure_buttons(device)
+  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
+end
+
+local function device_init(driver, device)
+  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
+    return
+  end
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+  if not device:get_field(SWITCH_INITIALIZED) then
+    initialize_buttons(driver, device)
+  end
+  device:subscribe()
+end
+
+local third_reality_mk1_handler = {
+  NAME = "Third Reality Handler",
+  lifecycle_handlers = {
+    init = device_init
+  },
+  supported_capabilities = {
+    capabilities.button
+  },
+  can_handle = is_third_reality_mk1
+}
+
+return third_reality_mk1_handler
