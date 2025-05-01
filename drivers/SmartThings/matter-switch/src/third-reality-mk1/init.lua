@@ -19,7 +19,6 @@ local im = require "st.matter.interaction_model"
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local INITIAL_PRESS_ONLY = "__initial_press_only"
-local SUBSCRIBED_EVENTS_KEY = "__subscribed_events"
 
 -------------------------------------------------------------------------------------
 -- Third Reality MK1 specifics
@@ -27,12 +26,6 @@ local SUBSCRIBED_EVENTS_KEY = "__subscribed_events"
 
 local THIRD_REALITY_MANUFACTURER_ID = 0x1407
 local THIRD_REALITY_MK1_PRODUCT_ID = 0x1388
-
-local subscribed_events = {
-  [capabilities.button.ID] = {
-    clusters.Switch.events.InitialPress
-  }
-}
 
 local function is_third_reality_mk1(opts, driver, device)
   return true
@@ -62,23 +55,10 @@ end
 
 -- Override subscribe function to prevent subscribing to additional events from the main driver
 local function subscribe(device)
-  for cap_id, events in pairs(subscribed_events or {}) do
-    if device:supports_capability_by_id(cap_id) then
-      for _, evnt in ipairs(events) do
-        device:add_subscribed_event(evnt)
-      end
-    end
-  end
-  local sub_evnts = device:get_field(SUBSCRIBED_EVENTS_KEY) or {}
+  local ib = im.InteractionInfoBlock(nil, clusters.Switch.ID, nil, clusters.Switch.events.InitialPress.ID)
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
-  for _, events in pairs(sub_evnts) do
-    for _, ib in pairs(events) do
-      subscribe_request:with_info_block(ib)
-    end
-  end
-  if #subscribe_request.info_blocks > 0 then
-    device:send(subscribe_request)
-  end
+  subscribe_request:with_info_block(ib)
+  device:send(subscribe_request)
 end
 
 local function configure_buttons(device)
@@ -134,7 +114,6 @@ local third_reality_mk1_handler = {
     infoChanged = info_changed,
     doConfigure = do_configure
   },
-  subscribed_events = subscribed_events,
   supported_capabilities = {
     capabilities.button
   },
