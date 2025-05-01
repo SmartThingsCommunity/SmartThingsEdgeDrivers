@@ -805,6 +805,109 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
   device:emit_event(capabilities.lockSchedules.weekDaySchedules(week_schedule_table, {visibility = {displayed = false}}))
 end
 
+-----------------------------
+-- Year Day Schedule Table --
+-----------------------------
+local function add_year_schedule_to_table(device, userIdx, scheduleIdx, sTime, eTime)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! add_year_schedule_to_table !!!!!!!!!!!!!")) -- needs to be removed
+
+  -- Get latest year day schedule table
+  local year_schedule_table = utils.deep_copy(device:get_latest_state(
+    "main",
+    capabilities.lockSchedules.ID,
+    capabilities.lockSchedules.yearDaySchedules.NAME,
+    {}
+  ))
+
+  -- Find schedule for specific user
+  local i = 0
+  for index, entry in pairs(year_schedule_table) do
+    if entry.userIndex == userIdx then
+      i = index
+    end
+  end
+
+  if i ~= 0 then -- Add schedule for existing user
+    -- Exclude same scheduleIdx
+    local new_schedule_table = {}
+    for index, entry in pairs(year_schedule_table[i].schedules) do
+      if entry.scheduleIndex ~= scheduleIdx then
+        table.insert(new_schedule_table, entry)
+      end
+    end
+    -- Add new entry to table
+    table.insert(
+      new_schedule_table,
+      {
+        scheduleIndex = scheduleIdx,
+        localStartTime = sTime,
+        localEndTime = eTime
+      }
+    )
+    -- Update schedule for specific user
+    year_schedule_table[i].schedules = new_schedule_table
+  else -- Add schedule for new user
+    device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! add_year_schedule_to_table 2!!!!!!!!!!!!!")) -- needs to be removed
+    table.insert(
+      year_schedule_table,
+      {
+        userIndex = userIdx,
+        schedules = {{
+          scheduleIndex = scheduleIdx,
+          localStartTime = sTime,
+          localEndTime = eTime
+        }}
+      }
+    )
+  end
+
+  device:emit_event(capabilities.lockSchedules.yearDaySchedules(year_schedule_table, {visibility = {displayed = false}}))
+end
+
+local function delete_year_schedule_to_table(device, userIdx, scheduleIdx)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! delete_year_schedule_to_table !!!!!!!!!!!!!")) -- needs to be removed
+
+  -- Get latest year day schedule table
+  local year_schedule_table = utils.deep_copy(device:get_latest_state(
+    "main",
+    capabilities.lockSchedules.ID,
+    capabilities.lockSchedules.yearDaySchedules.NAME,
+    {}
+  ))
+
+  -- Find schedule for specific user
+  local i = 0
+  for index, entry in pairs(year_schedule_table) do
+    if entry.userIndex == userIdx then
+      i = index
+    end
+  end
+
+  -- When there is no userIndex in the table
+  if i == 0 then
+    device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! No userIndex in Year Day Schedule Table !!!!!!!!!!!!!", i)) -- needs to be removed
+    return
+  end
+
+  -- Re-create schedule table for the user
+  local new_schedule_table = {}
+  for index, entry in pairs(year_schedule_table[i].schedules) do
+    if entry.scheduleIndex ~= scheduleIdx then
+      table.insert(new_schedule_table, entry)
+    end
+  end
+
+  -- If user has no schedule, remove user from the table
+  if #new_schedule_table == 0 then
+    device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! No schedule for User !!!!!!!!!!!!!", i)) -- needs to be removed
+    table.remove(year_schedule_table, i)
+  else
+    year_schedule_table[i].schedules = new_schedule_table
+  end
+
+  device:emit_event(capabilities.lockSchedules.yearDaySchedules(year_schedule_table, {visibility = {displayed = false}}))
+end
+
 ----------------------------
 -- Aliro Credential Table --
 ----------------------------
@@ -2180,8 +2283,135 @@ end
 ---------------------------
 -- Set Year Day Schedule --
 ---------------------------
+function iso8601_to_epoch(iso_str)
+  local pattern = "^(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)"
+  local year, month, day, hour, min, sec = iso_str:match(pattern)
+  local tz_sign, tz_hour, tz_min = iso_str:match("([%+%-])(%d+):(%d+)")
+  local is_utc_z = iso_str:match("Z$")
+  if not year then
+      return nil
+  end
+  local utc_time = os.time({
+      year = tonumber(year),
+      month = tonumber(month),
+      day = tonumber(day),
+      hour = tonumber(hour),
+      min = tonumber(min),
+      sec = tonumber(sec),
+  })
+  if is_utc_z then
+      return utc_time
+  elseif tz_sign and tz_hour and tz_min then
+      local offset_sec = tonumber(tz_hour) * 3600 + tonumber(tz_min) * 60
+      if tz_sign == "+" then
+          utc_time = utc_time - offset_sec
+      else
+          utc_time = utc_time + offset_sec
+      end
+      return utc_time
+  else
+      return utc_time
+  end
+end
+
 local function handle_set_year_day_schedule(driver, device, command)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_year_day_schedule !!!!!!!!!!!!!")) -- needs to be removed
+
+  -- Get parameters
+  local cmdName = "setYearDaySchedule"
+  local scheduleIdx = command.args.scheduleIndex
+  local userIdx = command.args.userIndex
+  local localStartTime = command.args.schedule.localStartTime
+  local localEndTime = command.args.schedule.localEndTime
+
+  -- Check busy state
+  local busy = check_busy_state(device)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = capabilities.lockSchedules.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    return
+  end
+
+  -- Save values to field
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_LOCAL_START_TIME, localStartTime, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_LOCAL_END_TIME, localEndTime, {persist = true})
+
+  -- needs to be removed
+  device.log.info_with({hub_logs=true}, string.format("scheduleIdx: %s", scheduleIdx))
+  device.log.info_with({hub_logs=true}, string.format("userIdx: %s", userIdx))
+  device.log.info_with({hub_logs=true}, string.format("localStartTime: %s", localStartTime))
+  device.log.info_with({hub_logs=true}, string.format("iso8601_to_epoch(localStartTime): %s", iso8601_to_epoch(localStartTime)))
+  device.log.info_with({hub_logs=true}, string.format("localEndTime: %s !!!!!!!!!!!!!", localEndTime))
+  device.log.info_with({hub_logs=true}, string.format("iso8601_to_epoch(localEndTime): %s", iso8601_to_epoch(localEndTime)))
+
+  -- Send command
+  local ep = device:component_to_endpoint(command.component)
+  device:send(
+    DoorLock.server.commands.SetYearDaySchedule(
+      device, ep,
+      scheduleIdx,    -- Year Day Schedule Index
+      userIdx,        -- User Index
+      iso8601_to_epoch(localStartTime), -- Days Mask
+      iso8601_to_epoch(localEndTime)    -- Start Hour
+    )
+  )
+end
+
+------------------------------------
+-- Set Year Day Schedule Response --
+------------------------------------
+local function set_year_day_schedule_handler(driver, device, ib, response)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! set_year_day_schedule_handler !!!!!!!!!!!!!")) -- needs to be removed
+
+  -- Get result
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local scheduleIdx = device:get_field(lock_utils.SCHEDULE_INDEX)
+  local localStartTime = device:get_field(lock_utils.SCHEDULE_LOCAL_START_TIME)
+  local localEndTime = device:get_field(lock_utils.SCHEDULE_LOCAL_END_TIME)
+  local status = "success"
+  if ib.status == DoorLock.types.DlStatus.FAILURE then
+    status = "failure"
+  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
+    status = "invalidCommand"
+  end
+
+  -- Add Year Day Schedule to table
+  if status == "success" then
+    add_year_schedule_to_table(device, userIdx, scheduleIdx, localStartTime, localEndTime)
+  else
+    device.log.warn(string.format("Failed to set year day schedule: %s", status))
+  end
+
+  -- Update commandResult
+  local result = {
+    commandName = cmdName,
+    userIndex = userIdx,
+    scheduleIndex = scheduleIdx,
+    statusCode = status
+  }
+  local event = capabilities.lockSchedules.commandResult(
+    result,
+    {
+      state_change = true,
+      visibility = {displayed = false}
+    }
+  )
+  device:emit_event(event)
+  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
 -----------------------------
@@ -2189,6 +2419,85 @@ end
 -----------------------------
 local function handle_clear_year_day_schedule(driver, device, command)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_clear_year_day_schedule !!!!!!!!!!!!!")) -- needs to be removed
+
+  -- Get parameters
+  local cmdName = "clearYearDaySchedules"
+  local scheduleIdx = command.args.scheduleIndex
+  local userIdx = command.args.userIndex
+
+  -- Check busy state
+  local busy = check_busy_state(device)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = capabilities.lockSchedules.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    return
+  end
+
+  -- Save values to field
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
+  device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+
+  -- needs to be removed
+  device.log.info_with({hub_logs=true}, string.format("commandName: %s", cmdName))
+  device.log.info_with({hub_logs=true}, string.format("scheduleIndex: %s", scheduleIdx))
+  device.log.info_with({hub_logs=true}, string.format("userIndex: %s", userIdx))
+
+  -- Send command
+  local ep = device:component_to_endpoint(command.component)
+  device:send(DoorLock.server.commands.ClearYearDaySchedule(device, ep, scheduleIdx, userIdx))
+end
+
+------------------------------------
+-- Clear Year Day Schedule Response --
+------------------------------------
+local function clear_year_day_schedule_handler(driver, device, ib, response)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! clear_year_day_schedule_handler !!!!!!!!!!!!!")) -- needs to be removed
+
+  -- Get result
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  local scheduleIdx = device:get_field(lock_utils.SCHEDULE_INDEX)
+  local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local status = "success"
+  if ib.status == DoorLock.types.DlStatus.FAILURE then
+    status = "failure"
+  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
+    status = "invalidCommand"
+  end
+
+  -- Delete Year Day Schedule to table
+  if status == "success" then
+    delete_year_schedule_to_table(device, userIdx, scheduleIdx)
+  else
+    device.log.warn(string.format("Failed to clear year day schedule: %s", status))
+  end
+
+  -- Update commandResult
+  local result = {
+    commandName = cmdName,
+    userIndex = userIdx,
+    scheduleIndex = scheduleIdx,
+    statusCode = status
+  }
+  local event = capabilities.lockSchedules.commandResult(
+    result,
+    {
+      state_change = true,
+      visibility = {displayed = false}
+    }
+  )
+  device:emit_event(event)
+  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
 ----------------
@@ -2320,6 +2629,15 @@ local function aliro_reader_group_id_handler(driver, device, ib, response)
   end
 end
 
+local function aliro_group_resolving_key_handler(driver, device, ib, response)
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_group_resolving_key_handler !!!!!!!!!!!!!"))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
+  if ib.data.value ~= nil then
+    device:emit_event(aliroSetting.aliroGroupResolvingKey(octet_string_to_hex_string(ib.data.value)))
+  end
+end
+
 local function aliro_protocol_versions_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_protocol_versions_handler !!!!!!!!!!!!!"))
   if ib.data.elements == nil then
@@ -2328,18 +2646,9 @@ local function aliro_protocol_versions_handler(driver, device, ib, response)
   local version = nil
   for _, entry in ipairs(ib.data.elements) do
     version = entry.value
+    device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value[1]: %s !!!!!!!!!!!!!", version))
   end
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.elements[1].value))
   device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0"))
-end
-
-local function aliro_group_resolving_key_handler(driver, device, ib, response)
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_group_resolving_key_handler !!!!!!!!!!!!!"))
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
-  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
-  if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroGroupResolvingKey(octet_string_to_hex_string(ib.data.value)))
-  end
 end
 
 local function aliro_supported_ble_uwb_protocol_version_handler(driver, device, ib, response)
@@ -2450,15 +2759,44 @@ local function set_aliro_reader_config_handler(driver, device, ib, response)
   local groupId = device:get_field(lock_utils.GROUP_ID)
   local groupResolvingKey = device:get_field(lock_utils.GROUP_RESOLVING_KEY)
 
+
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! publicKey: %s !!!!!!!!!!!!!", publicKey)) -- needs to be removed
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! groupId: %s !!!!!!!!!!!!!", groupId)) -- needs to be removed
+  device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! groupResolvingKey: %s !!!!!!!!!!!!!", groupResolvingKey)) -- needs to be removed
+
   local status = "success"
   if ib.status == DoorLock.types.DlStatus.FAILURE then
     status = "failure"
   elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
     status = "invalidCommand"
   elseif ib.status == DoorLock.types.DlStatus.SUCCESS then
-    device:emit_event(aliroSetting.aliroReaderVerificationKey(publicKey))
-    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(groupId))
-    device:emit_event(aliroSetting.aliroGroupResolvingKey(groupResolvingKey))
+    if publicKey ~= nil then
+      device:emit_event(
+        aliroSetting.aliroReaderVerificationKey(publicKey),
+        {
+          state_change = true,
+          visibility = {displayed = false}
+        }
+      )
+    end
+    if groupId ~= nil then
+      device:emit_event(
+        aliroSetting.aliroReaderGroupIdentifier(groupId),
+        {
+          state_change = true,
+          visibility = {displayed = false}
+        }
+      )
+    end
+    if groupResolvingKey ~= nil then
+      device:emit_event(
+        aliroSetting.aliroGroupResolvingKey(groupResolvingKey),
+        {
+          state_change = true,
+          visibility = {displayed = false}
+        }
+      )
+    end
   end
   
   -- Update commandResult
@@ -2721,6 +3059,8 @@ local new_matter_lock_handler = {
         [DoorLock.server.commands.ClearCredential.ID] = clear_credential_response_handler,
         [DoorLock.server.commands.SetWeekDaySchedule.ID] = set_week_day_schedule_handler,
         [DoorLock.server.commands.ClearWeekDaySchedule.ID] = clear_week_day_schedule_handler,
+        [DoorLock.server.commands.SetYearDaySchedule.ID] = set_year_day_schedule_handler,
+        [DoorLock.server.commands.ClearYearDaySchedule.ID] = clear_year_day_schedule_handler,
         [DoorLock.server.commands.SetAliroReaderConfig.ID] = set_aliro_reader_config_handler,
       },
     },
