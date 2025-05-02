@@ -22,8 +22,7 @@ function discovery.set_device_field(driver, device)
   driver.datastore.discovery_cache[device.device_network_id] = nil
 end
 
-local function update_device_discovery_cache(driver, dni, ip)
-  local device_info = driver.discovery_helper.get_device_info(driver, dni, ip)
+local function update_device_discovery_cache(driver, dni, ip, device_info)
   if driver.datastore.discovery_cache[dni] == nil then
     driver.datastore.discovery_cache[dni] = {}
   end
@@ -33,9 +32,10 @@ end
 
 local function try_add_device(driver, device_dni, device_ip)
   log.trace(string.format("try_add_device : dni= %s, ip= %s", device_dni, device_ip))
+  local device_info = driver.discovery_helper.get_device_info(driver, device_dni, device_ip)
 
-  update_device_discovery_cache(driver, device_dni, device_ip)
-  local create_device_msg = driver.discovery_helper.get_device_create_msg(driver, device_dni, device_ip)
+  update_device_discovery_cache(driver, device_dni, device_ip, device_info)
+  local create_device_msg = driver.discovery_helper.get_device_create_msg(driver, device_dni, device_ip, device_info)
 
   local credential = driver.discovery_helper.get_credential(driver, device_dni, device_ip)
 
@@ -93,7 +93,14 @@ local function discovery_device(driver)
 
   for dni, ip in pairs(unknown_discovered_devices) do
     log.trace(string.format("unknown dni= %s, ip= %s", dni, ip))
-    if not processing_devices[dni] then
+    local is_already_added = false
+    for _, device in pairs(driver:get_devices()) do
+      if device.device_network_id == dni then
+        is_already_added = true
+        break
+      end
+    end
+    if (not processing_devices[dni]) and (not is_already_added) then
       try_add_device(driver, dni, ip)
     end
   end

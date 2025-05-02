@@ -26,7 +26,7 @@ zigbeeManufacturer:
     model: SLA02
     deviceProfileName: basic-switch
   - id: "SMARTvill/SLA01"
-    deviceLabel: SMARTvill Switch 1
+    deviceLabel: SMARTvill Switch
     manufacturer: SMARTvill
     model: SLA01
     deviceProfileName: basic-switch
@@ -2345,6 +2345,16 @@ zigbeeGeneric:
         - 0x0300 #Color Control
     deviceIdentifiers:
       - 0x0220
+    deviceProfileName: color-temp-bulb-2700K-6500K
+  - id: "genericZHAColorTempBulb"
+    deviceLabel: Zigbee Light
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0300 #Color Control
+    deviceIdentifiers:
+      - 0x010C
     deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "genericMeteredSwitch"
     deviceLabel: Zigbee Switch
