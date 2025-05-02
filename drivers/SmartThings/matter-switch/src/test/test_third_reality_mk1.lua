@@ -213,12 +213,14 @@ local function test_init()
   configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "12-buttons-keyboard"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   configure_buttons()
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
 test.set_test_init_function(test_init)

@@ -28,15 +28,14 @@ local THIRD_REALITY_MANUFACTURER_ID = 0x1407
 local THIRD_REALITY_MK1_PRODUCT_ID = 0x1388
 
 local function is_third_reality_mk1(opts, driver, device)
-  return true
-  --if not device.manufacturer_info then return false end
-  ---- this sub driver does not support child devices
-  --if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-  --   device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
-  --   device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
-  --  return true
-  --end
-  --return false
+  if not device.manufacturer_info then return false end
+  -- this sub driver does not support child devices
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+     device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
+     device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
+    return true
+  end
+  return false
 end
 
 local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
@@ -94,10 +93,14 @@ local function device_init(driver, device)
   end
 end
 
+local function device_added(driver, device)
+  device_init(driver, device)
+end
+
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    subscribe(device)
     configure_buttons(device)
+    subscribe(device)
   end
 end
 
@@ -107,12 +110,24 @@ local function do_configure(driver, device)
   configure_buttons(device)
 end
 
+local function initial_press_event_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
+end
+
 local third_reality_mk1_handler = {
   NAME = "ThirdReality MK1 Handler",
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
     infoChanged = info_changed,
     doConfigure = do_configure
+  },
+  matter_handlers = {
+    event = {
+      [clusters.Switch.ID] = {
+        [clusters.Switch.events.InitialPress.ID] = initial_press_event_handler
+      }
+    }
   },
   supported_capabilities = {
     capabilities.button
