@@ -17,6 +17,8 @@ local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local data_types = require "st.zigbee.data_types"
+local cluster_base = require "st.zigbee.cluster_base"
+local Basic = zcl_clusters.Basic
 local alarm = capabilities.alarm
 local smokeDetector = capabilities.smokeDetector
 
@@ -30,6 +32,13 @@ local ALARM_DEFAULT_MAX_DURATION = 0x00F0
 local DEFAULT_WARNING_DURATION = 240
 local BATTERY_MIN_VOLTAGE = 2.3
 local BATTERY_MAX_VOLTAGE = 3.0
+
+local DEVELCO_MANUFACTURER_CODE = 0x1015
+local DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR = 0x8000
+
+local SIREN_ENDIAN = "siren_endian"
+local PRIMARY_SW_VERSION = "primary_sw_version"
+local SMOKE_ALARM_FIXED_ENDIAN_SW_VERSION = "040005"
 
 local TEMPERATURE_MEASUREMENT_ENDPOINT = 0x26
 
@@ -57,9 +66,18 @@ local CONFIGURATIONS = {
   }
 }
 
+local function primary_sw_version_attr_handler(driver, device, value, zb_rx)
+  local primary_sw_version = value.value:gsub('.', function (c) return string.format('%02x', string.byte(c)) end)
+  device:set_field(PRIMARY_SW_VERSION, primary_sw_version, {persist = true})
+  if (primary_sw_version < SMOKE_ALARM_FIXED_ENDIAN_SW_VERSION) then
+    device:set_field(SIREN_ENDIAN, "reverse", {persist = true})
+  end
+end
+
 local function device_added(driver, device)
   device:emit_event(alarm.alarm.off())
   device:emit_event(smokeDetector.smoke.clear())
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
 end
 
 local function device_init(driver, device)
@@ -75,6 +93,11 @@ end
 local function do_configure(self, device)
   device:configure()
   device:send(IASWD.attributes.MaxDuration:write(device, ALARM_DEFAULT_MAX_DURATION))
+
+  local sw_version = device:get_field(PRIMARY_SW_VERSION)
+  if ((sw_version == nil) or (sw_version == "")) then
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
+  end
 end
 
 local info_changed = function (driver, device, event, args)
@@ -115,19 +138,34 @@ local function ias_zone_status_change_handler(driver, device, zb_rx)
 end
 
 local function send_siren_command(device)
+  -- Check firmware version first if not already known
+  local sw_version = device:get_field(PRIMARY_SW_VERSION)
+  if ((sw_version == nil) or (sw_version == "")) then
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
+  end
+  
   local warning_duration = device:get_field(ALARM_LAST_DURATION) or DEFAULT_WARNING_DURATION
-  local sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
+  local sirenConfiguration
+  local warning_mode = 0x01  -- For siren on
 
-  sirenConfiguration:set_warning_mode(0x01)
+  if (device:get_field(SIREN_ENDIAN) == "reverse") then
+    -- Old frient firmware, the endian format is reversed
+    local siren_config_value = warning_mode
+    sirenConfiguration = IASWD.types.SirenConfiguration(siren_config_value)
+  else
+    sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
+    sirenConfiguration:set_warning_mode(warning_mode)
+  end
 
   device:send(
     IASWD.server.commands.StartWarning(
       device,
       sirenConfiguration,
-      data_types.Uint16(warning_duration)
+      data_types.Uint16(warning_duration),
+      data_types.Uint8(00),
+      data_types.Enum8(00)
     )
   )
-
 end
 
 local emit_alarm_event = function(device, cmd)
@@ -163,14 +201,26 @@ end
 
 
 local siren_switch_off_handler = function(driver, device, command)
-  local sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
-  sirenConfiguration:set_warning_mode(0x00)
+  local sirenConfiguration
+  local warning_mode = 0x00  -- For siren off
+  
+  if (device:get_field(SIREN_ENDIAN) == "reverse") then
+    -- Old frient firmware, the endian format is reversed
+    sirenConfiguration = IASWD.types.SirenConfiguration(warning_mode)
+  else
+    sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
+    sirenConfiguration:set_warning_mode(warning_mode)
+  end
+  
   device:set_field(ALARM_COMMAND, alarm_command.OFF, {persist = true})
 
   device:send(
     IASWD.server.commands.StartWarning(
       device,
-      sirenConfiguration
+      sirenConfiguration,
+      data_types.Uint16(0x00),
+      data_types.Uint8(00),
+      data_types.Enum8(00)
     )
   )
 end
@@ -203,6 +253,9 @@ local frient_smoke_sensor = {
     attr = {
       [IASZone.ID] = {
         [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
+      },
+      [Basic.ID] = {
+        [DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR] = primary_sw_version_attr_handler,
       }
     }
   },
