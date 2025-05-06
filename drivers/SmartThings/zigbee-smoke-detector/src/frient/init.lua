@@ -143,7 +143,7 @@ local function send_siren_command(device)
   if ((sw_version == nil) or (sw_version == "")) then
     device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
   end
-  
+
   local warning_duration = device:get_field(ALARM_LAST_DURATION) or DEFAULT_WARNING_DURATION
   local sirenConfiguration
   local warning_mode = 0x01  -- For siren on
@@ -203,7 +203,7 @@ end
 local siren_switch_off_handler = function(driver, device, command)
   local sirenConfiguration
   local warning_mode = 0x00  -- For siren off
-  
+
   if (device:get_field(SIREN_ENDIAN) == "reverse") then
     -- Old frient firmware, the endian format is reversed
     sirenConfiguration = IASWD.types.SirenConfiguration(warning_mode)
@@ -211,7 +211,7 @@ local siren_switch_off_handler = function(driver, device, command)
     sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
     sirenConfiguration:set_warning_mode(warning_mode)
   end
-  
+
   device:set_field(ALARM_COMMAND, alarm_command.OFF, {persist = true})
 
   device:send(
