@@ -720,7 +720,7 @@ local function device_init(driver, device)
   device:subscribe()
 end
 
-local function do_configure(driver, device)
+local function match_profile(driver, device)
   if detect_bridge(device) then
     return
   end
@@ -764,8 +764,12 @@ local function do_configure(driver, device)
   end
 end
 
+local function do_configure(driver, device)
+  match_profile(driver, device)
+end
+
 local function driver_switched(driver, device)
-  do_configure(driver, device)
+  match_profile(driver, device)
 end
 
 local function device_removed(driver, device)
