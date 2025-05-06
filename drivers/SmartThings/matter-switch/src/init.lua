@@ -45,11 +45,13 @@ local CURRENT_HUESAT_ATTR_MIN = 0
 local CURRENT_HUESAT_ATTR_MAX = 254
 
 -- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
+-- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
 -- devices that were joined to this driver as MCD devices before the transition
 -- to join switch devices as parent-child. This value will exist in the device
 -- table for devices that joined prior to this transition, and is also used for
 -- button devices that require component mapping.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
 local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
@@ -188,6 +190,12 @@ local child_device_profile_overrides_per_vendor_id = {
     { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
     { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
   }
+}
+
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
 
 local detect_matter_thing
@@ -558,6 +566,81 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
+local function supports_capability_by_id_modular(device, capability, component)
+  for _, component_capabilities in ipairs(device:get_field(SUPPORTED_COMPONENT_CAPABILITIES)) do
+    local comp_id = component_capabilities[1]
+    local capability_ids = component_capabilities[2]
+    if (component == nil) or (component == comp_id) then
+      for _, cap in ipairs(capability_ids) do
+        if cap == capability then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
+local function match_modular_profile(driver, device, battery_attr_support)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+
+  if #button_eps > 0 then
+    for component_num, _ in ipairs(button_eps) do
+      if component_num == 1 and #switch_eps == 0 then
+        table.insert(main_component_capabilities, capabilities.button.ID)
+        if battery_attr_support == battery_support.BATTERY_PERCENTAGE then
+          table.insert(main_component_capabilities, capabilities.battery.ID)
+        elseif battery_attr_support == battery_support.BATTERY_LEVEL then
+          table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+        end
+      else
+        local extra_component_capabilities = {}
+        table.insert(extra_component_capabilities, capabilities.button.ID)
+        if component_num == 1 then
+          if battery_attr_support == battery_support.BATTERY_PERCENTAGE then
+            table.insert(extra_component_capabilities, capabilities.battery.ID)
+          elseif battery_attr_support == battery_support.BATTERY_LEVEL then
+            table.insert(extra_component_capabilities, capabilities.batteryLevel.ID)
+          end
+        end
+        local component_name = "button"
+        if #button_eps > 1 then
+          component_name = component_name .. component_num
+        end
+        table.insert(optional_supported_component_capabilities, {component_name, extra_component_capabilities})
+      end
+    end
+    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+      device:send(clusters.PowerSource.attributes.AttributeList:read(device))
+    end
+  end
+
+  if #level_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.switchLevel.ID)
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, optional_supported_component_capabilities)
+
+  device:try_update_metadata({profile = "switch-modular", optional_component_capabilities = optional_supported_component_capabilities})
+
+  -- add mandatory capabilities for subscription
+  local total_supported_capabilities = optional_supported_component_capabilities
+  table.insert(total_supported_capabilities[1][2], capabilities.switch.ID)
+
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities)
+
+  --re-up subscription with new capabilities using the modular supports_capability override
+  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  device:subscribe()
+end
+
 local function build_button_component_map(device, main_endpoint, button_eps)
   -- create component mapping on the main profile button endpoints
   table.sort(button_eps)
@@ -575,16 +658,24 @@ local function build_button_component_map(device, main_endpoint, button_eps)
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
-local function build_button_profile(device, main_endpoint, num_button_eps)
-  local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
-  if device_type_supports_button_switch_combination(device, main_endpoint) then
-    profile_name = "light-level-" .. profile_name
-  end
+local function build_button_profile(driver, device, main_endpoint, num_button_eps)
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
-  if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
+  if version.api >= 14 and version.rpc >= 8 then
+    if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
+      device:send(clusters.PowerSource.attributes.AttributeList:read(device))
+    else
+      match_modular_profile(driver, device, battery_support.NO_BATTERY)
+    end
   else
-    device:try_update_metadata({profile = profile_name})
+    local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
+    if device_type_supports_button_switch_combination(device, main_endpoint) then
+      profile_name = "light-level-" .. profile_name
+    end
+    if battery_supported then
+      device:send(clusters.PowerSource.attributes.AttributeList:read(device))
+    else
+      device:try_update_metadata({profile = profile_name})
+    end
   end
 end
 
@@ -652,10 +743,10 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local profile_found = false
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    build_button_profile(device, main_endpoint, #button_eps)
+    build_button_component_map(device, main_endpoint, button_eps)
+    build_button_profile(driver, device, main_endpoint, #button_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
-    build_button_component_map(device, main_endpoint, button_eps)
     configure_buttons(device)
     profile_found = true
   end
@@ -711,6 +802,9 @@ local function device_init(driver, device)
           end
         end
       end
+    end
+    if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) then
+      device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
     end
     device:subscribe()
   end
@@ -1259,25 +1353,32 @@ local function battery_charge_level_attr_handler(driver, device, ib, response)
 end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
-  local profile_name = ""
-
+  local battery_attr_support
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   for _, attr in ipairs(ib.data.elements) do
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
     -- BatChargeLevel (Attribute ID 0x0E) is present.
     if attr.value == 0x0C then
-      profile_name = "button-battery"
+      battery_attr_support = battery_support.BATTERY_PERCENTAGE
       break
     elseif attr.value == 0x0E then
-      profile_name = "button-batteryLevel"
+      battery_attr_support = battery_support.BATTERY_LEVEL
       break
     end
   end
-  if profile_name ~= "" then
+  if version.api >= 14 and version.rpc >= 8 then
+    match_modular_profile(driver, device, battery_attr_support)
+    return
+  else
+    local profile_name
+    if battery_attr_support == battery_support.BATTERY_PERCENTAGE then
+      profile_name = "button-battery"
+    else -- battery_attr_support = battery_support.BATTERY_LEVEL
+      profile_name = "button-batteryLevel"
+    end
     if #button_eps > 1 then
       profile_name = string.format("%d-", #button_eps) .. profile_name
     end
-
     if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
        device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
       profile_name = profile_name .. "-temperature-humidity"

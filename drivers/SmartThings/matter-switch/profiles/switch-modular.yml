@@ -1,0 +1,43 @@
+name: switch-modular
+components:
+  - id: main
+    capabilities:
+      - id: switch
+      - id: switchLevel
+        optional: true
+        config:
+          values:
+            - key: "level.value"
+              range: [1, 100]
+      - id: button
+        optional: true
+      - id: battery
+        optional: true
+      - id: batteryLevel
+        optional: true
+      - id: firmwareUpdate
+      - id: refresh
+    categories:
+      - name: Light
+  - id: button1
+    capabilities:
+      - id: button
+        optional: true
+      - id: battery
+        optional: true
+      - id: batteryLevel
+        optional: true
+    categories:
+      - name: RemoteController
+  - id: button2
+    capabilities:
+      - id: button
+        optional: true
+    categories:
+      - name: RemoteController
+  - id: button3
+    capabilities:
+    - id: button
+      optional: true
+    categories:
+    - name: RemoteController
