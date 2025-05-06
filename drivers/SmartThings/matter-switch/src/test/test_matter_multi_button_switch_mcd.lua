@@ -408,5 +408,21 @@ test.register_coroutine_test(
   { test_init = test_init_mcd_unsupported_switch_device_type }
 )
 
+test.register_coroutine_test(
+  "Test driver switched event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    mock_device:expect_metadata_update({ profile = "light-level-3-button" })
+    configure_buttons()
+    mock_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Matter Switch 2",
+      profile = "light-color-level",
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", mock_device_ep5)
+    })
+  end
+)
+
 -- run the tests
 test.run_registered_tests()

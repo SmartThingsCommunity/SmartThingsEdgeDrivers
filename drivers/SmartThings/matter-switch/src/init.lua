@@ -764,6 +764,10 @@ local function do_configure(driver, device)
   end
 end
 
+local function driver_switched(driver, device)
+  do_configure(driver, device)
+end
+
 local function device_removed(driver, device)
   log.info("device removed")
   delete_import_poll_schedule(device)
@@ -1446,7 +1450,8 @@ local matter_driver_template = {
     added = device_added,
     removed = device_removed,
     infoChanged = info_changed,
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     attr = {
