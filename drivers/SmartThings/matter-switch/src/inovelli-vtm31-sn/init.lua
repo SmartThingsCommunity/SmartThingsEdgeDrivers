@@ -19,12 +19,6 @@ local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
 local log = require "log"
 local utils = require "st.utils"
-local version = require "version"
-
--- Include driver-side definitions when lua libs api version is < 10
-if version.api < 10 then
-  clusters.ModeSelect = require "ModeSelect"
-end
 
 -------------------------------------------------------------------------------------
 -- Inovelli VTM31 SN specifics
@@ -33,10 +27,7 @@ end
 local INOVELLI_VTM31_SN_FINGERPRINT = { vendor_id = 0x1361, product_id = 0x0001 }
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
-local SWITCH_INITIALIZED = "__switch_intialized"
-local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
-local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
-local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
 local EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
@@ -174,7 +165,6 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local num_switch_server_eps = 0
   device.log.info("Switching to Inovelli VTM31 SN driver")
   device:try_update_metadata({profile = "inovelli-vtm31-sn"})
-  device:set_field(BUTTON_DEVICE_PROFILED, true)
   -- The first switch endpoint will be the main component and the three buttons
   -- will be added as additional components in a MCD profile.
   component_map["main"] = main_endpoint
@@ -183,7 +173,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     component_map[string.format("button%d", current_component_number)] = ep
     current_component_number = current_component_number + 1
   end
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
   configure_buttons.configure_buttons(device)
   for _, ep in ipairs(switch_eps) do
     num_switch_server_eps = num_switch_server_eps + 1
@@ -201,15 +191,10 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
       )
     end
   end
-  -- Since this device is a parent child device, set the find_child function on init.
-  -- This is persisted because initialize switch is only run once, but find_child function should be set
-  -- on each driver init.
-  device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
-  device:set_field(SWITCH_INITIALIZED, true)
 end
 
 local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
     return map[component]
   end
@@ -217,7 +202,7 @@ local function component_to_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
     if endpoint == ep then
       return component
@@ -227,32 +212,42 @@ local function endpoint_to_component(device, ep)
 end
 
 local function device_init(driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
-    return
-  end
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  local main_endpoint = find_default_endpoint(device)
-  if not device:get_field(SWITCH_INITIALIZED) then
-    initialize_buttons_and_switches(driver, device, main_endpoint)
-  end
-  device:set_find_child(find_child)
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id ~= main_endpoint then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      for _, attr in pairs(device_type_attribute_map[id] or {}) do
-        if id == GENERIC_SWITCH_ID and attr ~= clusters.PowerSource.attributes.BatPercentRemaining then
-          device:add_subscribed_event(attr)
-        else
-          device:add_subscribed_attribute(attr)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    device:set_find_child(find_child)
+    local main_endpoint = find_default_endpoint(device)
+    for _, ep in ipairs(device.endpoints) do
+      if ep.endpoint_id ~= main_endpoint then
+        local id = 0
+        for _, dt in ipairs(ep.device_types) do
+          id = math.max(id, dt.device_type_id)
+        end
+        for _, attr in pairs(device_type_attribute_map[id] or {}) do
+          if id == GENERIC_SWITCH_ID and attr ~= clusters.PowerSource.attributes.BatPercentRemaining then
+            device:add_subscribed_event(attr)
+          else
+            device:add_subscribed_attribute(attr)
+          end
         end
       end
     end
+    device:subscribe()
   end
-  device:subscribe()
+end
+
+local function match_profile(driver, device)
+  local main_endpoint = find_default_endpoint(device)
+  initialize_buttons_and_switches(driver, device, main_endpoint)
+  device:set_find_child(find_child)
+end
+
+local function do_configure(driver, device)
+  match_profile(driver, device)
+end
+
+local function driver_switched(driver, device)
+  match_profile(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
@@ -274,12 +269,15 @@ local function info_changed(driver, device, event, args)
           new_parameter_value = to_boolean(new_parameter_value)
         elseif(preferences[id].size == data_types.Uint8) then
           new_parameter_value = math.tointeger(new_parameter_value)
-          --new_parameter_value = math.tointeger(value)
         end
         local data = data_types.validate_or_build_type(new_parameter_value, preferences[id].size)
         device:send(cluster_base.write(device, PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + preferences[id].parameter_number, nil, data))
       end
     end
+  end
+  if device.profile.id ~= args.old_st_store.profile.id then
+    configure_buttons.configure_buttons(device)
+    device:subscribe()
   end
 end
 
@@ -287,7 +285,9 @@ local inovelli_vtm31_sn_handler = {
   NAME = "inovelli vtm31-sn handler",
   lifecycle_handlers = {
     init = device_init,
-    infoChanged = info_changed
+    infoChanged = info_changed,
+    doConfigure = do_configure,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
   },
