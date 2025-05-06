@@ -12,17 +12,23 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local cluster_base = require "st.matter.cluster_base"
 local clusters = require "st.matter.clusters"
 local configure_buttons = require "configure-buttons"
 local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
 local log = require "log"
+local utils = require "st.utils"
 local version = require "version"
 
 -- Include driver-side definitions when lua libs api version is < 10
 if version.api < 10 then
   clusters.ModeSelect = require "ModeSelect"
 end
+
+-------------------------------------------------------------------------------------
+-- Inovelli VTM31 SN specifics
+-------------------------------------------------------------------------------------
 
 local INOVELLI_VTM31_SN_FINGERPRINT = { vendor_id = 0x1361, product_id = 0x0001 }
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
@@ -36,6 +42,10 @@ local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
 local EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
 local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local GENERIC_SWITCH_ID = 0x000F
+
+local PRIVATE_CLUSTER_ID = 0x122FFC31
+local PRIVATE_CLUSTER_ENDPOINT_ID = 0x01
+local PRIVATE_CLUSTER_ATTR_ID = 0x122F0000
 
 local device_type_attribute_map = {
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
@@ -72,20 +82,30 @@ local device_type_attribute_map = {
   }
 }
 
-local preference_map_inovelli_vtm31sn = {
-  switchMode = {parameter_number = 1, size = data_types.Uint8},
-  smartBulbMode = {parameter_number = 2, size = data_types.Uint8},
-  dimmingEdge = {parameter_number = 3, size = data_types.Uint8},
-  dimmingSpeed = {parameter_number = 4, size = data_types.Uint8},
-  relayClick = {parameter_number = 5, size = data_types.Uint8},
-  ledIndicatorColor = {parameter_number = 6, size = data_types.Uint8},
+local preference_map = {
+  parameter258 = {parameter_number = 258, size = data_types.Boolean},
+  parameter22 = {parameter_number = 22, size = data_types.Uint8},
+  parameter52 = {parameter_number = 52, size = data_types.Boolean},
+  parameter1 = {parameter_number = 1, size = data_types.Uint8},
+  parameter2 = {parameter_number = 2, size = data_types.Uint8},
+  parameter3 = {parameter_number = 3, size = data_types.Uint8},
+  parameter4 = {parameter_number = 4, size = data_types.Uint8},
+  parameter9 = {parameter_number = 9, size = data_types.Uint8},
+  parameter10 = {parameter_number = 10, size = data_types.Uint8},
+  parameter11 = {parameter_number = 11, size = data_types.Boolean},
+  parameter15 = {parameter_number = 15, size = data_types.Uint8},
+  parameter17 = {parameter_number = 17, size = data_types.Uint8},
+  parameter95 = {parameter_number = 95, size = data_types.Uint8},
+  parameter96 = {parameter_number = 96, size = data_types.Uint8},
+  parameter97 = {parameter_number = 97, size = data_types.Uint8},
+  parameter98 = {parameter_number = 98, size = data_types.Uint8},
 }
 
 local function is_inovelli_vtm31_sn(opts, driver, device)
   if not device.manufacturer_info then return false end
   if device.manufacturer_info.vendor_id == INOVELLI_VTM31_SN_FINGERPRINT.vendor_id and
      device.manufacturer_info.product_id == INOVELLI_VTM31_SN_FINGERPRINT.product_id then
-     log.info("Using Inovelli VTM31 sub driver")
+    log.info("Using Inovelli VTM31 sub driver")
     return true
   end
   return false
@@ -97,6 +117,26 @@ local preferences_to_numeric_value = function(new_value)
     numeric = new_value and 1 or 0
   end
   return numeric
+end
+
+local preferences_calculate_parameter = function(new_value, type, number)
+  if number == "parameter9" or number == "parameter10" or number == "parameter13" or number == "parameter14"  or number == "parameter15" or number == "parameter55" or number == "parameter56" then
+    if new_value == 101 then
+      return 255
+    else
+      return utils.round(new_value / 100 * 254)
+    end
+  else
+    return new_value
+  end
+end
+
+local function to_boolean(value)
+  if value == 0 or value =="0" then
+    return false
+  else
+    return true
+  end
 end
 
 local function get_first_non_zero_endpoint(endpoints)
@@ -126,19 +166,19 @@ end
 local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  table.sort(switch_eps)
-  table.sort(button_eps)
   local component_map = {}
   local current_component_number = 1
   -- Since we do not support bindings at the moment, we only want to count clusters
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
+  device.log.info("Switching to Inovelli VTM31 SN driver")
   device:try_update_metadata({profile = "inovelli-vtm31-sn"})
   device:set_field(BUTTON_DEVICE_PROFILED, true)
   -- The first switch endpoint will be the main component and the three buttons
   -- will be added as additional components in a MCD profile.
   component_map["main"] = main_endpoint
+  table.sort(button_eps)
   for _, ep in ipairs(button_eps) do
     component_map[string.format("button%d", current_component_number)] = ep
     current_component_number = current_component_number + 1
@@ -146,21 +186,19 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
   configure_buttons.configure_buttons(device)
   for _, ep in ipairs(switch_eps) do
-    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-      num_switch_server_eps = num_switch_server_eps + 1
-      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        local name = string.format("%s %d", device.label, num_switch_server_eps)
-        driver:try_create_device(
-          {
-            type = "EDGE_CHILD",
-            label = name,
-            profile = "light-color-level",
-            parent_device_id = device.id,
-            parent_assigned_child_key = string.format("%d", ep),
-            vendor_provided_label = name
-          }
-        )
-      end
+    num_switch_server_eps = num_switch_server_eps + 1
+    if ep ~= main_endpoint then
+      local name = string.format("%s %d", device.label, num_switch_server_eps)
+      driver:try_create_device(
+        {
+          type = "EDGE_CHILD",
+          label = name,
+          profile = "light-color-level",
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%d", ep),
+          vendor_provided_label = name
+        }
+      )
     end
   end
   -- Since this device is a parent child device, set the find_child function on init.
@@ -196,13 +234,9 @@ local function device_init(driver, device)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   local main_endpoint = find_default_endpoint(device)
   if not device:get_field(SWITCH_INITIALIZED) then
-    -- create child devices as needed for multi-switch devices
     initialize_buttons_and_switches(driver, device, main_endpoint)
   end
-  if device:get_field(IS_PARENT_CHILD_DEVICE) == true then
-    device:set_find_child(find_child)
-  end
-  -- ensure subscription to all endpoint attributes- including those mapped to child devices
+  device:set_find_child(find_child)
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id ~= main_endpoint then
       local id = 0
@@ -231,19 +265,19 @@ local function info_changed(driver, device, event, args)
     time_diff = os.difftime(os.time(), last_clock_set_time)
   end
   device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
-  -- don't process preference updates more than once every 2 seconds
-  if time_diff > 2 then
-    local preferences = preference_map_inovelli_vtm31sn
+  if time_diff > 2 then -- process preference updates at most once every 2 seconds
+    local preferences = preference_map
     for id, value in pairs(device.preferences) do
       if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-        local new_parameter_value
-        if preferences[id].parameter_number == 4 then
-          new_parameter_value = math.tointeger(device.preferences[id])
-        else
-          new_parameter_value = preferences_to_numeric_value(device.preferences[id])
+        local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preferences[id].size, id)
+        if(preferences[id].size == data_types.Boolean) then
+          new_parameter_value = to_boolean(new_parameter_value)
+        elseif(preferences[id].size == data_types.Uint8) then
+          new_parameter_value = math.tointeger(new_parameter_value)
+          --new_parameter_value = math.tointeger(value)
         end
-        local req = clusters.ModeSelect.server.commands.ChangeToMode(device, preferences[id].parameter_number, new_parameter_value)
-        device:send(req)
+        local data = data_types.validate_or_build_type(new_parameter_value, preferences[id].size)
+        device:send(cluster_base.write(device, PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + preferences[id].parameter_number, nil, data))
       end
     end
   end
