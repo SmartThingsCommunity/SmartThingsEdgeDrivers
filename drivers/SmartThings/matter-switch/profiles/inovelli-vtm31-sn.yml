@@ -242,3 +242,49 @@ preferences:
       minimum: 0
       maximum: 100
       default: 5
+  - name: "offTransitionTime"
+    title: "Off Transition Time"
+    description: "The time for the light to transition from on to off"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Instant"
+        "5": "500ms"
+        "8": "800ms"
+        "10": "1s"
+        "15": "1.5s"
+        "20": "2s"
+        "25": "2.5s"
+        "30": "3s"
+        "35": "3.5s"
+        "40": "4s"
+        "50": "5s"
+        "60": "6s"
+        "70": "7s"
+        "80": "8s"
+        "100": "10s"
+      default: 25
+  - name: "onTransitionTime"
+    title: "On Transition Time"
+    description: "The time for the light to transition from off to on"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Instant"
+        "5": "500ms"
+        "8": "800ms"
+        "10": "1s"
+        "15": "1.5s"
+        "20": "2s"
+        "25": "2.5s"
+        "30": "3s"
+        "35": "3.5s"
+        "40": "4s"
+        "50": "5s"
+        "60": "6s"
+        "70": "7s"
+        "80": "8s"
+        "100": "10s"
+      default: 25

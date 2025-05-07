@@ -21,7 +21,7 @@ local log = require "log"
 local utils = require "st.utils"
 
 -------------------------------------------------------------------------------------
--- Inovelli VTM31 SN specifics
+-- Inovelli VTM31-SN specifics
 -------------------------------------------------------------------------------------
 
 local INOVELLI_VTM31_SN_FINGERPRINT = { vendor_id = 0x1361, product_id = 0x0001 }
@@ -31,12 +31,12 @@ local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
 local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
 local EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
-local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 local GENERIC_SWITCH_ID = 0x000F
+local ON_OFF_DIMMER_SWITCH_ID = 0x0104
 
-local PRIVATE_CLUSTER_ID = 0x122FFC31
-local PRIVATE_CLUSTER_ENDPOINT_ID = 0x01
 local PRIVATE_CLUSTER_ATTR_ID = 0x122F0000
+local PRIVATE_CLUSTER_ENDPOINT_ID = 0x01
+local PRIVATE_CLUSTER_ID = 0x122FFC31
 
 local device_type_attribute_map = {
   [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
@@ -65,7 +65,6 @@ local device_type_attribute_map = {
     clusters.LevelControl.attributes.MinLevel
   },
   [GENERIC_SWITCH_ID] = {
-    clusters.PowerSource.attributes.BatPercentRemaining,
     clusters.Switch.events.InitialPress,
     clusters.Switch.events.LongPress,
     clusters.Switch.events.ShortRelease,
@@ -93,8 +92,8 @@ local preference_map = {
 }
 
 local function is_inovelli_vtm31_sn(opts, driver, device)
-  if not device.manufacturer_info then return false end
-  if device.manufacturer_info.vendor_id == INOVELLI_VTM31_SN_FINGERPRINT.vendor_id and
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+     device.manufacturer_info.vendor_id == INOVELLI_VTM31_SN_FINGERPRINT.vendor_id and
      device.manufacturer_info.product_id == INOVELLI_VTM31_SN_FINGERPRINT.product_id then
     log.info("Using Inovelli VTM31 sub driver")
     return true
@@ -111,23 +110,21 @@ local preferences_to_numeric_value = function(new_value)
 end
 
 local preferences_calculate_parameter = function(new_value, type, number)
-  if number == "parameter9" or number == "parameter10" or number == "parameter13" or number == "parameter14"  or number == "parameter15" or number == "parameter55" or number == "parameter56" then
+  if number == "parameter9" or number == "parameter10" or number == "parameter15" then
     if new_value == 101 then
       return 255
     else
       return utils.round(new_value / 100 * 254)
     end
-  else
-    return new_value
   end
+  return new_value
 end
 
 local function to_boolean(value)
-  if value == 0 or value =="0" then
+  if value == 0 or value == "0" then
     return false
-  else
-    return true
   end
+  return true
 end
 
 local function get_first_non_zero_endpoint(endpoints)
@@ -163,7 +160,6 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   -- that have been implemented as server. This can be removed when we have
   -- support for bindings.
   local num_switch_server_eps = 0
-  device.log.info("Switching to Inovelli VTM31 SN driver")
   device:try_update_metadata({profile = "inovelli-vtm31-sn"})
   -- The first switch endpoint will be the main component and the three buttons
   -- will be added as additional components in a MCD profile.
@@ -224,7 +220,7 @@ local function device_init(driver, device)
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(device_type_attribute_map[id] or {}) do
-          if id == GENERIC_SWITCH_ID and attr ~= clusters.PowerSource.attributes.BatPercentRemaining then
+          if id == GENERIC_SWITCH_ID then
             device:add_subscribed_event(attr)
           else
             device:add_subscribed_attribute(attr)
@@ -241,19 +237,21 @@ local function device_added(driver, device)
 end
 
 local function match_profile(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    local main_endpoint = find_default_endpoint(device)
-    initialize_buttons_and_switches(driver, device, main_endpoint)
-    device:set_find_child(find_child)
-  end
+  local main_endpoint = find_default_endpoint(device)
+  initialize_buttons_and_switches(driver, device, main_endpoint)
+  device:set_find_child(find_child)
 end
 
 local function do_configure(driver, device)
-  match_profile(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    match_profile(driver, device)
+  end
 end
 
 local function driver_switched(driver, device)
-  match_profile(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    match_profile(driver, device)
+  end
 end
 
 local function info_changed(driver, device, event, args)
@@ -270,14 +268,22 @@ local function info_changed(driver, device, event, args)
     local preferences = preference_map
     for id, value in pairs(device.preferences) do
       if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-        local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preferences[id].size, id)
-        if(preferences[id].size == data_types.Boolean) then
-          new_parameter_value = to_boolean(new_parameter_value)
-        elseif(preferences[id].size == data_types.Uint8) then
-          new_parameter_value = math.tointeger(new_parameter_value)
+        if id == "offTransitionTime" then
+          local transition_time = math.floor(value)
+          device:send(clusters.LevelControl.attributes.OffTransitionTime:write(device, 1, transition_time))
+        elseif id == "onTransitionTime" then
+          local transition_time = math.floor(value)
+          device:send(clusters.LevelControl.attributes.OnTransitionTime:write(device, 1, transition_time))
+        else
+          local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preferences[id].size, id)
+          if(preferences[id].size == data_types.Boolean) then
+            new_parameter_value = to_boolean(new_parameter_value)
+          elseif(preferences[id].size == data_types.Uint8) then
+            new_parameter_value = math.tointeger(new_parameter_value)
+          end
+          local data = data_types.validate_or_build_type(new_parameter_value, preferences[id].size)
+          device:send(cluster_base.write(device, PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + preferences[id].parameter_number, nil, data))
         end
-        local data = data_types.validate_or_build_type(new_parameter_value, preferences[id].size)
-        device:send(cluster_base.write(device, PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + preferences[id].parameter_number, nil, data))
       end
     end
   end

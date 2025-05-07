@@ -196,6 +196,23 @@ end
 
 test.set_test_init_function(test_init)
 
+local function send_preference(attr_id, expected_value, data_type)
+  if data_type == data_types.Boolean then
+    if expected_value == 0 then expected_value = false else expected_value = true end
+  elseif attr_id == 9 or attr_id == 10 or attr_id == 15 then
+    if expected_value == 101 then
+      expected_value = 255
+    else
+      expected_value = utils.round(expected_value / 100 * 254)
+    end
+  end
+  local data = data_types.validate_or_build_type(expected_value, data_type)
+  test.socket.matter:__expect_send({
+    mock_device.id,
+    cluster_base:write(PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + attr_id, nil, data)
+  })
+end
+
 test.register_message_test(
   "Main switch component: switch capability should send the appropriate commands",
   {
@@ -358,23 +375,6 @@ test.register_coroutine_test(
     })
   end
 )
-
-local function send_preference(attr_id, expected_value, data_type)
-  if data_type == data_types.Boolean then
-    if expected_value == 0 then expected_value = false else expected_value = true end
-  elseif attr_id == 9 or attr_id == 10 or attr_id == 15 then
-    if expected_value == 101 then
-      expected_value = 255
-    else
-      expected_value = utils.round(expected_value / 100 * 254)
-    end
-  end
-  local data = data_types.validate_or_build_type(expected_value, data_type)
-  test.socket.matter:__expect_send({
-    mock_device.id,
-    cluster_base:write(PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + attr_id, nil, data)
-  })
-end
 
 test.register_coroutine_test(
   "Test parameter258: Switch Mode",
