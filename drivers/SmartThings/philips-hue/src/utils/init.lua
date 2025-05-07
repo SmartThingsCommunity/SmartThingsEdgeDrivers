@@ -346,8 +346,9 @@ end
 ---@param device HueDevice
 ---@param parent_device_id string?
 ---@return HueBridgeDevice? bridge_device
-function utils.get_hue_bridge_for_device(driver, device, parent_device_id)
-  log.trace(string.format("------------------------ Looking for bridge for %s with parent_device_id %s", device.label, device.parent_device_id))
+function utils.get_hue_bridge_for_device(driver, device, parent_device_id, quiet)
+  local _ = quiet or
+    log.trace(string.format("------------------------ Looking for bridge for %s with parent_device_id %s", device.label, device.parent_device_id))
   if utils.is_bridge(driver, device) then
     log.trace(string.format("------------------------- %s is a bridge", device.label))
     return device --[[ @as HueBridgeDevice ]]
@@ -356,16 +357,18 @@ function utils.get_hue_bridge_for_device(driver, device, parent_device_id)
   local parent_device_id = parent_device_id or device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
   local parent_device = driver:get_device_info(parent_device_id)
   if not parent_device then
-    log.trace(string.format("------------------------- get_device_info for %s was nil", parent_device_id))
+    local _ = quiet or
+      log.trace(string.format("------------------------- get_device_info for %s was nil", parent_device_id))
     return nil
   end
 
-  log.trace(string.format("------------------------- parent_device label is %s, checking if bridge", parent_device.label))
+  local _ = quiet or
+    log.trace(string.format("------------------------- parent_device label is %s, checking if bridge", parent_device.label))
   if parent_device and utils.is_bridge(driver, parent_device) then
     return parent_device --[[ @as HueBridgeDevice ]]
   end
 
-  return utils.get_hue_bridge_for_device(driver, parent_device)
+  return utils.get_hue_bridge_for_device(driver, parent_device, quiet)
 end
 
 --- build a exponential backoff time value generator

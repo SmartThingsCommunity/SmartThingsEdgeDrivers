@@ -84,6 +84,9 @@ local device_init = function(driver, device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)
   end
+  if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    device:set_find_child(find_child)
+  end
 end
 
 local function is_mcd_device(device)
