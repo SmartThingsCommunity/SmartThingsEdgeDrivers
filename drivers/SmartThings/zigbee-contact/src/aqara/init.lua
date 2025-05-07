@@ -19,6 +19,14 @@ local FINGERPRINTS = {
 
 local CONFIGURATIONS = {
   {
+    cluster = OnOff.ID,
+    attribute = OnOff.attributes.OnOff.ID,
+    minimum_interval = 30,
+    maximum_interval = 3600,
+    data_type = OnOff.attributes.OnOff.base_type,
+    reportable_change = 1
+  },
+  {
     cluster = PowerConfiguration.ID,
     attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
     minimum_interval = 30,
