@@ -1,4 +1,5 @@
 local log = require "log"
+local socket = require "cosock.socket"
 local capabilities = require "st.capabilities"
 local Driver = require "st.driver"
 local discovery = require "discovery"
@@ -54,13 +55,22 @@ local function create_sse(driver, device, credential)
     end
 
     eventsource.onerror = function()
-      log.error(string.format("Eventsource error: dni= %s", device.device_network_id))
+      local DISCONNECTED_STATUS = "disconnected"
+      local connection_status = device:get_field(fields.CONNECTION_STATUS)
+      if connection_status and connection_status == DISCONNECTED_STATUS then
+        log.error(string.format("Eventsource error: dni= %s", device.device_network_id))
+      else
+        log.error_with({ hub_logs = true }, string.format("Eventsource error: disconnected, dni= %s", device.device_network_id))
+        device:set_field(fields.CONNECTION_STATUS, DISCONNECTED_STATUS)
+      end
       device:offline()
+
     end
 
     eventsource.onopen = function()
       log.info_with({ hub_logs = true }, string.format("Eventsource open: dni= %s", device.device_network_id))
       device:online()
+      device:set_field(fields.CONNECTION_STATUS, "connected")
       local success, err = status_update(driver, device)
       if not success then
         log.warn(string.format("Failed to status_update during eventsource.onopen, err = %s dni= %s", err, device.device_network_id))
@@ -125,7 +135,6 @@ local function create_monitoring_thread(driver, device, device_info)
   local monitoring_interval = DEFAULT_MONITORING_INTERVAL
   local new_timer = device.thread:call_on_schedule(monitoring_interval, function()
     check_and_update_connection(driver, device)
-    driver.device_manager.device_monitor(driver, device, device_info)
   end, "monitor_timer")
   device:set_field(fields.MONITORING_TIMER, new_timer)
 end
@@ -145,15 +154,19 @@ end
 
 local function device_removed(driver, device)
   local conn_info = device:get_field(fields.CONN_INFO)
+  driver.removing_devices = driver.removing_devices + 1
+  log.info_with({ hub_logs = true }, string.format("Device removed: dni= %s", device.device_network_id))
   if not conn_info then
-    log.warn(string.format("remove : failed to find conn_info, dni = %s", device.device_network_id))
+    log.warn_with({ hub_logs = true }, string.format("remove : failed to find conn_info, dni = %s", device.device_network_id))
   else
     local _, err, status = conn_info:get_remove()
 
     if err or status ~= 200 then
-      log.error(string.format("remove : failed to get remove, dni= %s, err= %s, status= %s", device.device_network_id,
+      log.error_with({ hub_logs = true }, string.format("remove : failed to get remove, dni= %s, err= %s, status= %s", device.device_network_id,
         err,
         status))
+    else
+      log.info_with({ hub_logs = true }, string.format("Device removed: token reset success. dni= %s", device.device_network_id))
     end
   end
 
@@ -161,6 +174,7 @@ local function device_removed(driver, device)
   if eventsource then
     eventsource:close()
   end
+  driver.removing_devices = driver.removing_devices - 1
 end
 
 local function device_init(driver, device)
@@ -194,11 +208,39 @@ local function device_init(driver, device)
 
   update_connection(driver, device, device_ip, device_info)
 
+  local eventsource = device:get_field(fields.EVENT_SOURCE)
+  if not eventsource then
+    log.error_with({ hub_logs = true }, "failed to create EVENT_SOURCE.")
+    device:offline()
+    return
+  end
+
   do_refresh(driver, device, nil)
 end
 
 local function device_info_changed(driver, device, event, args)
   do_refresh(driver, device, nil)
+end
+
+local function driver_lifecycle_handler(driver, event_name)
+  log.info(string.format("driver lifecycle event :'%s'", event_name))
+  if event_name == "shutdown" then
+    local MAXIMUM_WAITING_TIME = 30
+    local WAITING_TIME = 1
+    local total_waiting_time = 0
+
+    while (driver.removing_devices > 0) do
+      log.info("waiting for all devices to be removed")
+      total_waiting_time = total_waiting_time + WAITING_TIME
+      socket.sleep(WAITING_TIME) -- wait for 1 seconds
+
+      if total_waiting_time > MAXIMUM_WAITING_TIME then
+        log.error_with({ hub_logs = true }, "maximum waiting time exceeded")
+      end
+    end
+    log.info(string.format("forced exit"))
+    os.exit(0)
+  end
 end
 
 local lan_driver = Driver("aqara-fp2",
@@ -210,6 +252,7 @@ local lan_driver = Driver("aqara-fp2",
       infoChanged = device_info_changed,
       removed = device_removed
     },
+    driver_lifecycle = driver_lifecycle_handler,
     capability_handlers = {
       [capabilities.refresh.ID] = {
         [capabilities.refresh.commands.refresh.NAME] = do_refresh,
@@ -221,6 +264,7 @@ local lan_driver = Driver("aqara-fp2",
     discovery_helper = fp2_discovery_helper,
     device_manager = fp2_device_manager,
     controlled_devices = {},
+    removing_devices = 0
   }
 )
 
