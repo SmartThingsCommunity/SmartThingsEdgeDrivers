@@ -90,6 +90,7 @@ local IDLE_MODE     = { label = "Idle Mode",     mode = 0, mode_tags = { modeTag
 local CLEANING_MODE = { label = "Cleaning Mode", mode = 2, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 16385 }) } }
 local MAPPING_MODE  = { label = "Mapping Mode",  mode = 4, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 16386 }) } }
 
+-- The `mode` fields for these are purposely out-of-order, so that we can make sure we aren't reliant on ordering.
 local RUN_MODES = {
   MAPPING_MODE,
   IDLE_MODE,
@@ -101,6 +102,7 @@ local RUN_MODE_LABELS = { RUN_MODES[1].label, RUN_MODES[2].label, RUN_MODES[3].l
 local CLEAN_MODE_1 = { label = "Clean Mode 1", mode = 0, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 1 }) } }
 local CLEAN_MODE_2 = { label = "Clean Mode 2", mode = 1, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 2 }) } }
 
+-- The `mode` fields for these are purposely out-of-order, so that we can make sure we aren't reliant on ordering.
 local CLEAN_MODES = {
   CLEAN_MODE_2,
   CLEAN_MODE_1,
