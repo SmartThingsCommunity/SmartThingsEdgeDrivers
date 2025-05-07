@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -22,9 +22,6 @@ local IasEnrollResponseCode = require "st.zigbee.generated.zcl_clusters.IASZone.
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
 local TemperatureMeasurement = clusters.TemperatureMeasurement
-
-local IASCIEAddress = IASZone.attributes.IASCIEAddress
-local EnrollResponseCode = IASZone.types.EnrollResponseCode
 
 local POWER_CONFIGURATION_ENDPOINT = 0x23
 local IASZONE_ENDPOINT = 0x23

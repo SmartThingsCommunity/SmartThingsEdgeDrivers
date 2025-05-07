@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,27 +20,10 @@ local capabilities = require "st.capabilities"
 local IASZone = clusters.IASZone
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local TEMPERATURE_ENDPOINT = 0x26
-local DEFAULT_TEMPERATURE_SENSITIVITY = 100
-
-
-local FRIENT_CONTACT_TEMPERATURE_FINGERPRINTS = {
-  { mfr = "frient A/S", model = "WISZB-120", has_temperature = true,  has_tamper = true },
-  { mfr = "frient A/S", model = "WISZB-121", has_temperature = false, has_tamper = false }
-}
-
-local function get_device_capabilities(device)
-  for _, fingerprint in ipairs(FRIENT_CONTACT_TEMPERATURE_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return fingerprint
-    end
-  end
-  return nil
-end
 
 local function generate_event_from_zone_status(driver, device, zone_status, zb_rx)
   device:emit_event(zone_status:is_alarm1_set() and capabilities.contactSensor.contact.open() or capabilities.contactSensor.contact.closed())
-  local device_capabilities = get_device_capabilities(device)
-  if device_capabilities ~= nil and device_capabilities.has_tamper then
+  if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
     device:emit_event(zone_status:is_tamper_set() and capabilities.tamperAlert.tamper.detected() or capabilities.tamperAlert.tamper.clear())
   end
 end
@@ -67,8 +50,7 @@ local function device_init(driver, device)
 end
 
 local function added_handler(driver, device)
-  local device_capabilities = get_device_capabilities(device)
-  if device_capabilities ~= nil and device_capabilities.has_temperature then
+  if device:supports_capability_by_id(capabilities.temperatureMeasurement.ID) then
     device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
     device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
   end

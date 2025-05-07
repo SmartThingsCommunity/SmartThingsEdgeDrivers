@@ -19,7 +19,7 @@ components:
 preferences:
   - preferenceId: tempOffset
     explicit: true
-  - title: "Temperature Sensitivity (°)"
+  - title: "Temperature Sensitivity (°C)"
     name: temperatureSensitivity
     description: "Minimum change in temperature to report"
     required: false
