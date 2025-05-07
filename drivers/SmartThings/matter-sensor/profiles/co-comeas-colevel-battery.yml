@@ -1,4 +1,4 @@
-name: co-comeas-battery
+name: co-comeas-colevel-battery
 components:
 - id: main
   capabilities:
