@@ -721,9 +721,6 @@ local function device_init(driver, device)
 end
 
 local function match_profile(driver, device)
-  if detect_bridge(device) then
-    return
-  end
   local main_endpoint = find_default_endpoint(device)
   -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
   local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
@@ -765,11 +762,15 @@ local function match_profile(driver, device)
 end
 
 local function do_configure(driver, device)
-  match_profile(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not detect_bridge(device) then
+    match_profile(driver, device)
+  end
 end
 
 local function driver_switched(driver, device)
-  match_profile(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not detect_bridge(device) then
+    match_profile(driver, device)
+  end
 end
 
 local function device_removed(driver, device)
