@@ -36,7 +36,6 @@ local BATTERY_MAX_VOLTAGE = 3.0
 local DEVELCO_MANUFACTURER_CODE = 0x1015
 local DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR = 0x8000
 
-local SIREN_ENDIAN = "siren_endian"
 local PRIMARY_SW_VERSION = "primary_sw_version"
 local SMOKE_ALARM_FIXED_ENDIAN_SW_VERSION = "040005"
 
@@ -69,9 +68,6 @@ local CONFIGURATIONS = {
 local function primary_sw_version_attr_handler(driver, device, value, zb_rx)
   local primary_sw_version = value.value:gsub('.', function (c) return string.format('%02x', string.byte(c)) end)
   device:set_field(PRIMARY_SW_VERSION, primary_sw_version, {persist = true})
-  if (primary_sw_version < SMOKE_ALARM_FIXED_ENDIAN_SW_VERSION) then
-    device:set_field(SIREN_ENDIAN, "reverse", {persist = true})
-  end
 end
 
 local function device_added(driver, device)
@@ -137,44 +133,11 @@ local function ias_zone_status_change_handler(driver, device, zb_rx)
   generate_event_from_zone_status(driver, device, zone_status, zb_rx)
 end
 
-local function send_siren_command(device)
-  -- Check firmware version first if not already known
-  local sw_version = device:get_field(PRIMARY_SW_VERSION)
-  if ((sw_version == nil) or (sw_version == "")) then
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
-  end
-
-  local warning_duration = device:get_field(ALARM_LAST_DURATION) or DEFAULT_WARNING_DURATION
-  local sirenConfiguration
-  local warning_mode = 0x01  -- For siren on
-
-  if (device:get_field(SIREN_ENDIAN) == "reverse") then
-    -- Old frient firmware, the endian format is reversed
-    local siren_config_value = warning_mode
-    sirenConfiguration = IASWD.types.SirenConfiguration(siren_config_value)
-  else
-    sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
-    sirenConfiguration:set_warning_mode(warning_mode)
-  end
-
-  device:send(
-    IASWD.server.commands.StartWarning(
-      device,
-      sirenConfiguration,
-      data_types.Uint16(warning_duration),
-      data_types.Uint8(00),
-      data_types.Enum8(00)
-    )
-  )
-end
-
 local emit_alarm_event = function(device, cmd)
   if cmd == alarm_command.OFF then
     device:emit_event(alarm.alarm.off())
-  else
-    if cmd == alarm_command.SIREN then
+  elseif cmd == alarm_command.SIREN then
       device:emit_event(alarm.alarm.siren())
-    end
   end
 end
 
@@ -195,8 +158,35 @@ local default_response_handler = function(driver, device, zigbee_message)
 end
 
 local siren_alarm_siren_handler = function(driver, device, command)
-  device:set_field(ALARM_COMMAND, alarm_command.SIREN, {persist = true})
-  send_siren_command(device)
+  device:set_field(ALARM_COMMAND, alarm_command.SIREN)
+
+  local sw_version = device:get_field(PRIMARY_SW_VERSION)
+  if ((sw_version == nil) or (sw_version == "")) then
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
+  end
+
+  local warning_duration = device:get_field(ALARM_LAST_DURATION) or DEFAULT_WARNING_DURATION
+  local sirenConfiguration
+  local warning_mode = 0x01  -- For siren on
+
+  if (device:get_field(PRIMARY_SW_VERSION) < SMOKE_ALARM_FIXED_ENDIAN_SW_VERSION) then
+    -- Old frient firmware, the endian format is reversed
+    local siren_config_value = warning_mode
+    sirenConfiguration = IASWD.types.SirenConfiguration(siren_config_value)
+  else
+    sirenConfiguration = IASWD.types.SirenConfiguration(0x00)
+    sirenConfiguration:set_warning_mode(warning_mode)
+  end
+
+  device:send(
+    IASWD.server.commands.StartWarning(
+      device,
+      sirenConfiguration,
+      data_types.Uint16(warning_duration),
+      data_types.Uint8(00),
+      data_types.Enum8(00)
+    )
+  )
 end
 
 
@@ -204,7 +194,7 @@ local siren_switch_off_handler = function(driver, device, command)
   local sirenConfiguration
   local warning_mode = 0x00  -- For siren off
 
-  if (device:get_field(SIREN_ENDIAN) == "reverse") then
+  if (device:get_field(PRIMARY_SW_VERSION) < SMOKE_ALARM_FIXED_ENDIAN_SW_VERSION) then
     -- Old frient firmware, the endian format is reversed
     sirenConfiguration = IASWD.types.SirenConfiguration(warning_mode)
   else
