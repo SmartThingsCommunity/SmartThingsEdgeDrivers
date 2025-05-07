@@ -199,17 +199,12 @@ local function test_init()
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
-  configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "light-level-3-button" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
-  device_info_copy.profile.id = "3-button"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   configure_buttons()
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_child)
   mock_device:expect_device_create({
@@ -219,8 +214,13 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", mock_device_ep5)
   })
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+  device_info_copy.profile.id = "3-button"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  configure_buttons()
 end
 
 local function test_init_mcd_unsupported_switch_device_type()

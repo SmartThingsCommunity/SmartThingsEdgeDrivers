@@ -236,10 +236,16 @@ local function device_init(driver, device)
   end
 end
 
+local function device_added(driver, device)
+  device_init(driver, device)
+end
+
 local function match_profile(driver, device)
-  local main_endpoint = find_default_endpoint(device)
-  initialize_buttons_and_switches(driver, device, main_endpoint)
-  device:set_find_child(find_child)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    local main_endpoint = find_default_endpoint(device)
+    initialize_buttons_and_switches(driver, device, main_endpoint)
+    device:set_find_child(find_child)
+  end
 end
 
 local function do_configure(driver, device)
@@ -276,8 +282,8 @@ local function info_changed(driver, device, event, args)
     end
   end
   if device.profile.id ~= args.old_st_store.profile.id then
-    configure_buttons.configure_buttons(device)
     device:subscribe()
+    configure_buttons.configure_buttons(device)
   end
 end
 
@@ -285,6 +291,7 @@ local inovelli_vtm31_sn_handler = {
   NAME = "inovelli vtm31-sn handler",
   lifecycle_handlers = {
     init = device_init,
+    added = device_added,
     infoChanged = info_changed,
     doConfigure = do_configure,
     driverSwitched = driver_switched

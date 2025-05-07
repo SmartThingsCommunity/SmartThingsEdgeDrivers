@@ -16,11 +16,10 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
 
-local EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) devices we can emulate this on the software side
-local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
-local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
+local EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) devices we can emulate this on the software side
+local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
+local SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
 
 local function tbl_contains(array, value)
   for _, element in ipairs(array) do
@@ -36,7 +35,7 @@ local function set_field_for_endpoint(device, field, endpoint, value, additional
 end
 
 local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
     if endpoint == ep then
       return component
