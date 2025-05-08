@@ -30,7 +30,7 @@ preferences:
   - preferenceId: tempOffset
     explicit: true
   - name: "tempSensitivity"
-    title: "Temperature Sensitivity (18.0°C)"
+    title: "Temperature Sensitivity (°C)"
     description: "Minimum change in temperature to report"
     required: false
     preferenceType: number

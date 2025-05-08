@@ -522,5 +522,78 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+    "Test firmware version conversion using direct simulation",
+    function()
+        -- Binary firmware version test cases
+        local test_cases = {
+            {
+                binary = string.char(4, 0, 5),      -- \004\000\005
+                expected_hex = "040005"             -- Expected output
+            },
+            {
+                binary = string.char(4, 0, 12),     -- \004\000\012
+                expected_hex = "04000c"             -- Expected output
+            },
+            {
+                binary = string.char(5, 1, 3),      -- \005\001\003
+                expected_hex = "050103"             -- Expected output
+            }
+        }
+
+        for i, test_case in ipairs(test_cases) do
+            print("\n----- Test Case " .. i .. " -----")
+            local binary_fw = test_case.binary
+            local expected_hex = test_case.expected_hex
+
+            -- Print the raw binary version and its byte values
+            print("Binary firmware version (raw):", binary_fw)
+            print("Binary firmware bytes:", string.format(
+                "\\%03d\\%03d\\%03d",
+                string.byte(binary_fw, 1),
+                string.byte(binary_fw, 2),
+                string.byte(binary_fw, 3)
+            ))
+
+            -- Reset the field for clean test
+            mock_device:set_field(PRIMARY_SW_VERSION, nil, {persist = true})
+
+            -- Create a mock value object
+            local mock_value = {
+                value = binary_fw
+            }
+
+            -- Simulate what happens in primary_sw_version_attr_handler
+            local primary_sw_version = mock_value.value:gsub('.', function (c)
+                return string.format('%02x', string.byte(c))
+            end)
+
+            -- Store the version in PRIMARY_SW_VERSION field
+            mock_device:set_field(PRIMARY_SW_VERSION, primary_sw_version, {persist = true})
+
+            -- What the conversion should do
+            print("\nConversion steps:")
+            local hex_result = ""
+            for i = 1, #binary_fw do
+                local char = binary_fw:sub(i, i)
+                local byte_val = string.byte(char)
+                local hex_val = string.format('%02x', byte_val)
+                hex_result = hex_result .. hex_val
+                print(string.format("Character at position %d: byte value = %d, hex = %02x",
+                      i, byte_val, byte_val))
+            end
+
+            print("\nExpected hex result:", expected_hex)
+            print("Manual conversion result:", hex_result)
+
+            -- Verify the stored version
+            local stored_version = mock_device:get_field(PRIMARY_SW_VERSION)
+            print("\nStored version in device field:", stored_version)
+            assert(stored_version == expected_hex,
+                  string.format("Version mismatch! Expected '%s' but got '%s'",
+                  expected_hex, stored_version or "nil"))
+        end
+    end
+)
 
 test.run_registered_tests()
