@@ -85,10 +85,8 @@ local function build_button_component_map(device)
 end
 
 local function device_init(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    device:set_endpoint_to_component_fn(endpoint_to_component)
-    subscribe(device)
-  end
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+  subscribe(device)
 end
 
 local function device_added(driver, device)
@@ -109,15 +107,11 @@ local function match_profile(driver, device)
 end
 
 local function do_configure(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    match_profile(driver, device)
-  end
+  match_profile(driver, device)
 end
 
 local function driver_switched(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    match_profile(driver, device)
-  end
+  match_profile(driver, device)
 end
 
 local function initial_press_event_handler(driver, device, ib, response)
