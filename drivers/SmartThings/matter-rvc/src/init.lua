@@ -104,9 +104,9 @@ local function update_supported_arguments(device, current_run_mode, operating_st
   -- Get the tag of the current run mode
   local current_tag = 0xFFFF
   local supported_run_modes = device:get_field(RUN_MODE_SUPPORTED_MODES) or {}
-  for i, mode in ipairs(supported_run_modes) do
-    if mode[1] == current_run_mode then
-      current_tag = mode[2]
+  for _, mode in ipairs(supported_run_modes) do
+    if mode.label == current_run_mode then
+      current_tag = mode.tag
       break
     end
   end
@@ -126,9 +126,9 @@ local function update_supported_arguments(device, current_run_mode, operating_st
 
   -- Set supported run arguments
   local supported_arguments = {} -- For generic plugin
-  for i, mode in ipairs(supported_run_modes) do
-    if mode[2] == clusters.RvcRunMode.types.ModeTag.IDLE or can_be_non_idle == true then
-      table.insert(supported_arguments, mode[1])
+  for _, mode in ipairs(supported_run_modes) do
+    if mode.tag == clusters.RvcRunMode.types.ModeTag.IDLE or can_be_non_idle == true then
+      table.insert(supported_arguments, mode.label)
     end
   end
 
@@ -140,8 +140,8 @@ local function update_supported_arguments(device, current_run_mode, operating_st
   -- Set supported clean arguments
   local supported_clean_modes = device:get_field(CLEAN_MODE_SUPPORTED_MODES) or {}
   supported_arguments = {}
-  for i, mode in ipairs(supported_clean_modes) do
-    table.insert(supported_arguments, mode)
+  for _, mode in ipairs(supported_clean_modes) do
+    table.insert(supported_arguments, mode.label)
   end
 
   -- Send event to set supported clean modes
@@ -155,13 +155,13 @@ end
 -- Matter Handlers --
 local function run_mode_supported_mode_handler(driver, device, ib, response)
   local supported_modes = {}
-  local supported_modes_with_tag = {}
-  for i, mode in ipairs(ib.data.elements) do
+  local supported_modes_id_tag = {}
+  for _, mode in ipairs(ib.data.elements) do
     if version.api < 10 then
       clusters.RvcRunMode.types.ModeOptionStruct:augment_type(mode)
     end
     local tag = 0xFFFF
-    for i, t in ipairs(mode.elements.mode_tags.elements) do
+    for _, t in ipairs(mode.elements.mode_tags.elements) do
       if t.elements.value.value == clusters.RvcRunMode.types.ModeTag.IDLE then
         tag = clusters.RvcRunMode.types.ModeTag.IDLE
         break
@@ -175,10 +175,10 @@ local function run_mode_supported_mode_handler(driver, device, ib, response)
     end
     if tag ~= 0xFFFF then
       table.insert(supported_modes, mode.elements.label.value)
-      table.insert(supported_modes_with_tag, {mode.elements.label.value, tag})
+      table.insert(supported_modes_id_tag, { label = mode.elements.label.value, id = mode.elements.mode.value, tag = tag })
     end
   end
-  device:set_field(RUN_MODE_SUPPORTED_MODES, supported_modes_with_tag, { persist = true })
+  device:set_field(RUN_MODE_SUPPORTED_MODES, supported_modes_id_tag, { persist = true })
 
   -- Update Supported Modes
   local component = device.profile.components["runMode"]
@@ -203,12 +203,12 @@ local function run_mode_current_mode_handler(driver, device, ib, response)
   device.log.info(string.format("run_mode_current_mode_handler currentMode: %s", ib.data.value))
 
   -- Get label of current mode
-  local mode_index = ib.data.value
+  local mode_id = ib.data.value
   local supported_run_mode = device:get_field(RUN_MODE_SUPPORTED_MODES) or {}
   local current_run_mode = nil
-  for i, mode in ipairs(supported_run_mode) do
-    if i - 1 == mode_index then
-      current_run_mode = mode[1]
+  for _, mode in ipairs(supported_run_mode) do
+    if mode.id == mode_id then
+      current_run_mode = mode.label
     end
   end
   if current_run_mode == nil then
@@ -231,13 +231,15 @@ end
 local function clean_mode_supported_mode_handler(driver, device, ib, response)
   device.log.info(string.format("clean_mode_supported_mode_handler"))
   local supported_modes = {}
-  for i, mode in ipairs(ib.data.elements) do
+  local supported_modes_id = {}
+  for _, mode in ipairs(ib.data.elements) do
     if version.api < 10 then
       clusters.RvcRunMode.types.ModeOptionStruct:augment_type(mode)
     end
     table.insert(supported_modes, mode.elements.label.value)
+    table.insert(supported_modes_id, { label = mode.elements.label.value, id = mode.elements.mode.value })
   end
-  device:set_field(CLEAN_MODE_SUPPORTED_MODES, supported_modes, { persist = true })
+  device:set_field(CLEAN_MODE_SUPPORTED_MODES, supported_modes_id, { persist = true })
 
   local component = device.profile.components["cleanMode"]
   local event = capabilities.mode.supportedModes(supported_modes, {visibility = {displayed = false}})
@@ -248,12 +250,12 @@ end
 
 local function clean_mode_current_mode_handler(driver, device, ib, response)
   device.log.info(string.format("clean_mode_current_mode_handler currentMode: %s", ib.data.value))
-  local mode_index = ib.data.value
+  local mode_id = ib.data.value
   local supported_clean_mode = device:get_field(CLEAN_MODE_SUPPORTED_MODES) or {}
-  for i, mode in ipairs(supported_clean_mode) do
-    if i - 1 == mode_index then
+  for _, mode in ipairs(supported_clean_mode) do
+    if mode.id == mode_id then
       local component = device.profile.components["cleanMode"]
-      device:emit_component_event(component, capabilities.mode.mode(mode))
+      device:emit_component_event(component, capabilities.mode.mode(mode.label))
       break
     end
   end
@@ -329,17 +331,19 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   if cmd.component == "runMode" then
     local supported_modes = device:get_field(RUN_MODE_SUPPORTED_MODES) or {}
-    for i, mode in ipairs(supported_modes) do
-      if cmd.args.mode == mode[1] then
-        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, endpoint_id, i - 1))
+    for _, mode in ipairs(supported_modes) do
+      if cmd.args.mode == mode.label then
+        device.log.info(string.format("mode.label: %s, mode.id: %s", mode.label, mode.id))
+        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, endpoint_id, mode.id))
         return
       end
     end
   elseif cmd.component == "cleanMode" then
     local supported_modes = device:get_field(CLEAN_MODE_SUPPORTED_MODES) or {}
-    for i, mode in ipairs(supported_modes) do
-      if cmd.args.mode == mode then
-        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, endpoint_id, i - 1))
+    for _, mode in ipairs(supported_modes) do
+      if cmd.args.mode == mode.label then
+        device.log.info(string.format("mode.label: %s, mode.id: %s", mode.label, mode.id))
+        device:send(clusters.RvcCleanMode.commands.ChangeToMode(device, endpoint_id, mode.id))
         return
       end
     end
