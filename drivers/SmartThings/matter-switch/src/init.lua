@@ -689,35 +689,34 @@ local function detect_bridge(device)
 end
 
 local function device_init(driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
-    return
-  end
-  check_field_name_updates(device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
-  end
-  local main_endpoint = find_default_endpoint(device)
-  -- ensure subscription to all endpoint attributes- including those mapped to child devices
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id ~= main_endpoint then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      for _, attr in pairs(device_type_attribute_map[id] or {}) do
-        if id == GENERIC_SWITCH_ID and
-          attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-          attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-          device:add_subscribed_event(attr)
-        else
-          device:add_subscribed_attribute(attr)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    check_field_name_updates(device)
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    if device:get_field(IS_PARENT_CHILD_DEVICE) then
+      device:set_find_child(find_child)
+    end
+    local main_endpoint = find_default_endpoint(device)
+    -- ensure subscription to all endpoint attributes- including those mapped to child devices
+    for _, ep in ipairs(device.endpoints) do
+      if ep.endpoint_id ~= main_endpoint then
+        local id = 0
+        for _, dt in ipairs(ep.device_types) do
+          id = math.max(id, dt.device_type_id)
+        end
+        for _, attr in pairs(device_type_attribute_map[id] or {}) do
+          if id == GENERIC_SWITCH_ID and
+            attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+            attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+            device:add_subscribed_event(attr)
+          else
+            device:add_subscribed_attribute(attr)
+          end
         end
       end
     end
+    device:subscribe()
   end
-  device:subscribe()
 end
 
 local function match_profile(driver, device)
