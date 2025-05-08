@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
 local im = require "st.matter.interaction_model"
+local log = require "log"
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local INITIAL_PRESS_ONLY = "__initial_press_only"
@@ -24,13 +25,13 @@ local INITIAL_PRESS_ONLY = "__initial_press_only"
 -- Third Reality MK1 specifics
 -------------------------------------------------------------------------------------
 
-local THIRD_REALITY_MANUFACTURER_ID = 0x1407
-local THIRD_REALITY_MK1_PRODUCT_ID = 0x1388
+local THIRD_REALITY_MK1_FINGERPRINT = { vendor_id = 0x1407, product_id = 0x1388 }
 
 local function is_third_reality_mk1(opts, driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-     device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
-     device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
+     device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
+     device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
+    log.info("Using Third Reality MK1 sub driver")
     return true
   end
   return false
