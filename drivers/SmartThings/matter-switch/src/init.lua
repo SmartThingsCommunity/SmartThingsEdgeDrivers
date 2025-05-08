@@ -19,7 +19,7 @@ local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local lua_socket = require "socket"
 local utils = require "st.utils"
-local configure_buttons = require "configure-buttons"
+local buttons = require "buttons"
 local device_lib = require "st.device"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local version = require "version"
@@ -622,7 +622,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
     build_button_component_map(device, main_endpoint, button_eps)
-    configure_buttons.configure_buttons(device)
+    buttons.configure(device)
     profile_found = true
   end
 
@@ -1271,7 +1271,7 @@ local function info_changed(driver, device, event, args)
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     if #button_eps > 0 and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-      configure_buttons.configure_buttons(device)
+      buttons.configure(device)
     end
   end
 end

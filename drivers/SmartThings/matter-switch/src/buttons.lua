@@ -44,9 +44,9 @@ local function endpoint_to_component(device, ep)
   return "main"
 end
 
-local configure_buttons = {}
+local buttons = {}
 
-function configure_buttons.configure_buttons(device)
+function buttons.configure(device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     return
   end
@@ -82,4 +82,4 @@ function configure_buttons.configure_buttons(device)
   end
 end
 
-return configure_buttons
+return buttons

@@ -37,7 +37,7 @@ local mock_device_ep5 = 5
 local mock_device_ep6 = 6
 
 local mock_device = test.mock_device.build_test_matter_device({
-  label = "Matter Switch",
+  label = "VTM31-SN",
   profile = t_utils.get_profile_definition("inovelli-vtm31-sn.yml"),
   manufacturer_info = {
     vendor_id = 0x1361,
@@ -180,14 +180,13 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "inovelli-vtm31-sn" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   configure_buttons()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_child)
   mock_device:expect_device_create({
     type = "EDGE_CHILD",
-    label = "Matter Switch 2",
+    label = "VTM31-SN Notification Bar",
     profile = "light-color-level",
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", mock_device_ep6)
@@ -368,7 +367,7 @@ test.register_coroutine_test(
     configure_buttons()
     mock_device:expect_device_create({
       type = "EDGE_CHILD",
-      label = "Matter Switch 2",
+      label = "VTM31-SN Notification Bar",
       profile = "light-color-level",
       parent_device_id = mock_device.id,
       parent_assigned_child_key = string.format("%d", mock_device_ep6)
@@ -380,16 +379,12 @@ test.register_coroutine_test(
   "Test parameter258: Switch Mode",
   function()
     local parameter_values = { 0, 1 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter258 = tostring(v) } }))
       send_preference(258, v, data_types.Boolean)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -398,16 +393,12 @@ test.register_coroutine_test(
   "Test parameter22: Aux Switch Type",
   function()
     local parameter_values = { 0, 1, 2, 3 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter22 = tostring(v) } }))
       send_preference(22, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -416,16 +407,12 @@ test.register_coroutine_test(
   "Test parameter52: Smart Bulb Mode",
   function()
     local parameter_values = { 0, 1 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter52 = tostring(v) } }))
       send_preference(52, v, data_types.Boolean)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -434,16 +421,12 @@ test.register_coroutine_test(
   "Test parameter1: Dimming Speed (Remote)",
   function()
     local parameter_values = { 0, 5, 8, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 100 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter1 = tostring(v) } }))
       send_preference(1, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -452,16 +435,12 @@ test.register_coroutine_test(
   "Test parameter2: Dimming Speed (Local)",
   function()
     local parameter_values = { 0, 23, 54, 88, 120, 127 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter2 = tostring(v) } }))
       send_preference(2, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -470,16 +449,12 @@ test.register_coroutine_test(
   "Test parameter3: Ramp Rate (Remote)",
   function()
     local parameter_values = { 0, 23, 54, 88, 120, 127 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter3 = tostring(v) } }))
       send_preference(3, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -488,16 +463,12 @@ test.register_coroutine_test(
   "Test parameter4: Ramp Rate (Local)",
   function()
     local parameter_values = { 0, 23, 54, 88, 120, 127 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter4 = tostring(v) } }))
       send_preference(4, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -506,16 +477,12 @@ test.register_coroutine_test(
   "Test parameter9: Minimum Level",
   function()
     local parameter_values = { 1, 22, 54, 99 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter9 = tostring(v) } }))
       send_preference(9, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -524,16 +491,12 @@ test.register_coroutine_test(
   "Test parameter10: Maximum Level",
   function()
     local parameter_values = { 2, 22, 54, 100 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter10 = tostring(v) } }))
       send_preference(10, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -542,16 +505,12 @@ test.register_coroutine_test(
   "Test parameter11: Invert Switch",
   function()
     local parameter_values = { 0, 1 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter11 = tostring(v) } }))
       send_preference(11, v, data_types.Boolean)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -560,16 +519,12 @@ test.register_coroutine_test(
   "Test parameter15: Level After Power Restored",
   function()
     local parameter_values = { 0, 15, 45, 75, 101 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter15 = tostring(v) } }))
       send_preference(15, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -578,16 +533,12 @@ test.register_coroutine_test(
   "Test parameter17: Load Level Indicator Timeout",
   function()
     local parameter_values = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter17 = tostring(v) } }))
       send_preference(17, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -596,16 +547,12 @@ test.register_coroutine_test(
   "Test parameter95: LED Indicator Color (w/On)",
   function()
     local parameter_values = { 0, 7, 28, 64, 85, 106, 127, 148, 170, 190, 212, 234, 255 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter95 = tostring(v) } }))
       send_preference(95, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -614,16 +561,12 @@ test.register_coroutine_test(
   "Test parameter96: LED Indicator Color (w/Off)",
   function()
     local parameter_values = { 0, 7, 28, 64, 85, 106, 127, 148, 170, 190, 212, 234, 255 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter96 = tostring(v) } }))
       send_preference(96, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -632,16 +575,12 @@ test.register_coroutine_test(
   "Test parameter97: LED Indicator Intensity Color (w/On)",
   function()
     local parameter_values = { 0, 16, 55, 87, 100 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter97 = tostring(v) } }))
       send_preference(97, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )
@@ -650,16 +589,12 @@ test.register_coroutine_test(
   "Test parameter98: LED Indicator Intensity (w/Off)",
   function()
     local parameter_values = { 0, 16, 55, 87, 100 }
-    local num = 1
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
       test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { parameter98 = tostring(v) } }))
       send_preference(98, v, data_types.Uint8)
-      if num ~= #parameter_values then
-        test.wait_for_events()
-        test.mock_time.advance_time(3)
-      end
-      num = num + 1
     end
   end
 )

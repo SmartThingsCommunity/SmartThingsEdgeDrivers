@@ -14,7 +14,7 @@
 
 local cluster_base = require "st.matter.cluster_base"
 local clusters = require "st.matter.clusters"
-local configure_buttons = require "configure-buttons"
+local buttons = require "buttons"
 local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
 local log = require "log"
@@ -25,51 +25,23 @@ local utils = require "st.utils"
 -------------------------------------------------------------------------------------
 
 local INOVELLI_VTM31_SN_FINGERPRINT = { vendor_id = 0x1361, product_id = 0x0001 }
-local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-
-local DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
-local EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
-local GENERIC_SWITCH_ID = 0x000F
-local ON_OFF_DIMMER_SWITCH_ID = 0x0104
+local LATEST_CLOCK_SET_TIMESTAMP = "__latest_clock_set_timestamp"
 
 local PRIVATE_CLUSTER_ATTR_ID = 0x122F0000
 local PRIVATE_CLUSTER_ENDPOINT_ID = 0x01
 local PRIVATE_CLUSTER_ID = 0x122FFC31
+local CHILD_DEVICE_ENDPOINT_ID = 0x06
 
-local device_type_attribute_map = {
-  [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
-  },
-  [ON_OFF_DIMMER_SWITCH_ID] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [GENERIC_SWITCH_ID] = {
-    clusters.Switch.events.InitialPress,
-    clusters.Switch.events.LongPress,
-    clusters.Switch.events.ShortRelease,
-    clusters.Switch.events.MultiPressComplete
-  }
+local child_device_subscribed_attributes = {
+  clusters.ColorControl.attributes.CurrentHue,
+  clusters.ColorControl.attributes.CurrentSaturation,
+  clusters.ColorControl.attributes.CurrentX,
+  clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
 }
 
 local preference_map = {
@@ -127,21 +99,13 @@ local function to_boolean(value)
   return true
 end
 
-local function get_first_non_zero_endpoint(endpoints)
-  for _,ep in ipairs(endpoints) do
-    if ep ~= 0 then -- 0 is the matter RootNode endpoint
-      return ep
-    end
-  end
-  return nil
-end
-
 local function find_default_endpoint(device)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-  local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-  if main_endpoint ~= nil then
-    return main_endpoint
+  for _,ep in ipairs(switch_eps) do
+    if ep ~= 0 then -- 0 is the matter RootNode endpoint
+      return ep
+    end
   end
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return device.MATTER_DEFAULT_ENDPOINT
@@ -151,16 +115,11 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function initialize_buttons_and_switches(driver, device, main_endpoint)
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+local function initialize_vtm31_sn(driver, device)
+  local main_endpoint = find_default_endpoint(device)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local component_map = {}
   local current_component_number = 1
-  -- Since we do not support bindings at the moment, we only want to count clusters
-  -- that have been implemented as server. This can be removed when we have
-  -- support for bindings.
-  local num_switch_server_eps = 0
-  device:try_update_metadata({profile = "inovelli-vtm31-sn"})
   -- The first switch endpoint will be the main component and the three buttons
   -- will be added as additional components in a MCD profile.
   component_map["main"] = main_endpoint
@@ -170,23 +129,20 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     current_component_number = current_component_number + 1
   end
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-  configure_buttons.configure_buttons(device)
-  for _, ep in ipairs(switch_eps) do
-    num_switch_server_eps = num_switch_server_eps + 1
-    if ep ~= main_endpoint then
-      local name = string.format("%s %d", device.label, num_switch_server_eps)
-      driver:try_create_device(
-        {
-          type = "EDGE_CHILD",
-          label = name,
-          profile = "light-color-level",
-          parent_device_id = device.id,
-          parent_assigned_child_key = string.format("%d", ep),
-          vendor_provided_label = name
-        }
-      )
-    end
-  end
+  buttons.configure(device)
+  -- Create a child device for direct control of the LED Notification Bar.
+  local name = string.format("%s Notification Bar", device.label)
+  driver:try_create_device(
+    {
+      type = "EDGE_CHILD",
+      label = name,
+      profile = "light-color-level",
+      parent_device_id = device.id,
+      parent_assigned_child_key = string.format("%d", CHILD_DEVICE_ENDPOINT_ID),
+      vendor_provided_label = name
+    }
+  )
+  device:set_find_child(find_child)
 end
 
 local function component_to_endpoint(device, component)
@@ -208,24 +164,12 @@ local function endpoint_to_component(device, ep)
 end
 
 local function device_init(driver, device)
+  device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time())
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_find_child(find_child)
-  local main_endpoint = find_default_endpoint(device)
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id ~= main_endpoint then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      for _, attr in pairs(device_type_attribute_map[id] or {}) do
-        if id == GENERIC_SWITCH_ID then
-          device:add_subscribed_event(attr)
-        else
-          device:add_subscribed_attribute(attr)
-        end
-      end
-    end
+  for _, attr in ipairs(child_device_subscribed_attributes) do
+    device:add_subscribed_attribute(attr)
   end
   device:subscribe()
 end
@@ -234,18 +178,13 @@ local function device_added(driver, device)
   device_init(driver, device)
 end
 
-local function match_profile(driver, device)
-  local main_endpoint = find_default_endpoint(device)
-  initialize_buttons_and_switches(driver, device, main_endpoint)
-  device:set_find_child(find_child)
-end
-
 local function do_configure(driver, device)
-  match_profile(driver, device)
+  initialize_vtm31_sn(driver, device)
 end
 
 local function driver_switched(driver, device)
-  match_profile(driver, device)
+  device:try_update_metadata({profile = "inovelli-vtm31-sn"})
+  initialize_vtm31_sn(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
@@ -280,7 +219,7 @@ local function info_changed(driver, device, event, args)
   end
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
-    configure_buttons.configure_buttons(device)
+    buttons.configure(device)
   end
 end
 
@@ -292,8 +231,6 @@ local inovelli_vtm31_sn_handler = {
     infoChanged = info_changed,
     doConfigure = do_configure,
     driverSwitched = driver_switched
-  },
-  matter_handlers = {
   },
   can_handle = is_inovelli_vtm31_sn
 }
