@@ -1,3 +1,17 @@
+-- Copyright 2025 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
@@ -19,10 +33,11 @@ local CUBEACTION_TIMER = "__cubeAction_timer"
 local CUBEACTION_TIME = 3
 
 local function is_aqara_cube(opts, driver, device)
-  local name = string.format("%s", device.manufacturer_info.product_name)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-    string.find(name, "Aqara Cube T1 Pro") then
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    local name = string.format("%s", device.manufacturer_info.product_name)
+    if string.find(name, "Aqara Cube T1 Pro") then
       return true
+    end
   end
   return false
 end
@@ -186,6 +201,12 @@ local function info_changed(driver, device, event, args)
   end
 end
 
+-- override do_configure to prevent it running in the main driver
+local function do_configure(driver, device) end
+
+-- override driver_switched to prevent it running in the main driver
+local function driver_switched(driver, device) end
+
 local function initial_press_event_handler(driver, device, ib, response)
   if get_field_for_endpoint(device, INITIAL_PRESS_ONLY, ib.endpoint_id) then
     local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
@@ -214,7 +235,9 @@ local aqara_cube_handler = {
   lifecycle_handlers = {
     init = device_init,
     added = device_added,
-    infoChanged = info_changed
+    infoChanged = info_changed,
+    doConfigure = do_configure,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     attr = {
