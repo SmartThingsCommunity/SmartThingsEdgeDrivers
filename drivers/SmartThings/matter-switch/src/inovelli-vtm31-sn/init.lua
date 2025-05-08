@@ -208,28 +208,26 @@ local function endpoint_to_component(device, ep)
 end
 
 local function device_init(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    device:set_component_to_endpoint_fn(component_to_endpoint)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
-    device:set_find_child(find_child)
-    local main_endpoint = find_default_endpoint(device)
-    for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint then
-        local id = 0
-        for _, dt in ipairs(ep.device_types) do
-          id = math.max(id, dt.device_type_id)
-        end
-        for _, attr in pairs(device_type_attribute_map[id] or {}) do
-          if id == GENERIC_SWITCH_ID then
-            device:add_subscribed_event(attr)
-          else
-            device:add_subscribed_attribute(attr)
-          end
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+  device:set_find_child(find_child)
+  local main_endpoint = find_default_endpoint(device)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id ~= main_endpoint then
+      local id = 0
+      for _, dt in ipairs(ep.device_types) do
+        id = math.max(id, dt.device_type_id)
+      end
+      for _, attr in pairs(device_type_attribute_map[id] or {}) do
+        if id == GENERIC_SWITCH_ID then
+          device:add_subscribed_event(attr)
+        else
+          device:add_subscribed_attribute(attr)
         end
       end
     end
-    device:subscribe()
   end
+  device:subscribe()
 end
 
 local function device_added(driver, device)
@@ -243,21 +241,14 @@ local function match_profile(driver, device)
 end
 
 local function do_configure(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    match_profile(driver, device)
-  end
+  match_profile(driver, device)
 end
 
 local function driver_switched(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    match_profile(driver, device)
-  end
+  match_profile(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
-  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    return
-  end
   local time_diff = 3
   local last_clock_set_time = device:get_field(LATEST_CLOCK_SET_TIMESTAMP)
   if last_clock_set_time ~= nil then
