@@ -28,8 +28,6 @@ local THIRD_REALITY_MANUFACTURER_ID = 0x1407
 local THIRD_REALITY_MK1_PRODUCT_ID = 0x1388
 
 local function is_third_reality_mk1(opts, driver, device)
-  if not device.manufacturer_info then return false end
-  -- this sub driver does not support child devices
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
      device.manufacturer_info.vendor_id == THIRD_REALITY_MANUFACTURER_ID and
      device.manufacturer_info.product_id == THIRD_REALITY_MK1_PRODUCT_ID then
@@ -104,10 +102,22 @@ local function info_changed(driver, device, event, args)
   end
 end
 
-local function do_configure(driver, device)
+local function match_profile(driver, device)
   device:try_update_metadata({profile = "12-button-keyboard"})
   build_button_component_map(device)
   configure_buttons(device)
+end
+
+local function do_configure(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    match_profile(driver, device)
+  end
+end
+
+local function driver_switched(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    match_profile(driver, device)
+  end
 end
 
 local function initial_press_event_handler(driver, device, ib, response)
@@ -120,7 +130,8 @@ local third_reality_mk1_handler = {
     init = device_init,
     added = device_added,
     infoChanged = info_changed,
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     event = {
