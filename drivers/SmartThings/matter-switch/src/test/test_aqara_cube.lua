@@ -1,3 +1,17 @@
+-- Copyright 2025 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local test = require "integration_test"
 test.add_package_capability("cubeAction.yml")
 test.add_package_capability("cubeFace.yml")
@@ -5,12 +19,10 @@ local capabilities = require "st.capabilities"
 local cubeAction = capabilities["stse.cubeAction"]
 local cubeFace = capabilities["stse.cubeFace"]
 
-local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-
--- used in unit testing, since device.profile.id and args.old_st_store.profile.id are always the same
--- and this is to avoid the crash of the test case that occurs when try_update_metadata is performed in the device_init stage.
-local TEST_CONFIGURE = "__test_configure"
+local dkjson = require "dkjson"
+local t_utils = require "integration_test.utils"
+local utils = require "st.utils"
 
 --mock the actual device1
 local mock_device = test.mock_device.build_test_matter_device(
@@ -146,9 +158,6 @@ local CLUSTER_SUBSCRIBE_LIST ={
 }
 
 local function test_init()
-  local opts = { persist = true }
-  mock_device:set_field(TEST_CONFIGURE, true, opts)
-
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then
@@ -156,6 +165,15 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ profile = "cube-t1-pro" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+  device_info_copy.profile.id = "matter-thing"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
   test.mock_device.add_test_device(mock_device)
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main", cubeAction.cubeAction({value = "flipToSide1"}))
@@ -168,9 +186,6 @@ end
 test.set_test_init_function(test_init)
 
 local function test_init_exhausted()
-  local opts = { persist = true }
-  mock_device_exhausted:set_field(TEST_CONFIGURE, true, opts)
-
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device_exhausted)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then
@@ -178,6 +193,15 @@ local function test_init_exhausted()
     end
   end
   test.socket.matter:__expect_send({mock_device_exhausted.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_exhausted.id, "added" })
+  test.socket.matter:__expect_send({mock_device_exhausted.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_exhausted.id, "doConfigure" })
+  mock_device_exhausted:expect_metadata_update({ profile = "cube-t1-pro" })
+  mock_device_exhausted:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  local device_info_copy = utils.deep_copy(mock_device_exhausted.raw_st_data)
+  device_info_copy.profile.id = "matter-thing"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_exhausted.id, "infoChanged", device_info_json })
   test.mock_device.add_test_device(mock_device_exhausted)
   test.socket.capability:__expect_send(
     mock_device_exhausted:generate_test_message("main", cubeAction.cubeAction({value = "flipToSide1"}))
@@ -188,22 +212,13 @@ local function test_init_exhausted()
 end
 
 test.register_coroutine_test(
-  "Handle single press sequence when changing the device_lifecycle",
+  "Handle single press sequence",
     function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.mock_devices_api._expected_device_updates[mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
-      test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
-      test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="cube-t1-pro"}
-
-      test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({value = "face1Up"}))
-      -- let the driver run
-      test.wait_for_events()
-
       test.socket.matter:__queue_receive(
         {
           mock_device.id,
           clusters.Switch.events.InitialPress:build_test_event_report(
-            mock_device, 2, {new_position = 1}  --move to position 1?
+            mock_device, 2, {new_position = 1}
           )
         }
       )
@@ -236,20 +251,11 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle single press sequence in case of exhausted endpoint",
     function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device_exhausted.id, "added" })
-      test.mock_devices_api._expected_device_updates[mock_device_exhausted.device_id] = "00000000-1111-2222-3333-000000000003"
-      test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000003"}
-      test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000003", profileReference="cube-t1-pro"}
-
-      test.socket.device_lifecycle:__queue_receive(mock_device_exhausted:generate_info_changed({value = "face1Up"}))
-      -- let the driver run
-      test.wait_for_events()
-
       test.socket.matter:__queue_receive(
         {
           mock_device_exhausted.id,
           clusters.Switch.events.InitialPress:build_test_event_report(
-            mock_device_exhausted, 250, {new_position = 1}  --move to position 1?
+            mock_device_exhausted, 250, {new_position = 1}
           )
         }
       )
@@ -263,6 +269,14 @@ test.register_coroutine_test(
       )
     end,
     { test_init = test_init_exhausted }
+)
+
+test.register_coroutine_test(
+  "Test driver switched event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    mock_device:expect_metadata_update({ profile = "cube-t1-pro" })
+  end
 )
 
 -- run the tests

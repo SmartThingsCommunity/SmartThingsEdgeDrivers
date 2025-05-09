@@ -23,9 +23,12 @@ local utils = require "st.utils"
 local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
 
-local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local ON_OFF_STATES = "ON_OFF_STATES"
+
+local updated_fields = {
+  { current_field_name = "__switch_intialized", updated_field_name = nil }
+}
 
 local EVE_MANUFACTURER_ID = 0x130A
 local PRIVATE_CLUSTER_ID = 0x130AFC01
@@ -203,8 +206,6 @@ local function initialize_switch(driver, device)
       end
     end
   end
-
-  device:set_field(SWITCH_INITIALIZED, true)
 end
 
 local function component_to_endpoint(device, component)
@@ -245,6 +246,17 @@ local function set_on_off_state(device, endpoint, value)
   device:set_field(ON_OFF_STATES, map)
 end
 
+local function check_field_name_updates(device)
+  for _, field in ipairs(updated_fields) do
+    if device:get_field(field.current_field_name) then
+      if field.updated_field_name ~= nil then
+        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
+      end
+      device:set_field(field.current_field_name, nil)
+    end
+  end
+end
+
 
 -------------------------------------------------------------------------------------
 -- Device Management
@@ -252,11 +264,7 @@ end
 
 local function device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and
-        not device:get_field(SWITCH_INITIALIZED) then
-      -- create child devices as needed for multi-switch devices
-      initialize_switch(driver, device)
-    end
+    check_field_name_updates(device)
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
     device:set_find_child(find_child)
@@ -277,11 +285,18 @@ local function device_removed(driver, device)
   delete_poll_schedule(device)
 end
 
--- override do_configure to prevent it running in the main driver
-local function do_configure(driver, device) end
+local function do_configure(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    -- create child devices as needed for multi-switch devices
+    initialize_switch(driver, device)
+  end
+end
 
--- override driver_switched to prevent it running in the main driver
-local function driver_switched(driver, device) end
+local function driver_switched(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    initialize_switch(driver, device)
+  end
+end
 
 local function handle_refresh(self, device)
   requestData(device)
