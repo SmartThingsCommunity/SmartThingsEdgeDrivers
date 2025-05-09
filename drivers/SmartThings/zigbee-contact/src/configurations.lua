@@ -92,7 +92,6 @@ local devices = {
       { mfr = "Sercomm Corp.", model = "SZ-DWS04" },
       { mfr = "DAWON_DNS", model = "SS-B100-ZB" },
       { mfr = "frient A/S", model = "WISZB-120" },
-      { mfr = "frient A/S", model = "WISZB-121" },
       { mfr = "Compacta", model = "ZBWDS" }
     },
     CONFIGURATION = {
@@ -113,7 +112,22 @@ local devices = {
         reportable_change = 100
       }
     }
-  }
+  },
+  FRIENT_CONTACT_SENSOR_WISZB_121 = {
+    FINGERPRINTS = {
+      { mfr = "frient A/S", model = "WISZB-121" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = IASZone.ID,
+        attribute = IASZone.attributes.ZoneStatus.ID,
+        minimum_interval = 30,
+        maximum_interval = 300,
+        data_type = IASZone.attributes.ZoneStatus.base_type,
+        reportable_change = 1
+      }
+    }
+  },
 }
 
 local configurations = {}

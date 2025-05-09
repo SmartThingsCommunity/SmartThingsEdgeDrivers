@@ -140,15 +140,15 @@ zigbeeManufacturer:
     model: SS-B100-ZB
     deviceProfileName: contact-battery-temperature
   - id: "frient A/S/WISZB-120"
-    deviceLabel: frient Open/Closed Sensor
+    deviceLabel: frient Entry Sensor Pro
     manufacturer: frient A/S
     model: WISZB-120
-    deviceProfileName: contact-battery-temperature
+    deviceProfileName: contact-battery-temperature-tamper
   - id: "frient A/S/WISZB-121"
-    deviceLabel: frient Open/Closed Sensor
+    deviceLabel: frient Entry Sensor
     manufacturer: frient A/S
     model: WISZB-121
-    deviceProfileName: contact-battery-temperature
+    deviceProfileName: contact-battery-profile
   - id: "Compacta/ZBWDS"
     deviceLabel: Smartenit Open/Closed Sensor
     manufacturer: Compacta
