@@ -2614,7 +2614,7 @@ local function aliro_reader_verification_key_handler(driver, device, ib, respons
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
 
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroReaderVerificationKey(octet_string_to_hex_string(ib.data.value)))
+    device:emit_event(aliroSetting.aliroReaderVerificationKey(octet_string_to_hex_string(ib.data.value), {visibility = {displayed = false}}))
   end
 end
 
@@ -2623,7 +2623,7 @@ local function aliro_reader_group_id_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(octet_string_to_hex_string(ib.data.value)))
+    device:emit_event(aliroSetting.aliroReaderGroupIdentifier(octet_string_to_hex_string(ib.data.value), {visibility = {displayed = false}}))
   end
 end
 
@@ -2632,7 +2632,7 @@ local function aliro_group_resolving_key_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! octet_string_to_hex_string(value): %s !!!!!!!!!!!!!", octet_string_to_hex_string(ib.data.value)))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroGroupResolvingKey(octet_string_to_hex_string(ib.data.value)))
+    device:emit_event(aliroSetting.aliroGroupResolvingKey(octet_string_to_hex_string(ib.data.value), {visibility = {displayed = false}}))
   end
 end
 
@@ -2646,14 +2646,14 @@ local function aliro_protocol_versions_handler(driver, device, ib, response)
     version = entry.value
     device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value[1]: %s !!!!!!!!!!!!!", version))
   end
-  device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0"))
+  device:emit_event(aliroSetting.aliroExpeditedProtocolVersions("1.0", {visibility = {displayed = false}}))
 end
 
 local function aliro_supported_ble_uwb_protocol_version_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_supported_ble_uwb_protocol_version_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroBLEUWBProtocolVersions(ib.data.value))
+    device:emit_event(aliroSetting.aliroBLEUWBProtocolVersions(ib.data.value, {visibility = {displayed = false}}))
   end
 end
 
@@ -2661,7 +2661,7 @@ local function aliro_ble_advertising_version_handler(driver, device, ib, respons
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_ble_advertising_version_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.aliroBLEAdvertisingVersion(ib.data.value))
+    device:emit_event(aliroSetting.aliroBLEAdvertisingVersion(ib.data.value, {visibility = {displayed = false}}))
   end
 end
 
@@ -2669,7 +2669,7 @@ local function max_aliro_credential_issuer_key_handler(driver, device, ib, respo
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_credential_issuer_key_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.maxAliroCredentialIssuerKeys(ib.data.value))
+    device:emit_event(aliroSetting.maxAliroCredentialIssuerKeys(ib.data.value, {visibility = {displayed = false}}))
   end
 end
 
@@ -2677,7 +2677,7 @@ local function max_aliro_endpoint_key_handler(driver, device, ib, response)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! max_aliro_endpoint_key_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    device:emit_event(aliroSetting.maxAliroEndpointKeys(ib.data.value))
+    device:emit_event(aliroSetting.maxAliroEndpointKeys(ib.data.value, {visibility = {displayed = false}}))
   end
 end
 
@@ -2814,7 +2814,7 @@ local function handle_set_card_id(driver, device, command)
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! handle_set_card_id !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!! cardId: %s !!!!!!!!", command.args.cardId))
   if command.args.cardId ~= nil then
-    device:emit_event(aliroSetting.cardId(command.args.cardId))
+    device:emit_event(aliroSetting.cardId(command.args.cardId, {visibility = {displayed = false}}))
   end
 end
 
