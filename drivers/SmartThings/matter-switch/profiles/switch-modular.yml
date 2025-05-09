@@ -1,43 +1,91 @@
 name: switch-modular
 components:
-  - id: main
-    capabilities:
-      - id: switch
-      - id: switchLevel
-        optional: true
-        config:
-          values:
-            - key: "level.value"
-              range: [1, 100]
-      - id: button
-        optional: true
-      - id: battery
-        optional: true
-      - id: batteryLevel
-        optional: true
-      - id: firmwareUpdate
-      - id: refresh
-    categories:
-      - name: Light
-  - id: button1
-    capabilities:
-      - id: button
-        optional: true
-      - id: battery
-        optional: true
-      - id: batteryLevel
-        optional: true
-    categories:
-      - name: RemoteController
-  - id: button2
-    capabilities:
-      - id: button
-        optional: true
-    categories:
-      - name: RemoteController
-  - id: button3
-    capabilities:
+- id: main
+  capabilities:
+    - id: switch
+    - id: switchLevel
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: colorTemperature
+      version: 1
+      config:
+        values:
+          - key: "colorTemperature.value"
+            range: [ 2200, 6500 ]
+    - id: colorControl
+      version: 1
+    - id: temperatureMeasurement
+      version: 1
+    - id: relativeHumidityMeasurement
+      version: 1
+    - id: powerMeter
+      version: 1
+    - id: energyMeter
+      version: 1
+    - id: powerConsumptionReport
+      version: 1
     - id: button
       optional: true
-    categories:
+    - id: battery
+      optional: true
+    - id: batteryLevel
+      optional: true
+    - id: firmwareUpdate
+    - id: refresh
+  categories:
+    - name: Light
+- id: button1
+  capabilities:
+    - id: button
+      optional: true
+    - id: battery
+      optional: true
+    - id: batteryLevel
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button2
+  capabilities:
+    - id: button
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button3
+  capabilities:
+    - id: button
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button4
+  capabilities:
+    - id: button
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button5
+  capabilities:
+    - id: button
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button6
+  capabilities:
+    - id: button
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button7
+  capabilities:
+    - id: button
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button8
+  capabilities:
+    - id: button
+      optional: true
+  categories:
     - name: RemoteController
