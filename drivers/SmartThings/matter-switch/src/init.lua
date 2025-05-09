@@ -318,6 +318,12 @@ local TEMP_MAX = "__temp_max"
 local AQARA_MANUFACTURER_ID = 0x115F
 local AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
+local function supports_modular_profile(device)
+  return version.api >= 14 and version.rpc >= 8 and
+    not (device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+         device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID)
+end
+
 --helper function to create list of multi press values
 local function create_multi_press_values_list(size, supportsHeld)
   local list = {"pushed", "double"}
@@ -581,13 +587,24 @@ local function supports_capability_by_id_modular(device, capability, component)
   return false
 end
 
-local function match_modular_profile(driver, device, battery_attr_support)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+local function match_modular_profile(device, battery_attr_support)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local color_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.HS}) +
+    device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.XY})
+  local color_temp_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.CT})
+  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local level_eps = device:get_endpoints(clusters.LevelControl.ID)
+  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
 
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
+
+  if not battery_attr_support then battery_attr_support = battery_support.NO_BATTERY end
 
   if #button_eps > 0 then
     for component_num, _ in ipairs(button_eps) do
@@ -615,13 +632,46 @@ local function match_modular_profile(driver, device, battery_attr_support)
         table.insert(optional_supported_component_capabilities, {component_name, extra_component_capabilities})
       end
     end
-    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
-      device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-    end
+  end
+
+  if #color_eps then
+    table.insert(main_component_capabilities, capabilities.colorControl.ID)
+  end
+
+  if #color_temp_eps then
+    table.insert(main_component_capabilities, capabilities.colorTemperature.ID)
+  end
+
+  if #fan_eps then
+    table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
+  end
+
+  if #humidity_eps then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
   end
 
   if #level_eps > 0 then
     table.insert(main_component_capabilities, capabilities.switchLevel.ID)
+  end
+
+  if #energy_eps > 0 and #power_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.powerMeter.ID)
+    table.insert(main_component_capabilities, capabilities.energyMeter.ID)
+    table.insert(main_component_capabilities, capabilities.powerConsumptionReport.ID)
+  elseif #energy_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.energyMeter.ID)
+    table.insert(main_component_capabilities, capabilities.powerConsumptionReport.ID)
+  elseif #power_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.powerMeter.ID)
+  end
+
+  if #temperature_eps then
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+  end
+
+  if #valve_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.valve.ID)
   end
 
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
@@ -659,23 +709,14 @@ local function build_button_component_map(device, main_endpoint, button_eps)
 end
 
 local function build_button_profile(driver, device, main_endpoint, num_button_eps)
-  local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
-  if version.api >= 14 and version.rpc >= 8 then
-    if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
-      device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-    else
-      match_modular_profile(driver, device, battery_support.NO_BATTERY)
-    end
+  local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
+  if device_type_supports_button_switch_combination(device, main_endpoint) then
+    profile_name = "light-level-" .. profile_name
+  end
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:try_update_metadata({profile = profile_name})
   else
-    local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
-    if device_type_supports_button_switch_combination(device, main_endpoint) then
-      profile_name = "light-level-" .. profile_name
-    end
-    if battery_supported then
-      device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-    else
-      device:try_update_metadata({profile = profile_name})
-    end
+    device:send(clusters.PowerSource.attributes.AttributeList:read(device)) -- battery profiles are configured later, in power_source_attribute_list_handler
   end
 end
 
@@ -750,11 +791,9 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     configure_buttons(device)
     profile_found = true
   end
-
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
   -- while building switch child profiles
   local num_switch_server_eps = build_child_switch_profiles(driver, device, main_endpoint)
-
   -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
   -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
   -- Note: since their device type isn't supported, these devices join as a matter-thing.
@@ -811,43 +850,50 @@ local function device_init(driver, device)
 end
 
 local function match_profile(driver, device)
-  local main_endpoint = find_default_endpoint(device)
-  -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-  local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
-  if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
-  end
-  if profile_found then
-    return
-  end
-
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
-  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
-  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
-  local profile_name = nil
-  local level_support = ""
-  if #level_eps > 0 then
-    level_support = "-level"
-  end
-  if #energy_eps > 0 and #power_eps > 0 then
-    profile_name = "plug" .. level_support .. "-power-energy-powerConsumption"
-  elseif #energy_eps > 0 then
-    profile_name = "plug" .. level_support .. "-energy-powerConsumption"
-  elseif #power_eps > 0 then
-    profile_name = "plug" .. level_support .. "-power"
-  elseif #valve_eps > 0 then
-    profile_name = "water-valve"
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
-      profile_name = profile_name .. "-level"
+  if supports_modular_profile(device) then
+    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+      match_modular_profile(device)
+    else
+      device:send(clusters.PowerSource.attributes.AttributeList:read(device)) -- battery profiles are configured later, in power_source_attribute_list_handler
     end
-  elseif #fan_eps > 0 then
-    profile_name = "light-color-level-fan"
-  end
-  if profile_name then
-    device:try_update_metadata({ profile = profile_name })
+  else
+    local main_endpoint = find_default_endpoint(device)
+    -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
+    local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
+    if device:get_field(IS_PARENT_CHILD_DEVICE) then
+      device:set_find_child(find_child)
+    end
+    if profile_found then
+      return
+    end
+    local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+    local level_eps = device:get_endpoints(clusters.LevelControl.ID)
+    local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+    local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
+    local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
+    local profile_name
+    local level_support = ""
+    if #level_eps > 0 then
+      level_support = "-level"
+    end
+    if #energy_eps > 0 and #power_eps > 0 then
+      profile_name = "plug" .. level_support .. "-power-energy-powerConsumption"
+    elseif #energy_eps > 0 then
+      profile_name = "plug" .. level_support .. "-energy-powerConsumption"
+    elseif #power_eps > 0 then
+      profile_name = "plug" .. level_support .. "-power"
+    elseif #valve_eps > 0 then
+      profile_name = "water-valve"
+      if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+        {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+        profile_name = profile_name .. "-level"
+      end
+    elseif #fan_eps > 0 then
+      profile_name = "light-color-level-fan"
+    end
+    if profile_name then
+      device:try_update_metadata({ profile = profile_name })
+    end
   end
 end
 
@@ -1366,14 +1412,13 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
       break
     end
   end
-  if version.api >= 14 and version.rpc >= 8 then
-    match_modular_profile(driver, device, battery_attr_support)
-    return
+  if supports_modular_profile(device) then
+    match_modular_profile(device, battery_attr_support)
   else
     local profile_name
     if battery_attr_support == battery_support.BATTERY_PERCENTAGE then
       profile_name = "button-battery"
-    else -- battery_attr_support = battery_support.BATTERY_LEVEL
+    elseif battery_attr_support == battery_support.BATTERY_LEVEL then
       profile_name = "button-batteryLevel"
     end
     if #button_eps > 1 then
@@ -1383,7 +1428,9 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
        device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
       profile_name = profile_name .. "-temperature-humidity"
     end
-    device:try_update_metadata({ profile = profile_name })
+    if profile_name then
+      device:try_update_metadata({ profile = profile_name })
+    end
   end
 end
 
