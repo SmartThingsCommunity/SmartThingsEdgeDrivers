@@ -1,5 +1,6 @@
 local cluster_base = require "st.matter.cluster_base"
 local HepaFilterMonitoringServerAttributes = require "HepaFilterMonitoring.server.attributes"
+local HepaFilterMonitoringServerCommands = require "HepaFilterMonitoring.server.commands"
 local HepaFilterMonitoringTypes = require "HepaFilterMonitoring.types"
 
 local HepaFilterMonitoring = {}
@@ -9,6 +10,7 @@ HepaFilterMonitoring.NAME = "HepaFilterMonitoring"
 HepaFilterMonitoring.server = {}
 HepaFilterMonitoring.client = {}
 HepaFilterMonitoring.server.attributes = HepaFilterMonitoringServerAttributes:set_parent_cluster(HepaFilterMonitoring)
+HepaFilterMonitoring.server.commands = HepaFilterMonitoringServerCommands:set_parent_cluster(HepaFilterMonitoring)
 HepaFilterMonitoring.types = HepaFilterMonitoringTypes
 
 function HepaFilterMonitoring:get_attribute_by_id(attr_id)
@@ -52,6 +54,9 @@ HepaFilterMonitoring.attribute_direction_map = {
   ["AttributeList"] = "server",
 }
 
+HepaFilterMonitoring.command_direction_map = {
+  ["ResetCondition"] = "server",
+}
 
 HepaFilterMonitoring.FeatureMap = HepaFilterMonitoring.types.Feature
 
@@ -72,6 +77,24 @@ attribute_helper_mt.__index = function(self, key)
 end
 HepaFilterMonitoring.attributes = {}
 setmetatable(HepaFilterMonitoring.attributes, attribute_helper_mt)
+
+local command_helper_mt = {}
+command_helper_mt.__index = function(self, key)
+  local direction = HepaFilterMonitoring.command_direction_map[key]
+  if direction == nil then
+    error(string.format("Referenced unknown command %s on cluster %s", key, HepaFilterMonitoring.NAME))
+  end
+  return HepaFilterMonitoring[direction].commands[key]
+end
+HepaFilterMonitoring.commands = {}
+setmetatable(HepaFilterMonitoring.commands, command_helper_mt)
+
+local event_helper_mt = {}
+event_helper_mt.__index = function(self, key)
+  return HepaFilterMonitoring.server.events[key]
+end
+HepaFilterMonitoring.events = {}
+setmetatable(HepaFilterMonitoring.events, event_helper_mt)
 
 setmetatable(HepaFilterMonitoring, {__index = cluster_base})
 
