@@ -1644,7 +1644,8 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
-    require("aqara-cube")
+    require("aqara-cube"),
+    require("third-reality-mk1")
   }
 }
 
