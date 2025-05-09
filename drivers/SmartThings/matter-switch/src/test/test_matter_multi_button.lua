@@ -121,11 +121,13 @@ local function test_init()
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.mock_device.add_test_device(mock_device)
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   configure_buttons()
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
