@@ -1,0 +1,81 @@
+name: rvc-service-area
+components:
+  - id: main
+    label: Main
+    capabilities:
+      - id: robotCleanerOperatingState
+        version: 1
+      - id: serviceArea
+        version: 1
+      - id: refresh
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+    categories:
+    - name: RobotCleaner
+  - id: runMode
+    label: Run mode
+    capabilities:
+      - id: mode
+        version: 1
+    categories:
+    - name: RobotCleaner
+deviceConfig:
+  dashboard:
+    states:
+    - component: main
+      capability: robotCleanerOperatingState
+      version: 1
+  detailView:
+  - component: main
+    capability: robotCleanerOperatingState
+    version: 1
+  - component: main
+    capability: serviceArea
+    version: 1
+  - component: runMode
+    capability: mode
+    version: 1
+    patch:
+    - op: replace
+      path: /0/list/command/supportedValues
+      value: supportedArguments.value
+  - component: main
+    capability: refresh
+    version: 1
+  - component: main
+    capability: firmwareUpdate
+    version: 1
+  automation:
+    conditions:
+    - component: runMode
+      capability: mode
+      version: 1
+      patch:
+      - op: replace
+        path: /0/displayType
+        value: dynamicList
+      - op: add
+        path: /0/dynamicList
+        value:
+          value: mode.value
+          supportedValues:
+            value: supportedModes.value
+      - op: remove
+        path: /0/list
+    actions:
+    - component: runMode
+      capability: mode
+      version: 1
+      patch:
+      - op: replace
+        path: /0/displayType
+        value: dynamicList
+      - op: add
+        path: /0/dynamicList
+        value:
+          command: setMode
+          supportedValues:
+            value: supportedModes.value
+      - op: remove
+        path: /0/list
