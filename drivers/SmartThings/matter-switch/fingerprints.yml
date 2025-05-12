@@ -126,6 +126,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1005
     deviceProfileName: plug-binary
+  - id: "5014/4097"
+    deviceLabel: OREIN Bath Fan OLO5S
+    vendorId: 0x1396
+    productId: 0x1001
+    deviceProfileName: light-color-level-fan
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
@@ -456,6 +461,12 @@ matterManufacturer:
     vendorId: 0x1372
     productId: 0x0002
     deviceProfileName: switch-4
+#JUNG
+  - id: "5161/1"
+    deviceLabel: Matter Push button 2-gang
+    vendorId: 0x1429
+    productId: 0x0001
+    deviceProfileName: 4-button-battery
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
