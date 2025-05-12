@@ -1,3 +1,4 @@
+local api_version = require("version").api
 local capabilities = require "st.capabilities"
 
 local cosock = require "cosock"
@@ -45,7 +46,7 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
     capabilities.mediaTrackControl.commands.previousTrack.NAME,
   }))
 
-  if not driver:has_received_startup_state() then
+  if api_version >= 14 and not driver:has_received_startup_state() then
     device.log.debug("Driver startup state not yet received, delaying initialization of device.")
     driver:queue_device_init_for_startup_state(device)
     return

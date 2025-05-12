@@ -316,7 +316,7 @@ function SonosDriver:get_oauth_token()
     if now < expiration then
       -- token is expiring soon, so we pre-emptively refresh
       if math.abs(expiration - now) < ONE_HOUR_IN_SECONDS then
-        local result, err = self:request_oauth_token()
+        local result, err = security.get_sonos_oauth()
         if not result then
           log.warn(string.format("Error requesting OAuth token via Security API: %s", err))
         end
