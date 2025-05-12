@@ -794,11 +794,15 @@ local function match_modular_profile(driver, device, battery_attr_support)
     if num_switch_server_eps > 0 and detect_matter_thing(device) then
       local device_type_id = handle_light_switch_with_onOff_server_clusters(device, main_endpoint, true)
       if device_type_profile_map[device_type_id] then
-        if device_type_id == ON_OFF_DIMMER_SWITCH_ID then
+        local capabilities_to_remove = {}
+        if device_type_id == ON_OFF_SWITCH_ID then
+          capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID, capabilities.switchLevel.ID}
+        elseif device_type_id == ON_OFF_DIMMER_SWITCH_ID then
+          capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID}
           if not tbl_contains(main_component_capabilities, capabilities.switchLevel.ID) then
             table.insert(main_component_capabilities, capabilities.switchLevel.ID)
           end
-        elseif device_type_id == ON_OFF_COLOR_DIMMER_SWITCH_ID then
+        else -- device_type_id = ON_OFF_COLOR_DIMMER_SWITCH_ID
           if not tbl_contains(main_component_capabilities, capabilities.switchLevel.ID) then
             table.insert(main_component_capabilities, capabilities.switchLevel.ID)
           end
@@ -807,6 +811,12 @@ local function match_modular_profile(driver, device, battery_attr_support)
           end
           if not tbl_contains(main_component_capabilities, capabilities.colorControl.ID) then
             table.insert(main_component_capabilities, capabilities.colorControl.ID)
+          end
+        end
+        for _, cap in ipairs(capabilities_to_remove) do
+          local _, found_idx = tbl_contains(main_component_capabilities, cap)
+          if found_idx then
+            table.remove(main_component_capabilities, found_idx)
           end
         end
       end
@@ -831,7 +841,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
   local total_supported_capabilities = optional_supported_component_capabilities
   table.insert(total_supported_capabilities[1][2], capabilities.switch.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities)
+  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, {persist = true})
 
   --re-up subscription with new capabilities using the modular supports_capability override
   device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
