@@ -799,6 +799,9 @@ local function match_modular_profile(driver, device, battery_attr_support)
             table.insert(main_component_capabilities, capabilities.switchLevel.ID)
           end
         elseif device_type_id == ON_OFF_COLOR_DIMMER_SWITCH_ID then
+          if not tbl_contains(main_component_capabilities, capabilities.switchLevel.ID) then
+            table.insert(main_component_capabilities, capabilities.switchLevel.ID)
+          end
           if not tbl_contains(main_component_capabilities, capabilities.colorTemperature.ID) then
             table.insert(main_component_capabilities, capabilities.colorTemperature.ID)
           end
