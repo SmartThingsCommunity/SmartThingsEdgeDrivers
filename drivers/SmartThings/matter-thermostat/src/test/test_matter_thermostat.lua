@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,8 +16,13 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
-
 local clusters = require "st.matter.clusters"
+local version = require "version"
+
+if version.api < 11 then
+  clusters.Thermostat.types.SystemModeEnum = clusters.Thermostat.types.ThermostatSystemMode
+  clusters.Thermostat.types.ControlSequenceOfOperationEnum = clusters.Thermostat.types.ThermostatControlSequence
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
@@ -87,26 +92,27 @@ local mock_device_auto = test.mock_device.build_test_matter_device({
   }
 })
 
+local cluster_subscribe_list = {
+  clusters.Thermostat.attributes.LocalTemperature,
+  clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+  clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+  clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+  clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+  clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
+  clusters.Thermostat.attributes.SystemMode,
+  clusters.Thermostat.attributes.ThermostatRunningState,
+  clusters.Thermostat.attributes.ControlSequenceOfOperation,
+  clusters.TemperatureMeasurement.attributes.MeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+  clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+  clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+  clusters.FanControl.attributes.FanMode,
+  clusters.FanControl.attributes.FanModeSequence,
+  clusters.PowerSource.attributes.BatPercentRemaining,
+}
+
 local function test_init()
-  local cluster_subscribe_list = {
-    clusters.Thermostat.attributes.LocalTemperature,
-    clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
-    clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
-    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
-    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
-    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
-    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
-    clusters.Thermostat.attributes.SystemMode,
-    clusters.Thermostat.attributes.ThermostatRunningState,
-    clusters.Thermostat.attributes.ControlSequenceOfOperation,
-    clusters.TemperatureMeasurement.attributes.MeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
-    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-    clusters.FanControl.attributes.FanMode,
-    clusters.FanControl.attributes.FanModeSequence,
-    clusters.PowerSource.attributes.BatPercentRemaining,
-  }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -120,25 +126,6 @@ end
 test.set_test_init_function(test_init)
 
 local function test_init_auto()
-  local cluster_subscribe_list = {
-    clusters.Thermostat.attributes.LocalTemperature,
-    clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
-    clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
-    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
-    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
-    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
-    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
-    clusters.Thermostat.attributes.SystemMode,
-    clusters.Thermostat.attributes.ThermostatRunningState,
-    clusters.Thermostat.attributes.ControlSequenceOfOperation,
-    clusters.TemperatureMeasurement.attributes.MeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
-    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-    clusters.FanControl.attributes.FanMode,
-    clusters.FanControl.attributes.FanModeSequence,
-    clusters.PowerSource.attributes.BatPercentRemaining,
-  }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_auto)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -352,6 +339,210 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool())
+    },
+  }
+)
+
+test.register_message_test(
+  "Thermostat mode reports should generate correct messages when SystemMode is received first",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.PRECOOLING)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "precooling"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.precooling())
+    }
+  }
+)
+
+test.register_message_test(
+  "Thermostat mode reports should generate correct messages when the ControlSequenceOfOperation attribute changes",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.PRECOOLING)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "precooling"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.precooling())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.HEATING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.EMERGENCY_HEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "heat", "emergency heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, clusters.Thermostat.types.ControlSequenceOfOperationEnum.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "precooling", "cool"}, {visibility={displayed=false}}))
+    }
+  }
+)
+
+test.register_message_test(
+  "Thermostat mode capability commands should generate correct messages",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatMode", component = "main", command = "auto", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:write(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.AUTO)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatMode", component = "main", command = "off", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:write(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.OFF)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatMode", component = "main", command = "cool", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:write(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.COOL)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatMode", component = "main", command = "heat", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:write(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.HEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "thermostatMode", component = "main", command = "emergencyHeat", args = { } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.attributes.SystemMode:write(mock_device, 1, clusters.Thermostat.types.SystemModeEnum.EMERGENCY_HEAT)
+      }
     },
   }
 )
