@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-
 local clusters = require "st.matter.clusters"
+local version = require "version"
 
 local child_profile = t_utils.get_profile_definition("plug-binary.yml")
 local child_profile_override = t_utils.get_profile_definition("switch-binary.yml")
@@ -203,133 +203,112 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-  "Parent device: switch capability should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Parent device: switch capability should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_device.id,
         { capability = "switch", component = "main", command = "on", args = { } }
       }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
         clusters.OnOff.server.commands.On(mock_device, parent_ep)
-      },
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, parent_ep, true)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.switch.switch.on()
+      )
+    )
+  end
 )
 
-test.register_message_test(
-  "First child device: switch capability switch should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "First child device: switch capability switch should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_children[child1_ep].id,
         { capability = "switch", component = "main", command = "on", args = { } }
       }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_children[child1_ep].id, capability_id = "switch", capability_cmd_id = "on" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_children[child1_ep].id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
         clusters.OnOff.server.commands.On(mock_device, child1_ep)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, child1_ep, true)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
+    )
+    test.socket.capability:__expect_send(
+      mock_children[child1_ep]:generate_test_message(
+        "main", capabilities.switch.switch.on()
+      )
+    )
+  end
 )
 
-test.register_message_test(
-  "Second child device: switch capability should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
+test.register_coroutine_test(
+  "Second child device: switch capability switch should send the appropriate commands", function()
+    test.socket.capability:__queue_receive(
+      {
         mock_children[child2_ep].id,
         { capability = "switch", component = "main", command = "on", args = { } }
       }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_children[child2_ep].id, capability_id = "switch", capability_cmd_id = "on" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
+    )
+    if version.api >= 11 then
+      test.socket.devices:__expect_send(
+        {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_children[child2_ep].id, capability_id = "switch", capability_cmd_id = "on" }
+        }
+      )
+    end
+    test.socket.matter:__expect_send(
+      {
         mock_device.id,
         clusters.OnOff.server.commands.On(mock_device, child2_ep)
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, child2_ep, true)
       }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_children[child2_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
-  }
+    )
+    test.socket.capability:__expect_send(
+      mock_children[child2_ep]:generate_test_message(
+        "main", capabilities.switch.switch.on()
+      )
+    )
+  end
 )
 
 test.register_coroutine_test(
@@ -342,7 +321,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Child device profiles should be overriden for specific devices", function()
+  "Child device profiles should be overridden for specific devices", function()
     end,
     { test_init = test_init_child_profile_override }
 )
