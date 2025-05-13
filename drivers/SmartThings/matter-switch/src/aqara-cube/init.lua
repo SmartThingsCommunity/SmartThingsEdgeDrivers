@@ -59,6 +59,15 @@ local function reset_thread(device)
   device:set_field(CUBEACTION_TIMER, device.thread:call_with_delay(CUBEACTION_TIME, callback_timer(device)))
 end
 
+local function tbl_contains(array, value)
+  for _, element in ipairs(array) do
+    if element == value then
+      return true
+    end
+  end
+  return false
+end
+
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
 end
@@ -140,13 +149,20 @@ end
 
 -- This is called either on add for parent/child devices, or after the device profile changes for components
 local function configure_buttons(device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    device.log.debug(#MS.." momentary switch endpoints")
-    for _, ep in ipairs(MS) do
-      -- device only supports momentary switch, no release events
-      device.log.debug("configuring for press event only")
-      set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, true)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+    local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
+    for _, ep in ipairs(ms_eps) do
+      if device.profile.components[endpoint_to_component(device, ep)] then
+        if tbl_contains(msl_eps, ep) then -- this switch endpoint only supports momentary switch, no release events
+          device.log.debug(string.format("Configuring endpoint %d for long press event", ep))
+        else
+          device.log.debug(string.format("Configuring endpoint %d for initial press event", ep))
+          set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
+        end
+      else
+        device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping button configuration", ep))
+      end
     end
   end
 end
@@ -211,24 +227,32 @@ local function info_changed(driver, device, event, args)
     reset_thread(device)
     device:emit_event(cubeAction.cubeAction("flipToSide1"))
     device:emit_event(cubeFace.cubeFace("face1Up"))
+    configure_buttons(device)
   end
+end
+
+local function emit_cube_events(device, ib)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local face = 1
+  for component, _ in pairs(map) do
+    if map[component] == ib.endpoint_id then
+      face = component
+      break
+    end
+  end
+  reset_thread(device)
+  device:emit_event(cubeAction.cubeAction(string.format("flipToSide%d", face)))
+  device:emit_event(cubeFace.cubeFace(string.format("face%dUp", face)))
 end
 
 local function initial_press_event_handler(driver, device, ib, response)
   if get_field_for_endpoint(device, INITIAL_PRESS_ONLY, ib.endpoint_id) then
-    local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-    local face = 1
-    for component, ep in pairs(map) do
-      if map[component] == ib.endpoint_id then
-        face = component
-        break
-      end
-    end
-
-    reset_thread(device)
-    device:emit_event(cubeAction.cubeAction(string.format("flipToSide%d", face)))
-    device:emit_event(cubeFace.cubeFace(string.format("face%dUp", face)))
+    emit_cube_events(device, ib)
   end
+end
+
+local function long_press_event_handler(driver, device, ib, response)
+  emit_cube_events(device, ib)
 end
 
 local function battery_percent_remaining_attr_handler(driver, device, ib, response)
@@ -254,7 +278,8 @@ local aqara_cube_handler = {
     },
     event = {
       [clusters.Switch.ID] = {
-        [clusters.Switch.events.InitialPress.ID] = initial_press_event_handler
+        [clusters.Switch.events.InitialPress.ID] = initial_press_event_handler,
+        [clusters.Switch.events.LongPress.ID] = long_press_event_handler
       }
     },
   },
