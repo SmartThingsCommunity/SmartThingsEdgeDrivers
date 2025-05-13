@@ -209,7 +209,6 @@ local function device_added(driver, device)
 end
 
 local function do_configure(driver, device)
-  -- when unit testing, call set_configure elsewhere
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     set_configure(driver, device)
   end
