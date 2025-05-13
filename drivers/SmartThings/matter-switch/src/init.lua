@@ -902,12 +902,6 @@ local function set_fan_speed_percent(driver, device, cmd)
   device:send(clusters.FanControl.attributes.PercentSetting:write(device, fan_ep, speed))
 end
 
-local function handle_refresh(driver, device, cmd)
-  --Note: no endpoint specified indicates a wildcard endpoint
-  local req = clusters.OnOff.attributes.OnOff:read(device)
-  device:send(req)
-end
-
 -- Fallback handler for responses that dont have their own handler
 local function matter_handler(driver, device, response_block)
   log.info(string.format("Fallback handler for %s", response_block))
@@ -1304,10 +1298,11 @@ local function info_changed(driver, device, event, args)
 end
 
 local function device_added(driver, device)
-  -- refresh child devices to get initial attribute state in case child device
+  -- refresh child devices to get an initial attribute state for OnOff in case child device
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    handle_refresh(driver, device)
+    local req = clusters.OnOff.attributes.OnOff:read(device)
+    device:send(req)
   end
 
   -- Reset the values
@@ -1587,9 +1582,6 @@ local matter_driver_template = {
     },
     [capabilities.switchLevel.ID] = {
       [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_switch_level
-    },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = handle_refresh,
     },
     [capabilities.colorControl.ID] = {
       [capabilities.colorControl.commands.setColor.NAME] = handle_set_color,

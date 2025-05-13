@@ -13,32 +13,60 @@
 -- limitations under the License.
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local t_utils = require "integration_test.utils"
-local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 local clusters = require "st.matter.clusters"
+local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
+local t_utils = require "integration_test.utils"
 local version = require "version"
 
-if version.api < 10 then
-  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
-  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
-  clusters.AirQuality = require "AirQuality"
-  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
-  clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
-  clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
-  clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
-  clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
-  clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
-  clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
-  clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
-  clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
-end
+version.api = 9
+
+-- include driver-side cluster definitions to test embedded clusters on lower api versions
+clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
+clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
+clusters.AirQuality = require "AirQuality"
+clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
+clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
+clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
+clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
+clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
+clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
+clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
+clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
+clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
-    product_id = 0x0000,
+    product_id = 0x0000
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1 -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"}
+      }
+    }
+  }
+})
+
+local mock_device_rock = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-rock-wind.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000
   },
   endpoints = {
     {
@@ -55,36 +83,9 @@ local mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"}
       }
     }
-  }
-})
-
-local mock_device_rock = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("air-purifier-hepa-ac-rock-wind.yml"),
-  manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
-  },
-  endpoints = {
-    {
-      endpoint_id = 0,
-      clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
-      },
-      device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
-      }
-    },
-    {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
-        }
-      }
   }
 })
 
@@ -92,16 +93,16 @@ local mock_device_ap_aqs = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
-    product_id = 0x0000,
+    product_id = 0x0000
   },
   endpoints = {
     {
       endpoint_id = 0,
       clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"}
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        device_type_id = 0x0016, device_type_revision = 1 -- RootNode
       }
     },
     {
@@ -109,7 +110,7 @@ local mock_device_ap_aqs = test.mock_device.build_test_matter_device({
       clusters = {
         {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
         {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 0},
-        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 0}
       },
       device_types = {
         {device_type_id = 0x002D, device_type_revision = 1} -- AP
@@ -121,7 +122,7 @@ local mock_device_ap_aqs = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
         {cluster_id = clusters.RadonConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 2},
-        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 1},
+        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 1}
       },
       device_types = {
         {device_type_id = 0x002C, device_type_revision = 1} -- AQS
@@ -134,16 +135,16 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
-    product_id = 0x0000,
+    product_id = 0x0000
   },
   endpoints = {
     {
       endpoint_id = 0,
       clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"}
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        device_type_id = 0x0016, device_type_revision = 1 -- RootNode
       }
     },
     {
@@ -151,7 +152,7 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
       clusters = {
         {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
         {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
-        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
+        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7}
       },
       device_types = {
         {device_type_id = 0x002D, device_type_revision = 1} -- AP
@@ -165,7 +166,7 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 15},
         {cluster_id = clusters.FormaldehydeConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 15},
         {cluster_id = clusters.Pm10ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 15},
-        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 14},
+        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 14}
       },
       device_types = {
         {device_type_id = 0x002C, device_type_revision = 1} -- AQS
@@ -174,7 +175,7 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 4,
       clusters = {
-        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0}
       },
       device_types = {
         {device_type_id = 0x0302, device_type_revision = 1} -- Temperature Sensor
@@ -183,7 +184,7 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 6,
       clusters = {
-        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0}
       },
       device_types = {
         {device_type_id = 0x0307, device_type_revision = 1} -- Humidity Sensor
@@ -192,12 +193,12 @@ local mock_device_ap_thermo_aqs = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 7,
       clusters = {
-        {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 1},
+        {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 1}
       },
       device_types = {
         {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
-    },
+    }
   }
 })
 
@@ -205,16 +206,16 @@ local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matt
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-rock-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
-    product_id = 0x0000,
+    product_id = 0x0000
   },
   endpoints = {
     {
       endpoint_id = 0,
       clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"}
       },
       device_types = {
-        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+        device_type_id = 0x0016, device_type_revision = 1 -- RootNode
       }
     },
     {
@@ -222,7 +223,7 @@ local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matt
       clusters = {
         {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
         {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
-        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
+        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7}
       },
       device_types = {
         {device_type_id = 0x002D, device_type_revision = 1} -- AP
@@ -236,7 +237,7 @@ local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matt
         {cluster_id = clusters.Pm25ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 15},
         {cluster_id = clusters.FormaldehydeConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 15},
         {cluster_id = clusters.Pm10ConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 15},
-        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 14},
+        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 14}
       },
       device_types = {
         {device_type_id = 0x002C, device_type_revision = 1} -- AQS
@@ -268,7 +269,7 @@ local mock_device_ap_thermo_aqs_preconfigured = test.mock_device.build_test_matt
       device_types = {
         {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
       }
-    },
+    }
   }
 })
 
@@ -281,7 +282,7 @@ local cluster_subscribe_list = {
   clusters.HepaFilterMonitoring.attributes.ChangeIndication,
   clusters.HepaFilterMonitoring.attributes.Condition,
   clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication,
-  clusters.ActivatedCarbonFilterMonitoring.attributes.Condition,
+  clusters.ActivatedCarbonFilterMonitoring.attributes.Condition
 }
 
 local cluster_subscribe_list_rock = {
@@ -295,7 +296,7 @@ local cluster_subscribe_list_rock = {
   clusters.HepaFilterMonitoring.attributes.ChangeIndication,
   clusters.HepaFilterMonitoring.attributes.Condition,
   clusters.ActivatedCarbonFilterMonitoring.attributes.ChangeIndication,
-  clusters.ActivatedCarbonFilterMonitoring.attributes.Condition,
+  clusters.ActivatedCarbonFilterMonitoring.attributes.Condition
 }
 
 local cluster_subscribe_list_configured = {
@@ -303,7 +304,7 @@ local cluster_subscribe_list_configured = {
     clusters.Thermostat.attributes.LocalTemperature,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
     clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
   },
   [capabilities.relativeHumidityMeasurement.ID] = {
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
@@ -319,7 +320,7 @@ local cluster_subscribe_list_configured = {
   [capabilities.thermostatHeatingSetpoint.ID] = {
     clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
     clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
-    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
   },
   [capabilities.airPurifierFanMode.ID] = {
     clusters.FanControl.attributes.FanModeSequence,
@@ -332,7 +333,7 @@ local cluster_subscribe_list_configured = {
     clusters.FanControl.attributes.WindSupport,
     clusters.FanControl.attributes.WindSetting,
     clusters.FanControl.attributes.RockSupport,
-    clusters.FanControl.attributes.RockSetting,
+    clusters.FanControl.attributes.RockSetting
   },
   [capabilities.filterState.ID] = {
     clusters.HepaFilterMonitoring.attributes.Condition,
@@ -346,26 +347,26 @@ local cluster_subscribe_list_configured = {
     clusters.AirQuality.attributes.AirQuality
   },
   [capabilities.nitrogenDioxideHealthConcern.ID] = {
-    clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue,
+    clusters.NitrogenDioxideConcentrationMeasurement.attributes.LevelValue
   },
   [capabilities.formaldehydeMeasurement.ID] = {
     clusters.FormaldehydeConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit,
+    clusters.FormaldehydeConcentrationMeasurement.attributes.MeasurementUnit
   },
   [capabilities.formaldehydeHealthConcern.ID] = {
-    clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue,
+    clusters.FormaldehydeConcentrationMeasurement.attributes.LevelValue
   },
   [capabilities.fineDustHealthConcern.ID] = {
-    clusters.Pm25ConcentrationMeasurement.attributes.LevelValue,
+    clusters.Pm25ConcentrationMeasurement.attributes.LevelValue
   },
   [capabilities.dustSensor.ID] = {
     clusters.Pm25ConcentrationMeasurement.attributes.MeasuredValue,
     clusters.Pm25ConcentrationMeasurement.attributes.MeasurementUnit,
     clusters.Pm10ConcentrationMeasurement.attributes.MeasuredValue,
-    clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit,
+    clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit
   },
   [capabilities.dustHealthConcern.ID] = {
-    clusters.Pm10ConcentrationMeasurement.attributes.LevelValue,
+    clusters.Pm10ConcentrationMeasurement.attributes.LevelValue
   },
   [capabilities.tvocHealthConcern.ID] = {
     clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue
@@ -512,7 +513,7 @@ test.register_message_test(
         clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.LOW)
       }
     },
-      {
+    {
       channel = "capability",
       direction = "receive",
       message = {
@@ -648,7 +649,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.airPurifierFanMode.high())
-    },
+    }
   }
 )
 
@@ -706,7 +707,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.replace())
-    },
+    }
   }
 )
 
@@ -715,6 +716,7 @@ local supportedFanWind = {
   capabilities.windMode.windMode.sleepWind.NAME,
   capabilities.windMode.windMode.naturalWind.NAME
 }
+
 test.register_message_test(
   "Test wind mode",
   {
@@ -778,7 +780,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanSpeedPercent.percent(100))
-    },
+    }
   }
 )
 
@@ -789,6 +791,7 @@ local supportedFanRock = {
   capabilities.fanOscillationMode.fanOscillationMode.vertical.NAME,
   capabilities.fanOscillationMode.fanOscillationMode.swing.NAME
 }
+
 test.register_message_test(
   "Test rock mode",
   {
