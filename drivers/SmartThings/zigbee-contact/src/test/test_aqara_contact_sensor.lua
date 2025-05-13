@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@ local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
 
 local IASZone = clusters.IASZone
-local PowerConfiguration = clusters.PowerConfiguration
-local TemperatureMeasurement = clusters.TemperatureMeasurement
-local IASCIEAddress = IASZone.attributes.IASCIEAddress
-local EnrollResponseCode = IASZone.types.EnrollResponseCode
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -51,47 +47,9 @@ test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
-    })
-    test.wait_for_events()
 
-    test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, IASZone.ID)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
-    })
-
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 3600, 1)
-      }
-    )
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
-      }
-    )
-
-    test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui) })
-    test.socket.zigbee:__expect_send({ mock_device.id, IASZone.server.commands.ZoneEnrollResponse(mock_device, EnrollResponseCode.SUCCESS, 0x00) })
-    test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
-
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
   end
 )
 

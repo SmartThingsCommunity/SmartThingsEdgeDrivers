@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2024 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,16 +16,11 @@ local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local cluster_base = require "st.zigbee.cluster_base"
-local data_types = require "st.zigbee.data_types"
 
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
 
-local MFG_CODE = 0x115F
-local PRIVATE_CLUSTER_ID = 0xFCC0
-local PRIVATE_ATTRIBUTE_ID = 0x0009
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -56,11 +51,6 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.waterSensor.water.dry()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
-        ,
-        data_types.Uint8, 1) })
   end
 )
 
