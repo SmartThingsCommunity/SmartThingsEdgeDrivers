@@ -45,7 +45,6 @@ local CURRENT_HUESAT_ATTR_MIN = 0
 local CURRENT_HUESAT_ATTR_MAX = 254
 
 -- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
--- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
 -- devices that were joined to this driver as MCD devices before the transition
 -- to join switch devices as parent-child. This value will exist in the device
 -- table for devices that joined prior to this transition, and is also used for
@@ -453,8 +452,8 @@ local function find_default_endpoint(device)
   -- default endpoint.
   if #switch_eps > 0 and #button_eps > 0 then
     local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-    if device_type_supports_button_switch_combination(device, main_endpoint) then
-      return main_endpoint
+    if supports_modular_profile(device) or device_type_supports_button_switch_combination(device, main_endpoint) then
+      return get_first_non_zero_endpoint(switch_eps)
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
       return get_first_non_zero_endpoint(button_eps)
@@ -604,7 +603,7 @@ local function build_button_component_map(device, main_endpoint, button_eps)
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
-local function build_button_profile(driver, device, main_endpoint, num_button_eps)
+local function build_button_profile(device, main_endpoint, num_button_eps)
   local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
   if device_type_supports_button_switch_combination(device, main_endpoint) then
     profile_name = "light-level-" .. profile_name
@@ -685,7 +684,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     build_button_component_map(device, main_endpoint, button_eps)
-    build_button_profile(driver, device, main_endpoint, #button_eps)
+    build_button_profile(device, main_endpoint, #button_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
     configure_buttons(device)
@@ -754,14 +753,13 @@ local function match_modular_profile(driver, device, battery_attr_support)
     configure_buttons(device)
   end
 
-  -- Only add capabilities related to lights if the cluster is implemented on
-  -- the main endpoint. Otherwise, it will be added as a child device.
-  if (#color_hs_eps > 0 and tbl_contains(color_hs_eps, main_endpoint)) or
-     (#color_xy_eps > 0 and tbl_contains(color_xy_eps, main_endpoint)) then
+  -- Only add capabilities related to lights if the corresponding cluster is
+  -- implemented on the main endpoint. Otherwise, it will be added as a child device.
+  if tbl_contains(color_hs_eps, main_endpoint) or tbl_contains(color_xy_eps, main_endpoint) then
     table.insert(main_component_capabilities, capabilities.colorControl.ID)
   end
 
-  if #color_temp_eps > 0 and tbl_contains(color_temp_eps, main_endpoint) then
+  if tbl_contains(color_temp_eps, main_endpoint) then
     table.insert(main_component_capabilities, capabilities.colorTemperature.ID)
   end
 
