@@ -1,4 +1,4 @@
-name: contact-batteryLevel-profile
+name: contact-batteryLevel
 components:
   - id: main
     capabilities:
