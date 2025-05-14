@@ -728,6 +728,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
 
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
+  local extra_component_capabilities = {}
 
   if not battery_attr_support then battery_attr_support = battery_support.NO_BATTERY end
 
@@ -737,16 +738,16 @@ local function match_modular_profile(driver, device, battery_attr_support)
         table.insert(main_component_capabilities, capabilities.button.ID)
         add_battery_capability(main_component_capabilities, battery_attr_support)
       else
-        local extra_component_capabilities = {}
-        table.insert(extra_component_capabilities, capabilities.button.ID)
+        local button_capabilities = {}
+        table.insert(button_capabilities, capabilities.button.ID)
         if component_num == 1 then
-          add_battery_capability(extra_component_capabilities, battery_attr_support)
+          add_battery_capability(button_capabilities, battery_attr_support)
         end
         local component_name = "button"
         if #button_eps > 1 then
           component_name = component_name .. component_num
         end
-        table.insert(optional_supported_component_capabilities, {component_name, extra_component_capabilities})
+        table.insert(extra_component_capabilities, {component_name, button_capabilities})
       end
     end
     build_button_component_map(device, main_endpoint, button_eps)
@@ -830,6 +831,9 @@ local function match_modular_profile(driver, device, battery_attr_support)
   end
 
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  for _, component_capabilities in ipairs(extra_component_capabilities) do
+    table.insert(optional_supported_component_capabilities, component_capabilities)
+  end
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, optional_supported_component_capabilities)
 

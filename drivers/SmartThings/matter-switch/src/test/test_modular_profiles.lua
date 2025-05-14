@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,16 +14,14 @@
 
 local test = require "integration_test"
 test.set_rpc_version(8)
-local capabilities = require "st.capabilities"
-local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+local t_utils = require "integration_test.utils"
+local uint32 = require "st.matter.data_types.Uint32"
+local utils = require "st.utils"
 local version = require "version"
 
-local TRANSITION_TIME = 0
-local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
-
-local mock_device = test.mock_device.build_test_matter_device({
+local mock_device_tbl = {
+  label = "Matter Switch",
   profile = t_utils.get_profile_definition("switch-color-level.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
@@ -56,23 +54,33 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     }
   }
-})
+}
+
+local mock_device = test.mock_device.build_test_matter_device(mock_device_tbl)
+
+local default_component_capabilities = {{"main", {"colorControl", "colorTemperature", "switchLevel"}}}
+local optional_supported_component_capabilities = default_component_capabilities
+
+local default_cluster_subscribe_list = {
+  clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
+  clusters.ColorControl.attributes.CurrentHue,
+  clusters.ColorControl.attributes.CurrentSaturation,
+  clusters.ColorControl.attributes.CurrentX,
+  clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
+  clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+}
+
+local cluster_subscribe_list = default_cluster_subscribe_list
 
 local function test_init()
-  local cluster_subscribe_list = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY,
-    clusters.ColorControl.attributes.ColorMode,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-  }
+  cluster_subscribe_list = utils.deep_copy(default_cluster_subscribe_list)
+  optional_supported_component_capabilities = utils.deep_copy(default_component_capabilities)
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -81,339 +89,184 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
-  local optional_supported_component_capabilities = {{"main", {"colorControl", "colorTemperature", "switchLevel"}}}
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   if version.api >= 14 then
     mock_device:expect_metadata_update({ profile = "switch-modular", optional_component_capabilities = optional_supported_component_capabilities })
-  else
-    mock_device:expect_metadata_update({ profile = "switch-color-level" })
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-  "On command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switch", component = "main", command = "on", args = { } }
-      }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.OnOff.server.commands.On(mock_device, 1)
+local function add_endpoint(endpoint, component, new_capabilities)
+  table.insert(mock_device_tbl.endpoints, endpoint)
+  mock_device = test.mock_device.build_test_matter_device(mock_device_tbl)
+  local new_caps = {}
+  for idx, comp in ipairs(optional_supported_component_capabilities) do
+    if comp[1] == component then
+      new_caps = comp[2]
+      table.remove(optional_supported_component_capabilities, idx)
+      break
+    end
+  end
+  for _, cap in ipairs(new_capabilities) do
+    table.insert(new_caps, cap)
+  end
+  local new_comp_caps = {component, new_caps}
+  table.insert(optional_supported_component_capabilities, new_comp_caps)
+  test.mock_device.add_test_device(mock_device)
+end
+
+local function remove_endpoint(endpoint_id)
+  cluster_subscribe_list = utils.deep_copy(default_cluster_subscribe_list)
+  optional_supported_component_capabilities = utils.deep_copy(default_component_capabilities)
+  for idx, endpoint in ipairs(mock_device_tbl.endpoints) do
+    if endpoint.endpoint_id == endpoint_id then
+      table.remove(mock_device_tbl.endpoints, idx)
+    end
+  end
+  mock_device = test.mock_device.build_test_matter_device(mock_device_tbl)
+  test.mock_device.add_test_device(mock_device)
+end
+
+local tc1_cluster_subscribe_list = {
+  clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
+  clusters.ColorControl.attributes.CurrentHue,
+  clusters.ColorControl.attributes.CurrentSaturation,
+  clusters.ColorControl.attributes.CurrentX,
+  clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
+  clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+  clusters.ValveConfigurationAndControl.attributes.CurrentState
+}
+
+test.register_coroutine_test(
+  "Test driver switched event following valve endpoint being added to the device",
+  function()
+    cluster_subscribe_list = utils.deep_copy(tc1_cluster_subscribe_list)
+    local new_endpoint = {
+      endpoint_id = 2,
+      clusters = {
+        {cluster_id = clusters.ValveConfigurationAndControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0042, device_type_revision = 1}
       }
     }
-  }
+    add_endpoint(new_endpoint, "main", {"valve"})
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    if version.api >= 14 then
+      local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+      for i, cluster in ipairs(cluster_subscribe_list) do
+        if i > 1 then
+          subscribe_request:merge(cluster:subscribe(mock_device))
+        end
+      end
+      mock_device:expect_metadata_update({ profile = "switch-modular", optional_component_capabilities = optional_supported_component_capabilities })
+      test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    else
+      mock_device:expect_metadata_update({ profile = "water-valve-level" })
+    end
+    remove_endpoint(2)
+  end
 )
 
-test.register_message_test(
-  "Off command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switch", component = "main", command = "off", args = { } }
-      }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.OnOff.server.commands.Off(mock_device, 1)
+local tc2_cluster_subscribe_list = {
+  clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
+  clusters.ColorControl.attributes.CurrentHue,
+  clusters.ColorControl.attributes.CurrentSaturation,
+  clusters.ColorControl.attributes.CurrentX,
+  clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
+  clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+  clusters.PowerSource.server.attributes.BatPercentRemaining,
+  clusters.Switch.events.InitialPress,
+  clusters.Switch.events.LongPress,
+  clusters.Switch.events.ShortRelease,
+  clusters.Switch.events.MultiPressComplete
+}
+
+test.register_coroutine_test(
+  "Test driver switched event following button endpoint being added to the device",
+  function()
+    cluster_subscribe_list = utils.deep_copy(tc2_cluster_subscribe_list)
+    local new_endpoint = {
+      endpoint_id = 2,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.Feature.MOMENTARY_SWITCH,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.PowerSource.ID,
+          cluster_type = "SERVER",
+          feature_map = clusters.PowerSource.types.Feature.BATTERY
+        }
+      },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1}
       }
     }
-  }
-)
-
-test.register_message_test(
-  "Set level command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switchLevel", component = "main", command = "setLevel", args = {20,20} }
-      }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_cmd_id = "setLevel" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 1, math.floor(20/100.0 * 254), 20, 0 ,0)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 50)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_attr_handler",
-        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, 1, true)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_attr_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
-      }
-    },
-  }
-)
-
-test.register_message_test(
-  "Current level reports should generate appropriate events",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, 1, 50)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_attr_handler",
-        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+    local new_endpoint2 = {
+      endpoint_id = 3,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+          cluster_type = "SERVER"
+        }
+      },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1}
       }
     }
-  }
-)
-
-local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
-local sat = math.floor((50 * 0xFE) / 100.0 + 0.5)
-
-test.register_message_test(
-  "Set color command should send huesat commands when supported",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    add_endpoint(new_endpoint, "button1", {"button", "battery"})
+    add_endpoint(new_endpoint2, "button2", {"button"})
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+    test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
+    if version.api >= 14 then test.wait_for_events() end
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
-        clusters.ColorControl.attributes.ColorCapabilities:build_test_report_data(mock_device, 1, 0x01)
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(12)})
       }
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 50 } } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation:build_test_command_response(mock_device, 1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentHue:build_test_report_data(mock_device, 1, hue)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.CurrentSaturation:build_test_report_data(mock_device, 1, sat)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(50))
-    }
-  }
-)
-
-hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
-sat = math.floor((50 * 0xFE) / 100.0 + 0.5)
-test.register_message_test(
-  "Set Hue command should send MoveToHue",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "colorControl", component = "main", command = "setHue", args = { 50 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-  }
-)
-
-test.register_message_test(
-  "Set Saturation command should send MoveToSaturation",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "colorControl", component = "main", command = "setSaturation", args = { 50 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-  }
-)
-
-test.register_message_test(
-  "Set color temperature should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, 1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 556)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
-    },
-  }
+    )
+    if version.api >= 14 then
+      local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+      for i, cluster in ipairs(cluster_subscribe_list) do
+        if i > 1 then
+          subscribe_request:merge(cluster:subscribe(mock_device))
+        end
+      end
+      mock_device:expect_metadata_update({ profile = "switch-modular", optional_component_capabilities = optional_supported_component_capabilities })
+      test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    else
+      mock_device:expect_metadata_update({ profile = "2-button-battery" })
+      mock_device:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "Matter Switch 1",
+        profile = "light-binary",
+        parent_device_id = mock_device.id,
+        parent_assigned_child_key = string.format("%d", 1)
+      })
+    end
+    remove_endpoint(2)
+    remove_endpoint(3)
+  end
 )
 
 test.run_registered_tests()
