@@ -319,7 +319,7 @@ for _, attributes in pairs(subscribed_attributes) do
 end
 
 test.register_coroutine_test(
-  "Configure should read units from device and profile change as needed",
+  "Device with modular profile should enabled correct optional capabilities - all clusters",
   function()
     test_aqs_device_type_do_configure(mock_device, expected_metadata, subscribe_request)
   end
