@@ -125,6 +125,13 @@ test.register_coroutine_test(
         clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, mock_device_ep1, true)
       }
     )
+    test.socket.devices:__expect_send(
+      {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    )
+
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.switch.switch.on()
