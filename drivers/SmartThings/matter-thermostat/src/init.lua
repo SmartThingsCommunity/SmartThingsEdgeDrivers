@@ -493,8 +493,6 @@ local function device_init(driver, device)
     end
   end
   schedule_polls_for_cumulative_energy_imported(device)
-
-  match_profile(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
@@ -1046,6 +1044,7 @@ end
 
 function match_profile(driver, device)
   if supports_modular_profile(device) then
+    print("CHT Calling modular profile match")
     match_modular_profile(driver, device)
   else
     match_profile_switch(driver, device)
