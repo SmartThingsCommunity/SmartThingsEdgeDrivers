@@ -703,8 +703,8 @@ local function device_init(driver, device)
         end
         for _, attr in pairs(device_type_attribute_map[id] or {}) do
           if id == GENERIC_SWITCH_ID and
-            attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-            attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+             attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+             attr ~= clusters.PowerSource.attributes.BatChargeLevel then
             device:add_subscribed_event(attr)
           else
             device:add_subscribed_attribute(attr)
@@ -1641,7 +1641,8 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
-    require("aqara-cube")
+    require("aqara-cube"),
+    require("third-reality-mk1")
   }
 }
 
