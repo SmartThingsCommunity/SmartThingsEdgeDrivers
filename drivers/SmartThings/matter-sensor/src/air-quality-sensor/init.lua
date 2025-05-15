@@ -337,6 +337,8 @@ local function match_modular_profile(driver, device)
   -- add mandatory capabilities for subscription
   local total_supported_capabilities = optional_supported_component_capabilities
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airQualityHealthConcern.ID)
+  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
+  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
 
@@ -354,7 +356,6 @@ local function do_configure(driver, device)
     match_modular_profile(driver, device)
   else
     match_profile_switch(driver, device)
-
   end
 end
 
