@@ -218,13 +218,11 @@ local function supported_level_measurements(device)
     if (cap_id:match("HealthConcern$")) then
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
       if #attr_eps > 0 then
-        device.log.info(string.format("Adding %s cap to table", cap_id))
         table.insert(level_caps, cap_id)
       end
     elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
       if #attr_eps > 0 then
-        device.log.info(string.format("Adding %s cap to table", cap_id))
         table.insert(measurement_caps, cap_id)
       end
     end
@@ -341,10 +339,6 @@ local function match_modular_profile(driver, device)
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
-
-  --re-up subscription with new capabilities using the modular supports_capability override
-  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
-  device:subscribe()
 end
 
 local function do_configure(driver, device)
@@ -513,11 +507,22 @@ local function pressure_attr_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.atmosphericPressureMeasurement.atmosphericPressure(pressure))
 end
 
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) then
+      --re-up subscription with new capabilities using the modular supports_capability override
+       device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+    end
+    device:subscribe()
+  end
+end
+
 local matter_air_quality_sensor_handler = {
   NAME = "matter-air-quality-sensor",
   lifecycle_handlers = {
     init = device_init,
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    infoChanged = info_changed,
   },
   matter_handlers = {
     attr = {
