@@ -872,6 +872,9 @@ local function match_modular_profile_air_purifer(driver, device)
   local ac_filter_component_capabilties = {}
   local profile_name = "air-purifier-modular"
 
+  local MAIN_COMPONENT_IDX = 1
+  local CAPABILITIES_LIST_IDX = 2
+
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   if #humidity_eps > 0 then
     table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
@@ -943,12 +946,10 @@ local function match_modular_profile_air_purifer(driver, device)
 
   -- add mandatory capabilities for subscription
   local total_supported_capabilities = optional_supported_component_capabilities
-  -- TODO: make sure these are added to the main component list, even though it theoretically shouldn't matter
-  -- however, the numbering is thrown off if there are other components for hepa/AC filter
-  table.insert(total_supported_capabilities[1][2], capabilities.airPurifierFanMode.ID)
-  table.insert(total_supported_capabilities[1][2], capabilities.fanSpeedPercent.ID)
-  table.insert(total_supported_capabilities[1][2], capabilities.refresh.ID)
-  table.insert(total_supported_capabilities[1][2], capabilities.firmwareUpdate.ID)
+  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airPurifierFanMode.ID)
+  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.fanSpeedPercent.ID)
+  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
+  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
 
@@ -1001,6 +1002,8 @@ local function match_modular_profile_thermostat(driver, device)
   local total_supported_capabilities = optional_supported_component_capabilities
   table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
   table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+  table.insert(main_component_capabilities, capabilities.refresh.ID)
+  table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
 
