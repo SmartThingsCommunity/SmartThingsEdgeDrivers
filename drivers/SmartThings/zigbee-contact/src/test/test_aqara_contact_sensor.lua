@@ -175,7 +175,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "closed contact events - OnOff",
+  "open contact events - OnOff",
   function()
     local attr_report_data = {
       { OnOff.attributes.OnOff.ID, data_types.Boolean.ID, true }
