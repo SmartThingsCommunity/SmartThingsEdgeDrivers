@@ -42,21 +42,12 @@ components:
     - id: fanSpeedPercent
       version: 1
       optional: true
-    - id: button
-      version: 1
-      optional: true
-    - id: battery
-      version: 1
-      optional: true
-    - id: batteryLevel
-      version: 1
-      optional: true
     - id: firmwareUpdate
       version: 1
     - id: refresh
       version: 1
   categories:
-    - name: Switch
+    - name: SmartPlug
 - id: button1
   optional: true
   capabilities:
