@@ -14,7 +14,9 @@
 
 local test = require "integration_test"
 test.set_rpc_version(8)
+local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local dkjson = require "dkjson"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
 local utils = require "st.utils"
@@ -60,6 +62,7 @@ local mock_device = test.mock_device.build_test_matter_device(mock_device_tbl)
 
 local default_component_capabilities = {{"main", {"colorControl", "colorTemperature", "switchLevel"}}}
 local optional_supported_component_capabilities = default_component_capabilities
+local SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
 
 local default_cluster_subscribe_list = {
   clusters.OnOff.attributes.OnOff,
@@ -78,21 +81,26 @@ local default_cluster_subscribe_list = {
 
 local cluster_subscribe_list = default_cluster_subscribe_list
 
+local function subscribe(device, cluster_list)
+  local subscribe_request = cluster_list[1]:subscribe(device)
+  for i, cluster in ipairs(cluster_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(device))
+    end
+  end
+  test.socket.matter:__expect_send({device.id, subscribe_request})
+end
+
 local function test_init()
   cluster_subscribe_list = utils.deep_copy(default_cluster_subscribe_list)
   optional_supported_component_capabilities = utils.deep_copy(default_component_capabilities)
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device))
-    end
-  end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  subscribe(mock_device, cluster_subscribe_list)
   test.mock_device.add_test_device(mock_device)
+  mock_device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, nil, {persist = true})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   if version.api >= 14 then
-    mock_device:expect_metadata_update({ profile = "switch-modular", optional_component_capabilities = optional_supported_component_capabilities })
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    mock_device:expect_metadata_update({ profile = "light-modular", optional_component_capabilities = optional_supported_component_capabilities })
+    subscribe(mock_device, cluster_subscribe_list)
   end
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -142,13 +150,13 @@ local tc1_cluster_subscribe_list = {
   clusters.ColorControl.attributes.ColorTemperatureMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-  clusters.ValveConfigurationAndControl.attributes.CurrentState
+  clusters.ValveConfigurationAndControl.attributes.CurrentState,
+  clusters.ValveConfigurationAndControl.attributes.CurrentLevel
 }
 
 test.register_coroutine_test(
   "Test driver switched event following valve endpoint being added to the device",
   function()
-    cluster_subscribe_list = utils.deep_copy(tc1_cluster_subscribe_list)
     local new_endpoint = {
       endpoint_id = 2,
       clusters = {
@@ -158,17 +166,31 @@ test.register_coroutine_test(
         {device_type_id = 0x0042, device_type_revision = 1}
       }
     }
-    add_endpoint(new_endpoint, "main", {"valve"})
+    add_endpoint(new_endpoint, "main", {"valve", "level"})
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
     if version.api >= 14 then
-      local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-      for i, cluster in ipairs(cluster_subscribe_list) do
-        if i > 1 then
-          subscribe_request:merge(cluster:subscribe(mock_device))
-        end
-      end
-      mock_device:expect_metadata_update({ profile = "switch-modular", optional_component_capabilities = optional_supported_component_capabilities })
-      test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+      -- This functionality would only be expected to work with modular profiles. On lower FW versions,
+      -- adding new functionality to the device would require re-onboarding in order to make it work.
+      mock_device:expect_metadata_update({ profile = "light-modular", optional_component_capabilities = optional_supported_component_capabilities })
+      subscribe(mock_device, tc1_cluster_subscribe_list)
+      -- The new attributes won't be subscribed to until infoChanged occurs
+      local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+      device_info_copy.profile.id = "matter-thing"
+      local device_info_json = dkjson.encode(device_info_copy)
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+      subscribe(mock_device, tc1_cluster_subscribe_list)
+      test.wait_for_events()
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ValveConfigurationAndControl.server.attributes.CurrentState:build_test_report_data(mock_device, 1, 1)
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+          "main", capabilities.valve.valve.open()
+        )
+      )
     else
       mock_device:expect_metadata_update({ profile = "water-valve-level" })
     end
@@ -199,7 +221,6 @@ local tc2_cluster_subscribe_list = {
 test.register_coroutine_test(
   "Test driver switched event following button endpoint being added to the device",
   function()
-    cluster_subscribe_list = utils.deep_copy(tc2_cluster_subscribe_list)
     local new_endpoint = {
       endpoint_id = 2,
       clusters = {
@@ -246,14 +267,18 @@ test.register_coroutine_test(
       }
     )
     if version.api >= 14 then
-      local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-      for i, cluster in ipairs(cluster_subscribe_list) do
-        if i > 1 then
-          subscribe_request:merge(cluster:subscribe(mock_device))
-        end
-      end
-      mock_device:expect_metadata_update({ profile = "switch-modular", optional_component_capabilities = optional_supported_component_capabilities })
-      test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+      -- This functionality would only be expected to work with modular profiles. On lower FW versions,
+      -- adding new functionality to the device would require re-onboarding in order to make it work.
+      mock_device:expect_metadata_update({ profile = "light-modular", optional_component_capabilities = optional_supported_component_capabilities })
+      subscribe(mock_device, tc2_cluster_subscribe_list)
+      -- The new attributes won't be subscribed to until infoChanged occurs
+      local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+      device_info_copy.profile.id = "switch-modular"
+      local device_info_json = dkjson.encode(device_info_copy)
+      test.wait_for_events()
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+      cluster_subscribe_list = utils.deep_copy(default_cluster_subscribe_list)
+      subscribe(mock_device, tc2_cluster_subscribe_list)
     else
       mock_device:expect_metadata_update({ profile = "2-button-battery" })
       mock_device:expect_device_create({
