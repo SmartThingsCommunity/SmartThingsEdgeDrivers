@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
+local globals = require "st.zigbee.zcl.global_commands"
 local configurationMap = require "configurations"
 local SimpleMetering = clusters.SimpleMetering
 local preferences = require "preferences"
@@ -127,6 +128,86 @@ local function device_added(driver, device, event)
   end
 end
 
+--- DEFAULT reporting configuration
+-- local active_power_configuration = {
+--   cluster = zcl_clusters.ElectricalMeasurement.ID,
+--   attribute = zcl_clusters.ElectricalMeasurement.attributes.ActivePower.ID,
+--   minimum_interval = 1,
+--   maximum_interval = 3600,
+--   data_type = zcl_clusters.ElectricalMeasurement.attributes.ActivePower.base_type,
+--   reportable_change = 5
+-- }
+local ActivePower = clusters.ElectricalMeasurement.attributes.ActivePower
+local log = require "log"
+local zcl_messages = require "st.zigbee.zcl"
+local messages = require "st.zigbee.messages"
+local read_configuration = require "st.zigbee.zcl.global_commands.read_reporting_configuration"
+local data_types = require "st.zigbee.data_types"
+local zb_const = require "st.zigbee.constants"
+local function driver_switch(driver, device)
+  log.info_with({hub_logs = true}, "Driver switch handler starting")
+  -- read reporting configuration
+  local data = read_configuration.ReadReportingConfiguration({
+    read_configuration.ReadReportingConfigurationAttributeRecord(0, ActivePower.ID)
+  })
+  local zclh = zcl_messages.ZclHeader({
+    cmd = data_types.ZCLCommandId(read_configuration.ReadReportingConfiguration.ID)
+  })
+  local addrh = messages.AddressHeader(
+    zb_const.HUB.ADDR,
+    zb_const.HUB.ENDPOINT,
+    device:get_short_address(),
+    0x01,
+    zb_const.HA_PROFILE_ID,
+    clusters.ElectricalMeasurement.ID
+  )
+  local message_body = zcl_messages.ZclMessageBody({
+    zcl_header = zclh,
+    zcl_body = data
+  })
+  local read_config_message = messages.ZigbeeMessageTx({
+    address_header = addrh,
+    body = message_body
+  })
+  local configure_msg = ActivePower:configure_reporting(device, 15, 600, 15)
+
+  log.info_with({hub_logs = true}, "Driver switch handler reading previous Active Power configuration")
+  device:send(read_config_message)
+  -- delay and then reconfigure
+  device.thread:call_with_delay(2, function()
+    log.info_with({hub_logs = true}, "Driver switch handler changing Active Power configuration")
+    device:send(configure_msg)
+  end)
+  -- delay and then read configurations
+  device.thread:call_with_delay(4, function()
+    log.info_with({hub_logs = true}, "Driver switch handler reading new Active Power configuration")
+    -- read reporting configuration
+    local data = read_configuration.ReadReportingConfiguration({
+      read_configuration.ReadReportingConfigurationAttributeRecord(0, ActivePower.ID)
+    })
+    local zclh = zcl_messages.ZclHeader({
+      cmd = data_types.ZCLCommandId(read_configuration.ReadReportingConfiguration.ID)
+    })
+    local addrh = messages.AddressHeader(
+      zb_const.HUB.ADDR,
+      zb_const.HUB.ENDPOINT,
+      device:get_short_address(),
+      0x01,
+      zb_const.HA_PROFILE_ID,
+      clusters.ElectricalMeasurement.ID
+    )
+    local message_body = zcl_messages.ZclMessageBody({
+      zcl_header = zclh,
+      zcl_body = data
+    })
+    local read_config_message = messages.ZigbeeMessageTx({
+      address_header = addrh,
+      body = message_body
+    })
+    device:send(read_config_message)
+  end)
+end
+
 local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,
@@ -168,7 +249,8 @@ local zigbee_switch_driver_template = {
     init = device_init,
     added = device_added,
     infoChanged = info_changed,
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    driverSwitched = driver_switch,
   }
 }
 defaults.register_for_default_handlers(zigbee_switch_driver_template,

@@ -1,5 +1,5 @@
-name: 'Zigbee Switch'
-packageKey: 'zigbee-switch'
+name: 'Zigbee Switch Attr Reconfig'
+packageKey: 'zigbee-switch-reconfig'
 permissions:
   zigbee: {}
 description: "SmartThings driver for Zigbee switch devices"
