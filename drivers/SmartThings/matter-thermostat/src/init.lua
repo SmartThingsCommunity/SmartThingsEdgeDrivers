@@ -480,6 +480,11 @@ local function schedule_polls_for_cumulative_energy_imported(device)
 end
 
 local function device_init(driver, device)
+  if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) then
+    -- assume that device is using a modular profile, override supports_capability_by_id
+    -- library function to utilize optional capabilities
+    device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+  end
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
@@ -504,6 +509,13 @@ local function info_changed(driver, device, event, args)
       for _, attr in ipairs(attributes) do
         device:add_subscribed_attribute(attr)
       end
+    end
+  end
+
+  if device.profile.id ~= args.old_st_store.profile.id then
+    if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) then
+      --re-up subscription with new capabilities using the modular supports_capability override
+       device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
     end
   end
   device:subscribe()
@@ -692,7 +704,7 @@ local function profiling_data_still_required(device)
 end
 
 local function match_profile_switch(driver, device)
-  -- if profiling_data_still_required(device) then return end
+  if profiling_data_still_required(device) then return end
 
   local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
   local battery_supported = device:get_field(profiling_data.BATTERY_SUPPORT)
@@ -952,10 +964,6 @@ local function match_modular_profile_air_purifer(driver, device)
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
-
-  --re-up subscription with new capabiltiies using the moudlar supports_capability override
-  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
-  device:subscribe()
 end
 
 local function match_modular_profile_thermostat(driver, device)
@@ -1006,16 +1014,11 @@ local function match_modular_profile_thermostat(driver, device)
   table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
 
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
-
-  --re-up subscription with new capabiltiies using the moudlar supports_capability override
-  device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
-  device:subscribe()
 end
 
 local function match_modular_profile(driver, device)
   if profiling_data_still_required(device) then return end
 
-  -- TODO: test device refresh
   device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
 
   local device_type = get_device_type(device)
@@ -1047,7 +1050,6 @@ end
 
 function match_profile(driver, device)
   if supports_modular_profile(device) then
-    print("CHT Calling modular profile match")
     match_modular_profile(driver, device)
   else
     match_profile_switch(driver, device)
