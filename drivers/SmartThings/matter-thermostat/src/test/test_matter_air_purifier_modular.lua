@@ -14,6 +14,8 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local utils = require "st.utils"
+local dkjson = require "dkjson"
 
 local clusters = require "st.matter.clusters"
 
@@ -160,9 +162,6 @@ local cluster_subscribe_list_configured = {
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ControlSequenceOfOperation
   },
-  [capabilities.thermostatOperatingState.ID] = {
-    clusters.Thermostat.attributes.ThermostatRunningState
-  },
   [capabilities.thermostatFanMode.ID] = {
     clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.FanMode
@@ -288,6 +287,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "doConfigure" })
     mock_device_basic:expect_metadata_update(expected_update_metadata)
     mock_device_basic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    local device_info_copy = utils.deep_copy(mock_device_basic.raw_st_data)
+    device_info_copy.profile.id = "air-purifier-modular"
+    local device_info_json = dkjson.encode(device_info_copy)
+    test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "infoChanged", device_info_json })
     test.socket.matter:__expect_send({mock_device_basic.id, subscribe_request})
   end,
   { test_init = test_init_basic }
@@ -353,6 +356,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "doConfigure" })
     mock_device_ap_thermo_aqs:expect_metadata_update(expected_update_metadata)
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    local device_info_copy = utils.deep_copy(mock_device_ap_thermo_aqs.raw_st_data)
+    device_info_copy.profile.id = "air-purifier-modular"
+    local device_info_json = dkjson.encode(device_info_copy)
+    test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "infoChanged", device_info_json })
     test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, subscribe_request})
   end,
   { test_init = test_init_ap_thermo_aqs_preconfigured }
