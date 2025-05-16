@@ -342,7 +342,7 @@ local function match_modular_profile(driver, device)
 end
 
 local function do_configure(driver, device)
--- we have to read the unit before reports of values will do anything
+  -- we have to read the unit before reports of values will do anything
   for _, cluster in ipairs(units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
