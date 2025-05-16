@@ -1,4 +1,4 @@
-name: switch-modular
+name: water-valve-modular
 components:
 - id: main
   capabilities:

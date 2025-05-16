@@ -743,8 +743,8 @@ local function get_device_category(device)
       local category = device_type_category_map[dt.device_type_id]
       if category == device_categories.BUTTON then
         button_found = true
-      else
-        if category then return category end
+      elseif category then
+        return category
       end
     end
   end
@@ -770,14 +770,14 @@ local function match_modular_profile(driver, device, battery_attr_support)
   local color_hs_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.HS})
   local color_temp_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.CT})
   local color_xy_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.XY})
-  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
   local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local level_eps = device:get_endpoints(clusters.LevelControl.ID)
-  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
+  local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
+  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
 
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}

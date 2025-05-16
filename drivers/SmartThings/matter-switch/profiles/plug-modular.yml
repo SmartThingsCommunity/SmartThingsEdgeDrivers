@@ -1,4 +1,4 @@
-name: switch-modular
+name: plug-modular
 components:
 - id: main
   capabilities:

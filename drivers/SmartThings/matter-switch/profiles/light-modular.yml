@@ -1,4 +1,4 @@
-name: switch-modular
+name: light-modular
 components:
 - id: main
   capabilities:
