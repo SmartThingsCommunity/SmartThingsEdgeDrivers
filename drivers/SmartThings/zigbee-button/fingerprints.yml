@@ -207,3 +207,12 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401SCA4
     deviceProfileName: thirty-buttons
+zigbeeGeneric:
+  - id: "generic-button-sensor"
+    deviceLabel: "Zigbee Generic Button"
+    clusters:
+      server:
+        - 0x0500
+        - 0xFE00 # EZVIZ private cluster
+        - 0xFE05 # EZVIZ private cluster
+    deviceProfileName: one-button-battery
