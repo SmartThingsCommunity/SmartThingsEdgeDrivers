@@ -369,6 +369,31 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0040
     deviceProfileName: plug-binary
+  - id: "4921/118"
+    deviceLabel: Cync Button Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0076
+    deviceProfileName: light-binary
+  - id: "4921/119"
+    deviceLabel: Cync Paddle Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0077
+    deviceProfileName: light-binary
+  - id: "4921/120"
+    deviceLabel: Cync Toggle Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0078
+    deviceProfileName: light-binary
+  - id: "4921/116"
+    deviceLabel: Cync Button Dimmer w Traveler
+    vendorId: 0x1339
+    productId: 0x0074
+    deviceProfileName: switch-level
+  - id: "4921/117"
+    deviceLabel: Cync Motion Dimmer w Traveler
+    vendorId: 0x1339
+    productId: 0x0075
+    deviceProfileName: switch-level
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
