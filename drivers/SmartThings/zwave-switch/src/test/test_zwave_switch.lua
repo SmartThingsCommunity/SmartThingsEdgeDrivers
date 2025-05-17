@@ -78,7 +78,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_switch_binary:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_switch_binary.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -94,7 +102,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_switch_binary:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_switch_binary.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 

@@ -47,7 +47,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "waterSensor", capability_attr_id = "water" }
+        }
+      },
     }
 )
 
@@ -63,7 +71,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "waterSensor", capability_attr_id = "water" }
+        }
+      },
     }
 )
 
@@ -79,7 +95,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "waterSensor", capability_attr_id = "water" }
+        }
+      },
     }
 )
 
@@ -95,7 +119,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "waterSensor", capability_attr_id = "water" }
+        }
+      },
     }
 )
 

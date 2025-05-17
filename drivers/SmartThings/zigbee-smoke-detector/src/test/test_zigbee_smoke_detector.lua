@@ -47,7 +47,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "smokeDetector", capability_attr_id = "smoke" }
+        }
+      },
     }
 )
 
@@ -63,7 +71,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "smokeDetector", capability_attr_id = "smoke" }
+        }
+      },
     }
 )
 
@@ -79,7 +95,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "smokeDetector", capability_attr_id = "smoke" }
+        }
+      },
     }
 )
 
@@ -95,7 +119,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "smokeDetector", capability_attr_id = "smoke" }
+        }
+      },
     }
 )
 

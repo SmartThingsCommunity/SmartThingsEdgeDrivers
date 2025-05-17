@@ -373,8 +373,9 @@ test.register_message_test(
 test.register_coroutine_test(
   "Device should be configured after changing device settings",
   function()
+    test.socket.zwave:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    local _preferences = {zwaveNotifications = 3} --"Both actions enabled"
+    local _preferences = {zwaveNotifications = 3, overheatThreshold = 55} --"Both actions enabled"
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_CO_sensor:generate_info_changed({ preferences = _preferences }))
 
     test.socket.zwave:__expect_send(
@@ -387,11 +388,26 @@ test.register_coroutine_test(
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_CO_sensor,
         Configuration:Get({ parameter_number = 2 })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Set({
+          parameter_number = 22,
+          configuration_value = 55,
+          size = 1
+        })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Get({ parameter_number = 22 })
       )
     )
 
@@ -402,9 +418,14 @@ test.register_coroutine_test(
       Configuration:Report({ parameter_number = 2, configuration_value = 3 })
     })
 
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_CO_sensor.id,
+      Configuration:Report({ parameter_number = 22, configuration_value = 55 })
+    })
+
     test.mock_time.advance_time(1)
 
-    _preferences = {overheatThreshold = 50} --"120 °F / 50°C"
+    _preferences = {overheatThreshold = 50, zwaveNotifications = 0} --"120 °F / 50°C"
     test.socket.device_lifecycle():__queue_receive(mock_fibaro_CO_sensor:generate_info_changed({ preferences = _preferences }))
 
     test.socket.zwave:__expect_send(
@@ -417,11 +438,26 @@ test.register_coroutine_test(
         })
       )
     )
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_fibaro_CO_sensor,
         Configuration:Get({ parameter_number = 22 })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Set({
+          parameter_number = 2,
+          configuration_value = 0,
+          size = 1
+        })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_CO_sensor,
+        Configuration:Get({ parameter_number = 2 })
       )
     )
 
@@ -431,6 +467,11 @@ test.register_coroutine_test(
       mock_fibaro_CO_sensor.id,
       Configuration:Report({ parameter_number = 22, configuration_value = 50 })
     })
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_CO_sensor.id,
+      Configuration:Report({ parameter_number = 2, configuration_value = 3 })
+    })
+
   end
 )
 

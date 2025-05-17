@@ -48,7 +48,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "contactSensor", capability_attr_id = "contact" }
+        }
+      },
     }
 )
 
@@ -64,7 +72,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "contactSensor", capability_attr_id = "contact" }
+        }
+      },
     }
 )
 
@@ -82,7 +98,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "contactSensor", capability_attr_id = "contact" }
+        }
+      },
     }
 )
 
@@ -100,7 +124,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "contactSensor", capability_attr_id = "contact" }
+        }
+      },
     }
 )
 

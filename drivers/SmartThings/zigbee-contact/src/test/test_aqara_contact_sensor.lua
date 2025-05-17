@@ -13,27 +13,31 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-local clusters = require "st.zigbee.zcl.clusters"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local capabilities = require "st.capabilities"
-local data_types = require "st.zigbee.data_types"
 
-local IASZone = clusters.IASZone
+local clusters = require "st.zigbee.zcl.clusters"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
+local capabilities = require "st.capabilities"
+
+local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
-local TemperatureMeasurement = clusters.TemperatureMeasurement
-local IASCIEAddress = IASZone.attributes.IASCIEAddress
-local EnrollResponseCode = IASZone.types.EnrollResponseCode
+
+local MFG_CODE = 0x115F
+local PRIVATE_CLUSTER_ID = 0xFCC0
+local PRIVATE_ATTRIBUTE_ID = 0x0009
+local PRIVATE_HEART_BATTERY_ENERGY_ID = 0x00F7
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("contact-battery-profile.yml"),
+    profile = t_utils.get_profile_definition("contact-batteryLevel.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
         manufacturer = "LUMI",
         model = "lumi.magnet.agl02",
-        server_clusters = { 0x0000, 0x0001, 0x0003, 0x0500 }
+        server_clusters = { PRIVATE_CLUSTER_ID, PowerConfiguration.ID, OnOff.ID }
       }
     }
   }
@@ -43,83 +47,145 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.type("CR1632")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.quantity(1)))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.batteryLevel.battery("normal")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.contactSensor.contact.open()))
 end
 
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Configure should configure all necessary attributes",
+  "doConfigure lifecycle handler",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
-    })
-    test.wait_for_events()
-
-    test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, IASZone.ID)
-    })
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
-    })
-
-    test.socket.zigbee:__expect_send(
-      {
-        mock_device.id,
-        IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 30, 3600, 1)
-      }
-    )
+    test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device,
+    zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID) })
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
         PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
       }
     )
-
-    test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui) })
-    test.socket.zigbee:__expect_send({ mock_device.id, IASZone.server.commands.ZoneEnrollResponse(mock_device, EnrollResponseCode.SUCCESS, 0x00) })
-    test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
-
+    test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device,
+    zigbee_test_utils.mock_hub_eui, OnOff.ID) })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        OnOff.attributes.OnOff:configure_reporting(mock_device, 30, 3600, 1)
+      }
+    )
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+      , data_types.Uint8, 1) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
 test.register_coroutine_test(
-  "closed contact events",
+  "heartbeat battery events - normal status",
   function()
     local attr_report_data = {
-      { IASZone.attributes.ZoneStatus.ID, data_types.Bitmap16.ID, 0x0020 }
+      { PRIVATE_HEART_BATTERY_ENERGY_ID, data_types.OctetString.ID, "\x01\x21\x44\x0C\x03\x28\x19\x04\x21\xA8\x13\x05\x21\x8E\x00\x06\x24\x04\x00\x00\x00\x00\x08\x21\x1E\x01\x0A\x21\x00\x00\x0C\x20\x01\x64\x10\x01\x66\x20\x03\x67\x20\x01\x68\x21\xA8\x00"}
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, IASZone.ID, attr_report_data, 0x115F)
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.batteryLevel.battery("normal")))
   end
 )
 
 test.register_coroutine_test(
-  "open contact events",
+  "heartbeat battery events - critical status",
   function()
     local attr_report_data = {
-      { IASZone.attributes.ZoneStatus.ID, data_types.Bitmap16.ID, 0x0021}
+      { PRIVATE_HEART_BATTERY_ENERGY_ID, data_types.OctetString.ID, "\x01\x21\x00\x00\x03\x28\x19\x04\x21\xA8\x13\x05\x21\x8E\x00\x06\x24\x04\x00\x00\x00\x00\x08\x21\x1E\x01\x0A\x21\x00\x00\x0C\x20\x01\x64\x10\x01\x66\x20\x03\x67\x20\x01\x68\x21\xA8\x00"}
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, IASZone.ID, attr_report_data, 0x115F)
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.open()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.batteryLevel.battery("critical")))
+  end
+)
+
+test.register_coroutine_test(
+  "battery status events - normal status",
+  function()
+    local attr_report_data = {
+      {PowerConfiguration.attributes.BatteryVoltage.ID, data_types.Uint8.ID, 0x1C }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PowerConfiguration.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.batteryLevel.battery("normal")))
+  end
+)
+
+test.register_coroutine_test(
+  "battery status events - warning status",
+  function()
+    local attr_report_data = {
+      {PowerConfiguration.attributes.BatteryVoltage.ID, data_types.Uint8.ID, 0x1A }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PowerConfiguration.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.batteryLevel.battery("warning")))
+  end
+)
+
+test.register_coroutine_test(
+  "battery status events - critical status",
+  function()
+    local attr_report_data = {
+      {PowerConfiguration.attributes.BatteryVoltage.ID, data_types.Uint8.ID, 0x9 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PowerConfiguration.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.batteryLevel.battery("critical")))
+  end
+)
+
+test.register_coroutine_test(
+  "closed contact events - OnOff",
+  function()
+    local attr_report_data = {
+      { OnOff.attributes.OnOff.ID, data_types.Boolean.ID, false }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, OnOff.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.contactSensor.contact.closed()))
+  end
+)
+
+test.register_coroutine_test(
+  "open contact events - OnOff",
+  function()
+    local attr_report_data = {
+      { OnOff.attributes.OnOff.ID, data_types.Boolean.ID, true }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, OnOff.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.contactSensor.contact.open()))
   end
 )
 

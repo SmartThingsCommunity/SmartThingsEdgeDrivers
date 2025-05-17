@@ -146,6 +146,14 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+    {
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
@@ -153,9 +161,6 @@ test.register_message_test(
               Meter:Get({scale = Meter.scale.electric_meter.WATTS})
       )
     }
-  },
-  {
-    inner_block_ordering = "relaxed"
   }
 )
 
@@ -176,6 +181,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     },
     {
       channel = "zwave",
@@ -212,6 +225,14 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+    {
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
@@ -245,9 +266,25 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level(5))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
     },
     {
       channel = "zwave",
@@ -362,6 +399,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.switch.switch.on())
     )
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -428,6 +466,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.switch.switch.off())
     )
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(

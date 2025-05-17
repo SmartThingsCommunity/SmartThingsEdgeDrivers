@@ -180,6 +180,9 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
   test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
@@ -242,6 +245,9 @@ local function test_init_parent_child_endpoints_non_sequential()
     end
   end
   test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "doConfigure" })
+  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)
   for _, child in pairs(mock_children_non_sequential) do
@@ -315,7 +321,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -358,7 +372,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child1_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -401,7 +423,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -420,6 +450,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
     },
   }
 )

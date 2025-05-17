@@ -32,7 +32,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "eWeLink",
         model = "WB01",
-        server_clusters = { 0x0001 }
+        server_clusters = { 0x0001, 0x0402 }
       }
     }
   }

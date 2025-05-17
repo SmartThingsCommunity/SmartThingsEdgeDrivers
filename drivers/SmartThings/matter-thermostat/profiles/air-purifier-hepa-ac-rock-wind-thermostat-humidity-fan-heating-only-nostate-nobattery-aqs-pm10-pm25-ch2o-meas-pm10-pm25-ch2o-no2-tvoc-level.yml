@@ -35,14 +35,6 @@ components:
     version: 1
   - id: tvocHealthConcern
     version: 1
-  - id: thermostatOperatingState
-    version: 1
-    config:
-      values:
-        - key: "thermostatOperatingState.value"
-          enabledValues:
-            - idle
-            - heating
   - id: firmwareUpdate
     version: 1
   - id: refresh

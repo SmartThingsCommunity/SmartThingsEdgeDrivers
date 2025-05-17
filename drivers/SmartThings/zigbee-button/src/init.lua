@@ -110,8 +110,10 @@ local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
-  device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
-  device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+  if device:supports_server_cluster(TemperatureMeasurement.ID) then
+    device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
+    device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+  end
 end
 
 local zigbee_button_driver_template = {
@@ -145,7 +147,8 @@ local zigbee_button_driver_template = {
     require("iris"),
     require("samjin"),
     require("ewelink"),
-    require("thirdreality")
+    require("thirdreality"),
+    require("ezviz")
   },
   lifecycle_handlers = {
     added = added_handler,
