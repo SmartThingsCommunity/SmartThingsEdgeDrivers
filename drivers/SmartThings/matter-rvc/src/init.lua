@@ -67,7 +67,7 @@ local function device_added(driver, device)
   local run_mode_eps = device:get_endpoints(clusters.RvcRunMode.ID) or {}
   local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID) or {}
   local component_to_endpoint_map = {
-    ["main"] = device.MATTER_DEFAULT_ENDPOINT,
+    ["main"] = run_mode_eps[1],
     ["runMode"] = run_mode_eps[1],
     ["cleanMode"] = clean_mode_eps[1]
   }
