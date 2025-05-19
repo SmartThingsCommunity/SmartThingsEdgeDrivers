@@ -847,8 +847,10 @@ local function match_modular_profile(driver, device, battery_attr_support)
   if #switch_eps > 0 then
     local num_switch_server_eps = build_child_switch_profiles(driver, device, main_endpoint)
     if num_switch_server_eps > 0 and detect_matter_thing(device) then
+      -- Ensure that the proper capabilities are included for Light Switch
+      -- device types that implement the OnOff cluster as 'server'
       local device_type_id = handle_light_switch_with_onOff_server_clusters(device, main_endpoint, true)
-      if device_type_profile_map[device_type_id] then
+      if ON_OFF_SWITCH_ID <= device_type_id and device_type_id <= ON_OFF_COLOR_DIMMER_SWITCH_ID then
         local capabilities_to_remove = {}
         if device_type_id == ON_OFF_SWITCH_ID then
           capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID, capabilities.switchLevel.ID}
