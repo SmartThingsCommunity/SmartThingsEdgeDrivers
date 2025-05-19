@@ -1,0 +1,46 @@
+zigbeeManufacturer:
+  - id: "_TZ3000_ja5osu5g/TS004F"
+    deviceLabel: Tuya Button
+    manufacturer: _TZ3000_ja5osu5g
+    model: TS004F
+    deviceProfileName: one-button-battery
+  - id: "_TZ3000_8rppvwda/TS0041"
+    deviceLabel: Tuya Button
+    manufacturer: _TZ3000_8rppvwda
+    model: TS0041
+    deviceProfileName: one-button-battery
+  - id: "_TZ3000_pkfazisv/TS0215A"
+    deviceLabel: Tuya Button
+    manufacturer: _TZ3000_pkfazisv
+    model: TS0215A
+    deviceProfileName: one-button-battery
+  - id: "_TZE284_nladmfvf/TS0601"
+    deviceLabel: Tuya Curtain
+    manufacturer: _TZE284_nladmfvf
+    model: TS0601
+    deviceProfileName: window-treatment-reverse
+  - id: "_TZE200_mgxy2d9f/TS0601"
+    deviceLabel: Tuya Motion Sensor
+    manufacturer: _TZE200_mgxy2d9f
+    model: TS0601
+    deviceProfileName: motion-sensor
+  - id: "_TZE200_ioxkjvuz/TS0601"
+    deviceLabel: Tuya Gas Sensor
+    manufacturer: _TZE200_ioxkjvuz
+    model: TS0601
+    deviceProfileName: smoke-detector
+  - id: "_TZE204_mby4kbtq/TS0601"
+    deviceLabel: Tuya Gas Sensor
+    manufacturer: _TZE204_mby4kbtq
+    model: TS0601
+    deviceProfileName: smoke-detector
+  - id: "_TZE200_uebojraa/TS0601"
+    deviceLabel: Tuya Smoke Detector
+    manufacturer: _TZE200_uebojraa
+    model: TS0601
+    deviceProfileName: smoke-battery
+  - id: "_TZE204_h2rctifa/TS0601"
+    deviceLabel: Tuya Switch 1
+    manufacturer: _TZE204_h2rctifa
+    model: TS0601
+    deviceProfileName: basic-switch

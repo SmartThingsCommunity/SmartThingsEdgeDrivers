@@ -86,21 +86,45 @@ test.set_test_init_function(test_init)
 
 local modeTagStruct = require "RvcRunMode.types.ModeTagStruct"
 
+local IDLE_MODE     = { label = "Idle Mode",     mode = 0, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 16384 }) } }
+local CLEANING_MODE = { label = "Cleaning Mode", mode = 2, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 16385 }) } }
+local MAPPING_MODE  = { label = "Mapping Mode",  mode = 4, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 16386 }) } }
+
+-- The `mode` fields for these are purposely out-of-order, so that we can make sure we aren't reliant on ordering.
+local RUN_MODES = {
+  MAPPING_MODE,
+  IDLE_MODE,
+  CLEANING_MODE,
+}
+
+local RUN_MODE_LABELS = { RUN_MODES[1].label, RUN_MODES[2].label, RUN_MODES[3].label }
+
+local CLEAN_MODE_1 = { label = "Clean Mode 1", mode = 0, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 1 }) } }
+local CLEAN_MODE_2 = { label = "Clean Mode 2", mode = 1, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 2 }) } }
+
+-- The `mode` fields for these are purposely out-of-order, so that we can make sure we aren't reliant on ordering.
+local CLEAN_MODES = {
+  CLEAN_MODE_2,
+  CLEAN_MODE_1,
+}
+
+local CLEAN_MODE_LABELS = { CLEAN_MODES[1].label, CLEAN_MODES[2].label }
+
 local function supported_run_mode_init()
   test.socket.matter:__queue_receive({
     mock_device.id,
     clusters.RvcRunMode.attributes.SupportedModes:build_test_report_data(mock_device, APPLICATION_ENDPOINT,
       {
-        clusters.RvcRunMode.types.ModeOptionStruct({ ["label"] = "Idle Mode", ["mode"] = 0, ["mode_tags"] = { modeTagStruct({ ["mfg_code"] = 0x1E1E, ["value"] = 16384 }) } }),
-        clusters.RvcRunMode.types.ModeOptionStruct({ ["label"] = "Cleaning Mode", ["mode"] = 1, ["mode_tags"] = { modeTagStruct({ ["mfg_code"] = 0x1E1E, ["value"] = 16385 }) } }),
-        clusters.RvcRunMode.types.ModeOptionStruct({ ["label"] = "Mapping Mode", ["mode"] = 2, ["mode_tags"] = { modeTagStruct({ ["mfg_code"] = 0x1E1E, ["value"] = 16386 }) } })
+        clusters.RvcRunMode.types.ModeOptionStruct(RUN_MODES[1]),
+        clusters.RvcRunMode.types.ModeOptionStruct(RUN_MODES[2]),
+        clusters.RvcRunMode.types.ModeOptionStruct(RUN_MODES[3]),
       }
     )
   })
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
       "runMode",
-      capabilities.mode.supportedModes({ "Idle Mode", "Cleaning Mode", "Mapping Mode" }, { visibility = { displayed = false } })
+      capabilities.mode.supportedModes(RUN_MODE_LABELS, { visibility = { displayed = false } })
     )
   )
 end
@@ -110,21 +134,21 @@ local function supported_clean_mode_init()
     mock_device.id,
     clusters.RvcCleanMode.attributes.SupportedModes:build_test_report_data(mock_device, APPLICATION_ENDPOINT,
       {
-        clusters.RvcCleanMode.types.ModeOptionStruct({ ["label"] = "Clean Mode 1", ["mode"] = 0, ["mode_tags"] = { modeTagStruct({ ["mfg_code"] = 0x1E1E, ["value"] = 1 }) } }),
-        clusters.RvcCleanMode.types.ModeOptionStruct({ ["label"] = "Clean Mode 2", ["mode"] = 1, ["mode_tags"] = { modeTagStruct({ ["mfg_code"] = 0x1E1E, ["value"] = 2 }) } })
+        clusters.RvcCleanMode.types.ModeOptionStruct(CLEAN_MODES[1]),
+        clusters.RvcCleanMode.types.ModeOptionStruct(CLEAN_MODES[2]),
       }
     )
   })
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
       "cleanMode",
-      capabilities.mode.supportedModes({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+      capabilities.mode.supportedModes(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
     )
   )
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
       "cleanMode",
-      capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+      capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
     )
   )
 end
@@ -156,25 +180,25 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        0
+        IDLE_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
+        capabilities.mode.mode({value = IDLE_MODE.label})
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode", "Cleaning Mode", "Mapping Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -190,25 +214,25 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        1
+        CLEANING_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Cleaning Mode"})
+        capabilities.mode.mode({value = CLEANING_MODE.label})
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -224,25 +248,25 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        2
+        MAPPING_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Mapping Mode"})
+        capabilities.mode.mode({value = MAPPING_MODE.label})
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -253,34 +277,22 @@ test.register_coroutine_test(
     supported_run_mode_init()
     supported_clean_mode_init()
     operating_state_init()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.RvcCleanMode.attributes.CurrentMode:build_test_report_data(
-        mock_device,
-        APPLICATION_ENDPOINT,
-        0
+    for _, cleanMode in ipairs(CLEAN_MODES) do
+      test.socket.matter:__queue_receive({
+        mock_device.id,
+        clusters.RvcCleanMode.attributes.CurrentMode:build_test_report_data(
+          mock_device,
+          APPLICATION_ENDPOINT,
+          cleanMode.mode
+        )
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+          "cleanMode",
+          capabilities.mode.mode({value = cleanMode.label})
+        )
       )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.mode({value = "Clean Mode 1"})
-      )
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.RvcCleanMode.attributes.CurrentMode:build_test_report_data(
-        mock_device,
-        APPLICATION_ENDPOINT,
-        1
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.mode({value = "Clean Mode 2"})
-      )
-    )
+    end
   end
 )
 
@@ -288,14 +300,16 @@ test.register_coroutine_test(
   "On changing the rvc run mode, appropriate RvcRunMode command must be sent to the device", function()
     supported_run_mode_init()
     test.wait_for_events()
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "mode", component = "runMode", command = "setMode", args = { "Idle Mode" } }
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.RvcRunMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, 0)
-    })
+    for _, runMode in ipairs(RUN_MODES) do
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "mode", component = "runMode", command = "setMode", args = { runMode.label } }
+      })
+      test.socket.matter:__expect_send({
+        mock_device.id,
+        clusters.RvcRunMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, runMode.mode)
+      })
+    end
   end
 )
 
@@ -303,61 +317,16 @@ test.register_coroutine_test(
   "On changing the rvc clean mode, appropriate RvcCleanMode command must be sent to the device", function()
     supported_clean_mode_init()
     test.wait_for_events()
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "mode", component = "cleanMode", command = "setMode", args = { "Clean Mode 1" } }
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.RvcCleanMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, 0)
-    })
-  end
-)
-
-test.register_coroutine_test(
-  "On changing the operatinalState to STOPPED, robotCleanerOperatingState must be set to the appropriate value", function()
-    supported_run_mode_init()
-    supported_clean_mode_init()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
-        mock_device,
-        APPLICATION_ENDPOINT,
-        0
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
-      )
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.RvcOperationalState.server.attributes.OperationalState:build_test_report_data(
-        mock_device,
-        APPLICATION_ENDPOINT,
-        clusters.OperationalState.types.OperationalStateEnum.STOPPED
-      )
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.robotCleanerOperatingState.operatingState.stopped()
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode", "Cleaning Mode", "Mapping Mode" }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
-      )
-    )
+    for _, cleanMode in ipairs(CLEAN_MODES) do
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "mode", component = "cleanMode", command = "setMode", args = { cleanMode.label } }
+      })
+      test.socket.matter:__expect_send({
+        mock_device.id,
+        clusters.RvcCleanMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, cleanMode.mode)
+      })
+    end
   end
 )
 
@@ -370,13 +339,13 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        0
+        IDLE_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
+        capabilities.mode.mode({value = IDLE_MODE.label})
       )
     )
     test.socket.matter:__queue_receive({
@@ -396,13 +365,13 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -417,13 +386,13 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        0
+        IDLE_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
+        capabilities.mode.mode({value = IDLE_MODE.label})
       )
     )
     test.socket.matter:__queue_receive({
@@ -443,13 +412,13 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode", "Cleaning Mode", "Mapping Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -464,13 +433,13 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        0
+        IDLE_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
+        capabilities.mode.mode({value = IDLE_MODE.label})
       )
     )
     test.socket.matter:__queue_receive({
@@ -490,13 +459,13 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -511,13 +480,13 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        0
+        IDLE_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
+        capabilities.mode.mode({value = IDLE_MODE.label})
       )
     )
     test.socket.matter:__queue_receive({
@@ -537,13 +506,13 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode", "Cleaning Mode", "Mapping Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -558,13 +527,13 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        0
+        IDLE_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
+        capabilities.mode.mode({value = IDLE_MODE.label})
       )
     )
     test.socket.matter:__queue_receive({
@@ -584,13 +553,13 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.supportedArguments({ "Idle Mode", "Cleaning Mode", "Mapping Mode" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "cleanMode",
-        capabilities.mode.supportedArguments({ "Clean Mode 1", "Clean Mode 2" }, { visibility = { displayed = false } })
+        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -605,13 +574,13 @@ test.register_coroutine_test(
       clusters.RvcRunMode.attributes.CurrentMode:build_test_report_data(
         mock_device,
         APPLICATION_ENDPOINT,
-        0
+        IDLE_MODE.mode
       )
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "runMode",
-        capabilities.mode.mode({value = "Idle Mode"})
+        capabilities.mode.mode({value = IDLE_MODE.label})
       )
     )
     test.socket.matter:__queue_receive({
