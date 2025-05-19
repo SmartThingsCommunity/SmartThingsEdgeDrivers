@@ -128,7 +128,7 @@ matterGeneric:
       - id: 0x0301 # Thermostat
       - id: 0x0307 # Humidity Sensor
     deviceProfileName: air-purifier-thermostat-humidity-aqs
-    - id: "matter/ap/aqs/thermostat/humidity"
+    - id: "matter/ap/aqs/temperature/humidity"
     deviceLabel: Matter Air Purifier & Quality Sensor
     deviceTypes:
       - id: 0x002D # Air Purifier
