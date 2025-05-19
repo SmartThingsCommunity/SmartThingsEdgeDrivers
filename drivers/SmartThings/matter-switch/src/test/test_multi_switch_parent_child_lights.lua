@@ -181,6 +181,7 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ profile = "light-binary" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device)
@@ -247,6 +248,7 @@ local function test_init_parent_child_endpoints_non_sequential()
   test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "doConfigure" })
+  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ profile = "light-binary" })
   mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)

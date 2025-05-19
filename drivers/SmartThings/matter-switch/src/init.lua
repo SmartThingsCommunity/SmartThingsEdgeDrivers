@@ -480,11 +480,11 @@ local function check_field_name_updates(device)
   end
 end
 
-local function assign_child_profile(device, child_ep)
+local function assign_switch_profile(device, switch_ep, is_child_device)
   local profile
 
   for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == child_ep then
+    if ep.endpoint_id == switch_ep then
       -- Some devices report multiple device types which are a subset of
       -- a superset device type (For example, Dimmable Light is a superset of
       -- On/Off light). This mostly applies to the four light types, so we will want
@@ -499,24 +499,28 @@ local function assign_child_profile(device, child_ep)
     end
   end
 
-  -- Check if device has an overridden child profile that differs from the profile that would match
-  -- the child's device type for the following two cases:
-  --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
-  --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
-  --      determined in the "for" loop above (e.g., light-binary)
-  --   2. The selected profile for the child device matches the initial profile defined in
-  --      child_device_profile_overrides
-  for id, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
-    for _, fingerprint in ipairs(vendor) do
-      if device.manufacturer_info.product_id == fingerprint.product_id and
-         ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-         return fingerprint.target_profile
+  if not is_child_device then
+    return profile
+  else
+    -- Check if device has an overridden child profile that differs from the profile that would match
+    -- the child's device type for the following two cases:
+    --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
+    --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
+    --      determined in the "for" loop above (e.g., light-binary)
+    --   2. The selected profile for the child device matches the initial profile defined in
+    --      child_device_profile_overrides
+    for id, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
+      for _, fingerprint in ipairs(vendor) do
+        if device.manufacturer_info.product_id == fingerprint.product_id and
+           ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and switch_ep == 1) or profile == fingerprint.initial_profile) then
+           return fingerprint.target_profile
+        end
       end
     end
-  end
 
-  -- default to "switch-binary" if no profile is found
-  return profile or "switch-binary"
+    -- default to "switch-binary" if no profile is found
+    return profile or "switch-binary"
+  end
 end
 
 local function configure_buttons(device)
@@ -596,9 +600,16 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
   for _, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
-      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+      if ep == main_endpoint then
+        local profile_name = assign_switch_profile(device, ep, false)
+        -- ignore attempts to dynamically profile light-level-colorTemperature devices for now, since
+        -- these may lose fingerprinted Kelvin ranges when dynamically profiled. 
+        if profile_name and profile_name ~= "light-level-colorTemperature" then
+          device:try_update_metadata({profile = profile_name})
+        end
+      else -- don't create a child device that maps to the main endpoint
         local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local child_profile = assign_child_profile(device, ep)
+        local child_profile = assign_switch_profile(device, ep, true)
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
