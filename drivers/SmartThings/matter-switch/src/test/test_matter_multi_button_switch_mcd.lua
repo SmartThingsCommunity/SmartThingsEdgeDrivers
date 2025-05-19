@@ -198,6 +198,15 @@ local function test_init()
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ profile = "light-level-3-button" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+  device_info_copy.profile.id = "3-button"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  configure_buttons()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_child)
   mock_device:expect_device_create({
@@ -210,13 +219,6 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  mock_device:expect_metadata_update({ profile = "light-level-3-button" })
-  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
-  device_info_copy.profile.id = "3-button"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  configure_buttons()
 end
 
 local function test_init_mcd_unsupported_switch_device_type()
@@ -233,7 +235,10 @@ local function test_init_mcd_unsupported_switch_device_type()
       subscribe_request:merge(cluster:subscribe(mock_device_mcd_unsupported_switch_device_type))
     end
   end
+  test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "doConfigure" })
   mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ profile = "2-button" })
+  mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   mock_device_mcd_unsupported_switch_device_type:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 1",
@@ -242,7 +247,6 @@ local function test_init_mcd_unsupported_switch_device_type()
     parent_assigned_child_key = string.format("%d", 7)
   })
   test.mock_device.add_test_device(mock_device_mcd_unsupported_switch_device_type)
-  test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
 end
 
 test.set_test_init_function(test_init)
@@ -402,6 +406,22 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_mcd_unsupported_switch_device_type }
+)
+
+test.register_coroutine_test(
+  "Test driver switched event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    mock_device:expect_metadata_update({ profile = "light-level-3-button" })
+    configure_buttons()
+    mock_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Matter Switch 2",
+      profile = "light-color-level",
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", mock_device_ep5)
+    })
+  end
 )
 
 -- run the tests

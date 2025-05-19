@@ -62,7 +62,7 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device,
-      zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID) })
+    zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID) })
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
@@ -70,7 +70,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device,
-      zigbee_test_utils.mock_hub_eui, OnOff.ID) })
+    zigbee_test_utils.mock_hub_eui, OnOff.ID) })
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
@@ -78,8 +78,8 @@ test.register_coroutine_test(
       }
     )
     test.socket.zigbee:__expect_send({ mock_device.id,
-                                       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
-                                       , data_types.Uint8, 1) })
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+      , data_types.Uint8, 1) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
@@ -95,7 +95,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.batteryLevel.battery("normal")))
+    capabilities.batteryLevel.battery("normal")))
   end
 )
 
@@ -110,7 +110,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.batteryLevel.battery("critical")))
+    capabilities.batteryLevel.battery("critical")))
   end
 )
 
@@ -125,7 +125,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PowerConfiguration.ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.batteryLevel.battery("normal")))
+    capabilities.batteryLevel.battery("normal")))
   end
 )
 
@@ -140,7 +140,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PowerConfiguration.ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.batteryLevel.battery("warning")))
+    capabilities.batteryLevel.battery("warning")))
   end
 )
 
@@ -155,7 +155,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PowerConfiguration.ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.batteryLevel.battery("critical")))
+    capabilities.batteryLevel.battery("critical")))
   end
 )
 
