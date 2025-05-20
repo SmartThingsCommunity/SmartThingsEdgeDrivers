@@ -15,14 +15,15 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
 
-clusters.RvcCleanMode = require "RvcCleanMode"
-clusters.RvcOperationalState = require "RvcOperationalState"
-clusters.RvcRunMode = require "RvcRunMode"
-clusters.OperationalState = require "OperationalState"
-
+local version = require "version"
+if version.api < 10 then
+  clusters.RvcCleanMode = require "RvcCleanMode"
+  clusters.RvcOperationalState = require "RvcOperationalState"
+  clusters.RvcRunMode = require "RvcRunMode"
+  clusters.OperationalState = require "OperationalState"
+end
 local APPLICATION_ENDPOINT = 10
 
 local mock_device = test.mock_device.build_test_matter_device({
