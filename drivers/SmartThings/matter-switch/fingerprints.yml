@@ -121,6 +121,16 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1000
     deviceProfileName: light-color-level-1800K-6500K
+  - id: "5014/4101"
+    deviceLabel: Linkind Smart Plug with Light
+    vendorId: 0x1396
+    productId: 0x1005
+    deviceProfileName: plug-binary
+  - id: "5014/4097"
+    deviceLabel: OREIN Bath Fan OLO5S
+    vendorId: 0x1396
+    productId: 0x1001
+    deviceProfileName: light-color-level-fan
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
@@ -137,8 +147,8 @@ matterManufacturer:
     deviceLabel: Smart Bridge MZ1
     vendorId: 0x1407
     productId: 0x1288
-    deviceProfileName: matter-bridge 
-    
+    deviceProfileName: matter-bridge
+
 #ELEGRP
   - id: "5158/3"
     deviceLabel: ELEGRP Smart Mini Plug
@@ -243,7 +253,7 @@ matterManufacturer:
     deviceLabel: Cync Full Color A19 Clear Spiral
     vendorId: 0x1339
     productId: 0x00B6
-    deviceProfileName: light-color-level-2000K-7000K 
+    deviceProfileName: light-color-level-2000K-7000K
   - id: "4921/41"
     deviceLabel: Cync Full Color Undercabinet 12 Inch
     vendorId: 0x1339
@@ -359,6 +369,31 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0040
     deviceProfileName: plug-binary
+  - id: "4921/118"
+    deviceLabel: Cync Button Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0076
+    deviceProfileName: light-binary
+  - id: "4921/119"
+    deviceLabel: Cync Paddle Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0077
+    deviceProfileName: light-binary
+  - id: "4921/120"
+    deviceLabel: Cync Toggle Switch w Traveler
+    vendorId: 0x1339
+    productId: 0x0078
+    deviceProfileName: light-binary
+  - id: "4921/116"
+    deviceLabel: Cync Button Dimmer w Traveler
+    vendorId: 0x1339
+    productId: 0x0074
+    deviceProfileName: switch-level
+  - id: "4921/117"
+    deviceLabel: Cync Motion Dimmer w Traveler
+    vendorId: 0x1339
+    productId: 0x0075
+    deviceProfileName: switch-level
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
@@ -420,6 +455,26 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x055C
     deviceProfileName: plug-binary
+  - id: "4489/2377"
+    deviceLabel: LEDVANCE MATTER PLUG CH
+    vendorId: 0x1189
+    productId: 0x0949
+    deviceProfileName: plug-binary
+  - id: "4489/2473"
+    deviceLabel: MATTER FLEX RGBTW EU
+    vendorId: 0x1189
+    productId: 0x09A9
+    deviceProfileName: light-color-level
+  - id: "4489/2176"
+    deviceLabel: MATTER PLUG EU BK
+    vendorId: 0x1189
+    productId: 0x0880
+    deviceProfileName: plug-binary
+  - id: "4489/1587"
+    deviceLabel: MATTER COMP OUT PLUG EU
+    vendorId: 0x1189
+    productId: 0x0633
+    deviceProfileName: plug-binary
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
@@ -431,6 +486,12 @@ matterManufacturer:
     vendorId: 0x1372
     productId: 0x0002
     deviceProfileName: switch-4
+#JUNG
+  - id: "5161/1"
+    deviceLabel: Matter Push button 2-gang
+    vendorId: 0x1429
+    productId: 0x0001
+    deviceProfileName: 4-button-battery
 #Legrand
   - id: "4129/3"
     deviceLabel: Smart Lights Smart Plug
@@ -456,7 +517,7 @@ matterManufacturer:
     deviceLabel: Radiant Smart LED Dimmer
     vendorId: 0x1021
     productId: 0x0006
-    deviceProfileName: switch-level  
+    deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
@@ -478,6 +539,12 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x1002
     deviceProfileName: switch-binary
+#LG
+  - id: "4142/8785"
+    deviceLabel: LG Smart Button (2 Button)
+    vendorId: 0x102E
+    productId: 0x2251
+    deviceProfileName: 2-button-battery
 #Lifx
   - id: "5155/161"
     deviceLabel: LIFX Neon Outdoor
@@ -533,7 +600,7 @@ matterManufacturer:
     deviceLabel: LIFX Downlight (Retrofit 4)
     vendorId: 0x1423
     productId: 0x00B3
-    deviceProfileName: light-level-colorTemperature-1500k-9000k   
+    deviceProfileName: light-level-colorTemperature-1500k-9000k
   - id: "5155/180"
     deviceLabel: LIFX Downlight (Canless 4)
     vendorId: 0x1423
@@ -2714,6 +2781,12 @@ matterGeneric:
       - id: 0x0101 # Dimmable Light
       - id: 0x000F # Generic Switch
     deviceProfileName: light-level-button
+  - id: "matter/color/light/fan"
+    deviceLabel: Matter Color Light Fan
+    deviceTypes:
+      - id: 0x010D # Extended Color Light
+      - id: 0x002B # Fan
+    deviceProfileName: light-color-level-fan
 
 matterThing:
   - id: SmartThings/MatterThing

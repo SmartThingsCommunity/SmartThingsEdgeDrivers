@@ -4,12 +4,18 @@ matterManufacturer:
     vendorId: 0x10e1
     productId: 0x1023
     deviceProfileName: room-air-conditioner
-
+  #Aidot
   - id: "Leedarson AiDot Air Purifier"
     deviceLabel: AiDot Air Purifier
     vendorId: 0x1396
     productId: 0x043A
     deviceProfileName: air-purifier-hepa
+  #Bosch
+  - id: "4617/12306"
+    deviceLabel: Radiator Thermostat II [M]
+    vendorId: 0x1209
+    productId: 0x3012
+    deviceProfileName: thermostat-heating-only-nostate
   #Eve
   - id: "4874/79"
     deviceLabel: Eve Thermo
@@ -21,6 +27,11 @@ matterManufacturer:
     deviceLabel: habi Matter Wireless Room Thermostat
     vendorId: 0x1527
     productId: 0x0001
+    deviceProfileName: thermostat-heating-only-batteryLevel
+  - id: "5415/2"
+    deviceLabel: habi Smart TRV
+    vendorId: 0x1527
+    productId: 0x0002
     deviceProfileName: thermostat-heating-only-batteryLevel
   #Siterwell
   - id: "4736/769"

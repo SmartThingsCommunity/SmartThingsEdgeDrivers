@@ -32,8 +32,6 @@ local CONTACT_TEMPERATURE_SENSOR_FINGERPRINTS = {
   { mfr = "ADUROLIGHT", model = "CSW_ADUROLIGHT" },
   { mfr = "Sercomm Corp.", model = "SZ-DWS04" },
   { mfr = "DAWON_DNS", model = "SS-B100-ZB" },
-  { mfr = "frient A/S", model = "WISZB-120" },
-  { mfr = "frient A/S", model = "WISZB-121" },
   { mfr = "Compacta", model = "ZBWDS" }
 }
 
@@ -65,8 +63,7 @@ local contact_temperature_sensor = {
     init = device_init
   },
   sub_drivers = {
-    require("contact-temperature-sensor/ecolink-contact"),
-    require("contact-temperature-sensor/frient-sensor")
+    require("contact-temperature-sensor/ecolink-contact")
   },
   can_handle = can_handle_contact_temperature_sensor
 }

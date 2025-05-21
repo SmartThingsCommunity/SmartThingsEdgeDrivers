@@ -404,20 +404,15 @@ local function find_default_endpoint(device, cluster)
   return res
 end
 
-local function component_to_endpoint(device, component_name)
+local function component_to_endpoint(device, component_name, cluster_id)
   -- Use the find_default_endpoint function to return the first endpoint that
   -- supports a given cluster.
   local component_to_endpoint_map = device:get_field(COMPONENT_TO_ENDPOINT_MAP)
   if component_to_endpoint_map ~= nil and component_to_endpoint_map[component_name] ~= nil then
     return component_to_endpoint_map[component_name]
   end
-  if device:supports_capability(capabilities.airPurifierFanMode) then
-    -- Fan Control is mandatory for the Air Purifier device type
-    return find_default_endpoint(device, clusters.FanControl.ID)
-  else
-    -- Thermostat is mandatory for Thermostat and Room AC device type
-    return find_default_endpoint(device, clusters.Thermostat.ID)
-  end
+  if not cluster_id then return device.MATTER_DEFAULT_ENDPOINT end
+  return find_default_endpoint(device, cluster_id)
 end
 
 local endpoint_to_component = function (device, endpoint_id)
@@ -1417,13 +1412,13 @@ local function activated_carbon_filter_change_indication_handler(driver, device,
 end
 
 local function handle_switch_on(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.OnOff.ID)
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
 end
 
 local function handle_switch_off(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.OnOff.ID)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)
 end
@@ -1437,7 +1432,7 @@ local function set_thermostat_mode(driver, device, cmd)
     end
   end
   if mode_id then
-    device:send(clusters.Thermostat.attributes.SystemMode:write(device, device:component_to_endpoint(cmd.component), mode_id))
+    device:send(clusters.Thermostat.attributes.SystemMode:write(device, component_to_endpoint(device, cmd.component, clusters.Thermostat.ID), mode_id))
   end
 end
 
@@ -1449,7 +1444,7 @@ end
 
 local function set_setpoint(setpoint)
   return function(driver, device, cmd)
-    local endpoint_id = device:component_to_endpoint(cmd.component)
+    local endpoint_id = component_to_endpoint(device, cmd.component, clusters.Thermostat.ID)
     local MAX_TEMP_IN_C = THERMOSTAT_MAX_TEMP_IN_C
     local MIN_TEMP_IN_C = THERMOSTAT_MIN_TEMP_IN_C
     local is_water_heater_device = get_device_type(driver, device) == WATER_HEATER_DEVICE_TYPE_ID
@@ -1528,7 +1523,7 @@ local function set_setpoint(setpoint)
         return
       end
     end
-    device:send(setpoint:write(device, device:component_to_endpoint(cmd.component), utils.round(value * 100.0)))
+    device:send(setpoint:write(device, component_to_endpoint(device, cmd.component, clusters.Thermostat.ID), utils.round(value * 100.0)))
   end
 end
 
@@ -1595,7 +1590,7 @@ local function set_thermostat_fan_mode(driver, device, cmd)
     fan_mode_id = clusters.FanControl.attributes.FanMode.ON
   end
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
   end
 end
 
@@ -1621,7 +1616,7 @@ local function set_fan_mode(driver, device, cmd)
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
   end
 end
 
@@ -1645,13 +1640,13 @@ local function set_air_purifier_fan_mode(driver, device, cmd)
     fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
   if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, device:component_to_endpoint(cmd.component), fan_mode_id))
+    device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
   end
 end
 
 local function set_fan_speed_percent(driver, device, cmd)
   local speed = math.floor(cmd.args.percent)
-  device:send(clusters.FanControl.attributes.PercentSetting:write(device, device:component_to_endpoint(cmd.component), speed))
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), speed))
 end
 
 local function set_wind_mode(driver, device, cmd)
@@ -1661,7 +1656,7 @@ local function set_wind_mode(driver, device, cmd)
   elseif cmd.args.windMode == capabilities.windMode.windMode.naturalWind.NAME then
     wind_mode = clusters.FanControl.types.WindSupportMask.NATURAL_WIND
   end
-  device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), wind_mode))
+  device:send(clusters.FanControl.attributes.WindSetting:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), wind_mode))
 end
 
 local function set_rock_mode(driver, device, cmd)
@@ -1673,18 +1668,27 @@ local function set_rock_mode(driver, device, cmd)
   elseif cmd.args.fanOscillationMode == capabilities.fanOscillationMode.fanOscillationMode.swing.NAME then
     rock_mode = clusters.FanControl.types.RockSupportMask.ROCK_ROUND
   end
-  device:send(clusters.FanControl.attributes.RockSetting:write(device, device:component_to_endpoint(cmd.component), rock_mode))
+  device:send(clusters.FanControl.attributes.RockSetting:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), rock_mode))
 end
 
 local function set_water_heater_mode(driver, device, cmd)
   device.log.info(string.format("set_water_heater_mode mode: %s", cmd.args.mode))
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.Thermostat.ID)
   local supportedWaterHeaterModesWithIdx = device:get_field(SUPPORTED_WATER_HEATER_MODES_WITH_IDX) or {}
   for i, mode in ipairs(supportedWaterHeaterModesWithIdx) do
     if cmd.args.mode == mode[2] then
       device:send(clusters.WaterHeaterMode.commands.ChangeToMode(device, endpoint_id, mode[1]))
       return
     end
+  end
+end
+
+local function reset_filter_state(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  if cmd.component == "hepaFilter" then
+    device:send(clusters.HepaFilterMonitoring.server.commands.ResetCondition(device, endpoint_id))
+  else
+    device:send(clusters.ActivatedCarbonFilterMonitoring.server.commands.ResetCondition(device, endpoint_id))
   end
 end
 
@@ -1989,6 +1993,9 @@ local matter_driver_template = {
     },
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = set_water_heater_mode,
+    },
+    [capabilities.filterState.ID] = {
+      [capabilities.filterState.commands.resetFilter.NAME] = reset_filter_state,
     }
   },
   supported_capabilities = {

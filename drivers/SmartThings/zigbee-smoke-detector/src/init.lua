@@ -20,17 +20,19 @@ local constants = require "st.zigbee.constants"
 local zigbee_smoke_driver_template = {
   supported_capabilities = {
     capabilities.smokeDetector,
-    capabilities.battery
+    capabilities.battery,
+    capabilities.alarm,
+    capabilities.temperatureMeasurement
   },
   sub_drivers = {
     require("frient"),
     require("aqara-gas"),
-    require("aqara"),
-    require("frient")
+    require("aqara")
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
 }
 
-defaults.register_for_default_handlers(zigbee_smoke_driver_template, zigbee_smoke_driver_template.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_smoke_driver_template,
+  zigbee_smoke_driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
 local zigbee_smoke_driver = ZigbeeDriver("zigbee-smoke-detector", zigbee_smoke_driver_template)
 zigbee_smoke_driver:run()

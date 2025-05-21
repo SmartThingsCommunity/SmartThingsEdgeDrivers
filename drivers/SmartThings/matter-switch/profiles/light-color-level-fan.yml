@@ -15,8 +15,12 @@ components:
         config:
           values:
             - key: "colorTemperature.value"
-              range: [ 2200, 6500 ]
+              range: [ 2700, 6500 ]
       - id: colorControl
+        version: 1
+      - id: fanMode
+        version: 1
+      - id: fanSpeedPercent
         version: 1
       - id: firmwareUpdate
         version: 1
@@ -24,11 +28,3 @@ components:
         version: 1
     categories:
       - name: Light
-  - id: fan
-    capabilities:
-      - id: fanMode
-        version: 1
-      - id: fanSpeedPercent
-        version: 1
-    categories:
-      - name: Fan
