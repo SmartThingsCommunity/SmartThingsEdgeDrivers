@@ -2766,31 +2766,31 @@ local function set_aliro_reader_config_handler(driver, device, ib, response)
     status = "invalidCommand"
   elseif ib.status == DoorLock.types.DlStatus.SUCCESS then
     if publicKey ~= nil then
-      device:emit_event(
-        aliroSetting.aliroReaderVerificationKey(publicKey),
+      device:emit_event(aliroSetting.aliroReaderVerificationKey(
+        publicKey,
         {
           state_change = true,
           visibility = {displayed = false}
         }
-      )
+      ))
     end
     if groupId ~= nil then
-      device:emit_event(
-        aliroSetting.aliroReaderGroupIdentifier(groupId),
+      device:emit_event(aliroSetting.aliroReaderGroupIdentifier(
+        groupId,
         {
           state_change = true,
           visibility = {displayed = false}
         }
-      )
+      ))
     end
     if groupResolvingKey ~= nil then
-      device:emit_event(
-        aliroSetting.aliroGroupResolvingKey(groupResolvingKey),
+      device:emit_event(aliroSetting.aliroGroupResolvingKey(
+        groupResolvingKey,
         {
           state_change = true,
           visibility = {displayed = false}
         }
-      )
+      ))
     end
   end
   
