@@ -58,7 +58,7 @@ components:
       version: 1
   categories:
     - name: WaterValve
-- id: button1
+- id: button
   optional: true
   capabilities:
     - id: button
