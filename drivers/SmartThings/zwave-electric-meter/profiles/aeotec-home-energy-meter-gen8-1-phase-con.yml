@@ -103,63 +103,6 @@ preferences:
         0: "Disable"
         1: "Enable"
       default: 0
-  - name: defaultReport
-    title: "100. Set 101-106 to default"
-    description: "Set 101-106 to default."
-    preferenceType: enumeration
-    definition:
-      options:
-        0: "Disable"
-        1: "Enable"
-      default: 0
-  - name: autoReportImp1
-    title: "101. Auto Report list 1 (Import)"
-    description: "Configure which report needs to be sent in Report group 1."
-    preferenceType: number
-    definition:
-      min: 0
-      max: 4294967295
-      default: 50528256
-  - name: autoReportImp2
-    title: "102. Auto Report list 2 (Import)"
-    description: "Configure which report needs to be sent in Report group 2."
-    preferenceType: number
-    definition:
-      min: 0
-      max: 4294967295
-      default: 202113024
-  - name: autoReportImp3
-    title: "103. Auto Report list 3 (Import)"
-    description: "Configure which report needs to be sent in Report group 3."
-    preferenceType: number
-    definition:
-      min: 0
-      max: 4294967295
-      default: 4042260480
-  - name: autoReportExp1
-    title: "104. Auto Report list 1 (Export)"
-    description: "Configure which report needs to be sent in Report group 1."
-    preferenceType: number
-    definition:
-      min: 0
-      max: 4294967295
-      default: 50528256
-  - name: autoReportExp2
-    title: "105. Auto Report list 2 (Export)"
-    description: "Configure which report needs to be sent in Report group 2."
-    preferenceType: number
-    definition:
-      min: 0
-      max: 4294967295
-      default: 202113024
-  - name: autoReportExp3
-    title: "106. Auto Report list 3 (Export)"
-    description: "Configure which report needs to be sent in Report group 3."
-    preferenceType: number
-    definition:
-      min: 0
-      max: 4294967295
-      default: 4042260480
   - name: defaultTime
     title: "110. Set 111-116 to default"
     description: "Set 111-116 to default."
@@ -172,50 +115,50 @@ preferences:
   - name: autoTimeImp1
     title: "111. Automatic time list 1 (Import)"
     description: "Set the interval time of sending report in Report group 1."
-    preferenceType: number
+    preferenceType: integer
     definition:
-      min: 10
-      max: 4294967295
+      min: 300
+      max: 7200
       default: 3600
   - name: autoTimeImp2
     title: "112. Automatic time list 2 (Import)"
     description: "Set the interval time of sending report in Report group 2."
-    preferenceType: number
+    preferenceType: integer
     definition:
-      min: 10
-      max: 4294967295
+      min: 300
+      max: 7200
       default: 3600
   - name: autoTimeImp3
     title: "113. Automatic time list 3 (Import)"
     description: "Set the interval time of sending report in Report group 3."
-    preferenceType: number
+    preferenceType: integer
     definition:
-      min: 10
-      max: 4294967295
+      min: 300
+      max: 7200
       default: 3600
   - name: autoTimeExp1
     title: "114. Automatic time list 1 (Export)"
     description: "Set the interval time of sending report in Report group 1."
-    preferenceType: number
+    preferenceType: integer
     definition:
-      min: 10
-      max: 4294967295
+      min: 300
+      max: 7200
       default: 3600
   - name: autoTimeExp2
     title: "115. Automatic time list 2 (Export)"
     description: "Set the interval time of sending report in Report group 2."
-    preferenceType: number
+    preferenceType: integer
     definition:
-      min: 10
-      max: 4294967295
+      min: 300
+      max: 7200
       default: 7200
   - name: autoTimeExp3
     title: "116. Automatic time list 3 (Export)"
     description: "Set the interval time of sending report in Report group 3."
-    preferenceType: number
+    preferenceType: integer
     definition:
-      min: 10
-      max: 4294967295
+      min: 300
+      max: 7200
       default: 7200
   - name: lockConfig
     title: "252. Enable/disable lock config"
