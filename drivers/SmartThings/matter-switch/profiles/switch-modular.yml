@@ -57,7 +57,7 @@ components:
       version: 1
   categories:
     - name: Switch
-- id: button1
+- id: button
   optional: true
   capabilities:
     - id: button

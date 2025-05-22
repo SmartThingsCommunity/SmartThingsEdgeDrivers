@@ -11,6 +11,15 @@ components:
         values:
           - key: "level.value"
             range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
     - id: colorTemperature
       version: 1
       optional: true
@@ -27,15 +36,6 @@ components:
     - id: relativeHumidityMeasurement
       version: 1
       optional: true
-    - id: powerMeter
-      version: 1
-      optional: true
-    - id: energyMeter
-      version: 1
-      optional: true
-    - id: powerConsumptionReport
-      version: 1
-      optional: true
     - id: fanMode
       version: 1
       optional: true
@@ -48,7 +48,175 @@ components:
       version: 1
   categories:
     - name: SmartPlug
-- id: button1
+- id: plug2
+  optional: true
+  capabilities:
+    - id: switch
+      version: 1
+      optional: true
+    - id: switchLevel
+      version: 1
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
+  categories:
+    - name: SmartPlug
+- id: plug3
+  optional: true
+  capabilities:
+    - id: switch
+      version: 1
+      optional: true
+    - id: switchLevel
+      version: 1
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
+  categories:
+    - name: SmartPlug
+- id: plug4
+  optional: true
+  capabilities:
+    - id: switch
+      version: 1
+      optional: true
+    - id: switchLevel
+      version: 1
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
+  categories:
+    - name: SmartPlug
+- id: plug5
+  optional: true
+  capabilities:
+    - id: switch
+      version: 1
+      optional: true
+    - id: switchLevel
+      version: 1
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
+  categories:
+    - name: SmartPlug
+- id: plug6
+  optional: true
+  capabilities:
+    - id: switch
+      version: 1
+      optional: true
+    - id: switchLevel
+      version: 1
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
+  categories:
+    - name: SmartPlug
+- id: plug7
+  optional: true
+  capabilities:
+    - id: switch
+      version: 1
+      optional: true
+    - id: switchLevel
+      version: 1
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
+  categories:
+    - name: SmartPlug
+- id: plug8
+  optional: true
+  capabilities:
+    - id: switch
+      version: 1
+      optional: true
+    - id: switchLevel
+      version: 1
+      optional: true
+      config:
+        values:
+          - key: "level.value"
+            range: [1, 100]
+    - id: powerMeter
+      version: 1
+      optional: true
+    - id: energyMeter
+      version: 1
+      optional: true
+    - id: powerConsumptionReport
+      version: 1
+      optional: true
+  categories:
+    - name: SmartPlug
+- id: button
   optional: true
   capabilities:
     - id: button
