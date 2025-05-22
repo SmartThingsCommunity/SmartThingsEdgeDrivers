@@ -48,7 +48,7 @@ components:
       version: 1
   categories:
     - name: Light
-- id: button1
+- id: button
   optional: true
   capabilities:
     - id: button
