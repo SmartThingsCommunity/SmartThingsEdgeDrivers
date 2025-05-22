@@ -1,4 +1,4 @@
-name: air-purifier-hepa-ac-thermostat-humidity-fan-nostate-nobattery-aqs-pm25-tvoc-meas
+name: air-purifier-hepa-ac-temperature-humidity-fan-aqs-pm25-tvoc-meas
 components:
 - id: main
   label: Main
@@ -8,12 +8,6 @@ components:
   - id: fanSpeedPercent
     version: 1
   - id: temperatureMeasurement
-    version: 1
-  - id: thermostatMode
-    version: 1
-  - id: thermostatHeatingSetpoint
-    version: 1
-  - id: thermostatCoolingSetpoint
     version: 1
   - id: fineDustSensor
     version: 1
