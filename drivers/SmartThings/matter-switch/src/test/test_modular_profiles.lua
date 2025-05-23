@@ -20,7 +20,7 @@ local dkjson = require "dkjson"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 
-local mock_device_tbl = {
+local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
   profile = t_utils.get_profile_definition("water-valve-level.yml"),
   manufacturer_info = {
@@ -58,9 +58,7 @@ local mock_device_tbl = {
       }
     }
   }
-}
-
-local mock_device = test.mock_device.build_test_matter_device(mock_device_tbl)
+})
 
 local default_cluster_subscribe_list = {
   clusters.ValveConfigurationAndControl.attributes.CurrentState,
