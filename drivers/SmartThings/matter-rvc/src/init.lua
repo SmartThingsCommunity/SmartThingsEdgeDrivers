@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local area_type = require "Global.types.AreaTypeTag"
 local landmark = require "Global.types.LandmarkTag"
+local embedded_cluster_utils = require "embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
@@ -35,7 +36,6 @@ end
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local RUN_MODE_SUPPORTED_MODES = "__run_mode_supported_modes"
 local CLEAN_MODE_SUPPORTED_MODES = "__clean_mode_supported_modes"
-local SERVICE_AREA_SUPPORTED_AREAS = "__service_area_supported_areas"
 
 local subscribed_attributes = {
   [capabilities.mode.ID] = {
@@ -80,8 +80,9 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID)
-  local service_area_eps = device:get_endpoints(clusters.ServiceArea.ID)
+  local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID) or {}
+  local service_area_eps = embedded_cluster_utils.get_endpoints(device, clusters.ServiceArea.ID) or {}
+
   local profile_name = "rvc"
   if #clean_mode_eps > 0 then
     profile_name = profile_name .. "-clean-mode"
@@ -362,28 +363,26 @@ local function rvc_service_area_supported_areas_handler(driver, device, ib, resp
       end
     end
     local area_id = area.elements.area_id.value
+    local location_info = area.elements.area_info.elements.location_info.elements
+    local landmark_info = area.elements.area_info.elements.landmark_info.elements
     local area_name = ""
-    local location_info = area.elements.area_info.elements.location_info
-    local landmark_info = area.elements.area_info.elements.landmark_info
-    if location_info.elements ~= nil then
-      if string.len(location_info.elements.location_name.value) ~= 0 then
-        area_name = location_info.elements.location_name.value
-      elseif location_info.elements.floor_number.value ~= nil and location_info.elements.area_type.value ~= nil then
-        area_name = location_info.elements.floor_number.value .. "F" .. uppercase_to_camelcase(string.sub(area_type.pretty_print(location_info.elements.area_type),string.len("AreaTypeTag: ")))
-      elseif location_info.elements.floor_number.value ~= nil then
-        area_name = location_info.elements.floor_number.value .. "F"
-      elseif location_info.elements.area_type.value ~= nil then
-        area_name = uppercase_to_camelcase(string.sub(area_type.pretty_print(location_info.elements.area_type),string.len("AreaTypeTag:  ")))
+    -- set the area name based on available location information
+    if location_info ~= nil then
+      if location_info.location_name.value ~= "" then
+        area_name = location_info.location_name.value
+      elseif location_info.floor_number.value ~= nil and location_info.area_type.value ~= nil then
+        area_name = location_info.floor_number.value .. "F" .. uppercase_to_camelcase(string.sub(area_type.pretty_print(location_info.area_type),string.len("AreaTypeTag: ")))
+      elseif location_info.floor_number.value ~= nil then
+        area_name = location_info.floor_number.value .. "F"
+      elseif location_info.area_type.value ~= nil then
+        area_name = uppercase_to_camelcase(string.sub(area_type.pretty_print(location_info.area_type),string.len("AreaTypeTag:  ")))
       end
     end
-    if string.len(area_name) == 0 then
-      area_name = uppercase_to_camelcase(string.sub(landmark.pretty_print(landmark_info.elements.landmark_tag),string.len("LandmarkTag:  ")))
+    if area_name == "" then
+      area_name = uppercase_to_camelcase(string.sub(landmark.pretty_print(landmark_info.landmark_tag),string.len("LandmarkTag:  ")))
     end
-
     table.insert(supported_areas, {["areaId"] = area_id, ["areaName"] = area_name})
   end
-  device:set_field(SERVICE_AREA_SUPPORTED_AREAS, supported_areas, {persist = true})
-
   -- Update Supported Areas
   local component = device.profile.components["main"]
   local event = capabilities.serviceArea.supportedAreas(supported_areas, {visibility = {displayed = false}})
@@ -402,8 +401,7 @@ local function rvc_service_area_selected_areas_handler(driver, device, ib, respo
   device:emit_component_event(component, event)
 end
 
-local function handle_robot_cleaner_areas_selection_response(driver, device, ib, response)
-
+local function robot_cleaner_areas_selection_response_handler(driver, device, ib, response)
   local select_areas_response = ib.info_block.data
   if version.api < 13 then
     clusters.ServiceArea.client.commands.SelectAreasResponse:augment_type(select_areas_response)
@@ -411,9 +409,9 @@ local function handle_robot_cleaner_areas_selection_response(driver, device, ib,
   local status = select_areas_response.elements.status
   local status_text = select_areas_response.elements.status_text
   if status.value == clusters.ServiceArea.types.SelectAreasStatus.SUCCESS then
-    device.log.info(string.format("handle_robot_cleaner_areas_selection_response: %s, %s",status.pretty_print(status),status_text))
+    device.log.info(string.format("robot_cleaner_areas_selection_response_handler: %s, %s",status.pretty_print(status),status_text))
   else
-    device.log.error(string.format("handle_robot_cleaner_areas_selection_response: %s, %s",status.pretty_print(status),status_text))
+    device.log.error(string.format("robot_cleaner_areas_selection_response_handler: %s, %s",status.pretty_print(status),status_text))
     local selectedAreas = device:get_latest_state("main", capabilities.serviceArea.ID, capabilities.serviceArea.selectedAreas.NAME)
     local component = device.profile.components["main"]
     local event = capabilities.serviceArea.selectedAreas(selectedAreas, {state_change = true})
@@ -490,7 +488,7 @@ local matter_rvc_driver = {
     },
     cmd_response={
       [clusters.ServiceArea.ID] = {
-        [clusters.ServiceArea.client.commands.SelectAreasResponse.ID] = handle_robot_cleaner_areas_selection_response,
+        [clusters.ServiceArea.client.commands.SelectAreasResponse.ID] = robot_cleaner_areas_selection_response_handler,
       }
     }
   },
