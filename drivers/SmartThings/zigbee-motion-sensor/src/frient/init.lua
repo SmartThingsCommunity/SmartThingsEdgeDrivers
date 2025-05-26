@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ local DEFAULT_UNOCCUPIED_TO_OCCUPIED_THRESHOLD = 0
 
 local OCCUPANCY_ENDPOINT = 0x22
 local TAMPER_ENDPOINT = 0x23
+local POWER_CONFIGURATION_ENDPOINT = 0x23
 local TEMPERATURE_ENDPOINT = 0x26
 local ILLUMINANCE_ENDPOINT = 0x27
 
@@ -137,16 +138,16 @@ end
 
 local function do_refresh(driver, device)
   device:send(OccupancySensing.attributes.Occupancy:read(device):to_endpoint(OCCUPANCY_ENDPOINT))
-  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device):to_endpoint(POWER_CONFIGURATION_ENDPOINT))
 
   if device:supports_capability_by_id(capabilities.temperatureMeasurement.ID) then
-    device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device))
+    device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device):to_endpoint(TEMPERATURE_ENDPOINT))
   end
   if device:supports_capability_by_id(capabilities.illuminanceMeasurement.ID) then
-    device:send(IlluminanceMeasurement.attributes.MeasuredValue:read(device))
+    device:send(IlluminanceMeasurement.attributes.MeasuredValue:read(device):to_endpoint(ILLUMINANCE_ENDPOINT))
   end
   if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
-    device:send(IASZone.attributes.ZoneStatus:read(device))
+    device:send(IASZone.attributes.ZoneStatus:read(device):to_endpoint(TAMPER_ENDPOINT))
   end
 end
 

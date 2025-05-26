@@ -29,10 +29,11 @@ local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 
 local capabilities = require "st.capabilities"
 
+local IASZONE_ENDPOINT = 0x23
 local ILLUMINANCE_ENDPOINT = 0x27
 local OCCUPANCY_ENDPOINT = 0x22
 local POWER_CONFIGURATION_ENDPOINT = 0x23
-local IASZONE_ENDPOINT = 0x23
+local TAMPER_ENDPOINT = 0x23
 local TEMPERATURE_MEASUREMENT_ENDPOINT = 0x26
 
 local DEFAULT_OCCUPIED_TO_UNOCCUPIED_DELAY = 240
@@ -189,31 +190,31 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send(
                 {
                     mock_device.id,
-                    IASZone.attributes.ZoneStatus:read(mock_device)
+                    IASZone.attributes.ZoneStatus:read(mock_device):to_endpoint(TAMPER_ENDPOINT)
                 }
             )
             test.socket.zigbee:__expect_send(
                 {
                     mock_device.id,
-                    IlluminanceMeasurement.attributes.MeasuredValue:read(mock_device)
+                    IlluminanceMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(ILLUMINANCE_ENDPOINT)
                 }
             )
             test.socket.zigbee:__expect_send(
                 {
                     mock_device.id,
-                    OccupancySensing.attributes.Occupancy:read(mock_device)
+                    OccupancySensing.attributes.Occupancy:read(mock_device):to_endpoint(OCCUPANCY_ENDPOINT)
                 }
             )
             test.socket.zigbee:__expect_send(
                 {
                     mock_device.id,
-                    PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+                    PowerConfiguration.attributes.BatteryVoltage:read(mock_device):to_endpoint(POWER_CONFIGURATION_ENDPOINT)
                 }
             )
             test.socket.zigbee:__expect_send(
                 {
                     mock_device.id,
-                    TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
+                    TemperatureMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT)
                 }
             )
         end,
@@ -230,8 +231,8 @@ test.register_coroutine_test(
         function()
             test.socket.zigbee:__set_channel_ordering("relaxed")
             test.socket.capability:__queue_receive({mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} }})
-            test.socket.zigbee:__expect_send({mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device)})
-            test.socket.zigbee:__expect_send({mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device)})
+            test.socket.zigbee:__expect_send({mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device):to_endpoint(POWER_CONFIGURATION_ENDPOINT)})
+            test.socket.zigbee:__expect_send({mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device):to_endpoint(TAMPER_ENDPOINT)})
             test.socket.zigbee:__expect_send({mock_device.id, OccupancySensing.attributes.Occupancy:read(mock_device):to_endpoint(OCCUPANCY_ENDPOINT)})
             test.socket.zigbee:__expect_send({mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT)})
             test.socket.zigbee:__expect_send({mock_device.id, IlluminanceMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(ILLUMINANCE_ENDPOINT)})

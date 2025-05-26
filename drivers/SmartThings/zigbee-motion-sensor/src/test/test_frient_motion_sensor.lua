@@ -99,13 +99,13 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send(
                     {
                         mock_device.id,
-                        OccupancySensing.attributes.Occupancy:read(mock_device)
+                        OccupancySensing.attributes.Occupancy:read(mock_device):to_endpoint(OCCUPANCY_ENDPOINT)
                     }
             )
             test.socket.zigbee:__expect_send(
                     {
                         mock_device.id,
-                        PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+                        PowerConfiguration.attributes.BatteryVoltage:read(mock_device):to_endpoint(POWER_CONFIGURATION_ENDPOINT)
                     }
             )
         end,
@@ -122,8 +122,8 @@ test.register_coroutine_test(
         function()
             test.socket.zigbee:__set_channel_ordering("relaxed")
             test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
-            test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
-            test.socket.zigbee:__expect_send({ mock_device.id, OccupancySensing.attributes.Occupancy:read(mock_device) })
+            test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device):to_endpoint(POWER_CONFIGURATION_ENDPOINT)})
+            test.socket.zigbee:__expect_send({ mock_device.id, OccupancySensing.attributes.Occupancy:read(mock_device):to_endpoint(OCCUPANCY_ENDPOINT)})
         end
 )
 
