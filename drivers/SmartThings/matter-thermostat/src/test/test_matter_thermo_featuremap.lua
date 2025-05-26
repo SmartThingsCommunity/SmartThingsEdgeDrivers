@@ -253,7 +253,13 @@ test.register_coroutine_test(
     end
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
+    -- profile name does not matter, we just check that the name is different in the info_changed handler
+    local updates = {
+      profile = {
+        id = "new-profile"
+      }
+    }
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
 end
 )
 
