@@ -307,6 +307,9 @@ local matter_smoke_co_alarm_handler = {
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+    },
     [capabilities.batteryLevel.ID] = {
       clusters.PowerSource.attributes.BatChargeLevel,
     },
