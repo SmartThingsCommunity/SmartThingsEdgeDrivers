@@ -66,6 +66,7 @@ local supported_profiles =
   "smoke-battery",
   "smoke-co-comeas",
   "smoke-co-comeas-battery",
+  "smoke-co-comeas-colevel-battery",
   "smoke-co-temp-humidity-comeas",
   "smoke-co-temp-humidity-comeas-battery"
 }
