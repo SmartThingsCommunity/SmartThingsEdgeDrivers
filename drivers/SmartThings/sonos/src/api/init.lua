@@ -36,11 +36,18 @@ local SonosApi = {
   RestApi = SonosRestApi,
 }
 
---- Get the HTTP Headers with the correct API Key
+--- Get the HTTP Headers with the correct API Key and Bearer Token
+--- values.
 ---@param api_key string
+---@param access_token string? if nil, no Authorization header will be set
 ---@return table<string,string>
-function SonosApi.make_headers(api_key)
-  return { [SONOS_API_KEY_HTTP_HEADER_KEY] = api_key or (api_keys and api_keys.s1_key) }
+function SonosApi.make_headers(api_key, access_token)
+  local headers = { [SONOS_API_KEY_HTTP_HEADER_KEY] = api_key or (api_keys and api_keys.s1_key) }
+  if type(access_token) == "string" then
+    headers["Authorization"] = string.format("Bearer %s", access_token)
+  end
+
+  return headers
 end
 
 return SonosApi

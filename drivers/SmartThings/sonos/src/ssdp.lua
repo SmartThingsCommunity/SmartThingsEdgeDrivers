@@ -1,7 +1,8 @@
+-- luacheck: globals Ok Err
+local Headers = require "luncheon.headers"
+local Stream = require "cosock.stream"
 local log = require "log"
 local socket = require "cosock.socket"
-local Stream = require "cosock.stream"
-local Headers = require "luncheon.headers"
 
 local SSDP_MULTICAST_IP = "239.255.255.250"
 local SSDP_MULTICAST_PORT = 1900
@@ -47,7 +48,8 @@ function Ssdp.parse_raw_response(val)
   -- check first line assuming it's the HTTP Status Line, which if not is invalid
   local status_line = string.match(val, "([^\r\n]*)\r\n")
   if not (status_line and string.match(status_line, "HTTP/1.1 200 OK")) then
-    return nil, string.format("SSDP Response HTTP Status Line missing or not '200 OK': %q", status_line)
+    return nil,
+      string.format("SSDP Response HTTP Status Line missing or not '200 OK': %q", status_line)
   end
   -- strip status line from payload
   val = string.gsub(val, "HTTP/1.1 200 OK\r\n", "", 1)
@@ -95,7 +97,8 @@ function _stream_mt:next()
   -- We retain an interval of 1 second. Since this is an iterator implementation,
   -- we statefully update some time-keeping in the table every time the iterator is called,
   -- opening the loop with a multicast query if one second has elapsed.
-  local should_send = self.queries_sent <= self.num_multicast_queries and self.elapsed_since_last_send >= 1
+  local should_send = self.queries_sent <= self.num_multicast_queries
+    and self.elapsed_since_last_send >= 1
   if should_send then
     log.trace("Performing M-SEARCH Multicast")
     self.handle:multicast_m_search()
@@ -112,7 +115,9 @@ function _stream_mt:next()
     local next_time_remaining = math.max(0, self.handle.search_end_time - socket.gettime())
     -- timeout + done criteria
     if next_time_remaining == 0 and self.queries_sent >= self.num_multicast_queries then
-      log.trace("All queries sent and search time limit has elapsed, terminating search result stream")
+      log.trace(
+        "All queries sent and search time limit has elapsed, terminating search result stream"
+      )
       return nil, "complete"
     end
     -- timeout, done criteria *not* satisfied
@@ -158,7 +163,7 @@ function _ssdp_mt:register_search_term(term, kwargs)
     enabled = false,
     required_headers = (kwargs and kwargs.required_headers) or {},
     post_processor = kwargs and kwargs.post_processor,
-    validator = kwargs and kwargs.validator
+    validator = kwargs and kwargs.validator,
   }
 end
 
@@ -199,7 +204,7 @@ function _ssdp_mt:multicast_m_search()
       'MAN: "ssdp:discover"', -- yes, there are really supposed to be quotes in this one
       string.format("MX: %s", self.mx),
       string.format("ST: %s", term),
-      "\r\n"
+      "\r\n",
     }, "\r\n")
 
     local _, send_err = self.sock:sendto(multicast_msg, SSDP_MULTICAST_IP, SSDP_MULTICAST_PORT)
@@ -223,7 +228,9 @@ end
 ---parsed HTTP headers will be returned.
 ---@return Result<SsdpSearchResponse|any,string>?
 function _ssdp_mt:next_msearch_response()
-  local time_remaining = (self.search_end_time and math.max(0, self.search_end_time - socket.gettime())) or nil
+  local time_remaining = (
+    self.search_end_time and math.max(0, self.search_end_time - socket.gettime())
+  ) or nil
   self.time_remaining = time_remaining
   self.sock:settimeout(time_remaining)
 
@@ -251,7 +258,12 @@ function _ssdp_mt:next_msearch_response()
   local response_search_term = headers:get_one("st")
 
   if not (type(response_search_term) == "string" and self.search_terms[response_search_term]) then
-    return Err(string.format("SSDP Reply search term %s didn't match any registered search terms", response_search_term))
+    return Err(
+      string.format(
+        "SSDP Reply search term %s didn't match any registered search terms",
+        response_search_term
+      )
+    )
   end
 
   -- SSDP replies will have a `Location:` header that contains a URI, and *can* contain `AL:` header(s)
@@ -260,12 +272,16 @@ function _ssdp_mt:next_msearch_response()
   -- don't have access to DNS in edge drivers, we don't generalize our logic for that, and we'd treat
   -- a hostname as a mismatch.
   local possible_locations = {}
-  local location_candidates = table.pack(headers:get_one("location"), table.unpack(headers:get_all("al") or {}))
+  local location_candidates =
+    table.pack(headers:get_one("location"), table.unpack(headers:get_all("al") or {}))
 
   if #location_candidates < 1 then
-    return
-        Err(string.format("Unable to locate any Location or AL header lines in SSDP response for term %s",
-          response_search_term))
+    return Err(
+      string.format(
+        "Unable to locate any Location or AL header lines in SSDP response for term %s",
+        response_search_term
+      )
+    )
   end
 
   for _, location in ipairs(location_candidates) do
@@ -276,31 +292,46 @@ function _ssdp_mt:next_msearch_response()
   end
 
   if possible_locations[recv_ip_or_err] == nil then
-    return
-        Err(string.format("IP addres [%s] from socket receivefrom doesn't match any of the reply locations: %s",
-          table.concat(location_candidates, ", ")))
+    return Err(
+      string.format(
+        "IP addres [%s] from socket receivefrom doesn't match any of the reply locations: %s",
+        table.concat(location_candidates, ", ")
+      )
+    )
   end
 
   local ctx_for_response = self.search_terms[response_search_term]
 
   if ctx_for_response == nil then
-    return Err(string.format("Search term %s doesn't have a valid handler context", response_search_term))
+    return Err(
+      string.format("Search term %s doesn't have a valid handler context", response_search_term)
+    )
   end
 
-  if ctx_for_response.required_headers and #(ctx_for_response.required_headers) > 0 then
+  if ctx_for_response.required_headers and #ctx_for_response.required_headers > 0 then
     local success, missing = Ssdp.check_headers_contain(headers, ctx_for_response.required_headers)
 
     if not success then
-      return Err(string.format("Response for term %s was missing headers: %s", response_search_term,
-        table.concat(missing, ", ")))
+      return Err(
+        string.format(
+          "Response for term %s was missing headers: %s",
+          response_search_term,
+          table.concat(missing, ", ")
+        )
+      )
     end
   end
 
   if type(ctx_for_response.validator) == "function" then
     local valid, reason = ctx_for_response.validator(headers)
     if not valid then
-      return Err(string.format("Response to search term %s failed validation with reason: %s", response_search_term,
-        reason))
+      return Err(
+        string.format(
+          "Response to search term %s failed validation with reason: %s",
+          response_search_term,
+          reason
+        )
+      )
     end
   end
 
@@ -314,16 +345,28 @@ end
 ---@param kind "recvr"|"sendr"
 ---@param waker fun()|nil
 function _ssdp_mt:setwaker(kind, waker)
-  assert(kind == "recvr",
-    string.format("setwaker: SSDP search can only wake on receive readiness, got unsupported wake kind: %s.", kind))
+  assert(
+    kind == "recvr",
+    string.format(
+      "setwaker: SSDP search can only wake on receive readiness, got unsupported wake kind: %s.",
+      kind
+    )
+  )
 
-  assert(self.waker_ref == nil or waker == nil,
-    "Waker already set, cannot await SSDP serach instance from multiple locations.")
+  assert(
+    self.waker_ref == nil or waker == nil,
+    "Waker already set, cannot await SSDP serach instance from multiple locations."
+  )
 
   self.waker_ref = waker
   self._wake = function(ssdp_search_wrapper, wake_kind, ...)
-    assert(wake_kind == "recvr",
-      string.format("wake: SSDP search can only wake on receive readiness, got unsupported wake kind: %s.", wake_kind))
+    assert(
+      wake_kind == "recvr",
+      string.format(
+        "wake: SSDP search can only wake on receive readiness, got unsupported wake kind: %s.",
+        wake_kind
+      )
+    )
     if type(ssdp_search_wrapper.waker_ref) == "function" then
       ssdp_search_wrapper.waker_ref(...)
       ssdp_search_wrapper.waker_ref = nil
@@ -336,8 +379,10 @@ function _ssdp_mt:setwaker(kind, waker)
 end
 
 function _ssdp_mt:settimeout(timeout)
-  assert(timeout == nil or type(timeout) == "number",
-    string.format("expected number|nil, for timeout, received %s", type(timeout)))
+  assert(
+    timeout == nil or type(timeout) == "number",
+    string.format("expected number|nil, for timeout, received %s", type(timeout))
+  )
   self.timeout = timeout
   self.sock:settimeout(timeout)
 end
@@ -394,10 +439,14 @@ function Ssdp.new_search_instance(mx)
     return nil, bind_err
   end
 
-  return
-      setmetatable(
-        { search_terms = {}, sock = udp_sock, inner_sock = udp_sock.inner_sock, mx = mx or SSDP_DEFAULT_MX, search_end_time = nil },
-        _ssdp_mt), nil
+  return setmetatable({
+    search_terms = {},
+    sock = udp_sock,
+    inner_sock = udp_sock.inner_sock,
+    mx = mx or SSDP_DEFAULT_MX,
+    search_end_time = nil,
+  }, _ssdp_mt),
+    nil
 end
 
 return Ssdp

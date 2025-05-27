@@ -1,4 +1,3 @@
-local log = require "log"
 ---@diagnostic disable: duplicate-doc-alias, duplicate-doc-field, invisible, duplicate-set-field
 -- Copyright 2025 SmartThings
 --

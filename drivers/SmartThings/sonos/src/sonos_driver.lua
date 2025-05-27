@@ -16,19 +16,35 @@ local SonosDisco = require "disco"
 local SonosDriverLifecycleHandlers = require "lifecycle_handlers"
 local SonosState = require "sonos_state"
 
+local ONE_HOUR_IN_SECONDS = 3600
+
 ---@class SonosDriver: Driver
 ---
 ---@field public datastore table<string, any> driver persistent store
+---@field public hub_augmented_driver_data table<string, any> augmented data store
 ---@field public dni_to_device_id table<string,string>
 ---@field public get_devices fun(self: SonosDriver): SonosDevice[]
 ---@field public get_device_info fun(self: SonosDriver, id: string): SonosDevice?
 ---
 ---@field public sonos SonosState Local state related to the sonos systems
 ---@field public discovery fun(driver: SonosDriver, opts: table, should_continue: fun(): boolean)
+---@field private oauth_token_bus cosock.Bus.Sender bus for broadcasting new oauth tokens that arrive on the environment channel
+---@field private oauth { token: {accessToken: string, expiresAt: number}, endpoint_app_info: { state: "connected"|"disconnected" }, force_oauth: boolean? } cached OAuth info
+---@field private waiting_for_oauth_token boolean
+---@field private startup_state_received boolean
+---@field private devices_waiting_for_startup_state SonosDevice[]
 ---
 ---@field public ssdp_task SonosPersistentSsdpTask?
 ---@field private ssdp_event_thread_handle table?
 local SonosDriver = {}
+
+function SonosDriver:has_received_startup_state()
+  return self.startup_state_received
+end
+
+function SonosDriver:queue_device_init_for_startup_state(device)
+  table.insert(self.devices_waiting_for_startup_state, device)
+end
 
 ---@param household_id HouseholdId
 ---@param player_id PlayerId
@@ -59,32 +75,306 @@ function SonosDriver:get_device_by_dni(dni)
   return nil, string.format("Unable to find device record for DNI %s", dni)
 end
 
-function SonosDriver:get_api_key()
-  return SonosApi.api_keys.s1_key
+---@param update_key string
+---@param decoded any
+function SonosDriver:handle_augmented_data_change(update_key, decoded)
+  if update_key == "endpointAppInfo" then
+    self.oauth.endpoint_app_info = decoded
+  elseif update_key == "sonosOAuthToken" then
+    self.oauth.token = decoded
+    self.waiting_for_oauth_token = false
+    self.oauth_token_bus:send(decoded)
+  elseif update_key == "force_oauth" then
+    self.oauth.force_oauth = decoded
+  else
+    log.debug(string.format("received upsert of unexpected key: %s", update_key))
+  end
+end
+
+---@return boolean
+function SonosDriver:is_waiting_for_oauth_token()
+  return self.waiting_for_oauth_token
+end
+
+---@return (cosock.Bus.Subscription)? receiver the subscription receiver if the bus hasn't been closed, nil if closed
+function SonosDriver:oauth_token_event_subscribe()
+  return self.oauth_token_bus:subscribe()
+end
+
+function SonosDriver:update_after_startup_state_received()
+  for k, v in pairs(self.hub_augmented_driver_data) do
+    local decode_success, decoded = pcall(json.decode, v)
+    if decode_success then
+      self:handle_augmented_data_change(k, decoded)
+    end
+  end
+end
+
+---@param update_key "endpointAppInfo"|"sonosOAuthToken"|string
+function SonosDriver:handle_augmented_store_delete(update_key)
+  if update_key == "endpointAppInfo" then
+    if update_key == "endpointAppInfo" then
+      log.trace "deleting endpoint app info"
+      self.oauth.endpoint_app_info = nil
+    elseif update_key == "sonosOAuthToken" then
+      log.trace "deleting OAuth Token"
+      self.oauth.token = nil
+    elseif update_key == "force_oauth" then
+      log.trace "deleting Force OAuth"
+      self.oauth.force_oauth = nil
+    else
+      log.debug(string.format("received delete of unexpected key: %s", update_key))
+    end
+  end
+end
+
+---@param update_key "endpointAppInfo"|"sonosOAuthToken"|string
+---@param update_value string
+function SonosDriver:handle_augmented_store_upsert(update_key, update_value)
+  local decode_success, decoded = pcall(json.decode, update_value)
+  if not decode_success then
+    log.warn(
+      string.format(
+        "Unable to decode augmented data update payload: %s",
+        st_utils.stringify_table {
+          key = update_key,
+          decode_result = decoded,
+        }
+      )
+    )
+    return
+  end
+  self:handle_augmented_data_change(update_key, decoded)
+end
+
+---@param update_kind "snapshot"|"upsert"|"delete"
+---@param update_key "endpointAppInfo"|"sonosOAuthToken"
+---@param update_value string
+function SonosDriver:notify_augmented_data_changed(update_kind, update_key, update_value)
+  local already_connected = self.oauth
+    and self.oauth.endpoint_app_info
+    and self.oauth.endpoint_app_info.state == "connected"
+  log.info(string.format("Already connected? %s", already_connected))
+  if update_kind == "snapshot" then
+    self:update_after_startup_state_received()
+  elseif update_kind == "delete" then
+    self:handle_augmented_store_delete(update_key)
+  elseif update_kind == "upsert" then
+    self:handle_augmented_store_upsert(update_key, update_value)
+  else
+    log.debug(
+      st_utils.stringify_table(
+        { kind = update_kind, key = update_key, value = "..." },
+        "unexpected event kind in augmented data change event",
+        true
+      )
+    )
+  end
+
+  if
+    self.oauth.endpoint_app_info
+    and self.oauth.endpoint_app_info.state == "connected"
+    and not already_connected
+  then
+    local _, err = self:request_oauth_token()
+    if err then
+      log.error(string.format("Request OAuth token error: %s", err))
+    end
+  end
+end
+
+function SonosDriver:handle_startup_state_received()
+  self:start_ssdp_event_task()
+  self:notify_augmented_data_changed "snapshot"
+  self.startup_state_received = true
+  for _, device in pairs(self.devices_waiting_for_startup_state) do
+    SonosDriverLifecycleHandlers.initialize_device(self, device)
+  end
+  self.devices_waiting_for_startup_state = {}
+end
+
+function SonosDriver:get_fallback_api_key()
+  if self.oauth and self.oauth.force_oauth then
+    return SonosApi.api_keys.oauth_key
+  else
+    return SonosApi.api_keys.s1_key
+  end
+end
+
+--- Check if the driver is able to authenticate against the given household_id
+--- with what credentials it currently possesses.
+---@param info_or_device SonosDevice | { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }
+---@return boolean? auth_success true if the driver can authenticate against the provided arguments, false otherwise
+---@return string? api_key_or_err if `auth_success` is true, this will be the API key that is known to auth. If `auth_success` is false, this will be nil. If `auth_success` is `nil`, this will be an error message.
+function SonosDriver:check_auth(info_or_device)
+  local maybe_token, _ = self:get_oauth_token()
+
+  local token_valid = self.oauth
+    and self.oauth.endpoint_app_info
+    and self.oauth.endpoint_app_info.state == "connected"
+    and maybe_token ~= nil
+  if token_valid then
+    return true, SonosApi.api_keys.oauth_key
+  elseif self.oauth.force_oauth then
+    return false
+  end
+
+  local rest_url, household_id
+  if type(info_or_device) == "table" then
+    if
+      type(info_or_device.ssdp_info) == "table" and type(info_or_device.discovery_info) == "table"
+    then
+      ---@cast info_or_device { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo }
+      rest_url = net_url.parse(info_or_device.discovery_info.restUrl)
+      household_id = info_or_device.ssdp_info.household_id
+    elseif
+      type(info_or_device.get_field) == "function"
+      and type(info_or_device.set_field) == "function"
+      and info_or_device.id
+    then
+      ---@cast info_or_device SonosDevice
+      rest_url = net_url.parse(info_or_device:get_field(PlayerFields.REST_URL))
+      household_id = self.sonos:get_sonos_ids_for_device(info_or_device)
+    end
+  end
+
+  if not (rest_url and household_id) then
+    return nil,
+      string.format(
+        "unable to determine REST API call to check auth for %s",
+        (
+          (
+            type(info_or_device) == "table"
+            and (
+              info_or_device.label
+              or info_or_device.id
+              or info_or_device.discovery_info.device.name
+            )
+          ) or "<unknown Sonos device>"
+        )
+      )
+  end
+
+  for _, api_key in pairs(SonosApi.api_keys) do
+    local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
+    local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, household_id, headers)
+    if not response or response_err then
+      return nil,
+        string.format("Error while making REST API call: %s", (response_err or "<unknown error>"))
+    end
+
+    if response._objectType == "globalError" and response.errorCode ~= "ERROR_NOT_AUTHORIZED" then
+      return nil, string.format("Unexpected error body: %s", st_utils.stringify_table(response))
+    end
+
+    if response._objectType == "groups" then
+      return true, api_key
+    end
+  end
+
+  return false
+end
+
+---@return any? ret nil on permissions violation
+---@return string? error nil on success
+function SonosDriver:request_oauth_token()
+  local maybe_token, maybe_err = self:get_oauth_token()
+  if maybe_err then
+    log.warn(string.format("get oauth token error: %s", maybe_err))
+  end
+  if type(maybe_token) == "table" and type(maybe_token.accessToken) == "string" then
+    self.oauth_token_bus:send(maybe_token)
+  end
+  local result, err = security.get_sonos_oauth()
+  if not result then
+    return nil, string.format("Error requesting OAuth token via Security API: %s", err)
+  end
+  self.waiting_for_oauth_token = true
+  return result, err
+end
+
+---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
+---@return "token expired"|"no token"|nil reason the reason a token was not provided, nil if there is a valid token available
+function SonosDriver:get_oauth_token()
+  local decode_success, maybe_token =
+    pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
+  if
+    decode_success
+    and type(maybe_token) == "table"
+    and type(maybe_token.accessToken) == "string"
+    and type(maybe_token.expiresAt) == "number"
+  then
+    self.oauth.token = maybe_token
+  elseif self.hub_augmented_driver_data.sonosOAuthToken ~= nil then
+    log.warn(string.format("Unable to JSON decode token from hub augmented data: %s", maybe_token))
+  end
+
+  if self.oauth.token then
+    local expiration = math.floor(self.oauth.token.expiresAt / 1000)
+    local now = os.time()
+    -- token has not expired yet
+    if now < expiration then
+      -- token is expiring soon, so we pre-emptively refresh
+      if math.abs(expiration - now) < ONE_HOUR_IN_SECONDS then
+        local result, err = self:request_oauth_token()
+        if not result then
+          log.warn(string.format("Error requesting OAuth token via Security API: %s", err))
+        end
+      end
+      return self.oauth.token
+    else
+      return nil, "token expired"
+    end
+  end
+
+  return nil, "no token"
 end
 
 ---Create a cosock task that handles events from the persistent SSDP task.
 ---@param driver SonosDriver
 ---@param discovery_event_subscription cosock.Bus.Subscription
-local function make_ssdp_event_handler(driver, discovery_event_subscription)
+---@param oauth_token_subscription cosock.Bus.Subscription
+local function make_ssdp_event_handler(
+  driver,
+  discovery_event_subscription,
+  oauth_token_subscription
+)
   return function()
+    local unauthorized = {}
     local discovered = {}
     while true do
       local recv_ready, _, select_err =
-        cosock.socket.select({ discovery_event_subscription }, nil, nil)
+        cosock.socket.select({ discovery_event_subscription, oauth_token_subscription }, nil, nil)
 
       if recv_ready then
         for _, receiver in ipairs(recv_ready) do
-
+          if receiver == oauth_token_subscription then
+            local token_evt, receive_err = oauth_token_subscription:receive()
+            if not token_evt then
+              log.warn(string.format("Error on token event bus receive: %s", receive_err))
+            else
+              for _, event in pairs(unauthorized) do
+                driver.ssdp_task:publish(event)
+              end
+              unauthorized = {}
+            end
+          end
           if receiver == discovery_event_subscription then
             ---@type { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }?
             local event, recv_err = discovery_event_subscription:receive()
 
             if event then
               local unique_key = utils.sonos_unique_key_from_ssdp(event.ssdp_info)
-              if event.force_refresh or not discovered[unique_key] then
-                local success, handle_err = driver:handle_player_discovery_info(SonosApi.api_keys.s1_key, event)
+              if
+                event.force_refresh or not (unauthorized[unique_key] or discovered[unique_key])
+              then
+                local _, api_key = driver:check_auth(event)
+                local success, handle_err, err_code =
+                  driver:handle_player_discovery_info(api_key, event)
                 if not success then
+                  if err_code == "ERROR_NOT_AUTHORIZED" then
+                    unauthorized[unique_key] = event
+                  end
                   log.warn(string.format("Failed to handle discovered speaker: %s", handle_err))
                 else
                   discovered[unique_key] = true
@@ -111,8 +401,9 @@ function SonosDriver:start_ssdp_event_task()
   if ssdp_task then
     self.ssdp_task = ssdp_task
     local ssdp_task_subscription = ssdp_task:subscribe()
+    local oauth_token_subscription = self:oauth_token_event_subscribe()
     self.ssdp_event_thread_handle =
-      cosock.spawn(make_ssdp_event_handler(self, ssdp_task_subscription))
+      cosock.spawn(make_ssdp_event_handler(self, ssdp_task_subscription, oauth_token_subscription))
   end
 end
 
@@ -129,14 +420,19 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
   -- via websocket at all. So we ignore all bonded non-primary speakers
   if #info.ssdp_info.group_id == 0 then
     return nil,
-      string.format("Player %s is a non-primary bonded Sonos device, ignoring", info.discovery_info.device.name)
+      string.format(
+        "Player %s is a non-primary bonded Sonos device, ignoring",
+        info.discovery_info.device.name
+      )
   end
 
-  api_key = api_key or self:get_api_key()
+  api_key = api_key or self:get_fallback_api_key()
 
   local rest_url = net_url.parse(info.discovery_info.restUrl)
-  local headers = SonosApi.make_headers(api_key)
-  local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, info.ssdp_info.household_id, headers)
+  local maybe_token, no_token_reason = self:get_oauth_token()
+  local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
+  local response, response_err =
+    SonosApi.RestApi.get_groups_info(rest_url, info.ssdp_info.household_id, headers)
 
   if response_err then
     return nil, string.format("Error while making REST API call: %s", response_err)
@@ -151,9 +447,14 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
     )
 
     if additional_info then
-      error_string = string.format("%s\n\tadditional information: %s", error_string, additional_info)
+      error_string =
+        string.format("%s\n\tadditional information: %s", error_string, additional_info)
     end
 
+    if no_token_reason then
+      error_string =
+        string.format("%s\n\tinvalid token information: %s", error_string, no_token_reason)
+    end
 
     return nil, error_string, response.errorCode
   end
@@ -172,7 +473,8 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
 
   local device_to_update, device_mac_addr
 
-  local maybe_device_id = self.sonos:get_device_id_for_player(info.ssdp_info.household_id, info.discovery_info.playerId)
+  local maybe_device_id =
+    self.sonos:get_device_id_for_player(info.ssdp_info.household_id, info.discovery_info.playerId)
 
   if device then
     device_to_update = device
@@ -226,7 +528,9 @@ local function do_refresh(driver, device, cmd)
   log.trace("Refreshing " .. device.label)
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
   if sonos_conn == nil then
-    log.error(string.format("Failed to do refresh, no sonos connection for device: [%s]", device.label))
+    log.error(
+      string.format("Failed to do refresh, no sonos connection for device: [%s]", device.label)
+    )
     return
   end
 
@@ -240,11 +544,18 @@ local function do_refresh(driver, device, cmd)
 end
 
 function SonosDriver.new_driver_template()
+  local oauth_token_bus = cosock.bus()
+
   local template = {
     sonos = SonosState.instance(),
     discovery = SonosDisco.discover,
-        lifecycle_handlers = SonosDriverLifecycleHandlers,
+    oauth_token_bus = oauth_token_bus,
+    oauth = {},
+    waiting_for_oauth_token = false,
+    startup_state_received = false,
+    devices_waiting_for_startup_state = {},
     dni_to_device_id = utils.new_mac_address_keyed_table(),
+    lifecycle_handlers = SonosDriverLifecycleHandlers,
     capability_handlers = {
       [capabilities.refresh.ID] = {
         [capabilities.refresh.commands.refresh.NAME] = do_refresh,

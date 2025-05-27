@@ -1,4 +1,3 @@
-local socket = require "cosock.socket"
 ---@module 'result'
 
 ---@class cosock.Stream
@@ -57,7 +56,7 @@ function Stream.wrap(selectable, receive_fn)
   local base_stream = setmetatable({
     terminated = false,
     selectable = selectable,
-    receive_fn = receive_fn
+    receive_fn = receive_fn,
   }, _stream_mt)
 
   -- We create an index that can pass through to the selectable object, which is
@@ -77,7 +76,7 @@ local function curried_wrap(receive_fn_key)
 end
 
 Stream = setmetatable(Stream, {
-  __index = function(tbl, key)
+  __index = function(_, key)
     if rawget(Stream, key) ~= nil then
       return rawget(Stream, key)
     end
@@ -87,7 +86,7 @@ Stream = setmetatable(Stream, {
     if maybe_wrapped_fn then
       return curried_wrap(maybe_wrapped_fn)
     end
-  end
+  end,
 })
 
 return Stream

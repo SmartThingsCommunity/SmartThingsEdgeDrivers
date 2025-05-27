@@ -1,7 +1,7 @@
 local cosock = require "cosock"
 local log = require "log"
-local st_utils = require "st.utils"
 local ssdp = require "ssdp"
+local st_utils = require "st.utils"
 
 local utils = require "utils"
 
@@ -46,7 +46,7 @@ local function post_process_response(response)
     response:get_one("groupinfo.smartspeaker.audio"):match('gc=(.*); gid=(.*); gname="(.*)"')
   local household_id = response:get_one("household.smartspeaker.audio")
   local wss_url = response:get_one("websock.smartspeaker.audio")
-  local player_id, redundant_st = response:get_one("usn"):match("uuid:([^:]*)::(urn:.*)$")
+  local player_id = response:get_one("usn"):match("uuid:([^:]*)::(urn:.*)$")
   local expires_in = tonumber(response:get_one("cache-control"):match("max%-age%s*=%s*(%d*)"))
   ---@type SonosSSDPInfo
   local ret = setmetatable({
@@ -71,21 +71,23 @@ local _ControlMessageType = {
   SEARCH = 0,
 }
 
----@class ControlMessage
----@field package _type _ControlMessageType
-local ControlMessageDef = {}
-
 ---@param ssdp_search_handle SsdpSearchHandle
 ---@param control_rx table
 ---@param status_tx table
 ---@param on_search_result_cb fun(result: SonosSSDPInfo)
 ---@return function
-local function make_persistent_task_impl(ssdp_search_handle, control_rx, status_tx, on_search_result_cb)
+local function make_persistent_task_impl(
+  ssdp_search_handle,
+  control_rx,
+  status_tx,
+  on_search_result_cb
+)
   return function()
     ssdp_search_handle:multicast_m_search()
     local interval_timer = cosock.timer.create_interval(SSDP_SCAN_INTERVAL_SECONDS)
     while true do
-      local recv_ready, _, select_err = cosock.socket.select({ ssdp_search_handle, control_rx, interval_timer })
+      local recv_ready, _, select_err =
+        cosock.socket.select({ ssdp_search_handle, control_rx, interval_timer })
 
       if type(recv_ready) ~= "table" or (select_err and select_err ~= "timeout") then
         log.warn(string.format("Select error: %s", select_err))
@@ -271,26 +273,30 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
       if not discovery_info then
         log.error(string.format("Error getting discovery info from SSDP response: %s", err))
       else
-        local unified_info = { ssdp_info = sonos_ssdp_info, discovery_info = discovery_info, force_refresh = true }
+        local unified_info =
+          { ssdp_info = sonos_ssdp_info, discovery_info = discovery_info, force_refresh = true }
         task_handle.player_info_by_sonos_ids[unique_key] = unified_info
         info_to_send = unified_info
       end
     else
-      info_to_send =
-        { ssdp_info = maybe_known.ssdp_info, discovery_info = maybe_known.discovery_info, force_refresh = false }
+      info_to_send = {
+        ssdp_info = maybe_known.ssdp_info,
+        discovery_info = maybe_known.discovery_info,
+        force_refresh = false,
+      }
     end
 
     if info_to_send then
-      log.debug("sending on event bus")
       event_bus:send(info_to_send)
       local mac_addr = utils.extract_mac_addr(info_to_send.discovery_info.device)
-      log.debug("collecting waiting handles")
       local waiting_handles = task_handle.waiting_for_unique_key[unique_key] or {}
       log.debug(st_utils.stringify_table(waiting_handles, "waiting for unique keys", true))
       for _, v in pairs(task_handle.waiting_for_unique_key[mac_addr] or {}) do
         table.insert(waiting_handles, v)
       end
-      log.debug(st_utils.stringify_table(waiting_handles, "waiting for unique keys and mac addresses", true))
+      log.debug(
+        st_utils.stringify_table(waiting_handles, "waiting for unique keys and mac addresses", true)
+      )
       for _, reply_tx in ipairs(waiting_handles) do
         reply_tx:send(info_to_send)
       end

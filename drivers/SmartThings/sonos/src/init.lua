@@ -22,8 +22,6 @@ if driver.datastore["dni_to_device_id"] ~= nil then
   driver.datastore["dni_to_device_id"] = nil
 end
 
-driver:start_ssdp_event_task()
-
 log.info "Starting Sonos run loop"
 driver:run()
 log.info "Exiting Sonos run loop"
