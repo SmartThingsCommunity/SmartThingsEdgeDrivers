@@ -1,157 +1,18 @@
 local capabilities = require "st.capabilities"
 local cosock = require "cosock"
 local log = require "log"
-local st_utils = require "st.utils"
-
+local net_url = require "net.url"
 local swGenCapability = capabilities["stus.softwareGeneration"]
 
 local CmdHandlers = require "api.cmd_handlers"
 local SonosApi = require "api"
 local SonosDisco = require "disco"
-local SonosRestApi = require "api.rest"
+local SonosDriverLifecycleHandlers = require "lifecycle_handlers"
 local SonosState = require "types".SonosState
-local SSDP = require "ssdp"
 local PlayerFields = require "fields".SonosPlayerFields
 local SonosConnection = require "api.sonos_connection"
 local utils = require "utils"
-
--- We use the same handler for added and init here because at the time of authoring
--- this driver, there is a bug with LAN Edge Drivers where `init` may not be called
--- on every device that gets created using `try_create_device`. This makes sure that
--- a device is fully initialized whether we come from fresh join or restart.
--- See: https://smartthings.atlassian.net/browse/CHAD-9683
-local function _initialize_device(driver, device)
-  if
-    not (
-      driver:get_device_by_dni(device.device_network_id)
-      and driver:get_device_by_dni(device.device_network_id).id == device.id
-    )
-  then
-    driver.dni_to_device_id[device.device_network_id] = device.id
-  end
-  if not device:get_field(PlayerFields._IS_SCANNING) then
-    device.log.debug("Starting Scan in _initialize_device for %s", device.label)
-    device:set_field(PlayerFields._IS_SCANNING, true)
-    cosock.spawn(function()
-      if not device:get_field(PlayerFields._IS_INIT) then
-        log.trace(string.format("%s setting up device", device.label))
-        local is_already_found = (
-          (driver.found_ips and driver.found_ips[device.device_network_id])
-          or driver.sonos:is_player_joined(device.device_network_id)
-        ) and driver._field_cache[device.device_network_id]
-
-        if not is_already_found then
-          device.log.debug(
-            string.format("Rescanning for player with DNI %s", device.device_network_id)
-          )
-          device:offline()
-          local success = false
-
-          local backoff = utils.backoff_builder(360, 1)
-          while not success do
-            success = driver:find_player_for_device(device)
-            if not success then
-              device.log.warn_with(
-                { hub_logs = true },
-                string.format(
-                  "Couldn't find Sonos Player [%s] during SSDP scan, trying again shortly",
-                  device.label
-                )
-              )
-              cosock.socket.sleep(backoff())
-            end
-          end
-        end
-
-        device.log.trace("Setting persistent fields")
-        local fields = driver._field_cache[device.device_network_id]
-        driver:update_fields_from_ssdp_scan(device, fields)
-
-        device:set_field(PlayerFields._IS_INIT, true)
-      end
-
-      local sonos_conn = device:get_field(PlayerFields.CONNECTION) --- @type SonosConnection
-
-      if not sonos_conn then
-        log.trace("Setting transient fields")
-        -- device is offline until the websocket connection is established
-        device:offline()
-        sonos_conn = SonosConnection.new(driver, device)
-        device:set_field(PlayerFields.CONNECTION, sonos_conn)
-      end
-
-      if not sonos_conn:is_running() then
-        -- device is offline until the websocket connection is established
-        device:offline()
-        sonos_conn:start()
-      else
-        sonos_conn:refresh_subscriptions()
-      end
-    end, string.format("%s device init and SSDP scan", device.label))
-  end
-end
-
---- @param driver SonosDriver
---- @param device SonosDevice
-local function device_added(driver, device)
-  log.trace(string.format("%s device added", device.label))
-  _initialize_device(driver, device)
-end
-
-local function emit_component_event_no_cache(device, component, capability_event)
-  if not device:supports_capability(capability_event.capability, component.id) then
-    local err_msg = string.format(
-      "Attempted to generate event for %s.%s but it does not support capability %s",
-      device.id,
-      component.id,
-      capability_event.capability.NAME
-    )
-    log.warn_with({ hub_logs = true }, err_msg)
-    return false, err_msg
-  end
-  local event, err =
-    capabilities.emit_event(device, component.id, device.capability_channel, capability_event)
-  if err ~= nil then
-    log.warn_with({ hub_logs = true }, err)
-  end
-  return event, err
-end
-
---- @param driver SonosDriver
---- @param device SonosDevice
-local function device_init(driver, device)
-  log.trace(string.format("%s device init", device.label))
-  _initialize_device(driver, device)
-
-  -- Remove usage of the state cache for sonos devices to avoid large datastores
-  device:set_field("__state_cache", nil, { persist = true })
-  device:extend_device("emit_component_event", emit_component_event_no_cache)
-
-  device:emit_event(capabilities.mediaPlayback.supportedPlaybackCommands({
-    capabilities.mediaPlayback.commands.play.NAME,
-    capabilities.mediaPlayback.commands.pause.NAME,
-    capabilities.mediaPlayback.commands.stop.NAME,
-  }))
-
-  device:emit_event(capabilities.mediaTrackControl.supportedTrackControlCommands({
-    capabilities.mediaTrackControl.commands.nextTrack.NAME,
-    capabilities.mediaTrackControl.commands.previousTrack.NAME,
-  }))
-end
-
---- @param driver SonosDriver
---- @param device SonosDevice
-local function device_removed(driver, device)
-  log.trace(string.format("%s device removed", device.label))
-  driver.dni_to_device_id[device.device_network_id] = nil
-  local player_id = device:get_field(PlayerFields.PLAYER_ID)
-  local sonos_conn = device:get_field(PlayerFields.CONNECTION)
-  if sonos_conn and sonos_conn:is_running() then
-    sonos_conn:stop()
-  end
-  driver.sonos:mark_player_as_removed(device:get_field(PlayerFields.PLAYER_ID))
-  driver._player_id_to_device[player_id] = nil
-end
+local sonos_ssdp = require "api.sonos_ssdp_discovery"
 
 local function do_refresh(driver, device, cmd)
   log.trace("Refreshing " .. device.label)
@@ -198,56 +59,63 @@ function SonosDriver:get_device_by_dni(dni)
   return self:get_device_info(device_uuid)
 end
 
---- @param device SonosDevice
---- @param should_continue function|nil
-function SonosDriver:find_player_for_device(device, should_continue)
-  device.log.info(
-    string.format("Looking for Sonos Player on network for device (%s)", device.device_network_id)
-  )
-  local player_found = false
+---@param header SonosResponseHeader
+---@param body SonosGroupsResponseBody
+function SonosDriver:update_group_state(header, body)
+  self.sonos:update_household_info(header.householdId, body)
+end
 
-  -- Because SSDP is UDP/unreliable, sometimes we can miss a broadcast.
-  -- If the user doesn't provide a should_continue condition then we
-  -- make one that just attempts it a handful of times.
-  if type(should_continue) ~= "function" then
-    should_continue = function()
-      return false
-    end
-  end
+---Create a cosock task that handles events from the persistent SSDP task.
+---@param driver SonosDriver
+---@param discovery_event_subscription cosock.Bus.Subscription
+local function make_ssdp_event_handler(driver, discovery_event_subscription)
+  return function()
+    local discovered = {}
+    while true do
+      local recv_ready, _, select_err =
+        cosock.socket.select({ discovery_event_subscription }, nil, nil)
 
-  local dni_equal = self.is_same_mac_address
-  repeat
-    --- @param ssdp_group_info SonosSSDPInfo
-    SSDP.search(SONOS_SSDP_SEARCH_TERM, function(ssdp_group_info)
-      self:handle_ssdp_discovery(
-        ssdp_group_info,
-        function(dni, inner_ssdp_group_info, player_info, group_info)
-          device.log.info(
-            string.format(
-              "Found device for Sonos search query with MAC addr %s, comparing to %s",
-              dni,
-              device.device_network_id
-            )
-          )
-          if dni_equal(dni, device.device_network_id) then
-            device.log.info(string.format("Found Sonos Player match for device"))
+      if recv_ready then
+        for _, receiver in ipairs(recv_ready) do
 
-            self._field_cache[dni] = {
-              household_id = inner_ssdp_group_info.household_id,
-              player_id = player_info.playerId,
-              wss_url = player_info.websocketUrl,
-              swGen = player_info.device.swGen,
-            }
+          if receiver == discovery_event_subscription then
+            ---@type { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }?
+            local event, recv_err = discovery_event_subscription:receive()
 
-            self.sonos:update_household_info(player_info.householdId, group_info)
-            player_found = true
+            if event then
+              local unique_key = utils.sonos_unique_key_from_ssdp(event.ssdp_info)
+              if event.force_refresh or not discovered[unique_key] then
+                local success, handle_err = driver:handle_player_discovery_info(SonosApi.api_keys.s1_key, event)
+                if not success then
+                  log.warn(string.format("Failed to handle discovered speaker: %s", handle_err))
+                else
+                  discovered[unique_key] = true
+                end
+              end
+            else
+              log.warn(string.format("Discovery event receive error: %s", recv_err))
+            end
           end
         end
-      )
-    end)
-  until player_found or (not should_continue())
+      else
+        log.warn(string.format("SSDP Event Handler Select Error: %s", select_err))
+      end
+    end
+  end,
+    "SSDP Event Handler"
+end
 
-  return player_found
+function SonosDriver:start_ssdp_event_task()
+  local ssdp_task, err = sonos_ssdp.spawn_persistent_ssdp_task()
+  if err then
+    log.error(string.format("Unable to create SSDP task: %s", err))
+  end
+  if ssdp_task then
+    self.ssdp_task = ssdp_task
+    local ssdp_task_subscription = ssdp_task:subscribe()
+    self.ssdp_event_thread_handle =
+      cosock.spawn(make_ssdp_event_handler(self, ssdp_task_subscription))
+  end
 end
 
 ---@param device SonosDevice
@@ -315,100 +183,122 @@ function SonosDriver:update_fields_from_ssdp_scan(device, fields)
   end
 end
 
-function SonosDriver:scan_for_ssdp_updates()
-  SSDP.search(SONOS_SSDP_SEARCH_TERM, function(ssdp_group_info)
-    self:handle_ssdp_discovery(
-      ssdp_group_info,
-      function(dni, inner_ssdp_group_info, player_info, group_info)
-        local current_cached_fields = self._field_cache[dni] or {}
+---@param api_key string
+---@param info { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }
+---@param device SonosDevice?
+---@return boolean|nil response nil or false on failure
+---@return nil|string error the error reason on failure, nil on success
+---@return nil|string error_code the Sonos error code, if available
+function SonosDriver:handle_player_discovery_info(api_key, info, device)
+  -- If the SSDP Group Info is an empty string, then that means it's the non-primary
+  -- speaker in a bonded set (e.g. a home theater system, a stereo pair, etc).
+  -- These aren't the same as speaker groups, and bonded speakers can't be controlled
+  -- via websocket at all. So we ignore all bonded non-primary speakers
+  if #info.ssdp_info.group_id == 0 then
+    return nil,
+      string.format("Player %s is a non-primary bonded Sonos device, ignoring", info.discovery_info.device.name)
+  end
 
-        ---@type SonosFieldCacheTable
-        local updated_fields = {
-          household_id = inner_ssdp_group_info.household_id,
-          player_id = player_info.playerId,
-          wss_url = player_info.websocketUrl,
-          swGen = player_info.device.swGen,
-        }
+  api_key = api_key or SonosApi.api_keys.s1_key
 
-        self._field_cache[dni] = updated_fields
-        self.sonos:update_household_info(player_info.householdId, group_info)
+  local rest_url = net_url.parse(info.discovery_info.restUrl)
+  local headers = SonosApi.make_headers(api_key)
+  local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, info.ssdp_info.household_id, headers)
 
-        if not utils.deep_table_eq(current_cached_fields, updated_fields) then
-          local device = self:get_device_by_dni(dni)
-          if device then
-            self:update_fields_from_ssdp_scan(device, updated_fields)
-          end
-        end
-      end
-    )
-  end)
-end
+  if response_err then
+    return nil, string.format("Error while making REST API call: %s", response_err)
+  end
 
----@param header SonosResponseHeader
----@param body SonosGroupsResponseBody
-function SonosDriver:update_group_state(header, body)
-  self.sonos:update_household_info(header.householdId, body)
-end
-
---- @param ssdp_group_info SonosSSDPInfo
---- @param callback? DiscoCallback
-function SonosDriver:handle_ssdp_discovery(ssdp_group_info, callback)
-  log.debug(
-    string.format(
-      "Looking for player info for SSDP search results %s",
-      st_utils.stringify_table(ssdp_group_info)
-    )
-  )
-  local player_info, err =
-    SonosRestApi.get_player_info(ssdp_group_info.ip, SonosApi.DEFAULT_SONOS_PORT)
-
-  if err then
-    log.error("Error querying player info: " .. err)
-  elseif player_info and player_info.playerId and player_info.householdId then
-    log.debug(
-      string.format(
-        "Looking for group info for player info %s",
-        st_utils.stringify_table(player_info)
-      )
-    )
-    local group_info, err = SonosRestApi.get_groups_info(
-      ssdp_group_info.ip,
-      SonosApi.DEFAULT_SONOS_PORT,
-      player_info.householdId
+  if response and response._objectType == "globalError" then
+    local additional_info = response.reason or response.wwwAuthenticate
+    local error_string = string.format(
+      '`getGroups` response error for player "%s":\n\tError Code: %s',
+      info.discovery_info.device.name,
+      response.errorCode
     )
 
-    if err or not group_info then
-      log.error("Error querying group info: " .. err)
-      return
+    if additional_info then
+      error_string = string.format("%s\n\tadditional information: %s", error_string, additional_info)
     end
 
-    log.trace(
-      string.format(
-        "Device %s serial number: %s",
-        player_info.device.name,
-        player_info.device.serialNumber
-      )
-    )
-    -- Extract the MAC Address from the serial number
-    local mac_addr, _ = player_info.device.serialNumber:match("(.*):.*"):gsub("-", "")
-    local dni = mac_addr
-    log.trace(
-      string.format("MAC of %s computed from serial number: %s", player_info.device.name, mac_addr)
-    )
+    return nil, error_string, response.errorCode
+  end
 
-    if type(callback) == "function" then
-      callback(dni, ssdp_group_info, player_info, group_info)
+  if response and response._objectType ~= "groups" then
+    return nil,
+      string.format(
+        "Unexpected response type to group info request: %s",
+        (response and response._objectType) or "<nil>"
+      )
+  end
+
+
+  --- @cast response SonosGroupsResponseBody
+  self.sonos:update_household_info(info.ssdp_info.household_id, response)
+
+  local device_to_update, device_mac_addr
+
+  device = device or self._player_id_to_device[info.discovery_info.playerId]
+
+  if device then
+    device_to_update = device
+    device_mac_addr = device_to_update.device_network_id
+  end
+
+  if not device_mac_addr then
+    device_mac_addr = utils.extract_mac_addr(info.discovery_info.device)
+  end
+
+  if not device_to_update then
+    local maybe_device_from_dni = self:get_device_by_dni(device_mac_addr)
+    if maybe_device_from_dni then
+      device_to_update = maybe_device_from_dni
     end
   end
+
+
+  local current_cached_fields = self._field_cache[device_mac_addr or ""] or {}
+
+  ---@type SonosFieldCacheTable
+  local updated_fields = {
+    household_id = info.ssdp_info.household_id,
+    player_id = info.discovery_info.playerId,
+    wss_url = info.discovery_info.websocketUrl,
+    swGen = info.discovery_info.device.swGen,
+  }
+
+  self._field_cache[device_mac_addr] = updated_fields
+
+  if device_to_update and not utils.deep_table_eq(current_cached_fields, updated_fields)then
+    self.dni_to_device_id[device_mac_addr] = device_to_update.id
+    self:update_fields_from_ssdp_scan(device_to_update, updated_fields)
+  else
+    local name = info.discovery_info.device.name
+      or info.discovery_info.device.modelDisplayName
+      or "Unknown Sonos Player"
+    local model = info.discovery_info.device.modelDisplayName or "Unknown Sonos Model"
+    local try_create_message = {
+      type = "LAN",
+      device_network_id = device_mac_addr,
+      manufacturer = "Sonos",
+      label = name,
+      model = model,
+      profile = "sonos-player",
+      vendor_provided_label = info.discovery_info.device.model,
+    }
+
+    self:try_create_device(try_create_message)
+  end
+  return true
 end
 
 function SonosDriver.new_driver_template()
   local template = {
     discovery = SonosDisco.discover,
     lifecycle_handlers = {
-      added = device_added,
-      init = device_init,
-      removed = device_removed,
+      added = SonosDriverLifecycleHandlers.added,
+      init = SonosDriverLifecycleHandlers.init,
+      removed = SonosDriverLifecycleHandlers.removed,
     },
     capability_handlers = {
       [capabilities.refresh.ID] = {
