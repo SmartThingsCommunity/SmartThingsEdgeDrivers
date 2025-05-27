@@ -39,12 +39,6 @@ local function added_handler(self, device)
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
 end
 
-local function button_handler(event)
-  return function(driver, device, value, zb_rx)
-    device:emit_event(event)
-  end
-end
-
 local tuya_private_cluster_button_handler = function(driver, device, zb_rx)
   local event
   local additional_fields = {
@@ -79,9 +73,6 @@ local tuya_button_driver = {
   zigbee_handlers = {
     cluster = {
       [OnOff.ID] = {
-        [OnOff.server.commands.On.ID] = button_handler(capabilities.button.button.double({ state_change = true })),
-        [OnOff.server.commands.Off.ID] = button_handler(capabilities.button.button.held({ state_change = true })),
-        [OnOff.server.commands.Toggle.ID] = button_handler(capabilities.button.button.pushed({ state_change = true })),
         [PRESENT_ATTRIBUTE_ID] = tuya_private_cluster_button_handler
       }
     }
