@@ -1,4 +1,4 @@
----@module 'utils'
+---@class utils
 local utils = {}
 -- build a exponential backoff time value generator
 --
@@ -18,7 +18,9 @@ function utils.backoff_builder(max, inc, rand)
     count = count + 1
 
     -- ensure base backoff (not including random factor) is less than max
-    if max then base = math.min(base, max) end
+    if max then
+      base = math.min(base, max)
+    end
 
     -- ensure total backoff is >= 0
     return math.max(base + randval, 0)
@@ -36,52 +38,34 @@ function utils.labeled_socket_builder(label)
   end
 
   local function make_socket(host, port, wrap_ssl)
-    log.trace(
-      string.format(
-        "%sCreating TCP socket for REST Connection", label
-      )
-    )
+    log.trace(string.format("%sCreating TCP socket for REST Connection", label))
     local _ = nil
     local sock, err = socket.tcp()
-    if err ~= nil or (not sock) then
+    if err ~= nil or not sock then
       return nil, (err or "unknown error creating TCP socket")
     end
 
-    log.trace(
-      string.format(
-        "%sSetting TCP socket timeout for REST Connection", label
-      )
-    )
+    log.trace(string.format("%sSetting TCP socket timeout for REST Connection", label))
     _, err = sock:settimeout(60)
     if err ~= nil then
       return nil, "settimeout error: " .. err
     end
 
-    log.trace(
-      string.format(
-        "%sConnecting TCP socket for REST Connection", label
-      )
-    )
+    log.trace(string.format("%sConnecting TCP socket for REST Connection", label))
     _, err = sock:connect(host, port)
 
-    if err then return nil, err end
+    if err then
+      return nil, err
+    end
 
     if wrap_ssl then
-      log.trace(
-        string.format(
-          "%sCreating SSL wrapper for for REST Connection", label
-        )
-      )
+      log.trace(string.format("%sCreating SSL wrapper for for REST Connection", label))
       sock, err =
-          ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
+        ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
       if err ~= nil then
         return nil, "SSL wrap error: " .. err
       end
-      log.trace(
-        string.format(
-          "%sPerforming SSL handshake for for REST Connection", label
-        )
-      )
+      log.trace(string.format("%sPerforming SSL handshake for for REST Connection", label))
       _, err = sock:dohandshake()
       if err ~= nil then
         return nil, "Error with SSL handshake: " .. err

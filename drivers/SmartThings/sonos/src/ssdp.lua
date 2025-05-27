@@ -1,17 +1,18 @@
-local socket = require "cosock.socket"
 local log = require "log"
+local socket = require "cosock.socket"
 local st_utils = require "st.utils"
 
 SONOS_SSDP_SEARCH_TERM = "urn:smartspeaker-audio:service:SpeakerGroup:1"
 
---- @module 'sonos.SSDP'
+--- @class SSDP
 local SSDP = {}
 
 local function process_response(val)
   -- check first line assuming it's the HTTP Status Line, which if not is invalid
   local status_line = string.match(val, "([^\r\n]*)\r\n")
-  if not (status_line and string.match(status_line, "HTTP/1.1 200 OK"))  then
-    return nil, string.format("SSDP Response HTTP Status Line missing or not '200 OK': %q", status_line)
+  if not (status_line and string.match(status_line, "HTTP/1.1 200 OK")) then
+    return nil,
+      string.format("SSDP Response HTTP Status Line missing or not '200 OK': %q", status_line)
   end
   -- strip status line from payload
   val = string.gsub(val, "HTTP/1.1 200 OK\r\n", "", 1)
@@ -40,7 +41,9 @@ local function process_response(val)
 end
 
 function SSDP.check_headers_contain(response, ...)
-  if not (response and next(response) ~= nil) then return false end
+  if not (response and next(response) ~= nil) then
+    return false
+  end
   local header_vals = table.pack(...)
   for _, header in ipairs(header_vals) do
     if header ~= nil then
@@ -73,7 +76,7 @@ function SSDP.search(search_term, callback)
     'MAN: "ssdp:discover"', -- yes, there are really supposed to be quotes in this one
     string.format("MX: %s", mx),
     string.format("ST: %s", search_term),
-    "\r\n"
+    "\r\n",
   }, "\r\n")
 
   -- bind local ip and port
@@ -119,25 +122,29 @@ function SSDP.search(search_term, callback)
 
       -- log all parseable SSDP responses for the search term,
       -- even if they don't have proper headers.
-      log.debug_with({ hub_logs = true },
-      string.format("Received response for Sonos search with headers [%s], processing details",
-        st_utils.stringify_table(headers)))
+      log.debug_with(
+        { hub_logs = true },
+        string.format(
+          "Received response for Sonos search with headers [%s], processing details",
+          st_utils.stringify_table(headers)
+        )
+      )
       if
-      -- we don't explicitly check "st" because we don't index in to the contained
-      -- value so the equality check suffices as a nil check as well.
-          SSDP.check_headers_contain(
-            headers,
-            "server",
-            "location",
-            "groupinfo.smartspeaker.audio",
-            "websock.smartspeaker.audio",
-            "household.smartspeaker.audio") and headers["server"]:find("Sonos")
+        -- we don't explicitly check "st" because we don't index in to the contained
+        -- value so the equality check suffices as a nil check as well.
+        SSDP.check_headers_contain(
+          headers,
+          "server",
+          "location",
+          "groupinfo.smartspeaker.audio",
+          "websock.smartspeaker.audio",
+          "household.smartspeaker.audio"
+        ) and headers["server"]:find("Sonos")
       then
-        local ip =
-            headers["location"]:match("http://([^,/]+):[^/]+/.+%.xml")
+        local ip = headers["location"]:match("http://([^,/]+):[^/]+/.+%.xml")
 
         local is_group_coordinator, group_id, group_name =
-            headers["groupinfo.smartspeaker.audio"]:match("gc=(.*); gid=(.*); gname=\"(.*)\"")
+          headers["groupinfo.smartspeaker.audio"]:match('gc=(.*); gid=(.*); gname="(.*)"')
 
         local household_id = headers["household.smartspeaker.audio"]
         local wss_url = headers["websock.smartspeaker.audio"]
@@ -148,43 +155,57 @@ function SSDP.search(search_term, callback)
           group_id = group_id,
           group_name = group_name,
           household_id = household_id,
-          wss_url = wss_url
+          wss_url = wss_url,
         }
 
         if rip ~= ip then
-          log.warn(string.format(
-            "[%s] received discovery response with reported (%s) & source IP (%s) mismatch, ignoring",
-            group_id, rip, ip))
+          log.warn(
+            string.format(
+              "[%s] received discovery response with reported (%s) & source IP (%s) mismatch, ignoring",
+              group_id,
+              rip,
+              ip
+            )
+          )
           log.debug(rip, "!=", ip)
-        elseif ip and is_group_coordinator and group_id and
-            group_name and household_id and wss_url then
+        elseif
+          ip
+          and is_group_coordinator
+          and group_id
+          and group_name
+          and household_id
+          and wss_url
+        then
           if #group_id == 0 then
-            log.debug_with({ hub_logs = true }, string.format(
-              "Received SSDP response for non-primary Sonos device in a bonded set, skipping; SSDP Response: %s\n",
-              st_utils.stringify_table(group_info, nil, false)))
+            log.debug_with(
+              { hub_logs = true },
+              string.format(
+                "Received SSDP response for non-primary Sonos device in a bonded set, skipping; SSDP Response: %s\n",
+                st_utils.stringify_table(group_info, nil, false)
+              )
+            )
           elseif callback ~= nil then
             if type(callback) == "function" then
               callback(group_info)
             else
-              log.warn(string.format(
-                "Expected a function in callback argument position for `SSDP.search`, found argument of type %s",
-                type(callback)))
+              log.warn(
+                string.format(
+                  "Expected a function in callback argument position for `SSDP.search`, found argument of type %s",
+                  type(callback)
+                )
+              )
             end
           end
         else
-          log.warn(
-            "Received incomplete Sonos SSDP M-SEARCH Reply, retrying search")
-          log.debug(string.format("%s", st_utils.stringify_table(
-            group_info, "SSDP Reply", true)))
+          log.warn("Received incomplete Sonos SSDP M-SEARCH Reply, retrying search")
+          log.debug(string.format("%s", st_utils.stringify_table(group_info, "SSDP Reply", true)))
         end
       end
     elseif rip == "timeout" then
       log.warn("SSDP Search Timeout")
       break
     else
-      error(string.format(
-        "error receiving discovery replies for search term: %s",
-        rip))
+      error(string.format("error receiving discovery replies for search term: %s", rip))
     end
     ::continue::
   end

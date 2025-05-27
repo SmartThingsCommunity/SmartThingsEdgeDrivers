@@ -1,29 +1,36 @@
-local log = require "log"
 local cosock = require "cosock"
+local log = require "log"
 local ssdp = require "ssdp"
 
---- @module 'sonos.Discovery'
+--- @class Discovery
 local Discovery = {}
 
 --- @param driver SonosDriver
 --- @param ssdp_group_info SonosSSDPInfo
 --- @param known_devices_dnis table<string,boolean>
 --- @param found_ip_addrs table<string,boolean>
-local ssdp_discovery_callback = function(driver, ssdp_group_info, known_devices_dnis, found_ip_addrs)
+local ssdp_discovery_callback = function(
+  driver,
+  ssdp_group_info,
+  known_devices_dnis,
+  found_ip_addrs
+)
   if not found_ip_addrs[ssdp_group_info.ip] then
     found_ip_addrs[ssdp_group_info.ip] = true
 
     ---@type DiscoCallback
     local function add_device_callback(dni, inner_ssdp_group_info, player_info, group_info)
       if not known_devices_dnis[dni] then
-        local name = player_info.device.name or player_info.device.modelDisplayName or "Unknown Sonos Player"
+        local name = player_info.device.name
+          or player_info.device.modelDisplayName
+          or "Unknown Sonos Player"
         local model = player_info.device.modelDisplayName or "Unknown Sonos Model"
 
         driver._field_cache[dni] = {
           household_id = inner_ssdp_group_info.household_id,
           player_id = player_info.playerId,
           wss_url = player_info.websocketUrl,
-          swGen = player_info.device.swGen
+          swGen = player_info.device.swGen,
         }
 
         driver.sonos:update_household_info(player_info.householdId, group_info)
@@ -33,9 +40,9 @@ local ssdp_discovery_callback = function(driver, ssdp_group_info, known_devices_
           device_network_id = dni,
           manufacturer = "Sonos",
           label = name,
-          profile = 'sonos-player',
+          profile = "sonos-player",
           model = model,
-          vendor_provided_label = player_info.device.model
+          vendor_provided_label = player_info.device.model,
         }
 
         driver:try_create_device(create_device_msg)

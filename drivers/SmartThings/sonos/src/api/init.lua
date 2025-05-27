@@ -1,5 +1,4 @@
---- @module 'api.SonosApi'
-
+--- @class SonosApi
 return {
   -- constants
   DEFAULT_SONOS_PORT = 1443,

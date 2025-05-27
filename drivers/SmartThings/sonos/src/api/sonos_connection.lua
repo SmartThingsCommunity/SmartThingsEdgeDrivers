@@ -61,7 +61,7 @@ end
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
 local _update_self_subscriptions = function(sonos_conn, namespaces, command)
-  local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOULD_ID)
+  local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOLD_ID)
   local _, playerId = sonos_conn.driver.sonos:get_player_for_device(sonos_conn.device)
   local _, groupId = sonos_conn.driver.sonos:get_group_for_device(sonos_conn.device)
   _update_subscriptions_helper(sonos_conn, householdId, playerId, groupId, namespaces, command)
@@ -71,7 +71,7 @@ end
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
 local _update_coordinator_subscriptions = function(sonos_conn, namespaces, command)
-  local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOULD_ID)
+  local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOLD_ID)
   local _, coordinatorId = sonos_conn.driver.sonos:get_coordinator_for_device(sonos_conn.device)
   local _, groupId = sonos_conn.driver.sonos:get_group_for_device(sonos_conn.device)
   _update_subscriptions_helper(sonos_conn, householdId, coordinatorId, groupId, namespaces, command)
@@ -400,7 +400,7 @@ function SonosConnection:start()
   end
 
   log.debug(string.format("Starting SonosConnection for %s", self.device.label))
-  local household_id = self.device:get_field(PlayerFields.HOUSEHOULD_ID)
+  local household_id = self.device:get_field(PlayerFields.HOUSEHOLD_ID)
   local player_id = self.device:get_field(PlayerFields.PLAYER_ID)
 
   if not self:self_running() then

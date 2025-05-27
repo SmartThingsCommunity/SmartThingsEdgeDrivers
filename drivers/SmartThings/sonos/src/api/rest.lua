@@ -66,7 +66,7 @@ end
 --- useful to issue in order to gather some system information before establishing
 --- a websocket connection. This module provides a handful of free functions that
 --- make it easy to perform those handful of requests.
---- @module 'sonos.api.SonosRestApi'
+--- @class SonosRestApi
 local SonosRestApi = {}
 
 --- Query a Sonos Group IP address for individual player info

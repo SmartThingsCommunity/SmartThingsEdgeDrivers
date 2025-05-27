@@ -14,7 +14,7 @@ local st_utils = require "st.utils"
 --- home's Sonos players. A player as modeled in the driver will have
 --- its own connection but it might not use that for all commands,
 --- since it could be part of a group and need to speak to its coordinator.
---- @module 'api.sonos_websocket_router'
+--- @class SonosWebSocketRouter
 local SonosWebSocketRouter = {}
 local control_tx, control_rx = channel.new()
 control_rx:settimeout(0.5)
