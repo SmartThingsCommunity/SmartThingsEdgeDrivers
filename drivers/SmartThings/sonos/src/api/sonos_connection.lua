@@ -245,7 +245,8 @@ function SonosConnection.new(driver, device)
           end
           local group = household.groups[header.groupId] or { playerIds = {} }
           for _, player_id in ipairs(group.playerIds) do
-            local device_for_player = self.driver._player_id_to_device[player_id]
+            local device_for_player = self.driver:device_for_player(header.householdId, player_id)
+
             --- we've seen situations where these messages can be processed while a device
             --- is being deleted so we check for the presence of emit event as a proxy for
             --- whether or not this device is currently capable of emitting events.
@@ -269,7 +270,7 @@ function SonosConnection.new(driver, device)
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
         for _, player_id in ipairs(group.playerIds) do
-          local device_for_player = self.driver._player_id_to_device[player_id]
+          local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
           --- is being deleted so we check for the presence of emit event as a proxy for
           --- whether or not this device is currently capable of emitting events.
@@ -292,7 +293,7 @@ function SonosConnection.new(driver, device)
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
         for _, player_id in ipairs(group.playerIds) do
-          local device_for_player = self.driver._player_id_to_device[player_id]
+          local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
           --- is being deleted so we check for the presence of emit event as a proxy for
           --- whether or not this device is currently capable of emitting events.
@@ -343,7 +344,7 @@ function SonosConnection.new(driver, device)
               self.driver.sonos:update_household_favorites(header.householdId, new_favorites)
 
               for _, player_id in ipairs(group.playerIds) do
-                local device_for_player = self.driver._player_id_to_device[player_id]
+                local device_for_player = self.driver:device_for_player(header.householdId, player_id)
                 --- we've seen situations where these messages can be processed while a device
                 --- is being deleted so we check for the presence of emit event as a proxy for
                 --- whether or not this device is currently capable of emitting events.

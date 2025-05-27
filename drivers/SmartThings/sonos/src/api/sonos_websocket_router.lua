@@ -298,7 +298,7 @@ function SonosWebSocketRouter.cleanup_unused_sockets(driver)
   local should_keep = {}
   for unique_key, _ in pairs(websockets) do
     local household_id, player_id = unique_key:match("(.*)/(.*)")
-    local is_joined = driver.sonos:is_player_joined(household_id, player_id)
+    local is_joined = driver.sonos:get_device_id_for_player(household_id, player_id) ~= nil
     log.debug(string.format("Is Player %s joined? %s", player_id, is_joined))
     should_keep[unique_key] = is_joined
   end

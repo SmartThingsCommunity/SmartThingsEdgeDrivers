@@ -1,68 +1,66 @@
 local capabilities = require "st.capabilities"
 local cosock = require "cosock"
+local json = require "st.json"
 local log = require "log"
 local net_url = require "net.url"
-local swGenCapability = capabilities["stus.softwareGeneration"]
+local security = require "st.security"
+local st_utils = require "st.utils"
+
+local sonos_ssdp = require "api.sonos_ssdp_discovery"
+local utils = require "utils"
 
 local CmdHandlers = require "api.cmd_handlers"
+local PlayerFields = require("fields").SonosPlayerFields
 local SonosApi = require "api"
 local SonosDisco = require "disco"
 local SonosDriverLifecycleHandlers = require "lifecycle_handlers"
-local SonosState = require "types".SonosState
-local PlayerFields = require "fields".SonosPlayerFields
-local SonosConnection = require "api.sonos_connection"
-local utils = require "utils"
-local sonos_ssdp = require "api.sonos_ssdp_discovery"
+local SonosState = require "sonos_state"
 
-local function do_refresh(driver, device, cmd)
-  log.trace("Refreshing " .. device.label)
-  local sonos_conn = device:get_field(PlayerFields.CONNECTION)
-  if sonos_conn == nil then
-    log.error(
-      string.format("Failed to do refresh, no sonos connection for device: [%s]", device.label)
-    )
-    return
-  end
-
-  if not sonos_conn:is_running() then
-    sonos_conn:start()
-  end
-
-  -- refreshing subscriptions should refresh all relevant data on those channels as well
-  -- via the subscription confirmation events.
-  sonos_conn:refresh_subscriptions()
-end
-
---- Sonos Edge Driver extensions
----@class SonosDriver : Driver
----@field public sonos SonosState Local state related to the sonos systems
+---@class SonosDriver: Driver
+---
 ---@field public datastore table<string, any> driver persistent store
 ---@field public dni_to_device_id table<string,string>
----@field public _player_id_to_device table<string,SonosDevice>
----@field public _field_cache table<string,SonosFieldCacheTable>
+---@field public get_devices fun(self: SonosDriver): SonosDevice[]
+---@field public get_device_info fun(self: SonosDriver, id: string): SonosDevice?
+---
+---@field public sonos SonosState Local state related to the sonos systems
+---@field public discovery fun(driver: SonosDriver, opts: table, should_continue: fun(): boolean)
+---
+---@field public ssdp_task SonosPersistentSsdpTask?
+---@field private ssdp_event_thread_handle table?
 local SonosDriver = {}
 
-function SonosDriver.is_same_mac_address(dni, other)
-  if not (type(dni) == "string" and type(other) == "string") then
-    return false
+---@param household_id HouseholdId
+---@param player_id PlayerId
+---@return SonosDevice?
+function SonosDriver:device_for_player(household_id, player_id)
+  local maybe_device_id = self.sonos:get_device_id_for_player(household_id, player_id)
+  if maybe_device_id then
+    return self:get_device_info(maybe_device_id)
   end
-  local dni_normalized = dni:gsub("-", ""):gsub(":", ""):lower()
-  local other_normalized = other:gsub("-", ""):gsub(":", ""):lower()
-  return dni_normalized == other_normalized
 end
 
+---@param dni string
+---@return SonosDevice|nil
+---@return string?
 function SonosDriver:get_device_by_dni(dni)
-  local device_uuid = self.dni_to_device_id[dni]
-  if not device_uuid then
-    return nil
+  local cached_device_id = self.dni_to_device_id[dni]
+  if cached_device_id then
+    return self:get_device_info(cached_device_id)
   end
-  return self:get_device_info(device_uuid)
+
+  for _, device in ipairs(self:get_devices() or {}) do
+    if utils.mac_address_eq(device.device_network_id, dni) then
+      self.dni_to_device_id[dni] = device.id
+      return device
+    end
+  end
+
+  return nil, string.format("Unable to find device record for DNI %s", dni)
 end
 
----@param header SonosResponseHeader
----@param body SonosGroupsResponseBody
-function SonosDriver:update_group_state(header, body)
-  self.sonos:update_household_info(header.householdId, body)
+function SonosDriver:get_api_key()
+  return SonosApi.api_keys.s1_key
 end
 
 ---Create a cosock task that handles events from the persistent SSDP task.
@@ -118,71 +116,6 @@ function SonosDriver:start_ssdp_event_task()
   end
 end
 
----@param device SonosDevice
----@param fields SonosFieldCacheTable
-function SonosDriver:update_fields_from_ssdp_scan(device, fields)
-  device.log.debug("Updating fields from SSDP scan")
-  local is_initialized = device:get_field(PlayerFields._IS_INIT)
-
-  local current_player_id, current_url, current_household_id, sonos_conn, sw_gen
-
-  if is_initialized then
-    current_player_id = device:get_field(PlayerFields.PLAYER_ID)
-    current_url = device:get_field(PlayerFields.WSS_URL)
-    current_household_id = device:get_field(PlayerFields.HOUSEHOLD_ID)
-    sonos_conn = device:get_field(PlayerFields.CONNECTION)
-    sw_gen = device:get_field(PlayerFields.SW_GEN)
-  end
-
-  local already_connected = sonos_conn ~= nil
-  local refresh = false
-
-  if current_player_id ~= fields.player_id then
-    if current_player_id ~= nil then
-      self._player_id_to_device[current_player_id] = nil
-      self.sonos:mark_player_as_removed(current_player_id)
-      refresh = true
-    end
-    self._player_id_to_device[fields.player_id] = device -- quickly look up device from player id string
-    self.sonos:mark_player_as_joined(fields.player_id)
-    device:set_field(PlayerFields.PLAYER_ID, fields.player_id, { persist = true })
-  end
-
-  if current_household_id ~= fields.household_id then
-    if current_household_id ~= nil then
-      refresh = true
-    end
-    device:set_field(PlayerFields.HOUSEHOLD_ID, fields.household_id, { persist = true })
-  end
-
-  if current_url ~= fields.wss_url then
-    if current_url ~= nil and sonos_conn ~= nil then
-      sonos_conn:stop()
-      sonos_conn = nil
-      device:set_field(PlayerFields.CONNECTION, nil)
-      refresh = true
-    end
-    device:set_field(PlayerFields.WSS_URL, fields.wss_url, { persist = true })
-  end
-
-  if sw_gen ~= fields.swGen then
-    device:set_field(PlayerFields.SW_GEN, fields.swGen, { persist = true })
-    device:emit_event(swGenCapability.generation(string.format("%s", fields.swGen)))
-  end
-
-  if refresh and already_connected then
-    if not sonos_conn then
-      sonos_conn = SonosConnection.new(self, device)
-      device:set_field(PlayerFields.CONNECTION, sonos_conn)
-      -- calls refresh subscriptions for us
-      sonos_conn:start()
-      return
-    end
-
-    sonos_conn:refresh_subscriptions()
-  end
-end
-
 ---@param api_key string
 ---@param info { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }
 ---@param device SonosDevice?
@@ -199,7 +132,7 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
       string.format("Player %s is a non-primary bonded Sonos device, ignoring", info.discovery_info.device.name)
   end
 
-  api_key = api_key or SonosApi.api_keys.s1_key
+  api_key = api_key or self:get_api_key()
 
   local rest_url = net_url.parse(info.discovery_info.restUrl)
   local headers = SonosApi.make_headers(api_key)
@@ -221,6 +154,7 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
       error_string = string.format("%s\n\tadditional information: %s", error_string, additional_info)
     end
 
+
     return nil, error_string, response.errorCode
   end
 
@@ -232,17 +166,23 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
       )
   end
 
-
+  ---
   --- @cast response SonosGroupsResponseBody
   self.sonos:update_household_info(info.ssdp_info.household_id, response)
 
   local device_to_update, device_mac_addr
 
-  device = device or self._player_id_to_device[info.discovery_info.playerId]
+  local maybe_device_id = self.sonos:get_device_id_for_player(info.ssdp_info.household_id, info.discovery_info.playerId)
 
   if device then
     device_to_update = device
     device_mac_addr = device_to_update.device_network_id
+  elseif maybe_device_id then
+    local maybe_device_from_uuid = self:get_device_info(maybe_device_id)
+    if maybe_device_from_uuid then
+      device_to_update = maybe_device_from_uuid
+      device_mac_addr = device_to_update.device_network_id
+    end
   end
 
   if not device_mac_addr then
@@ -256,22 +196,9 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
     end
   end
 
-
-  local current_cached_fields = self._field_cache[device_mac_addr or ""] or {}
-
-  ---@type SonosFieldCacheTable
-  local updated_fields = {
-    household_id = info.ssdp_info.household_id,
-    player_id = info.discovery_info.playerId,
-    wss_url = info.discovery_info.websocketUrl,
-    swGen = info.discovery_info.device.swGen,
-  }
-
-  self._field_cache[device_mac_addr] = updated_fields
-
-  if device_to_update and not utils.deep_table_eq(current_cached_fields, updated_fields)then
+  if device_to_update then
     self.dni_to_device_id[device_mac_addr] = device_to_update.id
-    self:update_fields_from_ssdp_scan(device_to_update, updated_fields)
+    self.sonos:associate_device_record(device_to_update, info)
   else
     local name = info.discovery_info.device.name
       or info.discovery_info.device.modelDisplayName
@@ -292,14 +219,32 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
   return true
 end
 
+---@param driver SonosDriver
+---@param device SonosDevice
+---@param cmd any
+local function do_refresh(driver, device, cmd)
+  log.trace("Refreshing " .. device.label)
+  local sonos_conn = device:get_field(PlayerFields.CONNECTION)
+  if sonos_conn == nil then
+    log.error(string.format("Failed to do refresh, no sonos connection for device: [%s]", device.label))
+    return
+  end
+
+  if not sonos_conn:is_running() then
+    sonos_conn:start()
+  end
+
+  -- refreshing subscriptions should refresh all relevant data on those channels as well
+  -- via the subscription confirmation events.
+  sonos_conn:refresh_subscriptions()
+end
+
 function SonosDriver.new_driver_template()
   local template = {
+    sonos = SonosState.instance(),
     discovery = SonosDisco.discover,
-    lifecycle_handlers = {
-      added = SonosDriverLifecycleHandlers.added,
-      init = SonosDriverLifecycleHandlers.init,
-      removed = SonosDriverLifecycleHandlers.removed,
-    },
+        lifecycle_handlers = SonosDriverLifecycleHandlers,
+    dni_to_device_id = utils.new_mac_address_keyed_table(),
     capability_handlers = {
       [capabilities.refresh.ID] = {
         [capabilities.refresh.commands.refresh.NAME] = do_refresh,
@@ -340,10 +285,6 @@ function SonosDriver.new_driver_template()
         [capabilities.mediaTrackControl.commands.previousTrack.NAME] = CmdHandlers.handle_previous_track,
       },
     },
-    sonos = SonosState.new(),
-    _player_id_to_device = {},
-    _field_cache = {},
-    dni_to_device_id = {},
   }
 
   for k, v in pairs(SonosDriver) do
