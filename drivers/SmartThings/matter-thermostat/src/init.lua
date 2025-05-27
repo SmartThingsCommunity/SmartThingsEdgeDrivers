@@ -773,6 +773,16 @@ local function match_profile_switch(driver, device)
       elseif battery_supported == battery_support.NO_BATTERY then
         profile_name = profile_name .. "-nobattery"
       end
+    elseif #device:get_endpoints(clusters.TemperatureMeasurement.ID) > 0 then
+      profile_name = profile_name .. "-temperature"
+
+      if #humidity_eps > 0 then
+        profile_name = profile_name .. "-humidity"
+      end
+
+      if fan_eps_found then
+        profile_name = profile_name .. "-fan"
+      end
     end
     profile_name = profile_name .. create_air_quality_sensor_profile(device)
   elseif device_type == WATER_HEATER_DEVICE_TYPE_ID then
