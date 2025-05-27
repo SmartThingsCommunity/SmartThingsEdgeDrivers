@@ -10,6 +10,7 @@ local PlayerFields = require "fields".SonosPlayerFields
 local Router = require "api.sonos_websocket_router"
 local SonosApi = require "api"
 local SonosRestApi = require "api.rest"
+local utils = require "utils"
 
 --- A class-like lua module that allows for instantiation of a SonosConnection
 --- table providing an abstraction layer above the concept of a Sonos websocket connection.
@@ -22,9 +23,12 @@ local SonosRestApi = require "api.rest"
 --- @class SonosConnection
 --- @field public driver SonosDriver reference to the Edge Driver
 --- @field public device SonosDevice the player for this connection
---- @field private _self_listener_uuid string
---- @field private _coord_listener_uuid string
---- @field private _initialized boolean
+--- @field package _self_listener_uuid string
+--- @field package _coord_listener_uuid string
+--- @field package _initialized boolean
+--- @field package on_message fun(...)?
+--- @field package on_error fun(...)?
+--- @field package on_close fun(...)?
 local SonosConnection = {}
 SonosConnection.__index = SonosConnection
 
@@ -40,55 +44,54 @@ local favorites_version = ""
 ---@param sonos_conn SonosConnection
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
-local _update_subscriptions_helper = function(sonos_conn, householdId, playerId, groupId, namespaces, command)
+local _update_subscriptions_helper = function(sonos_conn, householdId, playerId, groupId, namespaces, command, reply_tx)
   for _, namespace in ipairs(namespaces) do
+    local wss_msg_header = {
+      namespace = namespace,
+      command = command,
+      householdId = householdId,
+      groupId = groupId,
+      playerId = playerId,
+    }
+
     local payload_table = {
-      {
-        namespace = namespace,
-        command = command,
-        householdId = householdId,
-        groupId = groupId,
-        playerId = playerId
-      },
-      {}
+      wss_msg_header,
+      {},
     }
     local payload = json.encode(payload_table)
-    Router.send_message_to_player(playerId, payload)
+    Router.send_message_to_player(utils.sonos_unique_key(householdId, playerId), payload, reply_tx)
   end
 end
 
 ---@param sonos_conn SonosConnection
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
-local _update_self_subscriptions = function(sonos_conn, namespaces, command)
+local _update_self_subscriptions = function(sonos_conn, namespaces, command, reply_tx)
   local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOLD_ID)
   local _, playerId = sonos_conn.driver.sonos:get_player_for_device(sonos_conn.device)
   local _, groupId = sonos_conn.driver.sonos:get_group_for_device(sonos_conn.device)
-  _update_subscriptions_helper(sonos_conn, householdId, playerId, groupId, namespaces, command)
+  _update_subscriptions_helper(sonos_conn, householdId, playerId, groupId, namespaces, command, reply_tx)
 end
 
 ---@param sonos_conn SonosConnection
 ---@param namespaces string[]
 ---@param command "subscribe"|"unsubscribe"
-local _update_coordinator_subscriptions = function(sonos_conn, namespaces, command)
+local _update_coordinator_subscriptions = function(sonos_conn, namespaces, command, reply_tx)
   local householdId = sonos_conn.device:get_field(PlayerFields.HOUSEHOLD_ID)
   local _, coordinatorId = sonos_conn.driver.sonos:get_coordinator_for_device(sonos_conn.device)
   local _, groupId = sonos_conn.driver.sonos:get_group_for_device(sonos_conn.device)
-  _update_subscriptions_helper(sonos_conn, householdId, coordinatorId, groupId, namespaces, command)
+  _update_subscriptions_helper(sonos_conn, householdId, coordinatorId, groupId, namespaces, command, reply_tx)
 end
 
 ---@param sonos_conn SonosConnection
 ---@param household_id HouseholdId
 ---@param self_player_id PlayerId
-local function _open_coordinator_socket(sonos_conn, household_id, self_player_id)
+---@param api_key string
+local function _open_coordinator_socket(sonos_conn, household_id, self_player_id, api_key)
   log.debug("Open coordinator socket for: " .. sonos_conn.device.label)
   local _, coordinator_id, err = sonos_conn.driver.sonos:get_coordinator_for_device(sonos_conn.device)
   if err ~= nil then
-    log.error(
-      string.format(
-        "Could not look up coordinator info for player %s: %s", sonos_conn.device.label, err
-      )
-    )
+    log.error(string.format("Could not look up coordinator info for player %s: %s", sonos_conn.device.label, err))
     return
   end
 
@@ -101,24 +104,25 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
 
     local coordinator = household.players[coordinator_id]
     if coordinator == nil then
-      log.error(st_utils.stringify_table(
-        {household = sonos_conn.driver.sonos:get_household(household_id)}, string.format("Coordinator doesn't exist for player: %s", sonos_conn.device.label), false
-      ))
-      return
-    end
-
-    _, err = Router.open_socket_for_player(coordinator_id, coordinator.websocketUrl)
-    if err ~= nil then
       log.error(
-        string.format(
-          "Couldn't open connection to coordinator for %s: %s", sonos_conn.device.label, err
+        st_utils.stringify_table(
+          { household = sonos_conn.driver.sonos:get_household(household_id) },
+          string.format("Coordinator doesn't exist for player: %s", sonos_conn.device.label),
+          false
         )
       )
       return
     end
 
+    _, err = Router.open_socket_for_player(household_id, coordinator_id, coordinator.websocketUrl, api_key)
+    if err ~= nil then
+      log.error(string.format("Couldn't open connection to coordinator for %s: %s", sonos_conn.device.label, err))
+      return
+    end
+
     local listener_id
-    listener_id, err = Router.register_listener_for_socket(sonos_conn, coordinator_id)
+    listener_id, err =
+      Router.register_listener_for_socket(sonos_conn, utils.sonos_unique_key(household_id, coordinator_id))
     if err ~= nil or not listener_id then
       log.error(err)
     else
@@ -145,7 +149,9 @@ local function backoff_builder(max, inc, rand)
     count = count + 1
 
     -- ensure base backoff (not including random factor) is less than max
-    if max then base = math.min(base, max) end
+    if max then
+      base = math.min(base, max)
+    end
 
     -- ensure total backoff is >= 0
     return math.max(base + randval, 0)
@@ -171,8 +177,8 @@ end
 --- @return SonosConnection
 function SonosConnection.new(driver, device)
   log.debug(string.format("Creating new SonosConnection for %s", device.label))
-  local self = setmetatable({ driver = driver, device = device, _listener_uuids = {}, _initialized = false },
-    SonosConnection)
+  local self =
+    setmetatable({ driver = driver, device = device, _listener_uuids = {}, _initialized = false }, SonosConnection)
 
   -- capture the label here in case something goes wonky like a callback being fired after a
   -- device is removed
@@ -184,9 +190,13 @@ function SonosConnection.new(driver, device)
       local json_result = table.pack(pcall(json.decode, msg.data))
       local success = table.remove(json_result, 1)
       if not success then
-        log.error(st_utils.stringify_table(
-          {response_body = msg.data, json = json_result}, "Couldn't decode JSON in WebSocket callback:", false
-        ))
+        log.error(
+          st_utils.stringify_table(
+            { response_body = msg.data, json = json_result },
+            "Couldn't decode JSON in WebSocket callback:",
+            false
+          )
+        )
         return
       end
       local header, body = table.unpack(table.unpack(json_result))
@@ -224,10 +234,13 @@ function SonosConnection.new(driver, device)
         if body.volume and (body.muted ~= nil) then
           local household = self.driver.sonos:get_household(header.householdId)
           if household == nil or household.groups == nil then
-            log.error(st_utils.stringify_table(
-              {response_body = msg.data, household = household or header.householdId},
-              "Received groupVolume message for non-existent household or household groups dont exist", false
-            ))
+            log.error(
+              st_utils.stringify_table(
+                { response_body = msg.data, household = household or header.householdId },
+                "Received groupVolume message for non-existent household or household groups dont exist",
+                false
+              )
+            )
             return
           end
           local group = household.groups[header.groupId] or { playerIds = {} }
@@ -245,10 +258,13 @@ function SonosConnection.new(driver, device)
         log.trace(string.format("PlaybackStatus type message for %s", device_name))
         local household = self.driver.sonos:get_household(header.householdId)
         if household == nil or household.groups == nil then
-          log.error(st_utils.stringify_table(
-            {response_body = msg.data, household = household or header.householdId},
-            "Received playbackStatus message for non-existent household or household groups dont exist", false
-          ))
+          log.error(
+            st_utils.stringify_table(
+              { response_body = msg.data, household = household or header.householdId },
+              "Received playbackStatus message for non-existent household or household groups dont exist",
+              false
+            )
+          )
           return
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
@@ -265,10 +281,13 @@ function SonosConnection.new(driver, device)
         log.trace(string.format("MetadataStatus type message for %s", device_name))
         local household = self.driver.sonos:get_household(header.householdId)
         if household == nil or household.groups == nil then
-          log.error(st_utils.stringify_table(
-            {response_body = msg.data, household = household or header.householdId},
-            "Received metadataStatus message for non-existent household or household groups dont exist", false
-          ))
+          log.error(
+            st_utils.stringify_table(
+              { response_body = msg.data, household = household or header.householdId },
+              "Received metadataStatus message for non-existent household or household groups dont exist",
+              false
+            )
+          )
           return
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
@@ -292,16 +311,20 @@ function SonosConnection.new(driver, device)
             local coordinator_id = self.driver.sonos:get_coordinator_for_group(header.householdId, group_id)
             local coordinator_player = household.players[coordinator_id]
             if coordinator_player == nil then
-              log.error(st_utils.stringify_table(
-                {household = household, coordinator_id = coordinator_id}, "Received message for non-existent coordinator player", false
-              ))
+              log.error(
+                st_utils.stringify_table(
+                  { household = household, coordinator_id = coordinator_id },
+                  "Received message for non-existent coordinator player",
+                  false
+                )
+              )
               return
             end
 
             local url_ip = lb_utils.force_url_table(coordinator_player.websocketUrl).host
 
             local favorites_response, err, _ =
-            SonosRestApi.get_favorites(url_ip, SonosApi.DEFAULT_SONOS_PORT, header.householdId)
+              SonosRestApi.get_favorites(url_ip, SonosApi.DEFAULT_SONOS_PORT, header.householdId)
 
             if err or not favorites_response then
               log.error("Error querying for favorites: " .. err)
@@ -309,8 +332,12 @@ function SonosConnection.new(driver, device)
               local new_favorites = {}
               for _, favorite in ipairs(favorites_response.items or {}) do
                 local new_item = { id = favorite.id, name = favorite.name }
-                if favorite.imageUrl then new_item.imageUrl = favorite.imageUrl end
-                if favorite.service and favorite.service.name then new_item.mediaSource = favorite.service.name end
+                if favorite.imageUrl then
+                  new_item.imageUrl = favorite.imageUrl
+                end
+                if favorite.service and favorite.service.name then
+                  new_item.mediaSource = favorite.service.name
+                end
                 table.insert(new_favorites, new_item)
               end
               self.driver.sonos:update_household_favorites(header.householdId, new_favorites)
@@ -329,7 +356,13 @@ function SonosConnection.new(driver, device)
         end
       end
     else
-      log.warn(string.format("WebSocket Message for %s did not have a data payload: %s", device_name, st_utils.stringify_table(msg)))
+      log.warn(
+        string.format(
+          "WebSocket Message for %s did not have a data payload: %s",
+          device_name,
+          st_utils.stringify_table(msg)
+        )
+      )
     end
   end
 
@@ -339,8 +372,12 @@ function SonosConnection.new(driver, device)
 
   self.on_close = function(uuid)
     log.debug(string.format("OnClose for %s", device_name))
-    if self._initialized then self.device:offline() end
-    if self._keepalive then _spawn_reconnect_task(self) end
+    if self._initialized then
+      self.device:offline()
+    end
+    if self._keepalive then
+      _spawn_reconnect_task(self)
+    end
   end
 
   return self
@@ -351,40 +388,60 @@ end
 function SonosConnection:is_running()
   local self_running = self:self_running()
   local coord_running = self:coordinator_running()
-  log.debug(string.format("%s all connections running? %s", self.device.label, st_utils.stringify_table({coordinator = self_running, mine = self_running})))
-  return  self_running and coord_running
+  log.debug(
+    string.format(
+      "%s all connections running? %s",
+      self.device.label,
+      st_utils.stringify_table({ coordinator = self_running, mine = self_running })
+    )
+  )
+  return self_running and coord_running
 end
 
 --- Whether or not the connection has a live websocket connection
 --- @return boolean
 function SonosConnection:self_running()
-  return Router.is_connected(self.device:get_field(PlayerFields.PLAYER_ID)) and self._initialized
+  local household_id = self.device:get_field(PlayerFields.HOUSEHOLD_ID)
+  local player_id = self.device:get_field(PlayerFields.PLAYER_ID)
+  return Router.is_connected(utils.sonos_unique_key(household_id, player_id)) and self._initialized
 end
 
 --- Whether or not the connection has a live websocket connection to its coordinator
 --- @return boolean
 function SonosConnection:coordinator_running()
-  local _, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
-  return Router.is_connected(coordinator_id) and self._initialized
+  local household_id, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  return Router.is_connected(utils.sonos_unique_key(household_id, coordinator_id)) and self._initialized
 end
 
-function SonosConnection:refresh_subscriptions()
+function SonosConnection:refresh_subscriptions(maybe_reply_tx)
   log.debug("Refresh subscriptions on " .. self.device.label)
-  _update_self_subscriptions(self, self_subscriptions, "subscribe")
-  _update_coordinator_subscriptions(self, coordinator_subscriptions, "subscribe")
+  local inner_tx, inner_rx = cosock.channel.new()
+  _update_self_subscriptions(self, self_subscriptions, "subscribe", inner_tx)
+  local recv, recv_err = inner_rx:receive()
+  log.debug(
+    string.format("[first] recv: %s, recv_err: %s", st_utils.stringify_table(recv), st_utils.stringify_table(recv_err))
+  )
+  _update_coordinator_subscriptions(self, coordinator_subscriptions, "subscribe", inner_tx)
+  recv, recv_err = inner_rx:receive()
+  log.debug(
+    string.format("[second] recv: %s, recv_err: %s", st_utils.stringify_table(recv), st_utils.stringify_table(recv_err))
+  )
+  if maybe_reply_tx then
+    maybe_reply_tx:send("success")
+  end
 end
 
 --- Send a Sonos command object to the player for this connection
 --- @param cmd SonosCommand
 function SonosConnection:send_command(cmd)
   log.debug("Sending command over websocket channel for device " .. self.device.label)
-  local _, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  local household_id, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
   local json_payload, err = json.encode(cmd)
 
   if err or not json_payload then
     log.error("Json encoding error: " .. err)
   else
-    Router.send_message_to_player(coordinator_id, json_payload)
+    Router.send_message_to_player(utils.sonos_unique_key(household_id, coordinator_id), json_payload)
   end
 end
 
@@ -392,27 +449,24 @@ end
 --- @return boolean success
 function SonosConnection:start()
   if self:is_running() then
-    log.warn(
-      "Called Start on a Sonos WebSocket that was already connected for device "
-      .. self.device.label
-    )
+    log.warn("Called Start on a Sonos WebSocket that was already connected for device " .. self.device.label)
     return false
   end
 
   log.debug(string.format("Starting SonosConnection for %s", self.device.label))
   local household_id = self.device:get_field(PlayerFields.HOUSEHOLD_ID)
   local player_id = self.device:get_field(PlayerFields.PLAYER_ID)
+  local api_key = SonosApi.api_keys.s1_key
 
   if not self:self_running() then
     local url = self.device:get_field(PlayerFields.WSS_URL) or {}
-
-    local _, err = Router.open_socket_for_player(player_id, url)
+    local _, err = Router.open_socket_for_player(household_id, player_id, url, api_key)
     if err ~= nil then
       log.error(err)
       return false
     end
 
-    local listener_id, err = Router.register_listener_for_socket(self, player_id)
+    local listener_id, err = Router.register_listener_for_socket(self, utils.sonos_unique_key(household_id, player_id))
     if err ~= nil or not listener_id then
       log.error(err)
     else
@@ -422,12 +476,19 @@ function SonosConnection:start()
 
   if not self:coordinator_running() then
     --TODO this is not infallible
-    _open_coordinator_socket(self, household_id, player_id)
+    _open_coordinator_socket(self, household_id, player_id, api_key)
   end
 
-  self:refresh_subscriptions()
+  local reply_tx, reply_rx = cosock.channel.new()
+  self:refresh_subscriptions(reply_tx)
+  local reply = reply_rx:receive()
+  log.info(st_utils.stringify_table(reply, "reply from subscription attempt", true))
+
   local coordinator_id = self.driver.sonos:get_coordinator_for_player(household_id, player_id)
-  if Router.is_connected(player_id) and Router.is_connected(coordinator_id) then
+  if
+    Router.is_connected(utils.sonos_unique_key(household_id, player_id))
+    and Router.is_connected(utils.sonos_unique_key(household_id, coordinator_id))
+  then
     self.device:online()
     self._initialized = true
     self._keepalive = true
@@ -447,7 +508,7 @@ function SonosConnection:stop()
   local coordinator_id = self.driver.sonos:get_coordinator_for_group(household_id, group_id)
 
   if player_id ~= coordinator_id then
-    Router.close_socket_for_player(player_id)
+    Router.close_socket_for_player(utils.sonos_unique_key(household_id, player_id))
   end
 end
 

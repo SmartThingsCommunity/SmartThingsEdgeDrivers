@@ -1,4 +1,3 @@
-SONOS_API_KEY = require "app_key"
 local log = require "log"
 
 local Driver = require "st.driver"

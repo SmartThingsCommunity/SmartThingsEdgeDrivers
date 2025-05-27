@@ -1,5 +1,147 @@
+local log = require "log"
+
+local PlayerFields = require "fields".SonosPlayerFields
+
 ---@class utils
 local utils = {}
+
+--- Returns the properly concatenated and formatted string for the a key that
+--- uniquely identifies a Sonos speaker on the network via its household ID and
+--- player ID.
+---@param household_id HouseholdId
+---@param player_id PlayerId
+function utils.sonos_unique_key(household_id, player_id)
+  return string.format("%s/%s", household_id:lower(), player_id:lower())
+end
+---
+--- Gets a string that uniquely identifies the player in the Sonos topology by combining
+--- both Player ID and Household ID
+---@param device SonosDevice
+function utils.sonos_unique_key_from_device_record(device)
+  local cached_key = device:get_field(PlayerFields.UNIQUE_KEY)
+  if cached_key then
+    return cached_key
+  end
+  local player_id = device:get_field(PlayerFields.PLAYER_ID)
+  local household_id = device:get_field(PlayerFields.HOUSEHOLD_ID)
+  if not (player_id or household_id) then
+    local driver = device.driver
+    local _player_id, _household_id = driver.sonos:get_player_for_device(device)
+    if not (player_id or _player_id) then
+      return nil,
+        string.format(
+          "unable to determine Player ID for device %s",
+          (device.label or device.id or "<incomplete device record>")
+        )
+    end
+    player_id = player_id or _player_id
+    device:set_field(PlayerFields.PLAYER_ID, player_id, { persist = true })
+
+    if not (household_id or _household_id) then
+      return nil,
+        string.format(
+          "unable to determine Household ID for device %s",
+          (device.label or device.id or "<incomplete device record>")
+        )
+    end
+    household_id = household_id or _household_id
+    device:set_field(PlayerFields.HOUSEHOLD_ID, household_id, { persist = true })
+  end
+
+  local unique_key = utils.sonos_unique_key(household_id, player_id)
+  device:set_field(PlayerFields.UNIQUE_KEY, unique_key)
+  return unique_key
+end
+
+--- [TODO:description]
+---@param ssdp_info SonosSSDPInfo
+function utils.sonos_unique_key_from_ssdp(ssdp_info)
+  return utils.sonos_unique_key(ssdp_info.household_id, ssdp_info.player_id)
+end
+
+---@param device SonosDevice
+---@param field_key string
+---@param new_value any
+---@param opts table?
+---@return boolean
+function utils.update_field_if_changed(device, field_key, new_value, opts)
+  if not (device and device.id and type(device.get_field) == "function" and type(device.set_field) == "function") then
+    log.error(
+      string.format("[device %s] table is incomplete", (device and device.label or device.id or "<unknown device>"))
+    )
+  end
+
+  local old_value = device:get_field(field_key)
+  local changed = (type(old_value) ~= type(new_value)) or (not utils.deep_table_eq(old_value, new_value))
+  if changed then
+    device:set_field(field_key, new_value, opts)
+    return true
+  end
+  return false
+end
+
+local function __normalize_mac_key_index(tbl, key)
+  assert(type(key) == "string", "DNI must be a string!")
+  return rawget(tbl, utils.normalize_mac_address(key))
+end
+
+local function __normalize_mac_key_newindex(tbl, key, value)
+  assert(type(key) == "string", "DNI must be a string!")
+  rawset(tbl, utils.normalize_mac_address(key), value)
+end
+
+local _mac_addr_key_mt = {
+  __index = __normalize_mac_key_index,
+  __newindex = __normalize_mac_key_newindex,
+}
+
+---creates a table that takes MAC addresses as a key. The table itself is mostly normal,
+---but it uses special `__index` and `__newindex` metamethods to perform MAC address normalization
+---on the keys before performing lookups.
+function utils.new_mac_address_keyed_table()
+  return setmetatable({}, _mac_addr_key_mt)
+end
+
+---@param sonos_device_info SonosDeviceInfo
+function utils.extract_mac_addr(sonos_device_info)
+  local mac, _ = sonos_device_info.serialNumber:match("(.*):.*"):gsub("-", "")
+  return utils.normalize_mac_address(mac)
+end
+
+---normalizes a MAC address by removing all `-` and `:` characters, then
+---unifying on uppercase letters.
+---
+---@param mac_addr string
+---@return string
+function utils.normalize_mac_address(mac_addr)
+  return mac_addr:gsub("-", ""):gsub(":", ""):upper()
+end
+
+function utils.mac_address_eq(a, b)
+  if not (type(a) == "string" and type(b) == "string") then
+    return false
+  end
+  local a_normalized = utils.normalize_mac_address(a)
+  local b_normalized = utils.normalize_mac_address(b)
+  return a_normalized == b_normalized
+end
+
+function utils.read_only(tbl)
+  if type(tbl) == "table" then
+    local proxy = {}
+    local mt = { -- create metatable
+      __index = tbl,
+      __newindex = function(t, k, v)
+        error("attempt to update a read-only table", 2)
+      end,
+    }
+    setmetatable(proxy, mt)
+    return proxy
+  else
+    return tbl
+  end
+end
+
 -- build a exponential backoff time value generator
 --
 -- max: the maximum wait interval (not including `rand factor`)
@@ -28,7 +170,6 @@ function utils.backoff_builder(max, inc, rand)
 end
 
 function utils.labeled_socket_builder(label)
-  local log = require "log"
   local socket = require "cosock.socket"
   local ssl = require "cosock.ssl"
 
@@ -58,12 +199,23 @@ function utils.labeled_socket_builder(label)
       return nil, err
     end
 
+    log.trace(string.format("%sSet Keepalive for TCP socket for REST Connection", label))
+    err = select(2, sock:setoption("keepalive", true))
+    if err ~= nil then
+      return nil, "Setoption error: " .. err
+    end
+
     if wrap_ssl then
       log.trace(string.format("%sCreating SSL wrapper for for REST Connection", label))
-      sock, err =
-        ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
+      sock, err = ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
       if err ~= nil then
         return nil, "SSL wrap error: " .. err
+      end
+      log.trace(string.format("%sSetting SSL socket timeout for REST Connection", label))
+      -- Re-set timeout due to cosock not carrying timeout over in some Lua library versions
+      err = select(2, sock:settimeout(60))
+      if err ~= nil then
+        return nil, "settimeout error: " .. err
       end
       log.trace(string.format("%sPerforming SSL handshake for for REST Connection", label))
       _, err = sock:dohandshake()
