@@ -481,20 +481,27 @@ local function check_field_name_updates(device)
 end
 
 local function assign_switch_profile(device, switch_ep, is_child_device)
+  local get_profile_by_device_type = function(ep)
+    -- Some devices report multiple device types which are a subset of
+    -- a superset device type (For example, Dimmable Light is a superset of
+    -- On/Off light). This mostly applies to the four light types, so we will want
+    -- to match the profile for the superset device type. This can be done by
+    -- matching to the device type with the highest ID
+    -- Note: Electrical Sensor does not follow the above logic, so it's ignored
+    local id = 0
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id ~= ELECTRICAL_SENSOR_ID then
+        id = math.max(id, dt.device_type_id)
+      end
+    end
+    return device_type_profile_map[id]
+  end
+
   local profile
   local electrical_tags = ""
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == switch_ep then
-      -- Some devices report multiple device types which are a subset of
-      -- a superset device type (For example, Dimmable Light is a superset of
-      -- On/Off light). This mostly applies to the four light types, so we will want
-      -- to match the profile for the superset device type. This can be done by
-      -- matching to the device type with the highest ID
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      profile = device_type_profile_map[id]
+      profile = get_profile_by_device_type(ep)
       if profile == "plug-binary" or profile == "plug-level" then
         local power_cluster_found, energy_cluster_found = false, false
         for _, cluster in ipairs(ep.clusters) do
@@ -535,16 +542,7 @@ local function assign_switch_profile(device, switch_ep, is_child_device)
       local main_switch_ep = switch_eps[1]
       for _, ep in ipairs(device.endpoints) do
         if ep.endpoint_id == main_switch_ep and ep.endpoint_id == switch_ep then
-          -- Some devices report multiple device types which are a subset of
-          -- a superset device type (For example, Dimmable Light is a superset of
-          -- On/Off light). This mostly applies to the four light types, so we will want
-          -- to match the profile for the superset device type. This can be done by
-          -- matching to the device type with the highest ID
-          local id = 0
-          for _, dt in ipairs(ep.device_types) do
-            id = math.max(id, dt.device_type_id)
-          end
-          profile = device_type_profile_map[id]
+          profile = get_profile_by_device_type(ep)
           if profile == "plug-binary" or profile == "plug-level" or profile == "light-binary" then
             if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then
               electrical_tags = electrical_tags .. "-power"
