@@ -23,6 +23,40 @@ local embedded_cluster_utils = require "embedded-cluster-utils"
 --   Used for environments that don't support modular profiles.
 -------------------------------------------------------------------------------------
 
+--- find_default_endpoint helper function to handle situations where the device
+--- does not have endpoint ids in sequential order from 1.
+local function find_default_endpoint(device)
+  if device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
+    device.manufacturer_info.product_id == common_utils.AQARA_CLIMATE_SENSOR_W100_ID then
+    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
+    return device.MATTER_DEFAULT_ENDPOINT
+  end
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  -- Return the first switch endpoint as the default endpoint if no button endpoints are present
+  if #button_eps == 0 and #switch_eps > 0 then
+    return common_utils.get_first_non_zero_endpoint(switch_eps)
+  end
+  -- Return the first button endpoint as the default endpoint if no switch endpoints are present
+  if #switch_eps == 0 and #button_eps > 0 then
+    return common_utils.get_first_non_zero_endpoint(button_eps)
+  end
+  -- If both switch and button endpoints are present, check the device type on the main switch
+  -- endpoint. If it is not a supported device type, return the first button endpoint as the
+  -- default endpoint.
+  if #switch_eps > 0 and #button_eps > 0 then
+    local main_endpoint = common_utils.get_first_non_zero_endpoint(switch_eps)
+    if common_utils.supports_modular_profile(device) or common_utils.device_type_supports_button_switch_combination(device, main_endpoint) then
+      return common_utils.get_first_non_zero_endpoint(switch_eps)
+    else
+      device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
+      return common_utils.get_first_non_zero_endpoint(button_eps)
+    end
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
 local function handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
   local cluster_id = 0
   for _, ep in ipairs(device.endpoints) do
@@ -67,7 +101,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
 end
 
 local function match_profile(driver, device)
-  local main_endpoint = common_utils.find_default_endpoint(device)
+  local main_endpoint = find_default_endpoint(device)
   -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
   local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
   if device:get_field(common_utils.IS_PARENT_CHILD_DEVICE) then
@@ -114,7 +148,7 @@ local function device_init(driver, device)
     if device:get_field(common_utils.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(common_utils.find_child)
     end
-    local main_endpoint = common_utils.find_default_endpoint(device)
+    local main_endpoint = find_default_endpoint(device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
     common_utils.add_subscribed_attributes_and_events(device, main_endpoint)
     device:subscribe()
