@@ -30,6 +30,18 @@ function CapEventHandlers.handle_group_volume(device, new_volume, is_muted)
   end
 end
 
+function CapEventHandlers.handle_group_role_update(device, group_role)
+  device:emit_event(capabilities.mediaGroup.groupRole(group_role))
+end
+
+function CapEventHandlers.handle_group_coordinator_update(device, coordinator_id)
+  device:emit_event(capabilities.mediaGroup.groupPrimaryDeviceId(coordinator_id))
+end
+
+function CapEventHandlers.handle_group_id_update(device, group_id)
+  device:emit_event(capabilities.mediaGroup.groupId(group_id))
+end
+
 function CapEventHandlers.handle_group_update(device, group_info)
   local groupRole, groupPrimaryDeviceId, groupId = table.unpack(group_info)
   device:emit_event(capabilities.mediaGroup.groupRole(groupRole))
