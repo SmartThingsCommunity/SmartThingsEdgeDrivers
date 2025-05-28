@@ -116,20 +116,21 @@ local SUPPORTED_WATER_HEATER_MODES_WITH_IDX = "__supported_water_heater_modes_wi
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
 
--- This is a work around to handle when units for temperatureSetpoint is changed for the App.
+-- For RPC version >= 6, we can always assume that the values received from temperatureSetpoint
+-- are in Celsius, but we still limit the setpoint range to somewhat reasonable values.
+-- For RPC <= 5, this is a work around to handle when units for temperatureSetpoint is changed for the App.
 -- When units are switched, we will never know the units of the received command value as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual thermostat/water-heater temperatures:
 -- Thermostat:
 --   1. if the received setpoint command value is in range 5 ~ 40, it is inferred as *C
 --   2. if the received setpoint command value is in range 41 ~ 104, it is inferred as *F
-local THERMOSTAT_MAX_TEMP_IN_C = 40.0
-local THERMOSTAT_MIN_TEMP_IN_C = 5.0
-
+local THERMOSTAT_MAX_TEMP_IN_C = version.rpc >= 6 and 100.0 or 40.0
+local THERMOSTAT_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 5.0
 -- Water Heater:
 --   1. if the received setpoint command value is in range 30 ~ 80, it is inferred as *C
 --   2. if the received setpoint command value is in range 86 ~ 176, it is inferred as *F
-local WATER_HEATER_MAX_TEMP_IN_C = 80.0
-local WATER_HEATER_MIN_TEMP_IN_C = 30.0
+local WATER_HEATER_MAX_TEMP_IN_C = version.rpc >= 6 and 100.0 or 80.0
+local WATER_HEATER_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 30.0
 
 local setpoint_limit_device_field = {
   MIN_SETPOINT_DEADBAND_CHECKED = "MIN_SETPOINT_DEADBAND_CHECKED",
@@ -1789,7 +1790,7 @@ local function set_setpoint(setpoint)
       MIN_TEMP_IN_C = WATER_HEATER_MIN_TEMP_IN_C
     end
     local value = cmd.args.setpoint
-    if (value > MAX_TEMP_IN_C) then -- assume this is a fahrenheit value
+    if version.rpc <= 5 and value > MAX_TEMP_IN_C then
       value = utils.f_to_c(value)
     end
 
