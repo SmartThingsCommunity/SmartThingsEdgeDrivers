@@ -188,6 +188,7 @@ local function test_init()
 
   for _, child in pairs(aqara_mock_children) do
     test.mock_device.add_test_device(child)
+    print("abcd1")
   end
 
   aqara_mock_device:expect_device_create({

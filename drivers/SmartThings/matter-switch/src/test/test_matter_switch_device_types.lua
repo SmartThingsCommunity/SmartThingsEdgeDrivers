@@ -427,6 +427,7 @@ local function test_init_mounted_on_off_control()
   end
   test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "doConfigure" })
+  mock_device_mounted_on_off_control:expect_metadata_update({ profile = "switch-binary" })
   mock_device_mounted_on_off_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(mock_device_mounted_on_off_control)
 end
@@ -443,6 +444,7 @@ local function test_init_mounted_dimmable_load_control()
   end
   test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "doConfigure" })
+  mock_device_mounted_dimmable_load_control:expect_metadata_update({ profile = "switch-level" })
   mock_device_mounted_dimmable_load_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(mock_device_mounted_dimmable_load_control)
 end
@@ -477,6 +479,7 @@ local function test_init_parent_child_different_types()
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "doConfigure" })
+  mock_device_parent_child_different_types:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_different_types:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device_parent_child_different_types)

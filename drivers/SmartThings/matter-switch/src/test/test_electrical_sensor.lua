@@ -51,10 +51,10 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = 2,
       clusters = {
         { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+        { cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
       },
       device_types = {
-        { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
+        { device_type_id = 0x010B, device_type_revision = 1 }, -- OnOff Dimmable Plug
       }
     },
   },
@@ -80,16 +80,18 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
         { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 10, },
       },
       device_types = {
-        { device_type_id = 0x0510, device_type_revision = 1 } -- Electrical Sensor
+        { device_type_id = 0x010A, device_type_revision = 1 }, -- OnOff Plug
       }
     },
   },
 })
 
 local subscribed_attributes_periodic = {
+  clusters.OnOff.attributes.OnOff,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
 }
@@ -713,7 +715,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 2)
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff:build_test_command_response(mock_device, 1)
       }
     },
     {

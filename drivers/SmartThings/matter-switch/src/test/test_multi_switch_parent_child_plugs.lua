@@ -23,6 +23,8 @@ local child_profile_override = t_utils.get_profile_definition("switch-binary.yml
 local parent_ep = 10
 local child1_ep = 20
 local child2_ep = 30
+local child3_ep = 40
+local child4_ep = 50
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
@@ -68,6 +70,27 @@ local mock_device = test.mock_device.build_test_matter_device({
         {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
       }
     },
+    {
+      endpoint_id = child3_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
+      }
+    },
+    {
+      endpoint_id = child4_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
+      }
+    }
   }
 })
 
@@ -139,6 +162,7 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ profile = "plug-binary" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device)
@@ -160,6 +184,22 @@ local function test_init()
     profile = "plug-binary",
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", child2_ep)
+  })
+
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 4",
+    profile = "plug-power-energy-powerConsumption",
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", child3_ep)
+  })
+
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 5",
+    profile = "plug-energy-powerConsumption",
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", child4_ep)
   })
 end
 
@@ -184,6 +224,7 @@ local function test_init_child_profile_override()
   test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "doConfigure" })
+  mock_device_child_profile_override:expect_metadata_update({ profile = "plug-binary" })
   mock_device_child_profile_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device_child_profile_override)
