@@ -14,6 +14,8 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local device_lib = require "st.device"
+local log = require "log"
 local version = require "version"
 
 local common_utils = {}
@@ -50,6 +52,8 @@ common_utils.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 
 common_utils.AQARA_MANUFACTURER_ID = 0x115F
 common_utils.AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
+local EVE_MANUFACTURER_ID = 0x130A
+local THIRD_REALITY_MK1_FINGERPRINT = { vendor_id = 0x1407, product_id = 0x1388 }
 
 common_utils.AGGREGATOR_DEVICE_TYPE_ID = 0x000E
 common_utils.ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
@@ -180,6 +184,53 @@ common_utils.battery_support = {
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
 
+common_utils.updated_fields = {
+  { current_field_name = "__component_to_endpoint_map_button", updated_field_name = common_utils.COMPONENT_TO_ENDPOINT_MAP },
+  { current_field_name = "__switch_intialized", updated_field_name = nil }
+}
+
+function common_utils.is_aqara_cube(opts, driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    local name = string.format("%s", device.manufacturer_info.product_name)
+    if string.find(name, "Aqara Cube T1 Pro") then
+      log.info("Using Aqara Cube sub driver")
+      return true
+    end
+  end
+  return false
+end
+
+function common_utils.is_eve_energy_products(opts, driver, device)
+  -- this sub driver does not support child devices
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+     device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
+    return true
+  end
+  log.info("Using Eve Energy sub driver")
+  return false
+end
+
+function common_utils.is_third_reality_mk1(opts, driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+     device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
+     device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
+    log.info("Using Third Reality MK1 sub driver")
+    return true
+  end
+  return false
+end
+
+function common_utils.is_static_profile_device(opts, driver, device)
+  if not common_utils.is_aqara_cube(opts, driver, device) and
+     not common_utils.is_eve_energy_products(opts, driver, device) and
+     not common_utils.is_third_reality_mk1(opts, driver, device) and
+     not common_utils.supports_modular_profile(device) then
+    log.info("Using Static Profile sub driver")
+    return true
+  end
+  return false
+end
+
 function common_utils.detect_matter_thing(device)
   for _, capability in ipairs(common_utils.supported_capabilities) do
     if device:supports_capability(capability) then
@@ -198,6 +249,17 @@ function common_utils.detect_bridge(device)
     end
   end
   return false
+end
+
+function common_utils.check_field_name_updates(device)
+  for _, field in ipairs(common_utils.updated_fields) do
+    if device:get_field(field.current_field_name) then
+      if field.updated_field_name ~= nil then
+        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
+      end
+      device:set_field(field.current_field_name, nil)
+    end
+  end
 end
 
 function common_utils.find_child(parent, ep_id)
@@ -258,38 +320,60 @@ local function get_first_non_zero_endpoint(endpoints)
   return nil
 end
 
---- find_default_endpoint is a helper function to handle situations where
---- device does not have endpoint ids in sequential order from 1
+--- find_default_endpoint helper function to handle situations where the device
+--- does not have endpoint ids in sequential order from 1. Order of preference:
+---   1. Water Valve
+---   2. Light / Plug / Switch
+---   3. Button
+--- Note that Water Valve is listed first because any additional switch
+--- endpoints would be added as child devices.
 function common_utils.find_default_endpoint(device)
-  if device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
-    device.manufacturer_info.product_id == common_utils.AQARA_CLIMATE_SENSOR_W100_ID then
-    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
-    return device.MATTER_DEFAULT_ENDPOINT
-  end
+  if common_utils.supports_modular_profile(device) then
+    local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+    if #valve_eps > 0 then
+      return get_first_non_zero_endpoint(valve_eps)
+    end
 
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-
-  -- Return the first switch endpoint as the default endpoint if no button endpoints are present
-  if #button_eps == 0 and #switch_eps > 0 then
-    return get_first_non_zero_endpoint(switch_eps)
-  end
-
-  -- Return the first button endpoint as the default endpoint if no switch endpoints are present
-  if #switch_eps == 0 and #button_eps > 0 then
-    return get_first_non_zero_endpoint(button_eps)
-  end
-
-  -- If both switch and button endpoints are present, check the device type on the main switch
-  -- endpoint. If it is not a supported device type, return the first button endpoint as the
-  -- default endpoint.
-  if #switch_eps > 0 and #button_eps > 0 then
-    local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-    if common_utils.supports_modular_profile(device) or common_utils.device_type_supports_button_switch_combination(device, main_endpoint) then
+    local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+    if #switch_eps > 0 then
       return get_first_non_zero_endpoint(switch_eps)
-    else
-      device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
+    end
+
+    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+    if #button_eps > 0 then
       return get_first_non_zero_endpoint(button_eps)
+    end
+  else
+    if device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
+      device.manufacturer_info.product_id == common_utils.AQARA_CLIMATE_SENSOR_W100_ID then
+      -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
+      return device.MATTER_DEFAULT_ENDPOINT
+    end
+
+    local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+
+    -- Return the first switch endpoint as the default endpoint if no button endpoints are present
+    if #button_eps == 0 and #switch_eps > 0 then
+      return get_first_non_zero_endpoint(switch_eps)
+    end
+
+    -- Return the first button endpoint as the default endpoint if no switch endpoints are present
+    if #switch_eps == 0 and #button_eps > 0 then
+      return get_first_non_zero_endpoint(button_eps)
+    end
+
+    -- If both switch and button endpoints are present, check the device type on the main switch
+    -- endpoint. If it is not a supported device type, return the first button endpoint as the
+    -- default endpoint.
+    if #switch_eps > 0 and #button_eps > 0 then
+      local main_endpoint = get_first_non_zero_endpoint(switch_eps)
+      if common_utils.supports_modular_profile(device) or common_utils.device_type_supports_button_switch_combination(device, main_endpoint) then
+        return get_first_non_zero_endpoint(switch_eps)
+      else
+        device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
+        return get_first_non_zero_endpoint(button_eps)
+      end
     end
   end
 
@@ -315,6 +399,26 @@ function common_utils.endpoint_to_component(device, ep)
   return "main"
 end
 
+function common_utils.add_subscribed_attributes_and_events(device, main_endpoint)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id ~= main_endpoint then
+      local id = 0
+      for _, dt in ipairs(ep.device_types) do
+        id = math.max(id, dt.device_type_id)
+      end
+      for _, attr in pairs(common_utils.device_type_attribute_map[id] or {}) do
+        if id == common_utils.GENERIC_SWITCH_ID and
+          attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+          attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+          device:add_subscribed_event(attr)
+        else
+          device:add_subscribed_attribute(attr)
+        end
+      end
+    end
+  end
+end
+
 local function assign_child_profile(device, child_ep)
   local profile
 
@@ -329,7 +433,7 @@ local function assign_child_profile(device, child_ep)
       for _, dt in ipairs(ep.device_types) do
         id = math.max(id, dt.device_type_id)
       end
-      profile = device_type_profile_map[id]
+      profile = common_utils.device_type_profile_map[id]
       break
     end
   end

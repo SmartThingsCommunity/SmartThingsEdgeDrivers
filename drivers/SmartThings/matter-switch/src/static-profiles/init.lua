@@ -17,20 +17,11 @@ local clusters = require "st.matter.clusters"
 local common_utils = require "common-utils"
 local device_lib = require "st.device"
 local embedded_cluster_utils = require "embedded-cluster-utils"
-local log = require "log"
 
 -------------------------------------------------------------------------------------
 -- Static Profile sub-driver
 --   Used for environments that don't support modular profiles.
 -------------------------------------------------------------------------------------
-
-local function is_static_profile_device(opts, driver, device)
-  if not common_utils.supports_modular_profile(device) then
-    log.info("Using Static Profile sub-driver")
-    return true
-  end
-  return false
-end
 
 local function handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
   local cluster_id = 0
@@ -115,6 +106,21 @@ local function match_profile(driver, device)
   end
 end
 
+local function device_init(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    common_utils.check_field_name_updates(device)
+    device:set_component_to_endpoint_fn(common_utils.component_to_endpoint)
+    device:set_endpoint_to_component_fn(common_utils.endpoint_to_component)
+    if device:get_field(common_utils.IS_PARENT_CHILD_DEVICE) then
+      device:set_find_child(common_utils.find_child)
+    end
+    local main_endpoint = common_utils.find_default_endpoint(device)
+    -- ensure subscription to all endpoint attributes- including those mapped to child devices
+    common_utils.add_subscribed_attributes_and_events(device, main_endpoint)
+    device:subscribe()
+  end
+end
+
 local function do_configure(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not common_utils.detect_bridge(device) then
     match_profile(driver, device)
@@ -162,6 +168,7 @@ end
 local static_profile_handler = {
   NAME = "Static Profile Handler",
   lifecycle_handlers = {
+    init = device_init,
     doConfigure = do_configure,
     driverSwitched = driver_switched
   },
@@ -172,7 +179,7 @@ local static_profile_handler = {
       }
     }
   },
-  can_handle = is_static_profile_device
+  can_handle = common_utils.is_static_profile_device
 }
 
 return static_profile_handler

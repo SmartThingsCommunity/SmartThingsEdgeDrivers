@@ -56,11 +56,6 @@ local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
 local COLOR_MODE = "__color_mode"
 
-local updated_fields = {
-  { current_field_name = "__component_to_endpoint_map_button", updated_field_name = common_utils.COMPONENT_TO_ENDPOINT_MAP },
-  { current_field_name = "__switch_intialized", updated_field_name = nil }
-}
-
 local HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
 local X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
@@ -187,20 +182,9 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
-local function check_field_name_updates(device)
-  for _, field in ipairs(updated_fields) do
-    if device:get_field(field.current_field_name) then
-      if field.updated_field_name ~= nil then
-        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
-      end
-      device:set_field(field.current_field_name, nil)
-    end
-  end
-end
-
 local function device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    check_field_name_updates(device)
+    common_utils.check_field_name_updates(device)
     device:set_component_to_endpoint_fn(common_utils.component_to_endpoint)
     device:set_endpoint_to_component_fn(common_utils.endpoint_to_component)
     if device:get_field(common_utils.IS_PARENT_CHILD_DEVICE) then
@@ -208,23 +192,7 @@ local function device_init(driver, device)
     end
     local main_endpoint = common_utils.find_default_endpoint(device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
-    for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint then
-        local id = 0
-        for _, dt in ipairs(ep.device_types) do
-          id = math.max(id, dt.device_type_id)
-        end
-        for _, attr in pairs(common_utils.device_type_attribute_map[id] or {}) do
-          if id == common_utils.GENERIC_SWITCH_ID and
-             attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-             attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-            device:add_subscribed_event(attr)
-          else
-            device:add_subscribed_attribute(attr)
-          end
-        end
-      end
-    end
+    common_utils.add_subscribed_attributes_and_events(device, main_endpoint)
     if device:get_field(modular_profiles_utils.SUPPORTED_COMPONENT_CAPABILITIES) then
       device:extend_device("supports_capability_by_id", modular_profiles_utils.supports_capability_by_id_modular)
     end
