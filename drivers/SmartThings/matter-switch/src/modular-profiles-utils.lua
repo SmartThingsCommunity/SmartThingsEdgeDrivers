@@ -45,13 +45,22 @@ local device_type_category_map = {
   [common_utils.WATER_VALVE_ID] = device_categories.WATER_VALVE
 }
 
+local profile_name_and_mandatory_capability_per_device_category = {
+  [device_categories.BUTTON] =      { profile_name = "button-modular", mandatory_capability = capabilities.button.ID },
+  [device_categories.LIGHT] =       { profile_name = "light-modular",  mandatory_capability = capabilities.switch.ID },
+  [device_categories.PLUG] =        { profile_name = "plug-modular",   mandatory_capability = capabilities.switch.ID },
+  [device_categories.SWITCH] =      { profile_name = "switch-modular", mandatory_capability = capabilities.valve.ID },
+  [device_categories.WATER_VALVE] = { profile_name = "valve-modular",  mandatory_capability = capabilities.switch.ID }
+}
+
+--- get_device_category helper function to determine the category that should be
 --- used in a device's profile. The more specific categories are preferred,
 --- except for Button, because buttons are included as optional components in
 --- every modular profile. Order of preference:
 ---   1. Light / Plug / Water Valve
 ---   2. Switch
 ---   3. Button
-function modular_profiles_utils.get_device_category(device)
+local function get_device_category(device)
   local button_found = false
   local switch_found = false
   for _, ep in ipairs(device.endpoints) do
@@ -92,14 +101,6 @@ local function supports_capability_by_id_modular(device, capability, component)
   return false
 end
 
-local function add_battery_capability(component_capabilities, battery_attr_support)
-  if battery_attr_support == common_utils.battery_support.BATTERY_PERCENTAGE then
-    table.insert(component_capabilities, capabilities.battery.ID)
-  elseif battery_attr_support == common_utils.battery_support.BATTERY_LEVEL then
-    table.insert(component_capabilities, capabilities.batteryLevel.ID)
-  end
-end
-
 local function add_energy_and_power_capabilities(component_capabilities, num_energy_eps, num_power_eps)
   if num_energy_eps > 0 and num_power_eps > 0 then
     table.insert(component_capabilities, capabilities.powerMeter.ID)
@@ -113,9 +114,86 @@ local function add_energy_and_power_capabilities(component_capabilities, num_ene
   end
 end
 
+local function add_battery_capability(component_capabilities, battery_attr_support)
+  if battery_attr_support == common_utils.battery_support.BATTERY_PERCENTAGE then
+    table.insert(component_capabilities, capabilities.battery.ID)
+  elseif battery_attr_support == common_utils.battery_support.BATTERY_LEVEL then
+    table.insert(component_capabilities, capabilities.batteryLevel.ID)
+  end
+end
+
+local function add_button_capabilities(device, category, main_endpoint, main_component_capabilities, extra_component_capabilities, battery_attr_support)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  if #button_eps == 0 then return end
+  for component_num, _ in ipairs(button_eps) do
+    -- button-modular profile uses 'main', 'button2', button3', ... as component names.
+    -- Other profiles use 'main', 'button', 'button2', etc
+    if component_num == 1 and category == "BUTTON" then
+      table.insert(main_component_capabilities, capabilities.button.ID)
+      if battery_attr_support then
+        add_battery_capability(main_component_capabilities, battery_attr_support)
+      end
+    else
+      local button_capabilities = {}
+      table.insert(button_capabilities, capabilities.button.ID)
+      if component_num == 1 and battery_attr_support then
+        add_battery_capability(button_capabilities, battery_attr_support)
+      end
+      local component_name = "button"
+      if component_num > 1 then
+        component_name = component_name .. component_num
+      end
+      table.insert(extra_component_capabilities, {component_name, button_capabilities})
+    end
+  end
+  button_utils.build_button_component_map(device, main_endpoint, button_eps)
+  button_utils.configure_buttons(device)
+end
+
+local function handle_light_switch_with_onOff_server_clusters(device, main_endpoint, component_capabilities)
+  local device_type_id = 0
+  for _, ep in ipairs(device.endpoints) do
+    -- main_endpoint only supports server cluster by definition of get_endpoints()
+    if main_endpoint == ep.endpoint_id then
+      for _, dt in ipairs(ep.device_types) do
+        -- no device type that is not in the switch subset should be considered.
+        if (common_utils.ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+          device_type_id = math.max(device_type_id, dt.device_type_id)
+        end
+      end
+      break
+    end
+  end
+  if device_type_id == 0 then return end
+  local capabilities_to_remove = {}
+  if device_type_id == common_utils.ON_OFF_SWITCH_ID then
+    capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID, capabilities.switchLevel.ID}
+  elseif device_type_id == common_utils.ON_OFF_DIMMER_SWITCH_ID then
+    capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID}
+    if not common_utils.tbl_contains(component_capabilities, capabilities.switchLevel.ID) then
+      table.insert(component_capabilities, capabilities.switchLevel.ID)
+    end
+  else -- device_type_id = ON_OFF_COLOR_DIMMER_SWITCH_ID
+    if not common_utils.tbl_contains(component_capabilities, capabilities.switchLevel.ID) then
+      table.insert(component_capabilities, capabilities.switchLevel.ID)
+    end
+    if not common_utils.tbl_contains(component_capabilities, capabilities.colorTemperature.ID) then
+      table.insert(component_capabilities, capabilities.colorTemperature.ID)
+    end
+    if not common_utils.tbl_contains(component_capabilities, capabilities.colorControl.ID) then
+      table.insert(component_capabilities, capabilities.colorControl.ID)
+    end
+  end
+  for _, capability in ipairs(capabilities_to_remove) do
+    local _, found_idx = common_utils.tbl_contains(component_capabilities, capability)
+    if found_idx then
+      table.remove(component_capabilities, found_idx)
+    end
+  end
+end
+
 local function match_modular_profile(driver, device, battery_attr_support)
   local main_endpoint = common_utils.find_default_endpoint(device)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local color_hs_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.HS})
   local color_temp_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.CT})
   local color_xy_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.XY})
@@ -128,7 +206,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
   local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
 
-  local category = modular_profiles_utils.get_device_category(device)
+  local category = get_device_category(device)
 
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
@@ -137,31 +215,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
   local MAIN_COMPONENT_IDX = 1
   local CAPABILITIES_LIST_IDX = 2
 
-  if #button_eps > 0 then
-    for component_num, _ in ipairs(button_eps) do
-      -- button-modular profile uses 'main', 'button2', button3', ... as component names.
-      -- Other profiles use 'main', 'button', 'button2', etc
-      if component_num == 1 and category == "BUTTON" then
-        table.insert(main_component_capabilities, capabilities.button.ID)
-        if battery_attr_support then
-          add_battery_capability(main_component_capabilities, battery_attr_support)
-        end
-      else
-        local button_capabilities = {}
-        table.insert(button_capabilities, capabilities.button.ID)
-        if component_num == 1 and battery_attr_support then
-          add_battery_capability(button_capabilities, battery_attr_support)
-        end
-        local component_name = "button"
-        if component_num > 1 then
-          component_name = component_name .. component_num
-        end
-        table.insert(extra_component_capabilities, {component_name, button_capabilities})
-      end
-    end
-    button_utils.build_button_component_map(device, main_endpoint, button_eps)
-    button_utils.configure_buttons(device)
-  end
+  add_button_capabilities(device, category, main_endpoint, main_component_capabilities, extra_component_capabilities, battery_attr_support)
 
   -- Only add capabilities related to lights if the corresponding cluster is
   -- implemented on the main endpoint. Otherwise, it will be added as a child device.
@@ -189,55 +243,18 @@ local function match_modular_profile(driver, device, battery_attr_support)
   add_energy_and_power_capabilities(main_component_capabilities, #energy_eps, #power_eps)
 
   if #switch_eps > 0 then
-    if category == "PLUG" then
-      for component_num, ep in ipairs(switch_eps) do
-        if component_num ~= 1 then
-          local plug_capabilities = {}
-          table.insert(plug_capabilities, capabilities.switch.ID)
-          if common_utils.tbl_contains(level_eps, ep) then
-            table.insert(plug_capabilities, capabilities.switchLevel.ID)
-          end
-          add_energy_and_power_capabilities(plug_capabilities, #energy_eps, #power_eps)
-          local component_name = "plug" .. component_num
-          table.insert(extra_component_capabilities, {component_name, plug_capabilities})
-        end
-      end
-    elseif category == "BUTTON" or category == "WATER_VALVE" then
+    -- If the device is a Button or Water Valve, add the switch capability since
+    -- it is not a mandatory capability for these device types.
+    if category == "BUTTON" or category == "WATER_VALVE" then
       table.insert(main_component_capabilities, capabilities.switch.ID)
-    else -- category = LIGHT or SWITCH
-      local num_switch_server_eps = common_utils.build_child_switch_profiles(driver, device, main_endpoint)
-      if num_switch_server_eps > 0 and common_utils.detect_matter_thing(device) then
-        -- Ensure that the proper capabilities are included for Light Switch
-        -- device types that implement the OnOff cluster as 'server'
-        local device_type_id = common_utils.handle_light_switch_with_onOff_server_clusters(device, main_endpoint, true)
-        if common_utils.ON_OFF_SWITCH_ID <= device_type_id and device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID then
-          local capabilities_to_remove = {}
-          if device_type_id == common_utils.ON_OFF_SWITCH_ID then
-            capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID, capabilities.switchLevel.ID}
-          elseif device_type_id == common_utils.ON_OFF_DIMMER_SWITCH_ID then
-            capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID}
-            if not common_utils.tbl_contains(main_component_capabilities, capabilities.switchLevel.ID) then
-              table.insert(main_component_capabilities, capabilities.switchLevel.ID)
-            end
-          else -- device_type_id = ON_OFF_COLOR_DIMMER_SWITCH_ID
-            if not common_utils.tbl_contains(main_component_capabilities, capabilities.switchLevel.ID) then
-              table.insert(main_component_capabilities, capabilities.switchLevel.ID)
-            end
-            if not common_utils.tbl_contains(main_component_capabilities, capabilities.colorTemperature.ID) then
-              table.insert(main_component_capabilities, capabilities.colorTemperature.ID)
-            end
-            if not common_utils.tbl_contains(main_component_capabilities, capabilities.colorControl.ID) then
-              table.insert(main_component_capabilities, capabilities.colorControl.ID)
-            end
-          end
-          for _, capability in ipairs(capabilities_to_remove) do
-            local _, found_idx = common_utils.tbl_contains(main_component_capabilities, capability)
-            if found_idx then
-              table.remove(main_component_capabilities, found_idx)
-            end
-          end
-        end
-      end
+    end
+    -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
+    -- while building switch child profiles
+    local num_switch_server_eps = common_utils.build_child_switch_profiles(driver, device, main_endpoint)
+    -- Ensure that the proper capabilities are included for Light Switch device types that implement the OnOff
+    -- cluster as 'server'
+    if num_switch_server_eps > 0 and common_utils.detect_matter_thing(device) then
+      handle_light_switch_with_onOff_server_clusters(device, main_endpoint, main_component_capabilities)
     end
   end
 
@@ -260,28 +277,12 @@ local function match_modular_profile(driver, device, battery_attr_support)
 
   local total_supported_capabilities = optional_supported_component_capabilities
 
-  local profile_name, mandatory_capability_for_device_category
-  if category == "BUTTON" then
-    profile_name = "button-modular"
-    mandatory_capability_for_device_category = capabilities.button.ID
-  elseif category == "LIGHT" then
-    profile_name = "light-modular"
-    mandatory_capability_for_device_category = capabilities.switch.ID
-  elseif category == "PLUG" then
-    profile_name = "plug-modular"
-    mandatory_capability_for_device_category = capabilities.switch.ID
-  elseif category == "WATER_VALVE" then
-    profile_name = "water-valve-modular"
-    mandatory_capability_for_device_category = capabilities.valve.ID
-  else -- category = SWITCH
-    profile_name = "switch-modular"
-    mandatory_capability_for_device_category = capabilities.switch.ID
-  end
-
-  device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+  device:try_update_metadata({profile = profile_name_and_mandatory_capability_per_device_category[category].profile_name,
+                              optional_component_capabilities = optional_supported_component_capabilities})
 
   -- add mandatory capabilities for subscription
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], mandatory_capability_for_device_category)
+  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX],
+    profile_name_and_mandatory_capability_per_device_category[category].mandatory_capability)
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
@@ -296,22 +297,6 @@ function modular_profiles_utils.match_profile(driver, device)
   else
     device:send(clusters.PowerSource.attributes.AttributeList:read(device)) -- battery profiles are configured by power_source_attribute_list_handler
   end
-end
-
-function modular_profiles_utils.power_source_attribute_list_handler(driver, device, ib, response)
-  local battery_attr_support
-  for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
-    -- BatChargeLevel (Attribute ID 0x0E) is present.
-    if attr.value == 0x0C then
-      battery_attr_support = common_utils.battery_support.BATTERY_PERCENTAGE
-      break
-    elseif attr.value == 0x0E then
-      battery_attr_support = common_utils.battery_support.BATTERY_LEVEL
-      break
-    end
-  end
-  match_modular_profile(driver, device, battery_attr_support)
 end
 
 return modular_profiles_utils
