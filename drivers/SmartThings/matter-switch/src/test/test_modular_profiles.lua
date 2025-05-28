@@ -22,7 +22,7 @@ local utils = require "st.utils"
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  profile = t_utils.get_profile_definition("water-valve-level.yml"),
+  profile = t_utils.get_profile_definition("water-valve-modular.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -40,45 +40,18 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
-        {cluster_id = clusters.ValveConfigurationAndControl.ID, cluster_type = "SERVER", feature_map = 2}
-      },
-      device_types = {
-        {device_type_id = 0x0042, device_type_revision = 1}
-      }
-    },
-    {
-      endpoint_id = 2,
-      clusters = {
+        {cluster_id = clusters.ValveConfigurationAndControl.ID, cluster_type = "SERVER", feature_map = 2},
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 31},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
       },
       device_types = {
-        {device_type_id = 0x0100, device_type_revision = 1} -- On/Off Light
+        {device_type_id = 0x0042, device_type_revision = 1}, -- Water Valve
+        {device_type_id = 0x0100, device_type_revision = 1}  -- On/Off Light
       }
     }
   }
 })
-local default_cluster_subscribe_list = {
-  clusters.ValveConfigurationAndControl.attributes.CurrentState,
-  clusters.ValveConfigurationAndControl.attributes.CurrentLevel
-}
-
-local function subscribe(device, cluster_list)
-  local subscribe_request = cluster_list[1]:subscribe(device)
-  for i, cluster in ipairs(cluster_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(device))
-    end
-  end
-  test.socket.matter:__expect_send({device.id, subscribe_request})
-end
-
-local function test_init()
-  subscribe(mock_device, default_cluster_subscribe_list)
-  test.mock_device.add_test_device(mock_device)
-end
-test.set_test_init_function(test_init)
 
 local tc1_cluster_subscribe_list = {
   clusters.OnOff.attributes.OnOff,
@@ -97,32 +70,64 @@ local tc1_cluster_subscribe_list = {
   clusters.ValveConfigurationAndControl.attributes.CurrentLevel
 }
 
+local function subscribe(device, cluster_list)
+  local subscribe_request = cluster_list[1]:subscribe(device)
+  for i, cluster in ipairs(cluster_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(device))
+    end
+  end
+  test.socket.matter:__expect_send({device.id, subscribe_request})
+end
+
+local function test_init()
+  subscribe(mock_device, tc1_cluster_subscribe_list)
+  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  local optional_component_capabilities = {
+    { "main", { "colorControl", "colorTemperature", "switchLevel", "switch", "valve", "level" } }
+  }
+  mock_device:expect_metadata_update({ profile = "water-valve-modular", optional_component_capabilities = optional_component_capabilities })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+  device_info_copy.profile.id = "switch-color-level"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+  subscribe(mock_device, tc1_cluster_subscribe_list)
+end
+test.set_test_init_function(test_init)
+
 test.register_coroutine_test(
   "Test water valve modular profiling",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    local optional_component_capabilities = {
-      { "main", { "colorControl", "colorTemperature", "switchLevel", "switch", "valve", "level" } }
-    }
-    mock_device:expect_metadata_update({ profile = "water-valve-modular", optional_component_capabilities = optional_component_capabilities })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
-    device_info_copy.profile.id = "switch-color-level"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-    subscribe(mock_device, tc1_cluster_subscribe_list)
-    --test.wait_for_events()
-    --test.socket.matter:__queue_receive(
-    --  {
-    --    mock_device.id,
-    --    clusters.ValveConfigurationAndControl.server.attributes.CurrentState:build_test_report_data(mock_device, 1, 1)
-    --  }
-    --)
-    --test.socket.capability:__expect_send(
-    --  mock_device:generate_test_message(
-    --    "main", capabilities.valve.valve.open()
-    --  )
-    --)
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ValveConfigurationAndControl.server.attributes.CurrentState:build_test_report_data(mock_device, 1, 1)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.valve.valve.open()
+      )
+    )
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 50 } }},
+      }
+    )
+    local TRANSITION_TIME = 0
+    local OPTIONS_MASK = 0x01
+    local OPTIONS_OVERRIDE = 0x01
+    local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
+    local sat = math.floor((50 * 0xFE) / 100.0 + 0.5)
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      }
+    )
   end
 )
 

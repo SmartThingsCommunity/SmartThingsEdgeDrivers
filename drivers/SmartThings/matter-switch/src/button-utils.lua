@@ -40,7 +40,7 @@ local function create_multi_press_values_list(size, supportsHeld)
   local list = {"pushed", "double"}
   if supportsHeld then table.insert(list, "held") end
   -- add multi press values of 3 or greater to the list
-  for i=3, size do
+  for i = 3, size do
     table.insert(list, string.format("pushed_%dx", i))
   end
   return list
@@ -68,7 +68,6 @@ function button_utils.configure_buttons(device)
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
-
   for _, ep in ipairs(ms_eps) do
     if device.profile.components[common_utils.endpoint_to_component(device, ep)] then
       device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
@@ -87,7 +86,6 @@ function button_utils.configure_buttons(device)
         supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
         common_utils.set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, {persist = true})
       end
-
       if supportedButtonValues_event then
         device:emit_event_for_endpoint(ep, supportedButtonValues_event)
       end
@@ -173,7 +171,6 @@ function button_utils.multi_press_complete_event_handler(driver, device, ib, res
       elseif press_value > 2 then
         button_event = capabilities.button.button(string.format("pushed_%dx", press_value), {state_change = true})
       end
-
       device:emit_event_for_endpoint(ib.endpoint_id, button_event)
     else
       log.info(string.format("Number of presses (%d) not supported by capability", press_value))

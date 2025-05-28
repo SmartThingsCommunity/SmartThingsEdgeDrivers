@@ -50,28 +50,31 @@ local profile_name_and_mandatory_capability_per_device_category = {
   [device_categories.LIGHT] =       { profile_name = "light-modular",  mandatory_capability = capabilities.switch.ID },
   [device_categories.PLUG] =        { profile_name = "plug-modular",   mandatory_capability = capabilities.switch.ID },
   [device_categories.SWITCH] =      { profile_name = "switch-modular", mandatory_capability = capabilities.valve.ID },
-  [device_categories.WATER_VALVE] = { profile_name = "valve-modular",  mandatory_capability = capabilities.switch.ID }
+  [device_categories.WATER_VALVE] = { profile_name = "water-valve-modular",  mandatory_capability = capabilities.switch.ID }
 }
 
 --- get_device_category helper function to determine the category that should be
 --- used in a device's profile. The more specific categories are preferred,
 --- except for Button, because buttons are included as optional components in
 --- every modular profile. Order of preference:
----   1. Light / Plug / Water Valve
----   2. Switch
----   3. Button
-local function get_device_category(device)
+---   1. Water Valve
+---   2. Light / Plug
+---   3. Switch
+---   4. Button
+local function get_device_category(device, main_endpoint)
   local button_found = false
   local switch_found = false
   for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      local category = device_type_category_map[dt.device_type_id]
-      if category == "LIGHT" or category == "PLUG" or category == "WATER_VALVE" then
-        return category
-      elseif category == device_categories.SWITCH then
-        switch_found = true
-      elseif category == device_categories.BUTTON then
-        button_found = true
+    if ep.endpoint_id == main_endpoint then
+      for _, dt in ipairs(ep.device_types) do
+        local category = device_type_category_map[dt.device_type_id]
+        if category == "LIGHT" or category == "PLUG" or category == "WATER_VALVE" then
+          return category
+        elseif category == device_categories.SWITCH then
+          switch_found = true
+        elseif category == device_categories.BUTTON then
+          button_found = true
+        end
       end
     end
   end
@@ -86,11 +89,11 @@ local function get_device_category(device)
 end
 
 local function supports_capability_by_id_modular(device, capability, component)
-  if not device:get_field(modular_profiles_utils.SUPPORTED_COMPONENT_CAPABILITIES) then return false end
-  for _, component_capabilities in ipairs(device:get_field(modular_profiles_utils.SUPPORTED_COMPONENT_CAPABILITIES)) do
+  local supported_component_capabilities = device:get_field(modular_profiles_utils.SUPPORTED_COMPONENT_CAPABILITIES) or {}
+  for _, component_capabilities in ipairs(supported_component_capabilities) do
     local comp_id = component_capabilities[1]
     local capability_ids = component_capabilities[2]
-    if (component == nil) or (component == comp_id) then
+    if component == nil or component == comp_id then
       for _, cap in ipairs(capability_ids) do
         if cap == capability then
           return true
@@ -206,7 +209,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
   local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
 
-  local category = get_device_category(device)
+  local category = get_device_category(device, main_endpoint)
 
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
