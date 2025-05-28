@@ -15,15 +15,20 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
+local version = require "version"
 
-clusters.RvcCleanMode = require "RvcCleanMode"
-clusters.RvcOperationalState = require "RvcOperationalState"
-clusters.RvcRunMode = require "RvcRunMode"
-clusters.OperationalState = require "OperationalState"
-clusters.ServiceArea = require "ServiceArea"
-clusters.Global = require "Global"
+if version.api < 10 then
+  clusters.RvcCleanMode = require "RvcCleanMode"
+  clusters.RvcOperationalState = require "RvcOperationalState"
+  clusters.RvcRunMode = require "RvcRunMode"
+  clusters.OperationalState = require "OperationalState"
+end
+
+if version.api < 13 then
+  clusters.ServiceArea = require "ServiceArea"
+  clusters.Global = require "Global"
+end
 
 local APPLICATION_ENDPOINT = 10
 
@@ -804,7 +809,6 @@ local locationDescriptorStruct = require "Global.types.LocationDescriptorStruct"
 local areaInfoStruct = require "ServiceArea.types.AreaInfoStruct"
 local areaStruct = require "ServiceArea.types.AreaStruct"
 local landmarkInfoStruct = require "ServiceArea.types.LandmarkInfoStruct"
-
 test.register_message_test(
   "Supported ServiceAreas must be registered",
   {
@@ -836,7 +840,6 @@ test.register_message_test(
 
 local uint32_dt = require "st.matter.data_types.Uint32"
 local selectAreasStatus = require "ServiceArea.types.SelectAreasStatus"
-
 test.register_message_test(
   "ServiceArea attribute report must emit appropriate capability event",
   {
@@ -860,7 +863,6 @@ test.register_message_test(
 )
 
 local uint32_dt = require "st.matter.data_types.Uint32"
-
 test.register_message_test(
   "Select ServiceAreas command must trigger appropriate matter cluster",
   {
@@ -882,7 +884,6 @@ test.register_message_test(
     },
   }
 )
-
 
 test.register_message_test(
   "Selected ServiceAreasResponse must log Success status or emit last valid selectedAreas capability on non-Success status",
