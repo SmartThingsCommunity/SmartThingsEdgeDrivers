@@ -67,7 +67,7 @@ common_utils.GENERIC_SWITCH_ID = 0x000F
 common_utils.ELECTRICAL_SENSOR_ID = 0x0510
 common_utils.WATER_VALVE_ID = 0x0042
 
-local device_type_profile_map = {
+common_utils.device_type_profile_map = {
   [common_utils.ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
   [common_utils.DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
   [common_utils.COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = "light-level-colorTemperature",
@@ -200,7 +200,10 @@ function common_utils.detect_bridge(device)
   return false
 end
 
---- get_device_category helper function to determine the category that should be
+function common_utils.find_child(parent, ep_id)
+  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
+end
+
 function common_utils.supports_modular_profile(device)
   return version.api >= 14 and version.rpc >= 8 and
     not (device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
@@ -310,30 +313,6 @@ function common_utils.endpoint_to_component(device, ep)
     end
   end
   return "main"
-end
-
-function common_utils.handle_light_switch_with_onOff_server_clusters(device, main_endpoint, return_device_type)
-  local cluster_id = 0
-  for _, ep in ipairs(device.endpoints) do
-    -- main_endpoint only supports server cluster by definition of get_endpoints()
-    if main_endpoint == ep.endpoint_id then
-      for _, dt in ipairs(ep.device_types) do
-        -- no device type that is not in the switch subset should be considered.
-        if (common_utils.ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID) then
-          cluster_id = math.max(cluster_id, dt.device_type_id)
-        end
-      end
-      break
-    end
-  end
-
-  if return_device_type then
-    return cluster_id
-  end
-
-  if device_type_profile_map[cluster_id] then
-    device:try_update_metadata({profile = device_type_profile_map[cluster_id]})
-  end
 end
 
 local function assign_child_profile(device, child_ep)
