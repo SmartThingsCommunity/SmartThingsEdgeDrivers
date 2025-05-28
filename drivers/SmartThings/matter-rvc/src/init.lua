@@ -343,7 +343,7 @@ local function rvc_operational_error_attr_handler(driver, device, ib, response)
   end
 end
 
-local function uppercase_to_camelcase(name)
+local function upper_to_camelcase(name)
   local name_camelcase = (string.lower(name)):gsub("_"," ")
   name_camelcase = name_camelcase:gsub("(%l)(%w*)",
     function(a, b)
@@ -371,15 +371,15 @@ local function rvc_service_area_supported_areas_handler(driver, device, ib, resp
       if location_info.location_name.value ~= "" then
         area_name = location_info.location_name.value
       elseif location_info.floor_number.value ~= nil and location_info.area_type.value ~= nil then
-        area_name = location_info.floor_number.value .. "F" .. uppercase_to_camelcase(string.sub(area_type.pretty_print(location_info.area_type),string.len("AreaTypeTag: ")))
+        area_name = location_info.floor_number.value .. "F " .. upper_to_camelcase(string.gsub(area_type.pretty_print(location_info.area_type),"AreaTypeTag: ",""))
       elseif location_info.floor_number.value ~= nil then
         area_name = location_info.floor_number.value .. "F"
       elseif location_info.area_type.value ~= nil then
-        area_name = uppercase_to_camelcase(string.sub(area_type.pretty_print(location_info.area_type),string.len("AreaTypeTag:  ")))
+        area_name = upper_to_camelcase(string.gsub(area_type.pretty_print(location_info.area_type),"AreaTypeTag: ",""))
       end
     end
     if area_name == "" then
-      area_name = uppercase_to_camelcase(string.sub(landmark.pretty_print(landmark_info.landmark_tag),string.len("LandmarkTag:  ")))
+      area_name = upper_to_camelcase(string.gsub(landmark.pretty_print(landmark_info.landmark_tag),"LandmarkTag: ",""))
     end
     table.insert(supported_areas, {["areaId"] = area_id, ["areaName"] = area_name})
   end
