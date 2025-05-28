@@ -257,7 +257,7 @@ local level_strings = {
 }
 
 local function carbon_monoxide_level_handler(driver, device, ib, response)
-    device:emit_event_for_endpoint(ib.endpoint_id, level_strings[ib.data.value])
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern(level_strings[ib.data.value]))
 end
 
 local function do_configure(driver, device)
