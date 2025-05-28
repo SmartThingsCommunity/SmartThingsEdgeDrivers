@@ -409,6 +409,7 @@ local function test_init_parent_child_switch_types()
   local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_child_switch_types)
   test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
 
+  mock_device_parent_child_switch_types:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "doConfigure" })
   mock_device_parent_child_switch_types:expect_metadata_update({ profile = "switch-level" })
   mock_device_parent_child_switch_types:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -426,6 +427,7 @@ end
 
 local function test_init_onoff()
   test.mock_device.add_test_device(mock_device_onoff)
+  mock_device_onoff:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "doConfigure" })
   mock_device_onoff:expect_metadata_update({ profile = "switch-binary" })
   mock_device_onoff:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -438,6 +440,7 @@ end
 local function test_init_parent_client_child_server()
   local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_client_child_server)
   test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, subscribe_request})
+  mock_device_parent_client_child_server:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_client_child_server.id, "doConfigure" })
   mock_device_parent_client_child_server:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_client_child_server:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -446,6 +449,7 @@ end
 
 local function test_init_dimmer()
   test.mock_device.add_test_device(mock_device_dimmer)
+  mock_device_dimmer:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "doConfigure" })
   mock_device_dimmer:expect_metadata_update({ profile = "switch-level" })
   mock_device_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -453,6 +457,7 @@ end
 
 local function test_init_color_dimmer()
   test.mock_device.add_test_device(mock_device_color_dimmer)
+  mock_device_color_dimmer:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_dimmer.id, "doConfigure" })
   mock_device_color_dimmer:expect_metadata_update({ profile = "switch-color-level" })
   mock_device_color_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -469,7 +474,9 @@ local function test_init_mounted_on_off_control()
     end
   end
   test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
+  mock_device_mounted_on_off_control:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "doConfigure" })
+  mock_device_mounted_on_off_control:expect_metadata_update({ profile = "switch-binary" })
   mock_device_mounted_on_off_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(mock_device_mounted_on_off_control)
 end
@@ -485,13 +492,16 @@ local function test_init_mounted_dimmable_load_control()
     end
   end
   test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
+  mock_device_mounted_dimmable_load_control:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "doConfigure" })
+  mock_device_mounted_dimmable_load_control:expect_metadata_update({ profile = "switch-level" })
   mock_device_mounted_dimmable_load_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(mock_device_mounted_dimmable_load_control)
 end
 
 local function test_init_water_valve()
   test.mock_device.add_test_device(mock_device_water_valve)
+  mock_device_water_valve:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_water_valve.id, "doConfigure" })
   mock_device_water_valve:expect_metadata_update({ profile = "water-valve-level" })
   mock_device_water_valve:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -519,7 +529,9 @@ local function test_init_parent_child_different_types()
   end
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
+  mock_device_parent_child_different_types:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "doConfigure" })
+  mock_device_parent_child_different_types:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_different_types:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device_parent_child_different_types)
@@ -534,6 +546,7 @@ local function test_init_parent_child_different_types()
 end
 
 local function test_init_parent_child_unsupported_device_type()
+  mock_device_parent_child_unsupported_device_type:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_unsupported_device_type.id, "doConfigure" })
   mock_device_parent_child_unsupported_device_type:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_unsupported_device_type:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -562,7 +575,12 @@ local function test_init_light_level_motion()
       subscribe_request:merge(cluster:subscribe(mock_device_light_level_motion))
     end
   end
+
   test.socket.matter:__expect_send({mock_device_light_level_motion.id, subscribe_request})
+  mock_device_light_level_motion:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
+  test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "doConfigure" })
+  mock_device_light_level_motion:expect_metadata_update({ profile = "light-level-motion" })
+  mock_device_light_level_motion:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(mock_device_light_level_motion)
 end
 
