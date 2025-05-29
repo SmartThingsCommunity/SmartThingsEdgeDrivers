@@ -60,10 +60,10 @@ end
 local function handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
   local cluster_id = 0
   for _, ep in ipairs(device.endpoints) do
-    -- main_endpoint only supports server cluster by definition of get_endpoints()
+    -- The main endpoint only supports server cluster by definition of get_endpoints()
     if main_endpoint == ep.endpoint_id then
       for _, dt in ipairs(ep.device_types) do
-        -- no device type that is not in the switch subset should be considered.
+        -- No device type that is not in the switch subset should be considered.
         if (common_utils.ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID) then
           cluster_id = math.max(cluster_id, dt.device_type_id)
         end
@@ -102,7 +102,7 @@ end
 
 local function match_profile(driver, device)
   local main_endpoint = find_default_endpoint(device)
-  -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
+  -- Initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
   local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
   if device:get_field(common_utils.IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(common_utils.find_child)
@@ -149,7 +149,7 @@ local function device_init(driver, device)
       device:set_find_child(common_utils.find_child)
     end
     local main_endpoint = find_default_endpoint(device)
-    -- ensure subscription to all endpoint attributes- including those mapped to child devices
+    -- Ensure subscription to all endpoint attributes- including those mapped to child devices
     common_utils.add_subscribed_attributes_and_events(device, main_endpoint)
     device:subscribe()
   end
