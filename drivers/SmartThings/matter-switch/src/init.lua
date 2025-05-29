@@ -397,10 +397,18 @@ local function mired_to_kelvin(value, minOrMax)
   end
 end
 
---- device_type_supports_button_switch_combination helper function used to check
+--- ep_device_type_supports_mcd_button_profile helper function used to check
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
-local function device_type_supports_button_switch_combination(device, endpoint_id)
+local function ep_device_type_supports_mcd_button_profile(device, endpoint_id)
+  if #device:get_endpoints(clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}) <= 0 then
+    return "No Button Support"
+  end
+  -- Aqara-specific device handling for ignoring the mcd light/button device logic
+  if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
+     device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
+    return true
+  end
   for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[AQARA_MANUFACTURER_ID]) do
     if device.manufacturer_info.product_id == fingerprint.product_id then
       return false -- For Aqara Dimmer Switch with Button.
@@ -412,63 +420,67 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
   return false
 end
 
-local function get_first_non_zero_endpoint(endpoints)
-  table.sort(endpoints)
-  for _,ep in ipairs(endpoints) do
-    if ep ~= 0 then -- 0 is the matter RootNode endpoint
-      return ep
+--- @param cluster_id integer|nil cluster id to check for (find first non-root ep if nil)
+--- @param opts table|nil currently, only valid option is feature_bitmap to specify cluster feature support
+--- @return integer default_endpoint_id the first cluster-specified ep, or the first non-root ep, or the root ep
+local function find_default_endpoint(device, cluster_id, opts)
+  local get_first_cluster_endpoint = function(endpoints_list)
+    table.sort(endpoints_list)
+    for _, ep_id in ipairs(endpoints_list) do
+      if ep_id ~= 0 then return ep_id end -- ignore Matter RootNode when choosing default endpoint
     end
+    return -1
   end
-  return nil
-end
-
---- find_default_endpoint is a helper function to handle situations where
---- device does not have endpoint ids in sequential order from 1
-local function find_default_endpoint(device)
-  if device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and
-     device.manufacturer_info.product_id == AQARA_CLIMATE_SENSOR_W100_ID then
-    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
-    return device.MATTER_DEFAULT_ENDPOINT
+  local get_default_endpoint = function()
+    local all_endpoint_ids = device:get_endpoints()
+    table.sort(all_endpoint_ids)
+    for _, ep_id in ipairs(all_endpoint_ids) do
+      if ep_id ~= 0 then return ep_id end -- ignore Matter RootNode when choosing default endpoint
+    end
+    return 0 -- return root node if all else fails
   end
 
+  -- Return first switch ep if both switch and button eps are present and it is a profile-supported device type
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-
-  -- Return the first switch endpoint as the default endpoint if no button endpoints are present
-  if #button_eps == 0 and #switch_eps > 0 then
-    return get_first_non_zero_endpoint(switch_eps)
-  end
-
-  -- Return the first button endpoint as the default endpoint if no switch endpoints are present
-  if #switch_eps == 0 and #button_eps > 0 then
-    return get_first_non_zero_endpoint(button_eps)
-  end
-
-  -- If both switch and button endpoints are present, check the device type on the main switch
-  -- endpoint. If it is not a supported device type, return the first button endpoint as the
-  -- default endpoint.
-  if #switch_eps > 0 and #button_eps > 0 then
-    local main_endpoint = get_first_non_zero_endpoint(switch_eps)
-    if device_type_supports_button_switch_combination(device, main_endpoint) then
-      return main_endpoint
-    else
-      device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
-      return get_first_non_zero_endpoint(button_eps)
+  if #switch_eps then
+    local default_switch_endpoint = get_first_cluster_endpoint(switch_eps)
+    local res = ep_device_type_supports_mcd_button_profile(device, default_switch_endpoint)
+    if res == true then
+      return default_switch_endpoint
+    elseif res == false then
+      log.warn("The primary OnOff cluster endpoint does not contain a supported device type for a component configuration with buttons")
     end
   end
 
-  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
-  return device.MATTER_DEFAULT_ENDPOINT
+  local default_endpoint_id
+  if cluster_id then
+    local cluster_eps = device:get_endpoints(cluster_id, opts)
+    default_endpoint_id = get_first_cluster_endpoint(cluster_eps)
+    log.debug("Cluster " .. cluster_id .. " given for default endpoint search, using endpoint " .. default_endpoint_id)
+  else
+    default_endpoint_id = get_default_endpoint()
+    log.debug("No cluster given for default endpoint search, using endpoint " .. default_endpoint_id)
+  end
+  if default_endpoint_id == -1 then
+    assert(cluster_id, not nil)
+    default_endpoint_id = get_default_endpoint()
+    log.warn("No endpoint found for given cluster " .. cluster_id .. ", using endpoint " .. default_endpoint_id)
+  end
+  return default_endpoint_id
 end
 
-local function component_to_endpoint(device, component)
+--- @param device any
+--- @param component any
+--- @param cluster_id number|nil cluster ID to check for (first non-zero endpoint if nil)
+--- @param opts table|nil currently, only valid option is feature_bitmap to specify cluster feature support
+--- @return integer endpoint_id
+local function component_to_endpoint(device, component, cluster_id, opts)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
     return map[component]
   end
-  return find_default_endpoint(device)
+  return find_default_endpoint(device, cluster_id, opts)
 end
-
 local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
@@ -525,9 +537,7 @@ local function assign_switch_profile(device, switch_ep, is_child_device)
     end
   end
   -- Add electrical support to the first switch ep if Electical Sensor is handled on a unique ep
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  table.sort(switch_eps)
-  if switch_ep == switch_eps[1] and electrical_tags == "" and contains_device_type(device, ELECTRICAL_SENSOR_ID) then
+  if switch_ep == find_default_endpoint(device, clusters.OnOff.ID) and electrical_tags == "" and contains_device_type(device, ELECTRICAL_SENSOR_ID) then
     if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then
       electrical_tags = electrical_tags .. "-power"
     end
@@ -595,6 +605,9 @@ local function find_child(parent, ep_id)
 end
 
 local function build_button_component_map(device, main_endpoint, button_eps)
+  if not ep_device_type_supports_mcd_button_profile(device, main_endpoint) then
+    main_endpoint = find_default_endpoint(device, clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  end
   -- create component mapping on the main profile button endpoints
   table.sort(button_eps)
   local component_map = {}
@@ -613,7 +626,7 @@ end
 
 local function build_button_profile(device, main_endpoint, num_button_eps)
   local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
-  if device_type_supports_button_switch_combination(device, main_endpoint) then
+  if ep_device_type_supports_mcd_button_profile(device, main_endpoint) then
     profile_name = "light-level-" .. profile_name
   end
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
@@ -625,16 +638,19 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
 end
 
 local function build_child_switch_profiles(driver, device, main_endpoint)
-  local num_switch_server_eps = 0
-  local parent_child_device = false
+  if not ep_device_type_supports_mcd_button_profile(device, main_endpoint) then
+    main_endpoint = find_default_endpoint(device, clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  end
+  local switch_server_count = 0  local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
   for _, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-      num_switch_server_eps = num_switch_server_eps + 1
+      switch_server_count = switch_server_count + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        local name = string.format("%s %d", device.label, num_switch_server_eps)
+        local name = string.format("%s %d", device.label, switch_server_count)
         local child_profile = assign_switch_profile(device, ep, true)
+        log.info_with({ hub_logs = true }, "Creating child device with name: " .. name .. " and profile: " .. child_profile)
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
@@ -645,7 +661,7 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
             vendor_provided_label = name
           }
         )
-        parent_child_device = true
+        device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
         if _ == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
           device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
@@ -654,14 +670,8 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
     end
   end
 
-  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_buttons_and_switches
-  -- is only run once, but find_child function should be set on each driver init.
-  if parent_child_device then
-    device:set_field(IS_PARENT_CHILD_DEVICE, true, {persist = true})
-  end
-
   -- this is needed in initialize_buttons_and_switches
-  return num_switch_server_eps
+  return switch_server_count
 end
 
 local function handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
@@ -746,7 +756,7 @@ local function device_init(driver, device)
 end
 
 local function match_profile(driver, device)
-  local main_endpoint = find_default_endpoint(device)
+  local main_endpoint = find_default_endpoint(device, clusters.OnOff.ID)
   -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
   local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
@@ -803,7 +813,7 @@ local function handle_switch_on(driver, device, cmd)
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.OnOff.ID)
   --TODO use OnWithRecallGlobalScene for devices with the LT feature
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
@@ -813,7 +823,7 @@ local function handle_switch_off(driver, device, cmd)
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.OnOff.ID)
   local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
   device:send(req)
 end
@@ -822,7 +832,7 @@ local function handle_set_switch_level(driver, device, cmd)
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.LevelControl.ID)
   local level = math.floor(cmd.args.level/100.0 * 254)
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate, 0, 0)
   device:send(req)
@@ -835,7 +845,7 @@ local OPTIONS_MASK = 0x01
 local OPTIONS_OVERRIDE = 0x01
 
 local function handle_set_color(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.ColorControl.ID)
   local req
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
@@ -850,7 +860,7 @@ local function handle_set_color(driver, device, cmd)
 end
 
 local function handle_set_hue(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.ColorControl.ID)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.hue)
@@ -862,7 +872,7 @@ local function handle_set_hue(driver, device, cmd)
 end
 
 local function handle_set_saturation(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.ColorControl.ID)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = convert_huesat_st_to_matter(cmd.args.saturation)
@@ -874,7 +884,7 @@ local function handle_set_saturation(driver, device, cmd)
 end
 
 local function handle_set_color_temperature(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.ColorControl.ID)
   local temp_in_kelvin = cmd.args.temperature
   local min_temp_kelvin = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MIN, endpoint_id)
   local max_temp_kelvin = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_KELVIN..COLOR_TEMP_MAX, endpoint_id)
@@ -891,20 +901,20 @@ local function handle_set_color_temperature(driver, device, cmd)
 end
 
 local function handle_valve_open(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.ValveConfigurationAndControl.ID)
   local req = clusters.ValveConfigurationAndControl.server.commands.Open(device, endpoint_id)
   device:send(req)
 end
 
 local function handle_valve_close(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.ValveConfigurationAndControl.ID)
   local req = clusters.ValveConfigurationAndControl.server.commands.Close(device, endpoint_id)
   device:send(req)
 end
 
 local function handle_set_level(driver, device, cmd)
   local commands = clusters.ValveConfigurationAndControl.server.commands
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = component_to_endpoint(device, cmd.component, clusters.ValveConfigurationAndControl.ID)
   local level = cmd.args.level
   if not level then
     return

@@ -100,7 +100,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local mock_device_mcd_unsupported_switch_device_type = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  profile = t_utils.get_profile_definition("matter-thing.yml"),
+  profile = t_utils.get_profile_definition("light-binary.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
