@@ -268,7 +268,8 @@ end
 
 function common_utils.supports_modular_profile(device)
   return version.api >= 14 and version.rpc >= 8 and
-    not (device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
+    not (device.manufacturer_info and
+      device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
       device.manufacturer_info.product_id == common_utils.AQARA_CLIMATE_SENSOR_W100_ID)
 end
 
