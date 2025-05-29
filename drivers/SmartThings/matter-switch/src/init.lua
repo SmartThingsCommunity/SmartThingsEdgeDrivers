@@ -641,7 +641,7 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
   if not ep_device_type_supports_mcd_button_profile(device, main_endpoint) then
     main_endpoint = find_default_endpoint(device, clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   end
-  local switch_server_count = 0  local parent_child_device = false
+  local switch_server_count = 0
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
   for _, ep in ipairs(switch_eps) do
