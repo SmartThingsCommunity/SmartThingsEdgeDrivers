@@ -46,7 +46,7 @@ local function find_default_endpoint(device)
   -- default endpoint.
   if #switch_eps > 0 and #button_eps > 0 then
     local main_endpoint = common_utils.get_first_non_zero_endpoint(switch_eps)
-    if common_utils.supports_modular_profile(device) or common_utils.device_type_supports_button_switch_combination(device, main_endpoint) then
+    if common_utils.device_type_supports_button_switch_combination(device, main_endpoint) then
       return common_utils.get_first_non_zero_endpoint(switch_eps)
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
