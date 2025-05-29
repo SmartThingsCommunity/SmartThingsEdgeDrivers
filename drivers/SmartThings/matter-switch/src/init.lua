@@ -777,7 +777,7 @@ local function match_profile(driver, device)
   profile_name = assign_switch_profile(device, main_endpoint, false)
   -- ignore attempts to dynamically profile light-level-colorTemperature devices for now, since
   -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
-  if profile_name and profile_name ~= "light-level-colorTemperature" then
+  if profile_name and profile_name ~= "light-level-colorTemperature" and profile_name ~= "light-color-level" then
     device:try_update_metadata({profile = profile_name})
   end
 end
