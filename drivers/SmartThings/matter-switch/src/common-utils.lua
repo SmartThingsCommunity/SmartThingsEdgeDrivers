@@ -49,6 +49,7 @@ common_utils.supported_capabilities = {
 common_utils.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 common_utils.ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 common_utils.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
+local SUPPORTS_MODULAR_PROFILE = "__supports_modular_profile"
 
 common_utils.AQARA_MANUFACTURER_ID = 0x115F
 common_utils.AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
@@ -189,6 +190,64 @@ common_utils.updated_fields = {
   { current_field_name = "__switch_intialized", updated_field_name = nil }
 }
 
+common_utils.device_categories = {
+  BUTTON = "BUTTON",
+  LIGHT = "LIGHT",
+  PLUG = "PLUG",
+  SWITCH = "SWITCH",
+  WATER_VALVE = "WATER_VALVE"
+}
+
+local device_type_category_map = {
+  [common_utils.ON_OFF_LIGHT_DEVICE_TYPE_ID] = common_utils.device_categories.LIGHT,
+  [common_utils.DIMMABLE_LIGHT_DEVICE_TYPE_ID] = common_utils.device_categories.LIGHT,
+  [common_utils.COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = common_utils.device_categories.LIGHT,
+  [common_utils.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = common_utils.device_categories.LIGHT,
+  [common_utils.ON_OFF_PLUG_DEVICE_TYPE_ID] = common_utils.device_categories.PLUG,
+  [common_utils.DIMMABLE_PLUG_DEVICE_TYPE_ID] = common_utils.device_categories.PLUG,
+  [common_utils.ON_OFF_SWITCH_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.ON_OFF_DIMMER_SWITCH_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.MOUNTED_ON_OFF_CONTROL_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.GENERIC_SWITCH_ID] = common_utils.device_categories.BUTTON,
+  [common_utils.WATER_VALVE_ID] = common_utils.device_categories.WATER_VALVE
+}
+
+function common_utils.get_first_non_zero_endpoint(endpoints)
+  table.sort(endpoints)
+  for _,ep in ipairs(endpoints) do
+    if ep ~= 0 then -- 0 is the matter RootNode endpoint
+      return ep
+    end
+  end
+  return nil
+end
+
+--- find_default_endpoint helper function to handle situations where the device
+--- does not have endpoint ids in sequential order from 1. Order of preference:
+---   1. Water Valve
+---   2. Light / Plug / Switch
+---   3. Button
+--- Note that Water Valve is listed first because any additional switch
+--- endpoints would be added as child devices.
+function common_utils.find_default_endpoint(device)
+  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+  if #valve_eps > 0 then
+    return common_utils.get_first_non_zero_endpoint(valve_eps)
+  end
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  if #switch_eps > 0 then
+    return common_utils.get_first_non_zero_endpoint(switch_eps)
+  end
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  if #button_eps > 0 then
+    return common_utils.get_first_non_zero_endpoint(button_eps)
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
 function common_utils.is_aqara_cube(opts, driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     local name = string.format("%s", device.manufacturer_info.product_name)
@@ -220,11 +279,63 @@ function common_utils.is_third_reality_mk1(opts, driver, device)
   return false
 end
 
+--- get_device_category helper function to determine the category that should be
+--- used in a device's profile. The more specific categories are preferred,
+--- except for Button, because buttons are included as optional components in
+--- every modular profile. Order of preference:
+---   1. Water Valve
+---   2. Light / Plug
+---   3. Switch
+---   4. Button
+function common_utils.get_device_category(device, main_endpoint)
+  local button_found = false
+  local switch_found = false
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == main_endpoint then
+      for _, dt in ipairs(ep.device_types) do
+        local category = device_type_category_map[dt.device_type_id]
+        if category == common_utils.device_categories.WATER_VALVE or category == common_utils.device_categories.LIGHT or category == common_utils.device_categories.PLUG then
+          return category
+        elseif category == common_utils.device_categories.SWITCH then
+          switch_found = true
+        elseif category == common_utils.device_categories.BUTTON then
+          button_found = true
+        end
+      end
+    end
+  end
+  if switch_found then
+    return common_utils.device_categories.SWITCH
+  end
+  if button_found then
+    return common_utils.device_categories.BUTTON
+  end
+  -- Return SWITCH as default if no other category is found
+  return common_utils.device_categories.SWITCH
+end
+
+local function supports_modular_profile(device)
+  local modular_profiles_supported = version.api >= 14 and version.rpc >= 8 and
+    not (device.manufacturer_info and
+      device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
+      device.manufacturer_info.product_id == common_utils.AQARA_CLIMATE_SENSOR_W100_ID)
+  if not modular_profiles_supported then
+    device:set_field(SUPPORTS_MODULAR_PROFILE, false)
+    return false
+  elseif device:get_field(SUPPORTS_MODULAR_PROFILE) then -- if we've already determined the device supports modular profiles, then there is no need to check the device category again
+    return true
+  end
+  local main_endpoint = common_utils.find_default_endpoint(device)
+  modular_profiles_supported = common_utils.get_device_category(device, main_endpoint) ~= common_utils.device_categories.LIGHT
+  device:set_field(SUPPORTS_MODULAR_PROFILE, modular_profiles_supported)
+  return modular_profiles_supported
+end
+
 function common_utils.is_static_profile_device(opts, driver, device)
   if not common_utils.is_aqara_cube(opts, driver, device) and
     not common_utils.is_eve_energy_products(opts, driver, device) and
     not common_utils.is_third_reality_mk1(opts, driver, device) and
-    not common_utils.supports_modular_profile(device) then
+    not supports_modular_profile(device) then
     log.info("Using Static Profile sub driver")
     return true
   end
@@ -266,13 +377,6 @@ function common_utils.find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-function common_utils.supports_modular_profile(device)
-  return version.api >= 14 and version.rpc >= 8 and
-    not (device.manufacturer_info and
-      device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
-      device.manufacturer_info.product_id == common_utils.AQARA_CLIMATE_SENSOR_W100_ID)
-end
-
 function common_utils.tbl_contains(array, value)
   for _, element in ipairs(array) do
     if element == value then
@@ -309,40 +413,6 @@ function common_utils.device_type_supports_button_switch_combination(device, end
     end
   end
   return false
-end
-
-function common_utils.get_first_non_zero_endpoint(endpoints)
-  table.sort(endpoints)
-  for _,ep in ipairs(endpoints) do
-    if ep ~= 0 then -- 0 is the matter RootNode endpoint
-      return ep
-    end
-  end
-  return nil
-end
-
---- find_default_endpoint helper function to handle situations where the device
---- does not have endpoint ids in sequential order from 1. Order of preference:
----   1. Water Valve
----   2. Light / Plug / Switch
----   3. Button
---- Note that Water Valve is listed first because any additional switch
---- endpoints would be added as child devices.
-function common_utils.find_default_endpoint(device)
-  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
-  if #valve_eps > 0 then
-    return common_utils.get_first_non_zero_endpoint(valve_eps)
-  end
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  if #switch_eps > 0 then
-    return common_utils.get_first_non_zero_endpoint(switch_eps)
-  end
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if #button_eps > 0 then
-    return common_utils.get_first_non_zero_endpoint(button_eps)
-  end
-  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
-  return device.MATTER_DEFAULT_ENDPOINT
 end
 
 function common_utils.component_to_endpoint(device, component)

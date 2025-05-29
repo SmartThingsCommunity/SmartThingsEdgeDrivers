@@ -21,72 +21,14 @@ local modular_profiles_utils = {}
 
 modular_profiles_utils.SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
 
-local device_categories = {
-  BUTTON = "BUTTON",
-  LIGHT = "LIGHT",
-  PLUG = "PLUG",
-  SWITCH = "SWITCH",
-  WATER_VALVE = "WATER_VALVE"
-}
-
-local device_type_category_map = {
-  [common_utils.ON_OFF_LIGHT_DEVICE_TYPE_ID] = device_categories.LIGHT,
-  [common_utils.DIMMABLE_LIGHT_DEVICE_TYPE_ID] = device_categories.LIGHT,
-  [common_utils.COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = device_categories.LIGHT,
-  [common_utils.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = device_categories.LIGHT,
-  [common_utils.ON_OFF_PLUG_DEVICE_TYPE_ID] = device_categories.PLUG,
-  [common_utils.DIMMABLE_PLUG_DEVICE_TYPE_ID] = device_categories.PLUG,
-  [common_utils.ON_OFF_SWITCH_ID] = device_categories.SWITCH,
-  [common_utils.ON_OFF_DIMMER_SWITCH_ID] = device_categories.SWITCH,
-  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID] = device_categories.SWITCH,
-  [common_utils.MOUNTED_ON_OFF_CONTROL_ID] = device_categories.SWITCH,
-  [common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = device_categories.SWITCH,
-  [common_utils.GENERIC_SWITCH_ID] = device_categories.BUTTON,
-  [common_utils.WATER_VALVE_ID] = device_categories.WATER_VALVE
-}
 
 local profile_name_and_mandatory_capability_per_device_category = {
-  [device_categories.BUTTON] =      { profile_name = "button-modular", mandatory_capability = capabilities.button.ID },
-  [device_categories.LIGHT] =       { profile_name = "light-modular",  mandatory_capability = capabilities.switch.ID },
-  [device_categories.PLUG] =        { profile_name = "plug-modular",   mandatory_capability = capabilities.switch.ID },
-  [device_categories.SWITCH] =      { profile_name = "switch-modular", mandatory_capability = capabilities.valve.ID },
-  [device_categories.WATER_VALVE] = { profile_name = "water-valve-modular",  mandatory_capability = capabilities.switch.ID }
+  [common_utils.device_categories.BUTTON] =      { profile_name = "button-modular", mandatory_capability = capabilities.button.ID },
+  [common_utils.device_categories.LIGHT] =       { profile_name = "light-modular",  mandatory_capability = capabilities.switch.ID },
+  [common_utils.device_categories.PLUG] =        { profile_name = "plug-modular",   mandatory_capability = capabilities.switch.ID },
+  [common_utils.device_categories.SWITCH] =      { profile_name = "switch-modular", mandatory_capability = capabilities.valve.ID },
+  [common_utils.device_categories.WATER_VALVE] = { profile_name = "water-valve-modular",  mandatory_capability = capabilities.switch.ID }
 }
-
---- get_device_category helper function to determine the category that should be
---- used in a device's profile. The more specific categories are preferred,
---- except for Button, because buttons are included as optional components in
---- every modular profile. Order of preference:
----   1. Water Valve
----   2. Light / Plug
----   3. Switch
----   4. Button
-local function get_device_category(device, main_endpoint)
-  local button_found = false
-  local switch_found = false
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == main_endpoint then
-      for _, dt in ipairs(ep.device_types) do
-        local category = device_type_category_map[dt.device_type_id]
-        if category == "LIGHT" or category == "PLUG" or category == "WATER_VALVE" then
-          return category
-        elseif category == device_categories.SWITCH then
-          switch_found = true
-        elseif category == device_categories.BUTTON then
-          button_found = true
-        end
-      end
-    end
-  end
-  if switch_found then
-    return device_categories.SWITCH
-  end
-  if button_found then
-    return device_categories.BUTTON
-  end
-  -- Return SWITCH as default if no other category is found
-  return device_categories.SWITCH
-end
 
 local function supports_capability_by_id_modular(device, capability, component)
   local supported_component_capabilities = device:get_field(modular_profiles_utils.SUPPORTED_COMPONENT_CAPABILITIES) or {}
@@ -118,7 +60,7 @@ local function add_button_capabilities(device, category, main_endpoint, main_com
   for component_num, _ in ipairs(button_eps) do
     -- button-modular profile uses 'main', 'button2', button3', ... as component names.
     -- Other profiles use 'main', 'button', 'button2', etc
-    if component_num == 1 and category == "BUTTON" then
+    if component_num == 1 and category == common_utils.device_categories.BUTTON then
       table.insert(main_component_capabilities, capabilities.button.ID)
       if battery_attr_support then
         add_battery_capability(main_component_capabilities, battery_attr_support)
@@ -196,7 +138,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
   local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
 
-  local category = get_device_category(device, main_endpoint)
+  local category = common_utils.get_device_category(device, main_endpoint)
 
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
@@ -232,7 +174,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
   if #switch_eps > 0 then
     -- If the device is a Button or Water Valve, add the switch capability since
     -- it is not a mandatory capability for these device types.
-    if category == "BUTTON" or category == "WATER_VALVE" then
+    if category == common_utils.device_categories.BUTTON or category == common_utils.device_categories.WATER_VALVE then
       table.insert(main_component_capabilities, capabilities.switch.ID)
     end
     -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
