@@ -1233,8 +1233,12 @@ local conversion_tables = {
   [units.PPM] = {
     [units.PPM] = function(value) return utils.round(value) end,
     [units.PPB] = function(value) return utils.round(value * (10^3)) end,
-    [units.UGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight * 10^3) / MGM3_PPM_CONVERSION_FACTOR) end,
-    [units.MGM3] = function(value, molecular_weight) return utils.round((value * molecular_weight) / MGM3_PPM_CONVERSION_FACTOR) end,
+    [units.UGM3] = function(value, molecular_weight) 
+      if molecular_weight == "N/A" then return utils.round(value) end
+      return utils.round((value * molecular_weight * 10^3) / MGM3_PPM_CONVERSION_FACTOR) end,
+    [units.MGM3] = function(value, molecular_weight)
+      if molecular_weight == "N/A" then return utils.round(value) end
+      return utils.round((value * molecular_weight) / MGM3_PPM_CONVERSION_FACTOR) end,
   },
   [units.PPB] = {
     [units.PPM] = function(value) return utils.round(value/(10^3)) end,
@@ -1249,7 +1253,9 @@ local conversion_tables = {
   },
   [units.UGM3] = {
     [units.UGM3] = function(value) return utils.round(value) end,
-    [units.PPM] = function(value, molecular_weight) return utils.round((value * MGM3_PPM_CONVERSION_FACTOR) / (molecular_weight * 10^3)) end,
+    [units.PPM] = function(value, molecular_weight)
+      if molecular_weight == "N/A" then return utils.round(value) end
+      return utils.round((value * MGM3_PPM_CONVERSION_FACTOR) / (molecular_weight * 10^3)) end,
   },
   [units.NGM3] = {
     [units.UGM3] = function(value) return utils.round(value/(10^3)) end
@@ -1289,10 +1295,11 @@ local function measurementHandlerFactory(capability_name, attribute, target_unit
     end
 
     if value then
-      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
       -- handle case where device profile supports both fineDustLevel and dustLevel
       if capability_name == capabilities.fineDustSensor.NAME and device:supports_capability(capabilities.dustSensor) then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = unit_strings[target_unit]}))
+      else
+        device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = unit_strings[target_unit]}))
       end
     end
   end
