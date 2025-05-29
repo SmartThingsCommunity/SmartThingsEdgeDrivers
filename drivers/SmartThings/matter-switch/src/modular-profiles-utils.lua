@@ -14,8 +14,8 @@
 
 local button_utils = require "button-utils"
 local capabilities = require "st.capabilities"
-local common_utils = require "common-utils"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
 
 local modular_profiles_utils = {}
 
@@ -104,19 +104,6 @@ local function supports_capability_by_id_modular(device, capability, component)
   return false
 end
 
-local function add_energy_and_power_capabilities(component_capabilities, num_energy_eps, num_power_eps)
-  if num_energy_eps > 0 and num_power_eps > 0 then
-    table.insert(component_capabilities, capabilities.powerMeter.ID)
-    table.insert(component_capabilities, capabilities.energyMeter.ID)
-    table.insert(component_capabilities, capabilities.powerConsumptionReport.ID)
-  elseif num_energy_eps > 0 then
-    table.insert(component_capabilities, capabilities.energyMeter.ID)
-    table.insert(component_capabilities, capabilities.powerConsumptionReport.ID)
-  elseif num_power_eps > 0 then
-    table.insert(component_capabilities, capabilities.powerMeter.ID)
-  end
-end
-
 local function add_battery_capability(component_capabilities, battery_attr_support)
   if battery_attr_support == common_utils.battery_support.BATTERY_PERCENTAGE then
     table.insert(component_capabilities, capabilities.battery.ID)
@@ -198,14 +185,14 @@ end
 local function match_modular_profile(driver, device, battery_attr_support)
   local main_endpoint = common_utils.find_default_endpoint(device)
   local color_hs_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.HS})
-  local color_temp_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.CT})
   local color_xy_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.XY})
-  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
+  local color_temp_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.CT})
   local level_eps = device:get_endpoints(clusters.LevelControl.ID)
   local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
+  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
   local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
   local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
 
@@ -215,8 +202,7 @@ local function match_modular_profile(driver, device, battery_attr_support)
   local main_component_capabilities = {}
   local extra_component_capabilities = {}
 
-  local MAIN_COMPONENT_IDX = 1
-  local CAPABILITIES_LIST_IDX = 2
+  local MAIN_COMPONENT_IDX, CAPABILITIES_LIST_IDX = 1, 2
 
   add_button_capabilities(device, category, main_endpoint, main_component_capabilities, extra_component_capabilities, battery_attr_support)
 
@@ -234,16 +220,14 @@ local function match_modular_profile(driver, device, battery_attr_support)
     table.insert(main_component_capabilities, capabilities.switchLevel.ID)
   end
 
-  if #fan_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.fanMode.ID)
-    table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
+  if #power_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.powerMeter.ID)
   end
 
-  if #humidity_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
+  if #energy_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.energyMeter.ID)
+    table.insert(main_component_capabilities, capabilities.powerConsumptionReport.ID)
   end
-
-  add_energy_and_power_capabilities(main_component_capabilities, #energy_eps, #power_eps)
 
   if #switch_eps > 0 then
     -- If the device is a Button or Water Valve, add the switch capability since
@@ -259,6 +243,15 @@ local function match_modular_profile(driver, device, battery_attr_support)
     if num_switch_server_eps > 0 and common_utils.detect_matter_thing(device) then
       handle_light_switch_with_onOff_server_clusters(device, main_endpoint, main_component_capabilities)
     end
+  end
+
+  if #fan_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
+  end
+
+  if #humidity_eps > 0 then
+    table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
   end
 
   if #temperature_eps > 0 then
@@ -278,19 +271,18 @@ local function match_modular_profile(driver, device, battery_attr_support)
     table.insert(optional_supported_component_capabilities, component_capability)
   end
 
-  local total_supported_capabilities = optional_supported_component_capabilities
-
   device:try_update_metadata({profile = profile_name_and_mandatory_capability_per_device_category[category].profile_name,
                               optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
+  local total_supported_capabilities = optional_supported_component_capabilities
+  -- Add mandatory capabilities for subscription
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX],
     profile_name_and_mandatory_capability_per_device_category[category].mandatory_capability)
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
   table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
   device:set_field(modular_profiles_utils.SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, {persist = true})
-  -- re-up subscription with new capabilities using the modular supports_capability override
+  -- Re-up subscription with new capabilities using the modular supports_capability override
   device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
 end
 

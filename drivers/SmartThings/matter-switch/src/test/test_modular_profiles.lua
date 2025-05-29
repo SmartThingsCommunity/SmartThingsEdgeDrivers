@@ -19,6 +19,7 @@ local clusters = require "st.matter.clusters"
 local dkjson = require "dkjson"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
+local version = require "version"
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
@@ -70,30 +71,30 @@ local tc1_cluster_subscribe_list = {
   clusters.ValveConfigurationAndControl.attributes.CurrentLevel
 }
 
-local function subscribe(device, cluster_list)
-  local subscribe_request = cluster_list[1]:subscribe(device)
-  for i, cluster in ipairs(cluster_list) do
+local function test_init()
+  local subscribe_request = tc1_cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(tc1_cluster_subscribe_list) do
     if i > 1 then
-      subscribe_request:merge(cluster:subscribe(device))
+      subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
-  test.socket.matter:__expect_send({device.id, subscribe_request})
-end
-
-local function test_init()
-  subscribe(mock_device, tc1_cluster_subscribe_list)
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   local optional_component_capabilities = {
     { "main", { "colorControl", "colorTemperature", "switchLevel", "switch", "valve", "level" } }
   }
-  mock_device:expect_metadata_update({ profile = "water-valve-modular", optional_component_capabilities = optional_component_capabilities })
+  if version.api >= 14 then
+    mock_device:expect_metadata_update({ profile = "water-valve-modular", optional_component_capabilities = optional_component_capabilities })
+  else
+    mock_device:expect_metadata_update({ profile = "water-valve-level" })
+  end
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "switch-color-level"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-  subscribe(mock_device, tc1_cluster_subscribe_list)
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 test.set_test_init_function(test_init)
 
