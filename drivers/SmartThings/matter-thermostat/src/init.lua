@@ -1233,7 +1233,7 @@ local conversion_tables = {
   [units.PPM] = {
     [units.PPM] = function(value) return utils.round(value) end,
     [units.PPB] = function(value) return utils.round(value * (10^3)) end,
-    [units.UGM3] = function(value, molecular_weight) 
+    [units.UGM3] = function(value, molecular_weight)
       if molecular_weight == "N/A" then return utils.round(value) end
       return utils.round((value * molecular_weight * 10^3) / MGM3_PPM_CONVERSION_FACTOR) end,
     [units.MGM3] = function(value, molecular_weight)
