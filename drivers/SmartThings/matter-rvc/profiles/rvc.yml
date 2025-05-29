@@ -43,6 +43,9 @@ deviceConfig:
     version: 1
   automation:
     conditions:
+    - component: main
+      capability: robotCleanerOperatingState
+      version: 1
     - component: runMode
       capability: mode
       version: 1
@@ -59,6 +62,9 @@ deviceConfig:
       - op: remove
         path: /0/list
     actions:
+    - component: main
+      capability: robotCleanerOperatingState
+      version: 1
     - component: runMode
       capability: mode
       version: 1
