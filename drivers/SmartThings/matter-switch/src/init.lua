@@ -321,6 +321,22 @@ local function create_multi_press_values_list(size, supportsHeld)
   return list
 end
 
+-- check if device type is found on the device. Optionally specify the endpoint to search on
+local function contains_device_type(device, device_type_id, endpoint_id)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == device_type_id then
+        if endpoint_id and ep.endpoint_id == endpoint_id then
+          return true
+        elseif endpoint_id == nil then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
 local function tbl_contains(array, value)
   for _, element in ipairs(array) do
     if element == value then
@@ -385,19 +401,13 @@ end
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
 local function device_type_supports_button_switch_combination(device, endpoint_id)
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == endpoint_id then
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
-          for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
-            if device.manufacturer_info.product_id == fingerprint.product_id then
-              return false -- For Aqara Dimmer Switch with Button.
-            end
-          end
-          return true
-        end
-      end
+  for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[AQARA_MANUFACTURER_ID]) do
+    if device.manufacturer_info.product_id == fingerprint.product_id then
+      return false -- For Aqara Dimmer Switch with Button.
     end
+  end
+  if contains_device_type(device, DIMMABLE_LIGHT_DEVICE_TYPE_ID, endpoint_id) then
+    return true
   end
   return false
 end
@@ -481,83 +491,51 @@ local function check_field_name_updates(device)
 end
 
 local function assign_switch_profile(device, switch_ep, is_child_device)
-  local get_profile_by_device_type = function(ep)
-    -- Some devices report multiple device types which are a subset of
-    -- a superset device type (For example, Dimmable Light is a superset of
-    -- On/Off light). This mostly applies to the four light types, so we will want
-    -- to match the profile for the superset device type. This can be done by
-    -- matching to the device type with the highest ID
-    -- Note: Electrical Sensor does not follow the above logic, so it's ignored
-    local id = 0
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id ~= ELECTRICAL_SENSOR_ID then
-        id = math.max(id, dt.device_type_id)
-      end
-    end
-    return device_type_profile_map[id]
-  end
-
   local profile
   local electrical_tags = ""
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == switch_ep then
-      profile = get_profile_by_device_type(ep)
-      if profile == "plug-binary" or profile == "plug-level" then
-        local power_cluster_found, energy_cluster_found = false, false
-        for _, cluster in ipairs(ep.clusters) do
-          if cluster.cluster_id == clusters.ElectricalPowerMeasurement.ID then
-            power_cluster_found = true
-          elseif cluster.cluster_id == clusters.ElectricalEnergyMeasurement.ID then
-            energy_cluster_found = true
-          end
+      -- Some devices report multiple device types which are a subset of
+      -- a superset device type (For example, Dimmable Light is a superset of
+      -- On/Off light). This mostly applies to the four light types, so we will want
+      -- to match the profile for the superset device type. This can be done by
+      -- matching to the device type with the highest ID
+      -- Note: Electrical Sensor does not follow the above logic, so it's ignored
+      local id = 0
+      for _, dt in ipairs(ep.device_types) do
+        if dt.device_type_id ~= ELECTRICAL_SENSOR_ID then
+          id = math.max(id, dt.device_type_id)
         end
-        if power_cluster_found then
-          electrical_tags = electrical_tags .. "-power"
+      end
+      profile = device_type_profile_map[id]
+      local power_tags, energy_tags = "", ""
+      for _, cluster in ipairs(ep.clusters) do
+        if cluster.cluster_id == clusters.ElectricalPowerMeasurement.ID then
+          power_tags = "-power"
+        elseif cluster.cluster_id == clusters.ElectricalEnergyMeasurement.ID then
+          energy_tags = "-energy-powerConsumption"
         end
-        if energy_cluster_found then
-          electrical_tags = electrical_tags .."-energy-powerConsumption"
-        end
-        if electrical_tags ~= "" then
-          profile = string.gsub(profile, "-binary", "") -- remove the "-binary" in the plug-binary profile name
-          profile = profile .. electrical_tags
-        end
+      end
+      electrical_tags = power_tags .. energy_tags
+      if electrical_tags ~= "" and (profile == "plug-binary" or profile == "plug-level") then
+        -- remove the "-binary" in the plug-binary profile name
+        profile = string.gsub(profile, "-binary", "") .. electrical_tags
       end
       break
     end
   end
-
-  -- If the device supports the Electrical Sensor Device Type
-  if electrical_tags == "" then
-    local electrical_sensor_found = false
-    for _, ep in ipairs(device.endpoints) do
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == ELECTRICAL_SENSOR_ID then
-          electrical_sensor_found = true
-        end
-      end
+  -- Add electrical support to the first switch ep if Electical Sensor is handled on a unique ep
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+  table.sort(switch_eps)
+  if switch_ep == switch_eps[1] and electrical_tags == "" and contains_device_type(device, ELECTRICAL_SENSOR_ID) then
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then
+      electrical_tags = electrical_tags .. "-power"
     end
-    if electrical_sensor_found then
-      local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-      table.sort(switch_eps)
-      local main_switch_ep = switch_eps[1]
-      for _, ep in ipairs(device.endpoints) do
-        if ep.endpoint_id == main_switch_ep and ep.endpoint_id == switch_ep then
-          profile = get_profile_by_device_type(ep)
-          if profile == "plug-binary" or profile == "plug-level" or profile == "light-binary" then
-            if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then
-              electrical_tags = electrical_tags .. "-power"
-            end
-            if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then
-              electrical_tags = electrical_tags .."-energy-powerConsumption"
-            end
-            if electrical_tags ~= "" then
-              profile = string.gsub(profile, "-binary", "") -- remove the "-binary" in the plug-binary/light-binary profile name
-              profile = profile .. electrical_tags
-            end
-          end
-          break
-        end
-      end
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then
+      electrical_tags = electrical_tags .."-energy-powerConsumption"
+    end
+    if electrical_tags ~= "" and (profile == "plug-binary" or profile == "plug-level" or profile == "light-binary") then
+      profile = string.gsub(profile, "-binary", "") .. electrical_tags
     end
   end
 
@@ -733,14 +711,7 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
 end
 
 local function detect_bridge(device)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == AGGREGATOR_DEVICE_TYPE_ID then
-        return true
-      end
-    end
-  end
-  return false
+  contains_device_type(device, AGGREGATOR_DEVICE_TYPE_ID)
 end
 
 local function device_init(driver, device)

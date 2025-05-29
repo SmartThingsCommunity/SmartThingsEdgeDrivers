@@ -47,6 +47,8 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = parent_ep,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER"},
       },
       device_types = {
         {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
@@ -74,8 +76,6 @@ local mock_device = test.mock_device.build_test_matter_device({
       endpoint_id = child3_ep,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER"},
       },
       device_types = {
         {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
@@ -162,7 +162,7 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "plug-binary" })
+  mock_device:expect_metadata_update({ profile = "plug-power-energy-powerConsumption" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device)
@@ -189,7 +189,7 @@ local function test_init()
   mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 4",
-    profile = "plug-power-energy-powerConsumption",
+    profile = "plug-binary",
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", child3_ep)
   })
