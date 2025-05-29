@@ -1318,14 +1318,6 @@ local function device_added(driver, device)
     device:send(req)
   end
 
-  -- Reset the values
-  if device:supports_capability(capabilities.powerMeter) then
-    device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
-  end
-  if device:supports_capability(capabilities.energyMeter) then
-    device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
-  end
-
   -- call device init in case init is not called after added due to device caching
   device_init(driver, device)
 end
