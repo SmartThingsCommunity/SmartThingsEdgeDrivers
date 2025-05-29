@@ -15,6 +15,9 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local area_type = require "Global.types.AreaTypeTag"
+local landmark = require "Global.types.LandmarkTag"
+local embedded_cluster_utils = require "embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 10
 local version = require "version"
@@ -23,6 +26,11 @@ if version.api < 10 then
   clusters.RvcOperationalState = require "RvcOperationalState"
   clusters.RvcRunMode = require "RvcRunMode"
   clusters.OperationalState = require "OperationalState"
+end
+
+if version.api < 13 then
+  clusters.ServiceArea = require "ServiceArea"
+  clusters.Global = require "Global"
 end
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
@@ -39,6 +47,10 @@ local subscribed_attributes = {
   [capabilities.robotCleanerOperatingState.ID] = {
     clusters.RvcOperationalState.attributes.OperationalState,
     clusters.RvcOperationalState.attributes.OperationalError
+  },
+  [capabilities.serviceArea.ID] = {
+    clusters.ServiceArea.attributes.SupportedAreas,
+    clusters.ServiceArea.attributes.SelectedAreas
   }
 }
 
@@ -55,10 +67,11 @@ local function device_added(driver, device)
   local run_mode_eps = device:get_endpoints(clusters.RvcRunMode.ID) or {}
   local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID) or {}
   local component_to_endpoint_map = {
+    ["main"] = run_mode_eps[1],
     ["runMode"] = run_mode_eps[1],
     ["cleanMode"] = clean_mode_eps[1]
   }
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_to_endpoint_map, {persist = true} )
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_to_endpoint_map, {persist = true})
 end
 
 local function device_init(driver, device)
@@ -67,12 +80,18 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID)
-  if #clean_mode_eps == 0 then
-    local profile_name = "rvc"
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
+  local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID) or {}
+  local service_area_eps = embedded_cluster_utils.get_endpoints(device, clusters.ServiceArea.ID) or {}
+
+  local profile_name = "rvc"
+  if #clean_mode_eps > 0 then
+    profile_name = profile_name .. "-clean-mode"
   end
+  if #service_area_eps > 0 then
+    profile_name = profile_name .. "-service-area"
+  end
+  device.log.info_with({hub_logs = true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
 end
 
 local function info_changed(driver, device, event, args)
@@ -324,6 +343,82 @@ local function rvc_operational_error_attr_handler(driver, device, ib, response)
   end
 end
 
+local function upper_to_camelcase(name)
+  local name_camelcase = (string.lower(name)):gsub("_"," ")
+  name_camelcase = name_camelcase:gsub("(%l)(%w*)",
+    function(a, b)
+      return string.upper(a) .. b
+    end)
+  return name_camelcase
+end
+
+local function rvc_service_area_supported_areas_handler(driver, device, ib, response)
+  local supported_areas = {}
+  for i, area in ipairs(ib.data.elements) do
+    if version.api < 13 then
+      clusters.ServiceArea.types.AreaStruct:augment_type(area)
+      clusters.ServiceArea.types.AreaInfoStruct:augment_type(area.elements.area_info)
+      if area.elements.area_info.elements.location_info.elements ~= nil then
+        clusters.Global.types.LocationDescriptorStruct:augment_type(area.elements.area_info.elements.location_info)
+      end
+    end
+    local area_id = area.elements.area_id.value
+    local location_info = area.elements.area_info.elements.location_info.elements
+    local landmark_info = area.elements.area_info.elements.landmark_info.elements
+    local area_name = ""
+    -- set the area name based on available location information
+    if location_info ~= nil then
+      if location_info.location_name.value ~= "" then
+        area_name = location_info.location_name.value
+      elseif location_info.floor_number.value ~= nil and location_info.area_type.value ~= nil then
+        area_name = location_info.floor_number.value .. "F " .. upper_to_camelcase(string.gsub(area_type.pretty_print(location_info.area_type),"AreaTypeTag: ",""))
+      elseif location_info.floor_number.value ~= nil then
+        area_name = location_info.floor_number.value .. "F"
+      elseif location_info.area_type.value ~= nil then
+        area_name = upper_to_camelcase(string.gsub(area_type.pretty_print(location_info.area_type),"AreaTypeTag: ",""))
+      end
+    end
+    if area_name == "" then
+      area_name = upper_to_camelcase(string.gsub(landmark.pretty_print(landmark_info.landmark_tag),"LandmarkTag: ",""))
+    end
+    table.insert(supported_areas, {["areaId"] = area_id, ["areaName"] = area_name})
+  end
+  -- Update Supported Areas
+  local component = device.profile.components["main"]
+  local event = capabilities.serviceArea.supportedAreas(supported_areas, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
+end
+
+-- in case selected area is not in supportedarea then should i add to supported area or remove from selectedarea
+local function rvc_service_area_selected_areas_handler(driver, device, ib, response)
+  local selected_areas = {}
+  for i, areaId in ipairs(ib.data.elements) do
+    table.insert(selected_areas, areaId.value)
+  end
+
+  local component = device.profile.components["main"]
+  local event = capabilities.serviceArea.selectedAreas(selected_areas, {visibility = {displayed = false}})
+  device:emit_component_event(component, event)
+end
+
+local function robot_cleaner_areas_selection_response_handler(driver, device, ib, response)
+  local select_areas_response = ib.info_block.data
+  if version.api < 13 then
+    clusters.ServiceArea.client.commands.SelectAreasResponse:augment_type(select_areas_response)
+  end
+  local status = select_areas_response.elements.status
+  local status_text = select_areas_response.elements.status_text
+  if status.value == clusters.ServiceArea.types.SelectAreasStatus.SUCCESS then
+    device.log.info(string.format("robot_cleaner_areas_selection_response_handler: %s, %s",status.pretty_print(status),status_text))
+  else
+    device.log.error(string.format("robot_cleaner_areas_selection_response_handler: %s, %s",status.pretty_print(status),status_text))
+    local selectedAreas = device:get_latest_state("main", capabilities.serviceArea.ID, capabilities.serviceArea.selectedAreas.NAME)
+    local component = device.profile.components["main"]
+    local event = capabilities.serviceArea.selectedAreas(selectedAreas, {state_change = true})
+    device:emit_component_event(component, event)
+  end
+end
+
 -- Capability Handlers --
 local function handle_robot_cleaner_mode(driver, device, cmd)
   device.log.info(string.format("handle_robot_cleaner_mode component: %s, mode: %s", cmd.component, cmd.args.mode))
@@ -350,6 +445,21 @@ local function handle_robot_cleaner_mode(driver, device, cmd)
   end
 end
 
+local uint32_dt = require "st.matter.data_types.Uint32"
+local function handle_robot_cleaner_areas_selection(driver, device, cmd)
+
+  device.log.info(string.format("handle_robot_cleaner_areas_selection component: %s, serviceArea: %s", cmd.component, cmd.args.areas.value))
+
+  local selectAreas = clusters.ServiceArea.commands.SelectAreas(nil,nil,{})
+  for i, areaId in ipairs(cmd.args.areas) do
+    table.insert(selectAreas, uint32_dt(areaId))
+  end
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  if cmd.component == "main" then
+    device:send(clusters.ServiceArea.commands.SelectAreas(device, endpoint_id, selectAreas))
+  end
+end
+
 local matter_rvc_driver = {
   lifecycle_handlers = {
     init = device_init,
@@ -371,12 +481,24 @@ local matter_rvc_driver = {
         [clusters.RvcOperationalState.attributes.OperationalState.ID] = rvc_operational_state_attr_handler,
         [clusters.RvcOperationalState.attributes.OperationalError.ID] = rvc_operational_error_attr_handler,
       },
+      [clusters.ServiceArea.ID] = {
+        [clusters.ServiceArea.attributes.SupportedAreas.ID] = rvc_service_area_supported_areas_handler,
+        [clusters.ServiceArea.attributes.SelectedAreas.ID] = rvc_service_area_selected_areas_handler,
+      }
+    },
+    cmd_response={
+      [clusters.ServiceArea.ID] = {
+        [clusters.ServiceArea.client.commands.SelectAreasResponse.ID] = robot_cleaner_areas_selection_response_handler,
+      }
     }
   },
   subscribed_attributes = subscribed_attributes,
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_robot_cleaner_mode,
+    },
+    [capabilities.serviceArea.ID] = {
+      [capabilities.serviceArea.commands.selectAreas.NAME] = handle_robot_cleaner_areas_selection,
     },
   },
 }

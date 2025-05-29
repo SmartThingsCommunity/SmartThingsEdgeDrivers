@@ -9,6 +9,12 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: thermostatCoolingSetpoint
+    version: 1
   - id: fineDustSensor
     version: 1
   - id: tvocMeasurement
