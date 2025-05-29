@@ -1,7 +1,9 @@
-name: co-comeas-colevel-battery
+name: smoke-co-comeas-colevel-battery
 components:
 - id: main
   capabilities:
+  - id: smokeDetector
+    version: 1
   - id: carbonMonoxideDetector
     version: 1
   - id: carbonMonoxideMeasurement
