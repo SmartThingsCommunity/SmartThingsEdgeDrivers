@@ -203,7 +203,7 @@ end
 function common_utils.is_eve_energy_products(opts, driver, device)
   -- this sub driver does not support child devices
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-     device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
+    device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
     return true
   end
   log.info("Using Eve Energy sub driver")
@@ -212,8 +212,8 @@ end
 
 function common_utils.is_third_reality_mk1(opts, driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-     device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
-     device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
+    device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
+    device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
     log.info("Using Third Reality MK1 sub driver")
     return true
   end
@@ -222,9 +222,9 @@ end
 
 function common_utils.is_static_profile_device(opts, driver, device)
   if not common_utils.is_aqara_cube(opts, driver, device) and
-     not common_utils.is_eve_energy_products(opts, driver, device) and
-     not common_utils.is_third_reality_mk1(opts, driver, device) and
-     not common_utils.supports_modular_profile(device) then
+    not common_utils.is_eve_energy_products(opts, driver, device) and
+    not common_utils.is_third_reality_mk1(opts, driver, device) and
+    not common_utils.supports_modular_profile(device) then
     log.info("Using Static Profile sub driver")
     return true
   end
@@ -384,7 +384,6 @@ end
 
 local function assign_child_profile(device, child_ep)
   local profile
-
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == child_ep then
       -- Some devices report multiple device types which are a subset of
@@ -400,7 +399,6 @@ local function assign_child_profile(device, child_ep)
       break
     end
   end
-
   -- Check if device has an overridden child profile that differs from the profile that would match
   -- the child's device type for the following two cases:
   --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
@@ -416,8 +414,7 @@ local function assign_child_profile(device, child_ep)
       end
     end
   end
-
-  -- default to "switch-binary" if no profile is found
+  -- Default to "switch-binary" if no profile is found
   return profile or "switch-binary"
 end
 
@@ -444,20 +441,18 @@ function common_utils.build_child_switch_profiles(driver, device, main_endpoint)
         )
         parent_child_device = true
         if _ == 1 and string.find(child_profile, "energy") then
-          -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+          -- When energy management is defined in the root endpoint(0), replace it with
+          -- the first switch endpoint and process it.
           device:set_field(common_utils.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
       end
     end
   end
-
-  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_buttons_and_switches
-  -- is only run once, but find_child function should be set on each driver init.
+  -- If the device is a parent child device, set the field and persist because the
+  -- find_child function should be set on each driver init.
   if parent_child_device then
     device:set_field(common_utils.IS_PARENT_CHILD_DEVICE, true, {persist = true})
   end
-
-  -- this is needed in initialize_buttons_and_switches
   return num_switch_server_eps
 end
 

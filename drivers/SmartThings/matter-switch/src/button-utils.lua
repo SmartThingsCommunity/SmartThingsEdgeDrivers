@@ -13,8 +13,8 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local common_utils = require "common-utils"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
 local log = require "log"
 local lua_socket = require "socket"
 
@@ -39,7 +39,7 @@ button_utils.STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
 local function create_multi_press_values_list(size, supportsHeld)
   local list = {"pushed", "double"}
   if supportsHeld then table.insert(list, "held") end
-  -- add multi press values of 3 or greater to the list
+  -- Add multi press values of 3 or greater to the list
   for i = 3, size do
     table.insert(list, string.format("pushed_%dx", i))
   end
@@ -72,7 +72,7 @@ function button_utils.configure_buttons(device)
     if device.profile.components[common_utils.endpoint_to_component(device, ep)] then
       device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event
-      -- this ordering is important, since MSM & MSL devices must also support MSR
+      -- This ordering is important, since MSM & MSL devices must also support MSR
       if common_utils.tbl_contains(msm_eps, ep) then
         supportedButtonValues_event = nil -- deferred to the max press handler
         device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
@@ -97,7 +97,7 @@ function button_utils.configure_buttons(device)
 end
 
 function button_utils.build_button_component_map(device, main_endpoint, button_eps)
-  -- create component mapping on the main profile button endpoints
+  -- Create component mapping on the main profile button endpoints
   table.sort(button_eps)
   local component_map = {}
   component_map["main"] = main_endpoint
@@ -133,13 +133,13 @@ function button_utils.initial_press_event_handler(driver, device, ib, response)
   elseif common_utils.get_field_for_endpoint(device, INITIAL_PRESS_ONLY, ib.endpoint_id) then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
   elseif common_utils.get_field_for_endpoint(device, EMULATE_HELD, ib.endpoint_id) then
-    -- if our button doesn't differentiate between short and long holds, do it in code by keeping track of the press down time
+    -- If our button doesn't differentiate between short and long holds, do it in code by keeping track of the press down time
     init_press(device, ib.endpoint_id)
   end
 end
 
--- if the device distinguishes a long press event, it will always be a "held"
--- there's also a "long release" event, but this event is required to come first
+-- If the device distinguishes a long press event, it will always be a "held".
+-- There's also a "long release" event, but this event is required to come first.
 function button_utils.long_press_event_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.held({state_change = true}))
   if common_utils.get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
@@ -159,12 +159,9 @@ function button_utils.short_release_event_handler(driver, device, ib, response)
 end
 
 function button_utils.multi_press_complete_event_handler(driver, device, ib, response)
-  -- in the case of multiple button presses
-  -- emit number of times, multiple presses have been completed
   if ib.data and not common_utils.get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) then
     local press_value = ib.data.elements.total_number_of_presses_counted.value
-    --capability only supports up to 6 presses
-    if press_value < 7 then
+    if press_value < 7 then -- button capability only supports up to 6 presses
       local button_event = capabilities.button.button.pushed({state_change = true})
       if press_value == 2 then
         button_event = capabilities.button.button.double({state_change = true})
@@ -180,15 +177,13 @@ function button_utils.multi_press_complete_event_handler(driver, device, ib, res
 end
 
 function button_utils.max_press_handler(driver, device, ib, response)
-  local max = ib.data.value or 1 -- get max number of presses
-  device.log.debug("Device supports "..max.." presses")
-  -- capability only supports up to 6 presses
-  if max > 6 then
+  local max = ib.data.value or 1
+  if max > 6 then -- button capability only supports up to 6 presses
     log.info("Device supports more than 6 presses")
     max = 6
   end
-  local MSL = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
-  local supportsHeld = common_utils.tbl_contains(MSL, ib.endpoint_id)
+  local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
+  local supportsHeld = common_utils.tbl_contains(msl_eps, ib.endpoint_id)
   local values = create_multi_press_values_list(max, supportsHeld)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
 end

@@ -14,16 +14,16 @@
 
 local button_utils = require "button-utils"
 local capabilities = require "st.capabilities"
+local clusters = require "st.matter.clusters"
 local color_utils = require "color-utils"
 local common_utils = require "common-utils"
-local log = require "log"
-local clusters = require "st.matter.clusters"
+local device_lib = require "st.device"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 local im = require "st.matter.interaction_model"
+local log = require "log"
 local MatterDriver = require "st.matter.driver"
 local modular_profiles_utils = require "modular-profiles-utils"
 local utils = require "st.utils"
-local device_lib = require "st.device"
-local embedded_cluster_utils = require "embedded-cluster-utils"
 local version = require "version"
 
 -- Include driver-side definitions when lua libs api version is < 11
@@ -55,6 +55,9 @@ local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
 local COLOR_MODE = "__color_mode"
+local TEMP_BOUND_RECEIVED = "__temp_bound_received"
+local TEMP_MIN = "__temp_min"
+local TEMP_MAX = "__temp_max"
 
 local HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
 local X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
@@ -127,7 +130,7 @@ end
 local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
   local cumul_eps = embedded_cluster_utils.get_endpoints(device,
     clusters.ElectricalEnergyMeasurement.ID,
-    {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
+    {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY})
   if #cumul_eps == 0 then
     device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = true})
   end
@@ -151,10 +154,6 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
   end
 end
-
-local TEMP_BOUND_RECEIVED = "__temp_bound_received"
-local TEMP_MIN = "__temp_min"
-local TEMP_MAX = "__temp_max"
 
 local function convert_huesat_st_to_matter(val)
   return utils.clamp_value(math.floor((val * 0xFE) / 100.0 + 0.5), CURRENT_HUESAT_ATTR_MIN, CURRENT_HUESAT_ATTR_MAX)
@@ -385,7 +384,7 @@ local function level_attr_handler(driver, device, ib, response)
 end
 
 local function hue_attr_handler(driver, device, ib, response)
-  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE  or ib.data.value == nil then
+  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE or ib.data.value == nil then
     return
   end
   local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
@@ -393,7 +392,7 @@ local function hue_attr_handler(driver, device, ib, response)
 end
 
 local function sat_attr_handler(driver, device, ib, response)
-  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE  or ib.data.value == nil then
+  if device:get_field(COLOR_MODE) == X_Y_COLOR_MODE or ib.data.value == nil then
     return
   end
   local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
