@@ -75,9 +75,6 @@ deviceConfig:
   - component: main
     capability: remoteControlStatus
     version: 1
-  - component: main
-    capability: batteryLevel
-    version: 1
   automation:
     conditions:
     - component: main
