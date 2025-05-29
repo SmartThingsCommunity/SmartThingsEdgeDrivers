@@ -90,7 +90,8 @@ local zigbee_motion_driver = {
     capabilities.relativeHumidityMeasurement,
     capabilities.battery,
     capabilities.presenceSensor,
-    capabilities.contactSensor
+    capabilities.contactSensor,
+    capabilities.illuminanceMeasurement
   },
   zigbee_handlers = {
     attr = {
@@ -132,7 +133,6 @@ local zigbee_motion_driver = {
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
 }
-
 defaults.register_for_default_handlers(zigbee_motion_driver,
   zigbee_motion_driver.supported_capabilities, {native_capability_attrs_enabled = true})
 local motion = ZigbeeDriver("zigbee-motion", zigbee_motion_driver)
