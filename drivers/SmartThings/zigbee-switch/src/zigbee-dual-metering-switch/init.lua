@@ -17,6 +17,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local utils = require "st.utils"
+local configurations = require "configurations"
 
 local CHILD_ENDPOINT = 2
 
@@ -76,7 +77,7 @@ local zigbee_dual_metering_switch = {
     }
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = can_handle_zigbee_dual_metering_switch

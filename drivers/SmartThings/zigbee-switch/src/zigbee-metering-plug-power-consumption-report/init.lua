@@ -16,6 +16,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local zigbee_constants = require "st.zigbee.constants"
 local energy_meter_defaults = require "st.zigbee.defaults.energyMeter_defaults"
+local configurations = require "configurations"
 
 local SimpleMetering = clusters.SimpleMetering
 
@@ -50,7 +51,7 @@ local zigbee_metering_plug_power_conumption_report = {
     }
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure
   },
   can_handle = function(opts, driver, device, ...)

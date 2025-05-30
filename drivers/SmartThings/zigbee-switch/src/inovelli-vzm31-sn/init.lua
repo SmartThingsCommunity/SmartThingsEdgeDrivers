@@ -19,6 +19,7 @@ local st_device = require "st.device"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
+local configurations = require "configurations"
 
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
@@ -358,7 +359,7 @@ local inovelli_vzm31_sn = {
   NAME = "inovelli vzm31-sn handler",
   lifecycle_handlers = {
     doConfigure = do_configure,
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     infoChanged = info_changed
   },
   zigbee_handlers = {

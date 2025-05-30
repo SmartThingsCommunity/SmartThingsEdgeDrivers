@@ -2,6 +2,7 @@ local device_lib = require "st.device"
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local configurations = require "configurations"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
@@ -100,7 +101,7 @@ end
 local aqara_multi_switch_handler = {
   NAME = "Aqara Multi Switch Handler",
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = is_aqara_products

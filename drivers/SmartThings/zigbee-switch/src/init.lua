@@ -127,6 +127,7 @@ local function device_added(driver, device, event)
   end
 end
 
+
 local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,
@@ -164,8 +165,9 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("laisiao"),
     lazy_load_if_possible("tuya-multi")
   },
+  current_config_version = 1,
   lifecycle_handlers = {
-    init = device_init,
+    init = configurationMap.power_reconfig_wrapper(device_init),
     added = device_added,
     infoChanged = info_changed,
     doConfigure = do_configure

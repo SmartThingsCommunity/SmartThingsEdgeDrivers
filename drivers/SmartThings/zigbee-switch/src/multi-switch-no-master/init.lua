@@ -13,6 +13,7 @@
 -- limitations under the License.
 local st_device = require "st.device"
 local utils = require "st.utils"
+local configurations = require "configurations"
 
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
@@ -113,7 +114,7 @@ end
 local multi_switch_no_master = {
   NAME = "multi switch no master",
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = is_multi_switch_no_master
