@@ -19,7 +19,7 @@ local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
-local buttons = require "buttons"
+local buttons_utils = require "button-utils"
 local device_lib = require "st.device"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local version = require "version"
@@ -544,11 +544,11 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local profile_found = false
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    buttons.build_profile(device, #button_eps, device_type_supports_button_switch_combination(device, main_endpoint))
+    buttons_utils.build_profile(device, #button_eps, device_type_supports_button_switch_combination(device, main_endpoint))
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
-    buttons.build_component_map(device, main_endpoint, button_eps)
-    buttons.configure(device)
+    buttons_utils.build_component_map(device, main_endpoint, button_eps)
+    buttons_utils.configure_buttons(device)
     profile_found = true
   end
 
@@ -1082,7 +1082,7 @@ local function info_changed(driver, device, event, args)
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     if #button_eps > 0 and device.network_type == device_lib.NETWORK_TYPE_MATTER then
-      buttons.configure(device)
+      buttons_utils.configure_buttons(device)
     end
   end
 end
@@ -1257,12 +1257,12 @@ local matter_driver_template = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = valve_level_attr_handler
       },
       [clusters.PowerSource.ID] = {
-        [clusters.PowerSource.attributes.AttributeList.ID] = buttons.power_source_attribute_list_handler,
-        [clusters.PowerSource.attributes.BatChargeLevel.ID] = buttons.battery_charge_level_attr_handler,
-        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = buttons.battery_percent_remaining_attr_handler,
+        [clusters.PowerSource.attributes.AttributeList.ID] = buttons_utils.power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = buttons_utils.battery_charge_level_attr_handler,
+        [clusters.PowerSource.attributes.BatPercentRemaining.ID] = buttons_utils.battery_percent_remaining_attr_handler,
       },
       [clusters.Switch.ID] = {
-        [clusters.Switch.attributes.MultiPressMax.ID] = buttons.max_press_handler
+        [clusters.Switch.attributes.MultiPressMax.ID] = buttons_utils.max_press_handler
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = humidity_attr_handler
@@ -1280,10 +1280,10 @@ local matter_driver_template = {
     },
     event = {
       [clusters.Switch.ID] = {
-        [clusters.Switch.events.InitialPress.ID] = buttons.initial_press_event_handler,
-        [clusters.Switch.events.LongPress.ID] = buttons.long_press_event_handler,
-        [clusters.Switch.events.ShortRelease.ID] = buttons.short_release_event_handler,
-        [clusters.Switch.events.MultiPressComplete.ID] = buttons.multi_press_complete_event_handler
+        [clusters.Switch.events.InitialPress.ID] = buttons_utils.initial_press_event_handler,
+        [clusters.Switch.events.LongPress.ID] = buttons_utils.long_press_event_handler,
+        [clusters.Switch.events.ShortRelease.ID] = buttons_utils.short_release_event_handler,
+        [clusters.Switch.events.MultiPressComplete.ID] = buttons_utils.multi_press_complete_event_handler
       }
     },
     fallback = matter_handler,

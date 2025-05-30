@@ -90,9 +90,9 @@ local function emulate_held_event(device, ep)
   set_field_for_endpoint(device, START_BUTTON_PRESS, ep, nil, {persist = false})
 end
 
-local buttons = {}
+local button_utils = {}
 
-function buttons.build_component_map(device, main_endpoint, button_eps)
+function button_utils.build_component_map(device, main_endpoint, button_eps)
   -- create component mapping on the main profile button endpoints
   table.sort(button_eps)
   local component_map = {}
@@ -109,7 +109,7 @@ function buttons.build_component_map(device, main_endpoint, button_eps)
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
-function buttons.build_profile(device, num_button_eps, device_supports_button_switch_combination)
+function button_utils.build_profile(device, num_button_eps, device_supports_button_switch_combination)
   local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
   if device_supports_button_switch_combination then
     profile_name = "light-level-" .. profile_name
@@ -122,7 +122,7 @@ function buttons.build_profile(device, num_button_eps, device_supports_button_sw
   end
 end
 
-function buttons.configure(device)
+function button_utils.configure_buttons(device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
@@ -157,7 +157,7 @@ function buttons.configure(device)
   end
 end
 
-function buttons.initial_press_event_handler(driver, device, ib, response)
+function button_utils.initial_press_event_handler(driver, device, ib, response)
   if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
     -- Receipt of an InitialPress event means we do not want to ignore the next MultiPressComplete event
     -- or else we would potentially not create the expected button capability event
@@ -172,7 +172,7 @@ end
 
 -- if the device distinguishes a long press event, it will always be a "held"
 -- there's also a "long release" event, but this event is required to come first
-function buttons.long_press_event_handler(driver, device, ib, response)
+function button_utils.long_press_event_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.held({state_change = true}))
   if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
     -- Ignore the next MultiPressComplete event if it is sent as part of this "long press" event sequence
@@ -180,7 +180,7 @@ function buttons.long_press_event_handler(driver, device, ib, response)
   end
 end
 
-function buttons.short_release_event_handler(driver, device, ib, response)
+function button_utils.short_release_event_handler(driver, device, ib, response)
   if not get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
     if get_field_for_endpoint(device, EMULATE_HELD, ib.endpoint_id) then
       emulate_held_event(device, ib.endpoint_id)
@@ -190,7 +190,7 @@ function buttons.short_release_event_handler(driver, device, ib, response)
   end
 end
 
-function buttons.multi_press_complete_event_handler(driver, device, ib, response)
+function button_utils.multi_press_complete_event_handler(driver, device, ib, response)
   -- in the case of multiple button presses
   -- emit number of times, multiple presses have been completed
   if ib.data and not get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) then
@@ -211,13 +211,13 @@ function buttons.multi_press_complete_event_handler(driver, device, ib, response
   set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, nil)
 end
 
-function buttons.battery_percent_remaining_attr_handler(driver, device, ib, response)
+function button_utils.battery_percent_remaining_attr_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
   end
 end
 
-function buttons.battery_charge_level_attr_handler(driver, device, ib, response)
+function button_utils.battery_charge_level_attr_handler(driver, device, ib, response)
   if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
     device:emit_event(capabilities.batteryLevel.battery.normal())
   elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
@@ -227,7 +227,7 @@ function buttons.battery_charge_level_attr_handler(driver, device, ib, response)
   end
 end
 
-function buttons.power_source_attribute_list_handler(driver, device, ib, response)
+function button_utils.power_source_attribute_list_handler(driver, device, ib, response)
   local profile_name = ""
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   for _, attr in ipairs(ib.data.elements) do
@@ -253,7 +253,7 @@ function buttons.power_source_attribute_list_handler(driver, device, ib, respons
   end
 end
 
-function buttons.max_press_handler(driver, device, ib, response)
+function button_utils.max_press_handler(driver, device, ib, response)
   local max = ib.data.value or 1 --get max number of presses
   device.log.debug("Device supports "..max.." presses")
   -- capability only supports up to 6 presses
@@ -267,4 +267,4 @@ function buttons.max_press_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
 end
 
-return buttons
+return button_utils

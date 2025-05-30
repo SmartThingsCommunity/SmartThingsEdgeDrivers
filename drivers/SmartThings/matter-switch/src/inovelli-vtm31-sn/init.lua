@@ -14,7 +14,7 @@
 
 local cluster_base = require "st.matter.cluster_base"
 local clusters = require "st.matter.clusters"
-local buttons = require "buttons"
+local button_utils = require "button-utils"
 local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
 local log = require "log"
@@ -131,7 +131,7 @@ local function initialize_vtm31_sn(driver, device)
     current_component_number = current_component_number + 1
   end
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-  buttons.configure(device)
+  button_utils.configure_buttons(device)
   -- Create a child device for direct control of the LED Notification Bar.
   local name = string.format("%s Notification Bar", device.label)
   driver:try_create_device(
@@ -220,7 +220,7 @@ local function info_changed(driver, device, event, args)
   end
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
-    buttons.configure(device)
+    button_utils.configure_buttons(device)
   end
 end
 
