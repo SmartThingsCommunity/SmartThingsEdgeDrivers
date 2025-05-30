@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local zigbee_constants = require "st.zigbee.constants"
+local configurations = require "configurations"
 
 local ZIGBEE_METERING_SWITCH_FINGERPRINTS = {
   { model = "E240-KR116Z-HA" }
@@ -37,7 +38,7 @@ end
 local ezex_switch_handler = {
   NAME = "ezex switch handler",
   lifecycle_handlers = {
-    init = do_init
+    init = configurations.power_reconfig_wrapper(do_init)
   },
   can_handle = is_zigbee_ezex_switch
 }
