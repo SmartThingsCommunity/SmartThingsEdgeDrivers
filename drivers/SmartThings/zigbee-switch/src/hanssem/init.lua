@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local stDevice = require "st.device"
+local configurations = require "configurations"
 
 local FINGERPRINTS = {
   { mfr = "Winners", model = "LSS1-101", children = 0 },
@@ -78,7 +79,7 @@ local HanssemSwitch = {
   NAME = "Zigbee Hanssem Switch",
   lifecycle_handlers = {
     added = device_added,
-    init = device_init
+    init = configurations.power_reconfig_wrapper(device_init)
   },
   can_handle = can_handle_hanssem_switch
 }

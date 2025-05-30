@@ -15,6 +15,7 @@
 local constants = require "st.zigbee.constants"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
+local configurations = require "configurations"
 local SimpleMetering = zcl_clusters.SimpleMetering
 
 local ROBB_DIMMER_FINGERPRINTS = {
@@ -57,7 +58,7 @@ local robb_dimmer_handler = {
     }
   },
   lifecycle_handlers = {
-    init = do_init
+    init = configurations.power_reconfig_wrapper(do_init)
   },
   can_handle = is_robb_dimmer
 }

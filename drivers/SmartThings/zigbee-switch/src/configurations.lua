@@ -14,9 +14,12 @@
 
 local clusters = require "st.zigbee.zcl.clusters"
 local constants = require "st.zigbee.constants"
+local capabilities = require "st.capabilities"
 
 local ColorControl = clusters.ColorControl
 local IASZone = clusters.IASZone
+
+local CONFIGURATION_VERSION_KEY = "_configuration_version"
 
 local devices = {
   IKEA_RGB_BULB = {
@@ -60,7 +63,28 @@ local devices = {
   }
 }
 
+
 local configurations = {}
+
+configurations.power_reconfig_wrapper = function(orig_function)
+  local new_init = function(driver, device)
+    local config_version = device:get_field(CONFIGURATION_VERSION_KEY)
+    if config_version == nil or config_version < driver.current_config_version then
+      if device:supports_capability(capabilities.powerMeter) then
+        if device:supports_server_cluster(clusters.ElectricalMeasurement.ID) then
+          -- Increase minimum reporting interval to 5 seconds
+          device:send(clusters.ElectricalMeasurement.attributes.ActivePower:configure_reporting(device, 5, 600, 5))
+        end
+        if device:supports_server_cluster(clusters.SimpleMetering.ID) then
+          -- Increase minimum reporting interval to 5 seconds
+          device:send(clusters.SimpleMetering.attributes.InstantaneousDemand:configure_reporting(device, 5, 600, 5))
+        end
+      end
+    end
+    device:set_field(CONFIGURATION_VERSION_KEY, driver.current_config_version, {persist = true})
+  end
+  return new_init
+end
 
 configurations.get_device_configuration = function(zigbee_device)
   for _, device in pairs(devices) do
