@@ -322,10 +322,13 @@ local function supports_modular_profile(device)
   if not modular_profiles_supported then
     device:set_field(SUPPORTS_MODULAR_PROFILE, false)
     return false
-  elseif device:get_field(SUPPORTS_MODULAR_PROFILE) then -- if we've already determined the device supports modular profiles, then there is no need to check the device category again
+  elseif device:get_field(SUPPORTS_MODULAR_PROFILE) then
+    -- If we've already determined the device supports modular profiles, then there is
+    -- no need to check the device category again
     return true
   end
   local main_endpoint = common_utils.find_default_endpoint(device)
+  -- Lights are not currently supported by modular profiles because modular profiles do not currently work with lighting groups
   modular_profiles_supported = common_utils.get_device_category(device, main_endpoint) ~= common_utils.device_categories.LIGHT
   device:set_field(SUPPORTS_MODULAR_PROFILE, modular_profiles_supported)
   return modular_profiles_supported
