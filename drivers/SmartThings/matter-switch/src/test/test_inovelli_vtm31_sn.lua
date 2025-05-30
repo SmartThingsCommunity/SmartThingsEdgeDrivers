@@ -599,5 +599,33 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Test offTransitionTime",
+  function()
+    local parameter_values = { 0, 5, 8, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 100 }
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
+      test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { offTransitionTime = tostring(v) } }))
+      test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.OffTransitionTime:write(mock_device, 1, v)})
+    end
+  end
+)
+
+test.register_coroutine_test(
+  "Test onTransitionTime",
+  function()
+    local parameter_values = { 0, 5, 8, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 80, 100 }
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    for _, v in pairs(parameter_values) do
+      test.wait_for_events()
+      test.mock_time.advance_time(3)
+      test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({ preferences = { onTransitionTime = tostring(v) } }))
+      test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.OnTransitionTime:write(mock_device, 1, v)})
+    end
+  end
+)
+
 -- run the tests
 test.run_registered_tests()

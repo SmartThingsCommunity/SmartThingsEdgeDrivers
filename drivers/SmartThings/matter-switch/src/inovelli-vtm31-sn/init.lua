@@ -60,7 +60,9 @@ local preference_map = {
   parameter95 = {parameter_number = 95, size = data_types.Uint8},     -- LED Indicator Color (w/On)
   parameter96 = {parameter_number = 96, size = data_types.Uint8},     -- LED Indicator Color (w/Off)
   parameter97 = {parameter_number = 97, size = data_types.Uint8},     -- LED Indicator Intensity (w/On)
-  parameter98 = {parameter_number = 98, size = data_types.Uint8}      -- LED Indicator Intensity (w/Off)
+  parameter98 = {parameter_number = 98, size = data_types.Uint8},     -- LED Indicator Intensity (w/Off)
+  offTransitionTime = {},
+  onTransitionTime = {}
 }
 
 local function is_inovelli_vtm31_sn(opts, driver, device)
@@ -195,9 +197,8 @@ local function info_changed(driver, device, event, args)
   end
   device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
   if time_diff > 2 then -- process preference updates at most once every 2 seconds
-    local preferences = preference_map
     for id, value in pairs(device.preferences) do
-      if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
+      if args.old_st_store.preferences[id] ~= value and preference_map[id] then
         if id == "offTransitionTime" then
           local transition_time = math.floor(value)
           device:send(clusters.LevelControl.attributes.OffTransitionTime:write(device, 1, transition_time))
@@ -205,14 +206,14 @@ local function info_changed(driver, device, event, args)
           local transition_time = math.floor(value)
           device:send(clusters.LevelControl.attributes.OnTransitionTime:write(device, 1, transition_time))
         else
-          local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preferences[id].size, id)
-          if(preferences[id].size == data_types.Boolean) then
+          local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preference_map[id].size, id)
+          if(preference_map[id].size == data_types.Boolean) then
             new_parameter_value = to_boolean(new_parameter_value)
-          elseif(preferences[id].size == data_types.Uint8) then
+          elseif(preference_map[id].size == data_types.Uint8) then
             new_parameter_value = math.tointeger(new_parameter_value)
           end
-          local data = data_types.validate_or_build_type(new_parameter_value, preferences[id].size)
-          device:send(cluster_base.write(device, PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + preferences[id].parameter_number, nil, data))
+          local data = data_types.validate_or_build_type(new_parameter_value, preference_map[id].size)
+          device:send(cluster_base.write(device, PRIVATE_CLUSTER_ENDPOINT_ID, PRIVATE_CLUSTER_ID, PRIVATE_CLUSTER_ATTR_ID + preference_map[id].parameter_number, nil, data))
         end
       end
     end
