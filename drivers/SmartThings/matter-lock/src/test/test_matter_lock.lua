@@ -20,7 +20,7 @@ local clusters = require "st.matter.clusters"
 
 local mock_device_record = {
   profile = t_utils.get_profile_definition("lock-without-codes.yml"),
-  manufacturer_info = {vendor_id = 0x101D, product_id = 0x1},
+  manufacturer_info = {vendor_id = 0xDEAD, product_id = 0xBEEF},
   endpoints = {
     {
       endpoint_id = 2,
