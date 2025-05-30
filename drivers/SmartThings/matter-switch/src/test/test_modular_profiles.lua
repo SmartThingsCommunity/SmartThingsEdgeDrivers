@@ -82,7 +82,7 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   local optional_component_capabilities = {
-    { "main", { "colorControl", "colorTemperature", "switchLevel", "switch", "valve", "level" } }
+    { "main", { "valve", "level", "switch", "switchLevel", "colorControl", "colorTemperature" } }
   }
   if version.api >= 14 then
     mock_device:expect_metadata_update({ profile = "water-valve-modular", optional_component_capabilities = optional_component_capabilities })
