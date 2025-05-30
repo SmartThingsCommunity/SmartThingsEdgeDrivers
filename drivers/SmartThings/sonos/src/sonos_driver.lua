@@ -296,6 +296,7 @@ end
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
 ---@return "token expired"|"no token"|nil reason the reason a token was not provided, nil if there is a valid token available
 function SonosDriver:get_oauth_token()
+  self.hub_augmented_driver_data = self.hub_augmented_driver_data or {}
   local decode_success, maybe_token =
     pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
   if
