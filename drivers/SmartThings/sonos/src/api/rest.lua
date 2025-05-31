@@ -1,7 +1,6 @@
-local log = require "log"
-local net_url = require "net.url"
-local st_utils = require "st.utils"
 local json = require "st.json"
+local log = require "log"
+local st_utils = require "st.utils"
 
 local RestClient = require "lunchbox.rest"
 
@@ -13,11 +12,13 @@ local RestClient = require "lunchbox.rest"
 --- @return string|nil partial contents of partial read if successful
 local function process_rest_response(response, err, partial, err_callback)
   if err == nil and response == nil then
-    log.error(st_utils.stringify_table({
-      resp = response,
-      maybe_err = err,
-      maybe_partial = partial,
-    }, "[SonosRestApi] Unexpected nil for both response and error processing REST reply", false))
+    log.error(
+      st_utils.stringify_table({
+        resp = response,
+        maybe_err = err,
+        maybe_partial = partial,
+      }, "[SonosRestApi] Unexpected nil for both response and error processing REST reply", false)
+    )
   end
   if err ~= nil then
     if type(err_callback) == "function" then
@@ -71,70 +72,32 @@ end
 local SonosRestApi = {}
 
 --- Query a Sonos Group IP address for individual player info
----@param ip_or_url string|table
----@param ... unknown
+---@param url table a URL table created by `net_url`
+---@param headers table<string,string>?
 ---@return SonosDiscoveryInfo|SonosErrorResponse|nil
 ---@return string|nil error
----@overload fun(ip_or_url: table, headers: table<string,string>): SonosDiscoveryInfo?,string?
----@overload fun(ip_or_url: string, port: number, headers: table<string,string>): SonosDiscoveryInfo?,string?
-function SonosRestApi.get_player_info(ip_or_url, ...)
-  local url
-  local headers
-  if type(ip_or_url) == "table" then
-    headers = select(1, ...)
-    ip_or_url.path = "/api/v1/players/local/info"
-    url = ip_or_url
-  else
-    local port = select(1, ...)
-    headers = select(2, ...)
-    url = net_url.parse(string.format("https://%s:%s/api/v1/players/local/info", ip_or_url, port))
-  end
+function SonosRestApi.get_player_info(url, headers)
+  url.path = "/api/v1/players/local/info"
   return process_rest_response(RestClient.one_shot_get(url, headers))
 end
 
----@param ip_or_url string|table
----@param ... unknown
+---@param url table a URL table created by `net_url`
+---@param household HouseholdId
+---@param headers table<string,string>?
 ---@return SonosGroupsResponseBody|SonosErrorResponse|nil response
 ---@return nil|string error
----@overload fun(ip_or_url: table, household: HouseholdId, headers: table<string,string>?): SonosGroupsResponseBody?,string?
----@overload fun(ip_or_url: string, port: number, household: HouseholdId, headers: table<string,string>?): SonosGroupsResponseBody?,string?
-function SonosRestApi.get_groups_info(ip_or_url, ...)
-  local url
-  local headers
-  if type(ip_or_url) == "table" then
-    local household = select(1, ...)
-    headers = select(2, ...)
-    ip_or_url.path = string.format("/api/v1/households/%s/groups", household)
-    url = ip_or_url
-  else
-    local port = select(1, ...)
-    local household = select(2, ...)
-    headers = select(3, ...)
-    url = net_url.parse(string.format("https://%s:%s/api/v1/households/%s/groups", ip_or_url, port, household))
-  end
+function SonosRestApi.get_groups_info(url, household, headers)
+  url.path = string.format("/api/v1/households/%s/groups", household)
   return process_rest_response(RestClient.one_shot_get(url, headers))
 end
 
----@param ip_or_url string|table
----@param ... unknown
+---@param url table a URL table created by `net_url`
+---@param household HouseholdId
+---@param headers table<string,string>?
 ---@return SonosFavoritesResponseBody|SonosErrorResponse|nil response
 ---@return nil|string error
----@overload fun(ip_or_url: table, household: HouseholdId, headers: table<string,string>?): SonosFavoritesResponseBody?,string?
----@overload fun(ip_or_url: string, port: number, household: HouseholdId, headers: table<string,string>?): SonosFavoritesResponseBody?,string?
-function SonosRestApi.get_favorites(ip_or_url, ...)
-  local url
-  local headers
-  if type(ip_or_url) == "table" then
-    local household = select(1, ...)
-    headers = select(2, ...)
-    ip_or_url.path = string.format("/api/v1/households/%s/favorites", household)
-    url = ip_or_url
-  else
-    local port = select(1, ...)
-    local household = select(2, ...)
-    headers = select(3, ...)
-    url = net_url.parse(string.format("https://%s:%s/api/v1/households/%s/favorites", ip_or_url, port, household))
-  end
+function SonosRestApi.get_favorites(url, household, headers)
+  url.path = string.format("/api/v1/households/%s/favorites", household)
   return process_rest_response(RestClient.one_shot_get(url, headers))
 end
 

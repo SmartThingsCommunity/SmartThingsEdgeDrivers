@@ -296,6 +296,7 @@ end
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
 ---@return "token expired"|"no token"|nil reason the reason a token was not provided, nil if there is a valid token available
 function SonosDriver:get_oauth_token()
+  self.hub_augmented_driver_data = self.hub_augmented_driver_data or {}
   local decode_success, maybe_token =
     pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
   if
@@ -316,7 +317,7 @@ function SonosDriver:get_oauth_token()
     if now < expiration then
       -- token is expiring soon, so we pre-emptively refresh
       if math.abs(expiration - now) < ONE_HOUR_IN_SECONDS then
-        local result, err = self:request_oauth_token()
+        local result, err = security.get_sonos_oauth()
         if not result then
           log.warn(string.format("Error requesting OAuth token via Security API: %s", err))
         end

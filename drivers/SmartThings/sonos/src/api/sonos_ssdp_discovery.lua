@@ -1,5 +1,6 @@
 local cosock = require "cosock"
 local log = require "log"
+local net_url = require "net.url"
 local ssdp = require "ssdp"
 local st_utils = require "st.utils"
 
@@ -268,8 +269,12 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
 
     if is_new_information then
       local headers = SonosApi.make_headers()
-      local discovery_info, err =
-        SonosApi.RestApi.get_player_info(sonos_ssdp_info.ip, SonosApi.DEFAULT_SONOS_PORT, headers)
+      local discovery_info, err = SonosApi.RestApi.get_player_info(
+        net_url.parse(
+          string.format("https://%s:%s", sonos_ssdp_info.ip, SonosApi.DEFAULT_SONOS_PORT)
+        ),
+        headers
+      )
       if not discovery_info then
         log.error(string.format("Error getting discovery info from SSDP response: %s", err))
       else
