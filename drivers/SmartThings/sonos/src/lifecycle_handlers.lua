@@ -1,3 +1,4 @@
+local api_version = require("version").api
 local capabilities = require "st.capabilities"
 
 local cosock = require "cosock"
@@ -45,7 +46,7 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
     capabilities.mediaTrackControl.commands.previousTrack.NAME,
   }))
 
-  if not driver:has_received_startup_state() then
+  if api_version >= 14 and not driver:has_received_startup_state() then
     device.log.debug("Driver startup state not yet received, delaying initialization of device.")
     driver:queue_device_init_for_startup_state(device)
     return
@@ -76,8 +77,76 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                   log.error("token event bus closed, aborting initialization")
                   return
                 end
-                driver:request_oauth_token()
-                token_event_receive:receive()
+                token_event_receive:settimeout(30)
+                local token, token_recv_err
+                -- max 30 mins
+                local backoff_builder = utils.backoff_builder(60 * 30, 30, 2)
+                if not driver:is_waiting_for_oauth_token() then
+                  local _, request_token_err = driver:request_oauth_token()
+                  if request_token_err then
+                    log.warn(string.format("Error sending token request: %s", request_token_err))
+                  end
+                end
+
+                local backoff_timer = nil
+                while not token do
+                  local send_request = false
+                  -- we use the backoff to create a timer and utilize a select loop here, instead of
+                  -- utilizing a sleep, so that we can create a long delay on our polling of the cloud
+                  -- without putting ourselves in a situation where we're sleeping for an extended period
+                  -- of time so that we don't sleep through the users's log-in attempt and fail to resume
+                  -- our connection attempts in a timely manner.
+                  --
+                  -- The backoff caps at 30 mins, as commented above
+                  if not backoff_timer then
+                    backoff_timer = cosock.timer.create_oneshot(backoff_builder())
+                  end
+                  local token_recv_ready, _, token_select_err =
+                    cosock.socket.select({ token_event_receive, backoff_timer }, nil, nil)
+
+                  if token_select_err then
+                    log.warn(string.format("select error: %s", token_select_err))
+                  end
+
+                  token, token_recv_err = nil, nil
+                  for _, receiver in pairs(token_recv_ready or {}) do
+                    if receiver == backoff_timer then
+                      -- we just make a note that the backoff has elapsed, rather than
+                      -- put a request in flight immediately.
+                      --
+                      -- This is just in case both receivers are ready, so that we can prioritize
+                      -- handling the token instead of putting another request in flight.
+                      send_request = true
+                      backoff_timer = nil
+                    end
+
+                    if receiver == token_event_receive then
+                      token, token_recv_err = token_event_receive:receive()
+                    end
+                  end
+
+                  if token_recv_err == "timeout" then
+                    log.debug("timeout waiting for OAuth token in reconnect task")
+                  elseif token_recv_err and not token then
+                    log.warn(
+                      string.format(
+                        "Unexpected error on token event receive bus: %s",
+                        token_recv_err
+                      )
+                    )
+                  end
+
+                  if send_request then
+                    if not driver:is_waiting_for_oauth_token() then
+                      local _, request_token_err = driver:request_oauth_token()
+                      if request_token_err then
+                        log.warn(
+                          string.format("Error sending token request: %s", request_token_err)
+                        )
+                      end
+                    end
+                  end
+                end
               else
                 device.log.error(
                   string.format(
