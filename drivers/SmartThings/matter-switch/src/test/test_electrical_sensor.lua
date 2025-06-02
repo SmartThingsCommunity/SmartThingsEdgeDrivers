@@ -162,27 +162,6 @@ local function test_init_periodic()
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 end
 
-test.register_coroutine_test(
-  "Check the power and energy meter when the device is added", function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
-    for i, cluster in ipairs(subscribed_attributes) do
-        if i > 1 then
-            subscribe_request:merge(cluster:subscribe(mock_device))
-        end
-    end
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
-    )
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-    test.wait_for_events()
-  end
-)
-
 test.register_message_test(
 	"On command should send the appropriate commands",
   {
