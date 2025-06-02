@@ -524,15 +524,24 @@ local function assign_switch_profile(device, switch_ep, is_child_device)
       break
     end
   end
-  -- Add electrical support to the first switch ep if Electical Sensor is handled on a unique ep
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  table.sort(switch_eps)
-  if switch_ep == switch_eps[1] and electrical_tags == "" and contains_device_type(device, ELECTRICAL_SENSOR_ID) then
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then
-      electrical_tags = electrical_tags .. "-power"
-    end
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then
-      electrical_tags = electrical_tags .."-energy-powerConsumption"
+  -- Add electrical support to the switch ep if Electical Sensor is handled on a unique ep
+  if electrical_tags == "" and contains_device_type(device, ELECTRICAL_SENSOR_ID) then
+    local electrical_energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
+    local electrical_power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
+    local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+    table.sort(electrical_energy_eps)
+    table.sort(electrical_power_eps)
+    table.sort(switch_eps)
+    for i, ep in ipairs(switch_eps) do
+      if ep == switch_ep then
+        if electrical_energy_eps[i] then
+          electrical_tags = electrical_tags .. "-power"
+        end
+        if electrical_power_eps[i] then
+          electrical_tags = electrical_tags .. "-energy-powerConsumption"
+        end
+        break
+      end
     end
     if electrical_tags ~= "" and (profile == "plug-binary" or profile == "plug-level" or profile == "light-binary") then
       profile = string.gsub(profile, "-binary", "") .. electrical_tags
