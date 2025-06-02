@@ -16,13 +16,6 @@ local devices = {
       exWPctThresholdTotal = {parameter_number = 16, size = 1},
       exWPctThresholdPhaseA = {parameter_number = 17, size = 1},
       autoRootDeviceReport = {parameter_number = 32, size = 1},
-      defaultTime = {parameter_number = 110, size = 1},
-      autoTimeImp1 = {parameter_number = 111, size = 4},
-      autoTimeImp2 = {parameter_number = 112, size = 4},
-      autoTimeImp3 = {parameter_number = 113, size = 4},
-      autoTimeExp1 = {parameter_number = 114, size = 4},
-      autoTimeExp2 = {parameter_number = 115, size = 4},
-      autoTimeExp3 = {parameter_number = 116, size = 4},
       lockConfig = {parameter_number = 252, size = 1}
     }
   },
@@ -47,13 +40,6 @@ local devices = {
       exWPctThresholdPhaseA = {parameter_number = 17, size = 1},
       exWPctThresholdPhaseB = {parameter_number = 18, size = 1},
       autoRootDeviceReport = {parameter_number = 32, size = 1},
-      defaultTime = {parameter_number = 110, size = 1},
-      autoTimeImp1 = {parameter_number = 111, size = 4},
-      autoTimeImp2 = {parameter_number = 112, size = 4},
-      autoTimeImp3 = {parameter_number = 113, size = 4},
-      autoTimeExp1 = {parameter_number = 114, size = 4},
-      autoTimeExp2 = {parameter_number = 115, size = 4},
-      autoTimeExp3 = {parameter_number = 116, size = 4},
       lockConfig = {parameter_number = 252, size = 1}
     }
   },
@@ -82,13 +68,6 @@ local devices = {
       exWPctThresholdPhaseB = {parameter_number = 18, size = 1},
       exWPctThresholdPhaseC = {parameter_number = 19, size = 1},
       autoRootDeviceReport = {parameter_number = 32, size = 1},
-      defaultTime = {parameter_number = 110, size = 1},
-      autoTimeImp1 = {parameter_number = 111, size = 4},
-      autoTimeImp2 = {parameter_number = 112, size = 4},
-      autoTimeImp3 = {parameter_number = 113, size = 4},
-      autoTimeExp1 = {parameter_number = 114, size = 4},
-      autoTimeExp2 = {parameter_number = 115, size = 4},
-      autoTimeExp3 = {parameter_number = 116, size = 4},
       lockConfig = {parameter_number = 252, size = 1}
     }
   }
