@@ -672,7 +672,7 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
       new_schedule_table,
       {
         scheduleIndex = scheduleIdx,
-        weekdays = weekDayList,
+        weekDays = weekDayList,
         startHour = schedule.startHour,
         startMinute = schedule.startMinute,
         endHour = schedule.endHour,
@@ -688,7 +688,7 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
         userIndex = userIdx,
         schedules = {{
           scheduleIndex = scheduleIdx,
-          weekdays = weekDayList,
+          weekDays = weekDayList,
           startHour = schedule.startHour,
           startMinute = schedule.startMinute,
           endHour = schedule.endHour,
