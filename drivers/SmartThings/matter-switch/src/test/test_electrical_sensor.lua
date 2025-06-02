@@ -57,6 +57,25 @@ local mock_device = test.mock_device.build_test_matter_device({
         { device_type_id = 0x010B, device_type_revision = 1 }, -- OnOff Dimmable Plug
       }
     },
+        {
+      endpoint_id = 3,
+      clusters = {
+        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 14, },
+      },
+      device_types = {
+        { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
+      }
+    },
+    {
+      endpoint_id = 4,
+      clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+        { cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
+      },
+      device_types = {
+        { device_type_id = 0x010B, device_type_revision = 1 }, -- OnOff Dimmable Plug
+      }
+    },
   },
 })
 
@@ -647,6 +666,13 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
+    mock_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "nil 2",
+      profile = "plug-level-energy-powerConsumption",
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", 4)
+    })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init }

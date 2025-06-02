@@ -534,10 +534,10 @@ local function assign_switch_profile(device, switch_ep, is_child_device)
     table.sort(switch_eps)
     for i, ep in ipairs(switch_eps) do
       if ep == switch_ep then
-        if electrical_energy_eps[i] then
+        if electrical_power_eps[i] then
           electrical_tags = electrical_tags .. "-power"
         end
-        if electrical_power_eps[i] then
+        if electrical_energy_eps[i] then
           electrical_tags = electrical_tags .. "-energy-powerConsumption"
         end
         break
