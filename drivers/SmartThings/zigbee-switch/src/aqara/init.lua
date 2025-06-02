@@ -244,6 +244,9 @@ local function do_configure(self, device)
 end
 
 local function device_added(driver, device)
+  if (device:supports_capability_by_id(capabilities.button.ID)) then
+    device:emit_event(capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } }))
+  end
   if (device:supports_capability_by_id(capabilities.powerMeter.ID)) then
     device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
     device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))

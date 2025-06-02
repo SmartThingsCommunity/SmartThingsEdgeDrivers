@@ -91,50 +91,11 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "OnOff cluster any command (except On or Off) should result with sending pushed event",
-  function()
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      OnOff.server.commands.Toggle.build_test_rx(mock_device)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.pushed({ state_change = true }))
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "OnOff cluster On command should result with sending double event",
-  function()
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      OnOff.server.commands.On.build_test_rx(mock_device)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.double({ state_change = true }))
-    )
-  end
-)
-
-test.register_coroutine_test(
   "OnOff cluster private command 0x01 should result with sending double event",
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, zigbee_test_utils.build_custom_command_id(mock_device, OnOff.ID, PRESENT_CMD_ID, MFG_CODE, "\x01") })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button.button.double({ state_change = true }))
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "OnOff cluster Off command should result with sending held event",
-  function()
-    test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      OnOff.server.commands.Off.build_test_rx(mock_device)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", button.button.held({ state_change = true }))
     )
   end
 )

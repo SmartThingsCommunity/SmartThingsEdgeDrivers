@@ -1,0 +1,81 @@
+name: aqs-modular-temp
+components:
+  - id: main
+    capabilities:
+      - id: airQualityHealthConcern
+        version: 1
+      - id: temperatureMeasurement
+        version: 1
+        optional: true
+      - id: relativeHumidityMeasurement
+        version: 1
+        optional: true
+      - id: carbonMonoxideMeasurement
+        version: 1
+        optional: true
+      - id: carbonMonoxideHealthConcern
+        version: 1
+        optional: true
+      - id: carbonDioxideMeasurement
+        version: 1
+        optional: true
+      - id: carbonDioxideHealthConcern
+        version: 1
+        optional: true
+      - id: nitrogenDioxideMeasurement
+        version: 1
+        optional: true
+      - id: nitrogenDioxideHealthConcern
+        version: 1
+        optional: true
+      - id: ozoneMeasurement
+        version: 1
+        optional: true
+      - id: ozoneHealthConcern
+        version: 1
+        optional: true
+      - id: formaldehydeMeasurement
+        version: 1
+        optional: true
+      - id: formaldehydeHealthConcern
+        version: 1
+        optional: true
+      - id: veryFineDustSensor
+        version: 1
+        optional: true
+      - id: veryFineDustHealthConcern
+        version: 1
+        optional: true
+      - id: fineDustSensor
+        version: 1
+        optional: true
+      - id: fineDustHealthConcern
+        version: 1
+        optional: true
+      - id: dustSensor
+        version: 1
+        optional: true
+      - id: dustHealthConcern
+        version: 1
+        optional: true
+      - id: radonMeasurement
+        version: 1
+        optional: true
+      - id: radonHealthConcern
+        version: 1
+        optional: true
+      - id: tvocMeasurement
+        version: 1
+        optional: true
+      - id: tvocHealthConcern
+        version: 1
+        optional: true
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: AirQualityDetector
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
