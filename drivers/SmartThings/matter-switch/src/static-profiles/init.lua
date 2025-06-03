@@ -64,7 +64,7 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
     if main_endpoint == ep.endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         -- No device type that is not in the switch subset should be considered.
-        if (common_utils.ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+        if (common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID) then
           cluster_id = math.max(cluster_id, dt.device_type_id)
         end
       end

@@ -25,8 +25,8 @@ local profile_name_and_mandatory_capability_per_device_category = {
   [common_utils.device_categories.BUTTON] = { profile_name = "button-modular", mandatory_capability = capabilities.button.ID },
   [common_utils.device_categories.LIGHT] = { profile_name = "light-modular",  mandatory_capability = capabilities.switch.ID },
   [common_utils.device_categories.PLUG] = { profile_name = "plug-modular",   mandatory_capability = capabilities.switch.ID },
-  [common_utils.device_categories.SWITCH] = { profile_name = "switch-modular", mandatory_capability = capabilities.valve.ID },
-  [common_utils.device_categories.WATER_VALVE] = { profile_name = "water-valve-modular",  mandatory_capability = capabilities.switch.ID }
+  [common_utils.device_categories.SWITCH] = { profile_name = "switch-modular", mandatory_capability = capabilities.switch.ID },
+  [common_utils.device_categories.WATER_VALVE] = { profile_name = "water-valve-modular",  mandatory_capability = capabilities.valve.ID }
 }
 
 local function supports_capability_by_id_modular(device, capability, component)
@@ -88,7 +88,7 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
     if main_endpoint == ep.endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         -- No device type that is not in the switch subset should be considered
-        if (common_utils.ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+        if (common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID) then
           device_type_id = math.max(device_type_id, dt.device_type_id)
         end
       end
@@ -97,14 +97,14 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
   end
   if device_type_id == 0 then return end
   local capabilities_to_remove = {}
-  if device_type_id == common_utils.ON_OFF_SWITCH_ID then
+  if device_type_id == common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID then
     capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID, capabilities.switchLevel.ID}
-  elseif device_type_id == common_utils.ON_OFF_DIMMER_SWITCH_ID then
+  elseif device_type_id == common_utils.ON_OFF_DIMMER_SWITCH_DEVICE_TYPE_ID then
     capabilities_to_remove = {capabilities.colorControl.ID, capabilities.colorTemperature.ID}
     if not common_utils.tbl_contains(component_capabilities, capabilities.switchLevel.ID) then
       table.insert(component_capabilities, capabilities.switchLevel.ID)
     end
-  else -- device_type_id = ON_OFF_COLOR_DIMMER_SWITCH_ID
+  else -- device_type_id = ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID
     if not common_utils.tbl_contains(component_capabilities, capabilities.switchLevel.ID) then
       table.insert(component_capabilities, capabilities.switchLevel.ID)
     end

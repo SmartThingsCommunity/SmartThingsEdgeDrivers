@@ -63,14 +63,14 @@ common_utils.COLOR_TEMP_LIGHT_DEVICE_TYPE_ID = 0x010C
 common_utils.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
 common_utils.ON_OFF_PLUG_DEVICE_TYPE_ID = 0x010A
 common_utils.DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
-common_utils.ON_OFF_SWITCH_ID = 0x0103
-common_utils.ON_OFF_DIMMER_SWITCH_ID = 0x0104
-common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
-common_utils.MOUNTED_ON_OFF_CONTROL_ID = 0x010F
-common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_ID = 0x0110
-common_utils.GENERIC_SWITCH_ID = 0x000F
-common_utils.ELECTRICAL_SENSOR_ID = 0x0510
-common_utils.WATER_VALVE_ID = 0x0042
+common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID = 0x0103
+common_utils.ON_OFF_DIMMER_SWITCH_DEVICE_TYPE_ID = 0x0104
+common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID = 0x0105
+common_utils.MOUNTED_ON_OFF_CONTROL_DEVICE_TYPE_ID = 0x010F
+common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_DEVICE_TYPE_ID = 0x0110
+common_utils.GENERIC_SWITCH_DEVICE_TYPE_ID = 0x000F
+common_utils.ELECTRICAL_SENSOR_DEVICE_TYPE_ID = 0x0510
+common_utils.WATER_VALVE_DEVICE_TYPE_ID = 0x0042
 
 common_utils.device_type_profile_map = {
   [common_utils.ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
@@ -79,14 +79,14 @@ common_utils.device_type_profile_map = {
   [common_utils.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = "light-color-level",
   [common_utils.ON_OFF_PLUG_DEVICE_TYPE_ID] = "plug-binary",
   [common_utils.DIMMABLE_PLUG_DEVICE_TYPE_ID] = "plug-level",
-  [common_utils.ON_OFF_SWITCH_ID] = "switch-binary",
-  [common_utils.ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
-  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
-  [common_utils.MOUNTED_ON_OFF_CONTROL_ID] = "switch-binary",
-  [common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = "switch-level",
+  [common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID] = "switch-binary",
+  [common_utils.ON_OFF_DIMMER_SWITCH_DEVICE_TYPE_ID] = "switch-level",
+  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID] = "switch-color-level",
+  [common_utils.MOUNTED_ON_OFF_CONTROL_DEVICE_TYPE_ID] = "switch-binary",
+  [common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_DEVICE_TYPE_ID] = "switch-level",
 }
 
-common_utils.device_type_attribute_map = {
+local device_type_attribute_map = {
   [common_utils.ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
     clusters.OnOff.attributes.OnOff
   },
@@ -127,16 +127,16 @@ common_utils.device_type_attribute_map = {
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel
   },
-  [common_utils.ON_OFF_SWITCH_ID] = {
+  [common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID] = {
     clusters.OnOff.attributes.OnOff
   },
-  [common_utils.ON_OFF_DIMMER_SWITCH_ID] = {
+  [common_utils.ON_OFF_DIMMER_SWITCH_DEVICE_TYPE_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel
   },
-  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID] = {
+  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
@@ -149,14 +149,14 @@ common_utils.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY
   },
-  [common_utils.GENERIC_SWITCH_ID] = {
+  [common_utils.GENERIC_SWITCH_DEVICE_TYPE_ID] = {
     clusters.PowerSource.attributes.BatPercentRemaining,
     clusters.Switch.events.InitialPress,
     clusters.Switch.events.LongPress,
     clusters.Switch.events.ShortRelease,
     clusters.Switch.events.MultiPressComplete
   },
-  [common_utils.ELECTRICAL_SENSOR_ID] = {
+  [common_utils.ELECTRICAL_SENSOR_DEVICE_TYPE_ID] = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
@@ -185,7 +185,7 @@ common_utils.battery_support = {
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
 
-common_utils.updated_fields = {
+local updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = common_utils.COMPONENT_TO_ENDPOINT_MAP },
   { current_field_name = "__switch_intialized", updated_field_name = nil }
 }
@@ -205,13 +205,13 @@ local device_type_category_map = {
   [common_utils.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = common_utils.device_categories.LIGHT,
   [common_utils.ON_OFF_PLUG_DEVICE_TYPE_ID] = common_utils.device_categories.PLUG,
   [common_utils.DIMMABLE_PLUG_DEVICE_TYPE_ID] = common_utils.device_categories.PLUG,
-  [common_utils.ON_OFF_SWITCH_ID] = common_utils.device_categories.SWITCH,
-  [common_utils.ON_OFF_DIMMER_SWITCH_ID] = common_utils.device_categories.SWITCH,
-  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_ID] = common_utils.device_categories.SWITCH,
-  [common_utils.MOUNTED_ON_OFF_CONTROL_ID] = common_utils.device_categories.SWITCH,
-  [common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = common_utils.device_categories.SWITCH,
-  [common_utils.GENERIC_SWITCH_ID] = common_utils.device_categories.BUTTON,
-  [common_utils.WATER_VALVE_ID] = common_utils.device_categories.WATER_VALVE
+  [common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.ON_OFF_DIMMER_SWITCH_DEVICE_TYPE_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.MOUNTED_ON_OFF_CONTROL_DEVICE_TYPE_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.MOUNTED_DIMMABLE_LOAD_CONTROL_DEVICE_TYPE_ID] = common_utils.device_categories.SWITCH,
+  [common_utils.GENERIC_SWITCH_DEVICE_TYPE_ID] = common_utils.device_categories.BUTTON,
+  [common_utils.WATER_VALVE_DEVICE_TYPE_ID] = common_utils.device_categories.WATER_VALVE
 }
 
 function common_utils.get_first_non_zero_endpoint(endpoints)
@@ -315,10 +315,7 @@ function common_utils.get_device_category(device, main_endpoint)
 end
 
 local function supports_modular_profile(device)
-  local modular_profiles_supported = version.api >= 14 and version.rpc >= 8 and
-    not (device.manufacturer_info and
-      device.manufacturer_info.vendor_id == common_utils.AQARA_MANUFACTURER_ID and
-      device.manufacturer_info.product_id == common_utils.AQARA_CLIMATE_SENSOR_W100_ID)
+  local modular_profiles_supported = version.api >= 14 and version.rpc >= 8
   if not modular_profiles_supported then
     device:set_field(SUPPORTS_MODULAR_PROFILE, false)
     return false
@@ -366,7 +363,7 @@ function common_utils.detect_bridge(device)
 end
 
 function common_utils.check_field_name_updates(device)
-  for _, field in ipairs(common_utils.updated_fields) do
+  for _, field in ipairs(updated_fields) do
     if device:get_field(field.current_field_name) then
       if field.updated_field_name ~= nil then
         device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
@@ -443,8 +440,8 @@ function common_utils.add_subscribed_attributes_and_events(device, main_endpoint
       for _, dt in ipairs(ep.device_types) do
         id = math.max(id, dt.device_type_id)
       end
-      for _, attr in pairs(common_utils.device_type_attribute_map[id] or {}) do
-        if id == common_utils.GENERIC_SWITCH_ID and
+      for _, attr in pairs(device_type_attribute_map[id] or {}) do
+        if id == common_utils.GENERIC_SWITCH_DEVICE_TYPE_ID and
           attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
           attr ~= clusters.PowerSource.attributes.BatChargeLevel then
           device:add_subscribed_event(attr)
