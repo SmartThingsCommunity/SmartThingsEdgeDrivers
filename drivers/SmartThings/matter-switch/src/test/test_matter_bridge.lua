@@ -81,6 +81,7 @@ local function test_init_mock_bridge()
       subscribe_request:merge(cluster:subscribe(mock_bridge))
     end
   end
+  test.socket.matter:__expect_send({mock_bridge.id, clusters.BasicInformation.attributes.MaxPathsPerInvoke:read()})
   test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
   test.mock_device.add_test_device(mock_bridge)
 end

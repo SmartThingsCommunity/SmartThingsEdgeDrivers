@@ -60,6 +60,7 @@ local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
 local COLOR_MODE = "__color_mode"
+local MAX_PATHS_PER_INVOKE = "__max_paths_per_invoke"
 
 local updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = COMPONENT_TO_ENDPOINT_MAP },
@@ -712,6 +713,9 @@ local function device_init(driver, device)
         end
       end
     end
+    if detect_bridge(device) then
+      device:send(clusters.BasicInformation.attributes.MaxPathsPerInvoke:read())
+    end
     device:subscribe()
   end
 end
@@ -774,7 +778,37 @@ local function device_removed(driver, device)
   delete_import_poll_schedule(device)
 end
 
+local function build_multi_invoke_command(device, cluster_id, device_command, capability_command)
+  local max_paths_per_invoke = 1
+  local parent = device:get_parent_device()
+  if parent then
+    max_paths_per_invoke = parent:get_field(MAX_PATHS_PER_INVOKE) or 1
+  end
+  local endpoints = {}
+  if max_paths_per_invoke > 1 then
+    for _, child in pairs(parent:get_child_list()) do
+      local child_endpoints = child:get_endpoints(cluster_id) or {}
+      if #child_endpoints > 0 and type(child.register_native_capability_cmd_handler) == "function" then
+        child:register_native_capability_cmd_handler(capability_command.capability, capability_command.command)
+      end
+      table.insert(endpoints, child_endpoints)
+    end
+  end
+  if #endpoints >= 2 and #endpoints <= max_paths_per_invoke then
+    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    for _, ep in endpoints do
+      req:merge(device_command(device, ep.endpoint_id))
+    end
+    return req
+  end
+end
+
 local function handle_switch_on(driver, device, cmd)
+  local multi_invoke_command = build_multi_invoke_command(device, clusters.OnOff.ID, clusters.OnOff.server.commands.On, cmd)
+  if multi_invoke_command then
+    device:send(multi_invoke_command)
+    return
+  end
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
@@ -785,6 +819,11 @@ local function handle_switch_on(driver, device, cmd)
 end
 
 local function handle_switch_off(driver, device, cmd)
+  local multi_invoke_command = build_multi_invoke_command(device, clusters.OnOff.ID, clusters.OnOff.server.commands.Off, cmd)
+  if multi_invoke_command then
+    device:send(multi_invoke_command)
+    return
+  end
   if type(device.register_native_capability_cmd_handler) == "function" then
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
@@ -1300,6 +1339,10 @@ local function max_press_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
 end
 
+local function max_paths_per_invoke_attr_handler(driver, device, ib, response)
+  device:set_field(MAX_PATHS_PER_INVOKE, ib.data.value)
+end
+
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
@@ -1499,6 +1542,9 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
         [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler
+      },
+      [clusters.BasicInformation.ID] = {
+        [clusters.BasicInformation.attributes.MaxPathsPerInvoke.ID] = max_paths_per_invoke_attr_handler
       }
     },
     event = {
