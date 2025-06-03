@@ -8,9 +8,18 @@ local utils = {}
 --- Returns the properly concatenated and formatted string for the a key that
 --- uniquely identifies a Sonos speaker on the network via its household ID and
 --- player ID.
----@param household_id HouseholdId
----@param player_id PlayerId
+---@param household_id HouseholdId?
+---@param player_id PlayerId?
+---@return UniqueKey? unique_key the unique key, as long as the inputs are valid, nil otherwise
+---@return "HouseholdId"|"PlayerId"|nil invalid_key_name which key argument was bad, nil otherwise
 function utils.sonos_unique_key(household_id, player_id)
+  if type(household_id) ~= "string" then
+    return nil, "HouseholdId"
+  end
+  if type(player_id) ~= "string" then
+    return nil, "PlayerId"
+  end
+
   return string.format("%s/%s", household_id:lower(), player_id:lower())
 end
 ---
@@ -65,14 +74,25 @@ end
 ---@param opts table?
 ---@return boolean
 function utils.update_field_if_changed(device, field_key, new_value, opts)
-  if not (device and device.id and type(device.get_field) == "function" and type(device.set_field) == "function") then
+  if
+    not (
+      device
+      and device.id
+      and type(device.get_field) == "function"
+      and type(device.set_field) == "function"
+    )
+  then
     log.error(
-      string.format("[device %s] table is incomplete", (device and device.label or device.id or "<unknown device>"))
+      string.format(
+        "[device %s] table is incomplete",
+        (device and device.label or device.id or "<unknown device>")
+      )
     )
   end
 
   local old_value = device:get_field(field_key)
-  local changed = (type(old_value) ~= type(new_value)) or (not utils.deep_table_eq(old_value, new_value))
+  local changed = (type(old_value) ~= type(new_value))
+    or (not utils.deep_table_eq(old_value, new_value))
   if changed then
     device:set_field(field_key, new_value, opts)
     return true
@@ -207,7 +227,8 @@ function utils.labeled_socket_builder(label)
 
     if wrap_ssl then
       log.trace(string.format("%sCreating SSL wrapper for for REST Connection", label))
-      sock, err = ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
+      sock, err =
+        ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
       if err ~= nil then
         return nil, "SSL wrap error: " .. err
       end
