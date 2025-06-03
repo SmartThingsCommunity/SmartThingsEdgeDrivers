@@ -71,7 +71,7 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
             local auth_success, api_key_or_err = driver:check_auth(info)
             if not auth_success then
               device:offline()
-              if auth_success == false then
+              if auth_success == false and api_version >= 14 then
                 local token_event_receive = driver:oauth_token_event_subscribe()
                 if not token_event_receive then
                   log.error("token event bus closed, aborting initialization")
