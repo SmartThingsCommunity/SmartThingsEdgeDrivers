@@ -54,7 +54,8 @@ local function add_battery_capability(component_capabilities, battery_attr_suppo
 end
 
 local function add_button_capabilities(device, category, main_endpoint, main_component_capabilities, extra_component_capabilities, battery_attr_support)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local button_eps = device:get_endpoints(clusters.Switch.ID,
+    {feature_bitmap = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}) or {}
   if #button_eps == 0 then return end
   for component_num, _ in ipairs(button_eps) do
     -- button-modular profile uses 'main', 'button2', button3', ... as component names.
@@ -88,7 +89,8 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
     if main_endpoint == ep.endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         -- No device type that is not in the switch subset should be considered
-        if (common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID <= dt.device_type_id and dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID) then
+        if common_utils.ON_OFF_SWITCH_DEVICE_TYPE_ID <= dt.device_type_id and
+          dt.device_type_id <= common_utils.ON_OFF_COLOR_DIMMER_SWITCH_DEVICE_TYPE_ID then
           device_type_id = math.max(device_type_id, dt.device_type_id)
         end
       end
@@ -133,17 +135,20 @@ end
 
 local function match_modular_profile(driver, device, battery_attr_support)
   local main_endpoint = common_utils.find_default_endpoint(device)
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
-  local color_hs_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.HS})
-  local color_xy_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.XY})
-  local color_temp_eps = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.types.Feature.CT})
-  local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
-  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID)
-  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID)
-  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+  local switch_eps = device:get_endpoints(clusters.OnOff.ID) or {}
+  local level_eps = device:get_endpoints(clusters.LevelControl.ID) or {}
+  local color_hs_eps = device:get_endpoints(clusters.ColorControl.ID,
+    {feature_bitmap = clusters.ColorControl.types.Feature.HS}) or {}
+  local color_xy_eps = device:get_endpoints(clusters.ColorControl.ID,
+    {feature_bitmap = clusters.ColorControl.types.Feature.XY}) or {}
+  local color_temp_eps = device:get_endpoints(clusters.ColorControl.ID,
+    {feature_bitmap = clusters.ColorControl.types.Feature.CT}) or {}
+  local power_eps = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID) or {}
+  local energy_eps = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID) or {}
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID) or {}
+  local humidity_eps = device:get_endpoints(clusters.RelativeHumidityMeasurement.ID) or {}
+  local temperature_eps = device:get_endpoints(clusters.TemperatureMeasurement.ID) or {}
+  local valve_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID) or {}
 
   local category = common_utils.get_device_category(device, main_endpoint)
 
@@ -208,8 +213,9 @@ local function match_modular_profile(driver, device, battery_attr_support)
   if #valve_eps > 0 then
     local is_a_valve = category == common_utils.device_categories.WATER_VALVE
     optionally_insert_to_position(is_a_valve, main_component_capabilities, capabilities.valve.ID, 1)
-    if #device:get_endpoints(clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+    local valve_level_eps = device:get_endpoints(clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) or {}
+    if #valve_level_eps > 0 then
       optionally_insert_to_position(is_a_valve, main_component_capabilities, capabilities.level.ID, 2)
     end
   end
@@ -237,10 +243,13 @@ local function match_modular_profile(driver, device, battery_attr_support)
 end
 
 function modular_profiles_utils.match_profile(driver, device)
-  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
+    {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) or {}
+  if #battery_eps == 0 then
     match_modular_profile(driver, device)
   else
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device)) -- battery profiles are configured by power_source_attribute_list_handler
+    -- Battery profiles are configured by power_source_attribute_list_handler
+    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
   end
 end
 
