@@ -60,6 +60,7 @@ local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
 local COLOR_MODE = "__color_mode"
+local MAX_PATHS_PER_INVOKE = "__max_paths_per_invoke"
 
 local updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = COMPONENT_TO_ENDPOINT_MAP },
@@ -712,6 +713,9 @@ local function device_init(driver, device)
         end
       end
     end
+    if detect_bridge(device) then
+      device:send(clusters.BasicInformation.attributes.MaxPathsPerInvoke:read())
+    end
     device:subscribe()
   end
 end
@@ -774,33 +778,73 @@ local function device_removed(driver, device)
   delete_import_poll_schedule(device)
 end
 
-local function handle_switch_on(driver, device, cmd)
-  if type(device.register_native_capability_cmd_handler) == "function" then
-    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+local function build_multi_invoke_command(device, cluster_id, device_command, args)
+  local max_paths_per_invoke = 1
+  local parent = device:get_parent_device()
+  if parent then
+    max_paths_per_invoke = parent:get_field(MAX_PATHS_PER_INVOKE) or 1
   end
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  if max_paths_per_invoke == 1 then return end
+  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  local num_endpoints = 0
+  for _, child in pairs(parent:get_child_list()) do
+    local child_endpoints = child:get_endpoints(cluster_id) or {}
+    for _, child_ep in pairs(child_endpoints) do
+      req:merge(device_command(child, child_ep, table.unpack(args)))
+      num_endpoints = num_endpoints + 1
+    end
+  end
+  if num_endpoints <= max_paths_per_invoke then
+    return req, parent
+  end
+end
+
+local function handle_switch_on(driver, device, cmd)
   --TODO use OnWithRecallGlobalScene for devices with the LT feature
-  local req = clusters.OnOff.server.commands.On(device, endpoint_id)
-  device:send(req)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req, parent = build_multi_invoke_command(device, clusters.OnOff.ID, clusters.OnOff.server.commands.On)
+  local dev = device
+  if req and parent then
+    dev = parent
+  else
+    if type(device.register_native_capability_cmd_handler) == "function" then
+      device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+    end
+    req = clusters.OnOff.server.commands.On(device, endpoint_id)
+  end
+  dev:send(req)
 end
 
 local function handle_switch_off(driver, device, cmd)
-  if type(device.register_native_capability_cmd_handler) == "function" then
-    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
-  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
-  device:send(req)
+  local req, parent = build_multi_invoke_command(device, clusters.OnOff.ID, clusters.OnOff.server.commands.Off)
+  local dev = device
+  if req and parent then
+    dev = parent
+  else
+    if type(device.register_native_capability_cmd_handler) == "function" then
+      device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+    end
+    req = clusters.OnOff.server.commands.Off(device, endpoint_id)
+  end
+  dev:send(req)
 end
 
 local function handle_set_switch_level(driver, device, cmd)
-  if type(device.register_native_capability_cmd_handler) == "function" then
-    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
-  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local level = math.floor(cmd.args.level/100.0 * 254)
-  local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate, 0, 0)
-  device:send(req)
+  local req, parent = build_multi_invoke_command(device, clusters.LevelControl.ID,
+    clusters.LevelControl.server.commands.MoveToLevelWithOnOff, {level, cmd.args.rate, 0, 0})
+  local dev = device
+  if req and parent then
+    dev = parent
+  else
+    if type(device.register_native_capability_cmd_handler) == "function" then
+      device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+    end
+    req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate, 0, 0)
+  end
+  dev:send(req)
 end
 
 local TRANSITION_TIME = 0 --1/10ths of a second
@@ -811,17 +855,31 @@ local OPTIONS_OVERRIDE = 0x01
 
 local function handle_set_color(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req
+  local req, parent, dev
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.color.hue)
     local sat = convert_huesat_st_to_matter(cmd.args.color.saturation)
-    req = clusters.ColorControl.server.commands.MoveToHueAndSaturation(device, endpoint_id, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+    req, parent = build_multi_invoke_command(device, clusters.ColorControl.ID,
+      clusters.ColorControl.server.commands.MoveToHueAndSaturation, {hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE})
+    dev = device
+    if req and parent then
+      dev = parent
+    else
+      req = clusters.ColorControl.server.commands.MoveToHueAndSaturation(device, endpoint_id, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+    end
   else
     local x, y, _ = utils.safe_hsv_to_xy(cmd.args.color.hue, cmd.args.color.saturation)
-    req = clusters.ColorControl.server.commands.MoveToColor(device, endpoint_id, x, y, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+    req, parent = build_multi_invoke_command(device, clusters.ColorControl.ID,
+      clusters.ColorControl.server.commands.MoveToColor, {x, y, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE})
+    dev = device
+    if req and parent then
+      dev = parent
+    else
+      req = clusters.ColorControl.server.commands.MoveToColor(device, endpoint_id, x, y, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+    end
   end
-  device:send(req)
+  dev:send(req)
 end
 
 local function handle_set_hue(driver, device, cmd)
@@ -829,8 +887,15 @@ local function handle_set_hue(driver, device, cmd)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = convert_huesat_st_to_matter(cmd.args.hue)
-    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-    device:send(req)
+    local req, parent = build_multi_invoke_command(device, clusters.ColorControl.ID,
+      clusters.ColorControl.server.commands.MoveToHue, {hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE})
+    local dev = device
+    if req and parent then
+      dev = parent
+    else
+      req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+    end
+    dev:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
   end
@@ -841,8 +906,15 @@ local function handle_set_saturation(driver, device, cmd)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = convert_huesat_st_to_matter(cmd.args.saturation)
-    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-    device:send(req)
+    local req, parent = build_multi_invoke_command(device, clusters.ColorControl.ID,
+      clusters.ColorControl.server.commands.MoveToSaturation, {sat, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE})
+    local dev = device
+    if req and parent then
+      dev = parent
+    else
+      req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+    end
+    dev:send(req)
   else
     log.warn("Device does not support huesat features on its color control cluster")
   end
@@ -860,9 +932,16 @@ local function handle_set_color_temperature(driver, device, cmd)
   elseif max_temp_kelvin ~= nil and temp_in_kelvin >= max_temp_kelvin then
     temp_in_mired = get_field_for_endpoint(device, COLOR_TEMP_BOUND_RECEIVED_MIRED..COLOR_TEMP_MIN, endpoint_id)
   end
-  local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
   device:set_field(MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
-  device:send(req)
+  local req, parent = build_multi_invoke_command(device, clusters.ColorControl.ID,
+    clusters.ColorControl.server.commands.MoveToColorTemperature, {temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE})
+  local dev = device
+  if req and parent then
+    dev = parent
+  else
+    req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+  end
+  dev:send(req)
 end
 
 local function handle_valve_open(driver, device, cmd)
@@ -1300,6 +1379,10 @@ local function max_press_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.supportedButtonValues(values, {visibility = {displayed = false}}))
 end
 
+local function max_paths_per_invoke_attr_handler(driver, device, ib, response)
+  device:set_field(MAX_PATHS_PER_INVOKE, ib.data.value)
+end
+
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
@@ -1499,6 +1582,9 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
         [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler
+      },
+      [clusters.BasicInformation.ID] = {
+        [clusters.BasicInformation.attributes.MaxPathsPerInvoke.ID] = max_paths_per_invoke_attr_handler
       }
     },
     event = {
