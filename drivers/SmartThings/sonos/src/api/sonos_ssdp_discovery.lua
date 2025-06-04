@@ -96,6 +96,7 @@ local function make_persistent_task_impl(
 
       for _, receiver in ipairs(recv_ready) do
         if receiver == interval_timer then
+          interval_timer:handled()
           ssdp_search_handle:multicast_m_search()
         elseif receiver == control_rx then
           ---@type ControlMessage?,string?
@@ -298,16 +299,19 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
       event_bus:send(info_to_send)
       local mac_addr = utils.extract_mac_addr(info_to_send.discovery_info.device)
       local waiting_handles = task_handle.waiting_for_unique_key[unique_key] or {}
+
       log.debug(st_utils.stringify_table(waiting_handles, "waiting for unique keys", true))
-      for _, v in pairs(task_handle.waiting_for_unique_key[mac_addr] or {}) do
+      for _, v in pairs(task_handle.waiting_for_mac_addr[mac_addr] or {}) do
         table.insert(waiting_handles, v)
       end
+
       log.debug(
         st_utils.stringify_table(waiting_handles, "waiting for unique keys and mac addresses", true)
       )
       for _, reply_tx in ipairs(waiting_handles) do
         reply_tx:send(info_to_send)
       end
+
       task_handle.waiting_for_unique_key[unique_key] = {}
       task_handle.waiting_for_mac_addr[mac_addr] = {}
     end
