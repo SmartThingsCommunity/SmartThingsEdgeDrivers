@@ -200,16 +200,19 @@ function SonosPersistentSsdpTask:get_player_info(reply_tx, ...)
   local household_id_or_mac = select(1, ...)
   local player_id = select(2, ...)
 
-  local lookup_table, lookup_key
+  local lookup_table, lookup_key, bad_key_part
 
   if player_id ~= nil and type(player_id) == "string" then
     lookup_table = self.player_info_by_sonos_ids
-    lookup_key = utils.sonos_unique_key(household_id_or_mac, player_id)
+    lookup_key, bad_key_part = utils.sonos_unique_key(household_id_or_mac, player_id)
   else
     lookup_table = self.player_info_by_mac_addrs
     lookup_key = household_id_or_mac
   end
 
+  if not lookup_key and bad_key_part then
+    log.error(string.format("Invalid Unique Key Part: %s", bad_key_part))
+  end
   local maybe_existing = lookup_table[lookup_key]
   if maybe_existing and maybe_existing.ssdp_info.expires_at > os.time() then
     reply_tx:send(maybe_existing)
