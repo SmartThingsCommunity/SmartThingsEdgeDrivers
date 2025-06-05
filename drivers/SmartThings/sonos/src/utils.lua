@@ -122,6 +122,29 @@ function utils.new_mac_address_keyed_table()
   return setmetatable({}, _mac_addr_key_mt)
 end
 
+---@param tbl table<string,any>
+---@param key string
+local function __case_insensitive_key_index(tbl, key)
+  assert(type(key) == "string", "key for CaseInsensitiveKeyTable must be a string!")
+  local lowercase = key:lower()
+  return rawget(tbl, lowercase)
+end
+
+local function __case_insensitive_key_newindex(tbl, key, value)
+  assert(type(key) == "string", "key for CaseInsensitiveKeyTable must be a string!")
+  rawset(tbl, key:lower(), value)
+end
+
+local _case_insensitive_key_mt = {
+  __index = __case_insensitive_key_index,
+  __newindex = __case_insensitive_key_newindex,
+  __metatable = "CaseInsensitiveKeyTable",
+}
+
+function utils.new_case_insensitive_table()
+  return setmetatable({}, _case_insensitive_key_mt)
+end
+
 ---@param sonos_device_info SonosDeviceInfo
 function utils.extract_mac_addr(sonos_device_info)
   local mac, _ = sonos_device_info.serialNumber:match("(.*):.*"):gsub("-", "")

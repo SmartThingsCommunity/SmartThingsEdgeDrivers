@@ -490,7 +490,6 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
       )
   end
 
-  ---
   --- @cast response SonosGroupsResponseBody
   self.sonos:update_household_info(info.ssdp_info.household_id, response)
 

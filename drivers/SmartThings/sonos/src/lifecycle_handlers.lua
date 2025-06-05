@@ -117,6 +117,7 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                       -- This is just in case both receivers are ready, so that we can prioritize
                       -- handling the token instead of putting another request in flight.
                       send_request = true
+                      backoff_timer:handled()
                       backoff_timer = nil
                     end
 
@@ -204,12 +205,12 @@ end
 ---@param device SonosDevice
 function SonosDriverLifecycleHandlers.removed(driver, device)
   log.trace(string.format("%s device removed", device.label))
+  driver.sonos:remove_device_record_association(device)
   driver.dni_to_device_id[device.device_network_id] = nil
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
   if sonos_conn and sonos_conn:is_running() then
     sonos_conn:stop()
   end
-  driver.sonos:remove_device_record_association(device)
 end
 
 SonosDriverLifecycleHandlers.added = SonosDriverLifecycleHandlers.handle_initialize_lifecycle_event
