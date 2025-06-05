@@ -100,6 +100,8 @@ test.set_test_init_function(test_init)
 local cached_heating_setpoint = capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" }, {state_change = true})
 local cached_cooling_setpoint = capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" }, {state_change = true})
 
+local ControlSequenceOfOperation = clusters.Thermostat.attributes.ControlSequenceOfOperation
+
 local function configure(device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -108,6 +110,8 @@ local function configure(device)
 
   test.socket.matter:__queue_receive({mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x0C)})})
   test.socket.matter:__queue_receive({mock_device.id, clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x29)})})
+  test.socket.matter:__queue_receive({mock_device.id, clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT)})
+
   mock_device:expect_metadata_update({ profile = "thermostat" })
 
   --populate cached setpoint values. This would normally happen due to subscription setup.
@@ -119,6 +123,9 @@ local function configure(device)
     device.id,
     clusters.Thermostat.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 1, 2667) --26.67 celcius
   })
+  test.socket.capability:__expect_send(
+    device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}, {visibility={displayed=false}}))
+  )
   test.socket.capability:__expect_send(
     device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 0.00, maximum = 100.00, step = 0.1 }, unit = "C" }))
   )

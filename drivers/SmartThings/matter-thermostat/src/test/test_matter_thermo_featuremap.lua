@@ -17,6 +17,7 @@ local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.clusters"
+local capabilities = require "st.capabilities"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
@@ -238,6 +239,15 @@ test.register_coroutine_test(
         clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x29)})
       }
     )
+        test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, 1)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    )
     mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only" })
 end
 )
@@ -281,6 +291,15 @@ test.register_coroutine_test(
         clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_simple, 1, {uint32(12)})
       }
     )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_simple.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device_simple, 1, 1)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_simple:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    )
     mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
 end
 )
@@ -294,6 +313,15 @@ test.register_coroutine_test(
         mock_device_no_battery.id,
         clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_no_battery, 1, {uint32(12)})
       }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_no_battery.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device_no_battery, 1, 1)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_no_battery:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
     )
     mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-nobattery" })
 end

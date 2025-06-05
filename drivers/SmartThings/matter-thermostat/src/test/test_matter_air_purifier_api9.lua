@@ -436,6 +436,7 @@ test.register_coroutine_test(
   function()
     mock_device_ap_aqs:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
     mock_device_ap_aqs:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
+    mock_device_ap_aqs:set_field("__THERMOSTAT_MODE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_aqs.id, "doConfigure" })
     mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level" })
     mock_device_ap_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -448,6 +449,7 @@ test.register_coroutine_test(
   function()
     mock_device_ap_thermo_aqs:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
     mock_device_ap_thermo_aqs:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
+    mock_device_ap_thermo_aqs:set_field("__THERMOSTAT_MODE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "doConfigure" })
     mock_device_ap_thermo_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-rock-wind-thermostat-humidity-fan-heating-only-nostate-nobattery-aqs-pm10-pm25-ch2o-meas-pm10-pm25-ch2o-no2-tvoc-level" })
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })

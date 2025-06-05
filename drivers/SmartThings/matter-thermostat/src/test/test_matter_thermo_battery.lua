@@ -16,6 +16,7 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local uint32 = require "st.matter.data_types.Uint32"
+local capabilities = require "st.capabilities"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-batteryLevel.yml"),
@@ -109,6 +110,15 @@ test.register_coroutine_test(
         clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(28)})
       }
     )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, 1)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
+    )
     mock_device:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
   end
 )
@@ -127,6 +137,15 @@ test.register_coroutine_test(
         mock_device.id,
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(14)})
       }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, 1)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
     )
     mock_device:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-batteryLevel" })
   end

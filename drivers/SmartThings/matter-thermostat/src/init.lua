@@ -151,7 +151,8 @@ local battery_support = {
 
 local profiling_data = {
   BATTERY_SUPPORT = "__BATTERY_SUPPORT",
-  THERMOSTAT_RUNNING_STATE_SUPPORT = "__THERMOSTAT_RUNNING_STATE_SUPPORT"
+  THERMOSTAT_RUNNING_STATE_SUPPORT = "__THERMOSTAT_RUNNING_STATE_SUPPORT",
+  THERMOSTAT_MODE_SUPPORT = "__THERMOSTAT_MODE_SUPPORT"
 }
 
 local subscribed_attributes = {
@@ -677,16 +678,35 @@ local function create_air_purifier_profile(device)
 end
 
 local function create_thermostat_modes_profile(device)
+  local supported_thermostat_modes = device:get_latest_state(
+    device:endpoint_to_component(device:get_field(profiling_data.THERMOSTAT_MODE_SUPPORT)),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.supportedThermostatModes.NAME
+  ) or {}
+
+  local cool_mode_supported, heat_mode_supported = false, false
+  for _, mode in pairs(supported_thermostat_modes) do
+    if mode == "cool" then cool_mode_supported = true end
+    if mode == "heat" then heat_mode_supported = true end
+  end
+
   local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
   local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
 
   local thermostat_modes = ""
-  if #heat_eps == 0 and #cool_eps == 0 then
+  if ((#cool_eps > 0 and cool_mode_supported == false) and (#heat_eps > 0 and heat_mode_supported == false))
+  or (#heat_eps == "" == 0 and #cool_eps == 0) then
     return "No Heating nor Cooling Support"
+  elseif #heat_eps > 0 and #cool_eps > 0 then
+    if cool_mode_supported == false then
+      thermostat_modes = "-heating-only"
+    elseif heat_mode_supported == false then
+      thermostat_modes = "-cooling-only"
+    end
   elseif #heat_eps > 0 and #cool_eps == 0 then
-    thermostat_modes = thermostat_modes .. "-heating-only"
+    thermostat_modes = "-heating-only"
   elseif #cool_eps > 0 and #heat_eps == 0 then
-    thermostat_modes = thermostat_modes .. "-cooling-only"
+    thermostat_modes = "-cooling-only"
   end
   return thermostat_modes
 end
@@ -694,6 +714,7 @@ end
 local function profiling_data_still_required(device)
   for _, field in pairs(profiling_data) do
     if device:get_field(field) == nil then
+      print("##",field)
       return true -- data still required if a field is nil
     end
   end
@@ -848,16 +869,30 @@ local function match_profile_switch(driver, device)
 end
 
 local function get_thermostat_optional_capabilities(device)
+  print("@@1")
+  local supported_thermostat_modes = device:get_latest_state(
+    device:endpoint_to_component(device:get_field(profiling_data.THERMOSTAT_MODE_SUPPORT)),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.supportedThermostatModes.NAME
+  ) or {}
+
+  local cool_mode_supported, heat_mode_supported = false, false
+  for _, mode in pairs(supported_thermostat_modes) do
+    if mode == "cool" then cool_mode_supported = true end
+    if mode == "heat" then heat_mode_supported = true end
+  end
+  print("@@2")
+
   local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
   local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
   local running_state_supported = device:get_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT)
 
   local supported_thermostat_capabilities = {}
 
-  if #heat_eps > 0 then
+  if #heat_eps > 0 and heat_mode_supported == true then
     table.insert(supported_thermostat_capabilities, capabilities.thermostatHeatingSetpoint.ID)
   end
-  if #cool_eps > 0  then
+  if #cool_eps > 0 and cool_mode_supported == true then
     table.insert(supported_thermostat_capabilities, capabilities.thermostatCoolingSetpoint.ID)
   end
 
@@ -1054,13 +1089,25 @@ local function match_modular_profile_room_ac(driver, device)
     table.insert(main_component_capabilities, capabilities.windMode.ID)
   end
 
+  local supported_thermostat_modes = device:get_latest_state(
+    device:endpoint_to_component(device:get_field(profiling_data.THERMOSTAT_MODE_SUPPORT)),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.supportedThermostatModes.NAME
+  ) or {}
+
+  local cool_mode_supported, heat_mode_supported = false, false
+  for _, mode in pairs(supported_thermostat_modes) do
+    if mode == "cool" then cool_mode_supported = true end
+    if mode == "heat" then heat_mode_supported = true end
+  end
+
   local heat_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING})
   local cool_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING})
 
-  if #heat_eps > 0 then
+  if #heat_eps > 0 and heat_mode_supported then
     table.insert(main_component_capabilities, capabilities.thermostatHeatingSetpoint.ID)
   end
-  if #cool_eps > 0  then
+  if #cool_eps > 0 and cool_mode_supported then
     table.insert(main_component_capabilities, capabilities.thermostatCoolingSetpoint.ID)
   end
 
@@ -1083,8 +1130,9 @@ local function match_modular_profile_room_ac(driver, device)
 end
 
 local function match_modular_profile(driver, device)
+  print("@@0-1")
   if profiling_data_still_required(device) then return end
-
+  print("@@0")
   local device_type = get_device_type(device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
 
@@ -1134,7 +1182,6 @@ end
 
 local function device_added(driver, device)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   req:merge(clusters.FanControl.attributes.FanModeSequence:read(device))
   req:merge(clusters.FanControl.attributes.WindSupport:read(device))
   req:merge(clusters.FanControl.attributes.RockSupport:read(device))
@@ -1142,8 +1189,10 @@ local function device_added(driver, device)
   local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
   if #thermostat_eps > 0 then
     req:merge(clusters.Thermostat.attributes.AttributeList:read(device))
+    req:merge(clusters.Thermostat.attributes.ControlSequenceOfOperation:read(device))
   else
     device:set_field(profiling_data.THERMOSTAT_RUNNING_STATE_SUPPORT, false)
+    device:set_field(profiling_data.THERMOSTAT_MODE_SUPPORT, false)
   end
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   if #battery_feature_eps > 0 then
@@ -1408,7 +1457,7 @@ local function humidity_attr_handler(driver, device, ib, response)
 end
 
 local function system_mode_handler(driver, device, ib, response)
-  if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then -- this being nil means the sequence_of_operation_handler hasn't run.
+  if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then -- this being nil means the control_sequence_of_operation_handler hasn't run.
     device.log.info_with({hub_logs = true}, "In the SystemMode handler: ControlSequenceOfOperation has not run yet. Exiting early.")
     device:set_field(SAVED_SYSTEM_MODE_IB, ib)
     return
@@ -1447,12 +1496,14 @@ local function running_state_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatOperatingState.thermostatOperatingState.idle())
 end
 
-local function sequence_of_operation_handler(driver, device, ib, response)
+local function control_sequence_of_operation_handler(driver, device, ib, response)
+  local run_match_profile = false
   -- The ControlSequenceofOperation attribute only directly specifies what can't be operated by the operating environment, not what can.
   -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
   -- We also assert that Off is supported, though per spec this is optional.
   if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then
     device:set_field(OPTIONAL_THERMOSTAT_MODES_SEEN, {capabilities.thermostatMode.thermostatMode.off.NAME}, {persist=true})
+    run_match_profile = true -- only set this field the first time a device hits this handler
   end
   local supported_modes = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN))
   local disallowed_mode_operations = {}
@@ -1505,8 +1556,14 @@ local function sequence_of_operation_handler(driver, device, ib, response)
 
   -- will be set by the SystemMode handler if this handler hasn't run yet.
   if device:get_field(SAVED_SYSTEM_MODE_IB) then
-    system_mode_handler(driver, device, device:get_field(SAVED_SYSTEM_MODE_IB), response)
+    system_mode_handler(driver, device, device:get_field(SAVED_SYSTEM_MODE_IB))
     device:set_field(SAVED_SYSTEM_MODE_IB, nil)
+  end
+
+  -- will call match_profile using the supportedThermostatModes values
+  if run_match_profile then
+    device:set_field(profiling_data.THERMOSTAT_MODE_SUPPORT, ib.endpoint_id)
+    match_profile(driver, device)
   end
 end
 
@@ -2185,7 +2242,7 @@ local matter_driver_template = {
         [clusters.Thermostat.attributes.OccupiedHeatingSetpoint.ID] = temp_event_handler(capabilities.thermostatHeatingSetpoint.heatingSetpoint),
         [clusters.Thermostat.attributes.SystemMode.ID] = system_mode_handler,
         [clusters.Thermostat.attributes.ThermostatRunningState.ID] = running_state_handler,
-        [clusters.Thermostat.attributes.ControlSequenceOfOperation.ID] = sequence_of_operation_handler,
+        [clusters.Thermostat.attributes.ControlSequenceOfOperation.ID] = control_sequence_of_operation_handler,
         [clusters.Thermostat.attributes.AbsMinHeatSetpointLimit.ID] = heating_setpoint_limit_handler_factory(setpoint_limit_device_field.MIN_HEAT),
         [clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit.ID] = heating_setpoint_limit_handler_factory(setpoint_limit_device_field.MAX_HEAT),
         [clusters.Thermostat.attributes.AbsMinCoolSetpointLimit.ID] = cooling_setpoint_limit_handler_factory(setpoint_limit_device_field.MIN_COOL),

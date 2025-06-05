@@ -18,6 +18,7 @@ local utils = require "st.utils"
 local dkjson = require "dkjson"
 
 local clusters = require "st.matter.clusters"
+local capabilities = require "st.capabilities"
 
 test.set_rpc_version(8)
 
@@ -291,6 +292,15 @@ test.register_coroutine_test(
   function()
     mock_device_basic:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
     mock_device_basic:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", true) -- since we're assuming this would have happened during device_added in this case.
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_basic.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device_basic, 1, 5)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_basic:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}, {visibility={displayed=false}}))
+    )
     test_room_ac_device_type_update_modular_profile(mock_device_basic, expected_metadata_basic, subscribe_request_basic)
   end,
   { test_init = test_init_basic }
@@ -318,6 +328,16 @@ test.register_coroutine_test(
   function()
     mock_device_no_state:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
     mock_device_no_state:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_no_state.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device_no_state, 1, 5)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_no_state:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}, {visibility={displayed=false}}))
+    )
+    test.wait_for_events()
     test_room_ac_device_type_update_modular_profile(mock_device_no_state, expected_metadata_no_state, subscribe_request_no_state)
   end,
   { test_init = test_init_no_state }

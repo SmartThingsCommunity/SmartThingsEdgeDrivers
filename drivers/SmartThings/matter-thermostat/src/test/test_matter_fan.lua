@@ -114,6 +114,7 @@ test.register_coroutine_test(
   function()
     mock_device:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
     mock_device:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
+    mock_device:set_field("__THERMOSTAT_MODE_SUPPORT", false)
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ profile = "fan-rock-wind" })
@@ -127,6 +128,8 @@ test.register_coroutine_test(
   function()
     mock_device_generic:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
     mock_device_generic:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
+    mock_device_generic:set_field("__THERMOSTAT_MODE_SUPPORT", false)
+
     test.socket.device_lifecycle:__queue_receive({ mock_device_generic.id, "doConfigure" })
     mock_device_generic:expect_metadata_update({ profile = "fan-generic" })
     mock_device_generic:expect_metadata_update({ provisioning_state = "PROVISIONED" })

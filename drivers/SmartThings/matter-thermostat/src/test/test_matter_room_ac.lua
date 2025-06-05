@@ -290,6 +290,15 @@ test.register_coroutine_test(
         clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_configure, 1, {uint32(0x29)})
       }
     )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_configure.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device_configure, 1, 5)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_configure:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}, {visibility={displayed=false}}))
+    )
     mock_device_configure:expect_metadata_update({ profile = "room-air-conditioner" })
   end,
   { test_init = test_init_configure }
@@ -307,6 +316,15 @@ test.register_coroutine_test(
         mock_device_nostate.id,
         clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_nostate, 1, {uint32(0)})
       }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_nostate.id,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device_nostate, 1, 5)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_nostate:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat", "auto"}, {visibility={displayed=false}}))
     )
     mock_device_nostate:expect_metadata_update({ profile = "room-air-conditioner-fan-heating-cooling-nostate" })
   end,
