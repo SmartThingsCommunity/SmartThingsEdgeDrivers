@@ -175,6 +175,11 @@ function AttributeEmitters.connectivity_update(child_device, zigbee_status)
     child_device.log.info_with({hub_logs=true}, "Device zigbee status event, marking device online")
     child_device:online()
     child_device:set_field(Fields.IS_ONLINE, true)
+    child_device.driver:inject_capability_command(child_device, {
+      capability = capabilities.refresh.ID,
+      command = capabilities.refresh.commands.refresh.NAME,
+      args = {}
+    })
   elseif zigbee_status.status == "connectivity_issue" then
     child_device.log.info_with({hub_logs=true}, "Device zigbee status event, marking device offline")
     child_device:set_field(Fields.IS_ONLINE, false)
