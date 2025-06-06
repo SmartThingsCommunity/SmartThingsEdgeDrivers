@@ -545,6 +545,11 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2251
     deviceProfileName: 2-button-battery
+  - id: "4142/8800"
+    deviceLabel: LG Smart Plug
+    vendorId: 0x102E
+    productId: 0x2260
+    deviceProfileName: plug-power
 #Lifx
   - id: "5155/161"
     deviceLabel: LIFX Neon Outdoor
