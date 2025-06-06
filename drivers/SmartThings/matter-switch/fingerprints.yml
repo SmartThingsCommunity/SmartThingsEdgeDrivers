@@ -486,6 +486,12 @@ matterManufacturer:
     vendorId: 0x1372
     productId: 0x0002
     deviceProfileName: switch-4
+# Inovelli
+  - id: "4961/1"
+    deviceLabel: Inovelli Dimmer Switch
+    vendorId: 0x1361
+    productId: 0x0001
+    deviceProfileName: inovelli-vtm31-sn
 #JUNG
   - id: "5161/1"
     deviceLabel: Matter Push button 2-gang
