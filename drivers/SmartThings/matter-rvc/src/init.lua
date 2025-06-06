@@ -15,8 +15,11 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
+
 local area_type = require "Global.types.AreaTypeTag"
 local landmark = require "Global.types.LandmarkTag"
+
 local embedded_cluster_utils = require "embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 10
@@ -36,6 +39,7 @@ end
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local RUN_MODE_SUPPORTED_MODES = "__run_mode_supported_modes"
 local CLEAN_MODE_SUPPORTED_MODES = "__clean_mode_supported_modes"
+local OPERATING_STATE_SUPPORTED_COMMANDS = "__operating_state_supported_commands"
 
 local subscribed_attributes = {
   [capabilities.mode.ID] = {
@@ -77,6 +81,9 @@ end
 local function device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  req:merge(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
+  device:send(req)
 end
 
 local function do_configure(driver, device)
@@ -101,14 +108,99 @@ local function info_changed(driver, device, event, args)
 end
 
 -- Helper functions --
+local function is_support_go_home(device)
+  local supported_op_commands = device:get_field(OPERATING_STATE_SUPPORTED_COMMANDS) or {}
+  for _, cmd in ipairs(supported_op_commands) do
+    if cmd == capabilities.robotCleanerOperatingState.commands.goHome.NAME then
+      return true;
+    end
+  end
+  return false;
+end
+
+local function can_send_go_home_cmd(device, operating_state)
+  if operating_state == "Error" then
+    return false
+  end
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if is_support_go_home(device) == true then
+    if operating_state ~= cap_op_enum.charging.NAME and operating_state ~= cap_op_enum.docked.NAME then
+      return true
+    end
+  end
+  return false
+end
+
+local function is_support_pause_and_resume(device)
+  local supported_op_commands = device:get_field(OPERATING_STATE_SUPPORTED_COMMANDS) or {}
+  for _, cmd in ipairs(supported_op_commands) do
+    if cmd == capabilities.robotCleanerOperatingState.commands.pause.NAME then
+      return true;
+    end
+  end
+  return false;
+end
+
+local function can_send_pause_cmd(device, current_tag, operating_state)
+  if operating_state == "Error" or is_support_pause_and_resume(device) == false then
+    return false
+  end
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE then
+    if operating_state == cap_op_enum.seekingCharger.NAME then
+      return true
+    end
+  else
+    if operating_state == cap_op_enum.running.NAME or operating_state == cap_op_enum.seekingCharger.NAME then
+      return true
+    end
+  end
+  return false
+end
+
+local function can_send_resume_cmd(device, current_tag, operating_state)
+  device.log.info("can_send_resume_cmd")
+  if operating_state == "Error" or is_support_pause_and_resume(device) == false then
+    return false
+  end
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if current_tag ~= clusters.RvcRunMode.types.ModeTag.IDLE then
+    if operating_state == cap_op_enum.paused.NAME or
+       operating_state == cap_op_enum.docked.NAME or
+       operating_state == cap_op_enum.charging.NAME then
+      return true
+    end
+  end
+  return false
+end
+
+local function can_send_change_to_idle_mode_cmd(device, current_tag, operating_state)
+  device.log.info("can_send_change_to_idle_mode_cmd")
+  if operating_state == "Error" then
+    return false
+  end
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE then
+    if operating_state == cap_op_enum.stopped.NAME or operating_state == cap_op_enum.paused.NAME or
+       operating_state == cap_op_enum.docked.NAME or operating_state == cap_op_enum.charging.NAME then
+        return true
+    end
+  end
+  return false
+end
+
 local function update_supported_arguments(device, current_run_mode, operating_state)
   device.log.info(string.format("update_supported_arguments: %s, %s", current_run_mode, operating_state))
   if current_run_mode == nil or operating_state == nil then
     return
   end
 
-  -- Error state
   if operating_state == "Error" then
+    -- Set Supported Operating State Commands to empty
+    local event = capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
+      {}, {visibility = {displayed = false}}
+    )
+    device:emit_component_event(device.profile.components["main"], event)
     -- Set runMode to empty
     local event = capabilities.mode.supportedArguments({}, {visibility = {displayed = false}})
     device:emit_component_event(device.profile.components["runMode"], event)
@@ -134,12 +226,29 @@ local function update_supported_arguments(device, current_run_mode, operating_st
     return
   end
 
+  -- Set Supported Operating State Commands
+  local cap_op_cmd = capabilities.robotCleanerOperatingState.commands
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  local supported_op_commands = {}
+  if can_send_go_home_cmd(device, operating_state) == true then
+    table.insert(supported_op_commands, cap_op_cmd.goHome.NAME)
+  end
+  if can_send_pause_cmd(device, current_tag, operating_state) == true then
+    table.insert(supported_op_commands, cap_op_cmd.pause.NAME)
+  elseif can_send_resume_cmd(device, current_tag, operating_state) == true or
+         can_send_change_to_idle_mode_cmd(device, current_tag, operating_state) == true then
+    table.insert(supported_op_commands, cap_op_cmd.start.NAME)
+  end
+  local event = capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
+    supported_op_commands, {visibility = {displayed = false}}
+  )
+  device:emit_component_event(device.profile.components["main"], event)
+
   -- Check whether non-idle mode can be selected or not
-  local op_state = capabilities.robotCleanerOperatingState.operatingState
   local can_be_non_idle = false
   if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE and
-    (operating_state == op_state.stopped.NAME or operating_state == op_state.paused.NAME or
-     operating_state == op_state.docked.NAME or operating_state == op_state.charging.NAME) then
+    (operating_state == cap_op_enum.stopped.NAME or operating_state == cap_op_enum.paused.NAME or
+     operating_state == cap_op_enum.docked.NAME or operating_state == cap_op_enum.charging.NAME) then
       can_be_non_idle = true
   end
 
@@ -248,7 +357,7 @@ local function run_mode_current_mode_handler(driver, device, ib, response)
 end
 
 local function clean_mode_supported_mode_handler(driver, device, ib, response)
-  device.log.info(string.format("clean_mode_supported_mode_handler"))
+  device.log.info("clean_mode_supported_mode_handler")
   local supported_modes = {}
   local supported_modes_id = {}
   for _, mode in ipairs(ib.data.elements) do
@@ -343,6 +452,64 @@ local function rvc_operational_error_attr_handler(driver, device, ib, response)
   end
 end
 
+local function handle_rvc_operational_state_accepted_command_list(driver, device, ib, response)
+  device.log.info("handle_rvc_operational_state_accepted_command_list")
+  local cap_op_cmd = capabilities.robotCleanerOperatingState.commands
+  local OP_COMMAND_MAP = {
+    [clusters.RvcOperationalState.commands.Pause.ID] = cap_op_cmd.pause,
+    [clusters.RvcOperationalState.commands.Resume.ID] = cap_op_cmd.start,
+    [clusters.RvcOperationalState.commands.GoHome.ID] = cap_op_cmd.goHome
+  }
+  local supportedOperatingStateCommands = {}
+  for _, attr in ipairs(ib.data.elements) do
+    table.insert(supportedOperatingStateCommands, OP_COMMAND_MAP[attr.value].NAME)
+  end
+  device:set_field(OPERATING_STATE_SUPPORTED_COMMANDS, supportedOperatingStateCommands, { persist = true })
+
+  -- Get current run mode, current tag, current operating state
+  local current_run_mode = device:get_latest_state(
+    "runMode",
+    capabilities.mode.ID,
+    capabilities.mode.mode.NAME
+  )
+  local current_tag = 0xFFFF
+  local supported_run_modes = device:get_field(RUN_MODE_SUPPORTED_MODES) or {}
+  for _, mode in ipairs(supported_run_modes) do
+    if mode.label == current_run_mode then
+      current_tag = mode.tag
+      break
+    end
+  end
+  local operating_state = device:get_latest_state(
+    "main",
+    capabilities.robotCleanerOperatingState.ID,
+    capabilities.robotCleanerOperatingState.operatingState.NAME
+  )
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if operating_state ~= cap_op_enum.stopped.NAME and operating_state ~= cap_op_enum.running.NAME and
+     operating_state ~= cap_op_enum.paused.NAME and operating_state ~= cap_op_enum.seekingCharger.NAME and
+     operating_state ~= cap_op_enum.charging.NAME and operating_state ~= cap_op_enum.docked.NAME then
+      operating_state = "Error"
+  end
+
+  -- Set Supported Operating State Commands
+  local cap_op_cmd = capabilities.robotCleanerOperatingState.commands
+  local supported_op_commands = {}
+  if can_send_go_home_cmd(device, operating_state) == true then
+    table.insert(supported_op_commands, cap_op_cmd.goHome.NAME)
+  end
+  if can_send_pause_cmd(device, current_tag, operating_state) == true then
+    table.insert(supported_op_commands, cap_op_cmd.pause.NAME)
+  elseif can_send_resume_cmd(device, current_tag, operating_state) == true or
+         can_send_change_to_idle_mode_cmd(device, current_tag, operating_state) == true then
+    table.insert(supported_op_commands, cap_op_cmd.start.NAME)
+  end
+  local event = capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
+    supported_op_commands, {visibility = {displayed = false}}
+  )
+  device:emit_component_event(device.profile.components["main"], event)
+end
+
 local function upper_to_camelcase(name)
   local name_camelcase = (string.lower(name)):gsub("_"," ")
   name_camelcase = name_camelcase:gsub("(%l)(%w*)",
@@ -383,6 +550,7 @@ local function rvc_service_area_supported_areas_handler(driver, device, ib, resp
     end
     table.insert(supported_areas, {["areaId"] = area_id, ["areaName"] = area_name})
   end
+
   -- Update Supported Areas
   local component = device.profile.components["main"]
   local event = capabilities.serviceArea.supportedAreas(supported_areas, {visibility = {displayed = false}})
@@ -420,6 +588,119 @@ local function robot_cleaner_areas_selection_response_handler(driver, device, ib
 end
 
 -- Capability Handlers --
+local function handle_robot_cleaner_operating_state_start(driver, device, cmd)
+  device.log.info("handle_robot_cleaner_operating_state_start")
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+
+  -- Get current run mode, current tag, current operating state
+  local current_run_mode = device:get_latest_state(
+    "runMode",
+    capabilities.mode.ID,
+    capabilities.mode.mode.NAME
+  )
+  local current_tag = 0xFFFF
+  local supported_run_modes = device:get_field(RUN_MODE_SUPPORTED_MODES) or {}
+  for _, mode in ipairs(supported_run_modes) do
+    if mode.label == current_run_mode then
+      current_tag = mode.tag
+      break
+    end
+  end
+  local operating_state = device:get_latest_state(
+    "main",
+    capabilities.robotCleanerOperatingState.ID,
+    capabilities.robotCleanerOperatingState.operatingState.NAME
+  )
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if operating_state ~= cap_op_enum.stopped.NAME and operating_state ~= cap_op_enum.running.NAME and
+     operating_state ~= cap_op_enum.paused.NAME and operating_state ~= cap_op_enum.seekingCharger.NAME and
+     operating_state ~= cap_op_enum.charging.NAME and operating_state ~= cap_op_enum.docked.NAME then
+      operating_state = "Error"
+  end
+
+  if can_send_resume_cmd(device, current_tag, operating_state) == true then
+    device:send(clusters.RvcOperationalState.commands.Resume(device, endpoint_id))
+  elseif can_send_change_to_idle_mode_cmd(device, current_tag, operating_state) == true then
+    for _, mode in ipairs(supported_run_modes) do
+      endpoint_id = device:component_to_endpoint("runMode")
+      if mode.tag == clusters.RvcRunMode.types.ModeTag.CLEANING then
+        device:send(clusters.RvcRunMode.commands.ChangeToMode(device, endpoint_id, mode.id))
+        return
+      end
+    end
+  end
+end
+
+local function handle_robot_cleaner_operating_state_pause(driver, device, cmd)
+  device.log.info("handle_robot_cleaner_operating_state_pause")
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+
+  -- Get current run mode, current tag, current operating state
+  local current_run_mode = device:get_latest_state(
+    "runMode",
+    capabilities.mode.ID,
+    capabilities.mode.mode.NAME
+  )
+  local current_tag = 0xFFFF
+  local supported_run_modes = device:get_field(RUN_MODE_SUPPORTED_MODES) or {}
+  for _, mode in ipairs(supported_run_modes) do
+    if mode.label == current_run_mode then
+      current_tag = mode.tag
+      break
+    end
+  end
+  local operating_state = device:get_latest_state(
+    "main",
+    capabilities.robotCleanerOperatingState.ID,
+    capabilities.robotCleanerOperatingState.operatingState.NAME
+  )
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if operating_state ~= cap_op_enum.stopped.NAME and operating_state ~= cap_op_enum.running.NAME and
+     operating_state ~= cap_op_enum.paused.NAME and operating_state ~= cap_op_enum.seekingCharger.NAME and
+     operating_state ~= cap_op_enum.charging.NAME and operating_state ~= cap_op_enum.docked.NAME then
+      operating_state = "Error"
+  end
+
+  if can_send_pause_cmd(device, current_tag, operating_state) == true then
+    device:send(clusters.RvcOperationalState.commands.Pause(device, endpoint_id))
+  end
+end
+
+local function handle_robot_cleaner_operating_state_go_home(driver, device, cmd)
+  device.log.info("handle_robot_cleaner_operating_state_go_home")
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+
+  -- Get current run mode, current tag, current operating state
+  local current_run_mode = device:get_latest_state(
+    "runMode",
+    capabilities.mode.ID,
+    capabilities.mode.mode.NAME
+  )
+  local current_tag = 0xFFFF
+  local supported_run_modes = device:get_field(RUN_MODE_SUPPORTED_MODES) or {}
+  for _, mode in ipairs(supported_run_modes) do
+    if mode.label == current_run_mode then
+      current_tag = mode.tag
+      break
+    end
+  end
+  local operating_state = device:get_latest_state(
+    "main",
+    capabilities.robotCleanerOperatingState.ID,
+    capabilities.robotCleanerOperatingState.operatingState.NAME
+  )
+  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
+  if operating_state ~= cap_op_enum.stopped.NAME and operating_state ~= cap_op_enum.running.NAME and
+     operating_state ~= cap_op_enum.paused.NAME and operating_state ~= cap_op_enum.seekingCharger.NAME and
+     operating_state ~= cap_op_enum.charging.NAME and operating_state ~= cap_op_enum.docked.NAME then
+      operating_state = "Error"
+  end
+
+  if can_send_go_home_cmd(device, current_tag, operating_state) == true then
+    device:send(clusters.RvcOperationalState.commands.GoHome(device, endpoint_id))
+  end
+end
+
 local function handle_robot_cleaner_mode(driver, device, cmd)
   device.log.info(string.format("handle_robot_cleaner_mode component: %s, mode: %s", cmd.component, cmd.args.mode))
 
@@ -447,7 +728,6 @@ end
 
 local uint32_dt = require "st.matter.data_types.Uint32"
 local function handle_robot_cleaner_areas_selection(driver, device, cmd)
-
   device.log.info(string.format("handle_robot_cleaner_areas_selection component: %s, serviceArea: %s", cmd.component, cmd.args.areas.value))
 
   local selectAreas = clusters.ServiceArea.commands.SelectAreas(nil,nil,{})
@@ -480,6 +760,7 @@ local matter_rvc_driver = {
       [clusters.RvcOperationalState.ID] = {
         [clusters.RvcOperationalState.attributes.OperationalState.ID] = rvc_operational_state_attr_handler,
         [clusters.RvcOperationalState.attributes.OperationalError.ID] = rvc_operational_error_attr_handler,
+        [clusters.RvcOperationalState.attributes.AcceptedCommandList.ID] = handle_rvc_operational_state_accepted_command_list,
       },
       [clusters.ServiceArea.ID] = {
         [clusters.ServiceArea.attributes.SupportedAreas.ID] = rvc_service_area_supported_areas_handler,
@@ -494,6 +775,11 @@ local matter_rvc_driver = {
   },
   subscribed_attributes = subscribed_attributes,
   capability_handlers = {
+    [capabilities.robotCleanerOperatingState.ID] = {
+      [capabilities.robotCleanerOperatingState.commands.start.NAME] = handle_robot_cleaner_operating_state_start,
+      [capabilities.robotCleanerOperatingState.commands.pause.NAME] = handle_robot_cleaner_operating_state_pause,
+      [capabilities.robotCleanerOperatingState.commands.goHome.NAME] = handle_robot_cleaner_operating_state_go_home,
+    },
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_robot_cleaner_mode,
     },
