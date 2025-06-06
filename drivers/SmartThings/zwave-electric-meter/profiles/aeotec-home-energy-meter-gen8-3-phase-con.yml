@@ -185,12 +185,3 @@ preferences:
         0: "Disable"
         1: "Enable"
       default: 0
-  - name: lockConfig
-    title: "252. Enable/disable lock config"
-    description: "Enable/disable to lock configuration parameters."
-    preferenceType: enumeration
-    definition:
-      options:
-        0: "Disable"
-        1: "Enable"
-      default: 0

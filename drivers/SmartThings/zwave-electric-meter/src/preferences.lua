@@ -16,7 +16,6 @@ local devices = {
       exWPctThresholdTotal = {parameter_number = 16, size = 1},
       exWPctThresholdPhaseA = {parameter_number = 17, size = 1},
       autoRootDeviceReport = {parameter_number = 32, size = 1},
-      lockConfig = {parameter_number = 252, size = 1}
     }
   },
   AEOTEC_HOME_ENERGY_METER_GEN8_2_PHASE = {
@@ -40,7 +39,6 @@ local devices = {
       exWPctThresholdPhaseA = {parameter_number = 17, size = 1},
       exWPctThresholdPhaseB = {parameter_number = 18, size = 1},
       autoRootDeviceReport = {parameter_number = 32, size = 1},
-      lockConfig = {parameter_number = 252, size = 1}
     }
   },
   AEOTEC_HOME_ENERGY_METER_GEN8_3_PHASE = {
@@ -68,7 +66,6 @@ local devices = {
       exWPctThresholdPhaseB = {parameter_number = 18, size = 1},
       exWPctThresholdPhaseC = {parameter_number = 19, size = 1},
       autoRootDeviceReport = {parameter_number = 32, size = 1},
-      lockConfig = {parameter_number = 252, size = 1}
     }
   }
 }

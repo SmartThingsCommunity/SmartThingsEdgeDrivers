@@ -623,30 +623,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Handle preference: lockConfig (parameter 252) in infoChanged",
-  function()
-    test.socket.device_lifecycle:__queue_receive(
-      mock_parent:generate_info_changed({
-        preferences = {
-          lockConfig = 1
-        }
-      })
-    )
-
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_parent,
-        Configuration:Set({
-          parameter_number = 252,
-          configuration_value = 1,
-          size = 1
-        })
-      )
-    )
-  end
-)
-
-test.register_coroutine_test(
   "Refresh sends commands to all components including base device",
   function()
     -- refresh commands for zwave devices do not have guaranteed ordering
