@@ -340,6 +340,7 @@ function SonosConnection.new(driver, device)
           self.driver.sonos:get_coordinator_for_device(self.device)
         local _, player_id = self.driver.sonos:get_player_for_device(self.device)
         self.driver.sonos:update_household_info(header.householdId, body, self.device)
+        self.driver.sonos:update_device_record_from_state(header.householdId, self.device)
         local _, updated_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
 
         Router.cleanup_unused_sockets(self.driver)
@@ -567,7 +568,7 @@ function SonosConnection:coordinator_running()
       )
     )
   end
-  return unique_key and Router.is_connected(unique_key) and self._initialized
+  return type(unique_key) == "string" and Router.is_connected(unique_key) and self._initialized
 end
 
 function SonosConnection:refresh_subscriptions(maybe_reply_tx)
