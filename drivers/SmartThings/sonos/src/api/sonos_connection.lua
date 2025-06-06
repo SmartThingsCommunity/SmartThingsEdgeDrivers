@@ -586,15 +586,21 @@ end
 
 --- Send a Sonos command object to the player for this connection
 --- @param cmd SonosCommand
-function SonosConnection:send_command(cmd)
+--- @param use_coordinator boolean
+function SonosConnection:send_command(cmd, use_coordinator)
   log.debug("Sending command over websocket channel for device " .. self.device.label)
-  local household_id, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  local household_id, target_id
+  if use_coordinator then
+    household_id, target_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  else
+    household_id, target_id = self.driver.sonos:get_player_for_device(self.device)
+  end
   local json_payload, err = json.encode(cmd)
 
   if err or not json_payload then
     log.error("Json encoding error: " .. err)
   else
-    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, coordinator_id)
+    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, target_id)
     if not unique_key then
       self.device.log.error(string.format("Invalid Sonos Unique Key Part: %s", bad_key_part))
       return
