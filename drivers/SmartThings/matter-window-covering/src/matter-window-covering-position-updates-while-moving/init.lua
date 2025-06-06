@@ -28,7 +28,8 @@ local StateMachineEnum = {
 }
 
 local SUB_WINDOW_COVERING_VID_PID = {
-  {0x10e1, 0x1005} -- VDA
+  {0x10e1, 0x1005}, -- VDA
+  {0x130a, 0x0055}  -- Eve MotionBlinds
 }
 
 local function is_matter_window_covering_position_updates_while_moving(opts, driver, device)
