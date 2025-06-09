@@ -127,7 +127,15 @@ matterGeneric:
       - id: 0x002C # Air Quality Sensor
       - id: 0x0301 # Thermostat
       - id: 0x0307 # Humidity Sensor
-    deviceProfileName: air-purifier-thermostat-humidity-aqs
+    deviceProfileName: air-purifier-thermostat-nostate-humidity-aqs
+  - id: "matter/ap/aqs/temperature/humidity"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: air-purifier-temperature-humidity-aqs
   - id: "matter/water-heater"
     deviceLabel: Matter Water Heater
     deviceTypes:

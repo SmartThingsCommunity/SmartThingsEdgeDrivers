@@ -16,6 +16,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
 local SimpleMetering = clusters.SimpleMetering
+local configurations = require "configurations"
 
 local ENBRIGHTEN_METERING_DIMMER_FINGERPRINTS = {
   { mfr = "Jasco Products", model = "43082" }
@@ -57,7 +58,7 @@ local enbrighten_metering_dimmer = {
     }
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure
   },
   can_handle = is_enbrighten_metering_dimmer

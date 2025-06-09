@@ -1,3 +1,4 @@
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -15,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -93,7 +93,7 @@ local function test_init()
   read_req:merge(clusters.Thermostat.attributes.AttributeList:read())
   test.socket.matter:__expect_send({mock_device.id, read_req})
 
-  test.set_rpc_version(5)
+  test.set_rpc_version(6)
 end
 test.set_test_init_function(test_init)
 
@@ -120,13 +120,13 @@ local function configure(device)
     clusters.Thermostat.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 1, 2667) --26.67 celcius
   })
   test.socket.capability:__expect_send(
-    device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 5.00, maximum = 40.00, step = 0.1 }, unit = "C" }))
+    device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 0.00, maximum = 100.00, step = 0.1 }, unit = "C" }))
   )
   test.socket.capability:__expect_send(
     device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 24.44, unit = "C" }))
   )
   test.socket.capability:__expect_send(
-    device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 5.00, maximum = 40.00, step = 0.1 }, unit = "C" }))
+    device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 0.00, maximum = 100.00, step = 0.1 }, unit = "C" }))
   )
   test.socket.capability:__expect_send(
     device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 26.67, unit = "C" }))

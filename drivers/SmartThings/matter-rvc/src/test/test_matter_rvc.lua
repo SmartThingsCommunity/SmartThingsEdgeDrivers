@@ -22,11 +22,13 @@ clusters.RvcCleanMode = require "RvcCleanMode"
 clusters.RvcOperationalState = require "RvcOperationalState"
 clusters.RvcRunMode = require "RvcRunMode"
 clusters.OperationalState = require "OperationalState"
+clusters.ServiceArea = require "ServiceArea"
+clusters.Global = require "Global"
 
 local APPLICATION_ENDPOINT = 10
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("rvc-clean-mode.yml"),
+  profile = t_utils.get_profile_definition("rvc-clean-mode-service-area.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -47,6 +49,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.RvcRunMode.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RvcCleanMode.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RvcOperationalState.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ServiceArea.ID, cluster_type = "SERVER"},
       },
       device_types = {
         {device_type_id = 0x0074, device_type_revision = 1} -- Robot Vacuum Cleaner
@@ -67,6 +70,10 @@ local function test_init()
         clusters.RvcOperationalState.attributes.OperationalState,
         clusters.RvcOperationalState.attributes.OperationalError,
     },
+    [capabilities.serviceArea.ID] = {
+      clusters.ServiceArea.attributes.SupportedAreas,
+      clusters.ServiceArea.attributes.SelectedAreas
+    }
   }
   local subscribe_request = nil
   for _, attributes in pairs(subscribed_attributes) do
@@ -791,6 +798,172 @@ test.register_coroutine_test(
       )
     )
   end
+)
+
+local locationDescriptorStruct = require "Global.types.LocationDescriptorStruct"
+local areaInfoStruct = require "ServiceArea.types.AreaInfoStruct"
+local areaStruct = require "ServiceArea.types.AreaStruct"
+local landmarkInfoStruct = require "ServiceArea.types.LandmarkInfoStruct"
+
+test.register_message_test(
+  "Supported ServiceAreas must be registered",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.attributes.SupportedAreas:build_test_report_data(mock_device, APPLICATION_ENDPOINT,
+          {
+            -- how to pass nil values here
+            areaStruct({ ["area_id"] = 0, ["map_id"] = 0, ["area_info"] = areaInfoStruct({ ["location_info"] = locationDescriptorStruct( {["location_name"] = "Location1", ["floor_number"] = 0, ["area_type"] = 0x04} ), ["landmark_info"] = landmarkInfoStruct({ ["landmark_tag"] = 0x1C, ["relative_position_tag"] = 0x02 })})}),
+            areaStruct({ ["area_id"] = 1, ["map_id"] = 0, ["area_info"] = areaInfoStruct({ ["location_info"] = locationDescriptorStruct( {["location_name"] = "", ["floor_number"] = 0, ["area_type"] = 0x04} ), ["landmark_info"] = landmarkInfoStruct({ ["landmark_tag"] = 0x1C, ["relative_position_tag"] = 0x02 })})})
+          }
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+      capabilities.serviceArea.supportedAreas({
+        {["areaId"] = 0, ["areaName"] = "Location1" },
+        {["areaId"] = 1, ["areaName"] = "0F Balcony" },
+      }, { visibility = { displayed = false } }))
+    },
+  }
+)
+
+local uint32_dt = require "st.matter.data_types.Uint32"
+local selectAreasStatus = require "ServiceArea.types.SelectAreasStatus"
+
+test.register_message_test(
+  "ServiceArea attribute report must emit appropriate capability event",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.attributes.SelectedAreas:build_test_report_data(mock_device, APPLICATION_ENDPOINT,
+        clusters.ServiceArea.attributes.SelectedAreas({uint32_dt(1),uint32_dt(2),uint32_dt(5)})
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+      capabilities.serviceArea.selectedAreas({ 1,2,5 }, { visibility = { displayed = false } }))
+    },
+  }
+)
+
+local uint32_dt = require "st.matter.data_types.Uint32"
+
+test.register_message_test(
+  "Select ServiceAreas command must trigger appropriate matter cluster",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "serviceArea", component = "main", command = "selectAreas", args = { {1, 2} } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.server.commands.SelectAreas(mock_device, APPLICATION_ENDPOINT, {uint32_dt(1),uint32_dt(2)})
+      }
+    },
+  }
+)
+
+
+test.register_message_test(
+  "Selected ServiceAreasResponse must log Success status or emit last valid selectedAreas capability on non-Success status",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "serviceArea", component = "main", command = "selectAreas", args = { {1, 2, 5} } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.server.commands.SelectAreas(mock_device, APPLICATION_ENDPOINT, {uint32_dt(1),uint32_dt(2),uint32_dt(5)}) --0 is the index where Clean Mode 1 is stored.
+      }
+    },
+    -- success response
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.client.commands.SelectAreasResponse:build_test_command_response(mock_device, APPLICATION_ENDPOINT,
+        selectAreasStatus.SUCCESS, "Success Response")
+      }
+    },
+    -- Attribute report for last successful selectArea command
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.attributes.SelectedAreas:build_test_report_data(mock_device, APPLICATION_ENDPOINT,
+        clusters.ServiceArea.attributes.SelectedAreas({uint32_dt(1),uint32_dt(2),uint32_dt(5)})
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+      capabilities.serviceArea.selectedAreas({ 1,2,5 }, { visibility = { displayed = false } }))
+    },
+    -- invalid command assuming area id 6 is not supported
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "serviceArea", component = "main", command = "selectAreas", args = { {1, 2, 6} } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.server.commands.SelectAreas(mock_device, APPLICATION_ENDPOINT, {uint32_dt(1),uint32_dt(2),uint32_dt(6)})
+      }
+    },
+    -- error response logs error and re-emits last valid 1,2,5
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ServiceArea.client.commands.SelectAreasResponse:build_test_command_response(mock_device, APPLICATION_ENDPOINT,
+        selectAreasStatus.UNSUPPORTED_AREA, "AreaId 6 is not supported")
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+      capabilities.serviceArea.selectedAreas({ 1,2,5 },{ state_change=true}))
+    },
+  }
 )
 
 test.run_registered_tests()
