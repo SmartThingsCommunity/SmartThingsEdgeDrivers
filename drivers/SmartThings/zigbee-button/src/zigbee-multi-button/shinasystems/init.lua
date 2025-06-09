@@ -19,7 +19,6 @@ local PowerConfiguration = clusters.PowerConfiguration
 local OnOff = clusters.OnOff
 local device_management = require "st.zigbee.device_management"
 local Groups = clusters.Groups
-local data_types = require "st.zigbee.data_types"
 
 local SHINASYSTEM_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "MSM-300Z", endpoint_num = 0x04 },
