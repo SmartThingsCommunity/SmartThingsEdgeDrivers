@@ -15,7 +15,6 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local im = require "st.matter.interaction_model"
 
 local area_type = require "Global.types.AreaTypeTag"
 local landmark = require "Global.types.LandmarkTag"
@@ -50,7 +49,8 @@ local subscribed_attributes = {
   },
   [capabilities.robotCleanerOperatingState.ID] = {
     clusters.RvcOperationalState.attributes.OperationalState,
-    clusters.RvcOperationalState.attributes.OperationalError
+    clusters.RvcOperationalState.attributes.OperationalError,
+    clusters.RvcOperationalState.attributes.AcceptedCommandList
   },
   [capabilities.serviceArea.ID] = {
     clusters.ServiceArea.attributes.SupportedAreas,
@@ -81,9 +81,6 @@ end
 local function device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
-  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  req:merge(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
-  device:send(req)
 end
 
 local function do_configure(driver, device)
