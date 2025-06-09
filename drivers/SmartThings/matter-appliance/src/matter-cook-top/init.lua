@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local common_utils = require "common-utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"

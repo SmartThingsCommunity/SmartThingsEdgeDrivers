@@ -139,6 +139,7 @@ end
 
 -- Lifecycle Handlers --
 local function device_init(driver, device)
+  common_utils.check_field_name_updates(device)
   device:subscribe()
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)

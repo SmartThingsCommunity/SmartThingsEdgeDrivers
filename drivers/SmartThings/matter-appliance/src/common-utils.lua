@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local im = require "st.matter.interaction_model"
@@ -22,10 +21,25 @@ local common_utils = {}
 common_utils.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 common_utils.SUPPORTED_TEMPERATURE_LEVELS_MAP = "__supported_temperature_levels_map"
 
+common_utils.updated_fields = {
+  { current_field_name = "__supported_temperature_levels", updated_field_name = common_utils.SUPPORTED_TEMPERATURE_LEVELS_MAP }
+}
+
 common_utils.setpoint_limit_device_field = {
   MIN_TEMP = "MIN_TEMP",
   MAX_TEMP = "MAX_TEMP"
 }
+
+function common_utils.check_field_name_updates(device)
+  for _, field in ipairs(common_utils.updated_fields) do
+    if device:get_field(field.current_field_name) then
+      if field.updated_field_name ~= nil then
+        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
+      end
+      device:set_field(field.current_field_name, nil)
+    end
+  end
+end
 
 function common_utils.get_endpoints_for_dt(device, device_type)
   local endpoints = {}

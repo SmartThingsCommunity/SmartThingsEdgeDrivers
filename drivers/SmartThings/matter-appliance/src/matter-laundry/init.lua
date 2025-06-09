@@ -44,7 +44,6 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
 }
 
 local LAUNDRY_DEVICE_TYPE_ID= "__laundry_device_type_id"
-local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
 local SUPPORTED_LAUNDRY_WASHER_MODES = "__supported_laundry_washer_modes"
 local SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS = "__supported_laundry_spin_speeds"
 local SUPPORTED_LAUNDRY_WASHER_RINSES = "__supported_laundry_washer_rinses"
