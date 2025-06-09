@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 
 local log = require "log"
@@ -23,7 +24,6 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local COOK_SURFACE_DEVICE_TYPE_ID = 0x0077
 local COOK_TOP_DEVICE_TYPE_ID = 0x0078
 local OVEN_DEVICE_ID = 0x007B
@@ -53,37 +53,13 @@ local function table_contains(tab, val)
   return false
 end
 
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return device.MATTER_DEFAULT_ENDPOINT
-end
-
-local function device_init(driver, device)
-  device:subscribe()
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-end
-
 local function device_added(driver, device)
   local cook_surface_endpoints = get_endpoints_for_dt(device, COOK_SURFACE_DEVICE_TYPE_ID)
   local componentToEndpointMap = {
     ["cookSurfaceOne"] = cook_surface_endpoints[1],
     ["cookSurfaceTwo"] = cook_surface_endpoints[2]
   }
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
+  device:set_field(common_utils.COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
 end
 
 local function do_configure(driver, device)
@@ -199,7 +175,6 @@ end
 local matter_cook_top_handler = {
   NAME = "matter-cook-top",
   lifecycle_handlers = {
-    init = device_init,
     added = device_added,
     doConfigure = do_configure
   },

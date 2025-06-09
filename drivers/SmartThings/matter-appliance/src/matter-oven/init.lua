@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
 local log = require "log"
 local version = require "version"
 local embedded_cluster_utils = require "embedded-cluster-utils"
@@ -23,10 +24,10 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
---this cluster is not supported in any releases of the lua libs
-clusters.OvenMode = require "OvenMode"
+if version.api < 12 then
+  clusters.OvenMode = require "OvenMode"
+end
 
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local SUPPORTED_OVEN_MODES_MAP = "__supported_oven_modes_map_key_"
 
 local OVEN_DEVICE_ID = 0x007B
@@ -44,11 +45,6 @@ local TCC_DEVICE_TYPE_ID = 0x0071
 local OVEN_MAX_TEMP_IN_C = version.rpc >= 6 and 400.0 or 260.0
 local OVEN_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 127.0
 
-local setpoint_limit_device_field = {
-  MIN_TEMP = "MIN_TEMP",
-  MAX_TEMP = "MAX_TEMP",
-}
-
 local function get_endpoints_for_dt(device, device_type)
   local endpoints = {}
   for _, ep in ipairs(device.endpoints) do
@@ -63,24 +59,6 @@ local function get_endpoints_for_dt(device, device_type)
   return endpoints
 end
 
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return device.MATTER_DEFAULT_ENDPOINT
-end
-
 local function is_oven_device(opts, driver, device)
   local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_ID)
   if #oven_eps > 0 then
@@ -90,12 +68,6 @@ local function is_oven_device(opts, driver, device)
 end
 
 -- Lifecycle Handlers --
-local function device_init(driver, device)
-  device:subscribe()
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-end
-
 local function device_added(driver, device)
   -- We assume the following endpoint structure of oven device for now
   local cook_surface_endpoints = get_endpoints_for_dt(device, COOK_SURFACE_DEVICE_TYPE_ID)
@@ -108,7 +80,7 @@ local function device_added(driver, device)
     ["cookSurfaceOne"] = cook_surface_endpoints[1],
     ["cookSurfaceTwo"] = cook_surface_endpoints[2]
   }
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
+  device:set_field(common_utils.COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
 end
 
 -- Matter Handlers --
@@ -152,8 +124,8 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   end
   device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
-  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
-  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
+  local min_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
+  local max_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
   local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
   local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
   local temp = ib.data.value / 100.0
@@ -196,7 +168,7 @@ end
 -- Capability Handlers --
 local function handle_oven_mode(driver, device, cmd)
   log.info(string.format("handle_oven_mode mode: %s", cmd.args.mode))
-  local ep = component_to_endpoint(device, cmd.component)
+  local ep = device:component_to_endpoint(cmd.component)
   local supportedOvenModesMap = device:get_field(SUPPORTED_OVEN_MODES_MAP) or {}
   local supportedOvenModes = supportedOvenModesMap[string.format(ep)] or {}
   for i, mode in ipairs(supportedOvenModes) do
@@ -223,9 +195,9 @@ local function handle_temperature_setpoint(driver, device, cmd)
     capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
     0, { value = 0, unit = "C" }
   )
-  local ep = component_to_endpoint(device, cmd.component)
-  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
-  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
+  local ep = device:component_to_endpoint(cmd.component)
+  local min_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MIN_TEMP, ep)
+  local max_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MAX_TEMP, ep)
   local min = device:get_field(min_field) or OVEN_MIN_TEMP_IN_C
   local max = device:get_field(max_field) or OVEN_MAX_TEMP_IN_C
 
@@ -241,24 +213,23 @@ local function handle_temperature_setpoint(driver, device, cmd)
     return
   end
 
-  local ep = component_to_endpoint(device, cmd.component)
+  ep = device:component_to_endpoint(cmd.component)
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end
 
 local matter_oven_handler = {
   NAME = "matter-oven",
   lifecycle_handlers = {
-    init = device_init,
-    added = device_added,
+    added = device_added
   },
   matter_handlers = {
     attr = {
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
         [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(
-          setpoint_limit_device_field.MIN_TEMP),
+          common_utils.setpoint_limit_device_field.MIN_TEMP),
         [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(
-          setpoint_limit_device_field.MAX_TEMP),
+          common_utils.setpoint_limit_device_field.MAX_TEMP),
       },
       [clusters.OvenMode.ID] = {
         [clusters.OvenMode.attributes.SupportedModes.ID] = oven_supported_modes_attr_handler,
