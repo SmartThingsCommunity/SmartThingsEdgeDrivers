@@ -466,8 +466,11 @@ function SonosConnection.new(driver, device)
             local base_url = lb_utils.force_url_table(
               string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
             )
+            local _, api_key = driver:check_auth(device)
+            local maybe_token = driver:get_oauth_token()
+            local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
             local favorites_response, err, _ =
-              SonosRestApi.get_favorites(base_url, header.householdId)
+              SonosRestApi.get_favorites(base_url, header.householdId, headers)
 
             if err or not favorites_response then
               log.error("Error querying for favorites: " .. err)
