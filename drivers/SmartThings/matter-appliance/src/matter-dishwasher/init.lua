@@ -390,8 +390,6 @@ local matter_dishwasher_handler = {
   matter_handlers = {
     attr = {
       [clusters.TemperatureControl.ID] = {
-        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
-        [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
         [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MIN_TEMP),
         [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MAX_TEMP),
@@ -413,9 +411,6 @@ local matter_dishwasher_handler = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_dishwasher_mode,
-    },
-    [capabilities.temperatureLevel.ID] = {
-      [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level,
     },
     [capabilities.temperatureSetpoint.ID] = {
       [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,

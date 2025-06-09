@@ -29,7 +29,6 @@ if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
 end
 
-local SUPPORTED_TEMPERATURE_LEVELS_MAP = "__supported_temperature_levels_map"
 local SUPPORTED_REFRIGERATOR_TCC_MODES_MAP = "__supported_refrigerator_tcc_modes_map"
 
 -- For RPC version <= 5, this is a work around to handle when units for temperatureSetpoint is changed for the App.
@@ -98,51 +97,19 @@ local function do_configure(driver, device)
 end
 
 -- Matter Handlers --
-local function supports_temperature_level_endpoint(device, endpoint)
-  local feature = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL
-  local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = feature})
-  if #tl_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
-    return false
-  end
-  for i, eps in ipairs(tl_eps) do
-    if eps == endpoint then
-      return true
-    end
-  end
-  device.log.warn_with({ hub_logs = true }, string.format("Endpoint(%d) does not support TEMPERATURE_LEVEL feature", endpoint))
-  return false
-end
-
-local function supports_temperature_number_endpoint(device, endpoint)
-  local feature = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER
-  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = feature})
-  if #tn_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_NUMBER feature"))
-    return false
-  end
-  for i, eps in ipairs(tn_eps) do
-    if eps == endpoint then
-      return true
-    end
-  end
-  device.log.warn_with({ hub_logs = true }, string.format("Endpoint(%d) does not support TEMPERATURE_NUMBER feature", endpoint))
-  return false
-end
-
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
-  if not supports_temperature_number_endpoint(device, ib.endpoint_id) then
+  if not common_utils.supports_temperature_number_endpoint(device, ib.endpoint_id) then
     return
   end
   device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
   local min_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
   local max_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
   local min, max
-  local laundry_device_type = device:endpoint_to_component(ib.endpoint_id)
-  if laundry_device_type == "refrigerator" then
+  local component = device:endpoint_to_component(ib.endpoint_id)
+  if component == "refrigerator" then
     min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
     max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
-  elseif laundry_device_type == "freezer" then
+  elseif component == "freezer" then
     min = device:get_field(min_field) or FREEZER_MIN_TEMP_IN_C
     max = device:get_field(max_field) or FREEZER_MAX_TEMP_IN_C
   else
@@ -168,18 +135,18 @@ end
 
 local function setpoint_limit_handler(limit_field)
   return function(driver, device, ib, response)
-    if not supports_temperature_number_endpoint(device, ib.endpoint_id) then
+    if not common_utils.supports_temperature_number_endpoint(device, ib.endpoint_id) then
       return
     end
     local field = string.format("%s-%d", limit_field, ib.endpoint_id)
     local val = ib.data.value / 100.0
 
     local min_temp_in_c, max_temp_in_c
-    local laundry_device_type = device:endpoint_to_component(ib.endpoint_id)
-    if laundry_device_type == "refrigerator" then
+    local component = device:endpoint_to_component(ib.endpoint_id)
+    if component == "refrigerator" then
       min_temp_in_c = REFRIGERATOR_MIN_TEMP_IN_C
       max_temp_in_c = REFRIGERATOR_MAX_TEMP_IN_C
-    elseif laundry_device_type == "freezer" then
+    elseif component == "freezer" then
       min_temp_in_c =  FREEZER_MIN_TEMP_IN_C
       max_temp_in_c =  FREEZER_MAX_TEMP_IN_C
     else
@@ -192,47 +159,6 @@ local function setpoint_limit_handler(limit_field)
     device.log.info("Setting " .. field .. " to " .. string.format("%s", val))
     device:set_field(field, val, { persist = true })
   end
-end
-
-local function selected_temperature_level_attr_handler(driver, device, ib, response)
-  if not supports_temperature_level_endpoint(device, ib.endpoint_id) then
-    return
-  end
-  local temperatureLevel = ib.data.value
-  local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP)
-  if not supportedTemperatureLevelsMap then
-    return
-  end
-  local supportedTemperatureLevels = supportedTemperatureLevelsMap[ib.endpoint_id]
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
-    device.log.info(string.format("selected_temperature_level_attr_handler: %d, %s", i, tempLevel))
-    if i - 1 == temperatureLevel then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
-      break
-    end
-  end
-end
-
-local function supported_temperature_levels_attr_handler(driver, device, ib, response)
-  if not supports_temperature_level_endpoint(device, ib.endpoint_id) then
-    return
-  end
-  local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
-  local supportedTemperatureLevels = {}
-  for _, tempLevel in ipairs(ib.data.elements) do
-    device.log.info(string.format("supported_temperature_levels_attr_handler: %s", tempLevel.value))
-    table.insert(supportedTemperatureLevels, tempLevel.value)
-  end
-  for ep = 1, ib.endpoint_id - 1 do
-    if not supportedTemperatureLevelsMap[ep] then
-      device.log.info(string.format("supportedTemperatureLevelsMap[%d] is nil", ep))
-      supportedTemperatureLevelsMap[ep] = {"Nothing"}
-    end
-  end
-  supportedTemperatureLevelsMap[ib.endpoint_id] = supportedTemperatureLevels
-  device:set_field(SUPPORTED_TEMPERATURE_LEVELS_MAP, supportedTemperatureLevelsMap, { persist = true })
-  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function refrigerator_tcc_supported_modes_attr_handler(driver, device, ib, response)
@@ -275,20 +201,6 @@ local function refrigerator_alarm_attr_handler(driver, device, ib, response)
   end
 end
 
-local function temp_event_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-  string.format("temp_event_handler: %s", ib.data.value))
-
-  local temp
-  local unit = "C"
-  if ib.data.value == nil then
-    temp = 0
-  else
-    temp = ib.data.value / 100.0
-  end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
-end
-
 -- Capability Handlers --
 local function handle_refrigerator_tcc_mode(driver, device, cmd)
   device.log.info(string.format("handle_refrigerator_tcc_mode mode: %s", cmd.args.mode))
@@ -305,7 +217,7 @@ end
 
 local function handle_temperature_setpoint(driver, device, cmd)
   local ep = device:component_to_endpoint(cmd.component)
-  if not supports_temperature_number_endpoint(device, ep) then
+  if not common_utils.supports_temperature_number_endpoint(device, ep) then
     return
   end
   device.log.info(string.format("handle_temperature_setpoint: %s", cmd.args.setpoint))
@@ -320,12 +232,12 @@ local function handle_temperature_setpoint(driver, device, cmd)
   local max_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MAX_TEMP, ep)
   local min, max
   local max_temp_in_c
-  local laundry_device_type = cmd.component
-  if laundry_device_type == "refrigerator" then
+  local component = cmd.component
+  if component == "refrigerator" then
     min = device:get_field(min_field) or REFRIGERATOR_MIN_TEMP_IN_C
     max = device:get_field(max_field) or REFRIGERATOR_MAX_TEMP_IN_C
     max_temp_in_c = REFRIGERATOR_MAX_TEMP_IN_C
-  elseif laundry_device_type == "freezer" then
+  elseif component == "freezer" then
     min = device:get_field(min_field) or FREEZER_MIN_TEMP_IN_C
     max = device:get_field(max_field) or FREEZER_MAX_TEMP_IN_C
     max_temp_in_c = FREEZER_MAX_TEMP_IN_C
@@ -350,25 +262,6 @@ local function handle_temperature_setpoint(driver, device, cmd)
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end
 
-local function handle_temperature_level(driver, device, cmd)
-  local ep = device:component_to_endpoint(cmd.component)
-  device.log.info(string.format("handle_temperature_level: %s(%d)", cmd.args.temperatureLevel, ep))
-  if not supports_temperature_level_endpoint(device, ep) then
-    return
-  end
-  local supportedTemperatureLevelsMap = device:get_field(SUPPORTED_TEMPERATURE_LEVELS_MAP)
-  if not supportedTemperatureLevelsMap then
-    return
-  end
-  local supportedTemperatureLevels = supportedTemperatureLevelsMap[ep]
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
-    if cmd.args.temperatureLevel == tempLevel then
-      device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, nil, i - 1))
-      return
-    end
-  end
-end
-
 local matter_refrigerator_handler = {
   NAME = "matter-refrigerator",
   lifecycle_handlers = {
@@ -380,34 +273,26 @@ local matter_refrigerator_handler = {
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
         [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MIN_TEMP),
-        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MAX_TEMP),
-        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
-        [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MAX_TEMP)
       },
       [clusters.RefrigeratorAndTemperatureControlledCabinetMode.ID] = {
         [clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.SupportedModes.ID] = refrigerator_tcc_supported_modes_attr_handler,
-        [clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode.ID] = refrigerator_tcc_mode_attr_handler,
+        [clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode.ID] = refrigerator_tcc_mode_attr_handler
       },
       [clusters.RefrigeratorAlarm.ID] = {
         [clusters.RefrigeratorAlarm.attributes.State.ID] = refrigerator_alarm_attr_handler
-      },
-      [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler,
-      },
+      }
     }
   },
   capability_handlers = {
     [capabilities.mode.ID] = {
-      [capabilities.mode.commands.setMode.NAME] = handle_refrigerator_tcc_mode,
+      [capabilities.mode.commands.setMode.NAME] = handle_refrigerator_tcc_mode
     },
     [capabilities.temperatureSetpoint.ID] = {
-      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
-    },
-    [capabilities.temperatureLevel.ID] = {
-      [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level,
-    },
+      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint
+    }
   },
-  can_handle = is_matter_refrigerator,
+  can_handle = is_matter_refrigerator
 }
 
 return matter_refrigerator_handler

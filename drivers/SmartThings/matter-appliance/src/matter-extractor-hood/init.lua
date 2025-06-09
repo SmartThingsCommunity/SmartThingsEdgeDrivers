@@ -33,29 +33,14 @@ local WIND_MODE_MAP = {
   [1]		= capabilities.windMode.windMode.naturalWind
 }
 
--- Helper functions --
-local function get_endpoints_for_dt(device, device_type)
-  local endpoints = {}
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == device_type then
-        table.insert(endpoints, ep.endpoint_id)
-        break
-      end
-    end
-  end
-  table.sort(endpoints)
-  return endpoints
-end
-
 -- Lifecycle Handlers --
 local function device_added(driver, device)
-  local extractor_hood_endpoint = get_endpoints_for_dt(device, EXTRACTOR_HOOD_DEVICE_TYPE_ID)[1]
+  local extractor_hood_endpoint = common_utils.get_endpoints_for_dt(device, EXTRACTOR_HOOD_DEVICE_TYPE_ID)[1]
   local componentToEndpointMap = {
     ["main"] = extractor_hood_endpoint
   }
-  local on_off_light_device_type_endpoint = get_endpoints_for_dt(device, ON_OFF_LIGHT_DEVICE_TYPE_ID)[1]
-  local on_off_light_switch_device_type_endpoint = get_endpoints_for_dt(device, ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID)[1]
+  local on_off_light_device_type_endpoint = common_utils.get_endpoints_for_dt(device, ON_OFF_LIGHT_DEVICE_TYPE_ID)[1]
+  local on_off_light_switch_device_type_endpoint = common_utils.get_endpoints_for_dt(device, ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID)[1]
   if on_off_light_device_type_endpoint and
     device:supports_server_cluster(clusters.OnOff.ID, on_off_light_device_type_endpoint) then
     componentToEndpointMap["light"] = on_off_light_device_type_endpoint

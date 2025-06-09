@@ -15,10 +15,10 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local common_utils = require "common-utils"
-local log = require "log"
-local version = require "version"
 local embedded_cluster_utils = require "embedded-cluster-utils"
+local log = require "log"
 local utils = require "st.utils"
+local version = require "version"
 
 if version.api < 10 then
   clusters.TemperatureControl = require "TemperatureControl"
@@ -36,31 +36,17 @@ local COOK_TOP_DEVICE_TYPE_ID = 0x0078
 local TCC_DEVICE_TYPE_ID = 0x0071
 
 -- For RPC version <= 5, this is a work around to handle when units for temperatureSetpoint is changed for the App.
--- When units are switched, we will never know the recevied command value is for what unit as the arguments don't contain the unit.
+-- When units are switched, we will never know the received command value is for what unit as the arguments don't contain the unit.
 -- So to handle this we assume the following ranges considering usual oven temperatures:
---   1. if the recieved setpoint command value is in range 127 ~ 260, it is inferred as *C
+--   1. if the received setpoint command value is in range 127 ~ 260, it is inferred as *C
 --   2. if the received setpoint command value is in range 261 ~ 500, it is inferred as *F
 -- For RPC version >= 6, we can always assume that the values received from temperatureSetpoint
 -- is in Celsius, but we still limit the setpoint range to reasonable values.
 local OVEN_MAX_TEMP_IN_C = version.rpc >= 6 and 400.0 or 260.0
 local OVEN_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 127.0
 
-local function get_endpoints_for_dt(device, device_type)
-  local endpoints = {}
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == device_type then
-        table.insert(endpoints, ep.endpoint_id)
-        break
-      end
-    end
-  end
-  table.sort(endpoints)
-  return endpoints
-end
-
 local function is_oven_device(opts, driver, device)
-  local oven_eps = get_endpoints_for_dt(device, OVEN_DEVICE_ID)
+  local oven_eps = common_utils.get_endpoints_for_dt(device, OVEN_DEVICE_ID)
   if #oven_eps > 0 then
     return true
   end
@@ -70,9 +56,9 @@ end
 -- Lifecycle Handlers --
 local function device_added(driver, device)
   -- We assume the following endpoint structure of oven device for now
-  local cook_surface_endpoints = get_endpoints_for_dt(device, COOK_SURFACE_DEVICE_TYPE_ID)
-  local cook_top_endpoint = get_endpoints_for_dt(device, COOK_TOP_DEVICE_TYPE_ID)[1] or device.MATTER_DEFAULT_ENDPOINT
-  local tcc_endpoints = get_endpoints_for_dt(device, TCC_DEVICE_TYPE_ID)
+  local cook_surface_endpoints = common_utils.get_endpoints_for_dt(device, COOK_SURFACE_DEVICE_TYPE_ID)
+  local cook_top_endpoint = common_utils.get_endpoints_for_dt(device, COOK_TOP_DEVICE_TYPE_ID)[1] or device.MATTER_DEFAULT_ENDPOINT
+  local tcc_endpoints = common_utils.get_endpoints_for_dt(device, TCC_DEVICE_TYPE_ID)
   local componentToEndpointMap = {
     ["tccOne"] = tcc_endpoints[1],
     ["tccTwo"] = tcc_endpoints[2],
@@ -226,10 +212,8 @@ local matter_oven_handler = {
     attr = {
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
-        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(
-          common_utils.setpoint_limit_device_field.MIN_TEMP),
-        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(
-          common_utils.setpoint_limit_device_field.MAX_TEMP),
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MAX_TEMP),
       },
       [clusters.OvenMode.ID] = {
         [clusters.OvenMode.attributes.SupportedModes.ID] = oven_supported_modes_attr_handler,

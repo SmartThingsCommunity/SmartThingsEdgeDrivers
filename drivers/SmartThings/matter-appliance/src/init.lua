@@ -207,6 +207,50 @@ local function setpoint_limit_handler(limit_field)
   end
 end
 
+local function selected_temperature_level_attr_handler(driver, device, ib, response)
+  if not common_utils.supports_temperature_level_endpoint(device, ib.endpoint_id) then
+    return
+  end
+  local temperatureLevel = ib.data.value
+  local supportedTemperatureLevelsMap = device:get_field(common_utils.SUPPORTED_TEMPERATURE_LEVELS_MAP)
+  if not supportedTemperatureLevelsMap or not supportedTemperatureLevelsMap[ib.endpoint_id] then
+    return
+  end
+  local supportedTemperatureLevels = supportedTemperatureLevelsMap[ib.endpoint_id]
+  for i, tempLevel in ipairs(supportedTemperatureLevels) do
+    if i - 1 == temperatureLevel then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
+      break
+    end
+  end
+end
+
+local function supported_temperature_levels_attr_handler(driver, device, ib, response)
+  if not common_utils.supports_temperature_level_endpoint(device, ib.endpoint_id) then
+    return
+  end
+  local supportedTemperatureLevelsMap = device:get_field(common_utils.SUPPORTED_TEMPERATURE_LEVELS_MAP) or {}
+  local supportedTemperatureLevels = {}
+  for _, tempLevel in ipairs(ib.data.elements) do
+    table.insert(supportedTemperatureLevels, tempLevel.value)
+  end
+  for ep = 1, ib.endpoint_id - 1 do
+    if not supportedTemperatureLevelsMap[ep] then
+      supportedTemperatureLevelsMap[ep] = {"Nothing"}
+    end
+  end
+  supportedTemperatureLevelsMap[ib.endpoint_id] = supportedTemperatureLevels
+  device:set_field(common_utils.SUPPORTED_TEMPERATURE_LEVELS_MAP, supportedTemperatureLevelsMap, { persist = true })
+  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+local function temp_event_handler(driver, device, ib, response)
+  local temp = ib.data.value and ib.data.value / 100.0 or 0
+  local unit = "C"
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+end
+
 -- Capability Handlers --
 local function handle_switch_on(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
@@ -249,6 +293,24 @@ local function handle_temperature_setpoint(driver, device, cmd)
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, utils.round(value * 100.0), nil))
 end
 
+local function handle_temperature_level(driver, device, cmd)
+  local ep = device:component_to_endpoint(cmd.component)
+  if not common_utils.supports_temperature_level_endpoint(device, ep) then
+    return
+  end
+  local supportedTemperatureLevelsMap = device:get_field(common_utils.SUPPORTED_TEMPERATURE_LEVELS_MAP)
+  if not supportedTemperatureLevelsMap then
+    return
+  end
+  local supportedTemperatureLevels = supportedTemperatureLevelsMap[ep]
+  for i, tempLevel in ipairs(supportedTemperatureLevels) do
+    if cmd.args.temperatureLevel == tempLevel then
+      device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, nil, i - 1))
+      return
+    end
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
@@ -261,9 +323,14 @@ local matter_driver_template = {
       },
       [clusters.TemperatureControl.ID] = {
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
-        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MIN_TEMP),
         [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MAX_TEMP),
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
+        [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler
       },
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = temp_event_handler
+      }
     }
   },
   subscribed_attributes = subscribed_attributes,
@@ -272,13 +339,17 @@ local matter_driver_template = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
       [capabilities.switch.commands.off.NAME] = handle_switch_off,
     },
-    [capabilities.temperatureSetpoint.ID] = {
-      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,
+    [capabilities.temperatureLevel.ID] = {
+      [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level
     },
+    [capabilities.temperatureSetpoint.ID] = {
+      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint
+    }
   },
   supported_capabilities = {
     capabilities.switch,
     capabilities.temperatureSetpoint,
+    capabilities.temperatureLevel,
     capabilities.operationalState.ID,
     capabilities.mode,
     capabilities.laundryWasherRinseMode,
