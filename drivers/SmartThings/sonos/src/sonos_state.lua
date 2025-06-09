@@ -183,8 +183,9 @@ end
 function SonosState:update_device_record_group_info(household, group, device)
   local player_id = device:get_field(PlayerFields.PLAYER_ID)
   local group_role
-  if player_id == group.coordinatorId then
-    if #household.groups[group.id].playerIds > 1 then
+  if (player_id and group and group.id and group.coordinatorId) and player_id == group.coordinatorId then
+    local player_ids_list = household.groups[group.id].playerIds or {}
+    if #player_ids_list > 1 then
       group_role = "primary"
     else
       group_role = "ungrouped"
@@ -248,7 +249,7 @@ end
 --- @param household_id HouseholdId
 --- @param device SonosDevice
 function SonosState:update_device_record_from_state(household_id, device)
-  local current_mapping = _STATE.device_record_map[device.id]
+  local current_mapping = _STATE.device_record_map[device.id] or {}
   local household = _STATE.households:get_or_init(household_id)
   self:update_device_record_group_info(household, current_mapping.group, device)
 end

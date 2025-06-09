@@ -78,7 +78,11 @@ local _update_subscriptions_helper = function(
     local unique_key, bad_key_part = utils.sonos_unique_key(householdId, playerId)
     if not unique_key then
       local err_msg = string.format("Invalid Sonos Unique Key Part: %s", bad_key_part)
-      reply_tx:send(table.pack(nil, err_msg))
+      if reply_tx then
+        reply_tx:send(table.pack(nil, err_msg))
+      else
+        log.warn(string.format("Update Subscriptions Error: %s", err_msg))
+      end
       return
     end
     Router.send_message_to_player(unique_key, payload, reply_tx)
