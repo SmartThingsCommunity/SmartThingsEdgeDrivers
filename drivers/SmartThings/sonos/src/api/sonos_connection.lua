@@ -1,3 +1,4 @@
+local api_version = require "version".api
 local cosock = require "cosock"
 local json = require "st.json"
 local log = require "log"
@@ -74,7 +75,17 @@ local _update_subscriptions_helper = function(
       {},
     }
     local payload = json.encode(payload_table)
-    Router.send_message_to_player(utils.sonos_unique_key(householdId, playerId), payload, reply_tx)
+    local unique_key, bad_key_part = utils.sonos_unique_key(householdId, playerId)
+    if not unique_key then
+      local err_msg = string.format("Invalid Sonos Unique Key Part: %s", bad_key_part)
+      if reply_tx then
+        reply_tx:send(table.pack(nil, err_msg))
+      else
+        log.warn(string.format("Update Subscriptions Error: %s", err_msg))
+      end
+      return
+    end
+    Router.send_message_to_player(unique_key, payload, reply_tx)
   end
 end
 
@@ -168,10 +179,13 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
     end
 
     local listener_id
-    listener_id, err = Router.register_listener_for_socket(
-      sonos_conn,
-      utils.sonos_unique_key(household_id, coordinator_id)
-    )
+    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, coordinator_id)
+
+    if not unique_key then
+      log.error(string.format("Invalid Sonos Unique Key Part: %s", bad_key_part))
+    end
+
+    listener_id, err = Router.register_listener_for_socket(sonos_conn, unique_key)
     if err ~= nil or not listener_id then
       log.error(err)
     else
@@ -208,7 +222,22 @@ local function backoff_builder(max, inc, rand)
 end
 
 ---@param sonos_conn SonosConnection
-local function _spawn_reconnect_task(sonos_conn)
+local function _legacy_reconnect_task(sonos_conn)
+  log.debug("Spawning reconnect task for ", sonos_conn.device.label)
+  cosock.spawn(function()
+    local backoff = backoff_builder(60, 1, 0.1)
+    while not sonos_conn:is_running() do
+      local start_success = sonos_conn:start()
+      if start_success then
+        return
+      end
+      cosock.socket.sleep(backoff())
+    end
+  end, string.format("%s Reconnect Task", sonos_conn.device.label))
+end
+
+---@param sonos_conn SonosConnection
+local function _oauth_reconnect_task(sonos_conn)
   log.debug("Spawning reconnect task for ", sonos_conn.device.label)
   if not sonos_conn.driver:is_waiting_for_oauth_token() then
     sonos_conn.driver:request_oauth_token()
@@ -241,6 +270,15 @@ local function _spawn_reconnect_task(sonos_conn)
       cosock.socket.sleep(backoff())
     end
   end, string.format("%s Reconnect Task", sonos_conn.device.label))
+end
+
+---@param sonos_conn SonosConnection
+local function _spawn_reconnect_task(sonos_conn)
+  if type(api_version) == "number" and api_version >= 14 then
+    _oauth_reconnect_task(sonos_conn)
+  else
+    _legacy_reconnect_task(sonos_conn)
+  end
 end
 
 --- Create a new Sonos connection to manage the given device
@@ -276,15 +314,29 @@ function SonosConnection.new(driver, device)
       local header, body = table.unpack(table.unpack(json_result))
       if header.type == "globalError" then
         if body.errorCode == "ERROR_NOT_AUTHORIZED" then
-          local household_id, player_id = driver.sonos:get_player_for_device(device)
-          device.log.warn(string.format("WebSocket connection no longer authorized, disconnecting"))
-          local _, security_err = driver:request_oauth_token()
-          if security_err then
-            log.warn(string.format("Error during request for oauth token: %s", security_err))
+          if api_version < 14 then
+            log.error(
+              "Unable to authenticate Sonos WebSocket Connection, and current API does not support Sonos OAuth"
+            )
+            self:stop()
+          else
+            local household_id, player_id = driver.sonos:get_player_for_device(device)
+            device.log.warn(
+              string.format("WebSocket connection no longer authorized, disconnecting")
+            )
+            local _, security_err = driver:request_oauth_token()
+            if security_err then
+              log.warn(string.format("Error during request for oauth token: %s", security_err))
+            end
+            -- closing the socket directly without calling `:stop()` triggers the reconnect loop,
+            -- which is where we wait for the token to come in.
+            local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
+            if not unique_key then
+              log.error(string.format("Invalid Sonos Unique Key Part: %s", bad_key_part))
+            else
+              Router.close_socket_for_player(unique_key)
+            end
           end
-          -- closing the socket directly without calling `:stop()` triggers the reconnect loop,
-          -- which is where we wait for the token to come in.
-          Router.close_socket_for_player(utils.sonos_unique_key(household_id, player_id))
         end
       elseif header.type == "groups" then
         log.trace(string.format("Groups type message for %s", device_name))
@@ -292,6 +344,7 @@ function SonosConnection.new(driver, device)
           self.driver.sonos:get_coordinator_for_device(self.device)
         local _, player_id = self.driver.sonos:get_player_for_device(self.device)
         self.driver.sonos:update_household_info(header.householdId, body, self.device)
+        self.driver.sonos:update_device_record_from_state(header.householdId, self.device)
         local _, updated_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
 
         Router.cleanup_unused_sockets(self.driver)
@@ -413,8 +466,11 @@ function SonosConnection.new(driver, device)
             local base_url = lb_utils.force_url_table(
               string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
             )
+            local _, api_key = driver:check_auth(device)
+            local maybe_token = driver:get_oauth_token()
+            local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
             local favorites_response, err, _ =
-              SonosRestApi.get_favorites(base_url, header.householdId)
+              SonosRestApi.get_favorites(base_url, header.householdId, headers)
 
             if err or not favorites_response then
               log.error("Error querying for favorites: " .. err)
@@ -494,15 +550,32 @@ end
 function SonosConnection:self_running()
   local household_id = self.device:get_field(PlayerFields.HOUSEHOLD_ID)
   local player_id = self.device:get_field(PlayerFields.PLAYER_ID)
-  return Router.is_connected(utils.sonos_unique_key(household_id, player_id)) and self._initialized
+  local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
+  if bad_key_part then
+    self.device.log.warn(
+      string.format(
+        "Bad Unique Key Part While Inspecting Connections in 'self_running': %s",
+        bad_key_part
+      )
+    )
+  end
+  return type(unique_key) == "string" and Router.is_connected(unique_key) and self._initialized
 end
 
 --- Whether or not the connection has a live websocket connection to its coordinator
 --- @return boolean
 function SonosConnection:coordinator_running()
   local household_id, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
-  return Router.is_connected(utils.sonos_unique_key(household_id, coordinator_id))
-    and self._initialized
+  local unique_key, bad_key_part = utils.sonos_unique_key(household_id, coordinator_id)
+  if bad_key_part then
+    self.device.log.warn(
+      string.format(
+        "Bad Unique Key Part While Inspecting Connections in 'coordinator_running': %s",
+        bad_key_part
+      )
+    )
+  end
+  return type(unique_key) == "string" and Router.is_connected(unique_key) and self._initialized
 end
 
 function SonosConnection:refresh_subscriptions(maybe_reply_tx)
@@ -516,18 +589,26 @@ end
 
 --- Send a Sonos command object to the player for this connection
 --- @param cmd SonosCommand
-function SonosConnection:send_command(cmd)
+--- @param use_coordinator boolean
+function SonosConnection:send_command(cmd, use_coordinator)
   log.debug("Sending command over websocket channel for device " .. self.device.label)
-  local household_id, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  local household_id, target_id
+  if use_coordinator then
+    household_id, target_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  else
+    household_id, target_id = self.driver.sonos:get_player_for_device(self.device)
+  end
   local json_payload, err = json.encode(cmd)
 
   if err or not json_payload then
     log.error("Json encoding error: " .. err)
   else
-    Router.send_message_to_player(
-      utils.sonos_unique_key(household_id, coordinator_id),
-      json_payload
-    )
+    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, target_id)
+    if not unique_key then
+      self.device.log.error(string.format("Invalid Sonos Unique Key Part: %s", bad_key_part))
+      return
+    end
+    Router.send_message_to_player(unique_key, json_payload)
   end
 end
 
@@ -562,12 +643,17 @@ function SonosConnection:start()
       return false
     end
 
-    local listener_id, register_listener_err =
-      Router.register_listener_for_socket(self, utils.sonos_unique_key(household_id, player_id))
-    if register_listener_err ~= nil or not listener_id then
-      log.error(register_listener_err)
+    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
+    if bad_key_part then
+      self.device.log.error(string.format("Invalid Sonos Unique Key Part: %s", bad_key_part))
     else
-      self._self_listener_uuid = listener_id
+      local listener_id, register_listener_err =
+        Router.register_listener_for_socket(self, unique_key)
+      if register_listener_err ~= nil or not listener_id then
+        log.error(register_listener_err)
+      else
+        self._self_listener_uuid = listener_id
+      end
     end
   end
 
@@ -578,14 +664,37 @@ function SonosConnection:start()
 
   self:refresh_subscriptions()
   local coordinator_id = self.driver.sonos:get_coordinator_for_player(household_id, player_id)
+  local self_unique_key, self_bad_key_part = utils.sonos_unique_key(household_id, player_id)
+  local coordinator_unique_key, coordinator_bad_key_part =
+    utils.sonos_unique_key(household_id, coordinator_id)
   if
-    Router.is_connected(utils.sonos_unique_key(household_id, player_id))
-    and Router.is_connected(utils.sonos_unique_key(household_id, coordinator_id))
+    self_unique_key
+    and Router.is_connected(self_unique_key)
+    and coordinator_unique_key
+    and Router.is_connected(coordinator_unique_key)
   then
     self.device:online()
     self._initialized = true
     self._keepalive = true
     return true
+  end
+
+  if self_bad_key_part then
+    self.device.log.error(
+      string.format(
+        "Invalid Unique Key Part for 'self' Player during connection bring-up: %s",
+        self_bad_key_part
+      )
+    )
+  end
+
+  if coordinator_bad_key_part then
+    self.device.log.error(
+      string.format(
+        "Invalid Unique Key Part for 'coordinator' Player during connection bring-up: %s",
+        coordinator_bad_key_part
+      )
+    )
   end
 
   return false
@@ -601,7 +710,12 @@ function SonosConnection:stop()
   local coordinator_id = self.driver.sonos:get_coordinator_for_group(household_id, group_id)
 
   if player_id ~= coordinator_id then
-    Router.close_socket_for_player(utils.sonos_unique_key(household_id, player_id))
+    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
+    if not unique_key then
+      self.device.log.error(string.format("Invalid Sonos Unique Key Part: %s", bad_key_part))
+      return
+    end
+    Router.close_socket_for_player(unique_key)
   end
 end
 

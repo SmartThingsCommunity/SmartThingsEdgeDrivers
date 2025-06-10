@@ -166,15 +166,6 @@
 --- @alias SonosFavorites { id: string, name: string }[]
 --- @alias DiscoCallback fun(dni: string, ssdp_group_info: SonosSSDPInfo, player_info: SonosDiscoveryInfo, group_info: SonosGroupsResponseBody): boolean?
 
---- @class SonosHousehold
---- Information on an entire Sonos system ("household"), such as its current groups, list of players, etc.
---- @field public id HouseholdId
---- @field public groups table<GroupId,SonosGroupObject> All of the current groups in the system
---- @field public players table<PlayerId,SonosPlayerObject> All of the current players in the system
---- @field public player_to_group table<PlayerId,GroupId> quick lookup from Player ID -> Group ID
---- @field public st_devices table<PlayerId,string> Player ID -> ST Device Record UUID information for the household
---- @field public favorites SonosFavorites all of the favorites/presets in the system
-
 ---@class SonosFieldCacheTable
 ---@field public swGen number
 ---@field public household_id string

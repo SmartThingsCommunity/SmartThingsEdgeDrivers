@@ -11,10 +11,10 @@ local CapCommandHandlers = {}
 
 local QUEUE_ACTION_PREF = "queueAction"
 
-local function _do_send(device, payload)
+local function _do_send(device, payload, use_coordinator)
   local conn = device:get_field(PlayerFields.CONNECTION)
   if conn and conn:is_running() then
-    conn:send_command(payload)
+    conn:send_command(payload, use_coordinator)
   else
     log.warn("No sonos connection for handling capability command")
   end
@@ -33,7 +33,7 @@ local function _do_send_to_group(driver, device, payload)
     payload[1].authorization = string.format("Bearer %s", maybe_token.accessToken)
   end
 
-  _do_send(device, payload)
+  _do_send(device, payload, true)
 end
 
 local function _do_send_to_self(driver, device, payload)
@@ -48,7 +48,7 @@ local function _do_send_to_self(driver, device, payload)
   if maybe_token then
     payload[1].authorization = string.format("Bearer %s", maybe_token.accessToken)
   end
-  _do_send(device, payload)
+  _do_send(device, payload, false)
 end
 
 function CapCommandHandlers.handle_play(driver, device, _cmd)
