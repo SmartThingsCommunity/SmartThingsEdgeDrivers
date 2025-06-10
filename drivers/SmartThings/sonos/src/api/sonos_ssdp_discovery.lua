@@ -99,7 +99,6 @@ local function make_persistent_task_impl(
           interval_timer:handled()
           ssdp_search_handle:multicast_m_search()
         elseif receiver == control_rx then
-          ---@type ControlMessage?,string?
           local recv, recv_err = receiver:receive()
           if not recv then
             log.warn(string.format("control channel receive error: %s", recv_err))

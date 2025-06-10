@@ -78,7 +78,11 @@ local _update_subscriptions_helper = function(
     local unique_key, bad_key_part = utils.sonos_unique_key(householdId, playerId)
     if not unique_key then
       local err_msg = string.format("Invalid Sonos Unique Key Part: %s", bad_key_part)
-      reply_tx:send(table.pack(nil, err_msg))
+      if reply_tx then
+        reply_tx:send(table.pack(nil, err_msg))
+      else
+        log.warn(string.format("Update Subscriptions Error: %s", err_msg))
+      end
       return
     end
     Router.send_message_to_player(unique_key, payload, reply_tx)
@@ -462,8 +466,11 @@ function SonosConnection.new(driver, device)
             local base_url = lb_utils.force_url_table(
               string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
             )
+            local _, api_key = driver:check_auth(device)
+            local maybe_token = driver:get_oauth_token()
+            local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
             local favorites_response, err, _ =
-              SonosRestApi.get_favorites(base_url, header.householdId)
+              SonosRestApi.get_favorites(base_url, header.householdId, headers)
 
             if err or not favorites_response then
               log.error("Error querying for favorites: " .. err)
@@ -582,15 +589,21 @@ end
 
 --- Send a Sonos command object to the player for this connection
 --- @param cmd SonosCommand
-function SonosConnection:send_command(cmd)
+--- @param use_coordinator boolean
+function SonosConnection:send_command(cmd, use_coordinator)
   log.debug("Sending command over websocket channel for device " .. self.device.label)
-  local household_id, coordinator_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  local household_id, target_id
+  if use_coordinator then
+    household_id, target_id = self.driver.sonos:get_coordinator_for_device(self.device)
+  else
+    household_id, target_id = self.driver.sonos:get_player_for_device(self.device)
+  end
   local json_payload, err = json.encode(cmd)
 
   if err or not json_payload then
     log.error("Json encoding error: " .. err)
   else
-    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, coordinator_id)
+    local unique_key, bad_key_part = utils.sonos_unique_key(household_id, target_id)
     if not unique_key then
       self.device.log.error(string.format("Invalid Sonos Unique Key Part: %s", bad_key_part))
       return
