@@ -15,12 +15,12 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
+local version = require "version"
 
 local EXTRACTOR_HOOD_DEVICE_TYPE_ID = 0x007A
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID = 0x0103
 
-local version = require "version"
 if version.api < 10 then
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
   clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
@@ -48,6 +48,17 @@ local function get_endpoints_for_dt(device, device_type)
   return endpoints
 end
 
+local find_default_endpoint = function(device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == EXTRACTOR_HOOD_DEVICE_TYPE_ID then
+        return ep.endpoint_id
+      end
+    end
+  end
+  return device.MATTER_DEFAULT_ENDPOINT
+end
+
 local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
@@ -63,7 +74,7 @@ local function component_to_endpoint(device, component)
   if map[component] then
     return map[component]
   end
-  return device.MATTER_DEFAULT_ENDPOINT
+  return find_default_endpoint(device)
 end
 
 local function device_init(driver, device)

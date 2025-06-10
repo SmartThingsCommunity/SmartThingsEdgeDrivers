@@ -21,7 +21,7 @@ clusters.OperationalState = require "OperationalState"
 clusters.MicrowaveOvenControl = require "MicrowaveOvenControl"
 clusters.MicrowaveOvenMode = require "MicrowaveOvenMode"
 
-local APPLICATION_ENDPOINT = 1
+local APPLICATION_ENDPOINT = 200
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("microwave-oven.yml"),
@@ -40,7 +40,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-      endpoint_id = 1,
+      endpoint_id = APPLICATION_ENDPOINT,
       clusters = {
         { cluster_id = clusters.OperationalState.ID,     cluster_type = "SERVER" },
         { cluster_id = clusters.MicrowaveOvenControl.ID, cluster_type = "SERVER" },
