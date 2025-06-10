@@ -9,6 +9,8 @@ components:
     version: 1
   - id: windMode
     version: 1
+  - id: airQualityHealthConcern
+    version: 1
   - id: fineDustSensor
     version: 1
   - id: fineDustHealthConcern
