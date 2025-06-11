@@ -28,7 +28,8 @@ local StateMachineEnum = {
 }
 
 local SUB_WINDOW_COVERING_VID_PID = {
-  {0x10e1, 0x1005} -- VDA
+  {0x10e1, 0x1005}, -- VDA
+  {0x130a, 0x0055}  -- Eve MotionBlinds
 }
 
 local function is_matter_window_covering_position_updates_while_moving(opts, driver, device)
@@ -65,7 +66,7 @@ local function current_pos_handler(driver, device, ib, response)
     )
   end
   local state_machine = device:get_field(STATE_MACHINE)
-  -- When stat_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
+  -- When state_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_MOVING then
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
   elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED or state_machine == nil then
@@ -89,18 +90,17 @@ local function current_status_handler(driver, device, ib, response)
                      "main", capabilities.windowShadeLevel.ID,
                        capabilities.windowShadeLevel.shadeLevel.NAME
                    ) or DEFAULT_LEVEL
-  position = reverse_polarity_if_needed(device, position)
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
-       rb.info_block.cluster_id == clusters.WindowCovering.ID and
-       rb.info_block.data ~= nil and
-       rb.info_block.data.value ~= nil then
+      rb.info_block.cluster_id == clusters.WindowCovering.ID and
+      rb.info_block.data ~= nil and
+      rb.info_block.data.value ~= nil then
       position = reverse_polarity_if_needed(device, math.floor((rb.info_block.data.value / 100)))
     end
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
   local state_machine = device:get_field(STATE_MACHINE)
-  -- When stat_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
+  -- When state_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_IDLE then
     if state == 1 then -- opening
       device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
