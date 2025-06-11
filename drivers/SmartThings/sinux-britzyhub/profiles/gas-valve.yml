@@ -1,0 +1,8 @@
+name: gas-valve
+components:
+  - id: main
+    capabilities:
+      - id: valve
+        version: 1
+    categories:
+      - name: GasValve
