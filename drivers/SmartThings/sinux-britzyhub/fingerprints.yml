@@ -12,25 +12,25 @@ matterGeneric:
   - id: "elevator-call-up"
     deviceLabel: 상행 엘리베이터 호출
     deviceTypes:
-      - id: 0x0103 # On Off Switch
+      - id: 0xFF02 # On Off Switch
     deviceProfileName: elevator
   - id: "elevator-call-down"
     deviceLabel: 하행 엘리베이터 호출
     deviceTypes:
-      - id: 0x0103 # On Off Switch
+      - id: 0xFF02 # On Off Switch
     deviceProfileName: elevator
   - id: "elevator-call"
     deviceLabel: 엘리베이터 호출
     deviceTypes:
-      - id: 0x0103 # On Off Switch
+      - id: 0xFF02 # On Off Switch
     deviceProfileName: elevator
   - id: "gas-valve"
     deviceLabel: 가스밸브
     deviceTypes:
-      - id: 0x0303 # Pump
+      - id: 0xFF01 # GasValve
     deviceProfileName: gas-valve
   - id: "ventilator"
     deviceLabel: 전열교환기
     deviceTypes:
-      - id: 0x002D # Air Purifier
+      - id: 0xFF03 # Air Purifier
     deviceProfileName: ventilator
