@@ -13,12 +13,19 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+test.set_rpc_version(5)
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local version = require "version"
 
-clusters.OvenMode = require "OvenMode"
-clusters.TemperatureControl = require "TemperatureControl"
+if version.api < 10 then
+  clusters.TemperatureControl = require "TemperatureControl"
+end
+
+if version.api < 12 then
+  clusters.OvenMode = require "OvenMode"
+end
 
 local dishwasher_ep = 1
 local washer_ep = 1
@@ -285,7 +292,6 @@ local function test_init_dishwasher()
   test.socket.matter:__expect_send({ mock_device_dishwasher.id, subscribe_request })
   test.mock_device.add_test_device(mock_device_dishwasher)
   test.socket.device_lifecycle:__queue_receive({ mock_device_dishwasher.id, "added" })
-  test.set_rpc_version(5)
 end
 
 local function test_init_washer_dryer()

@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local log = require "log"
 local utils = require "st.utils"
@@ -42,9 +43,7 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Resume.ID] = "resume",
 }
 
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local LAUNDRY_DEVICE_TYPE_ID= "__laundry_device_type_id"
-local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
 local SUPPORTED_LAUNDRY_WASHER_MODES = "__supported_laundry_washer_modes"
 local SUPPORTED_LAUNDRY_WASHER_SPIN_SPEEDS = "__supported_laundry_spin_speeds"
 local SUPPORTED_LAUNDRY_WASHER_RINSES = "__supported_laundry_washer_rinses"
@@ -65,29 +64,6 @@ local LAUNDRYWASHER_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 13.0
 local LAUNDRYDRYER_MAX_TEMP_IN_C = version.rpc >= 6 and 100.0 or 80.0
 local LAUNDRYDRYER_MIN_TEMP_IN_C = version.rpc >= 6 and 0.0 or 27.0
 
-local setpoint_limit_device_field = {
-  MIN_TEMP = "MIN_TEMP",
-  MAX_TEMP = "MAX_TEMP",
-}
-
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return device.MATTER_DEFAULT_ENDPOINT
-end
-
 local function is_matter_laundry_device(opts, driver, device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
@@ -101,50 +77,28 @@ local function is_matter_laundry_device(opts, driver, device)
 end
 
 -- Lifecycle Handlers --
-local function device_init(driver, device)
-  device:subscribe()
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
+local function do_configure(driver, device)
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
+  local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
+  local device_type = is_matter_laundry_device({}, driver, device)
+  local profile_name = "laundry"
+  if (device_type == LAUNDRY_WASHER_DEVICE_TYPE_ID) then
+    profile_name = profile_name.."-washer"
+  else
+    profile_name = profile_name.."-dryer"
+  end
+  if #tn_eps > 0 then
+    profile_name = profile_name .. "-tn"
+    common_utils.query_setpoint_limits(device)
+  end
+  if #tl_eps > 0 then
+    profile_name = profile_name .. "-tl"
+  end
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
 end
 
 -- Matter Handlers --
-local function selected_temperature_level_attr_handler(driver, device, ib, response)
-  local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
-  if #tl_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
-    return
-  end
-  device.log.info_with({ hub_logs = true },
-    string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
-
-  local supportedTemperatureLevels = device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
-  local temperatureLevel = ib.data.value
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
-    if i - 1 == temperatureLevel then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
-      break
-    end
-  end
-end
-
-local function supported_temperature_levels_attr_handler(driver, device, ib, response)
-  local tl_eps = embedded_cluster_utils.get_endpoints(device,clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
-  if #tl_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
-    return
-  end
-  device.log.info_with({ hub_logs = true },
-    string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
-
-  local supportedTemperatureLevels = {}
-  for _, tempLevel in ipairs(ib.data.elements) do
-    table.insert(supportedTemperatureLevels, tempLevel.value)
-  end
-  device:set_field(SUPPORTED_TEMPERATURE_LEVELS, supportedTemperatureLevels, {persist = true})
-  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
-end
-
 local function temperature_setpoint_attr_handler(driver, device, ib, response)
   local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID,
     { feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER })
@@ -154,8 +108,8 @@ local function temperature_setpoint_attr_handler(driver, device, ib, response)
   end
   device.log.info(string.format("temperature_setpoint_attr_handler: %d", ib.data.value))
 
-  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
-  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
+  local min_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MIN_TEMP, ib.endpoint_id)
+  local max_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MAX_TEMP, ib.endpoint_id)
   local min, max
   local laundry_device_type = device:get_field(LAUNDRY_DEVICE_TYPE_ID)
   if laundry_device_type == LAUNDRY_DRYER_DEVICE_TYPE_ID then
@@ -359,20 +313,6 @@ local function handle_laundry_washer_mode(driver, device, cmd)
   end
 end
 
-local function handle_temperature_level(driver, device, cmd)
-  device.log.info_with({ hub_logs = true },
-    string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
-
-  local endpoint_id = device:component_to_endpoint(cmd.component)
-  local supportedTemperatureLevels = device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
-    if cmd.args.temperatureLevel == tempLevel then
-      device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, nil, i - 1))
-      return
-    end
-  end
-end
-
 local function handle_laundry_washer_spin_speed(driver, device, cmd)
   device.log.info_with({ hub_logs = true },
     string.format("handle_laundry_washer_spin_speed spinSpeed: %s", cmd.args.spinSpeed))
@@ -415,9 +355,9 @@ local function handle_temperature_setpoint(driver, device, cmd)
     capabilities.temperatureSetpoint.temperatureSetpoint.NAME,
     0, { value = 0, unit = "C" }
   )
-  local ep = component_to_endpoint(device, cmd.component)
-  local min_field = string.format("%s-%d", setpoint_limit_device_field.MIN_TEMP, ep)
-  local max_field = string.format("%s-%d", setpoint_limit_device_field.MAX_TEMP, ep)
+  local ep = device:component_to_endpoint(cmd.component)
+  local min_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MIN_TEMP, ep)
+  local max_field = string.format("%s-%d", common_utils.setpoint_limit_device_field.MAX_TEMP, ep)
   local min, max
   local max_temp_in_c
   local laundry_device_type = device:get_field(LAUNDRY_DEVICE_TYPE_ID)
@@ -446,7 +386,7 @@ local function handle_temperature_setpoint(driver, device, cmd)
     return
   end
 
-  ep = component_to_endpoint(device, cmd.component)
+  ep = device:component_to_endpoint(cmd.component)
   device:send(clusters.TemperatureControl.commands.SetTemperature(device, ep, utils.round(value * 100), nil))
 end
 
@@ -481,16 +421,14 @@ end
 local matter_laundry_handler = {
   NAME = "matter-laundry",
   lifecycle_handlers = {
-    init = device_init,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
       [clusters.TemperatureControl.ID] = {
-        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
-        [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
         [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
-        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MIN_TEMP),
-        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(setpoint_limit_device_field.MAX_TEMP),
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MAX_TEMP),
       },
       [clusters.LaundryWasherMode.ID] = {
         [clusters.LaundryWasherMode.attributes.SupportedModes.ID] = laundry_washer_supported_modes_attr_handler,
@@ -512,9 +450,6 @@ local matter_laundry_handler = {
   capability_handlers = {
     [capabilities.mode.ID] = {
       [capabilities.mode.commands.setMode.NAME] = handle_laundry_washer_mode,
-    },
-    [capabilities.temperatureLevel.ID] = {
-      [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level,
     },
     [capabilities.temperatureSetpoint.ID] = {
       [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint,

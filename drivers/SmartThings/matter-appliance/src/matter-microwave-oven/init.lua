@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
 local log = require "log"
 local version = require "version"
 
@@ -39,6 +40,7 @@ local DEFAULT_COOKING_TIME = 30
 local MICROWAVE_OVEN_SUPPORTED_MODES_KEY = "__microwave_oven_supported_modes__"
 
 local function device_init(driver, device)
+  common_utils.check_field_name_updates(device)
   device:subscribe()
   device:send(clusters.MicrowaveOvenControl.attributes.MaxCookTime:read(device, device.MATTER_DEFAULT_ENDPOINT))
 end
