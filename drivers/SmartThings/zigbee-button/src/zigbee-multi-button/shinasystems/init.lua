@@ -17,14 +17,15 @@ local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local PowerConfiguration = clusters.PowerConfiguration
 local OnOff = clusters.OnOff
+local device_management = require "st.zigbee.device_management"
 local Groups = clusters.Groups
 
 local SHINASYSTEM_BUTTON_FINGERPRINTS = {
-  { mfr = "ShinaSystem", model = "MSM-300Z" },
-  { mfr = "ShinaSystem", model = "BSM-300Z" },
-  { mfr = "ShinaSystem", model = "SBM300ZB1" },
-  { mfr = "ShinaSystem", model = "SBM300ZB2" },
-  { mfr = "ShinaSystem", model = "SBM300ZB3" },
+  { mfr = "ShinaSystem", model = "MSM-300Z", endpoint_num = 0x04 },
+  { mfr = "ShinaSystem", model = "BSM-300Z", endpoint_num = 0x01 },
+  { mfr = "ShinaSystem", model = "SBM300ZB1", endpoint_num = 0x01 },
+  { mfr = "ShinaSystem", model = "SBM300ZB2", endpoint_num = 0x02 },
+  { mfr = "ShinaSystem", model = "SBM300ZB3", endpoint_num = 0x03 },
 }
 
 local is_shinasystem_button = function(opts, driver, device)
@@ -34,6 +35,14 @@ local is_shinasystem_button = function(opts, driver, device)
     end
   end
   return false
+end
+
+local function get_ep_num_shinasystem_button(device)
+  for _, fingerprint in ipairs(SHINASYSTEM_BUTTON_FINGERPRINTS) do
+    if device:get_model() == fingerprint.model then
+      return fingerprint.endpoint_num
+    end
+  end
 end
 
 local function build_button_handler(pressed_type)
@@ -56,6 +65,9 @@ end
 local do_configure = function(self, device)
   device:configure()
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+  for endpoint = 1, get_ep_num_shinasystem_button(device) do
+      device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui, endpoint))
+  end
   self:add_hub_to_zigbee_group(0x0000)
   device:send(Groups.commands.AddGroup(device, 0x0000))
 end
