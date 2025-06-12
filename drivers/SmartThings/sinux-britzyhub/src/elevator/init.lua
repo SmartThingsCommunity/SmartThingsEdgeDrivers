@@ -34,6 +34,16 @@ local function handle_elevator_call(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.OnOff.server.commands.On(device, endpoint_id)
   device:send(req)
+
+  -- 3초 후 called 상태로 전환
+  driver:call_with_delay(3, function()
+    device:emit_event_for_endpoint(endpoint_id, capabilities.elevatorCall.callStatus.called())
+
+    -- 10초 후 standby 상태로 자동 초기화
+    driver:call_with_delay(10, function()
+      device:emit_event_for_endpoint(endpoint_id, capabilities.elevatorCall.callStatus.standby())
+    end)
+  end)
 end
 
 local function find_default_endpoint(device, cluster)
