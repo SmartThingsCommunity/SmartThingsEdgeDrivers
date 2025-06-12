@@ -148,6 +148,11 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1288
     deviceProfileName: matter-bridge
+  - id: "5127/5000"
+    deviceLabel: Smart Mechanical Keyboard MK1
+    vendorId: 0x1407
+    productId: 0x1388
+    deviceProfileName: 12-button-keyboard
 
 #ELEGRP
   - id: "5158/3"
