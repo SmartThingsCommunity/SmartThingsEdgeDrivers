@@ -205,7 +205,7 @@ matterGeneric:
       - id: 0x0106 # Light Sensor
       - id: 0x0302 # Temperature Sensor
     deviceProfileName: motion-illuminance-temperature-battery
-  - id: "matter/motion-illuminance-temp-humidity"
+  - id: "matter/motion-illum-temp-humidity"
     deviceLabel: Matter Motion/Illuminance Sensor
     deviceTypes:
       - id: 0x0107 # Occupancy Sensor
