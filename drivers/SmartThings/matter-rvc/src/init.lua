@@ -595,7 +595,7 @@ local function handle_robot_cleaner_operating_state_start(driver, device, cmd)
   local cap_op_cmds = capabilities.robotCleanerOperatingState.commands
   if can_send_state_command(device, cap_op_cmds.start.NAME, current_state, current_tag) == true then
     device:send(clusters.RvcOperationalState.commands.Resume(device, endpoint_id))
-  elseif can_send_state_command(device, capabilities.mode.commands.setMode.NAME, current_tag, current_state) == true then
+  elseif can_send_state_command(device, capabilities.mode.commands.setMode.NAME, current_state, current_tag) == true then
     for _, mode in ipairs(supported_run_modes) do
       endpoint_id = device:component_to_endpoint("runMode")
       if mode.tag == clusters.RvcRunMode.types.ModeTag.CLEANING then
