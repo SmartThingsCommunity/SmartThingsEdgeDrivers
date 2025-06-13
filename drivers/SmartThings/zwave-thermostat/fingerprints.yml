@@ -86,6 +86,12 @@ zwaveManufacturer:
     manufacturerId: 0x0002
     productType: 0x0005
     deviceProfileName: thermostat-heating-battery
+  - id: "015F/7101/F502"
+    deviceLabel: Thermostat
+    manufacturerId: 0x015F
+    productId: 0x7101
+    productType: 0xF502
+    deviceProfileName: base-thermostat
 zwaveGeneric:
   - id: "GenericBatteryThermostat"
     deviceLabel: Z-Wave Battery Thermostat
