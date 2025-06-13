@@ -117,13 +117,15 @@ local function supports_rvc_operational_state(device, command_name)
 end
 
 local function can_send_state_command(device, command_name, current_state, current_tag)
+  device.log.info(string.format("can_send_state_command: %s, %s, %s", command_name, current_state, current_tag))
   if current_state == "Error" then
     return false
   end
 
+  local set_mode = capabilities.mode.commands.setMode.NAME
   local cap_op_cmds = capabilities.robotCleanerOperatingState.commands
   local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
-  if supports_rvc_operational_state(device, command_name) == false then
+  if command_name ~= set_mode and supports_rvc_operational_state(device, command_name) == false then
     return false
   end
 
@@ -149,20 +151,12 @@ local function can_send_state_command(device, command_name, current_state, curre
         return true
       end
     end
-  end
-  return false
-end
-
-local function can_send_change_to_idle_mode_cmd(device, current_tag, current_state)
-  device.log.info("can_send_change_to_idle_mode_cmd")
-  if current_state == "Error" then
-    return false
-  end
-  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
-  if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE then
-    if current_state == cap_op_enum.stopped.NAME or current_state == cap_op_enum.paused.NAME or
-       current_state == cap_op_enum.docked.NAME or current_state == cap_op_enum.charging.NAME then
-        return true
+  elseif command_name == set_mode then
+    if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE then
+      if current_state == cap_op_enum.stopped.NAME or current_state == cap_op_enum.paused.NAME or
+         current_state == cap_op_enum.docked.NAME or current_state == cap_op_enum.charging.NAME then
+          return true
+      end
     end
   end
   return false
@@ -216,7 +210,7 @@ local function update_supported_arguments(device, current_run_mode, current_stat
   if can_send_state_command(device, cap_op_cmds.pause.NAME, current_state, current_tag) == true then
     table.insert(supported_op_commands, cap_op_cmds.pause.NAME)
   elseif can_send_state_command(device, cap_op_cmds.start.NAME, current_state, current_tag) == true or
-         can_send_change_to_idle_mode_cmd(device, current_tag, current_state) == true then
+         can_send_state_command(device, capabilities.mode.commands.setMode.NAME, current_state, current_tag) == true then
     table.insert(supported_op_commands, cap_op_cmds.start.NAME)
   end
   local event = capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
@@ -481,7 +475,7 @@ local function handle_rvc_operational_state_accepted_command_list(driver, device
   if can_send_state_command(device, cap_op_cmds.pause.NAME, current_state, current_tag) == true then
     table.insert(supported_op_commands, cap_op_cmds.pause.NAME)
   elseif can_send_state_command(device, cap_op_cmds.start.NAME, current_state, current_tag) == true or
-         can_send_change_to_idle_mode_cmd(device, current_tag, current_state) == true then
+         can_send_state_command(device, capabilities.mode.commands.setMode.NAME, current_state, current_tag) == true then
     table.insert(supported_op_commands, cap_op_cmds.start.NAME)
   end
   local event = capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
@@ -513,7 +507,7 @@ local function rvc_service_area_supported_areas_handler(driver, device, ib, resp
     local location_info = area.elements.area_info.elements.location_info.elements
     local landmark_info = area.elements.area_info.elements.landmark_info.elements
     local area_name = ""
-    -- set the area name based on available location information
+    -- Set the area name based on available location information
     if location_info ~= nil then
       if location_info.location_name.value ~= "" then
         area_name = location_info.location_name.value
@@ -537,7 +531,7 @@ local function rvc_service_area_supported_areas_handler(driver, device, ib, resp
   device:emit_component_event(component, event)
 end
 
--- in case selected area is not in supportedarea then should i add to supported area or remove from selectedarea
+-- In case selected area is not in supportedarea then should i add to supported area or remove from selectedarea
 local function rvc_service_area_selected_areas_handler(driver, device, ib, response)
   local selected_areas = {}
   for i, areaId in ipairs(ib.data.elements) do
@@ -601,7 +595,7 @@ local function handle_robot_cleaner_operating_state_start(driver, device, cmd)
   local cap_op_cmds = capabilities.robotCleanerOperatingState.commands
   if can_send_state_command(device, cap_op_cmds.start.NAME, current_state, current_tag) == true then
     device:send(clusters.RvcOperationalState.commands.Resume(device, endpoint_id))
-  elseif can_send_change_to_idle_mode_cmd(device, current_tag, current_state) == true then
+  elseif can_send_state_command(device, capabilities.mode.commands.setMode.NAME, current_tag, current_state) == true then
     for _, mode in ipairs(supported_run_modes) do
       endpoint_id = device:component_to_endpoint("runMode")
       if mode.tag == clusters.RvcRunMode.types.ModeTag.CLEANING then
