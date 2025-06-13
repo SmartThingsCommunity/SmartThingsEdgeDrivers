@@ -34,6 +34,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2801}, -- AQARA, U300
   {0x147F, 0x0001}, -- U-tec
   {0x144F, 0x4002}, -- Yale, Linus Smart Lock L2
+  {0x101D, 0x8110}, -- Yale, New Lock
   {0x1533, 0x0001}, -- eufy, E31
   {0x1533, 0x0002}, -- eufy, E30
   {0x1533, 0x0003}, -- eufy, C34
@@ -265,6 +266,7 @@ local function operating_modes_handler(driver, device, ib, response)
     device:emit_event(capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
   end
 end
+
 -------------------------------------
 -- Number Of Total Users Supported --
 -------------------------------------
@@ -1356,6 +1358,7 @@ local function set_credential_response_handler(driver, device, ib, response)
     credData = device:get_field(lock_utils.COTA_CRED)
   end
   local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local userType = device:get_field(lock_utils.USER_TYPE)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
   local status = "success"
   local elements = ib.info_block.data.elements
@@ -1368,7 +1371,6 @@ local function set_credential_response_handler(driver, device, ib, response)
 
     -- If user is added also, update User table
     if userIdx == nil then
-      local userType = device:get_field(lock_utils.USER_TYPE)
       add_user_to_table(device, elements.user_index.value, userType)
     end
 
@@ -1393,7 +1395,32 @@ local function set_credential_response_handler(driver, device, ib, response)
       }
     )
     device:emit_event(event)
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+
+    -- If User Type is Guest and device support schedule, add default schedule
+    local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
+    local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
+    if userType == "guest" and (#week_schedule_eps > 0 or #year_schedule_eps > 0) then
+      local cmdName = "defaultSchedule"
+      local scheduleIdx = 1
+
+      -- Save values to field
+      device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+      device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+      device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
+
+      local ep = device:component_to_endpoint("main")
+      device:send(
+        DoorLock.server.commands.SetYearDaySchedule(
+          device, ep,
+          scheduleIdx,
+          userIdx,
+          0, -- Min Uint32
+          0xFFFFFFFF -- MAX Uint32
+        )
+      )
+    else
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    end
     return
   end
 
@@ -1789,11 +1816,13 @@ end
 ---------------------------
 -- Set Year Day Schedule --
 ---------------------------
+local MIN_EPOCH_S = 0
+local MAX_EPOCH_S = 0xffffffff
+local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
+-- This type represents an offset, in seconds, from 0 hours, 0 minutes, 0 seconds, on the 1st of January, 2000 UTC
 local function iso8601_to_epoch(iso_str)
   local pattern = "^(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)"
   local year, month, day, hour, min, sec = iso_str:match(pattern)
-  local tz_sign, tz_hour, tz_min = iso_str:match("([%+%-])(%d+):(%d+)")
-  local is_utc_z = iso_str:match("Z$")
   if not year then
       return nil
   end
@@ -1805,18 +1834,16 @@ local function iso8601_to_epoch(iso_str)
       min = tonumber(min),
       sec = tonumber(sec),
   })
-  if is_utc_z then
-      return utc_time
-  elseif tz_sign and tz_hour and tz_min then
-      local offset_sec = tonumber(tz_hour) * 3600 + tonumber(tz_min) * 60
-      if tz_sign == "+" then
-          utc_time = utc_time - offset_sec
-      else
-          utc_time = utc_time + offset_sec
-      end
-      return utc_time
+
+  -- The os.time() is based on 1970. Thirty years must be subtracted for calculations from 2000.
+  utc_time = utc_time - THIRTY_YEARS_S
+
+  if utc_time < MIN_EPOCH_S then
+    return MIN_EPOCH_S
+  elseif utc_time > MAX_EPOCH_S then
+    return MAX_EPOCH_S
   else
-      return utc_time
+    return utc_time
   end
 end
 
@@ -1858,10 +1885,10 @@ local function handle_set_year_day_schedule(driver, device, command)
   device:send(
     DoorLock.server.commands.SetYearDaySchedule(
       device, ep,
-      scheduleIdx,    -- Year Day Schedule Index
-      userIdx,        -- User Index
-      iso8601_to_epoch(localStartTime), -- Days Mask
-      iso8601_to_epoch(localEndTime)    -- Start Hour
+      scheduleIdx,
+      userIdx,
+      iso8601_to_epoch(localStartTime),
+      iso8601_to_epoch(localEndTime)
     )
   )
 end
@@ -1883,11 +1910,18 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
     status = "invalidCommand"
   end
 
-  -- Add Year Day Schedule to table
+  if cmdName == "defaultSchedule" then
+    return
+  end
+
   if status == "success" then
-    add_year_schedule_to_table(device, userIdx, scheduleIdx, localStartTime, localEndTime)
+    if cmdName == "setYearDaySchedule" then
+      add_year_schedule_to_table(device, userIdx, scheduleIdx, localStartTime, localEndTime)
+    elseif cmdName == "clearYearDaySchedules" then
+      delete_year_schedule_from_table(device, userIdx, scheduleIdx)
+    end
   else
-    device.log.warn(string.format("Failed to set year day schedule: %s", status))
+    device.log.warn(string.format("Failed to set/clear year day schedule: %s", status))
   end
 
   -- Update commandResult
@@ -1941,48 +1975,18 @@ local function handle_clear_year_day_schedule(driver, device, command)
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
 
   -- Send command
+  -- In SmartThings, Schedule Restrict User is basically allowed to access always.
+  -- So, if user delete the year day schedule, enter an infinitely long schedule.
   local ep = device:component_to_endpoint(command.component)
-  device:send(DoorLock.server.commands.ClearYearDaySchedule(device, ep, scheduleIdx, userIdx))
-end
-
-------------------------------------
--- Clear Year Day Schedule Response --
-------------------------------------
-local function clear_year_day_schedule_handler(driver, device, ib, response)
-  -- Get result
-  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  local scheduleIdx = device:get_field(lock_utils.SCHEDULE_INDEX)
-  local userIdx = device:get_field(lock_utils.USER_INDEX)
-  local status = "success"
-  if ib.status == DoorLock.types.DlStatus.FAILURE then
-    status = "failure"
-  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
-    status = "invalidCommand"
-  end
-
-  -- Delete Year Day Schedule to table
-  if status == "success" then
-    delete_year_schedule_from_table(device, userIdx, scheduleIdx)
-  else
-    device.log.warn(string.format("Failed to clear year day schedule: %s", status))
-  end
-
-  -- Update commandResult
-  local result = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    scheduleIndex = scheduleIdx,
-    statusCode = status
-  }
-  local event = capabilities.lockSchedules.commandResult(
-    result,
-    {
-      state_change = true,
-      visibility = {displayed = false}
-    }
+  device:send(
+    DoorLock.server.commands.SetYearDaySchedule(
+      device, ep,
+      scheduleIdx,
+      userIdx,
+      MIN_EPOCH_S,
+      MAX_EPOCH_S
+    )
   )
-  device:emit_event(event)
-  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
 ----------------
@@ -2113,7 +2117,6 @@ local new_matter_lock_handler = {
         [DoorLock.server.commands.SetWeekDaySchedule.ID] = set_week_day_schedule_handler,
         [DoorLock.server.commands.ClearWeekDaySchedule.ID] = clear_week_day_schedule_handler,
         [DoorLock.server.commands.SetYearDaySchedule.ID] = set_year_day_schedule_handler,
-        [DoorLock.server.commands.ClearYearDaySchedule.ID] = clear_year_day_schedule_handler,
       },
     },
   },
