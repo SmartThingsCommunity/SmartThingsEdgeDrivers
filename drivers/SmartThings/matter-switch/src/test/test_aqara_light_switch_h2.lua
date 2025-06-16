@@ -178,7 +178,7 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  aqara_mock_children[aqara_child1_ep]:set_field("__POWER_CONSUMPTION_REPORT_SUPPORTED", true, {persist = true}) -- assume this was set in added 
+  aqara_mock_children[aqara_child1_ep]:set_field("__POWER_CONSUMPTION_REPORT_SUPPORTED", true, {persist = true}) -- assume this was set in added
   aqara_mock_device:set_field("__ELECTRICAL_TOPOLOGY", {topology = clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, tags_on_ep = {[1] = "-power-energy-powerConsumption"}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
   test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
