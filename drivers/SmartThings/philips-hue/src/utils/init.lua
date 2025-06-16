@@ -368,7 +368,7 @@ function utils.get_hue_bridge_for_device(driver, device, parent_device_id, quiet
     return parent_device --[[ @as HueBridgeDevice ]]
   end
 
-  return utils.get_hue_bridge_for_device(driver, parent_device, quiet)
+  return utils.get_hue_bridge_for_device(driver, parent_device, nil, quiet)
 end
 
 --- build a exponential backoff time value generator
