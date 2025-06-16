@@ -355,7 +355,7 @@ function _ssdp_mt:setwaker(kind, waker)
 
   assert(
     self.waker_ref == nil or waker == nil,
-    "Waker already set, cannot await SSDP serach instance from multiple locations."
+    "Waker already set, cannot await SSDP search instance from multiple locations."
   )
 
   self.waker_ref = waker

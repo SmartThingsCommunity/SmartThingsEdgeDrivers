@@ -1799,7 +1799,7 @@ test.register_coroutine_test(
             userIndex=1,
             schedules={{
               scheduleIndex=1,
-              weekdays={"Monday"},
+              weekDays={"Monday"},
               startHour=12,
               startMinute=30,
               endHour=17,

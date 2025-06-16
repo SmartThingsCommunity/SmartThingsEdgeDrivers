@@ -1,3 +1,4 @@
+local api_version = require "version".api
 local capabilities = require "st.capabilities"
 local cosock = require "cosock"
 local json = require "st.json"
@@ -93,11 +94,15 @@ end
 
 ---@return boolean
 function SonosDriver:is_waiting_for_oauth_token()
-  return self.waiting_for_oauth_token
+  return (api_version >= 14) and self.waiting_for_oauth_token
 end
 
 ---@return (cosock.Bus.Subscription)? receiver the subscription receiver if the bus hasn't been closed, nil if closed
+---@return nil|"not supported"|"closed" err_msg "not supported" on old API versions, "closed" if the bus is closed, nil on success
 function SonosDriver:oauth_token_event_subscribe()
+  if api_version < 14 then
+    return nil, "not supported"
+  end
   return self.oauth_token_bus:subscribe()
 end
 
@@ -194,11 +199,15 @@ function SonosDriver:handle_startup_state_received()
 end
 
 function SonosDriver:get_fallback_api_key()
-  if self.oauth and self.oauth.force_oauth then
-    return SonosApi.api_keys.oauth_key
-  else
+  if api_version < 14 then
     return SonosApi.api_keys.s1_key
   end
+
+  if self.oauth and self.oauth.force_oauth then
+    return SonosApi.api_keys.oauth_key
+  end
+
+  return SonosApi.api_keys.s1_key
 end
 
 --- Check if the driver is able to authenticate against the given household_id
@@ -209,7 +218,8 @@ end
 function SonosDriver:check_auth(info_or_device)
   local maybe_token, _ = self:get_oauth_token()
 
-  local token_valid = self.oauth
+  local token_valid = (api_version >= 14)
+    and self.oauth
     and self.oauth.endpoint_app_info
     and self.oauth.endpoint_app_info.state == "connected"
     and maybe_token ~= nil
@@ -278,6 +288,9 @@ end
 ---@return any? ret nil on permissions violation
 ---@return string? error nil on success
 function SonosDriver:request_oauth_token()
+  if api_version < 14 then
+    return nil, "not supported"
+  end
   local maybe_token, maybe_err = self:get_oauth_token()
   if maybe_err then
     log.warn(string.format("get oauth token error: %s", maybe_err))
@@ -294,8 +307,12 @@ function SonosDriver:request_oauth_token()
 end
 
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
----@return "token expired"|"no token"|nil reason the reason a token was not provided, nil if there is a valid token available
+---@return "token expired"|"no token"|"not supported"|nil reason the reason a token was not provided, nil if there is a valid token available
 function SonosDriver:get_oauth_token()
+  if api_version < 14 then
+    return nil, "not supported"
+  end
+  self.hub_augmented_driver_data = self.hub_augmented_driver_data or {}
   local decode_success, maybe_token =
     pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
   if
@@ -316,7 +333,7 @@ function SonosDriver:get_oauth_token()
     if now < expiration then
       -- token is expiring soon, so we pre-emptively refresh
       if math.abs(expiration - now) < ONE_HOUR_IN_SECONDS then
-        local result, err = self:request_oauth_token()
+        local result, err = security.get_sonos_oauth()
         if not result then
           log.warn(string.format("Error requesting OAuth token via Security API: %s", err))
         end
@@ -333,7 +350,7 @@ end
 ---Create a cosock task that handles events from the persistent SSDP task.
 ---@param driver SonosDriver
 ---@param discovery_event_subscription cosock.Bus.Subscription
----@param oauth_token_subscription cosock.Bus.Subscription
+---@param oauth_token_subscription cosock.Bus.Subscription?
 local function make_ssdp_event_handler(
   driver,
   discovery_event_subscription,
@@ -342,13 +359,16 @@ local function make_ssdp_event_handler(
   return function()
     local unauthorized = {}
     local discovered = {}
+    local receivers = { discovery_event_subscription }
+    if oauth_token_subscription ~= nil then
+      table.insert(receivers, oauth_token_subscription)
+    end
     while true do
-      local recv_ready, _, select_err =
-        cosock.socket.select({ discovery_event_subscription, oauth_token_subscription }, nil, nil)
+      local recv_ready, _, select_err = cosock.socket.select(receivers, nil, nil)
 
       if recv_ready then
         for _, receiver in ipairs(recv_ready) do
-          if receiver == oauth_token_subscription then
+          if oauth_token_subscription ~= nil and receiver == oauth_token_subscription then
             local token_evt, receive_err = oauth_token_subscription:receive()
             if not token_evt then
               log.warn(string.format("Error on token event bus receive: %s", receive_err))
@@ -401,7 +421,10 @@ function SonosDriver:start_ssdp_event_task()
   if ssdp_task then
     self.ssdp_task = ssdp_task
     local ssdp_task_subscription = ssdp_task:subscribe()
-    local oauth_token_subscription = self:oauth_token_event_subscribe()
+    local oauth_token_subscription, subscribe_err = self:oauth_token_event_subscribe()
+    if subscribe_err then
+      log.warn(string.format("Couldn't subscribe to OAuth Token Events: %s", subscribe_err))
+    end
     self.ssdp_event_thread_handle =
       cosock.spawn(make_ssdp_event_handler(self, ssdp_task_subscription, oauth_token_subscription))
   end
@@ -467,7 +490,6 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
       )
   end
 
-  ---
   --- @cast response SonosGroupsResponseBody
   self.sonos:update_household_info(info.ssdp_info.household_id, response)
 
