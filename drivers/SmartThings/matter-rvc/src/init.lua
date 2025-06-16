@@ -49,8 +49,7 @@ local subscribed_attributes = {
   },
   [capabilities.robotCleanerOperatingState.ID] = {
     clusters.RvcOperationalState.attributes.OperationalState,
-    clusters.RvcOperationalState.attributes.OperationalError,
-    clusters.RvcOperationalState.attributes.AcceptedCommandList
+    clusters.RvcOperationalState.attributes.OperationalError
   },
   [capabilities.serviceArea.ID] = {
     clusters.ServiceArea.attributes.SupportedAreas,
@@ -97,6 +96,7 @@ local function do_configure(driver, device)
 
   device.log.info_with({hub_logs = true}, string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
+  device:send(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
 end
 
 local function info_changed(driver, device, event, args)

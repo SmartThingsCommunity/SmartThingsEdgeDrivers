@@ -73,8 +73,7 @@ local function test_init()
     },
     [capabilities.robotCleanerOperatingState.ID] = {
         clusters.RvcOperationalState.attributes.OperationalState,
-        clusters.RvcOperationalState.attributes.OperationalError,
-        clusters.RvcOperationalState.attributes.AcceptedCommandList
+        clusters.RvcOperationalState.attributes.OperationalError
     },
     [capabilities.serviceArea.ID] = {
       clusters.ServiceArea.attributes.SupportedAreas,
@@ -209,6 +208,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ profile = "rvc-clean-mode-service-area" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      clusters.RvcOperationalState.attributes.AcceptedCommandList:read()
+    })
   end
 )
 
