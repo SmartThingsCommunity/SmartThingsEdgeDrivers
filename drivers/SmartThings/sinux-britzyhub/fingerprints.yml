@@ -1,36 +1,21 @@
 matterGeneric:
-  - id: "dimming-light"
-    deviceLabel: 디밍 조명
-    deviceTypes:
-      - id: 0x0101 # Dimmable Light
-    deviceProfileName: dimming-light
   #- id: "air-conditioner"
-  #  deviceLabel: 에어컨
+  #  deviceLabel: "Air Conditioner"
   #  deviceTypes:
   #    - id: 0x0072 # Room Air Conditioner
   #  deviceProfileName: air-conditioner
-  - id: "elevator-call-up"
-    deviceLabel: 상행 엘리베이터 호출
+  - id: "elevator"
+    deviceLabel: "Elevator"
     deviceTypes:
-      - id: 0xFF02 # On Off Switch
-    deviceProfileName: elevator
-  - id: "elevator-call-down"
-    deviceLabel: 하행 엘리베이터 호출
-    deviceTypes:
-      - id: 0xFF02 # On Off Switch
-    deviceProfileName: elevator
-  - id: "elevator-call"
-    deviceLabel: 엘리베이터 호출
-    deviceTypes:
-      - id: 0xFF02 # On Off Switch
+      - id: 0xFF02
     deviceProfileName: elevator
   - id: "gas-valve"
-    deviceLabel: 가스밸브
+    deviceLabel: "Gas Valve"
     deviceTypes:
-      - id: 0xFF01 # GasValve
+      - id: 0xFF01
     deviceProfileName: gas-valve
   - id: "ventilator"
-    deviceLabel: 전열교환기
+    deviceLabel: "Ventilator"
     deviceTypes:
-      - id: 0xFF03 # Air Purifier
+      - id: 0xFF03
     deviceProfileName: ventilator

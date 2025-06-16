@@ -6,5 +6,7 @@ components:
         version: 1
       - id: airPurifierFanMode
         version: 1
+      - id: fanSpeedPercent
+        version: 1
     categories:
       - name: Vent
