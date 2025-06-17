@@ -1289,10 +1289,12 @@ local function short_release_event_handler(driver, device, ib, response)
 end
 
 local function active_power_handler(driver, device, ib, response)
+  local component = device.profile.components["main"]
   if ib.data.value then
-    local component = device.profile.components["main"]
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     device:emit_component_event(component, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+  else
+    device:emit_component_event(component, capabilities.powerMeter.power({ value = 0, unit = "W"}))
   end
 end
 
