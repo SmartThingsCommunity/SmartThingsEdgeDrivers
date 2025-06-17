@@ -26,14 +26,19 @@ end
 
 local DoorLock = clusters.DoorLock
 local PowerSource = clusters.PowerSource
+
 local INITIAL_COTA_INDEX = 1
 local ALL_INDEX = 0xFFFE
+local MIN_EPOCH_S = 0
+local MAX_EPOCH_S = 0xffffffff
+local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
 local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
   {0x147F, 0x0001}, -- U-tec
   {0x144F, 0x4002}, -- Yale, Linus Smart Lock L2
+  {0x101D, 0x8110}, -- Yale, New Lock
   {0x1533, 0x0001}, -- eufy, E31
   {0x1533, 0x0002}, -- eufy, E30
   {0x1533, 0x0003}, -- eufy, C34
@@ -265,6 +270,7 @@ local function operating_modes_handler(driver, device, ib, response)
     device:emit_event(capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
   end
 end
+
 -------------------------------------
 -- Number Of Total Users Supported --
 -------------------------------------
@@ -701,7 +707,7 @@ local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule
   device:emit_event(capabilities.lockSchedules.weekDaySchedules(week_schedule_table, {visibility = {displayed = false}}))
 end
 
-local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
+local function delete_week_schedule_from_table(device, userIdx, scheduleIdx)
   -- Get latest week day schedule table
   local week_schedule_table = utils.deep_copy(device:get_latest_state(
     "main",
@@ -739,6 +745,154 @@ local function delete_week_schedule_to_table(device, userIdx, scheduleIdx)
   end
 
   device:emit_event(capabilities.lockSchedules.weekDaySchedules(week_schedule_table, {visibility = {displayed = false}}))
+end
+
+local function delete_week_schedule_from_table_as_user(device, userIdx)
+  -- If User Index is ALL_INDEX, remove all entry from the table
+  if userIdx == ALL_INDEX then
+    device:emit_event(capabilities.lockSchedules.weekDaySchedules({}, {visibility = {displayed = false}}))
+    return
+  end
+
+  -- Get latest week day schedule table
+  local week_schedule_table = utils.deep_copy(device:get_latest_state(
+    "main",
+    capabilities.lockSchedules.ID,
+    capabilities.lockSchedules.weekDaySchedules.NAME,
+    {}
+  ))
+
+  -- Re-create week day schedule table
+  local new_week_schedule_table = {}
+  for index, entry in pairs(week_schedule_table) do
+    if entry.userIndex ~= userIdx then
+      table.insert(new_week_schedule_table, entry)
+    end
+  end
+
+  device:emit_event(capabilities.lockSchedules.weekDaySchedules(new_week_schedule_table, {visibility = {displayed = false}}))
+end
+
+-----------------------------
+-- Year Day Schedule Table --
+-----------------------------
+local function add_year_schedule_to_table(device, userIdx, scheduleIdx, sTime, eTime)
+  -- Get latest year day schedule table
+  local year_schedule_table = utils.deep_copy(device:get_latest_state(
+    "main",
+    capabilities.lockSchedules.ID,
+    capabilities.lockSchedules.yearDaySchedules.NAME,
+    {}
+  ))
+
+  -- Find schedule for specific user
+  local i = 0
+  for index, entry in pairs(year_schedule_table) do
+    if entry.userIndex == userIdx then
+      i = index
+    end
+  end
+
+  if i ~= 0 then -- Add schedule for existing user
+    -- Exclude same scheduleIdx
+    local new_schedule_table = {}
+    for index, entry in pairs(year_schedule_table[i].schedules) do
+      if entry.scheduleIndex ~= scheduleIdx then
+        table.insert(new_schedule_table, entry)
+      end
+    end
+    -- Add new entry to table
+    table.insert(
+      new_schedule_table,
+      {
+        scheduleIndex = scheduleIdx,
+        localStartTime = sTime,
+        localEndTime = eTime
+      }
+    )
+    -- Update schedule for specific user
+    year_schedule_table[i].schedules = new_schedule_table
+  else -- Add schedule for new user
+    table.insert(
+      year_schedule_table,
+      {
+        userIndex = userIdx,
+        schedules = {{
+          scheduleIndex = scheduleIdx,
+          localStartTime = sTime,
+          localEndTime = eTime
+        }}
+      }
+    )
+  end
+
+  device:emit_event(capabilities.lockSchedules.yearDaySchedules(year_schedule_table, {visibility = {displayed = false}}))
+end
+
+local function delete_year_schedule_from_table(device, userIdx, scheduleIdx)
+  -- Get latest year day schedule table
+  local year_schedule_table = utils.deep_copy(device:get_latest_state(
+    "main",
+    capabilities.lockSchedules.ID,
+    capabilities.lockSchedules.yearDaySchedules.NAME,
+    {}
+  ))
+
+  -- Find schedule for specific user
+  local i = 0
+  for index, entry in pairs(year_schedule_table) do
+    if entry.userIndex == userIdx then
+      i = index
+    end
+  end
+
+  -- When there is no userIndex in the table
+  if i == 0 then
+    return
+  end
+
+  -- Re-create year day schedule table for the user
+  local new_schedule_table = {}
+  for index, entry in pairs(year_schedule_table[i].schedules) do
+    if entry.scheduleIndex ~= scheduleIdx then
+      table.insert(new_schedule_table, entry)
+    end
+  end
+
+  -- If user has no schedule, remove user from the table
+  if #new_schedule_table == 0 then
+    table.remove(year_schedule_table, i)
+  else
+    year_schedule_table[i].schedules = new_schedule_table
+  end
+
+  device:emit_event(capabilities.lockSchedules.yearDaySchedules(year_schedule_table, {visibility = {displayed = false}}))
+end
+
+local function delete_year_schedule_from_table_as_user(device, userIdx)
+  -- If User Index is ALL_INDEX, remove all entry from the table
+  if userIdx == ALL_INDEX then
+    device:emit_event(capabilities.lockSchedules.yearDaySchedules({}, {visibility = {displayed = false}}))
+    return
+  end
+
+  -- Get latest year day schedule table
+  local year_schedule_table = utils.deep_copy(device:get_latest_state(
+    "main",
+    capabilities.lockSchedules.ID,
+    capabilities.lockSchedules.yearDaySchedules.NAME,
+    {}
+  ))
+
+  -- Re-create year day schedule table
+  local new_year_schedule_table = {}
+  for index, entry in pairs(year_schedule_table) do
+    if entry.userIndex ~= userIdx then
+      table.insert(new_year_schedule_table, entry)
+    end
+  end
+
+  device:emit_event(capabilities.lockSchedules.yearDaySchedules(new_year_schedule_table, {visibility = {displayed = false}}))
 end
 
 --------------
@@ -1049,6 +1203,8 @@ local function clear_user_response_handler(driver, device, ib, response)
   if status == "success" then
     delete_user_from_table(device, userIdx)
     delete_credential_from_table_as_user(device, userIdx)
+    delete_week_schedule_from_table_as_user(device, userIdx)
+    delete_year_schedule_from_table_as_user(device, userIdx)
   else
     device.log.warn(string.format("Failed to clear user: %s", status))
   end
@@ -1206,6 +1362,7 @@ local function set_credential_response_handler(driver, device, ib, response)
     credData = device:get_field(lock_utils.COTA_CRED)
   end
   local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local userType = device:get_field(lock_utils.USER_TYPE)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
   local status = "success"
   local elements = ib.info_block.data.elements
@@ -1218,7 +1375,6 @@ local function set_credential_response_handler(driver, device, ib, response)
 
     -- If user is added also, update User table
     if userIdx == nil then
-      local userType = device:get_field(lock_utils.USER_TYPE)
       add_user_to_table(device, elements.user_index.value, userType)
     end
 
@@ -1243,7 +1399,32 @@ local function set_credential_response_handler(driver, device, ib, response)
       }
     )
     device:emit_event(event)
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+
+    -- If User Type is Guest and device support schedule, add default schedule
+    local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
+    local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
+    if userType == "guest" and (#week_schedule_eps > 0 or #year_schedule_eps > 0) then
+      local cmdName = "defaultSchedule"
+      local scheduleIdx = 1
+
+      -- Save values to field
+      device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+      device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+      device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
+
+      local ep = device:component_to_endpoint("main")
+      device:send(
+        DoorLock.server.commands.SetYearDaySchedule(
+          device, ep,
+          scheduleIdx,
+          userIdx,
+          MIN_EPOCH_S,
+          MAX_EPOCH_S
+        )
+      )
+    else
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    end
     return
   end
 
@@ -1283,7 +1464,9 @@ local function set_credential_response_handler(driver, device, ib, response)
     local userIdx = device:get_field(lock_utils.USER_INDEX)
     local userType = device:get_field(lock_utils.USER_TYPE)
     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
-    if userType == "guest" then
+    if userIdx ~= nil then
+      userTypeMatter = nil
+    elseif userType == "guest" then
       userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
     elseif userType == "remote" then
       userTypeMatter = DoorLock.types.UserTypeEnum.REMOTE_ONLY_USER
@@ -1611,7 +1794,7 @@ local function clear_week_day_schedule_handler(driver, device, ib, response)
 
   -- Delete Week Day Schedule to table
   if status == "success" then
-    delete_week_schedule_to_table(device, userIdx, scheduleIdx)
+    delete_week_schedule_from_table(device, userIdx, scheduleIdx)
   else
     device.log.warn(string.format("Failed to clear week day schedule: %s", status))
   end
@@ -1634,16 +1817,177 @@ local function clear_week_day_schedule_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
+-- This type represents an offset, in seconds, from 0 hours, 0 minutes, 0 seconds, on the 1st of January, 2000 UTC
+local function iso8601_to_epoch(iso_str)
+  local pattern = "^(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)"
+  local year, month, day, hour, min, sec = iso_str:match(pattern)
+  if not year then
+      return nil
+  end
+  local epoch_s = os.time({
+      year = tonumber(year),
+      month = tonumber(month),
+      day = tonumber(day),
+      hour = tonumber(hour),
+      min = tonumber(min),
+      sec = tonumber(sec),
+  })
+
+  -- The os.time() is based on 1970. Thirty years must be subtracted for calculations from 2000.
+  epoch_s = epoch_s - THIRTY_YEARS_S
+
+  if epoch_s < MIN_EPOCH_S then
+    return MIN_EPOCH_S
+  elseif epoch_s > MAX_EPOCH_S then
+    return MAX_EPOCH_S
+  else
+    return epoch_s
+  end
+end
+
 ---------------------------
 -- Set Year Day Schedule --
 ---------------------------
 local function handle_set_year_day_schedule(driver, device, command)
+  -- Get parameters
+  local cmdName = "setYearDaySchedule"
+  local scheduleIdx = command.args.scheduleIndex
+  local userIdx = command.args.userIndex
+  local localStartTime = command.args.schedule.localStartTime
+  local localEndTime = command.args.schedule.localEndTime
+
+  -- Check busy state
+  local busy = check_busy_state(device)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = capabilities.lockSchedules.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    return
+  end
+
+  -- Save values to field
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_LOCAL_START_TIME, localStartTime, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_LOCAL_END_TIME, localEndTime, {persist = true})
+
+  -- Send command
+  local ep = device:component_to_endpoint(command.component)
+  device:send(
+    DoorLock.server.commands.SetYearDaySchedule(
+      device, ep,
+      scheduleIdx,
+      userIdx,
+      iso8601_to_epoch(localStartTime),
+      iso8601_to_epoch(localEndTime)
+    )
+  )
+end
+
+------------------------------------
+-- Set Year Day Schedule Response --
+------------------------------------
+local function set_year_day_schedule_handler(driver, device, ib, response)
+  -- Get result
+  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
+  local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local scheduleIdx = device:get_field(lock_utils.SCHEDULE_INDEX)
+  local localStartTime = device:get_field(lock_utils.SCHEDULE_LOCAL_START_TIME)
+  local localEndTime = device:get_field(lock_utils.SCHEDULE_LOCAL_END_TIME)
+  local status = "success"
+  if ib.status == DoorLock.types.DlStatus.FAILURE then
+    status = "failure"
+  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
+    status = "invalidCommand"
+  end
+
+  if cmdName == "defaultSchedule" then
+    return
+  end
+
+  if status == "success" then
+    if cmdName == "setYearDaySchedule" then
+      add_year_schedule_to_table(device, userIdx, scheduleIdx, localStartTime, localEndTime)
+    elseif cmdName == "clearYearDaySchedules" then
+      delete_year_schedule_from_table(device, userIdx, scheduleIdx)
+    end
+  else
+    device.log.warn(string.format("Failed to set/clear year day schedule: %s", status))
+  end
+
+  -- Update commandResult
+  local result = {
+    commandName = cmdName,
+    userIndex = userIdx,
+    scheduleIndex = scheduleIdx,
+    statusCode = status
+  }
+  local event = capabilities.lockSchedules.commandResult(
+    result,
+    {
+      state_change = true,
+      visibility = {displayed = false}
+    }
+  )
+  device:emit_event(event)
+  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
 -----------------------------
 -- Clear Year Day Schedule --
 -----------------------------
 local function handle_clear_year_day_schedule(driver, device, command)
+  -- Get parameters
+  local cmdName = "clearYearDaySchedules"
+  local scheduleIdx = command.args.scheduleIndex
+  local userIdx = command.args.userIndex
+
+  -- Check busy state
+  local busy = check_busy_state(device)
+  if busy == true then
+    local result = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    local event = capabilities.lockSchedules.commandResult(
+      result,
+      {
+        state_change = true,
+        visibility = {displayed = false}
+      }
+    )
+    device:emit_event(event)
+    return
+  end
+
+  -- Save values to field
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.SCHEDULE_INDEX, scheduleIdx, {persist = true})
+  device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+
+  -- Send command
+  -- In SmartThings, Schedule Restrict User is basically allowed to access always.
+  -- So, if user delete the year day schedule, enter an infinitely long schedule.
+  local ep = device:component_to_endpoint(command.component)
+  device:send(
+    DoorLock.server.commands.SetYearDaySchedule(
+      device, ep,
+      scheduleIdx,
+      userIdx,
+      MIN_EPOCH_S,
+      MAX_EPOCH_S
+    )
+  )
 end
 
 ----------------
@@ -1773,6 +2117,7 @@ local new_matter_lock_handler = {
         [DoorLock.server.commands.ClearCredential.ID] = clear_credential_response_handler,
         [DoorLock.server.commands.SetWeekDaySchedule.ID] = set_week_day_schedule_handler,
         [DoorLock.server.commands.ClearWeekDaySchedule.ID] = clear_week_day_schedule_handler,
+        [DoorLock.server.commands.SetYearDaySchedule.ID] = set_year_day_schedule_handler,
       },
     },
   },
