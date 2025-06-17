@@ -62,7 +62,8 @@ local COLOR_MODE = "__color_mode"
 
 local updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = COMPONENT_TO_ENDPOINT_MAP },
-  { current_field_name = "__switch_intialized", updated_field_name = nil }
+  { current_field_name = "__switch_intialized", updated_field_name = nil },
+  { current_field_name = "__energy_management_endpoint", updated_field_name = nil }
 }
 
 local HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
@@ -236,7 +237,12 @@ local function send_import_poll_report(device, latest_total_imported_energy_wh)
     energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
   end
 
-  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  -- Report the energy consumed during the time interval on the first device that supports it. The unit of these values should be 'Wh'
+  if device:get_parent_device() and device:get_parent_device():supports_capability(capabilities.powerConsumptionReport) then
+    device = device:get_parent_device()
+  elseif device:get_parent_device() ~= nil then
+    device = device:get_parent_device():get_child_list()[1]
+  end
   local component = device.profile.components["main"]
   device:emit_component_event(component, capabilities.powerConsumptionReport.powerConsumption({
     start = iso8061Timestamp(last_time),
@@ -244,12 +250,17 @@ local function send_import_poll_report(device, latest_total_imported_energy_wh)
     deltaEnergy = energy_delta_wh,
     energy = latest_total_imported_energy_wh
   }))
+
 end
 
 local function create_poll_report_schedule(device)
   local import_timer = device.thread:call_on_schedule(
     device:get_field(IMPORT_REPORT_TIMEOUT), function()
-    send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY))
+    local total_imported_energy = 0
+    for _, energy_report in pairs(device:get_field(TOTAL_IMPORTED_ENERGY)) do
+      total_imported_energy = total_imported_energy + energy_report
+    end
+    send_import_poll_report(device, total_imported_energy)
     end, "polling_import_report_schedule_timer"
   )
   device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, import_timer)
@@ -274,7 +285,8 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     local report_interval_secs = second_timestamp - first_timestamp
     device:set_field(IMPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
     -- the poll schedule is only needed for devices that support powerConsumptionReport
-    if device:get_field(POWER_CONSUMPTION_REPORT_SUPPORTED) then
+    -- if device:get_field(POWER_CONSUMPTION_REPORT_SUPPORTED) then
+    if device:supports_capability(capabilities.powerConsumptionReport) then
       create_poll_report_schedule(device)
     end
     device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true, {persist = true})
@@ -1211,7 +1223,9 @@ local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
+    local total_imported_energy = device:get_field(TOTAL_IMPORTED_ENERGY) or {}
+    total_imported_energy[ib.endpoint_id] = watt_hour_value
+    device:set_field(TOTAL_IMPORTED_ENERGY, total_imported_energy, {persist = true})
     device:emit_component_event(component, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
   end
 end
@@ -1220,10 +1234,11 @@ local function per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
     local component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
-    local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
-    device:emit_component_event(component, capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
+    local total_imported_energy = device:get_field(TOTAL_IMPORTED_ENERGY) or {}
+    local latest_energy_report = total_imported_energy[ib.endpoint_id] or 0
+    total_imported_energy[ib.endpoint_id] = latest_energy_report + watt_hour_value
+    device:set_field(TOTAL_IMPORTED_ENERGY, total_imported_energy, {persist = true})
+    device:emit_component_event(component, capabilities.energyMeter.energy({ value = total_imported_energy[ib.endpoint_id], unit = "Wh" }))
   end
 end
 
