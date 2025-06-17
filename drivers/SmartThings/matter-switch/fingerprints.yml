@@ -399,6 +399,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0075
     deviceProfileName: switch-level
+  - id: "4921/22"
+    deviceLabel: Cync Full Color RS Can
+    vendorId: 0x1339
+    productId: 0x0016
+    deviceProfileName: light-color-level-2000K-7000K
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
