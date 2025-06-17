@@ -205,6 +205,14 @@ matterGeneric:
       - id: 0x0106 # Light Sensor
       - id: 0x0302 # Temperature Sensor
     deviceProfileName: motion-illuminance-temperature-battery
+  - id: "matter/motion-illum-temp-humidity"
+    deviceLabel: Matter Motion/Illuminance Sensor
+    deviceTypes:
+      - id: 0x0107 # Occupancy Sensor
+      - id: 0x0106 # Light Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: motion-illuminance-temperature-humidity-battery
   - id: "matter/motion-sensor"
     deviceLabel: Matter Motion Sensor
     deviceTypes:
@@ -219,30 +227,30 @@ matterGeneric:
   - id: "matter/air-quality-sensor"
     deviceLabel: Matter Air Quality Sensor
     deviceTypes:
-      - id: 0x002C
+      - id: 0x002C # Air Quality Sensor
     deviceProfileName: aqs
   - id: "matter/smoke-co-alarm"
     deviceLabel: Matter Smoke/CO Alarm
     deviceTypes:
-      - id: 0x0076
+      - id: 0x0076 # Smoke CO Alarm
     deviceProfileName: smoke-co
   - id: "matter/rain/sensor"
     deviceLabel: Matter Rain Sensor
     deviceTypes:
-      - id: 0x0044
+      - id: 0x0044 # Rain Sensor
     deviceProfileName: rain-battery
   - id: "matter/freeze/detector"
     deviceLabel: Matter Water Freeze Detector
     deviceTypes:
-      - id: 0x0041
+      - id: 0x0041 # Freeze Detector
     deviceProfileName: freeze-battery
   - id: "matter/leak/detector"
     deviceLabel: Matter Water Leak Detector
     deviceTypes:
-      - id: 0x0043
+      - id: 0x0043 # Leak Sensor
     deviceProfileName: leak-battery
   - id: "matter/flow/sensor"
     deviceLabel: Matter Flow Sensor
     deviceTypes:
-      - id: 0x0306
+      - id: 0x0306 # Flow Sensor
     deviceProfileName: flow-battery

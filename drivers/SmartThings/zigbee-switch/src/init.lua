@@ -17,7 +17,9 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local configurationMap = require "configurations"
+local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local SimpleMetering = clusters.SimpleMetering
+local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
 local device_lib = require "st.device"
 
@@ -127,6 +129,7 @@ local function device_added(driver, device, event)
   end
 end
 
+
 local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,
@@ -164,8 +167,19 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("laisiao"),
     lazy_load_if_possible("tuya-multi")
   },
+  zigbee_handlers = {
+    global = {
+      [SimpleMetering.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
+      },
+     [ElectricalMeasurement.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
+      }
+    }
+  },
+  current_config_version = 1,
   lifecycle_handlers = {
-    init = device_init,
+    init = configurationMap.power_reconfig_wrapper(device_init),
     added = device_added,
     infoChanged = info_changed,
     doConfigure = do_configure
