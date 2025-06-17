@@ -69,7 +69,7 @@ zwaveManufacturer:
     productType: 0x0001
     productId: 0x0410
     deviceProfileName: smoke-co-battery
-  - id: 0x0138/0001/0410
+  - id: 0138/0001/0410
     deviceLabel: First Alert Smoke & CO Alarm (SMCO410)
     manufacturerId: 0x0138
     productType: 0x0001
