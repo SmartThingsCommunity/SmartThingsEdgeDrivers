@@ -1,7 +1,7 @@
-local log = require "log"
-local cosock = require "cosock"
-local socket = require "cosock.socket"
 local channel = require "cosock.channel"
+local cosock = require "cosock"
+local log = require "log"
+local socket = require "cosock.socket"
 local ssl = require "cosock.ssl"
 local LustreConfig = require "lustre".Config
 local WebSocket = require "lustre".WebSocket
@@ -10,8 +10,8 @@ local CloseCode = require "lustre.frame.close".CloseCode
 local lb_utils = require "lunchbox.util"
 local st_utils = require "st.utils"
 
-local utils = require "utils"
 local SonosApi = require "api"
+local utils = require "utils"
 
 --- A "singleton" module that maintains all of the websockets for a
 --- home's Sonos players. A player as modeled in the driver will have
@@ -105,7 +105,13 @@ cosock.spawn(function()
               local wss = websockets[target]
               if wss == nil then
                 --TODO is this silencing a crash that is an indication of a state management bug in the run loop?
-                log.error(st_utils.stringify_table({ msg = msg }, "Coordinator doesn't exist for player", false))
+                log.error(
+                  st_utils.stringify_table(
+                    { msg = msg },
+                    "Coordinator doesn't exist for player",
+                    false
+                  )
+                )
                 goto continue
               end
 
@@ -123,7 +129,10 @@ cosock.spawn(function()
               if listener ~= nil then
                 if listener.device and listener.device.label then
                   log.debug(
-                    string.format("SonosConnection for device %s handling websocket message", listener.device.label)
+                    string.format(
+                      "SonosConnection for device %s handling websocket message",
+                      listener.device.label
+                    )
                   )
                 end
                 listener.on_message(uuid, msg)
@@ -153,7 +162,13 @@ local function _make_websocket(url_table, api_key)
     return nil, "Could not set TCP socket timeout: " .. sock_operation_err
   end
 
-  log.trace(string.format("Opening up websocket connection for host/port %s %s", url_table.host, url_table.port))
+  log.trace(
+    string.format(
+      "Opening up websocket connection for host/port %s %s",
+      url_table.host,
+      url_table.port
+    )
+  )
 
   _, sock_operation_err = sock:connect(url_table.host, url_table.port)
   if sock_operation_err ~= nil then
@@ -239,7 +254,7 @@ end
 --- @return boolean|nil success true on success, nil otherwise
 --- @return nil|string error the error message in the failure case
 function SonosWebSocketRouter.open_socket_for_player(household_id, player_id, wss_url, api_key)
-  local unique_key = utils.sonos_unique_key(household_id, player_id)
+  local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
   if not websockets[unique_key] then
     log.debug("Opening websocket for player id " .. unique_key)
     local url_table = lb_utils.force_url_table(wss_url)
@@ -247,6 +262,8 @@ function SonosWebSocketRouter.open_socket_for_player(household_id, player_id, ws
 
     if err or not wss then
       return nil, string.format("Could not create websocket connection for %s: %s", unique_key, err)
+    elseif not unique_key then
+      return nil, string.format("Invalid Sonos Unique Key Part: %s", bad_key_part)
     else
       websockets[unique_key] = wss
       return true
@@ -307,8 +324,17 @@ function SonosWebSocketRouter.cleanup_unused_sockets(driver)
 
   for _, device in ipairs(known_devices) do
     local household_id, coordinator_id = driver.sonos:get_coordinator_for_device(device)
-    local coordinator_unique_key = utils.sonos_unique_key(household_id, coordinator_id)
-    if should_keep[coordinator_unique_key] == false then -- looking for false specifically, not nil
+    local coordinator_unique_key, bad_key_part =
+      utils.sonos_unique_key(household_id, coordinator_id)
+    if bad_key_part then
+      log.warn(
+        string.format(
+          "Invalid Sonos Unique Key Part while cleaning up unused websockets: %s",
+          bad_key_part
+        )
+      )
+    end
+    if coordinator_unique_key and should_keep[coordinator_unique_key] == false then -- looking for false specifically, not nil
       log.trace("Preserving coordinator socket " .. coordinator_id)
       should_keep[coordinator_unique_key] = true
     end

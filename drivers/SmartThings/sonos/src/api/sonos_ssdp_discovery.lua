@@ -96,9 +96,9 @@ local function make_persistent_task_impl(
 
       for _, receiver in ipairs(recv_ready) do
         if receiver == interval_timer then
+          interval_timer:handled()
           ssdp_search_handle:multicast_m_search()
         elseif receiver == control_rx then
-          ---@type ControlMessage?,string?
           local recv, recv_err = receiver:receive()
           if not recv then
             log.warn(string.format("control channel receive error: %s", recv_err))
@@ -200,14 +200,20 @@ function SonosPersistentSsdpTask:get_player_info(reply_tx, ...)
   local household_id_or_mac = select(1, ...)
   local player_id = select(2, ...)
 
-  local lookup_table, lookup_key
+  local wait_table_key, lookup_table, lookup_key, bad_key_part
 
   if player_id ~= nil and type(player_id) == "string" then
+    wait_table_key = "waiting_for_unique_key"
     lookup_table = self.player_info_by_sonos_ids
-    lookup_key = utils.sonos_unique_key(household_id_or_mac, player_id)
+    lookup_key, bad_key_part = utils.sonos_unique_key(household_id_or_mac, player_id)
   else
+    wait_table_key = "waiting_for_mac_addr"
     lookup_table = self.player_info_by_mac_addrs
     lookup_key = household_id_or_mac
+  end
+
+  if not lookup_key and bad_key_part then
+    log.error(string.format("Invalid Unique Key Part: %s", bad_key_part))
   end
 
   local maybe_existing = lookup_table[lookup_key]
@@ -216,9 +222,9 @@ function SonosPersistentSsdpTask:get_player_info(reply_tx, ...)
     return
   end
 
-  local waiting_for_player = self.waiting_for_unique_key[lookup_key] or {}
+  local waiting_for_player = self[wait_table_key][lookup_key] or {}
   table.insert(waiting_for_player, reply_tx)
-  self.waiting_for_unique_key[lookup_key] = waiting_for_player
+  self[wait_table_key][lookup_key] = waiting_for_player
   self:refresh()
 end
 
@@ -295,16 +301,19 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
       event_bus:send(info_to_send)
       local mac_addr = utils.extract_mac_addr(info_to_send.discovery_info.device)
       local waiting_handles = task_handle.waiting_for_unique_key[unique_key] or {}
+
       log.debug(st_utils.stringify_table(waiting_handles, "waiting for unique keys", true))
-      for _, v in pairs(task_handle.waiting_for_unique_key[mac_addr] or {}) do
+      for _, v in pairs(task_handle.waiting_for_mac_addr[mac_addr] or {}) do
         table.insert(waiting_handles, v)
       end
+
       log.debug(
         st_utils.stringify_table(waiting_handles, "waiting for unique keys and mac addresses", true)
       )
       for _, reply_tx in ipairs(waiting_handles) do
         reply_tx:send(info_to_send)
       end
+
       task_handle.waiting_for_unique_key[unique_key] = {}
       task_handle.waiting_for_mac_addr[mac_addr] = {}
     end
