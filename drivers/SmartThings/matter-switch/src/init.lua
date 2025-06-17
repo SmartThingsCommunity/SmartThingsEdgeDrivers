@@ -204,7 +204,6 @@ local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
 
 local ELECTRICAL_SENSOR_EPS = "__ELECTRICAL_SENSOR_EPS"
-local POWER_CONSUMPTION_REPORT_SUPPORTED = "__POWER_CONSUMPTION_REPORT_SUPPORTED"
 
 local profiling_data = {
   ELECTRICAL_TOPOLOGY = "__ELECTRICAL_TOPOLOGY",
@@ -285,7 +284,6 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     local report_interval_secs = second_timestamp - first_timestamp
     device:set_field(IMPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
     -- the poll schedule is only needed for devices that support powerConsumptionReport
-    -- if device:get_field(POWER_CONSUMPTION_REPORT_SUPPORTED) then
     if device:supports_capability(capabilities.powerConsumptionReport) then
       create_poll_report_schedule(device)
     end
@@ -694,7 +692,6 @@ local function collect_and_store_electrical_sensor_info(driver, device)
             electrical_ep_info.topology = cluster.feature_map
           elseif cluster.cluster_id == clusters.ElectricalEnergyMeasurement.ID then
             electrical_ep_info.energy = true
-            device:set_field(POWER_CONSUMPTION_REPORT_SUPPORTED, true, {persist = true})
           elseif cluster.cluster_id == clusters.ElectricalPowerMeasurement.ID then
             electrical_ep_info.power = true
           end
