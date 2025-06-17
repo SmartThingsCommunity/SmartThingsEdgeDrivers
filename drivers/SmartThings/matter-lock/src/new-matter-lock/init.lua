@@ -26,8 +26,12 @@ end
 
 local DoorLock = clusters.DoorLock
 local PowerSource = clusters.PowerSource
+
 local INITIAL_COTA_INDEX = 1
 local ALL_INDEX = 0xFFFE
+local MIN_EPOCH_S = 0
+local MAX_EPOCH_S = 0xffffffff
+local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
 local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2802}, -- AQARA, U200
@@ -1414,8 +1418,8 @@ local function set_credential_response_handler(driver, device, ib, response)
           device, ep,
           scheduleIdx,
           userIdx,
-          0, -- Min Uint32
-          0xFFFFFFFF -- MAX Uint32
+          MIN_EPOCH_S,
+          MAX_EPOCH_S
         )
       )
     else
@@ -1813,12 +1817,6 @@ local function clear_week_day_schedule_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
----------------------------
--- Set Year Day Schedule --
----------------------------
-local MIN_EPOCH_S = 0
-local MAX_EPOCH_S = 0xffffffff
-local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 -- This type represents an offset, in seconds, from 0 hours, 0 minutes, 0 seconds, on the 1st of January, 2000 UTC
 local function iso8601_to_epoch(iso_str)
   local pattern = "^(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)"
@@ -1826,7 +1824,7 @@ local function iso8601_to_epoch(iso_str)
   if not year then
       return nil
   end
-  local utc_time = os.time({
+  local epoch_s = os.time({
       year = tonumber(year),
       month = tonumber(month),
       day = tonumber(day),
@@ -1836,17 +1834,20 @@ local function iso8601_to_epoch(iso_str)
   })
 
   -- The os.time() is based on 1970. Thirty years must be subtracted for calculations from 2000.
-  utc_time = utc_time - THIRTY_YEARS_S
+  epoch_s = epoch_s - THIRTY_YEARS_S
 
-  if utc_time < MIN_EPOCH_S then
+  if epoch_s < MIN_EPOCH_S then
     return MIN_EPOCH_S
-  elseif utc_time > MAX_EPOCH_S then
+  elseif epoch_s > MAX_EPOCH_S then
     return MAX_EPOCH_S
   else
-    return utc_time
+    return epoch_s
   end
 end
 
+---------------------------
+-- Set Year Day Schedule --
+---------------------------
 local function handle_set_year_day_schedule(driver, device, command)
   -- Get parameters
   local cmdName = "setYearDaySchedule"
