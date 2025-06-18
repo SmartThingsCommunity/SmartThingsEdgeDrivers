@@ -730,6 +730,11 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x1853
     deviceProfileName: plug-binary
+  - id: "5264/4121"
+    deviceLabel: Shelly 1PM Gen3
+    vendorId: 0x1490
+    productId: 0x1019
+    deviceProfileName: plug-binary
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
