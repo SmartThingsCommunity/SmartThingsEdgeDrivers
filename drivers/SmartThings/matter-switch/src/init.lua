@@ -408,7 +408,7 @@ end
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
 local function device_type_supports_button_switch_combination(device, endpoint_id)
-  for _, fingerprint in ipairs(device_overrides_per_vendor[AQARA_MANUFACTURER_ID]) do
+  for _, fingerprint in ipairs(device_overrides_per_vendor[AQARA_MANUFACTURER_ID] or {}) do
     if fingerprint.product_id == device.manufacturer_info.product_id and fingerprint.combo_switch_button == false then
       return false -- For Aqara Dimmer Switch with Button.
     end
@@ -523,14 +523,12 @@ local function assign_switch_profile(device, switch_ep, is_child_device, electri
   end
 
   if is_child_device then
-    if device_overrides_per_vendor[device.manufacturer_info.vendor_id] then
       -- Check if child device has an overridden child profile that differs from the child's generic device type profile
-      for _, fingerprint in ipairs(device_overrides_per_vendor[device.manufacturer_info.vendor_id]) do
+      for _, fingerprint in ipairs(device_overrides_per_vendor[device.manufacturer_info.vendor_id] or {}) do
         if device.manufacturer_info.product_id == fingerprint.product_id and profile == fingerprint.initial_profile then
           return fingerprint.target_profile
         end
       end
-    end
     -- default to "switch-binary" if no child profile is found
     return profile or "switch-binary"
   end
@@ -1190,30 +1188,28 @@ local function available_endpoints_handler(driver, device, ib, response)
   local avail_eps_req_complete = true
   local electrical_tags_per_ep = {}
   table.sort(ib.data.elements)
-  if electrical_sensor_eps then
-    for _, info in ipairs(electrical_sensor_eps) do
-      if info.endpoint_id == ib.endpoint_id then
-        info.availableEndpoints = ib.data.elements
-      elseif info.availableEndpoints == false then -- an endpoint is found that hasn't been updated through this handler.
-        avail_eps_req_complete = false
-      end
-      if avail_eps_req_complete then
-        local electrical_tags = ""
-        if info.power then electrical_tags = electrical_tags .. "-power" end
-        if info.energy then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
-        electrical_tags_per_ep[info.availableEndpoints[1].value] = electrical_tags -- set tags on first available endpoint
-      end
+  for _, info in ipairs(electrical_sensor_eps or {}) do
+    if info.endpoint_id == ib.endpoint_id then
+      info.availableEndpoints = ib.data.elements
+    elseif info.availableEndpoints == false then -- an endpoint is found that hasn't been updated through this handler.
+      avail_eps_req_complete = false
     end
-    if avail_eps_req_complete == false then
-      device:set_field(ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
-    else
-      local topology_data = {}
-      topology_data.topology = clusters.PowerTopology.types.Feature.SET_TOPOLOGY
-      topology_data.tags_on_ep = electrical_tags_per_ep
-      device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, topology_data)
-      device:set_field(ELECTRICAL_SENSOR_EPS, nil)
-      match_profile(driver, device)
+    if avail_eps_req_complete then
+      local electrical_tags = ""
+      if info.power then electrical_tags = electrical_tags .. "-power" end
+      if info.energy then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
+      electrical_tags_per_ep[info.availableEndpoints[1].value] = electrical_tags -- set tags on first available endpoint
     end
+  end
+  if avail_eps_req_complete == false then
+    device:set_field(ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
+  else
+    local topology_data = {}
+    topology_data.topology = clusters.PowerTopology.types.Feature.SET_TOPOLOGY
+    topology_data.tags_on_ep = electrical_tags_per_ep
+    device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, topology_data)
+    device:set_field(ELECTRICAL_SENSOR_EPS, nil)
+    match_profile(driver, device)
   end
 end
 
