@@ -1412,8 +1412,8 @@ local function device_added(driver, device)
       local switch_eps = device:get_endpoints(clusters.OnOff.ID)
       table.sort(switch_eps)
       local electrical_tags = ""
-      if electrical_sensor_eps[1].power then electrical_tags = electrical_tags + "-power" end
-      if electrical_sensor_eps[1].energy then electrical_tags = electrical_tags + "-energy-powerConsumption" end
+      if electrical_sensor_eps[1].power then electrical_tags = electrical_tags .. "-power" end
+      if electrical_sensor_eps[1].energy then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
       device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, {topology = clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, tags_on_ep = {[switch_eps[1]] = electrical_tags}})
       device:set_field(ELECTRICAL_SENSOR_EPS, nil)
     end
