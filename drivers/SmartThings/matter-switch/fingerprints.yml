@@ -560,6 +560,21 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2260
     deviceProfileName: plug-power
+  - id: "4142/8704"
+    deviceLabel: LG Smart Wall Switch (1 Button)
+    vendorId: 0x102E
+    productId: 0x2200
+    deviceProfileName: light-binary
+  - id: "4142/8705"
+    deviceLabel: LG Smart Wall Switch (2 Button)
+    vendorId: 0x102E
+    productId: 0x2201
+    deviceProfileName: light-binary
+  - id: "4142/8706"
+    deviceLabel: LG Smart Wall Switch (3 Button)
+    vendorId: 0x102E
+    productId: 0x2202
+    deviceProfileName: light-binary
 #Lifx
   - id: "5155/161"
     deviceLabel: LIFX Neon Outdoor
