@@ -1190,29 +1190,30 @@ local function available_endpoints_handler(driver, device, ib, response)
   local avail_eps_req_complete = true
   local electrical_tags_per_ep = {}
   table.sort(ib.data.elements)
-  for _, info in ipairs(electrical_sensor_eps) do
-    if info.endpoint_id == ib.endpoint_id then
-      info.availableEndpoints = ib.data.elements
-    elseif info.availableEndpoints == false then -- an endpoint is found that hasn't been updated through this handler.
-      avail_eps_req_complete = false
+  if electrical_sensor_eps then
+    for _, info in ipairs(electrical_sensor_eps) do
+      if info.endpoint_id == ib.endpoint_id then
+        info.availableEndpoints = ib.data.elements
+      elseif info.availableEndpoints == false then -- an endpoint is found that hasn't been updated through this handler.
+        avail_eps_req_complete = false
+      end
+      if avail_eps_req_complete then
+        local electrical_tags = ""
+        if info.power then electrical_tags = electrical_tags .. "-power" end
+        if info.energy then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
+        electrical_tags_per_ep[info.availableEndpoints[1].value] = electrical_tags -- set tags on first available endpoint
+      end
     end
-
-    if avail_eps_req_complete then
-      local electrical_tags = ""
-      if info.power then electrical_tags = electrical_tags .. "-power" end
-      if info.energy then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
-      electrical_tags_per_ep[info.availableEndpoints[1].value] = electrical_tags -- set tags on first available endpoint
+    if avail_eps_req_complete == false then
+      device:set_field(ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
+    else
+      local topology_data = {}
+      topology_data.topology = clusters.PowerTopology.types.Feature.SET_TOPOLOGY
+      topology_data.tags_on_ep = electrical_tags_per_ep
+      device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, topology_data)
+      device:set_field(ELECTRICAL_SENSOR_EPS, nil)
+      match_profile(driver, device)
     end
-  end
-  if avail_eps_req_complete == false then
-    device:set_field(ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
-  else
-    local topology_data = {}
-    topology_data.topology = clusters.PowerTopology.types.Feature.SET_TOPOLOGY
-    topology_data.tags_on_ep = electrical_tags_per_ep
-    device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, topology_data)
-    device:set_field(ELECTRICAL_SENSOR_EPS, nil)
-    match_profile(driver, device)
   end
 end
 
