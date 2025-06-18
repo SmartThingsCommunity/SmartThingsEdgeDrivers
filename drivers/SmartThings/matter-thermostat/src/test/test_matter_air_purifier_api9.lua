@@ -313,7 +313,7 @@ local cluster_subscribe_list_configured = {
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ControlSequenceOfOperation
   },
-  [capabilities.thermostatFanMode.ID] = {
+  [capabilities.fanMode.ID] = {
     clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.FanMode
   },

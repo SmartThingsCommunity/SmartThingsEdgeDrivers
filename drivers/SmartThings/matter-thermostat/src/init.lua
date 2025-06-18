@@ -174,10 +174,6 @@ local subscribed_attributes = {
   [capabilities.thermostatOperatingState.ID] = {
     clusters.Thermostat.attributes.ThermostatRunningState
   },
-  [capabilities.thermostatFanMode.ID] = {
-    clusters.FanControl.attributes.FanModeSequence,
-    clusters.FanControl.attributes.FanMode
-  },
   [capabilities.thermostatCoolingSetpoint.ID] = {
     clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
     clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
@@ -192,6 +188,10 @@ local subscribed_attributes = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.airPurifierFanMode.ID] = {
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.FanMode
+  },
+  [capabilities.fanMode.ID] = {
     clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.FanMode
   },
@@ -998,7 +998,7 @@ local function match_modular_profile_thermostat(driver, device)
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
 
   if #fan_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.thermostatFanMode.ID)
+    table.insert(main_component_capabilities, capabilities.fanMode.ID)
   end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
@@ -1520,150 +1520,71 @@ local function min_deadband_limit_handler(driver, device, ib, response)
 end
 
 local function fan_mode_handler(driver, device, ib, response)
-  if device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
-    -- Room Air Conditioner
-    if ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airConditionerFanMode.fanMode("off"))
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.LOW then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airConditionerFanMode.fanMode("low"))
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.MEDIUM then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airConditionerFanMode.fanMode("medium"))
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.HIGH then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airConditionerFanMode.fanMode("high"))
-    else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airConditionerFanMode.fanMode("auto"))
-    end
-  elseif device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
-    if ib.data.value == clusters.FanControl.attributes.FanMode.OFF then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.off())
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.LOW then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.low())
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.MEDIUM then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.medium())
-    elseif ib.data.value == clusters.FanControl.attributes.FanMode.HIGH then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.high())
-    else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.airPurifierFanMode.airPurifierFanMode.auto())
-    end
+  local fan_mode_cap = capabilities.fanMode
+  local fan_mode_attr = fan_mode_cap.fanMode
+  local is_air_conditioner = false
+  if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
+    fan_mode_cap = capabilities.airPurifierFanMode
+    fan_mode_attr = fan_mode_cap.airPurifierFanMode
+  elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
+    fan_mode_cap = capabilities.airConditionerFanMode
+    fan_mode_attr = fan_mode_cap.airConditionerFanMode
+    is_air_conditioner = true
+  end
+  local fan_mode_event = {
+    [clusters.FanControl.attributes.FanMode.OFF] = is_air_conditioner and fan_mode_cap.fanMode("off") or fan_mode_attr.off(),
+    [clusters.FanControl.attributes.FanMode.LOW] = is_air_conditioner and fan_mode_cap.fanMode("low") or fan_mode_attr.low(),
+    [clusters.FanControl.attributes.FanMode.MEDIUM] = is_air_conditioner and fan_mode_cap.fanMode("medium") or fan_mode_attr.medium(),
+    [clusters.FanControl.attributes.FanMode.HIGH] = is_air_conditioner and fan_mode_cap.fanMode("high") or fan_mode_attr.high(),
+    [clusters.FanControl.attributes.FanMode.ON] = is_air_conditioner and fan_mode_cap.fanMode("auto") or fan_mode_attr.auto(),
+    [clusters.FanControl.attributes.FanMode.AUTO] = is_air_conditioner and fan_mode_cap.fanMode("auto") or fan_mode_attr.auto(),
+    [clusters.FanControl.attributes.FanMode.SMART] = is_air_conditioner and fan_mode_cap.fanMode("auto") or fan_mode_attr.auto()
+  }
+  if fan_mode_event[ib.data.value] then
+    device:emit_event_for_endpoint(ib.endpoint_id, fan_mode_event[ib.data.value])
   else
-    -- Thermostat
-    if ib.data.value == clusters.FanControl.attributes.FanMode.AUTO or
-      ib.data.value == clusters.FanControl.attributes.FanMode.SMART then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.auto())
-    elseif ib.data.value ~= clusters.FanControl.attributes.FanMode.OFF then -- we don't have an "off" value
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.thermostatFanMode.on())
-    end
+    log.warn(string.format("Invalid Fan Mode (%s)", ib.data.value))
   end
 end
 
 local function fan_mode_sequence_handler(driver, device, ib, response)
-  if device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
-    -- Room Air Conditioner
-    local supportedAcFanModes
-    if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
-      supportedAcFanModes = {
-        "off",
-        "low",
-        "medium",
-        "high"
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
-      supportedAcFanModes = {
-        "off",
-        "low",
-        "high"
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
-      supportedAcFanModes = {
-        "off",
-        "low",
-        "medium",
-        "high",
-        "auto"
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
-      supportedAcFanModes = {
-        "off",
-        "low",
-        "high",
-        "auto"
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
-      supportedAcFanModes = {
-        "off",
-        "high",
-        "auto"
-      }
-    else
-      supportedAcFanModes = {
-        "off",
-        "high"
-      }
-    end
-    local event = capabilities.airConditionerFanMode.supportedAcFanModes(supportedAcFanModes, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(ib.endpoint_id, event)
-  elseif device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
-    -- Air Purifier
-    local supportedAirPurifierFanModes
-    if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
-      supportedAirPurifierFanModes = {
-        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.medium.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
-      supportedAirPurifierFanModes = {
-        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
-      supportedAirPurifierFanModes = {
-        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.medium.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
-      supportedAirPurifierFanModes = {
-        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
-      }
-    elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
-      supportedAirPurifierFanModes = {
-        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME
-      }
-    else
-      supportedAirPurifierFanModes = {
-        capabilities.airPurifierFanMode.airPurifierFanMode.off.NAME,
-        capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
-      }
-    end
-    local event = capabilities.airPurifierFanMode.supportedAirPurifierFanModes(supportedAirPurifierFanModes, {visibility = {displayed = false}})
-    device:emit_event_for_endpoint(ib.endpoint_id, event)
-  else
-    -- Thermostat
-    -- Our thermostat fan mode control is probably not granular enough to handle the supported modes here well
-    -- definitely meant for actual fans and not HVAC fans
-    if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
-      ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.supportedThermostatFanModes(
-        {capabilities.thermostatFanMode.thermostatFanMode.auto.NAME, capabilities.thermostatFanMode.thermostatFanMode.on.NAME},
-        {visibility = {displayed = false}}
-      ))
-    else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.thermostatFanMode.supportedThermostatFanModes(
-        {capabilities.thermostatFanMode.thermostatFanMode.on.NAME},
-        {visibility = {displayed = false}}
-      ))
-    end
+  local fan_mode_cap = capabilities.fanMode
+  local fan_mode_attr = fan_mode_cap.fanMode
+  local supported_fan_modes = fan_mode_cap.supportedFanModes
+  local is_air_conditioner = false
+  if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
+    fan_mode_cap = capabilities.airPurifierFanMode
+    fan_mode_attr = fan_mode_cap.airPurifierFanMode
+    supported_fan_modes = fan_mode_cap.supportedAirPurifierFanModes
+  elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
+    fan_mode_cap = capabilities.airConditionerFanMode
+    fan_mode_attr = fan_mode_cap.airConditionerFanMode
+    supported_fan_modes = fan_mode_cap.supportedAcFanModes
+    is_air_conditioner = true
   end
+  local fan_mode = {
+    ["off"] = is_air_conditioner and "off" or fan_mode_attr.off.NAME,
+    ["low"] = is_air_conditioner and "low" or fan_mode_attr.low.NAME,
+    ["medium"] = is_air_conditioner and "medium" or fan_mode_attr.medium.NAME,
+    ["high"] = is_air_conditioner and "high" or fan_mode_attr.high.NAME,
+    ["auto"] = is_air_conditioner and "auto" or fan_mode_attr.auto.NAME
+  }
+  local supportedFanModes
+  if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
+    supportedFanModes = { fan_mode["off"], fan_mode["low"], fan_mode["medium"], fan_mode["high"] }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
+    supportedFanModes = { fan_mode["off"], fan_mode["low"], fan_mode["high"] }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
+    supportedFanModes = { fan_mode["off"], fan_mode["low"], fan_mode["medium"], fan_mode["high"], fan_mode["auto"] }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
+    supportedFanModes = { fan_mode["off"], fan_mode["low"], fan_mode["high"], fan_mode["auto"] }
+  elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
+    supportedFanModes = { fan_mode["off"], fan_mode["high"], fan_mode["auto"] }
+  else
+    supportedFanModes = { fan_mode["off"], fan_mode["high"] }
+  end
+  local event = supported_fan_modes(supportedFanModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
@@ -1921,29 +1842,23 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
   end
 end
 
-local function set_thermostat_fan_mode(driver, device, cmd)
-  local fan_mode_id = nil
-  if cmd.args.mode == capabilities.thermostatFanMode.thermostatFanMode.auto.NAME then
-    fan_mode_id = clusters.FanControl.attributes.FanMode.AUTO
-  elseif cmd.args.mode == capabilities.thermostatFanMode.thermostatFanMode.on.NAME then
-    fan_mode_id = clusters.FanControl.attributes.FanMode.ON
-  end
-  if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
-  end
-end
-
-local function thermostat_fan_mode_setter(mode_name)
-  return function(driver, device, cmd)
-    return set_thermostat_fan_mode(driver, device, {component = cmd.component, args = {mode = mode_name}})
-  end
-end
-
 local function set_fan_mode(driver, device, cmd)
-  local fan_mode_id
-  if cmd.args.fanMode == "off" then
-    fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
-  elseif cmd.args.fanMode == "low" then
+  local fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
+  if cmd.args.fanMode == capabilities.fanMode.fanMode.low.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.LOW
+  elseif cmd.args.fanMode == capabilities.fanMode.fanMode.medium.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.MEDIUM
+  elseif cmd.args.fanMode == capabilities.fanMode.fanMode.high.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.HIGH
+  elseif cmd.args.fanMode == capabilities.fanMode.fanMode.auto.NAME then
+    fan_mode_id = clusters.FanControl.attributes.FanMode.AUTO
+  end
+  device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
+end
+
+local function set_air_conditioner_fan_mode(driver, device, cmd)
+  local fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
+  if cmd.args.fanMode == "low" then
     fan_mode_id = clusters.FanControl.attributes.FanMode.LOW
   elseif cmd.args.fanMode == "medium" then
     fan_mode_id = clusters.FanControl.attributes.FanMode.MEDIUM
@@ -1951,16 +1866,12 @@ local function set_fan_mode(driver, device, cmd)
     fan_mode_id = clusters.FanControl.attributes.FanMode.HIGH
   elseif cmd.args.fanMode == "auto" then
     fan_mode_id = clusters.FanControl.attributes.FanMode.AUTO
-  else
-    fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
-  if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
-  end
+  device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
 end
 
 local function set_air_purifier_fan_mode(driver, device, cmd)
-  local fan_mode_id
+  local fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   if cmd.args.airPurifierFanMode == capabilities.airPurifierFanMode.airPurifierFanMode.low.NAME then
     fan_mode_id = clusters.FanControl.attributes.FanMode.LOW
   elseif cmd.args.airPurifierFanMode == capabilities.airPurifierFanMode.airPurifierFanMode.sleep.NAME then
@@ -1975,12 +1886,8 @@ local function set_air_purifier_fan_mode(driver, device, cmd)
     fan_mode_id = clusters.FanControl.attributes.FanMode.HIGH
   elseif cmd.args.airPurifierFanMode == capabilities.airPurifierFanMode.airPurifierFanMode.auto.NAME then
     fan_mode_id = clusters.FanControl.attributes.FanMode.AUTO
-  else
-    fan_mode_id = clusters.FanControl.attributes.FanMode.OFF
   end
-  if fan_mode_id then
-    device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
-  end
+  device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
 end
 
 local function set_fan_speed_percent(driver, device, cmd)
@@ -2305,11 +2212,6 @@ local matter_driver_template = {
       [capabilities.thermostatMode.commands.heat.NAME] = thermostat_mode_setter(capabilities.thermostatMode.thermostatMode.heat.NAME),
       [capabilities.thermostatMode.commands.emergencyHeat.NAME] = thermostat_mode_setter(capabilities.thermostatMode.thermostatMode.emergency_heat.NAME)
     },
-    [capabilities.thermostatFanMode.ID] = {
-      [capabilities.thermostatFanMode.commands.setThermostatFanMode.NAME] = set_thermostat_fan_mode,
-      [capabilities.thermostatFanMode.commands.fanAuto.NAME] = thermostat_fan_mode_setter(capabilities.thermostatFanMode.thermostatFanMode.auto.NAME),
-      [capabilities.thermostatFanMode.commands.fanOn.NAME] = thermostat_fan_mode_setter(capabilities.thermostatFanMode.thermostatFanMode.on.NAME)
-    },
     [capabilities.thermostatCoolingSetpoint.ID] = {
       [capabilities.thermostatCoolingSetpoint.commands.setCoolingSetpoint.NAME] = set_setpoint(clusters.Thermostat.attributes.OccupiedCoolingSetpoint)
     },
@@ -2317,10 +2219,13 @@ local matter_driver_template = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint(clusters.Thermostat.attributes.OccupiedHeatingSetpoint)
     },
     [capabilities.airConditionerFanMode.ID] = {
-      [capabilities.airConditionerFanMode.commands.setFanMode.NAME] = set_fan_mode,
+      [capabilities.airConditionerFanMode.commands.setFanMode.NAME] = set_air_conditioner_fan_mode
     },
     [capabilities.airPurifierFanMode.ID] = {
       [capabilities.airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = set_air_purifier_fan_mode
+    },
+    [capabilities.fanMode.ID] = {
+      [capabilities.fanMode.commands.setFanMode.NAME] = set_fan_mode
     },
     [capabilities.fanSpeedPercent.ID] = {
       [capabilities.fanSpeedPercent.commands.setPercent.NAME] = set_fan_speed_percent,
@@ -2342,9 +2247,9 @@ local matter_driver_template = {
     capabilities.thermostatMode,
     capabilities.thermostatHeatingSetpoint,
     capabilities.thermostatCoolingSetpoint,
-    capabilities.thermostatFanMode,
     capabilities.thermostatOperatingState,
     capabilities.airConditionerFanMode,
+    capabilities.fanMode,
     capabilities.fanSpeedPercent,
     capabilities.airPurifierFanMode,
     capabilities.windMode,
