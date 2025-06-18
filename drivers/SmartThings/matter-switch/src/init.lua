@@ -174,20 +174,21 @@ local device_type_attribute_map = {
   }
 }
 
-local child_device_profile_overrides_per_vendor_id = {
+local device_overrides_per_vendor = {
   [0x1321] = {
     { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
     { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
   [0x115F] = {
-    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1003, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1004, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x1005, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    { product_id = 0x1006, combo_switch_button = false }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1008, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1009, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x100A, combo_switch_button = false }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
   }
+
 }
 
 local detect_matter_thing
@@ -287,7 +288,7 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     if device:supports_capability(capabilities.powerConsumptionReport) then
       create_poll_report_schedule(device)
     end
-    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true, {persist = true})
+    device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
   end
 end
 
@@ -407,8 +408,8 @@ end
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
 local function device_type_supports_button_switch_combination(device, endpoint_id)
-  for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[AQARA_MANUFACTURER_ID]) do
-    if device.manufacturer_info.product_id == fingerprint.product_id then
+  for _, fingerprint in ipairs(device_overrides_per_vendor[AQARA_MANUFACTURER_ID]) do
+    if fingerprint.product_id == device.manufacturer_info.product_id and fingerprint.combo_switch_button == false then
       return false -- For Aqara Dimmer Switch with Button.
     end
   end
@@ -522,9 +523,9 @@ local function assign_switch_profile(device, switch_ep, is_child_device, electri
   end
 
   if is_child_device then
-    -- Check if child device has an overridden child profile that differs from the child's generic device type profile
-    for _, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
-      for _, fingerprint in ipairs(vendor) do
+    if device_overrides_per_vendor[device.manufacturer_info.vendor_id] then
+      -- Check if child device has an overridden child profile that differs from the child's generic device type profile
+      for _, fingerprint in ipairs(device_overrides_per_vendor[device.manufacturer_info.vendor_id]) do
         if device.manufacturer_info.product_id == fingerprint.product_id and profile == fingerprint.initial_profile then
           return fingerprint.target_profile
         end
@@ -533,7 +534,6 @@ local function assign_switch_profile(device, switch_ep, is_child_device, electri
     -- default to "switch-binary" if no child profile is found
     return profile or "switch-binary"
   end
-
   return profile
 end
 

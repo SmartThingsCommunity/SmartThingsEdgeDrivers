@@ -162,7 +162,6 @@ local periodic_report_val_23 = {
 }
 
 local function test_init()
-  mock_device:set_field("__POWER_CONSUMPTION_REPORT_SUPPORTED", true, {persist = true}) -- assume this was set in added
   local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
   for i, cluster in ipairs(subscribed_attributes) do
       if i > 1 then
@@ -177,8 +176,6 @@ end
 test.set_test_init_function(test_init)
 
 local function test_init_periodic()
-  mock_device_periodic:set_field("__POWER_CONSUMPTION_REPORT_SUPPORTED", true, {persist = true}) -- assume this was set in added
-
   local subscribe_request = subscribed_attributes_periodic[1]:subscribe(mock_device_periodic)
   for i, cluster in ipairs(subscribed_attributes_periodic) do
     if i > 1 then
