@@ -1730,11 +1730,8 @@ local function set_aliro_response_handler(driver, device, ib, response)
   local cmdName = "setCredential"
   local dataOpType = device:get_field(lock_utils.SET_ALIRO_OP_TYPE)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
-  local userType = device:get_field(lock_utils.USER_TYPE)
+  local userType = "adminMember"
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
-  if userType == "guest" then
-    userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
-  end
   local keyId = device:get_field(lock_utils.DEVICE_KEY_ID)
   local issuerKey = device:get_field(lock_utils.ISSUER_KEY)
   local credIndexForIssuerKey = device:get_field(lock_utils.ISSUER_KEY_INDEX)
@@ -1818,7 +1815,7 @@ local function set_aliro_response_handler(driver, device, ib, response)
 
   if elements.next_credential_index.value ~= nil then
     -- Get parameters
-    if userIdx ~= nil then
+    if dataOpType == DoorLock.types.DataOperationTypeEnum.MODIFY then
       userTypeMatter = nil
     end
     local credIdx = elements.next_credential_index.value
@@ -2875,9 +2872,6 @@ local function handle_set_aliro_credential(driver, device, command)
   local cmdName = "setCredential"
   local userIdx = command.args.userIndex
   local userType = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
-  if userIdx ~= nil then
-    userType = nil
-  end
   local keyId = command.args.keyId
   local issuerKey = command.args.issuerKey
   local evictableEndpointKey = command.args.evictableEndpointKey
