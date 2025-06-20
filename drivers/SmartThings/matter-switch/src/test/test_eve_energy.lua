@@ -77,6 +77,8 @@ local function test_init()
   end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
 
@@ -404,6 +406,15 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
   }
+)
+
+test.register_coroutine_test(
+  "Test driver switched event",
+  function()
+    -- a driverSwitched event in this case would only have an effect for a
+    -- parent-child device and therefore nothing should happen for an Eve Energy.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+  end
 )
 
 test.run_registered_tests()
