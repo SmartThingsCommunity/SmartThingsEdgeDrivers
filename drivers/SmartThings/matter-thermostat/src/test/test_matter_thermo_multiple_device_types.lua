@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-local uint32 = require "st.matter.data_types.Uint32"
 
 local clusters = require "st.matter.clusters"
 
