@@ -229,7 +229,7 @@ function SonosDriver:check_auth(info_or_device)
     return false
   end
 
-  local rest_url, household_id
+  local rest_url, household_id, sw_gen
   if type(info_or_device) == "table" then
     if
       type(info_or_device.ssdp_info) == "table" and type(info_or_device.discovery_info) == "table"
@@ -237,6 +237,7 @@ function SonosDriver:check_auth(info_or_device)
       ---@cast info_or_device { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo }
       rest_url = net_url.parse(info_or_device.discovery_info.restUrl)
       household_id = info_or_device.ssdp_info.household_id
+      sw_gen = info_or_device.discovery_info.device.swGen
     elseif
       type(info_or_device.get_field) == "function"
       and type(info_or_device.set_field) == "function"
@@ -245,6 +246,7 @@ function SonosDriver:check_auth(info_or_device)
       ---@cast info_or_device SonosDevice
       rest_url = net_url.parse(info_or_device:get_field(PlayerFields.REST_URL))
       household_id = self.sonos:get_sonos_ids_for_device(info_or_device)
+      sw_gen = info_or_device:get_field(PlayerFields.SW_GEN)
     end
   end
 
@@ -265,6 +267,19 @@ function SonosDriver:check_auth(info_or_device)
       )
   end
 
+  if sw_gen == nil or sw_gen == 1 then
+    local api_key = SonosApi.api_keys.s1_key
+    local headers = SonosApi.make_headers(api_key)
+    local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, household_id, headers)
+    if not response or response_err then
+      return nil,
+        string.format("Error while making REST API call: %s", (response_err or "<unknown error>"))
+    end
+
+    if type(response) == "table" and response.groups and response.players then
+      return true, api_key
+    end
+  end
   for _, api_key in pairs(SonosApi.api_keys) do
     local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
     local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, household_id, headers)
@@ -482,11 +497,21 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
     return nil, error_string, response.errorCode
   end
 
-  if response and response._objectType ~= "groups" then
+  local sw_gen = info.discovery_info.device.swGen
+  local is_s1 = sw_gen == 1
+  local response_valid
+  if is_s1 then
+    response_valid = type(response) == "table"
+      and type(response.groups) == "table"
+      and type(response.players) == "table"
+  else
+    response_valid = response and response._objectType == "groups"
+  end
+  if not response_valid then
     return nil,
       string.format(
         "Unexpected response type to group info request: %s",
-        (response and response._objectType) or "<nil>"
+        st_utils.stringify_table(response)
       )
   end
 
