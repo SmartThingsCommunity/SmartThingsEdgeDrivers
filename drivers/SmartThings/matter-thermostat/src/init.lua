@@ -1450,7 +1450,7 @@ local function running_state_handler(driver, device, ib, response)
 end
 
 local function sequence_of_operation_handler(driver, device, ib, response)
-  -- The ControlSequenceofOperation attribute only directly specifies what can't be operated by the operating environment, not what can.
+  -- The ControlSequenceOfOperation attribute only directly specifies what can't be operated by the operating environment, not what can.
   -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
   -- We also assert that Off is supported, though per spec this is optional.
   if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then
@@ -1481,7 +1481,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
     table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.heat.NAME)
   end
 
-  -- check whether the Auto Mode should be supported in SystemMode, though this is unrelated to ControlSequenceofOperation
+  -- check whether the Auto Mode should be supported in SystemMode, though this is unrelated to ControlSequenceOfOperation
   local auto = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
   if #auto > 0 then
     table.insert(modes_for_inclusion, capabilities.thermostatMode.thermostatMode.auto.NAME)
@@ -1520,25 +1520,25 @@ local function min_deadband_limit_handler(driver, device, ib, response)
 end
 
 local function fan_mode_handler(driver, device, ib, response)
-  local fan_mode_cap = capabilities.fanMode
-  local fan_mode_attr = fan_mode_cap.fanMode
+  local fan_mode_capability = capabilities.fanMode
+  local fan_mode_attribute = fan_mode_capability.fanMode
   local is_air_conditioner = false
   if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
-    fan_mode_cap = capabilities.airPurifierFanMode
-    fan_mode_attr = fan_mode_cap.airPurifierFanMode
+    fan_mode_capability = capabilities.airPurifierFanMode
+    fan_mode_attribute = fan_mode_capability.airPurifierFanMode
   elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
-    fan_mode_cap = capabilities.airConditionerFanMode
-    fan_mode_attr = fan_mode_cap.airConditionerFanMode
+    fan_mode_capability = capabilities.airConditionerFanMode
+    fan_mode_attribute = fan_mode_capability.fanMode
     is_air_conditioner = true
   end
   local fan_mode_event = {
-    [clusters.FanControl.attributes.FanMode.OFF] = is_air_conditioner and fan_mode_cap.fanMode("off") or fan_mode_attr.off(),
-    [clusters.FanControl.attributes.FanMode.LOW] = is_air_conditioner and fan_mode_cap.fanMode("low") or fan_mode_attr.low(),
-    [clusters.FanControl.attributes.FanMode.MEDIUM] = is_air_conditioner and fan_mode_cap.fanMode("medium") or fan_mode_attr.medium(),
-    [clusters.FanControl.attributes.FanMode.HIGH] = is_air_conditioner and fan_mode_cap.fanMode("high") or fan_mode_attr.high(),
-    [clusters.FanControl.attributes.FanMode.ON] = is_air_conditioner and fan_mode_cap.fanMode("auto") or fan_mode_attr.auto(),
-    [clusters.FanControl.attributes.FanMode.AUTO] = is_air_conditioner and fan_mode_cap.fanMode("auto") or fan_mode_attr.auto(),
-    [clusters.FanControl.attributes.FanMode.SMART] = is_air_conditioner and fan_mode_cap.fanMode("auto") or fan_mode_attr.auto()
+    [clusters.FanControl.attributes.FanMode.OFF] = is_air_conditioner and fan_mode_capability.fanMode("off") or fan_mode_attribute.off(),
+    [clusters.FanControl.attributes.FanMode.LOW] = is_air_conditioner and fan_mode_capability.fanMode("low") or fan_mode_attribute.low(),
+    [clusters.FanControl.attributes.FanMode.MEDIUM] = is_air_conditioner and fan_mode_capability.fanMode("medium") or fan_mode_attribute.medium(),
+    [clusters.FanControl.attributes.FanMode.HIGH] = is_air_conditioner and fan_mode_capability.fanMode("high") or fan_mode_attribute.high(),
+    [clusters.FanControl.attributes.FanMode.ON] = is_air_conditioner and fan_mode_capability.fanMode("auto") or fan_mode_attribute.auto(),
+    [clusters.FanControl.attributes.FanMode.AUTO] = is_air_conditioner and fan_mode_capability.fanMode("auto") or fan_mode_attribute.auto(),
+    [clusters.FanControl.attributes.FanMode.SMART] = is_air_conditioner and fan_mode_capability.fanMode("auto") or fan_mode_attribute.auto()
   }
   if fan_mode_event[ib.data.value] then
     device:emit_event_for_endpoint(ib.endpoint_id, fan_mode_event[ib.data.value])
@@ -1548,14 +1548,11 @@ local function fan_mode_handler(driver, device, ib, response)
 end
 
 local function fan_mode_sequence_handler(driver, device, ib, response)
-  local fan_mode_cap = capabilities.fanMode
-  local supported_fan_modes = fan_mode_cap.supportedFanModes
+  local supported_fan_modes_attribute = capabilities.fanMode.supportedFanModes
   if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
-    fan_mode_cap = capabilities.airPurifierFanMode
-    supported_fan_modes = fan_mode_cap.supportedAirPurifierFanModes
+    supported_fan_modes_attribute = capabilities.airPurifierFanMode.supportedAirPurifierFanModes
   elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
-    fan_mode_cap = capabilities.airConditionerFanMode
-    supported_fan_modes = fan_mode_cap.supportedAcFanModes
+    supported_fan_modes_attribute = capabilities.airConditionerFanMode.supportedAcFanModes
   end
   local supportedFanModes
   if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
@@ -1571,7 +1568,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
   else
     supportedFanModes = { "off", "high" }
   end
-  local event = supported_fan_modes(supportedFanModes, {visibility = {displayed = false}})
+  local event = supported_fan_modes_attribute(supportedFanModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
@@ -1830,10 +1827,10 @@ local cooling_setpoint_limit_handler_factory = function(minOrMax)
   end
 end
 
-local set_fan_mode_factory = function(capability)
+local set_fan_mode_factory = function(fan_mode_capability)
   return function(driver, device, cmd)
     local command_argument = cmd.args.fanMode
-    if capability == capabilities.airPurifierFanMode then
+    if fan_mode_capability == capabilities.airPurifierFanMode then
       command_argument = cmd.args.airPurifierFanMode
     end
     local fan_mode_id
@@ -1848,7 +1845,7 @@ local set_fan_mode_factory = function(capability)
     elseif tbl_contains({ "low", "sleep", "quiet", "windFree" }, command_argument) then
       fan_mode_id = clusters.FanControl.attributes.FanMode.LOW
     else
-      device.log.warn(string.format("Invalid Fan Mode (%s) )received from capability command", command_argument))
+      device.log.warn(string.format("Invalid Fan Mode (%s) received from capability command", command_argument))
       return
     end
     device:send(clusters.FanControl.attributes.FanMode:write(device, component_to_endpoint(device, cmd.component, clusters.FanControl.ID), fan_mode_id))
@@ -2184,7 +2181,7 @@ local matter_driver_template = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint(clusters.Thermostat.attributes.OccupiedHeatingSetpoint)
     },
     [capabilities.airConditionerFanMode.ID] = {
-      [capabilities.airConditionerFanMode.commands.setFanMode.NAME] = set_fan_mode_factory(capabilities.fanMode)
+      [capabilities.airConditionerFanMode.commands.setFanMode.NAME] = set_fan_mode_factory(capabilities.airConditionerFanMode)
     },
     [capabilities.airPurifierFanMode.ID] = {
       [capabilities.airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = set_fan_mode_factory(capabilities.airPurifierFanMode)
