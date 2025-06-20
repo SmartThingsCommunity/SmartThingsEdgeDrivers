@@ -328,20 +328,17 @@ local function create_multi_press_values_list(size, supportsHeld)
   return list
 end
 
--- check if device type is found on the device. Optionally specify the endpoint to search on
-local function contains_device_type(device, device_type_id, endpoint_id)
+-- get a list of endpoints for a specified device type.
+local function get_endpoints_by_dt(device, device_type_id)
+  local dt_eps = {}
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
       if dt.device_type_id == device_type_id then
-        if endpoint_id and ep.endpoint_id == endpoint_id then
-          return true
-        elseif endpoint_id == nil then
-          return true
-        end
+        table.insert(dt_eps, ep.endpoint_id)
       end
     end
   end
-  return false
+  return dt_eps
 end
 
 local function tbl_contains(array, value)
@@ -413,10 +410,8 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
       return false -- For Aqara Dimmer Switch with Button.
     end
   end
-  if contains_device_type(device, DIMMABLE_LIGHT_DEVICE_TYPE_ID, endpoint_id) then
-    return true
-  end
-  return false
+  local dimmable_eps = get_endpoints_by_dt(device, DIMMABLE_LIGHT_DEVICE_TYPE_ID)
+  return tbl_contains(dimmable_eps, endpoint_id)
 end
 
 local function get_first_non_zero_endpoint(endpoints)
@@ -674,29 +669,27 @@ local function initialize_buttons(driver, device, main_endpoint)
 end
 
 local function collect_and_store_electrical_sensor_info(driver, device)
+  local el_dt_eps = get_endpoints_by_dt(device, ELECTRICAL_SENSOR_ID)
   local electrical_sensor_eps = {}
   local avail_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == ELECTRICAL_SENSOR_ID then
-        local electrical_ep_info = {}
-        electrical_ep_info.endpoint_id = ep.endpoint_id
-        for _, cluster in ipairs(ep.clusters) do
-          if cluster.cluster_id == clusters.PowerTopology.ID then
-            if cluster.feature_map == clusters.PowerTopology.types.Feature.SET_TOPOLOGY then
-              avail_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
-              electrical_ep_info.availableEndpoints = false
-            end
-            electrical_ep_info.topology = cluster.feature_map
-          elseif cluster.cluster_id == clusters.ElectricalEnergyMeasurement.ID then
-            electrical_ep_info.energy = true
-          elseif cluster.cluster_id == clusters.ElectricalPowerMeasurement.ID then
-            electrical_ep_info.power = true
+    if tbl_contains(el_dt_eps, ep.endpoint_id) then
+      local electrical_ep_info = {}
+      electrical_ep_info.endpoint_id = ep.endpoint_id
+      for _, cluster in ipairs(ep.clusters) do
+        if cluster.cluster_id == clusters.ElectricalEnergyMeasurement.ID then
+          electrical_ep_info.energy = true
+        elseif cluster.cluster_id == clusters.ElectricalPowerMeasurement.ID then
+          electrical_ep_info.power = true
+        elseif cluster.cluster_id == clusters.PowerTopology.ID then
+          electrical_ep_info.topology = cluster.feature_map
+          if cluster.feature_map == clusters.PowerTopology.types.Feature.SET_TOPOLOGY then
+            avail_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
+            electrical_ep_info.availableEndpoints = false
           end
         end
-        table.insert(electrical_sensor_eps, electrical_ep_info)
-        break
       end
+      table.insert(electrical_sensor_eps, electrical_ep_info)
     end
   end
   if #avail_eps_req.info_blocks ~= 0 then
@@ -723,7 +716,7 @@ local function initialize_switches(driver, device, main_endpoint)
 end
 
 local function detect_bridge(device)
-  contains_device_type(device, AGGREGATOR_DEVICE_TYPE_ID)
+  return #get_endpoints_by_dt(device, AGGREGATOR_DEVICE_TYPE_ID) > 0
 end
 
 local function device_init(driver, device)
