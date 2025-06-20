@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -587,7 +587,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.auto())
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode.auto())
     },
     {
       channel = "matter",
@@ -600,7 +600,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.auto())
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode.auto())
     },
     {
       channel = "matter",
@@ -613,7 +613,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.on())
+      message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode.medium())
     },
 
   }
@@ -634,7 +634,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({"on"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "high"}, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -647,7 +647,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({"auto", "on"}, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "medium", "high", "auto"}, {visibility={displayed=false}}))
     },
   }
 )
@@ -748,7 +748,7 @@ test.register_message_test(
 			direction = "receive",
 			message = {
 				mock_device.id,
-				{ capability = "thermostatFanMode", component = "main", command = "setThermostatFanMode", args = { "auto" } }
+				{ capability = "fanMode", component = "main", command = "setFanMode", args = { "auto" } }
 			}
 		},
 		{
@@ -764,7 +764,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        { capability = "thermostatFanMode", component = "main", command = "setThermostatFanMode", args = { "on" } }
+        { capability = "fanMode", component = "main", command = "setFanMode", args = { "high" } }
       }
     },
     {
@@ -772,31 +772,9 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        FanMode:write(mock_device, 1, FanMode.ON)
+        FanMode:write(mock_device, 1, FanMode.HIGH)
       }
     },
-	}
-)
-
-test.register_message_test(
-	"Setting the fan mode to auto should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatFanMode", component = "main", command = "fanAuto", args = { } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.FanControl.attributes.FanMode:write(mock_device, 1, 5)
-			}
-		}
 	}
 )
 

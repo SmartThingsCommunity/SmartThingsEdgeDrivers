@@ -2,7 +2,7 @@ name: fan-wind
 components:
 - id: main
   capabilities:
-  - id: airConditionerFanMode
+  - id: fanMode
     version: 1
   - id: fanSpeedPercent
     version: 1

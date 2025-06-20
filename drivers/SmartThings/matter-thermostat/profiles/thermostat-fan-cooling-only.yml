@@ -6,7 +6,7 @@ components:
     version: 1
   - id: thermostatMode
     version: 1
-  - id: thermostatFanMode
+  - id: fanMode
     version: 1
   - id: thermostatCoolingSetpoint
     version: 1
