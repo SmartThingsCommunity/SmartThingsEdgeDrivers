@@ -1,0 +1,21 @@
+matterGeneric:
+  #- id: "air-conditioner"
+  #  deviceLabel: "Air Conditioner"
+  #  deviceTypes:
+  #    - id: 0x0072 # Room Air Conditioner
+  #  deviceProfileName: air-conditioner
+  - id: "elevator"
+    deviceLabel: "Elevator"
+    deviceTypes:
+      - id: 0xFF02
+    deviceProfileName: elevator
+  - id: "gas-valve"
+    deviceLabel: "Gas Valve"
+    deviceTypes:
+      - id: 0xFF01
+    deviceProfileName: gas-valve
+  - id: "ventilator"
+    deviceLabel: "Ventilator"
+    deviceTypes:
+      - id: 0xFF03
+    deviceProfileName: ventilator
