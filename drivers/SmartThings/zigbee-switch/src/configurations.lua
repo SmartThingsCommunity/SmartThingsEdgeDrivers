@@ -19,6 +19,9 @@ local device_def = require "st.device"
 
 local ColorControl = clusters.ColorControl
 local IASZone = clusters.IASZone
+local ElectricalMeasurement = clusters.ElectricalMeasurement
+local SimpleMetering = clusters.SimpleMetering
+local Alarms = clusters.Alarms
 local Status = require "st.zigbee.generated.types.ZclStatus"
 
 local CONFIGURATION_VERSION_KEY = "_configuration_version"
@@ -63,7 +66,69 @@ local devices = {
       }
     },
     IAS_ZONE_CONFIG_METHOD = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
-  }
+  },
+  FRIENT_SWITCHES = {
+    FINGERPRINTS = {
+      { mfr = "frient A/S", model = "SPLZB-131" },
+      { mfr = "frient A/S", model = "SPLZB-132" },
+      { mfr = "frient A/S", model = "SPLZB-134" },
+      { mfr = "frient A/S", model = "SPLZB-137" },
+      { mfr = "frient A/S", model = "SPLZB-141" },
+      { mfr = "frient A/S", model = "SPLZB-142" },
+      { mfr = "frient A/S", model = "SPLZB-144" },
+      { mfr = "frient A/S", model = "SPLZB-147" },
+      { mfr = "frient A/S", model = "SMRZB-143" },
+      { mfr = "frient A/S", model = "SMRZB-153" },
+      { mfr = "frient A/S", model = "SMRZB-332" },
+      { mfr = "frient A/S", model = "SMRZB-342" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = ElectricalMeasurement.ID,
+        attribute = ElectricalMeasurement.attributes.RMSVoltage.ID,
+        minimum_interval = 5,
+        maximum_interval = 600,
+        data_type = ElectricalMeasurement.attributes.RMSVoltage.base_type,
+        reportable_change = 1
+      },{
+        cluster = ElectricalMeasurement.ID,
+        attribute = ElectricalMeasurement.attributes.RMSCurrent.ID,
+        minimum_interval = 5,
+        maximum_interval = 600,
+        data_type = ElectricalMeasurement.attributes.RMSCurrent.base_type,
+        reportable_change = 1
+      },{
+        cluster = ElectricalMeasurement.ID,
+        attribute = ElectricalMeasurement.attributes.ActivePower.ID,
+        minimum_interval = 5,
+        maximum_interval = 600,
+        data_type = ElectricalMeasurement.attributes.ActivePower.base_type,
+        reportable_change = 1
+      },{
+        cluster = SimpleMetering.ID,
+        attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
+        minimum_interval = 5,
+        maximum_interval = 600,
+        data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
+        reportable_change = 1
+      },{
+        cluster = SimpleMetering.ID,
+        attribute = SimpleMetering.attributes.CurrentSummationDelivered.ID,
+        minimum_interval = 5,
+        maximum_interval = 600,
+        data_type = SimpleMetering.attributes.CurrentSummationDelivered.base_type,
+        reportable_change = 1
+      },{
+        cluster = Alarms.ID,
+        attribute = Alarms.attributes.AlarmCount.ID,
+        minimum_interval = 1,
+        maximum_interval = 600,
+        data_type = Alarms.attributes.AlarmCount.base_type,
+        reportable_change = 1,
+
+      },
+    }
+  },
 }
 
 
