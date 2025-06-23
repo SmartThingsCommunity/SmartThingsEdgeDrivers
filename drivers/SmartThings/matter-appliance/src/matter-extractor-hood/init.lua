@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,71 +14,33 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
+local embedded_cluster_utils = require "embedded-cluster-utils"
 local utils = require "st.utils"
+local version = require "version"
 
 local EXTRACTOR_HOOD_DEVICE_TYPE_ID = 0x007A
 local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
 local ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID = 0x0103
 
-local version = require "version"
 if version.api < 10 then
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
   clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
 end
-
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
 local WIND_MODE_MAP = {
   [0]		= capabilities.windMode.windMode.sleepWind,
   [1]		= capabilities.windMode.windMode.naturalWind
 }
 
--- Helper functions --
-local function get_endpoints_for_dt(device, device_type)
-  local endpoints = {}
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == device_type then
-        table.insert(endpoints, ep.endpoint_id)
-        break
-      end
-    end
-  end
-  table.sort(endpoints)
-  return endpoints
-end
-
-local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
-      return component
-    end
-  end
-  return "main"
-end
-
-local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  if map[component] then
-    return map[component]
-  end
-  return device.MATTER_DEFAULT_ENDPOINT
-end
-
-local function device_init(driver, device)
-  device:subscribe()
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-end
-
+-- Lifecycle Handlers --
 local function device_added(driver, device)
-  local extractor_hood_endpoint = get_endpoints_for_dt(device, EXTRACTOR_HOOD_DEVICE_TYPE_ID)[1]
+  local extractor_hood_endpoint = common_utils.get_endpoints_for_dt(device, EXTRACTOR_HOOD_DEVICE_TYPE_ID)[1]
   local componentToEndpointMap = {
     ["main"] = extractor_hood_endpoint
   }
-  local on_off_light_device_type_endpoint = get_endpoints_for_dt(device, ON_OFF_LIGHT_DEVICE_TYPE_ID)[1]
-  local on_off_light_switch_device_type_endpoint = get_endpoints_for_dt(device, ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID)[1]
+  local on_off_light_device_type_endpoint = common_utils.get_endpoints_for_dt(device, ON_OFF_LIGHT_DEVICE_TYPE_ID)[1]
+  local on_off_light_switch_device_type_endpoint = common_utils.get_endpoints_for_dt(device, ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID)[1]
   if on_off_light_device_type_endpoint and
     device:supports_server_cluster(clusters.OnOff.ID, on_off_light_device_type_endpoint) then
     componentToEndpointMap["light"] = on_off_light_device_type_endpoint
@@ -86,7 +48,32 @@ local function device_added(driver, device)
     device:supports_server_cluster(clusters.OnOff.ID, on_off_light_switch_device_type_endpoint) then
     componentToEndpointMap["light"] = on_off_light_switch_device_type_endpoint
   end
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
+  device:set_field(common_utils.COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
+end
+
+local function do_configure(driver, device)
+  local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
+  local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+  local light_eps = device:get_endpoints(clusters.OnOff.ID)
+  local profile_name = "extractor-hood"
+  if #hepa_filter_eps > 0 then
+    profile_name = profile_name .. "-hepa"
+  end
+  if #ac_filter_eps > 0 then
+    profile_name = profile_name .. "-ac"
+  end
+  if #wind_eps > 0 then
+    profile_name = profile_name .. "-wind"
+  end
+  for _, ep in ipairs(light_eps) do
+    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      profile_name = profile_name .. "-light"
+      break
+    end
+  end
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
 end
 
 -- Matter Handlers --
@@ -282,13 +269,13 @@ end
 local matter_extractor_hood_handler = {
   NAME = "matter-extractor-hood",
   lifecycle_handlers = {
-    init = device_init,
-    added = device_added
+    added = device_added,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
       [clusters.OnOff.ID] = {
-        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
+        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler
       },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.Condition.ID] = hepa_filter_condition_handler,
@@ -304,7 +291,7 @@ local matter_extractor_hood_handler = {
         [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler,
         [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
         [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler
-      },
+      }
     }
   },
   capability_handlers = {
@@ -316,7 +303,7 @@ local matter_extractor_hood_handler = {
     },
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = handle_switch_on,
-      [capabilities.switch.commands.off.NAME] = handle_switch_off,
+      [capabilities.switch.commands.off.NAME] = handle_switch_off
     },
     [capabilities.windMode.ID] = {
       [capabilities.windMode.commands.setWindMode.NAME] = set_wind_mode
