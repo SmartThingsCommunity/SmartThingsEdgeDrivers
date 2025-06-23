@@ -15,9 +15,6 @@
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local area_type = require "Global.types.AreaTypeTag"
-local landmark = require "Global.types.LandmarkTag"
-local embedded_cluster_utils = require "embedded_cluster_utils"
 
 local area_type = require "Global.types.AreaTypeTag"
 local landmark = require "Global.types.LandmarkTag"

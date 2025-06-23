@@ -1284,7 +1284,6 @@ local locationDescriptorStruct = require "Global.types.LocationDescriptorStruct"
 local areaInfoStruct = require "ServiceArea.types.AreaInfoStruct"
 local areaStruct = require "ServiceArea.types.AreaStruct"
 local landmarkInfoStruct = require "ServiceArea.types.LandmarkInfoStruct"
-
 test.register_message_test(
   "Supported ServiceAreas must be registered",
   {
@@ -1315,7 +1314,6 @@ test.register_message_test(
 )
 
 local selectAreasStatus = require "ServiceArea.types.SelectAreasStatus"
-
 test.register_message_test(
   "ServiceArea attribute report must emit appropriate capability event",
   {
@@ -1339,7 +1337,6 @@ test.register_message_test(
 )
 
 local uint32_dt = require "st.matter.data_types.Uint32"
-
 test.register_message_test(
   "Select ServiceAreas command must trigger appropriate matter cluster",
   {
@@ -1361,7 +1358,6 @@ test.register_message_test(
     },
   }
 )
-
 
 test.register_message_test(
   "Selected ServiceAreasResponse must log Success status or emit last valid selectedAreas capability on non-Success status",
