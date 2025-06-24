@@ -534,7 +534,14 @@ local function get_endpoints_for_dt(device, device_type)
 end
 
 local function get_device_type(device)
+  local device_types = {}
   for _, ep in ipairs(device.endpoints) do
+    if ep.device_types ~= nil then
+      table.insert(device_types, { endpoint_id = ep.endpoint_id, device_types = ep.device_types })
+    end
+  end
+  table.sort(device_types, function(a, b) return a.endpoint_id < b.endpoint_id end)
+  for _, ep in ipairs(device_types) do
     if ep.device_types ~= nil then
       for _, dt in ipairs(ep.device_types) do
         if dt.device_type_id == RAC_DEVICE_TYPE_ID then
