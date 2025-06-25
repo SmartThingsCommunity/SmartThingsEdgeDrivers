@@ -294,7 +294,7 @@ function SonosDriver:check_auth(info_or_device)
     local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
     local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, household_id, headers)
 
-    if response._objectType == "globalError" then
+    if response and response._objectType == "globalError" then
       unauthorized = (response.errorCode == "ERROR_NOT_AUTHORIZED")
       if not unauthorized then
         return nil, string.format("Unexpected error body: %s", st_utils.stringify_table(response))
