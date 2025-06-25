@@ -298,6 +298,13 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
     end
 
     if info_to_send then
+      if not (info_to_send.discovery_info and info_to_send.discovery_info.device) then
+        log.error_with(
+          { hub_logs = true },
+          st_utils.stringify_table(info_to_send, "Sonos Discovery Info has unexpected structure")
+        )
+        return
+      end
       event_bus:send(info_to_send)
       local mac_addr = utils.extract_mac_addr(info_to_send.discovery_info.device)
       local waiting_handles = task_handle.waiting_for_unique_key[unique_key] or {}
