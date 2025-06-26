@@ -534,32 +534,24 @@ local function get_endpoints_for_dt(device, device_type)
 end
 
 local function get_device_type(device)
-  local device_types = {}
+  local device_type_found = {}
   for _, ep in ipairs(device.endpoints) do
     if ep.device_types ~= nil then
-      table.insert(device_types, { endpoint_id = ep.endpoint_id, device_types = ep.device_types })
-    end
-  end
-  table.sort(device_types, function(a, b) return a.endpoint_id < b.endpoint_id end)
-  for _, ep in ipairs(device_types) do
-    if ep.device_types ~= nil then
       for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == RAC_DEVICE_TYPE_ID then
-          return RAC_DEVICE_TYPE_ID
-        elseif dt.device_type_id == AP_DEVICE_TYPE_ID then
-          return AP_DEVICE_TYPE_ID
-        elseif dt.device_type_id == THERMOSTAT_DEVICE_TYPE_ID then
-          return THERMOSTAT_DEVICE_TYPE_ID
-        elseif dt.device_type_id == FAN_DEVICE_TYPE_ID then
-          return FAN_DEVICE_TYPE_ID
-        elseif dt.device_type_id == WATER_HEATER_DEVICE_TYPE_ID then
-          return WATER_HEATER_DEVICE_TYPE_ID
-        elseif dt.device_type_id == HEAT_PUMP_DEVICE_TYPE_ID then
-          return HEAT_PUMP_DEVICE_TYPE_ID
-        end
+        device_type_found[dt.device_type_id] = true
       end
     end
   end
+
+  for _, id in ipairs({
+    RAC_DEVICE_TYPE_ID,
+    AP_DEVICE_TYPE_ID,
+    THERMOSTAT_DEVICE_TYPE_ID,
+    FAN_DEVICE_TYPE_ID,
+    WATER_HEATER_DEVICE_TYPE_ID,
+    HEAT_PUMP_DEVICE_TYPE_ID
+  }) do if device_type_found[id] then return id end end
+
   return false
 end
 
