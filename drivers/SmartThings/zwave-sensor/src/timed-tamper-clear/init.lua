@@ -23,7 +23,7 @@ local TAMPER_CLEAR = 10
 local FIBARO_DOOR_WINDOW_MFR_ID = 0x010F
 
 local function can_handle_tamper_event(opts, driver, device, cmd, ...)
-  return device.zwave_manufacturer_id ~= FIBARO_DOOR_WINDOW_MFR_ID and
+  if device.zwave_manufacturer_id ~= FIBARO_DOOR_WINDOW_MFR_ID and
     opts.dispatcher_class == "ZwaveDispatcher" and
     cmd ~= nil and
     cmd.cmd_class ~= nil and
@@ -31,7 +31,11 @@ local function can_handle_tamper_event(opts, driver, device, cmd, ...)
     cmd.cmd_id == Notification.REPORT and
     cmd.args.notification_type == Notification.notification_type.HOME_SECURITY and
     (cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED or
-    cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_MOVED)
+    cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_MOVED) then
+      local subdriver = require("timed-tamper-clear")
+      return true, subdriver
+    else return false
+    end
 end
 
 -- This behavior is from zwave-door-window-sensor.groovy. We've seen this behavior

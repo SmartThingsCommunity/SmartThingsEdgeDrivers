@@ -24,7 +24,12 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local fingerprint = {manufacturerId = 0x014F, productType = 0x2001, productId = 0x0102} -- NorTek open/close sensor
 
 local function can_handle(opts, driver, device, ...)
-  return device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId)
+  if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
+    local subdriver = require("wakeup-no-poll")
+    return true, subdriver
+  else
+    return false
+  end
 end
 
 -- Nortek open/closed sensors _always_ respond with "open" when polled, and they are polled after wakeup

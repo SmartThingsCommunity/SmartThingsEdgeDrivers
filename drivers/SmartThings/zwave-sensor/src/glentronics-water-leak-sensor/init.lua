@@ -18,9 +18,7 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
-local GLENTRONICS_WATER_LEAK_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x0084, productType = 0x0093, productId = 0x0114 } -- glentronics water leak sensor
-}
+local GLENTRONICS_WATER_LEAK_SENSOR_FINGERPRINTS = { manufacturerId = 0x0084, productType = 0x0093, productId = 0x0114 } -- glentronics water leak sensor
 
 --- Determine whether the passed device is glentronics water leak sensor
 ---
@@ -28,12 +26,13 @@ local GLENTRONICS_WATER_LEAK_SENSOR_FINGERPRINTS = {
 --- @param device Device device isntance
 --- @return boolean true if the device proper, else false
 local function can_handle_glentronics_water_leak_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(GLENTRONICS_WATER_LEAK_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
+  if device:id_match(
+      GLENTRONICS_WATER_LEAK_SENSOR_FINGERPRINTS.manufacturerId,
+      GLENTRONICS_WATER_LEAK_SENSOR_FINGERPRINTS.productType,
+      GLENTRONICS_WATER_LEAK_SENSOR_FINGERPRINTS.productId) then
+    local subdriver = require("glentronics-water-leak-sensor")
+    return true, subdriver
+  else return false end
 end
 
 local function notification_report_handler(self, device, cmd)

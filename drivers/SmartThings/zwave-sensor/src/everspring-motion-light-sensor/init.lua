@@ -19,11 +19,14 @@ local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({version=2})
 local EVERSPRING_MOTION_LIGHT_FINGERPRINT = { mfr = 0x0060, prod = 0x0012, model = 0x0001 }
 
 local function can_handle_everspring_motion_light(opts, driver, device, ...)
-  return device:id_match(
+  if device:id_match(
     EVERSPRING_MOTION_LIGHT_FINGERPRINT.mfr,
     EVERSPRING_MOTION_LIGHT_FINGERPRINT.prod,
     EVERSPRING_MOTION_LIGHT_FINGERPRINT.model
-  )
+  ) then
+    local subdriver = require("everspring-motion-light-sensor")
+    return true, subdriver
+  else return false end
 end
 
 local function device_added(driver, device)
