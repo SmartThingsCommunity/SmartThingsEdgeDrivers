@@ -87,45 +87,44 @@ local devices = {
         cluster = ElectricalMeasurement.ID,
         attribute = ElectricalMeasurement.attributes.RMSVoltage.ID,
         minimum_interval = 5,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = ElectricalMeasurement.attributes.RMSVoltage.base_type,
         reportable_change = 1
       },{
         cluster = ElectricalMeasurement.ID,
         attribute = ElectricalMeasurement.attributes.RMSCurrent.ID,
         minimum_interval = 5,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = ElectricalMeasurement.attributes.RMSCurrent.base_type,
         reportable_change = 1
       },{
         cluster = ElectricalMeasurement.ID,
         attribute = ElectricalMeasurement.attributes.ActivePower.ID,
         minimum_interval = 5,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = ElectricalMeasurement.attributes.ActivePower.base_type,
         reportable_change = 1
       },{
         cluster = SimpleMetering.ID,
         attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
         minimum_interval = 5,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
         reportable_change = 1
       },{
         cluster = SimpleMetering.ID,
         attribute = SimpleMetering.attributes.CurrentSummationDelivered.ID,
         minimum_interval = 5,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = SimpleMetering.attributes.CurrentSummationDelivered.base_type,
         reportable_change = 1
       },{
         cluster = Alarms.ID,
         attribute = Alarms.attributes.AlarmCount.ID,
         minimum_interval = 1,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = Alarms.attributes.AlarmCount.base_type,
         reportable_change = 1,
-
       },
     }
   },

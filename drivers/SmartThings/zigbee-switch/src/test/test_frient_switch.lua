@@ -270,9 +270,9 @@ test.register_coroutine_test("doConfigure should send bind request, read attribu
     )})
     test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ACPowerMultiplier:configure_reporting(mock_device, 0x0001, 0xA8C0,0x0001)})
     test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 0x0001, 0xA8C0,0x0001)})
-    test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.RMSVoltage:configure_reporting(mock_device, 0x0005, 0x0258,0x0001)})
-    test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.RMSCurrent:configure_reporting(mock_device, 0x0005, 0x0258,0x0001)})
-    test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 0x0005, 0x0258,0x0001)})
+    test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.RMSVoltage:configure_reporting(mock_device, 0x0005, 0x0E10,0x0001)})
+    test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.RMSCurrent:configure_reporting(mock_device, 0x0005, 0x0E10,0x0001)})
+    test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 0x0005, 0x0E10,0x0001)})
 
     test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ACVoltageMultiplier:read(mock_device )})
     test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ACVoltageDivisor:read(mock_device )})
@@ -292,8 +292,8 @@ test.register_coroutine_test("doConfigure should send bind request, read attribu
             SimpleMetering.ID,
             0x02
     )})
-    test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 0x0005, 0x0258,1)})
-    test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 0x0005, 0x0258,1)})
+    test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 0x0005, 0x0E10,1)})
+    test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 0x0005, 0x0E10,1)})
     test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device )})
     test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_device )})
 
@@ -312,7 +312,7 @@ test.register_coroutine_test("doConfigure should send bind request, read attribu
             Alarms.ID,
             0x02
     )})
-    test.socket.zigbee:__expect_send({mock_device.id, Alarms.attributes.AlarmCount:configure_reporting(mock_device, 1, 0x0258, 1)})
+    test.socket.zigbee:__expect_send({mock_device.id, Alarms.attributes.AlarmCount:configure_reporting(mock_device, 1, 0x0E10, 1)})
     test.socket.zigbee:__expect_send({mock_device.id, Alarms.attributes.AlarmCount:read(mock_device)})
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
