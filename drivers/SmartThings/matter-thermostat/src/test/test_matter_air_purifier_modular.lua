@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -12,28 +12,29 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 local test = require "integration_test"
+test.set_rpc_version(8)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
-
 local clusters = require "st.matter.clusters"
+local version = require "version"
 
-clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
-clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
-clusters.AirQuality = require "AirQuality"
-clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
-clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
-clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
-clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
-clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
-clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
-clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
-clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
-clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
-
-test.set_rpc_version(8)
+if version.api < 10 then
+  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
+  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
+  clusters.AirQuality = require "AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+end
 
 local mock_device_basic = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
@@ -162,7 +163,7 @@ local cluster_subscribe_list_configured = {
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ControlSequenceOfOperation
   },
-  [capabilities.thermostatFanMode.ID] = {
+  [capabilities.fanMode.ID] = {
     clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.FanMode
   },

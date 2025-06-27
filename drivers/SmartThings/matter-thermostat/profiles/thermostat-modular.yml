@@ -6,6 +6,9 @@ components:
         version: 1
       - id: thermostatMode
         version: 1
+      - id: fanMode
+        version: 1
+        optional: true
       - id: thermostatFanMode
         version: 1
         optional: true
