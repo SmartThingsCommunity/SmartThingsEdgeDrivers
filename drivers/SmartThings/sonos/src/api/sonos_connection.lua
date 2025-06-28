@@ -239,7 +239,9 @@ end
 ---@param sonos_conn SonosConnection
 local function _oauth_reconnect_task(sonos_conn)
   log.debug("Spawning reconnect task for ", sonos_conn.device.label)
-  if not sonos_conn.driver:is_waiting_for_oauth_token() then
+  local check_auth = sonos_conn.driver:check_auth(sonos_conn.device)
+  local unauthorized = (check_auth == false)
+  if unauthorized and not sonos_conn.driver:is_waiting_for_oauth_token() then
     sonos_conn.driver:request_oauth_token()
   end
   local token_receive_handle, err = sonos_conn.driver:oauth_token_event_subscribe()
@@ -264,7 +266,11 @@ local function _oauth_reconnect_task(sonos_conn)
           return
         end
       end
-      if not sonos_conn.driver:is_waiting_for_oauth_token() then
+
+      check_auth = sonos_conn.driver:check_auth(sonos_conn.device)
+      unauthorized = (check_auth == false)
+
+      if unauthorized and not sonos_conn.driver:is_waiting_for_oauth_token() then
         sonos_conn.driver:request_oauth_token()
       end
       cosock.socket.sleep(backoff())
