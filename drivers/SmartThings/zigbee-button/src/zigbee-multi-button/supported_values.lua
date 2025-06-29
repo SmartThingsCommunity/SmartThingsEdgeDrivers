@@ -90,14 +90,18 @@ local devices = {
   BUTTON_PUSH_HELD_DOUBLE_1 = {
     MATCHING_MATRIX = {
       { mfr = "ShinaSystem", model = "BSM-300Z" },
-      { mfr = "ShinaSystem", model = "SBM300ZB1" }
+      { mfr = "ShinaSystem", model = "SBM300ZB1" },
+      { mfr = "LUMI", model = "lumi.remote.b1acn02" },
+      { mfr = "LUMI", model = "lumi.remote.acn003" },
+      { mfr = "LUMI", model = "lumi.remote.b18ac1" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 1
   },
   BUTTON_PUSH_HELD_DOUBLE_2 = {
     MATCHING_MATRIX = {
-      { mfr = "ShinaSystem", model = "SBM300ZB2" }
+      { mfr = "ShinaSystem", model = "SBM300ZB2" },
+      { mfr = "LUMI", model = "lumi.remote.b28ac1" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 2
