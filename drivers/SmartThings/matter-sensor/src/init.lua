@@ -150,6 +150,14 @@ local function match_profile(driver, device, battery_supported)
   if device:supports_capability(capabilities.waterSensor) then
     profile_name = profile_name .. "-leak"
   end
+  
+  if device:supports_capability(capabilities.smokeDetector) then
+    profile_name = profile_name .. "-smoke"
+  end
+  
+  if device:supports_capability(capabilities.carbonMonoxideDetector) then
+    profile_name = profile_name .. "-co"
+  end
 
   if device:supports_capability(capabilities.flowMeasurement) then
     profile_name = profile_name .. "-flow"
