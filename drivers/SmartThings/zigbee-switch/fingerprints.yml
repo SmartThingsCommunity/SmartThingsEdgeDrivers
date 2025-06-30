@@ -2309,6 +2309,11 @@ zigbeeManufacturer:
     manufacturer: Inovelli
     model: VZM31-SN
     deviceProfileName: inovelli-vzm31-sn
+  - id: "Inovelli/VZM32-SN"
+    deviceLabel: "Inovelli mmWave Dimmer Blue Series"
+    manufacturer: Inovelli
+    model: VZM32-SN
+    deviceProfileName: inovelli-vzm32-sn
   - id: "LAISIAO/BATH"
     deviceLabel: Laisiao Bathroom Heater
     manufacturer: LAISIAO
