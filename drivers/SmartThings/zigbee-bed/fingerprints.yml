@@ -1,6 +1,0 @@
-zigbeeManufacturer:
-  - id: "SHUS/shus.smart.mattress"
-    deviceLabel: Sleepone Ai SX-1
-    manufacturer: SHUS
-    model: SX-1
-    deviceProfileName: shus-smart-mattress
