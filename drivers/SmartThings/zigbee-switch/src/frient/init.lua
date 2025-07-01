@@ -55,6 +55,9 @@ local function alarm_report_handler(driver, device, zb_rx)
   end
 end
 
+local function device_added(driver, device)
+end
+
 -- Handler for voltage measurement
 local function voltage_measurement_handler(driver, device, value, zb_rx)
   local raw_value  = value.value
@@ -188,6 +191,7 @@ local frient_smart_plug = {
   lifecycle_handlers = {
     init = device_init,
     doConfigure = do_configure,
+    added = device_added,
   },
   can_handle = can_handle_frient_smart_plug
 }
