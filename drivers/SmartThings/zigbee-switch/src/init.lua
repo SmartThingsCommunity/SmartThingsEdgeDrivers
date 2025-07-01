@@ -183,7 +183,8 @@ local zigbee_switch_driver_template = {
     added = device_added,
     infoChanged = info_changed,
     doConfigure = do_configure
-  }
+  },
+  health_check = false,
 }
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
   zigbee_switch_driver_template.supported_capabilities,
