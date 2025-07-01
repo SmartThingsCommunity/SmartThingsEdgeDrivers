@@ -143,6 +143,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({unit="C", value={maximum=80.0, minimum=30.0, step=0.1}}))
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 70.0, unit = "C" }))
     }
   }
