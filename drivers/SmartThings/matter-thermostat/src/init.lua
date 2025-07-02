@@ -541,6 +541,8 @@ local function get_device_type(device)
           return RAC_DEVICE_TYPE_ID
         elseif dt.device_type_id == AP_DEVICE_TYPE_ID then
           return AP_DEVICE_TYPE_ID
+        elseif dt.device_type_id == THERMOSTAT_DEVICE_TYPE_ID then
+          return THERMOSTAT_DEVICE_TYPE_ID
         elseif dt.device_type_id == FAN_DEVICE_TYPE_ID then
           return FAN_DEVICE_TYPE_ID
         elseif dt.device_type_id == WATER_HEATER_DEVICE_TYPE_ID then

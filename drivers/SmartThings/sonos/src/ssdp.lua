@@ -294,7 +294,8 @@ function _ssdp_mt:next_msearch_response()
   if possible_locations[recv_ip_or_err] == nil then
     return Err(
       string.format(
-        "IP addres [%s] from socket receivefrom doesn't match any of the reply locations: %s",
+        "IP address [%s] from socket receivefrom doesn't match any of the reply locations: %s",
+        recv_ip_or_err,
         table.concat(location_candidates, ", ")
       )
     )
@@ -425,8 +426,11 @@ end
 function Ssdp.new_search_instance(mx)
   local udp_sock, sock_err = socket.udp()
   if sock_err or not udp_sock then
-    log.error(string.format("Error opening UDP socket for SSDP search: %s", sock_err))
-    return nil, "sock_err"
+    log.error_with(
+      { hub_logs = true },
+      string.format("Error opening UDP socket for SSDP search: %s", sock_err)
+    )
+    return nil, sock_err
   end
 
   local listen_ip = "0.0.0.0"
@@ -435,7 +439,10 @@ function Ssdp.new_search_instance(mx)
   local _, bind_err = udp_sock:setsockname(listen_ip, listen_port)
 
   if bind_err then
-    log.error(string.format("Unable to bind UDP socket for SSDP search: %s", bind_err))
+    log.error_with(
+      { hub_logs = true },
+      string.format("Unable to bind UDP socket for SSDP search: %s", bind_err)
+    )
     return nil, bind_err
   end
 

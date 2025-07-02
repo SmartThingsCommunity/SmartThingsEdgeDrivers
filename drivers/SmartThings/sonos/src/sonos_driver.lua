@@ -4,7 +4,6 @@ local cosock = require "cosock"
 local json = require "st.json"
 local log = require "log"
 local net_url = require "net.url"
-local security = require "st.security"
 local st_utils = require "st.utils"
 
 local sonos_ssdp = require "api.sonos_ssdp_discovery"
@@ -16,6 +15,15 @@ local SonosApi = require "api"
 local SonosDisco = require "disco"
 local SonosDriverLifecycleHandlers = require "lifecycle_handlers"
 local SonosState = require "sonos_state"
+
+local security_load_success, security = pcall(require, "st.security")
+if not security_load_success then
+  log.warn_with(
+    { hub_logs = true },
+    string.format("Unable to load `st.security` module: %s", security)
+  )
+  security = nil
+end
 
 local ONE_HOUR_IN_SECONDS = 3600
 
@@ -94,13 +102,13 @@ end
 
 ---@return boolean
 function SonosDriver:is_waiting_for_oauth_token()
-  return (api_version >= 14) and self.waiting_for_oauth_token
+  return (api_version >= 14 and security ~= nil) and self.waiting_for_oauth_token
 end
 
 ---@return (cosock.Bus.Subscription)? receiver the subscription receiver if the bus hasn't been closed, nil if closed
 ---@return nil|"not supported"|"closed" err_msg "not supported" on old API versions, "closed" if the bus is closed, nil on success
 function SonosDriver:oauth_token_event_subscribe()
-  if api_version < 14 then
+  if api_version < 14 or security == nil then
     return nil, "not supported"
   end
   return self.oauth_token_bus:subscribe()
@@ -199,7 +207,7 @@ function SonosDriver:handle_startup_state_received()
 end
 
 function SonosDriver:get_fallback_api_key()
-  if api_version < 14 then
+  if api_version < 14 or security == nil then
     return SonosApi.api_keys.s1_key
   end
 
@@ -218,7 +226,7 @@ end
 function SonosDriver:check_auth(info_or_device)
   local maybe_token, _ = self:get_oauth_token()
 
-  local token_valid = (api_version >= 14)
+  local token_valid = (api_version >= 14 and security ~= nil)
     and self.oauth
     and self.oauth.endpoint_app_info
     and self.oauth.endpoint_app_info.state == "connected"
@@ -229,7 +237,7 @@ function SonosDriver:check_auth(info_or_device)
     return false
   end
 
-  local rest_url, household_id
+  local rest_url, household_id, sw_gen
   if type(info_or_device) == "table" then
     if
       type(info_or_device.ssdp_info) == "table" and type(info_or_device.discovery_info) == "table"
@@ -237,6 +245,7 @@ function SonosDriver:check_auth(info_or_device)
       ---@cast info_or_device { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo }
       rest_url = net_url.parse(info_or_device.discovery_info.restUrl)
       household_id = info_or_device.ssdp_info.household_id
+      sw_gen = info_or_device.discovery_info.device.swGen
     elseif
       type(info_or_device.get_field) == "function"
       and type(info_or_device.set_field) == "function"
@@ -245,6 +254,7 @@ function SonosDriver:check_auth(info_or_device)
       ---@cast info_or_device SonosDevice
       rest_url = net_url.parse(info_or_device:get_field(PlayerFields.REST_URL))
       household_id = self.sonos:get_sonos_ids_for_device(info_or_device)
+      sw_gen = info_or_device:get_field(PlayerFields.SW_GEN)
     end
   end
 
@@ -265,16 +275,35 @@ function SonosDriver:check_auth(info_or_device)
       )
   end
 
-  for _, api_key in pairs(SonosApi.api_keys) do
-    local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
+  if sw_gen == nil or sw_gen == 1 then
+    local api_key = SonosApi.api_keys.s1_key
+    local headers = SonosApi.make_headers(api_key)
     local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, household_id, headers)
     if not response or response_err then
       return nil,
         string.format("Error while making REST API call: %s", (response_err or "<unknown error>"))
     end
 
-    if response._objectType == "globalError" and response.errorCode ~= "ERROR_NOT_AUTHORIZED" then
-      return nil, string.format("Unexpected error body: %s", st_utils.stringify_table(response))
+    if type(response) == "table" and response.groups and response.players then
+      return true, api_key
+    end
+  end
+
+  local unauthorized = false
+  for _, api_key in pairs(SonosApi.api_keys) do
+    local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
+    local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, household_id, headers)
+
+    if response and response._objectType == "globalError" then
+      unauthorized = (response.errorCode == "ERROR_NOT_AUTHORIZED")
+      if not unauthorized then
+        return nil, string.format("Unexpected error body: %s", st_utils.stringify_table(response))
+      end
+    end
+
+    if not response or response_err then
+      return nil,
+        string.format("Error while making REST API call: %s", (response_err or "<unknown error>"))
     end
 
     if response._objectType == "groups" then
@@ -282,13 +311,21 @@ function SonosDriver:check_auth(info_or_device)
     end
   end
 
-  return false
+  if unauthorized then
+    return false
+  end
+
+  return nil,
+    string.format(
+      "Unable to determine Authentication Status for %s",
+      st_utils.stringify_table(info_or_device)
+    )
 end
 
 ---@return any? ret nil on permissions violation
 ---@return string? error nil on success
 function SonosDriver:request_oauth_token()
-  if api_version < 14 then
+  if api_version < 14 or security == nil then
     return nil, "not supported"
   end
   local maybe_token, maybe_err = self:get_oauth_token()
@@ -309,7 +346,7 @@ end
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
 ---@return "token expired"|"no token"|"not supported"|nil reason the reason a token was not provided, nil if there is a valid token available
 function SonosDriver:get_oauth_token()
-  if api_version < 14 then
+  if api_version < 14 or security == nil then
     return nil, "not supported"
   end
   self.hub_augmented_driver_data = self.hub_augmented_driver_data or {}
@@ -374,6 +411,8 @@ local function make_ssdp_event_handler(
               log.warn(string.format("Error on token event bus receive: %s", receive_err))
             else
               for _, event in pairs(unauthorized) do
+                -- shouldn't need a nil check on the ssdp_task here since this whole function
+                -- won't get called unless the task is successfully spawned.
                 driver.ssdp_task:publish(event)
               end
               unauthorized = {}
@@ -395,7 +434,10 @@ local function make_ssdp_event_handler(
                   if err_code == "ERROR_NOT_AUTHORIZED" then
                     unauthorized[unique_key] = event
                   end
-                  log.warn(string.format("Failed to handle discovered speaker: %s", handle_err))
+                  log.warn_with(
+                    { hub_logs = true },
+                    string.format("Failed to handle discovered speaker: %s", handle_err)
+                  )
                 else
                   discovered[unique_key] = true
                 end
@@ -416,7 +458,7 @@ end
 function SonosDriver:start_ssdp_event_task()
   local ssdp_task, err = sonos_ssdp.spawn_persistent_ssdp_task()
   if err then
-    log.error(string.format("Unable to create SSDP task: %s", err))
+    log.error_with({ hub_logs = true }, string.format("Unable to create SSDP task: %s", err))
   end
   if ssdp_task then
     self.ssdp_task = ssdp_task
@@ -482,11 +524,21 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
     return nil, error_string, response.errorCode
   end
 
-  if response and response._objectType ~= "groups" then
+  local sw_gen = info.discovery_info.device.swGen
+  local is_s1 = sw_gen == 1
+  local response_valid
+  if is_s1 then
+    response_valid = type(response) == "table"
+      and type(response.groups) == "table"
+      and type(response.players) == "table"
+  else
+    response_valid = response and response._objectType == "groups"
+  end
+  if not response_valid then
     return nil,
       string.format(
         "Unexpected response type to group info request: %s",
-        (response and response._objectType) or "<nil>"
+        st_utils.stringify_table(response)
       )
   end
 
@@ -510,6 +562,9 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
   end
 
   if not device_mac_addr then
+    if not (info and info.discovery_info and info.discovery_info.device) then
+      return nil, st_utils.stringify_table(info, "Sonos Discovery Info has unexpected structure")
+    end
     device_mac_addr = utils.extract_mac_addr(info.discovery_info.device)
   end
 

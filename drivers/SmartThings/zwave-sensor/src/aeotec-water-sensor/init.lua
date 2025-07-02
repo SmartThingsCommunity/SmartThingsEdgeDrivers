@@ -26,14 +26,11 @@ local ZWAVE_WATER_TEMP_HUMIDITY_FINGERPRINTS = {
 }
 
 --- Determine whether the passed device is zwave water temperature humidiry sensor
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
 local function can_handle_zwave_water_temp_humidity_sensor(opts, driver, device, ...)
   for _, fingerprint in ipairs(ZWAVE_WATER_TEMP_HUMIDITY_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
+      local subdriver = require("aeotec-water-sensor")
+      return true, subdriver
     end
   end
   return false

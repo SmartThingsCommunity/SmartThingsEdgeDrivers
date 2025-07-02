@@ -75,7 +75,11 @@ local function device_init(self, device)
   device:emit_event(capabilities.lock.supportedUnlockDirections({ "fromInside", "fromOutside" },
     { visibility = { displayed = false } }))
   device:emit_event(capabilities.battery.type("AA"))
-  device:emit_event(capabilities.battery.quantity(8))
+  local battery_quantity = 8
+  if device:get_model() == "aqara.lock.akr001" then
+    battery_quantity = 6
+  end
+  device:emit_event(capabilities.battery.quantity(battery_quantity))
 end
 
 local function device_added(self, device)
