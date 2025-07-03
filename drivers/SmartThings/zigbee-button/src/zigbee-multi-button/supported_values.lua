@@ -20,6 +20,13 @@ local devices = {
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 2
   },
+  BUTTON_PUSH_HELD_2 = {
+	MATCHING_MATRIX = {
+	  { mfr = "zunzunbee", model = "SSWZ8T" }
+	},
+	SUPPORTED_BUTTON_VALUES = { "pushed","held"},
+	NUMBER_OF_BUTTONS = 8
+  },
   BUTTON_PUSH_HELD_4 = {
     MATCHING_MATRIX = {
       { mfr = "CentraLite", model = "3450-L" },
