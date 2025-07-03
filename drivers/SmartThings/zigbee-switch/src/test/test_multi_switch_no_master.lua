@@ -83,9 +83,7 @@ local function test_init()
   test.mock_device.add_test_device(mock_base_device)
   test.mock_device.add_test_device(mock_parent_device)
   test.mock_device.add_test_device(mock_first_child)
-  test.mock_device.add_test_device(mock_second_child)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_second_child)end
 
 test.set_test_init_function(test_init)
 
