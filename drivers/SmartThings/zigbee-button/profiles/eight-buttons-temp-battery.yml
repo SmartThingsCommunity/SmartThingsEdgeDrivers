@@ -65,8 +65,8 @@ components:
     categories:
       - name: RemoteController
 metadata:
-    mnmn: SmartThingsCommunity
-    vid: b85e2d6f-0ea4-38e2-b5f4-31c3873b1920
+  mnmn: SmartThingsCommunity
+  vid: b85e2d6f-0ea4-38e2-b5f4-31c3873b1920
 preferences:
   - preferenceId: tempOffset
     explicit: true
