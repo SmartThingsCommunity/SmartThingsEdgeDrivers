@@ -1,0 +1,12 @@
+name: ventilator
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: airPurifierFanMode
+        version: 1
+      - id: fanSpeedPercent
+        version: 1
+    categories:
+      - name: Vent
