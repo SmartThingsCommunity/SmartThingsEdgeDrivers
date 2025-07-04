@@ -4,8 +4,6 @@ local fields = require "fields"
 local discovery_mdns = require "discovery_mdns"
 local socket = require "cosock.socket"
 
-local processing_devices = {}
-
 function discovery.set_device_field(driver, device)
   local device_cache_value = driver.datastore.discovery_cache[device.device_network_id]
 
@@ -36,6 +34,10 @@ local function try_add_device(driver, device_dni, device_ip)
 
   update_device_discovery_cache(driver, device_dni, device_ip, device_info)
   local create_device_msg = driver.discovery_helper.get_device_create_msg(driver, device_dni, device_ip, device_info)
+  if not create_device_msg then
+    log.error_with({ hub_logs = true }, string.format("Failed to get device info. dni= %s, ip= %s", device_dni, device_ip))
+    return "device info not found"
+  end
 
   local credential = driver.discovery_helper.get_credential(driver, device_dni, device_ip)
 
@@ -52,7 +54,6 @@ local function try_add_device(driver, device_dni, device_ip)
   end
 
   log.info_with({ hub_logs = true }, string.format("try_create_device. dni= %s, ip= %s", device_dni, device_ip))
-  processing_devices[device_dni] = true
   driver:try_create_device(create_device_msg)
   return nil
 end
@@ -60,7 +61,6 @@ end
 function discovery.device_added(driver, device)
   log.info_with({ hub_logs = true }, string.format("device_added. dni= %s", device.device_network_id))
   discovery.set_device_field(driver, device)
-  processing_devices[device.device_network_id] = nil
   driver.lifecycle_handlers.init(driver, device)
 end
 
@@ -100,7 +100,7 @@ local function discovery_device(driver)
         break
       end
     end
-    if (not processing_devices[dni]) and (not is_already_added) then
+    if not is_already_added then
       try_add_device(driver, dni, ip)
     end
   end
