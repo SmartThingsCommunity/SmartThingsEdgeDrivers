@@ -7,7 +7,6 @@
 --- @field BRIDGE_SW_VERSION string The SW Version of the bridge to determine if it supports CLIP V2
 --- @field DEVICE_TYPE string Field on all Hue devices that indicates type, maps to a Hue service rtype.
 --- @field BRIDGE_API string Transient field that holds the HueAPI instance for the bridge
---- @field MIN_DIMMING string Minimum dimming/brightness value accepted by a light
 --- @field EVENT_SOURCE string Field on a bridge that stores a handle to the SSE EventSource client.
 local Fields = {
   _ADDED = "added",
@@ -20,11 +19,12 @@ local Fields = {
   DEVICE_TYPE = "devicetype",
   EVENT_SOURCE = "eventsource",
   GAMUT = "gamut",
+  GROUPS = "groups",
+  GROUPS_SCAN_QUEUE = "groups_scan_queue",
   HUE_DEVICE_ID = "hue_device_id",
   IPV4 = "ipv4",
   IS_ONLINE = "is_online",
   IS_MULTI_SERVICE = "is_multi_service",
-  MIN_DIMMING = "mindim",
   MIN_KELVIN = "mintemp",
   MAX_KELVIN = "maxtemp",
   MODEL_ID = "modelid",
@@ -35,6 +35,7 @@ local Fields = {
   COLOR_SATURATION = "color_saturation",
   COLOR_HUE = "color_hue",
   SWITCH_STATE = "switch_state_cache",
+  COLOR_TEMP_SETPOINT = "ct_setpoint"
 }
 
 return Fields

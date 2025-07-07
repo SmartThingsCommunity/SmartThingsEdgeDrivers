@@ -28,6 +28,24 @@ local AEOTEC_HEAVY_DUTY_SWITCH = {
   }
 }
 
+local SWITCH_US = {
+  PARAMETERS = {
+    thresholdKwh    = { type = 'config', parameter_number = 20, size = 2 },
+    thresholdPower  = { type = 'config', parameter_number = 21, size = 2 },
+    assocGroup1     = { type = 'assoc', group = 1, maxnodes = 5, addhub = true }
+  }
+}
+
+local SWITCH_EU = {
+  PARAMETERS = {
+    thresholdPower = { type = 'config', parameter_number = 91, size = 2 },
+    thresholdKwh   = { type = 'config', parameter_number = 92, size = 2 },
+    group1Sensors  = { type = 'config', parameter_number = 101, size = 4 },
+    group1Time     = { type = 'config', parameter_number = 111, size = 4 },
+    assocGroup1    = { type = 'assoc', group = 1, maxnodes = 5, addhub = true }
+  }
+}
+
 local devices = {
   INOVELLI = {
     MATCHING_MATRIX = {
@@ -323,6 +341,22 @@ local devices = {
       product_ids = 0x004E
     },
     PARAMETERS = AEOTEC_HEAVY_DUTY_SWITCH.PARAMETERS
+  },
+  AEOTEC_SMART_SWITCH_US = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = 0x0103,
+      product_ids = 0x0017
+    },
+    PARAMETERS = SWITCH_US.PARAMETERS
+  },
+  AEOTEC_SMART_SWITCH_7_EU = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = 0x0003,
+      product_ids = 0x00AF
+    },
+    PARAMETERS = SWITCH_EU.PARAMETERS
   },
   SWITCH_LEVEL_INDICATOR = {
     MATCHING_MATRIX = {

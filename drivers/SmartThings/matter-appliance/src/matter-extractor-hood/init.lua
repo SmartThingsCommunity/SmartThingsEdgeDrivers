@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,9 +14,15 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
+local embedded_cluster_utils = require "embedded-cluster-utils"
+local utils = require "st.utils"
+local version = require "version"
 
 local EXTRACTOR_HOOD_DEVICE_TYPE_ID = 0x007A
-local version = require "version"
+local ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
+local ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID = 0x0103
+
 if version.api < 10 then
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
   clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
@@ -27,8 +33,47 @@ local WIND_MODE_MAP = {
   [1]		= capabilities.windMode.windMode.naturalWind
 }
 
-local function device_init(driver, device)
-  device:subscribe()
+-- Lifecycle Handlers --
+local function device_added(driver, device)
+  local extractor_hood_endpoint = common_utils.get_endpoints_for_dt(device, EXTRACTOR_HOOD_DEVICE_TYPE_ID)[1]
+  local componentToEndpointMap = {
+    ["main"] = extractor_hood_endpoint
+  }
+  local on_off_light_device_type_endpoint = common_utils.get_endpoints_for_dt(device, ON_OFF_LIGHT_DEVICE_TYPE_ID)[1]
+  local on_off_light_switch_device_type_endpoint = common_utils.get_endpoints_for_dt(device, ON_OFF_LIGHT_SWITCH_DEVICE_TYPE_ID)[1]
+  if on_off_light_device_type_endpoint and
+    device:supports_server_cluster(clusters.OnOff.ID, on_off_light_device_type_endpoint) then
+    componentToEndpointMap["light"] = on_off_light_device_type_endpoint
+  elseif on_off_light_switch_device_type_endpoint and
+    device:supports_server_cluster(clusters.OnOff.ID, on_off_light_switch_device_type_endpoint) then
+    componentToEndpointMap["light"] = on_off_light_switch_device_type_endpoint
+  end
+  device:set_field(common_utils.COMPONENT_TO_ENDPOINT_MAP, componentToEndpointMap, { persist = true })
+end
+
+local function do_configure(driver, device)
+  local hepa_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.HepaFilterMonitoring.ID)
+  local ac_filter_eps = embedded_cluster_utils.get_endpoints(device, clusters.ActivatedCarbonFilterMonitoring.ID)
+  local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
+  local light_eps = device:get_endpoints(clusters.OnOff.ID)
+  local profile_name = "extractor-hood"
+  if #hepa_filter_eps > 0 then
+    profile_name = profile_name .. "-hepa"
+  end
+  if #ac_filter_eps > 0 then
+    profile_name = profile_name .. "-ac"
+  end
+  if #wind_eps > 0 then
+    profile_name = profile_name .. "-wind"
+  end
+  for _, ep in ipairs(light_eps) do
+    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+      profile_name = profile_name .. "-light"
+      break
+    end
+  end
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
 end
 
 -- Matter Handlers --
@@ -104,10 +149,11 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
-  local speed = ib.data.value
-  if speed ~= nil and speed <= 100 then
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
+  if ib.data.value == nil then
+    return
   end
+  local speed = utils.clamp_value(ib.data.value, 0, 100)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end
 
 local function wind_support_handler(driver, device, ib, response)
@@ -165,6 +211,15 @@ local function activated_carbon_filter_change_indication_handler(driver, device,
   end
 end
 
+local function on_off_attr_handler(driver, device, ib, response)
+  local component = device.profile.components["light"]
+  if ib.data.value then
+    device:emit_component_event(component, capabilities.switch.switch.on())
+  else
+    device:emit_component_event(component, capabilities.switch.switch.off())
+  end
+end
+
 -- Capability Handlers --
 local function set_fan_mode(driver, device, cmd)
   local fan_mode_id
@@ -199,13 +254,29 @@ local function set_wind_mode(driver, device, cmd)
   device:send(clusters.FanControl.attributes.WindSetting:write(device, device:component_to_endpoint(cmd.component), wind_mode))
 end
 
+local function handle_switch_on(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.OnOff.server.commands.On(device, endpoint_id)
+  device:send(req)
+end
+
+local function handle_switch_off(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local req = clusters.OnOff.server.commands.Off(device, endpoint_id)
+  device:send(req)
+end
+
 local matter_extractor_hood_handler = {
   NAME = "matter-extractor-hood",
   lifecycle_handlers = {
-    init = device_init
+    added = device_added,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
+      [clusters.OnOff.ID] = {
+        [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler
+      },
       [clusters.HepaFilterMonitoring.ID] = {
         [clusters.HepaFilterMonitoring.attributes.Condition.ID] = hepa_filter_condition_handler,
         [clusters.HepaFilterMonitoring.attributes.ChangeIndication.ID] = hepa_filter_change_indication_handler
@@ -220,7 +291,7 @@ local matter_extractor_hood_handler = {
         [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler,
         [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
         [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler
-      },
+      }
     }
   },
   capability_handlers = {
@@ -229,6 +300,10 @@ local matter_extractor_hood_handler = {
     },
     [capabilities.fanSpeedPercent.ID] = {
       [capabilities.fanSpeedPercent.commands.setPercent.NAME] = set_fan_speed_percent
+    },
+    [capabilities.switch.ID] = {
+      [capabilities.switch.commands.on.NAME] = handle_switch_on,
+      [capabilities.switch.commands.off.NAME] = handle_switch_off
     },
     [capabilities.windMode.ID] = {
       [capabilities.windMode.commands.setWindMode.NAME] = set_wind_mode

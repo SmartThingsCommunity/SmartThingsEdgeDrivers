@@ -111,10 +111,19 @@ local devices = {
   },
   BUTTON_PUSH_HELD_DOUBLE_4 = {
     MATCHING_MATRIX = {
-      { mfr = "ShinaSystem", model = "MSM-300Z" }
+      { mfr = "ShinaSystem", model = "MSM-300Z" },
+      { mfr = "Linxura", model = "Smart Controller" },
+      { mfr = "Linxura", model = "Aura Smart Button" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 4
+  },
+  BUTTON_PUSH_DOWN_HOLD_UP_VIMAR_2 = {
+    MATCHING_MATRIX = {
+      { mfr = "Vimar", model = "RemoteControl_v1.0" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "down_hold", "up" },
+    NUMBER_OF_BUTTONS = 2
   }
 }
 

@@ -99,8 +99,10 @@ local zigbee_water_driver_template = {
     require("sengled"),
     require("sinope")
   },
+  health_check = false,
 }
 
-defaults.register_for_default_handlers(zigbee_water_driver_template, zigbee_water_driver_template.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_water_driver_template,
+  zigbee_water_driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
 local zigbee_water_driver = ZigbeeDriver("zigbee-water", zigbee_water_driver_template)
 zigbee_water_driver:run()

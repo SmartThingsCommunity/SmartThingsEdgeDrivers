@@ -10,6 +10,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
+  #Bosch
+  - id: 4617/12309
+    deviceLabel: "Door/window contact II [M]"
+    vendorId: 0x1209
+    productId: 0x3015
+    deviceProfileName: contact-button-battery  
   #Elko
   - id: "5170/4098"
     deviceLabel: RFWD-100/MT
@@ -69,6 +75,29 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0001
     deviceProfileName: motion-contact-battery
+  # LG
+  - id: "4142/8208"
+    deviceLabel: LG Air Quality Sensor
+    vendorId: 0x102E
+    productId: 0x2010
+    deviceProfileName: aqs-temp-humidity-co2-pm1-pm25-pm10-meas
+  # Neo
+  - id: "4991/1122"
+    deviceLabel: Door Sensor
+    vendorId: 0x137F
+    productId: 0x0462
+    deviceProfileName: contact-battery
+  - id: "4991/1123"
+    deviceLabel: Motion Sensor
+    vendorId: 0x137F
+    productId: 0x0463
+    deviceProfileName: motion-battery
+  #Tado
+  - id: "4942/6"
+    deviceLabel: Wireless Temperature Sensor X
+    vendorId: 0x134E
+    productId: 0x0006
+    deviceProfileName: temperature-humidity
   #Tuo
   - id: "5150/3"
     deviceLabel: "TUO Temperature Sensor"
@@ -86,6 +115,44 @@ matterManufacturer:
     vendorId: 0x142B
     productId: 0x0002
     deviceProfileName: motion-illuminance-temperature-humidity
+  #LG
+  - id: "4142/8192"
+    deviceLabel: LG Temp and Humidity Sensor
+    vendorId: 0x102E
+    productId: 0x2000
+    deviceProfileName: temperature-humidity-battery
+  - id: "4142/8224"
+    deviceLabel: LG Door and Window Sensor
+    vendorId: 0x102E
+    productId: 0x2020
+    deviceProfileName: contact-battery
+  - id: "4142/8240"
+    deviceLabel: LG Motion Sensor
+    vendorId: 0x102E
+    productId: 0x2030
+    deviceProfileName: motion-illuminance-battery  
+  # Siterwell
+  - id: "4736/847"
+    deviceLabel: Siterwell Door Window Sensor
+    vendorId: 0x1280
+    productId: 0x034F
+    deviceProfileName: contact-battery
+  - id: "4736/32788"
+    deviceLabel: Siterwell Smart Smoke Alarm
+    vendorId: 0x1280
+    productId: 0x8014
+    deviceProfileName: smoke 
+  - id: "4736/32789"
+    deviceLabel: Siterwell Smart Carbon Monoxide Alarm
+    vendorId: 0x1280
+    productId: 0x8015
+    deviceProfileName: co
+  - id: "4736/848"
+    deviceLabel: Siterwell Motion Sensor
+    vendorId: 0x1280
+    productId: 0x0350
+    deviceProfileName: motion-battery
+
 matterGeneric:
   - id: "matter/contact/sensor"
     deviceLabel: Matter Contact Sensor
@@ -138,6 +205,14 @@ matterGeneric:
       - id: 0x0106 # Light Sensor
       - id: 0x0302 # Temperature Sensor
     deviceProfileName: motion-illuminance-temperature-battery
+  - id: "matter/motion-illum-temp-humidity"
+    deviceLabel: Matter Motion/Illuminance Sensor
+    deviceTypes:
+      - id: 0x0107 # Occupancy Sensor
+      - id: 0x0106 # Light Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: motion-illuminance-temperature-humidity-battery
   - id: "matter/motion-sensor"
     deviceLabel: Matter Motion Sensor
     deviceTypes:
@@ -152,25 +227,30 @@ matterGeneric:
   - id: "matter/air-quality-sensor"
     deviceLabel: Matter Air Quality Sensor
     deviceTypes:
-      - id: 0x002C
+      - id: 0x002C # Air Quality Sensor
     deviceProfileName: aqs
   - id: "matter/smoke-co-alarm"
     deviceLabel: Matter Smoke/CO Alarm
     deviceTypes:
-      - id: 0x0076
+      - id: 0x0076 # Smoke CO Alarm
     deviceProfileName: smoke-co
   - id: "matter/rain/sensor"
     deviceLabel: Matter Rain Sensor
     deviceTypes:
-      - id: 0x0044
+      - id: 0x0044 # Rain Sensor
     deviceProfileName: rain-battery
   - id: "matter/freeze/detector"
     deviceLabel: Matter Water Freeze Detector
     deviceTypes:
-      - id: 0x0041
+      - id: 0x0041 # Freeze Detector
     deviceProfileName: freeze-battery
   - id: "matter/leak/detector"
     deviceLabel: Matter Water Leak Detector
     deviceTypes:
-      - id: 0x0043
+      - id: 0x0043 # Leak Sensor
     deviceProfileName: leak-battery
+  - id: "matter/flow/sensor"
+    deviceLabel: Matter Flow Sensor
+    deviceTypes:
+      - id: 0x0306 # Flow Sensor
+    deviceProfileName: flow-battery

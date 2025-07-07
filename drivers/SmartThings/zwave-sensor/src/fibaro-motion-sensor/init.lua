@@ -22,7 +22,10 @@ local FIBARO_MOTION_MFR = 0x010F
 local FIBARO_MOTION_PROD = 0x0800
 
 local function can_handle_fibaro_motion_sensor(opts, driver, device, ...)
-  return device:id_match(FIBARO_MOTION_MFR, FIBARO_MOTION_PROD)
+  if device:id_match(FIBARO_MOTION_MFR, FIBARO_MOTION_PROD) then
+    local subdriver = require("fibaro-motion-sensor")
+    return true, subdriver
+  else return false end
 end
 
 local function sensor_alarm_report(driver, device, cmd)

@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 local capabilities = require "st.capabilities"
 local log = require "log"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
@@ -50,8 +51,15 @@ end
 local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
+local FLOW_BOUND_RECEIVED = "__flow_bound_received"
+local FLOW_MIN = "__flow_min"
+local FLOW_MAX = "__flow_max"
 
-local HUE_MANUFACTURER_ID = 0x100B
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
 
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
@@ -80,22 +88,12 @@ local function set_boolean_device_type_per_endpoint(driver, device)
       for _, dt in ipairs(ep.device_types) do
           for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
               if dt.device_type_id == info.id then
-                  device:set_field(dt_name, ep.endpoint_id)
+                  device:set_field(dt_name, ep.endpoint_id, { persist = true })
                   device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, ep.endpoint_id))
               end
           end
       end
   end
-end
-
-local function supports_battery_percentage_remaining(device)
-  local battery_eps = device:get_endpoints(clusters.PowerSource.ID,
-          {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
-  if #battery_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
-    return true
-  end
-  return false
 end
 
 local function supports_sensitivity_preferences(device)
@@ -114,11 +112,7 @@ local function supports_sensitivity_preferences(device)
   return preference_names
 end
 
-local function device_added(driver, device)
-  set_boolean_device_type_per_endpoint(driver, device)
-end
-
-local function do_configure(driver, device)
+local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
   if device:supports_capability(capabilities.motionSensor) then
@@ -157,8 +151,18 @@ local function do_configure(driver, device)
     profile_name = profile_name .. "-leak"
   end
 
-  if supports_battery_percentage_remaining(device) then
+  if device:supports_capability(capabilities.flowMeasurement) then
+    profile_name = profile_name .. "-flow"
+  end
+
+  if device:supports_capability(capabilities.button) then
+    profile_name = profile_name .. "-button"
+  end
+
+  if battery_supported == battery_support.BATTERY_PERCENTAGE then
     profile_name = profile_name .. "-battery"
+  elseif battery_supported == battery_support.BATTERY_LEVEL then
+    profile_name = profile_name .. "-batteryLevel"
   end
 
   if device:supports_capability(capabilities.hardwareFault) then
@@ -175,15 +179,27 @@ local function do_configure(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
+local function do_configure(driver, device)
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+    device:send(attribute_list_read)
+  else
+    match_profile(driver, device, battery_support.NO_BATTERY)
+  end
+end
+
 local function device_init(driver, device)
   log.info("device init")
+  set_boolean_device_type_per_endpoint(driver, device)
   device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    device:subscribe()
     set_boolean_device_type_per_endpoint(driver, device)
+    device:subscribe()
   end
   if not device.preferences then
     return
@@ -295,7 +311,7 @@ local function supported_sensitivities_handler(driver, device, ib, response)
 
   for dt_name, info in pairs(BOOLEAN_DEVICE_TYPE_INFO) do
     if device:get_field(dt_name) == ib.endpoint_id then
-      device:set_field(info.sensitivity_max, ib.data.value)
+      device:set_field(info.sensitivity_max, ib.data.value, {persist = true})
     end
   end
 end
@@ -314,6 +330,30 @@ local function battery_percent_remaining_attr_handler(driver, device, ib, respon
   end
 end
 
+local function battery_charge_level_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.OK then
+    device:emit_event(capabilities.batteryLevel.battery.normal())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.WARNING then
+    device:emit_event(capabilities.batteryLevel.battery.warning())
+  elseif ib.data.value == clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL then
+    device:emit_event(capabilities.batteryLevel.battery.critical())
+  end
+end
+
+local function power_source_attribute_list_handler(driver, device, ib, response)
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    if attr.value == 0x0C then
+      match_profile(driver, device, battery_support.BATTERY_PERCENTAGE)
+      return
+    elseif attr.value == 0x0E then
+      match_profile(driver, device, battery_support.BATTERY_LEVEL)
+      return
+    end
+  end
+end
+
 local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
@@ -327,12 +367,42 @@ local function pressure_attr_handler(driver, device, ib, response)
   end
 end
 
+local function flow_attr_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local flow = measured_value / 10.0
+    local unit = "m^3/h"
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flow({value = flow, unit = unit}))
+  end
+end
+
+local flow_attr_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    local flow_bound = ib.data.value / 10.0
+    local unit = "m^3/h"
+    set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..minOrMax, ib.endpoint_id, flow_bound)
+    local min = get_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MAX, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flowRange({ value = { minimum = min, maximum = max }, unit = unit }))
+        set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MIN, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MAX, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min flow measurement %d that is not lower than the reported max flow measurement %d", min, max))
+      end
+    end
+  end
+end
+
 local matter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,
     doConfigure = do_configure,
-    added = device_added,
   },
   matter_handlers = {
     attr = {
@@ -351,6 +421,8 @@ local matter_driver_template = {
         [clusters.BooleanState.attributes.StateValue.ID] = boolean_attr_handler
       },
       [clusters.PowerSource.ID] = {
+        [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
+        [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_remaining_attr_handler,
       },
       [clusters.OccupancySensing.ID] = {
@@ -362,7 +434,15 @@ local matter_driver_template = {
       [clusters.BooleanStateConfiguration.ID] = {
         [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = sensor_fault_handler,
         [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = supported_sensitivities_handler,
-    },
+      },
+      [clusters.Thermostat.ID] = {
+        [clusters.Thermostat.attributes.LocalTemperature.ID] = temperature_attr_handler
+      },
+      [clusters.FlowMeasurement.ID] = {
+        [clusters.FlowMeasurement.attributes.MeasuredValue.ID] = flow_attr_handler,
+        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = flow_attr_handler_factory(FLOW_MIN),
+        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = flow_attr_handler_factory(FLOW_MAX)
+      }
     }
   },
   -- TODO Once capabilities all have default handlers move this info there, and
@@ -374,7 +454,8 @@ local matter_driver_template = {
     [capabilities.temperatureMeasurement.ID] = {
       clusters.TemperatureMeasurement.attributes.MeasuredValue,
       clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+      clusters.Thermostat.attributes.LocalTemperature
     },
     [capabilities.illuminanceMeasurement.ID] = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
@@ -387,6 +468,10 @@ local matter_driver_template = {
     },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining
+    },
+    [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.BatChargeLevel,
+      clusters.SmokeCoAlarm.attributes.BatteryAlert,
     },
     [capabilities.atmosphericPressureMeasurement.ID] = {
       clusters.PressureMeasurement.attributes.MeasuredValue
@@ -478,18 +563,27 @@ local matter_driver_template = {
       clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
       clusters.BooleanStateConfiguration.attributes.SensorFault,
     },
-    [capabilities.batteryLevel.ID] = {
-      clusters.SmokeCoAlarm.attributes.BatteryAlert,
-    },
     [capabilities.waterSensor.ID] = {
-        clusters.BooleanState.attributes.StateValue,
+      clusters.BooleanState.attributes.StateValue,
     },
     [capabilities.temperatureAlarm.ID] = {
-        clusters.BooleanState.attributes.StateValue,
+      clusters.BooleanState.attributes.StateValue,
     },
     [capabilities.rainSensor.ID] = {
-        clusters.BooleanState.attributes.StateValue,
+      clusters.BooleanState.attributes.StateValue,
     },
+    [capabilities.flowMeasurement.ID] = {
+      clusters.FlowMeasurement.attributes.MeasuredValue,
+      clusters.FlowMeasurement.attributes.MinMeasuredValue,
+      clusters.FlowMeasurement.attributes.MaxMeasuredValue
+    },
+  },
+  subscribed_events = {
+    [capabilities.button.ID] = {
+      clusters.Switch.events.InitialPress,
+      clusters.Switch.events.LongPress,
+      clusters.Switch.events.MultiPressComplete,
+    }
   },
   capability_handlers = {
   },
@@ -497,18 +591,22 @@ local matter_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.contactSensor,
     capabilities.motionSensor,
+    capabilities.button,
     capabilities.battery,
+    capabilities.batteryLevel,
     capabilities.relativeHumidityMeasurement,
     capabilities.illuminanceMeasurement,
     capabilities.atmosphericPressureMeasurement,
     capabilities.waterSensor,
     capabilities.temperatureAlarm,
     capabilities.rainSensor,
-    capabilities.hardwareFault
+    capabilities.hardwareFault,
+    capabilities.flowMeasurement,
   },
   sub_drivers = {
     require("air-quality-sensor"),
-    require("smoke-co-alarm")
+    require("smoke-co-alarm"),
+    require("bosch-button-contact")
   }
 }
 

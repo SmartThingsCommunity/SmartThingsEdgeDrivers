@@ -79,6 +79,9 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ profile = "lock-user-pin" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
   end
 )
 
@@ -741,33 +744,6 @@ test.register_message_test(
         DoorLock.events.LockOperation:build_test_event_report(
           mock_device, 1,
           {
-            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
-            operation_source = types.OperationSourceEnum.MANUAL,
-            user_index = 1,
-            fabric_index = 1,
-            source_node = 1
-          }
-        ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main",
-        capabilities.lock.lock.locked(
-          {data = {method = "manual", userIndex = 1}, state_change = true}
-        )
-      ),
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.events.LockOperation:build_test_event_report(
-          mock_device, 1,
-          {
             lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
             operation_source = types.OperationSourceEnum.PROPRIETARY_REMOTE,
             user_index = 1,
@@ -822,33 +798,6 @@ test.register_message_test(
         DoorLock.events.LockOperation:build_test_event_report(
           mock_device, 1,
           {
-            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
-            operation_source = types.OperationSourceEnum.BUTTON,
-            user_index = 1,
-            fabric_index = 1,
-            source_node = 1
-          }
-        ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main",
-        capabilities.lock.lock.locked(
-          {data = {method = "button", userIndex = 1}, state_change = true}
-        )
-      ),
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.events.LockOperation:build_test_event_report(
-          mock_device, 1,
-          {
             lock_operation_type = types.LockOperationTypeEnum.UNLOCK,
             operation_source = types.OperationSourceEnum.SCHEDULE,
             user_index = 1,
@@ -892,33 +841,6 @@ test.register_message_test(
         "main",
         capabilities.lock.lock.locked(
           {data = {method = "command", userIndex = 1}, state_change = true}
-        )
-      ),
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.events.LockOperation:build_test_event_report(
-          mock_device, 1,
-          {
-            lock_operation_type = types.LockOperationTypeEnum.UNLATCH,
-            operation_source = types.OperationSourceEnum.RFID,
-            user_index = 1,
-            fabric_index = 1,
-            source_node = 1
-          }
-        ),
-      },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message(
-        "main",
-        capabilities.lock.lock.locked(
-          {data = {method = "rfid", userIndex = 1}, state_change = true}
         )
       ),
     },
@@ -1236,6 +1158,18 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
         capabilities.lockUsers.commandResult(
           {commandName="deleteUser", statusCode="success", userIndex=1},
           {state_change=true, visibility={displayed=false}}
@@ -1306,6 +1240,18 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main",
         capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
       )
     )
     test.socket.capability:__expect_send(
@@ -1538,11 +1484,11 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
-    test.wait_for_events()
+    -- test.wait_for_events()
   end
 )
 
@@ -1877,7 +1823,7 @@ test.register_coroutine_test(
             userIndex=1,
             schedules={{
               scheduleIndex=1,
-              weekdays={"Monday"},
+              weekDays={"Monday"},
               startHour=12,
               startMinute=30,
               endHour=17,

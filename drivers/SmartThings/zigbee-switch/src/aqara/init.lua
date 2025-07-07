@@ -33,6 +33,7 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1acn1" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1" },
+  { mfr = "LUMI", model = "lumi.switch.b1laus01" },
   { mfr = "LUMI", model = "lumi.switch.b2laus01" },
   { mfr = "LUMI", model = "lumi.switch.n1aeu1" },
   { mfr = "LUMI", model = "lumi.switch.n2aeu1" },
@@ -244,6 +245,9 @@ local function do_configure(self, device)
 end
 
 local function device_added(driver, device)
+  if (device:supports_capability_by_id(capabilities.button.ID)) then
+    device:emit_event(capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } }))
+  end
   if (device:supports_capability_by_id(capabilities.powerMeter.ID)) then
     device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
     device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))

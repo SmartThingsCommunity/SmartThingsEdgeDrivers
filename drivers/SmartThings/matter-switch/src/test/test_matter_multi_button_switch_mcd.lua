@@ -181,13 +181,32 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.Switch.server.events.MultiPressComplete,
 }
 
+local function configure_buttons()
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
+
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
+
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+end
+
 local function test_init()
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ profile = "light-level-3-button" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+  device_info_copy.profile.id = "3-button"
+  local device_info_json = dkjson.encode(device_info_copy)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  configure_buttons()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_child)
   mock_device:expect_device_create({
@@ -198,22 +217,8 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", mock_device_ep5)
   })
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  mock_device:expect_metadata_update({ profile = "light-level-3-button" })
-  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
-  device_info_copy.profile.id = "3-button"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+  configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
-
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 end
 
 local function test_init_mcd_unsupported_switch_device_type()
@@ -231,9 +236,9 @@ local function test_init_mcd_unsupported_switch_device_type()
     end
   end
   test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device_mcd_unsupported_switch_device_type)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "doConfigure" })
   mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ profile = "2-button" })
-
+  mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   mock_device_mcd_unsupported_switch_device_type:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 1",
@@ -241,6 +246,7 @@ local function test_init_mcd_unsupported_switch_device_type()
     parent_device_id = mock_device_mcd_unsupported_switch_device_type.id,
     parent_assigned_child_key = string.format("%d", 7)
   })
+  test.mock_device.add_test_device(mock_device_mcd_unsupported_switch_device_type)
 end
 
 test.set_test_init_function(test_init)
@@ -254,14 +260,6 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "switch", component = "main", command = "on", args = { } }
-      }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
       }
     },
     {
@@ -408,6 +406,22 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_mcd_unsupported_switch_device_type }
+)
+
+test.register_coroutine_test(
+  "Test driver switched event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    mock_device:expect_metadata_update({ profile = "light-level-3-button" })
+    configure_buttons()
+    mock_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Matter Switch 2",
+      profile = "light-color-level",
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", mock_device_ep5)
+    })
+  end
 )
 
 -- run the tests

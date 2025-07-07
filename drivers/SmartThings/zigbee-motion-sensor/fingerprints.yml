@@ -159,15 +159,15 @@ zigbeeManufacturer:
     model: VMS_ADUROLIGHT
     deviceProfileName: motion-battery
   - id: frientA/S/140
-    deviceLabel: frient Motion Sensor
+    deviceLabel: frient Motion Sensor Pro
     manufacturer: frient A/S
     model: MOSZB-140
-    deviceProfileName: motion-temp-battery
+    deviceProfileName: frient-motion-temp-illuminance-tamper-battery
   - id: frientA/S/141
     deviceLabel: frient Motion Sensor
     manufacturer: frient A/S
     model: MOSZB-141
-    deviceProfileName: motion-battery
+    deviceProfileName: frient-motion-battery
   - id: Compacta/ZBMS3-1
     deviceLabel: Smartenit Motion Sensor
     manufacturer: Compacta

@@ -30,6 +30,7 @@ local zigbee_range_driver_template = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
   },
+  health_check = false,
 }
 
 local zigbee_range_extender_driver = ZigbeeDriver("zigbee-range-extender", zigbee_range_driver_template)

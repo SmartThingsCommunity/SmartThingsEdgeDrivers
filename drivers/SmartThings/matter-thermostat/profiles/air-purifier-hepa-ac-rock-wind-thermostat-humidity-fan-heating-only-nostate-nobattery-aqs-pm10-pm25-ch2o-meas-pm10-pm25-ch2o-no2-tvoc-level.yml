@@ -35,8 +35,6 @@ components:
     version: 1
   - id: tvocHealthConcern
     version: 1
-  - id: thermostatOperatingState
-    version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh

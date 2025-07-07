@@ -128,6 +128,7 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = { 200 } } })
 
+    mock_device:expect_native_cmd_handler_registration("colorTemperature", "setColorTemperature")
     local temp_in_mired = math.floor(1000000 / 200)
     test.socket.zigbee:__expect_send(
       {

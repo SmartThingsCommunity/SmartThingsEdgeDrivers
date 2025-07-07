@@ -27,7 +27,14 @@ VERSION = "version"
 PACKAGEKEY = "packageKey"
 
 BOSE_APPKEY = os.environ.get("BOSE_AUDIONOTIFICATION_APPKEY")
-SONOS_API_KEY = os.environ.get("SONOS_API_KEY")
+
+SONOS_API_KEY = os.environ.get("SONOS_API_KEY") or "N/A"
+SONOS_OAUTH_API_KEY = os.environ.get("SONOS_OAUTH_API_KEY") or "N/A"
+SONOS_API_KEY_LUA_TEMPLATE = f"""return {{
+  s1_key = "{SONOS_API_KEY}",
+  oauth_key = "{SONOS_OAUTH_API_KEY}",
+}}
+"""
 
 print(ENVIRONMENT_URL)
 
@@ -65,7 +72,7 @@ response = requests.get(
   headers={
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
-    "X-ST-LOG-LEVEL": "TRACE"
+    "X-ST-LOG-LEVEL": "DEBUG"
   }
 )
 if response.status_code != 200:
@@ -81,7 +88,7 @@ else:
       headers = {
         "Accept": "application/vnd.smartthings+json;v=20200810",
         "Authorization": "Bearer "+TOKEN,
-        "X-ST-LOG-LEVEL": "TRACE"
+        "X-ST-LOG-LEVEL": "DEBUG"
       },
       json = {
         DRIVERID: driver[DRIVERID],
@@ -116,8 +123,13 @@ for partner in partners:
       if package_key == "bose" and BOSE_APPKEY:
         # write the app key into a app_key.lua (overwrite if exists already)
         subprocess.run(["touch -a ./src/app_key.lua && echo \'return \"" + BOSE_APPKEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
-      if package_key == "sonos" and SONOS_API_KEY:
-        subprocess.run(["echo \'return \"" + SONOS_API_KEY +  "\"\n\' > ./src/app_key.lua"], cwd=driver, shell=True, capture_output=True)
+      if package_key == "sonos":
+          subprocess.run(
+              [f"echo -n '{SONOS_API_KEY_LUA_TEMPLATE}' > ./src/app_key.lua"],
+              cwd=driver,
+              shell=True,
+              capture_output=True,
+          )
       retries = 0
       while not os.path.exists(driver+".zip") and retries < 5:
         try:
@@ -139,7 +151,7 @@ for partner in partners:
               "Content-Type": "application/zip",
               "Accept": "application/vnd.smartthings+json;v=20200810",
               "Authorization": "Bearer "+TOKEN,
-              "X-ST-LOG-LEVEL": "TRACE"},
+              "X-ST-LOG-LEVEL": "DEBUG"},
             data=data)
           if response.status_code != 200:
             print("Failed to upload driver "+driver)
@@ -172,7 +184,7 @@ response = requests.put(
     "Accept": "application/vnd.smartthings+json;v=20200810",
     "Authorization": "Bearer "+TOKEN,
     "Content-Type": "application/json",
-    "X-ST-LOG-LEVEL": "TRACE"
+    "X-ST-LOG-LEVEL": "DEBUG"
   },
   data=json.dumps(driver_updates)
 )

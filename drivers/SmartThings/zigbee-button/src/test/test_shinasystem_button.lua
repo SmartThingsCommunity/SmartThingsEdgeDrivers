@@ -41,9 +41,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 )
 
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -228,6 +226,14 @@ test.register_coroutine_test(
       mock_device.id,
       PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
     })
+    for endpoint = 1,4 do
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        zigbee_test_utils.build_bind_request(mock_device,
+                                             zigbee_test_utils.mock_hub_eui,
+                                             OnOff.ID, endpoint)
+      })
+    end
     test.socket.zigbee:__expect_add_hub_to_group(0x0000)
     test.socket.zigbee:__expect_send({mock_device.id,
       Groups.commands.AddGroup(mock_device, 0x0000)

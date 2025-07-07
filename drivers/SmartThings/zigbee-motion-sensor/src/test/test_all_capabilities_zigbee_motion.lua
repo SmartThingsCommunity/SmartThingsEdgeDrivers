@@ -48,7 +48,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
+        }
+      },
     }
 )
 
@@ -64,7 +72,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
+        }
+      },
     }
 )
 
@@ -80,7 +96,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
+        }
+      },
     }
 )
 
@@ -96,7 +120,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
+        }
+      },
     }
 )
 
@@ -171,6 +203,28 @@ test.register_message_test(
     }
 )
 
+-- test.register_coroutine_test(
+--     "Health check should check all relevant attributes",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
+--       test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device) })
+--       test.wait_for_events()
+
+--       test.mock_time.advance_time(50000) -- 21600 is the battery max interval
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, RelativeHumidity.attributes.MeasuredValue:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_device)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
 test.register_coroutine_test(
     "Configure should configure all necessary attributes",

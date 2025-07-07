@@ -84,8 +84,8 @@ local mock_device_parent_child_endpoints_non_sequential = test.mock_device.build
   label = "Matter Switch",
   profile = t_utils.get_profile_definition("light-level-colorTemperature.yml"),
   manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
+    vendor_id = 0x1321,
+    product_id = 0x000C,
   },
   endpoints = {
     {
@@ -132,11 +132,9 @@ local mock_device_parent_child_endpoints_non_sequential = test.mock_device.build
       endpoint_id = child3_ep_non_sequential,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
-        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
       },
       device_types = {
-        {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
       }
     },
   }
@@ -181,6 +179,9 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
@@ -245,6 +246,9 @@ local function test_init_parent_child_endpoints_non_sequential()
   end
   test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
 
+  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "doConfigure" })
+  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
   test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)
   for _, child in pairs(mock_children_non_sequential) do
     test.mock_device.add_test_device(child)
@@ -258,10 +262,11 @@ local function test_init_parent_child_endpoints_non_sequential()
     parent_assigned_child_key = string.format("%d", child2_ep_non_sequential)
   })
 
+  -- switch-binary will be selected as an overridden child device profile
   mock_device_parent_child_endpoints_non_sequential:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 3",
-    profile = "light-color-level",
+    profile = "switch-binary",
     parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
     parent_assigned_child_key = string.format("%d", child3_ep_non_sequential)
   })
@@ -316,7 +321,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -359,7 +372,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child1_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -402,7 +423,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -421,6 +450,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
     },
   }
 )

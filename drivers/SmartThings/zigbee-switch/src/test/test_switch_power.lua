@@ -38,6 +38,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
+  mock_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -72,6 +73,18 @@ test.register_coroutine_test(
       {
         mock_device.id,
         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 5)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ElectricalMeasurement.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
       }
     )
     test.socket.zigbee:__expect_send(
@@ -114,6 +127,22 @@ test.register_message_test(
       message = {
         mock_device.id,
         ElectricalMeasurement.attributes.ActivePower:read(mock_device)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device)
       }
     },
     {

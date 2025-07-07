@@ -78,4 +78,3 @@ end
 
 setmetatable(StartUpMode, {__call = StartUpMode.new_value, __index = StartUpMode.base_type})
 return StartUpMode
-

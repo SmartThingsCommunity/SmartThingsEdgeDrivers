@@ -357,7 +357,7 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
   local event = STATUS[event_code]
   if (event ~= nil) then
     event["data"] = {}
-    if (event_code == OperationEventCode.AUTO_LOCK or
+    if (source ~= 0 and event_code == OperationEventCode.AUTO_LOCK or
         event_code == OperationEventCode.SCHEDULE_LOCK or
         event_code == OperationEventCode.SCHEDULE_UNLOCK
       ) then
@@ -365,7 +365,7 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
     else
       event.data.method = METHOD[source]
     end
-    if (source == 0) then --keypad
+    if (source == 0 and device:supports_capability_by_id(capabilities.lockCodes.ID)) then --keypad
       local code_id = zb_rx.body.zcl_body.user_id.value
       local code_name = "Code "..code_id
       local lock_codes = device:get_field("lockCodes")
@@ -442,7 +442,8 @@ local zigbee_lock_driver = {
     doConfigure = do_configure,
     added = device_added,
     init = init,
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_lock_driver, zigbee_lock_driver.supported_capabilities)

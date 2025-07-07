@@ -9,7 +9,7 @@ CapEventHandlers.PlaybackStatus = {
   Buffering = "PLAYBACK_STATE_BUFFERING",
   Idle = "PLAYBACK_STATE_IDLE",
   Paused = "PLAYBACK_STATE_PAUSED",
-  Playing = "PLAYBACK_STATE_PLAYING"
+  Playing = "PLAYBACK_STATE_PLAYING",
 }
 
 function CapEventHandlers.handle_player_volume(device, new_volume, is_muted)
@@ -28,6 +28,18 @@ function CapEventHandlers.handle_group_volume(device, new_volume, is_muted)
   else
     device:emit_event(capabilities.mediaGroup.groupMute.unmuted())
   end
+end
+
+function CapEventHandlers.handle_group_role_update(device, group_role)
+  device:emit_event(capabilities.mediaGroup.groupRole(group_role))
+end
+
+function CapEventHandlers.handle_group_coordinator_update(device, coordinator_id)
+  device:emit_event(capabilities.mediaGroup.groupPrimaryDeviceId(coordinator_id))
+end
+
+function CapEventHandlers.handle_group_id_update(device, group_id)
+  device:emit_event(capabilities.mediaGroup.groupId(group_id))
 end
 
 function CapEventHandlers.handle_group_update(device, group_info)
@@ -72,7 +84,12 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
     local is_linein = string.find(metadata_status_body.container.type, "linein", 1, true) ~= nil
     local is_station = string.find(metadata_status_body.container.type, "station", 1, true) ~= nil
     local is_show = string.find(metadata_status_body.container.type, "show", 1, true) ~= nil
-    local is_radio_tracklist = string.find(metadata_status_body.container.type, "trackList.program", 1, true) ~= nil
+    local is_radio_tracklist = string.find(
+      metadata_status_body.container.type,
+      "trackList.program",
+      1,
+      true
+    ) ~= nil
 
     if is_linein then
       audio_track_data.title = metadata_status_body.container.name
@@ -89,8 +106,7 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
   if metadata_status_body.track then
     track_info = metadata_status_body.track
   elseif metadata_status_body.currentItem and metadata_status_body.currentItem.track then
-    track_info = metadata_status_body
-        .currentItem.track
+    track_info = metadata_status_body.currentItem.track
   end
 
   if track_info ~= nil then

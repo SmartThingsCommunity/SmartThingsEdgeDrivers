@@ -28,4 +28,3 @@ end
 setmetatable(ModeTag, new_mt)
 
 return ModeTag
-
