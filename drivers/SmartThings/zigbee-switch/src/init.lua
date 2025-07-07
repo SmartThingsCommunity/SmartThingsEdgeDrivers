@@ -158,6 +158,7 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("white-color-temp-bulb"),
     lazy_load_if_possible("rgbw-bulb"),
     lazy_load_if_possible("zll-dimmer-bulb"),
+    lazy_load_if_possible("zll-polling"),
     lazy_load_if_possible("zigbee-switch-power"),
     lazy_load_if_possible("ge-link-bulb"),
     lazy_load_if_possible("bad_on_off_data_type"),
