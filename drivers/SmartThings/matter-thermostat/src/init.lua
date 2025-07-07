@@ -1114,7 +1114,7 @@ local function supports_modular_profile(device)
   return version.api >= 14 and version.rpc >= 8 and
     (device_type == AP_DEVICE_TYPE_ID or
      device_type == RAC_DEVICE_TYPE_ID or
-    (device_type == false and #thermostat_eps > 0))
+     device_type == THERMOSTAT_DEVICE_TYPE_ID)
 end
 
 function match_profile(driver, device)
