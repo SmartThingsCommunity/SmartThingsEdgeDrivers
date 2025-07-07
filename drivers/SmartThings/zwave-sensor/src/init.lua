@@ -27,6 +27,19 @@ local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local preferences = require "preferences"
 local configurations = require "configurations"
 
+local function lazy_load_if_possible(sub_driver_name)
+  -- gets the current lua libs api version
+  local version = require "version"
+
+  -- version 9 will include the lazy loading functions
+  if version.api >= 9 then
+    return ZwaveDriver.lazy_load_sub_driver(require(sub_driver_name))
+  else
+    return require(sub_driver_name)
+  end
+
+end
+
 --- Handle preference changes
 ---
 --- @param driver st.zwave.Driver
@@ -122,24 +135,24 @@ local driver_template = {
     capabilities.smokeDetector
   },
   sub_drivers = {
-    require("zooz-4-in-1-sensor"),
-    require("vision-motion-detector"),
-    require("fibaro-flood-sensor"),
-    require("aeotec-water-sensor"),
-    require("glentronics-water-leak-sensor"),
-    require("homeseer-multi-sensor"),
-    require("fibaro-door-window-sensor"),
-    require("sensative-strip"),
-    require("enerwave-motion-sensor"),
-    require("aeotec-multisensor"),
-    require("zwave-water-leak-sensor"),
-    require("everspring-motion-light-sensor"),
-    require("ezmultipli-multipurpose-sensor"),
-    require("fibaro-motion-sensor"),
-    require("v1-contact-event"),
-    require("timed-tamper-clear"),
-    require("wakeup-no-poll"),
-    require("apiv6_bugfix")
+    lazy_load_if_possible("zooz-4-in-1-sensor"),
+    lazy_load_if_possible("vision-motion-detector"),
+    lazy_load_if_possible("fibaro-flood-sensor"),
+    lazy_load_if_possible("aeotec-water-sensor"),
+    lazy_load_if_possible("glentronics-water-leak-sensor"),
+    lazy_load_if_possible("homeseer-multi-sensor"),
+    lazy_load_if_possible("fibaro-door-window-sensor"),
+    lazy_load_if_possible("sensative-strip"),
+    lazy_load_if_possible("enerwave-motion-sensor"),
+    lazy_load_if_possible("aeotec-multisensor"),
+    lazy_load_if_possible("zwave-water-leak-sensor"),
+    lazy_load_if_possible("everspring-motion-light-sensor"),
+    lazy_load_if_possible("ezmultipli-multipurpose-sensor"),
+    lazy_load_if_possible("fibaro-motion-sensor"),
+    lazy_load_if_possible("v1-contact-event"),
+    lazy_load_if_possible("timed-tamper-clear"),
+    lazy_load_if_possible("wakeup-no-poll"),
+    lazy_load_if_possible("apiv6_bugfix")
   },
   lifecycle_handlers = {
     added = added_handler,

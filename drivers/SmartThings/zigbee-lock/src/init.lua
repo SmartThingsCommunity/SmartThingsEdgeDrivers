@@ -442,7 +442,8 @@ local zigbee_lock_driver = {
     doConfigure = do_configure,
     added = device_added,
     init = init,
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_lock_driver, zigbee_lock_driver.supported_capabilities)

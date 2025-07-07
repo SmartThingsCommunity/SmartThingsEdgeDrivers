@@ -86,7 +86,8 @@ local zigbee_humidity_driver = {
     require("centralite-sensor"),
     require("heiman-sensor"),
     require("frient-sensor")
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_humidity_driver, zigbee_humidity_driver.supported_capabilities)
