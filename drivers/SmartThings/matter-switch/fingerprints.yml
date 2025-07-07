@@ -740,6 +740,21 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x1018
     deviceProfileName: plug-binary
+  - id: "5264/4115"
+    deviceLabel: Shelly 2L Gen3
+    vendorId: 0x1490
+    productId: 0x1013
+    deviceProfileName: plug-binary
+  - id: "5264/4116"
+    deviceLabel: Shelly 1L Gen3
+    vendorId: 0x1490
+    productId: 0x1014
+    deviceProfileName: plug-binary
+  - id: "5264/4117"
+    deviceLabel: Shelly 1 Mini Gen3
+    vendorId: 0x1490
+    productId: 0x1015
+    deviceProfileName: plug-binary
   - id: "5264/4118"
     deviceLabel: Shelly 1PM Mini Gen3
     vendorId: 0x1490
