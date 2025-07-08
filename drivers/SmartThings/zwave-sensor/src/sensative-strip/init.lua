@@ -27,7 +27,10 @@ local SENSATIVE_COMFORT_PROFILE = "illuminance-temperature"
 local CONFIG_REPORT_RECEIVED = "configReportReceived"
 
 local function can_handle_sensative_strip(opts, driver, device, cmd, ...)
-  return device:id_match(SENSATIVE_MFR, nil, SENSATIVE_MODEL)
+  if device:id_match(SENSATIVE_MFR, nil, SENSATIVE_MODEL) then
+    local subdriver = require("sensative-strip")
+    return true, subdriver
+  else return false end
 end
 
 local function configuration_report(driver, device, cmd)

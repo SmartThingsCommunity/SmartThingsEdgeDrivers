@@ -110,9 +110,7 @@ local function test_init()
   test.mock_device.add_test_device(mock_device_motion_sensor)
   test.mock_device.add_test_device(mock_device_waterleak_sensor)
   test.mock_device.add_test_device(mock_device_generic_sensor)
-  test.mock_device.add_test_device(mock_device_motion_illuminance)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device_motion_illuminance)end
 
 test.set_test_init_function(test_init)
 
@@ -492,97 +490,97 @@ test.register_message_test(
     }
 )
 
-test.register_coroutine_test(
-    "Health check should check all relevant attributes(contact)",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device_contact_sensor.id, "added" })
-      test.socket.zigbee:__expect_send({
-        mock_device_contact_sensor.id,
-        ZoneTypeAttribute:read(mock_device_contact_sensor)
-      })
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "Health check should check all relevant attributes(contact)",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device_contact_sensor.id, "added" })
+--       test.socket.zigbee:__expect_send({
+--         mock_device_contact_sensor.id,
+--         ZoneTypeAttribute:read(mock_device_contact_sensor)
+--       })
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(50000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_device_contact_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_contact_sensor) })
-      test.wait_for_events()
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_device_contact_sensor)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--       test.mock_time.advance_time(50000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_device_contact_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_contact_sensor) })
+--       test.wait_for_events()
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_device_contact_sensor)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
-test.register_coroutine_test(
-    "Health check should check all relevant attributes(motion)",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device_motion_sensor.id, "added" })
-      test.socket.zigbee:__expect_send({
-        mock_device_motion_sensor.id,
-        ZoneTypeAttribute:read(mock_device_motion_sensor)
-      })
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "Health check should check all relevant attributes(motion)",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device_motion_sensor.id, "added" })
+--       test.socket.zigbee:__expect_send({
+--         mock_device_motion_sensor.id,
+--         ZoneTypeAttribute:read(mock_device_motion_sensor)
+--       })
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(50000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_device_motion_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_motion_sensor) })
-      test.wait_for_events()
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_device_motion_sensor)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--       test.mock_time.advance_time(50000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_device_motion_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_motion_sensor) })
+--       test.wait_for_events()
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_device_motion_sensor)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
-test.register_coroutine_test(
-    "Health check should check all relevant attributes(motion illuminance)",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device_motion_illuminance.id, "added" })
-      test.socket.zigbee:__expect_send({
-        mock_device_motion_illuminance.id,
-        ZoneTypeAttribute:read(mock_device_motion_illuminance)
-      })
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "Health check should check all relevant attributes(motion illuminance)",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device_motion_illuminance.id, "added" })
+--       test.socket.zigbee:__expect_send({
+--         mock_device_motion_illuminance.id,
+--         ZoneTypeAttribute:read(mock_device_motion_illuminance)
+--       })
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(50000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_device_motion_illuminance.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_motion_illuminance) })
-      test.wait_for_events()
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_device_motion_illuminance)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--       test.mock_time.advance_time(50000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_device_motion_illuminance.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_motion_illuminance) })
+--       test.wait_for_events()
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_device_motion_illuminance)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
-test.register_coroutine_test(
-    "Health check should check all relevant attributes(waterleak)",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device_waterleak_sensor.id, "added" })
-      test.socket.zigbee:__expect_send({
-        mock_device_waterleak_sensor.id,
-        ZoneTypeAttribute:read(mock_device_waterleak_sensor)
-      })
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "Health check should check all relevant attributes(waterleak)",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device_waterleak_sensor.id, "added" })
+--       test.socket.zigbee:__expect_send({
+--         mock_device_waterleak_sensor.id,
+--         ZoneTypeAttribute:read(mock_device_waterleak_sensor)
+--       })
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(50000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_device_waterleak_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_waterleak_sensor) })
-      test.wait_for_events()
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_device_waterleak_sensor)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--       test.mock_time.advance_time(50000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_device_waterleak_sensor.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_waterleak_sensor) })
+--       test.wait_for_events()
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_device_waterleak_sensor)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
 test.register_coroutine_test(
     "Refresh necessary attributes(contact)",

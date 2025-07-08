@@ -37,7 +37,8 @@ local function can_handle(opts, driver, device, ...)
       return true
     end
   end
-  if device.zigbee_endpoints[1].profileId == SMARTSENSE_PROFILE_ID then return true end
+  local endpoint = device.zigbee_endpoints[1] or device.zigbee_endpoints["1"]
+  if endpoint.profile_id == SMARTSENSE_PROFILE_ID then return true end
   return false
 end
 

@@ -27,6 +27,7 @@ local utils = require "utils"
 --- @field package _self_listener_uuid string
 --- @field package _coord_listener_uuid string
 --- @field package _initialized boolean
+--- @field package _reconnecting boolean if a reconnect task is active
 --- @field package on_message fun(...)?
 --- @field package on_error fun(...)?
 --- @field package on_close fun(...)?
@@ -229,10 +230,12 @@ local function _legacy_reconnect_task(sonos_conn)
     while not sonos_conn:is_running() do
       local start_success = sonos_conn:start()
       if start_success then
+        sonos_conn._reconnecting = false
         return
       end
       cosock.socket.sleep(backoff())
     end
+    sonos_conn._reconnecting = false
   end, string.format("%s Reconnect Task", sonos_conn.device.label))
 end
 
@@ -263,6 +266,7 @@ local function _oauth_reconnect_task(sonos_conn)
       else
         local start_success = sonos_conn:start()
         if start_success then
+          sonos_conn._reconnecting = false
           return
         end
       end
@@ -275,11 +279,16 @@ local function _oauth_reconnect_task(sonos_conn)
       end
       cosock.socket.sleep(backoff())
     end
+    sonos_conn._reconnecting = false
   end, string.format("%s Reconnect Task", sonos_conn.device.label))
 end
 
 ---@param sonos_conn SonosConnection
 local function _spawn_reconnect_task(sonos_conn)
+  if sonos_conn._reconnecting then
+    return
+  end
+  sonos_conn._reconnecting = true
   if type(api_version) == "number" and api_version >= 14 then
     _oauth_reconnect_task(sonos_conn)
   else
@@ -294,7 +303,7 @@ end
 function SonosConnection.new(driver, device)
   log.debug(string.format("Creating new SonosConnection for %s", device.label))
   local self = setmetatable(
-    { driver = driver, device = device, _listener_uuids = {}, _initialized = false },
+    { driver = driver, device = device, _listener_uuids = {}, _initialized = false, _reconnecting = false },
     SonosConnection
   )
 
