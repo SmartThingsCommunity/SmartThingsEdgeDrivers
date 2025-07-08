@@ -6,6 +6,8 @@ local clusters = require "st.matter.clusters"
 local utils = require "st.utils"
 local log = require "log"
 
+local VENTILATOR_DEVICE_TYPE_ID = 0xFF03
+
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
 local WIND_MODE_MAP = {
@@ -35,9 +37,39 @@ local function generate_bitmask_event_handler(map, capability, default_event)
   end
 end
 
+local function find_default_endpoint(device, cluster)
+  local res = device.MATTER_DEFAULT_ENDPOINT
+  local eps = device:get_endpoints(cluster)
+  table.sort(eps)
+  for _, v in ipairs(eps) do
+    if v ~= 0 then
+      return v
+    end
+  end
+  device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead",
+  device.MATTER_DEFAULT_ENDPOINT))
+  return res
+end
+
 local function component_to_endpoint(device, component_name, cluster_id)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP)
-  return (map and map[component_name]) or device.MATTER_DEFAULT_ENDPOINT
+  local component_to_endpoint_map = device:get_field(COMPONENT_TO_ENDPOINT_MAP)
+  if component_to_endpoint_map ~= nil and component_to_endpoint_map[component_name] ~= nil then
+    return component_to_endpoint_map[component_name]
+  end
+  if not cluster_id then return device.MATTER_DEFAULT_ENDPOINT end
+  return find_default_endpoint(device, cluster_id)
+end
+
+local endpoint_to_component = function(device, endpoint_id)
+  local component_to_endpoint_map = device:get_field(COMPONENT_TO_ENDPOINT_MAP)
+  if component_to_endpoint_map ~= nil then
+    for comp, ep in pairs(component_to_endpoint_map) do
+      if ep == endpoint_id then
+        return comp
+      end
+    end
+  end
+  return "main"
 end
 
 local function on_off_attr_handler(_, device, ib, _)
@@ -101,8 +133,15 @@ local function set_air_purifier_fan_mode(_, device, cmd)
   device:send(clusters.FanControl.attributes.FanMode:write(device, ep, mode))
 end
 
+local function set_fan_speed_percent(_, device, cmd)
+  local speed = math.floor(cmd.args.percent)
+  device:send(clusters.FanControl.attributes.PercentSetting:write(device,
+  component_to_endpoint(device, cmd.component, clusters.FanControl.ID), speed))
+end
+
 local function device_init(_, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
   device:subscribe()
 end
 
@@ -119,8 +158,20 @@ local function info_changed(_, device)
   device:subscribe()
 end
 
+local function is_matter_ventilator(opts, driver, device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == VENTILATOR_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local ventilator_handler = {
   NAME = "Ventilator Handler",
+  can_handle = is_matter_ventilator,
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,
@@ -145,6 +196,9 @@ local ventilator_handler = {
     },
     [capabilities.airPurifierFanMode.ID] = {
       [capabilities.airPurifierFanMode.commands.setAirPurifierFanMode.NAME] = set_air_purifier_fan_mode,
+    },
+    [capabilities.fanSpeedPercent.ID] = {
+      [capabilities.fanSpeedPercent.commands.setPercent.NAME] = set_fan_speed_percent,
     },
   },
   supported_capabilities = {

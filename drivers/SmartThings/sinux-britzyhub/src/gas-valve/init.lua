@@ -5,8 +5,10 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local log = require "log"
 
-local valve_cap = capabilities.valve
+local valve_cap = capabilities.safetyValve
 local onoff_cluster = clusters.OnOff
+
+local GAS_VALVE_DEVICE_TYPE_ID = 0xFF01
 
 local function on_off_attr_handler(driver, device, ib, response)
   if ib.data.value then
@@ -33,7 +35,7 @@ local function find_default_endpoint(device, cluster)
 end
 
 local function component_to_endpoint(device, _)
-  return find_default_endpoint(device, clusters.PumpConfigurationAndControl.ID)
+  return find_default_endpoint(device, onoff_cluster.ID)
 end
 
 local function device_init(_, device)
@@ -46,8 +48,20 @@ local function info_changed(_, device)
   device:subscribe()
 end
 
+local function is_matter_gas_valve(opts, driver, device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == GAS_VALVE_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local gas_valve_handler = {
   NAME = "Gas Valve Handler",
+  can_handle = is_matter_gas_valve,
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,
@@ -61,9 +75,9 @@ local gas_valve_handler = {
   },
   capability_handlers = {
     [valve_cap.ID] = {
-      [valve_cap.commands.open.NAME] = function(driver, device, cmd)
-        handle_valve_command(driver, device, cmd, onoff_cluster.server.commands.On)
-      end,
+      --[valve_cap.commands.open.NAME] = function(driver, device, cmd)
+        --handle_valve_command(driver, device, cmd, onoff_cluster.server.commands.On)
+      --end,
       [valve_cap.commands.close.NAME] = function(driver, device, cmd)
         handle_valve_command(driver, device, cmd, onoff_cluster.server.commands.Off)
       end,
