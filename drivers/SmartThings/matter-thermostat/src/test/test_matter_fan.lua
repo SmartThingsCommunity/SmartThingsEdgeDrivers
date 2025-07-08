@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ local mock_device_generic = test.mock_device.build_test_matter_device({
 
 local cluster_subscribe_list = {
     clusters.FanControl.attributes.FanMode,
+    clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.PercentCurrent,
     clusters.FanControl.attributes.WindSupport,
     clusters.FanControl.attributes.WindSetting,
@@ -83,6 +84,7 @@ local cluster_subscribe_list = {
 
 local cluster_subscribe_list_generic = {
     clusters.FanControl.attributes.FanMode,
+    clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.PercentCurrent,
 }
 
