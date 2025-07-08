@@ -1,0 +1,6 @@
+name: 'Zibgee Bed'
+packageKey: 'zibgee-bed'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Zigbee Bed devices"
+vendorSupportInformation: "https://support.smartthings.com"
