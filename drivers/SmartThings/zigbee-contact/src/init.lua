@@ -107,7 +107,8 @@ local zigbee_contact_driver_template = {
     require("sengled"),
     require("frient")
   },
-  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
+  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_contact_driver_template,
