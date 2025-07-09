@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@ local Tone = capabilities.tone
 local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local utils = require "st.utils"
-local device_management = require "st.zigbee.device_management"
 local IASZone = clusters.IASZone
 local IdentifyCluster = clusters.Identify
 
 local log = require "log"
-local button_utils = require "button_utils"
 
 -- Constants
 local BEEP_IDENTIFY_TIME = 5 -- seconds for device beep duration
@@ -90,7 +88,7 @@ local function generate_button_event_from_zone_status(driver, device, zone_statu
 
   local additional_fields = { state_change = true }
   local button_name, event
-  
+
 
   -- Check which button bit is set and determine if it was a hold or push
   for _, entry in ipairs(button_bit_map) do

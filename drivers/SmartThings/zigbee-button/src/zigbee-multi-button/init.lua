@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "Vimar", model = "RemoteControl_v1.0" },
   { mfr = "Linxura", model = "Smart Controller" },
   { mfr = "Linxura", model = "Aura Smart Button" },
-    { mfr = "zunzunbee", model = "SSWZ8T" }
+  { mfr = "zunzunbee", model = "SSWZ8T" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)

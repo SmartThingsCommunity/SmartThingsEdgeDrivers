@@ -1,10 +1,10 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
 -- You may obtain a copy of the License at
 --
---     http://www.apache.org/licenses/LICENSE-2.0
+-- http://www.apache.org/licenses/LICENSE-2.0
 --
 -- Unless required by applicable law or agreed to in writing, software
 -- distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,7 +54,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
     for button_name, _ in pairs(mock_device.profile.components) do
-	  if button_name ~= "main" then	
+	  if button_name ~= "main" then
 		test.socket.capability:__expect_send(
 		  mock_device:generate_test_message(
 			button_name,
@@ -74,7 +74,7 @@ test.register_coroutine_test(
         "main",
         capabilities.button.supportedButtonValues({ "pushed","held" }, { visibility = { displayed = false } })
       )
-    )	
+    )
 	test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
@@ -190,13 +190,13 @@ test.register_coroutine_test(
 			  "main",
 			  capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = true } })
 			  )
-		  )		  
+		  )
           test.socket.capability:__expect_send(
               mock_device:generate_test_message(string.format("button%d", var), button_attr.held({ state_change = true }))
           )
- 		  test.socket.capability:__expect_send(
+          test.socket.capability:__expect_send(
 			  mock_device:generate_test_message(string.format("main", var), button_attr.held({ state_change = true }))
-		  )		  
+		  )
           test.wait_for_events()
         end
     end

@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -20,13 +20,6 @@ local devices = {
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 2
   },
-  BUTTON_PUSH_HELD_2 = {
-	MATCHING_MATRIX = {
-	  { mfr = "zunzunbee", model = "SSWZ8T" }
-	},
-	SUPPORTED_BUTTON_VALUES = { "pushed","held"},
-	NUMBER_OF_BUTTONS = 8
-  },
   BUTTON_PUSH_HELD_4 = {
     MATCHING_MATRIX = {
       { mfr = "CentraLite", model = "3450-L" },
@@ -39,6 +32,7 @@ local devices = {
   BUTTON_PUSH_HELD_8 = {
     MATCHING_MATRIX = {
       { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+      { mfr = "zunzunbee", model = "SSWZ8T" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 8
