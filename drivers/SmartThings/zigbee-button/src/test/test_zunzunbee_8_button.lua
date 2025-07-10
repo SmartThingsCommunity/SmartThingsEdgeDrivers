@@ -54,28 +54,28 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
     for button_name, _ in pairs(mock_device.profile.components) do
-	  if button_name ~= "main" then
-		test.socket.capability:__expect_send(
-		  mock_device:generate_test_message(
-			button_name,
-			capabilities.button.supportedButtonValues({ "pushed", "held"}, { visibility = { displayed = false } })
-		  )
-		)
-		test.socket.capability:__expect_send(
-		  mock_device:generate_test_message(
-			button_name,
-			capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
-		  )
-		)
-	  end
+      if button_name ~= "main" then
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "held"}, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      end
     end
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.button.supportedButtonValues({ "pushed","held" }, { visibility = { displayed = false } })
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
       )
     )
-	test.socket.capability:__expect_send(
+    test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
         capabilities.button.numberOfButtons({ value = 8 }, { visibility = { displayed = false } })
@@ -156,20 +156,20 @@ test.register_coroutine_test(
     function()
       for var = 1, 8 do
         test.socket.zigbee:__queue_receive({
-            mock_device.id,
-            ZoneStatusAttribute:build_test_attr_report(mock_device, 1<<var)
+          mock_device.id,
+          ZoneStatusAttribute:build_test_attr_report(mock_device, 1<<var)
         })
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message(
-			"main",
-			capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = true } })
-			)
-		)
         test.socket.capability:__expect_send(
-            mock_device:generate_test_message(string.format("button%d", var), button_attr.pushed({ state_change = true }))
+          mock_device:generate_test_message(
+          "main",
+          capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = true } })
+          )
         )
-		test.socket.capability:__expect_send(
-            mock_device:generate_test_message(string.format("main", var), button_attr.pushed({ state_change = true }))
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(string.format("button%d", var), button_attr.pushed({ state_change = true }))
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(string.format("main", var), button_attr.pushed({ state_change = true }))
         )
         test.wait_for_events()
       end
@@ -182,21 +182,21 @@ test.register_coroutine_test(
     function()
         for var = 1, 8 do
           test.socket.zigbee:__queue_receive({
-              mock_device.id,
-              ZoneStatusAttribute:build_test_attr_report(mock_device, ((1<<var )| 1))
+            mock_device.id,
+            ZoneStatusAttribute:build_test_attr_report(mock_device, ((1<<var )| 1))
           })
-		  test.socket.capability:__expect_send(
-			  mock_device:generate_test_message(
-			  "main",
-			  capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = true } })
-			  )
-		  )
           test.socket.capability:__expect_send(
-              mock_device:generate_test_message(string.format("button%d", var), button_attr.held({ state_change = true }))
+            mock_device:generate_test_message(
+            "main",
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = true } })
+            )
           )
           test.socket.capability:__expect_send(
-			  mock_device:generate_test_message(string.format("main", var), button_attr.held({ state_change = true }))
-		  )
+            mock_device:generate_test_message(string.format("button%d", var), button_attr.held({ state_change = true }))
+          )
+          test.socket.capability:__expect_send(
+            mock_device:generate_test_message(string.format("main", var), button_attr.held({ state_change = true }))
+          )
           test.wait_for_events()
         end
     end
