@@ -1558,7 +1558,7 @@ local function fan_mode_handler(driver, device, ib, response)
     device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) and 2 or
     device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) and 3 or
     device:supports_capability_by_id(capabilities.thermostatFanMode.ID) and 4
-  if fan_mode_idx ~= false then
+  if fan_mode_idx ~= false and fan_mode_event[ib.data.value][fan_mode_idx] then
     device:emit_event_for_endpoint(ib.endpoint_id, fan_mode_event[ib.data.value][fan_mode_idx])
   else
     log.warn(string.format("Invalid Fan Mode (%s)", ib.data.value))
