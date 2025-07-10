@@ -30,7 +30,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         manufacturer = "AduroSmart Eria",
         model = "ZLL-ExtendedColor",
         server_clusters = { 0x0006, 0x0008, 0x0300 },
-        profile = 0xC05E,
+        profile_id = 0xC05E,
       }
     }
   }

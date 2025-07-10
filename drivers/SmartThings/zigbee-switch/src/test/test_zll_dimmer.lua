@@ -30,7 +30,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         manufacturer = "Leviton",
         model = "DL6HD",
         server_clusters = { 0x0006, 0x0008 },
-        profile = 0xC05E,
+        profile_id = 0xC05E,
       }
     }
   }
