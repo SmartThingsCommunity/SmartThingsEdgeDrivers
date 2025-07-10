@@ -15,7 +15,7 @@ matterManufacturer:
     deviceLabel: "Door/window contact II [M]"
     vendorId: 0x1209
     productId: 0x3015
-    deviceProfileName: contact-button-battery  
+    deviceProfileName: contact-button-battery
   #Elko
   - id: "5170/4098"
     deviceLabel: RFWD-100/MT
@@ -68,7 +68,7 @@ matterManufacturer:
     deviceLabel: Smart co sensor
     vendorId: 0x120B
     productId: 0x1007
-    deviceProfileName: co  
+    deviceProfileName: co
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -130,7 +130,13 @@ matterManufacturer:
     deviceLabel: LG Motion Sensor
     vendorId: 0x102E
     productId: 0x2030
-    deviceProfileName: motion-illuminance-battery  
+    deviceProfileName: motion-illuminance-battery
+  # Sensereo
+  - id: "5526/1"
+    deviceLabel: Sensereo Matter Smoke Alarm MS1
+    vendorId: 0x1596
+    productId: 0x0001
+    deviceProfileName: smoke-battery
   # Siterwell
   - id: "4736/847"
     deviceLabel: Siterwell Door Window Sensor
@@ -141,7 +147,7 @@ matterManufacturer:
     deviceLabel: Siterwell Smart Smoke Alarm
     vendorId: 0x1280
     productId: 0x8014
-    deviceProfileName: smoke 
+    deviceProfileName: smoke
   - id: "4736/32789"
     deviceLabel: Siterwell Smart Carbon Monoxide Alarm
     vendorId: 0x1280
