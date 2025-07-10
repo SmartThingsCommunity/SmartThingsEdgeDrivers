@@ -4,7 +4,7 @@ local discovery_mdns = require "discovery_mdns"
 local socket = require "cosock.socket"
 
 local discovery = {
-  processing_devices = {}
+  last_try_time = {}
 }
 
 function discovery.set_device_field(driver, device)
@@ -57,9 +57,10 @@ local function try_add_device(driver, device_dni, device_ip)
   end
 
   log.info_with({ hub_logs = true }, string.format("try_create_device. dni= %s, ip= %s", device_dni, device_ip))
+
   local success, ret = pcall(driver.try_create_device, driver, create_device_msg)
   if success then
-    discovery.processing_devices[device_dni] = true
+    discovery.last_try_time[device_dni] = os.time()
   else
     log.error_with({ hub_logs = true }, string.format("Failed to try_create_device. dni= %s, %s", device_dni, ret))
   end
@@ -69,7 +70,7 @@ end
 function discovery.device_added(driver, device)
   log.info_with({ hub_logs = true }, string.format("device_added. dni= %s", device.device_network_id))
   discovery.set_device_field(driver, device)
-  discovery.processing_devices[device.device_network_id] = nil
+  discovery.last_try_time[device.device_network_id] = nil
   driver.lifecycle_handlers.init(driver, device)
 end
 
@@ -109,15 +110,20 @@ local function discovery_device(driver)
         break
       end
     end
-    if (not discovery.processing_devices[dni]) and (not is_already_added) then
-      try_add_device(driver, dni, ip)
+    if not is_already_added then
+      local time_since_last_try = os.time() - (discovery.last_try_time[dni] or 0)
+      if (not discovery.last_try_time[dni]) or (time_since_last_try > 10) then
+        try_add_device(driver, dni, ip)
+      else
+        log.trace(string.format("skip adding device because it was tried recently. dni= %s, ip= %s, since %s sec", dni, ip, time_since_last_try))
+      end
     end
   end
 end
 
 function discovery.do_network_discovery(driver, _, should_continue)
   log.info_with({ hub_logs = true }, string.format("discovery start for Aqara FP2"))
-  discovery.processing_devices = {}
+  discovery.last_try_time = {}
   while should_continue() do
     discovery_device(driver)
     socket.sleep(1)
