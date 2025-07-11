@@ -1030,6 +1030,21 @@ zigbeeManufacturer:
     manufacturer: SONOFF
     model: ZBMINIL2
     deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-1C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-1C-120W
+    deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-2C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-2C-120W
+    deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-3C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-3C-120W
+    deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch
     manufacturer:
