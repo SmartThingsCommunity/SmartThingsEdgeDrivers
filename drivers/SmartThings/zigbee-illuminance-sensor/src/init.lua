@@ -23,8 +23,7 @@ local zigbee_illuminance_driver = {
   },
   sub_drivers = {
     require("aqara")
-  },
-  health_check = false,
+  }
 }
 
 defaults.register_for_default_handlers(zigbee_illuminance_driver, zigbee_illuminance_driver.supported_capabilities)

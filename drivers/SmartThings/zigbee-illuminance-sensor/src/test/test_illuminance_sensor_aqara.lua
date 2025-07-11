@@ -49,7 +49,9 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)end
+  test.mock_device.add_test_device(mock_device)
+  zigbee_test_utils.init_noop_health_check_timer()
+end
 
 test.set_test_init_function(test_init)
 
