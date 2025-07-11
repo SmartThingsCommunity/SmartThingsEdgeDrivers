@@ -49,10 +49,6 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.type("CR1632")))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.quantity(1)))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.batteryLevel.battery("normal")))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.contactSensor.contact.open()))
 end
 
 test.set_test_init_function(test_init)

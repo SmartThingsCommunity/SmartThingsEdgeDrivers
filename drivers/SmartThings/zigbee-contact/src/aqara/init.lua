@@ -58,8 +58,6 @@ local function device_init(driver, device)
 
   device:emit_event(capabilities.batteryLevel.type("CR1632"))
   device:emit_event(capabilities.batteryLevel.quantity(1))
-  device:emit_event(capabilities.batteryLevel.battery("normal"))
-  device:emit_event(capabilities.contactSensor.contact.open())
 end
 
 local function do_configure(self, device)
