@@ -11,7 +11,7 @@ local fields = {
   MONITORING_TIMER = "monitoring_timer",
   CREDENTIAL = "credential",
   _INIT = "init",
-  CONNECTION_STATUS = "connection_status"
+  LAST_DISCONNECTED_TIME = "last_disconnected_time"
 }
 
 return fields

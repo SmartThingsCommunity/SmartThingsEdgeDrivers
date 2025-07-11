@@ -427,6 +427,7 @@ local function closed_action(source)
 
     local sleep_time_secs = source._reconnect_time_millis / 1000.0
     socket.sleep(sleep_time_secs)
+
     if source._reconnect_time_millis  <= MAX_RECONNECT_TIME_SEC * 1000 then
       source._reconnect_time_millis = source._reconnect_time_millis + 1000.0
     end
@@ -506,7 +507,7 @@ function EventSource.new(url, extra_headers, sock_builder)
       local _, action_err, partial = state_actions[source.ready_state](source)
       if action_err ~= nil then
         if action_err ~= "timeout" or action_err ~= "wantread" then
-          log.error_with({ hub_logs = true }, "Event Source Coroutine State Machine error: " .. action_err)
+          log.error_with({ hub_logs = true }, "Event Source Coroutine State Machine error(" .. (source.url.host or "") .. "):" .. action_err)
           if partial ~= nil and #partial > 0 then
             log.error_with({ hub_logs = true }, st_utils.stringify_table(partial, "\tReceived Partial", true))
           end

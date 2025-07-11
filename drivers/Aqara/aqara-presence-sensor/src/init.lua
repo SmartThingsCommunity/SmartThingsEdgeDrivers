@@ -11,6 +11,7 @@ local multipleZonePresence = require "multipleZonePresence"
 local EventSource = require "lunchbox.sse.eventsource"
 
 local DEFAULT_MONITORING_INTERVAL = 300
+local OFFLINE_TIMEOUT = 150
 local CREDENTIAL_KEY_HEADER = "Authorization"
 
 local function handle_sse_event(driver, device, msg)
@@ -54,23 +55,27 @@ local function create_sse(driver, device, credential)
       end
     end
 
-    eventsource.onerror = function()
-      local DISCONNECTED_STATUS = "disconnected"
-      local connection_status = device:get_field(fields.CONNECTION_STATUS)
-      if connection_status and connection_status == DISCONNECTED_STATUS then
-        log.error(string.format("Eventsource error: dni= %s", device.device_network_id))
-      else
-        log.error_with({ hub_logs = true }, string.format("Eventsource error: disconnected, dni= %s", device.device_network_id))
-        device:set_field(fields.CONNECTION_STATUS, DISCONNECTED_STATUS)
-      end
-      device:offline()
 
+    eventsource.onerror = function()
+      local last_disconnected_time = device:get_field(fields.LAST_DISCONNECTED_TIME)
+      local now = os.time()
+
+      if not last_disconnected_time then
+        log.error_with({ hub_logs = true }, string.format("Eventsource error: disconnected, dni= %s, time = %s, host=%s", device.device_network_id, now, eventsource.url.host))
+        device:set_field(fields.LAST_DISCONNECTED_TIME, now)
+      else
+        local time_diff = os.difftime(now, last_disconnected_time)
+        if time_diff > OFFLINE_TIMEOUT then
+          log.error_with({ hub_logs = true }, string.format("Eventsource error: Offline. disconnected for %s secs, dni= %s", time_diff, device.device_network_id))
+          device:offline()
+        end
+      end
     end
 
     eventsource.onopen = function()
-      log.info_with({ hub_logs = true }, string.format("Eventsource open: dni= %s", device.device_network_id))
+      log.info_with({ hub_logs = true }, string.format("Eventsource open: dni= %s, host=%s", device.device_network_id, eventsource.url.host))
       device:online()
-      device:set_field(fields.CONNECTION_STATUS, "connected")
+      device:set_field(fields.LAST_DISCONNECTED_TIME, nil)
       local success, err = status_update(driver, device)
       if not success then
         log.warn(string.format("Failed to status_update during eventsource.onopen, err = %s dni= %s", err, device.device_network_id))
