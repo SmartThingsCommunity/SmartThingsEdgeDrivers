@@ -202,8 +202,7 @@ local zigbee_presence_driver = {
   sub_drivers = {
     require("aqara"),
     require("arrival-sensor-v1")
-  },
-  health_check = false,
+  }
 }
 
 defaults.register_for_default_handlers(zigbee_presence_driver, zigbee_presence_driver.supported_capabilities)

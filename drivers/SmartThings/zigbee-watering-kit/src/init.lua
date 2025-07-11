@@ -13,7 +13,6 @@ local zigbee_water_driver_template = {
   sub_drivers = {
     require("thirdreality")
   },
-  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_water_driver_template, zigbee_water_driver_template.supported_capabilities)
