@@ -8,6 +8,8 @@ local log = require "log"
 local elevator_cap = capabilities.elevatorCall
 local onoff_cluster = clusters.OnOff
 
+local ELEVATOR_DEVICE_TYPE_ID = 0xFF02
+
 local function on_off_attr_handler(_, device, ib, _)
   if ib.data.value then
     device:emit_event_for_endpoint(ib.endpoint_id, elevator_cap.callStatus.called())
@@ -16,7 +18,7 @@ local function on_off_attr_handler(_, device, ib, _)
   end
 end
 
-local function handle_elevator_call(_, device, cmd)
+local function handle_elevator_call(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = onoff_cluster.server.commands.On(device, endpoint_id)
   device:send(req)
@@ -46,8 +48,20 @@ local function info_changed(_, device)
   device:subscribe()
 end
 
+local function is_matter_elevator(opts, driver, device)
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == ELEVATOR_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local elevator_handler = {
   NAME = "Elevator Handler",
+  can_handle = is_matter_elevator,
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,

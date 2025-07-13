@@ -6,7 +6,6 @@ local log = require "log"
 
 local matter_driver = MatterDriver("britzyhub-matter", {
   sub_drivers = {
-    --require ("air-conditioner"),
     require ("elevator"),
     require ("gas-valve"),
     require ("ventilator"),

@@ -2,11 +2,16 @@ name: ventilator
 components:
   - id: main
     capabilities:
-      - id: switch
-        version: 1
       - id: airPurifierFanMode
         version: 1
-      - id: fanSpeedPercent
-        version: 1
+        config:
+          values:
+            - key: "airPurifierFanMode.value"
+              enabledValues:
+                - auto
+                - low
+                - medium
+                - high
+                - off
     categories:
       - name: Vent
