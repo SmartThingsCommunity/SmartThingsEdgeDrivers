@@ -441,30 +441,65 @@ zigbeeManufacturer:
     deviceProfileName: switch-power-energy
   #frient A/S
   - id: "frient A/S/SPLZB-131"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini"
     manufacturer: frient A/S
     model: SPLZB-131
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SPLZB-132"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini"
     manufacturer: frient A/S
     model: SPLZB-132
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SPLZB-134"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini UK"
     manufacturer: frient A/S
     model: SPLZB-134
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SPLZB-137"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini"
     manufacturer: frient A/S
     model: SPLZB-137
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-141"
+    deviceLabel: "Smart Plug Mini 2"
+    manufacturer: frient A/S
+    model: SPLZB-141
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-142"
+    deviceLabel: Smart Plug Mini 2
+    manufacturer: frient A/S
+    model: SPLZB-142
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-144"
+    deviceLabel: Smart Plug Mini UK 2
+    manufacturer: frient A/S
+    model: SPLZB-144
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-147"
+    deviceLabel: "Smart Plug Mini 2"
+    manufacturer: frient A/S
+    model: SPLZB-147
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SMRZB-143"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Cable"
     manufacturer: frient A/S
     model: SMRZB-143
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SMRZB-153"
+    deviceLabel: "Smart Cable 2"
+    manufacturer: frient A/S
+    model: SMRZB-153
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SMRZB-332"
+    deviceLabel: "Smart Din Relay"
+    manufacturer: frient A/S
+    model: SMRZB-332
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SMRZB-342"
+    deviceLabel: Smart DIN Relay 2
+    manufacturer: frient A/S
+    model: SMRZB-342
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "AduroSmart Eria/AD-DimmableLight3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -994,6 +1029,21 @@ zigbeeManufacturer:
     deviceLabel: SONOFF Switch
     manufacturer: SONOFF
     model: ZBMINIL2
+    deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-1C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-1C-120W
+    deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-2C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-2C-120W
+    deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-3C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-3C-120W
     deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch

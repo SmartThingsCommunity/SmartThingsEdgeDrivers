@@ -46,9 +46,7 @@ local mock_simple_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_simple_device)end
 
 local function build_config_response_msg(cluster, status)
   local addr_header = messages.AddressHeader(
@@ -201,9 +199,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     end,
     {
-      test_init = function()
-        zigbee_test_utils.init_noop_health_check_timer()
-      end
+      test_init = function()      end
     }
 )
 

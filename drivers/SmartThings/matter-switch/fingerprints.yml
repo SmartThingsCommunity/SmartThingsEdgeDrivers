@@ -148,6 +148,11 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1288
     deviceProfileName: matter-bridge
+  - id: "5127/5000"
+    deviceLabel: Smart Mechanical Keyboard MK1
+    vendorId: 0x1407
+    productId: 0x1388
+    deviceProfileName: 12-button-keyboard
 
 #ELEGRP
   - id: "5158/3"
@@ -394,6 +399,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0075
     deviceProfileName: switch-level
+  - id: "4921/22"
+    deviceLabel: Cync Full Color RS Can
+    vendorId: 0x1339
+    productId: 0x0016
+    deviceProfileName: light-color-level-2000K-7000K
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
@@ -720,6 +730,41 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x1853
     deviceProfileName: plug-binary
+  - id: "5264/4121"
+    deviceLabel: Shelly 1PM Gen3
+    vendorId: 0x1490
+    productId: 0x1019
+    deviceProfileName: plug-binary
+  - id: "5264/4120"
+    deviceLabel: Shelly 1 Gen3
+    vendorId: 0x1490
+    productId: 0x1018
+    deviceProfileName: plug-binary
+  - id: "5264/4115"
+    deviceLabel: Shelly 2L Gen3
+    vendorId: 0x1490
+    productId: 0x1013
+    deviceProfileName: plug-binary
+  - id: "5264/4116"
+    deviceLabel: Shelly 1L Gen3
+    vendorId: 0x1490
+    productId: 0x1014
+    deviceProfileName: plug-binary
+  - id: "5264/4117"
+    deviceLabel: Shelly 1 Mini Gen3
+    vendorId: 0x1490
+    productId: 0x1015
+    deviceProfileName: plug-binary
+  - id: "5264/4118"
+    deviceLabel: Shelly 1PM Mini Gen3
+    vendorId: 0x1490
+    productId: 0x1016
+    deviceProfileName: plug-binary
+  - id: "5264/4137"
+    deviceLabel: Shelly 1PM Gen4
+    vendorId: 0x1490
+    productId: 0x1029
+    deviceProfileName: plug-power-energy-powerConsumption
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
