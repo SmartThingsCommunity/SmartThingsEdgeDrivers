@@ -125,8 +125,7 @@ local aqara_cube_t1_pro_handler = {
   lifecycle_handlers = {
     init = device_init,
     added = device_added
-  },
-  health_check = false,
+  }
 }
 
 local aqara_cube_t1_pro_driver = ZigbeeDriver("aqara_cube_t1_pro", aqara_cube_t1_pro_handler)
