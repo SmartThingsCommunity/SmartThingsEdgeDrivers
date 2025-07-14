@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -121,6 +121,9 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
+  mock_device:expect_metadata_update({ profile = "extractor-hood-hepa-ac-wind" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_onoff()
@@ -141,6 +144,9 @@ local function test_init_onoff()
   test.socket.matter:__expect_send({mock_device_onoff.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_onoff)
   test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "doConfigure"})
+  mock_device_onoff:expect_metadata_update({ profile = "extractor-hood-wind-light" })
+  mock_device_onoff:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
 
