@@ -38,8 +38,7 @@ local zigbee_fan_driver = {
   },
   lifecycle_handlers = {
     init = device_init
-  },
-  health_check = false,
+  }
 }
 
 defaults.register_for_default_handlers(zigbee_fan_driver,zigbee_fan_driver.supported_capabilities)

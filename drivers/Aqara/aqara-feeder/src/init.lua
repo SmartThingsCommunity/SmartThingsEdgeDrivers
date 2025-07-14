@@ -184,7 +184,6 @@ local aqara_pet_feeder_handler = {
     infoChanged = device_info_changed,
     doConfigure = device_configure
   },
-  health_check = false,
   can_handle = function(opts, driver, device, ...)
     return device:get_model() == "aqara.feeder.acn001"
   end
