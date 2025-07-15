@@ -17,29 +17,9 @@ local capabilities = require "st.capabilities"
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
-
-local preferencesMap = require "preferences"
 
 local device_added = function (self, device)
   device:refresh()
-end
-
---- Handle preference changes
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @param event table
---- @param args
-local function info_changed(driver, device, event, args)
-  local preferences = preferencesMap.get_device_parameters(device)
-  for id, value in pairs(device.preferences) do
-    if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
-      local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-      device:send(Configuration:Set({ parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value }))
-    end
-  end
 end
 
 local driver_template = {
@@ -49,14 +29,12 @@ local driver_template = {
     capabilities.refresh
   },
   lifecycle_handlers = {
-    infoChanged = info_changed,
     added = device_added
   },
   sub_drivers = {
     require("qubino-meter"),
     require("aeotec-gen5-meter"),
-    require("aeon-meter"),
-    require("aeotec-home-energy-meter-gen8")
+    require("aeon-meter")
   }
 }
 
