@@ -1,0 +1,22 @@
+name: aeotec-home-energy-meter-gen8-1-phase-pro
+components:
+- id: main
+  label: "Sum Production"
+  capabilities:
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+- id: clamp2
+  label: "Clamp 1"
+  capabilities:
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  categories:
+  - name: CurbPowerMeter
