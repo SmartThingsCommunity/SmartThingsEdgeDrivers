@@ -76,7 +76,9 @@ local add_device = function()
 end
 
 local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)end
+  test.mock_device.add_test_device(mock_simple_device)
+  zigbee_test_utils.init_noop_health_check_timer()
+end
 
 test.set_test_init_function(test_init)
 
@@ -191,7 +193,9 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     end,
     {
-      test_init = function()      end
+      test_init = function()
+        zigbee_test_utils.init_noop_health_check_timer()
+      end
     }
 )
 

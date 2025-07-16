@@ -325,8 +325,7 @@ local aqara_locks_handler = {
   },
   secret_data_handlers = {
     [security.SECRET_KIND_AQARA] = my_secret_data_handler
-  },
-  health_check = false,
+  }
 }
 
 local aqara_locks_driver = ZigbeeDriver("aqara_locks_k100", aqara_locks_handler)
