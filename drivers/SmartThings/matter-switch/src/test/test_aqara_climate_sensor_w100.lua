@@ -141,6 +141,7 @@ local function test_init()
   end
 
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+  aqara_mock_device:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
