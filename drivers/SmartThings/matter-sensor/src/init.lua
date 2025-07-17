@@ -233,6 +233,9 @@ local function temperature_attr_handler(driver, device, ib, response)
     local temp = measured_value / 100.0
     local unit = "C"
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperature({value = temp, unit = unit}))
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("temperatureMeasurement", "temperature")
+    end
   end
 end
 

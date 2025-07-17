@@ -78,6 +78,9 @@ local function sensor_multilevel_report_handler(self, device, cmd)
     local scale = 'C'
     if (cmd.args.scale == SensorMultilevel.scale.temperature.FAHRENHEIT) then scale = 'F' end
     device:emit_event(capabilities.temperatureMeasurement.temperature({value = cmd.args.sensor_value, unit = scale}))
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("temperatureMeasurement","temperature")
+    end
   end
 end
 
