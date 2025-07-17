@@ -14,4 +14,4 @@ matterGeneric:
     deviceTypes:
       - id: 0x0022 # Speaker
       - id: 0x0028 # Basic Video Player
-    deviceProfileName: media-video-speaker
+    deviceProfileName: media-video-player-speaker
