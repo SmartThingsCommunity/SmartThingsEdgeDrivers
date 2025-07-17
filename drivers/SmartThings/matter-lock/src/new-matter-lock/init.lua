@@ -70,8 +70,7 @@ local subscribed_attributes = {
   [capabilities.lockCredentials.ID] = {
     DoorLock.attributes.NumberOfPINUsersSupported,
     DoorLock.attributes.MaxPINCodeLength,
-    DoorLock.attributes.MinPINCodeLength,
-    DoorLock.attributes.RequirePINforRemoteOperation
+    DoorLock.attributes.MinPINCodeLength
   },
   [capabilities.lockSchedules.ID] = {
     DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser,
@@ -298,6 +297,14 @@ end
 -------------------------
 local function max_pin_code_len_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCredentials.maxPinCodeLen(ib.data.value, {visibility = {displayed = false}}))
+  -- Device may require pin for remote operation if it supports COTA and PIN features.
+  local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+  if #eps == 0 then
+    device.log.debug("Device will not require PIN for remote operation")
+    device:set_field(lock_utils.COTA_CRED, false, {persist = true})
+  else
+    device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+  end
 end
 
 --------------------------------------
