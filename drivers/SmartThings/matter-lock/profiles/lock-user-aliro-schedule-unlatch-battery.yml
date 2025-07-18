@@ -1,4 +1,4 @@
-name: lock-user-pin-aliro-schedule-unlatch-battery
+name: lock-user-aliro-schedule-unlatch-battery
 components:
 - label: Main
   id: main
@@ -18,8 +18,6 @@ components:
   - id: remoteControlStatus
     version: 1
   - id: lockUsers
-    version: 1
-  - id: lockCredentials
     version: 1
   - id: lockSchedules
     version: 1
