@@ -63,7 +63,7 @@ local _update_subscriptions_helper = function(
       groupId = groupId,
       playerId = playerId,
     }
-    local maybe_token, err = sonos_conn.driver:get_oauth_token()
+    local maybe_token, err = sonos_conn.driver:get_cached_oauth_token()
     if err then
       log.warn(string.format("notice: get_oauth_token -> %s", err))
     end
@@ -258,7 +258,7 @@ local function _oauth_reconnect_task(sonos_conn)
         local token, channel_error = token_receive_handle:receive()
         if not token then
           log.warn(string.format("Error requesting token: %s", channel_error))
-          local _, get_token_err = sonos_conn.driver:get_oauth_token()
+          local _, get_token_err = sonos_conn.driver:get_cached_oauth_token()
           if get_token_err then
             log.warn(string.format("notice: get_oauth_token -> %s", get_token_err))
           end
@@ -339,9 +339,11 @@ function SonosConnection.new(driver, device)
             device.log.warn(
               string.format("WebSocket connection no longer authorized, disconnecting")
             )
-            local _, security_err = driver:request_oauth_token()
-            if security_err then
-              log.warn(string.format("Error during request for oauth token: %s", security_err))
+            if not driver:is_waiting_for_oauth_token() then
+              local _, security_err = driver:request_oauth_token()
+              if security_err then
+                log.warn(string.format("Error during request for oauth token: %s", security_err))
+              end
             end
             -- closing the socket directly without calling `:stop()` triggers the reconnect loop,
             -- which is where we wait for the token to come in.
@@ -482,7 +484,7 @@ function SonosConnection.new(driver, device)
               string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
             )
             local _, api_key = driver:check_auth(device)
-            local maybe_token = driver:get_oauth_token()
+            local maybe_token = driver:get_cached_oauth_token()
             local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
             local favorites_response, err, _ =
               SonosRestApi.get_favorites(base_url, header.householdId, headers)

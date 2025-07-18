@@ -184,11 +184,15 @@ function SonosDriver:notify_augmented_data_changed(update_kind, update_key, upda
     )
   end
 
-  if
-    self.oauth.endpoint_app_info
+  local maybe_token, _ = self:get_cached_oauth_token()
+
+  local should_request_token = self.oauth.endpoint_app_info
     and self.oauth.endpoint_app_info.state == "connected"
     and not already_connected
-  then
+    and type(maybe_token) ~= "table"
+    and not self:is_waiting_for_oauth_token()
+
+  if should_request_token then
     local _, err = self:request_oauth_token()
     if err then
       log.error(string.format("Request OAuth token error: %s", err))
@@ -224,7 +228,7 @@ end
 ---@return boolean? auth_success true if the driver can authenticate against the provided arguments, false otherwise
 ---@return string? api_key_or_err if `auth_success` is true, this will be the API key that is known to auth. If `auth_success` is false, this will be nil. If `auth_success` is `nil`, this will be an error message.
 function SonosDriver:check_auth(info_or_device)
-  local maybe_token, _ = self:get_oauth_token()
+  local maybe_token, _ = self:get_cached_oauth_token()
 
   local token_valid = (api_version >= 14 and security ~= nil)
     and self.oauth
@@ -322,30 +326,45 @@ function SonosDriver:check_auth(info_or_device)
     )
 end
 
+---@return boolean is_connected
+function SonosDriver:is_account_linked()
+  return (
+    self.oauth
+    and self.oauth.endpoint_app_info
+    and self.oauth.endpoint_app_info.state == "connected"
+  )
+      and true
+    or false
+end
+
 ---@return any? ret nil on permissions violation
 ---@return string? error nil on success
 function SonosDriver:request_oauth_token()
   if api_version < 14 or security == nil then
     return nil, "not supported"
   end
-  local maybe_token, maybe_err = self:get_oauth_token()
+  local maybe_token, maybe_err = self:get_cached_oauth_token()
   if maybe_err then
     log.warn(string.format("get oauth token error: %s", maybe_err))
   end
   if type(maybe_token) == "table" and type(maybe_token.accessToken) == "string" then
+    self.waiting_for_oauth_token = false
     self.oauth_token_bus:send(maybe_token)
+    return true
   end
   local result, err = security.get_sonos_oauth()
   if not result then
     return nil, string.format("Error requesting OAuth token via Security API: %s", err)
   end
-  self.waiting_for_oauth_token = true
+  -- if the account isn't linked, then we're not actually "waiting" for the token yet,
+  -- because we need to wait for the account link to succeed and the endpoint app upsert
+  self.waiting_for_oauth_token = self:is_account_linked()
   return result, err
 end
 
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
 ---@return "token expired"|"no token"|"not supported"|nil reason the reason a token was not provided, nil if there is a valid token available
-function SonosDriver:get_oauth_token()
+function SonosDriver:get_cached_oauth_token()
   if api_version < 14 or security == nil then
     return nil, "not supported"
   end
@@ -494,7 +513,7 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
   api_key = api_key or self:get_fallback_api_key()
 
   local rest_url = net_url.parse(info.discovery_info.restUrl)
-  local maybe_token, no_token_reason = self:get_oauth_token()
+  local maybe_token, no_token_reason = self:get_cached_oauth_token()
   local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
   local response, response_err =
     SonosApi.RestApi.get_groups_info(rest_url, info.ssdp_info.household_id, headers)
