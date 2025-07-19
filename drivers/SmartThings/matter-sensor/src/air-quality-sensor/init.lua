@@ -165,44 +165,97 @@ local supported_profiles =
   "aqs-temp-humidity-tvoc-meas",
 }
 
-local AIR_QUALITY_MAP = {
-  {capabilities.carbonMonoxideMeasurement.ID,    "-co",    clusters.CarbonMonoxideConcentrationMeasurement},
-  {capabilities.carbonMonoxideHealthConcern.ID,  "-co",    clusters.CarbonMonoxideConcentrationMeasurement},
-  {capabilities.carbonDioxideMeasurement.ID,     "-co2",   clusters.CarbonDioxideConcentrationMeasurement},
-  {capabilities.carbonDioxideHealthConcern.ID,   "-co2",   clusters.CarbonDioxideConcentrationMeasurement},
-  {capabilities.nitrogenDioxideHealthConcern.ID, "-no2",   clusters.NitrogenDioxideConcentrationMeasurement},
-  {capabilities.nitrogenDioxideMeasurement.ID,   "-no2",   clusters.NitrogenDioxideConcentrationMeasurement},
-  {capabilities.ozoneHealthConcern.ID,           "-ozone", clusters.OzoneConcentrationMeasurement},
-  {capabilities.ozoneMeasurement.ID,             "-ozone", clusters.OzoneConcentrationMeasurement},
-  {capabilities.formaldehydeMeasurement.ID,      "-ch2o",  clusters.FormaldehydeConcentrationMeasurement},
-  {capabilities.formaldehydeHealthConcern.ID,    "-ch2o",  clusters.FormaldehydeConcentrationMeasurement},
-  {capabilities.veryFineDustHealthConcern.ID,    "-pm1",   clusters.Pm1ConcentrationMeasurement},
-  {capabilities.veryFineDustSensor.ID,           "-pm1",   clusters.Pm1ConcentrationMeasurement},
-  {capabilities.fineDustSensor.ID,               "-pm25",  clusters.Pm25ConcentrationMeasurement},
-  {capabilities.fineDustHealthConcern.ID,        "-pm25",  clusters.Pm25ConcentrationMeasurement},
-  {capabilities.dustSensor.ID,                   "-pm10",  clusters.Pm10ConcentrationMeasurement},
-  {capabilities.dustHealthConcern.ID,            "-pm10",  clusters.Pm10ConcentrationMeasurement},
-  {capabilities.radonHealthConcern.ID,           "-radon", clusters.RadonConcentrationMeasurement},
-  {capabilities.radonMeasurement.ID,             "-radon", clusters.RadonConcentrationMeasurement},
-  {capabilities.tvocHealthConcern.ID,            "-tvoc",  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement},
-  {capabilities.tvocMeasurement.ID,              "-tvoc",  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement},
+local CONCENTRATION_MEASUREMENT_MAP = {
+  [capabilities.carbonMonoxideMeasurement]    = {"-co",    clusters.CarbonMonoxideConcentrationMeasurement, "N/A"},
+  [capabilities.carbonMonoxideHealthConcern]  = {"-co",    clusters.CarbonMonoxideConcentrationMeasurement, capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues},
+  [capabilities.carbonDioxideMeasurement]     = {"-co2",   clusters.CarbonDioxideConcentrationMeasurement, "N/A"},
+  [capabilities.carbonDioxideHealthConcern]   = {"-co2",   clusters.CarbonDioxideConcentrationMeasurement, capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues},
+  [capabilities.nitrogenDioxideMeasurement]   = {"-no2",   clusters.NitrogenDioxideConcentrationMeasurement, "N/A"},
+  [capabilities.nitrogenDioxideHealthConcern] = {"-no2",   clusters.NitrogenDioxideConcentrationMeasurement, capabilities.nitrogenDioxideHealthConcern.supportedNitrogenDioxideValues},
+  [capabilities.ozoneMeasurement]             = {"-ozone", clusters.OzoneConcentrationMeasurement, "N/A"},
+  [capabilities.ozoneHealthConcern]           = {"-ozone", clusters.OzoneConcentrationMeasurement, capabilities.ozoneHealthConcern.supportedOzoneValues},
+  [capabilities.formaldehydeMeasurement]      = {"-ch2o",  clusters.FormaldehydeConcentrationMeasurement, "N/A"},
+  [capabilities.formaldehydeHealthConcern]    = {"-ch2o",  clusters.FormaldehydeConcentrationMeasurement, capabilities.formaldehydeHealthConcern.supportedFormaldehydeValues},
+  [capabilities.veryFineDustSensor]           = {"-pm1",   clusters.Pm1ConcentrationMeasurement, "N/A"},
+  [capabilities.veryFineDustHealthConcern]    = {"-pm1",   clusters.Pm1ConcentrationMeasurement, capabilities.veryFineDustHealthConcern.supportedVeryFineDustValues},
+  [capabilities.fineDustSensor]               = {"-pm25",  clusters.Pm25ConcentrationMeasurement, "N/A"},
+  [capabilities.fineDustHealthConcern]        = {"-pm25",  clusters.Pm25ConcentrationMeasurement, capabilities.fineDustHealthConcern.supportedFineDustValues},
+  [capabilities.dustSensor]                   = {"-pm10",  clusters.Pm10ConcentrationMeasurement, "N/A"},
+  [capabilities.dustHealthConcern]            = {"-pm10",  clusters.Pm10ConcentrationMeasurement, capabilities.dustHealthConcern.supportedDustValues},
+  [capabilities.radonMeasurement]             = {"-radon", clusters.RadonConcentrationMeasurement, "N/A"},
+  [capabilities.radonHealthConcern]           = {"-radon", clusters.RadonConcentrationMeasurement, capabilities.radonHealthConcern.supportedRadonValues},
+  [capabilities.tvocMeasurement]              = {"-tvoc",  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement, "N/A"},
+  [capabilities.tvocHealthConcern]            = {"-tvoc",  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement, capabilities.tvocHealthConcern.supportedTvocValues},
 }
+
+
+local CONCENTRATION_MEASUREMENT_PROFILE_ORDERING = {
+  capabilities.carbonMonoxideMeasurement,
+  capabilities.carbonMonoxideHealthConcern,
+  capabilities.carbonDioxideMeasurement,
+  capabilities.carbonDioxideHealthConcern,
+  capabilities.nitrogenDioxideMeasurement,
+  capabilities.nitrogenDioxideHealthConcern,
+  capabilities.ozoneMeasurement,
+  capabilities.ozoneHealthConcern,
+  capabilities.formaldehydeMeasurement,
+  capabilities.formaldehydeHealthConcern,
+  capabilities.veryFineDustSensor,
+  capabilities.veryFineDustHealthConcern,
+  capabilities.fineDustSensor,
+  capabilities.fineDustHealthConcern,
+  capabilities.dustSensor,
+  capabilities.dustHealthConcern,
+  capabilities.radonMeasurement,
+  capabilities.radonHealthConcern,
+  capabilities.tvocMeasurement,
+  capabilities.tvocHealthConcern,
+}
+
+local function set_supported_health_concern_values(device, setter_function, cluster, cluster_ep)
+  -- read_datatype_value works since all the healthConcern capabilities' datatypes are equivalent to the one in airQualityHealthConcern
+  local read_datatype_value = capabilities.airQualityHealthConcern.airQualityHealthConcern
+  local supported_values = {read_datatype_value.unknown.NAME, read_datatype_value.good.NAME, read_datatype_value.unhealthy.NAME}
+  if cluster == clusters.AirQuality then
+    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.FAIR }) > 0 then
+      table.insert(supported_values, 3, read_datatype_value.moderate.NAME)
+    end
+    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MODERATE }) > 0 then
+      table.insert(supported_values, 4, read_datatype_value.slightlyUnhealthy.NAME)
+    end
+    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.VERY_POOR }) > 0 then
+      table.insert(supported_values, read_datatype_value.veryUnhealthy.NAME)
+    end
+    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.EXTREMELY_POOR }) > 0 then
+      table.insert(supported_values, read_datatype_value.hazardous.NAME)
+    end
+  else -- ConcentrationMeasurement clusters
+    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MEDIUM_LEVEL }) > 0 then
+      table.insert(supported_values, 3, read_datatype_value.moderate.NAME)
+    end
+    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.CRITICAL_LEVEL }) > 0 then
+      table.insert(supported_values, read_datatype_value.hazardous.NAME)
+    end
+  end
+  device:emit_event_for_endpoint(cluster_ep, setter_function(supported_values, { visibility = { displayed = false }}))
+end
 
 local function create_level_measurement_profile(device)
   local meas_name, level_name = "", ""
-  for _, details in ipairs(AIR_QUALITY_MAP) do
-    local cap_id  = details[1]
-    local cluster = details[3]
+  for _, cap in ipairs(CONCENTRATION_MEASUREMENT_PROFILE_ORDERING) do
+    local cap_id = cap.ID
+    local cluster = CONCENTRATION_MEASUREMENT_MAP[cap][2]
     -- capability describes either a HealthConcern or Measurement/Sensor
     if (cap_id:match("HealthConcern$")) then
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
       if #attr_eps > 0 then
-        level_name = level_name .. details[2]
+        level_name = level_name .. CONCENTRATION_MEASUREMENT_MAP[cap][1]
+        set_supported_health_concern_values(device, CONCENTRATION_MEASUREMENT_MAP[cap][3], cluster, attr_eps[1])
       end
     elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
       if #attr_eps > 0 then
-        meas_name = meas_name .. details[2]
+        meas_name = meas_name .. CONCENTRATION_MEASUREMENT_MAP[cap][1]
       end
     end
   end
@@ -211,9 +264,9 @@ end
 
 local function supported_level_measurements(device)
   local measurement_caps, level_caps = {}, {}
-  for _, details in ipairs(AIR_QUALITY_MAP) do
-    local cap_id  = details[1]
-    local cluster = details[3]
+  for _, cap in ipairs(CONCENTRATION_MEASUREMENT_PROFILE_ORDERING) do
+    local cap_id  = cap.ID
+    local cluster = CONCENTRATION_MEASUREMENT_MAP[cap][2]
     -- capability describes either a HealthConcern or Measurement/Sensor
     if (cap_id:match("HealthConcern$")) then
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
@@ -235,6 +288,8 @@ local function match_profile_switch(driver, device)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
   local profile_name = "aqs"
+  local aq_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
+  set_supported_health_concern_values(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aq_eps[1])
 
   if #temp_eps > 0 then
     profile_name = profile_name .. "-temp"

@@ -22,22 +22,18 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
-local VISION_MOTION_DETECTOR_FINGERPRINTS = {
-  { manufacturerId = 0x0109, productType = 0x2002, productId = 0x0205 } -- Vision Motion Detector ZP3102
-}
+local VISION_MOTION_DETECTOR_FINGERPRINTS = { manufacturerId = 0x0109, productType = 0x2002, productId = 0x0205 } -- Vision Motion Detector ZP3102
 
 --- Determine whether the passed device is zwave-plus-motion-temp-sensor
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
 local function can_handle_vision_motion_detector(opts, driver, device, ...)
-  for _, fingerprint in ipairs(VISION_MOTION_DETECTOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
+  if device:id_match(
+    VISION_MOTION_DETECTOR_FINGERPRINTS.manufacturerId,
+    VISION_MOTION_DETECTOR_FINGERPRINTS.productType,
+    VISION_MOTION_DETECTOR_FINGERPRINTS.productId
+  ) then
+    local subdriver = require("vision-motion-detector")
+    return true, subdriver
+  else return false end
 end
 
 --- Handler for notification report command class from sensor

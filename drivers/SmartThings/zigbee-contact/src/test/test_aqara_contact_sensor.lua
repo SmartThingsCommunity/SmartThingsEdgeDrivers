@@ -47,12 +47,6 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.type("CR1632")))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.quantity(1)))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.batteryLevel.battery("normal")))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.contactSensor.contact.open()))
 end
 
 test.set_test_init_function(test_init)
@@ -81,6 +75,19 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
       , data_types.Uint8, 1) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+test.register_coroutine_test(
+  "added lifecycle handler",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.type("CR1632")))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.quantity(1)))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.batteryLevel.battery("normal")))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.contactSensor.contact.open()))
   end
 )
 

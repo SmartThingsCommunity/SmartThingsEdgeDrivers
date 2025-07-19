@@ -29,14 +29,11 @@ local ZOOZ_4_IN_1_FINGERPRINTS = {
 }
 
 --- Determine whether the passed device is zooz_4_in_1_sensor
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
 local function can_handle_zooz_4_in_1_sensor(opts, driver, device, ...)
   for _, fingerprint in ipairs(ZOOZ_4_IN_1_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
+      local subdriver = require("zooz-4-in-1-sensor")
+      return true, subdriver
     end
   end
   return false
