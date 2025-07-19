@@ -44,7 +44,8 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
   { mfr = "Vimar", model = "RemoteControl_v1.0" },
   { mfr = "Linxura", model = "Smart Controller" },
-  { mfr = "Linxura", model = "Aura Smart Button" }
+  { mfr = "Linxura", model = "Aura Smart Button" },
+  { mfr = "zunzunbee", model = "SSWZ8T" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -93,7 +94,8 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.wallhero"),
     require("zigbee-multi-button.SLED"),
     require("zigbee-multi-button.vimar"),
-    require("zigbee-multi-button.linxura")
+    require("zigbee-multi-button.linxura"),
+    require("zigbee-multi-button.zunzunbee")
   }
 }
 
