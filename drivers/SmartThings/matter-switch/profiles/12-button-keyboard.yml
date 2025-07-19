@@ -1,6 +1,7 @@
 name: 12-button-keyboard
 components:
-  - id: F1
+  - id: main
+    label: F1
     capabilities:
       - id: button
         version: 1
@@ -10,67 +11,78 @@ components:
         version: 1
     categories:
     - name: RemoteController
-  - id: F2
+  - id: button2
+    label: F2
     capabilities:
       - id: button
         version: 1
     categories:
     - name: RemoteController
-  - id: F3
+  - id: button3
+    label: F3
     capabilities:
       - id: button
         version: 1
     categories:
     - name: RemoteController
-  - id: F4
+  - id: button4
+    label: F4
     capabilities:
       - id: button
         version: 1
     categories:
     - name: RemoteController
-  - id: F5
+  - id: button5
+    label: F5
     capabilities:
       - id: button
         version: 1
     categories:
     - name: RemoteController
-  - id: F6
+  - id: button6
+    label: F6
     capabilities:
       - id: button
         version: 1
     categories:
     - name: RemoteController
-  - id: F7
+  - id: button7
+    label: F7
     capabilities:
       - id: button
         version: 1
     categories:
     - name: RemoteController
-  - id: F8
+  - id: button8
+    label: F8
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F9
+  - id: button9
+    label: F9
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F10
+  - id: button10
+    label: F10
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F11
+  - id: button11
+    label: F11
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F12
+  - id: button12
+    label: F12
     capabilities:
       - id: button
         version: 1
