@@ -200,7 +200,8 @@ local zigbee_siren_driver_template = {
         data_type = IASZone.attributes.ZoneStatus.base_type
       }
     }
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_siren_driver_template, zigbee_siren_driver_template.supported_capabilities)
