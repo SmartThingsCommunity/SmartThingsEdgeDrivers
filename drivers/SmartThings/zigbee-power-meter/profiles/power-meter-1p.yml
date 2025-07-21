@@ -1,0 +1,31 @@
+name: power-meter-1p
+components:
+- id: main
+  label: Total Forward Energy
+  capabilities:
+  - id: energyMeter
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+- id: TotalReverseEnergy
+  label: Total Reverse Energy
+  capabilities:
+  - id: energyMeter
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+- id: PhaseA
+  label: Phase A
+  capabilities:
+  - id: powerMeter
+    version: 1
+  - id: currentMeasurement
+    version: 1
+  - id: voltageMeasurement
+    version: 1
+  categories:
+    - name: CurbPowerMeter
