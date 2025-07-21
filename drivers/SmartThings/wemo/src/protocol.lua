@@ -63,8 +63,6 @@ function protocol.poll(device)
     }
   }
 
-  -- TODO: some retries needed here to get device health if we timeout
-
   if resp == nil then
     log.warn_with({hub_logs=true},
       string.format("proto| retry sending poll request for %s: %s", device.label, code_or_err))
@@ -98,6 +96,10 @@ function protocol.poll(device)
   else
     local resp_body = table.concat(response_chunks)
     parser.parse_get_state_resp_xml(device, resp_body)
+  end
+
+  if device:supports_capability_by_id("powerMeter") then
+    protocol.get_insight_params(device)
   end
 end
 
@@ -235,6 +237,42 @@ function protocol.send_switch_level_cmd(device, level)
       device.label, code_or_err, status_line
     ))
   end
+end
+
+function protocol.get_insight_params(device)
+  local ip, port = get_ip_and_port(device)
+  if not (ip and port) then
+    return
+  end
+
+
+  local body = string.format(request_wrapper, [[<u:GetInsightParams xmlns:u="urn:Belkin:service:insight:1"></u:GetInsightParams>]])
+
+  local response_body = {}
+  log.trace(string.format("proto| %s get_insight_params", device.label))
+  local resp, code_or_err, _, status_line = http.request {
+    url = "http://" .. ip .. ":" .. port .. "/upnp/control/insight1",
+    method = "POST",
+    sink = ltn12.sink.table(response_body),
+    source = ltn12.source.string(body),
+    headers = {
+      ["SOAPAction"] = [["urn:Belkin:service:insight:1#GetInsightParams"]],
+      ["Content-Type"] = "text/xml",
+      ["Host"] = ip .. ":" .. port,
+      ["Content-Length"] = #body
+    }
+  }
+
+  if resp == nil or code_or_err ~= 200 then
+    log.warn_with({ hub_logs = true }, string.format(
+      "proto| %s get_insight_params failed with error code %s and status: %s",
+      device.label, code_or_err, status_line
+    ))
+  else
+    local resp_body = table.concat(response_body)
+    parser.parse_get_state_resp_xml(device, resp_body)
+  end
+
 end
 
 return protocol
