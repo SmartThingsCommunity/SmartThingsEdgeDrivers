@@ -133,7 +133,8 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   code_slot = tonumber(code_slot)
   if (code_slot == device:get_field(lock_utils.CHECKING_CODE)) then
     -- the code we're checking has arrived
-    if (code_slot >= device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)) then
+    local last_slot = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME) - 1
+    if (code_slot >= last_slot) then
       device:emit_event(LockCodes.scanCodes("Complete", { visibility = { displayed = false } }))
       device:set_field(lock_utils.CHECKING_CODE, nil)
     else
@@ -393,6 +394,14 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
   end
 end
 
+local function lock(driver, device, command)
+  device:send_to_component(command.component, LockCluster.server.commands.LockDoor(device))
+end
+
+local function unlock(driver, device, command)
+  device:send_to_component(command.component, LockCluster.server.commands.UnlockDoor(device))
+end
+
 local zigbee_lock_driver = {
   supported_capabilities = {
     Lock,
@@ -427,6 +436,10 @@ local zigbee_lock_driver = {
       [LockCodes.commands.requestCode.NAME] = request_code,
       [LockCodes.commands.setCode.NAME] = set_code,
       [LockCodes.commands.nameSlot.NAME] = name_slot,
+    },
+    [Lock.ID] = {
+      [Lock.commands.lock.NAME] = lock,
+      [Lock.commands.unlock.NAME] = unlock,
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = refresh

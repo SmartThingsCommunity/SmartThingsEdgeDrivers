@@ -78,13 +78,13 @@ local mock_device_rock = test.mock_device.build_test_matter_device({
       }
     },
     {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
-        }
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER"},
       }
+    }
   }
 })
 

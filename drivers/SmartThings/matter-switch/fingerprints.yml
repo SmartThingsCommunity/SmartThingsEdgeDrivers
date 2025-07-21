@@ -760,6 +760,11 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x1016
     deviceProfileName: plug-binary
+  - id: "5264/4137"
+    deviceLabel: Shelly 1PM Gen4
+    vendorId: 0x1490
+    productId: 0x1029
+    deviceProfileName: plug-power-energy-powerConsumption
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -2662,6 +2667,21 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0x0388
     deviceProfileName: matter-bridge
+  - id: "5020/43778"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB02
+    deviceProfileName: switch-binary
+  - id: "5020/43779"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB03
+    deviceProfileName: switch-binary
+  - id: "5020/43781"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB05
+    deviceProfileName: switch-binary
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
