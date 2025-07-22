@@ -76,6 +76,9 @@ components:
       - id: veryFineDustHealthConcern
         version: 1
         optional: true
+      - id: fineDustSensor
+        version: 1
+        optional: true
       - id: fineDustHealthConcern
         version: 1
         optional: true
