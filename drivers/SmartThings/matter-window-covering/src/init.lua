@@ -148,15 +148,21 @@ end
 -- close covering
 local function handle_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
-  device:send(req)
+  local command = clusters.WindowCovering.server.commands.DownOrClose
+  if device:get_field(REVERSE_POLARITY) then
+    command = clusters.WindowCovering.server.commands.UpOrOpen
+  end
+  device:send(command(device, endpoint_id))
 end
 
 -- open covering
 local function handle_open(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
-  device:send(req)
+  local command = clusters.WindowCovering.server.commands.UpOrOpen
+  if device:get_field(REVERSE_POLARITY) then
+    command = clusters.WindowCovering.server.commands.DownOrClose
+  end
+  device:send(command(device, endpoint_id))
 end
 
 -- pause covering

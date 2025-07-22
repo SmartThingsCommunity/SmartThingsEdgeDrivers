@@ -51,10 +51,6 @@ local function reverse_polarity_if_needed(device, value)
   return 100 - value
 end
 
-local function device_init(driver, device)
-  device:subscribe()
-end
-
 -- current lift percentage, changed to 100ths percent
 local function current_pos_handler(driver, device, ib, response)
   local position = 0
@@ -65,7 +61,7 @@ local function current_pos_handler(driver, device, ib, response)
     )
   end
   local state_machine = device:get_field(STATE_MACHINE)
-  -- When stat_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
+  -- When state_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_MOVING then
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
   elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED or state_machine == nil then
@@ -89,7 +85,6 @@ local function current_status_handler(driver, device, ib, response)
                      "main", capabilities.windowShadeLevel.ID,
                        capabilities.windowShadeLevel.shadeLevel.NAME
                    ) or DEFAULT_LEVEL
-  position = reverse_polarity_if_needed(device, position)
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
        rb.info_block.cluster_id == clusters.WindowCovering.ID and
@@ -100,7 +95,7 @@ local function current_status_handler(driver, device, ib, response)
   end
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
   local state_machine = device:get_field(STATE_MACHINE)
-  -- When stat_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
+  -- When state_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_IDLE then
     if state == 1 then -- opening
       device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
@@ -138,20 +133,15 @@ end
 
 local matter_window_covering_position_updates_while_moving_handler = {
   NAME = "matter-window-covering-position-updates-while-moving",
-  lifecycle_handlers = {
-    init = device_init,
-  },
   matter_handlers = {
     attr = {
       [clusters.WindowCovering.ID] = {
         [clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID] = current_pos_handler,
-        [clusters.WindowCovering.attributes.OperationalStatus.ID] = current_status_handler,
+        [clusters.WindowCovering.attributes.OperationalStatus.ID] = current_status_handler
       }
     }
   },
-  capability_handlers = {
-  },
-  can_handle = is_matter_window_covering_position_updates_while_moving,
+  can_handle = is_matter_window_covering_position_updates_while_moving
 }
 
 return matter_window_covering_position_updates_while_moving_handler

@@ -1067,6 +1067,24 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send(
       {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 8500)}
     )
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "windowShade", component = "main", command = "close", args = {}},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.UpOrOpen(mock_device, 10)}
+    )
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "windowShade", component = "main", command = "open", args = {}},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.DownOrClose(mock_device, 10)}
+    )
   end
 )
 
