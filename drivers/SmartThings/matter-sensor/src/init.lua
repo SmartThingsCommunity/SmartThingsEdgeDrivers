@@ -116,7 +116,17 @@ local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
   if device:supports_capability(capabilities.motionSensor) then
-    profile_name = profile_name .. "-motion"
+    -- If the Occupancy Sensing Cluster’s revision is >= 5 (maps to Lua Libs version 13+), and any of the AIR / RAD / RFS / VIS
+    -- features are supported by the device, use the presenceSensor capability. Otherwise, use the motionSensor capability.
+    if version.api >= 13 and
+      #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.ACTIVE_INFRARED}) > 0 or
+      #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RADAR}) > 0 or
+      #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RF_SENSING}) > 0 or
+      #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.VISION}) > 0 then
+      profile_name = profile_name .. "-presence"
+    else
+      profile_name = profile_name .. "-motion"
+    end
   end
 
   if device:supports_capability(capabilities.contactSensor) then
@@ -355,7 +365,11 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
 end
 
 local function occupancy_attr_handler(driver, device, ib, response)
-  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  if device:supports_capability(capabilities.presenceSensor) then
+    device:emit_event(ib.data.value == 0x01 and capabilities.presenceSensor.presence("present") or capabilities.presenceSensor.presence("not present"))
+  else
+    device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  end
 end
 
 local function pressure_attr_handler(driver, device, ib, response)
@@ -461,6 +475,9 @@ local matter_driver_template = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
     },
     [capabilities.motionSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.presenceSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
     },
     [capabilities.contactSensor.ID] = {
@@ -591,6 +608,7 @@ local matter_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.contactSensor,
     capabilities.motionSensor,
+    capabilities.presenceSensor,
     capabilities.button,
     capabilities.battery,
     capabilities.batteryLevel,
