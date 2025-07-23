@@ -24,7 +24,12 @@ matterManufacturer:
     deviceLabel: Eve MotionBlinds for Curtains
     vendorId: 0x130A
     productId: 0x0064
-    deviceProfileName: window-covering-battery  
+    deviceProfileName: window-covering-battery
+  - id: "4874/96"
+    deviceLabel: Eve Shutter Switch
+    vendorId: 0x130A
+    productId: 0x0060
+    deviceProfileName: window-covering
 #Zemismart
   - id: "Zemismart MT01 Slide Curtain"
     deviceLabel: Zemismart MT01 Slide Curtain
@@ -65,7 +70,7 @@ matterManufacturer:
     deviceLabel: Zemismart ZM24A Smart Curtain
     vendorId: 0x139C
     productId: 0xFA17
-    deviceProfileName: window-covering  
+    deviceProfileName: window-covering
 #WISTAR
   - id: "5207/17"
     deviceLabel: WISTAR WSER40 Smart Tubular Motor
