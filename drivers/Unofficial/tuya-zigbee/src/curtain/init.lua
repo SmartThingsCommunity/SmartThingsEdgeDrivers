@@ -97,7 +97,10 @@ local function window_shade_level(driver, device, command)
 end
 
 local function window_shade_preset(driver, device)
-  local level = device.preferences and device.preferences.presetPosition or window_preset_defaults.PRESET_LEVEL
+  local level = device:get_latest_state("main", "windowShadePreset", "position") or
+    device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or
+    (device.preferences ~= nil and device.preferences.presetPosition) or
+    window_preset_defaults.PRESET_LEVEL
   tuya_utils.send_tuya_command(device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00'..string.pack(">I2", level), packet_id)
   packet_id = increase_packet_id(packet_id)
 end

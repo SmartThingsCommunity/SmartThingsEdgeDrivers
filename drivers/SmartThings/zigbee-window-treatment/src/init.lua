@@ -15,6 +15,23 @@
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
+local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+
+local function init_handler(self, device)
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+
+    local preset_position = device:get_field(window_preset_defaults.PRESET_LEVEL_KEY)
+    if preset_position == nil and device.preferences ~= nil and device.preferences.presetPosition ~= nil then
+        preset_position = device.preferences.presetPosition
+        device:set_field(window_preset_defaults.PRESET_LEVEL_KEY, device.preferences.presetPosition, {persist = true})
+    end
+
+    if preset_position ~= nil then
+      device:emit_event(capabilities.windowShadePreset.position(preset_position, { visibility = {displayed = false}}))
+    end
+  end
+end
 
 local function added_handler(self, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false }}))
@@ -40,6 +57,7 @@ local zigbee_window_treatment_driver_template = {
     require("hanssem"),
     require("screen-innovations")},
   lifecycle_handlers = {
+    init = init_handler,
     added = added_handler
   },
   health_check = false,

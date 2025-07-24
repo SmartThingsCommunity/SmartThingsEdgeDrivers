@@ -219,7 +219,42 @@ test.register_message_test(
           mock_device.id,
           clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
         }
-      }
+      },
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          {
+            capability = "windowShadePreset", component = "main",
+            command = "setPresetPosition", args = {20}
+          }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShadePreset.position(20))
+      },
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          {
+            capability = "windowShadePreset", component = "main",
+            command = "presetPosition", args = {}
+          }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 20)
+        }
+      },
     }
 )
 
