@@ -76,12 +76,20 @@ local matter_endpoints_presence_sensor = {
   {
     endpoint_id = 1,
     clusters = {
-      {cluster_id = clusters.IlluminanceMeasurement.ID, cluster_type = "SERVER"}
+      {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
+      {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
     },
     device_types = {}
   },
   {
     endpoint_id = 2,
+    clusters = {
+      {cluster_id = clusters.IlluminanceMeasurement.ID, cluster_type = "SERVER"}
+    },
+    device_types = {}
+  },
+  {
+    endpoint_id = 3,
     clusters = {
       {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
       {cluster_id = clusters.OccupancySensing.ID, cluster_type = "SERVER", feature_map = clusters.OccupancySensing.types.Feature.RADAR}
@@ -91,7 +99,7 @@ local matter_endpoints_presence_sensor = {
 }
 
 local mock_device_presence_sensor = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("motion-illuminance-battery.yml"),
+  profile = t_utils.get_profile_definition("motion-illuminance-temperature-humidity-battery.yml"),
   endpoints = matter_endpoints_presence_sensor
 })
 
@@ -115,7 +123,11 @@ end
 test.set_test_init_function(test_init)
 
 local function subscribe_on_init_presence_sensor(dev)
-  local subscribe_request = clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(dev)
+  local subscribe_request = clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:subscribe(dev)
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(dev))
   subscribe_request:merge(clusters.OccupancySensing.attributes.Occupancy:subscribe(dev))
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(dev))
   return subscribe_request
@@ -351,7 +363,7 @@ test.register_coroutine_test(
       mock_device_presence_sensor.id,
       clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_presence_sensor, 2, {uint32(12)})
     })
-    mock_device_presence_sensor:expect_metadata_update({ profile = "presence-illuminance-battery" })
+    mock_device_presence_sensor:expect_metadata_update({ profile = "presence-illuminance-temperature-humidity-battery" })
   end,
   { test_init = test_init_presence_sensor }
 )

@@ -115,20 +115,6 @@ end
 local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
-  if device:supports_capability(capabilities.motionSensor) then
-    -- If the Occupancy Sensing Cluster’s revision is >= 5 (corresponds to Lua Libs version 13+), and any of the AIR / RAD / RFS / VIS
-    -- features are supported by the device, use the presenceSensor capability. Otherwise, use the motionSensor capability.
-    local occupancy_air_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.ACTIVE_INFRARED}) or {}
-    local occupancy_rad_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RADAR}) or {}
-    local occupancy_rfs_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RF_SENSING}) or {}
-    local occupancy_vis_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.VISION}) or {}
-    if version.api >= 13 and (#occupancy_air_eps > 0 or #occupancy_rad_eps > 0 or #occupancy_rfs_eps > 0 or #occupancy_vis_eps > 0) then
-      profile_name = profile_name .. "-presence"
-    else
-      profile_name = profile_name .. "-motion"
-    end
-  end
-
   if device:supports_capability(capabilities.contactSensor) then
     profile_name = profile_name .. "-contact"
   end
@@ -181,6 +167,21 @@ local function match_profile(driver, device, battery_supported)
 
   local concatenated_preferences = supports_sensitivity_preferences(device)
   profile_name = profile_name .. concatenated_preferences
+
+  if device:supports_capability(capabilities.motionSensor) then
+    -- If the Occupancy Sensing Cluster’s revision is >= 5 (corresponds to Lua Libs version 13+), and any of the AIR / RAD / RFS / VIS
+    -- features are supported by the device, use the presenceSensor capability. Otherwise, use the motionSensor capability.
+    local occupancy_air_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.ACTIVE_INFRARED}) or {}
+    local occupancy_rad_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RADAR}) or {}
+    local occupancy_rfs_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RF_SENSING}) or {}
+    local occupancy_vis_eps = device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.VISION}) or {}
+    if profile_name == "-illuminance-temperature-humidity-battery" and version.api >= 13 and
+      (#occupancy_air_eps > 0 or #occupancy_rad_eps > 0 or #occupancy_rfs_eps > 0 or #occupancy_vis_eps > 0) then
+      profile_name = "-presence" .. profile_name
+    else
+      profile_name = "-motion" .. profile_name
+    end
+  end
 
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
@@ -365,10 +366,10 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
 end
 
 local function occupancy_attr_handler(driver, device, ib, response)
-  if device:supports_capability(capabilities.presenceSensor) then
-    device:emit_event(ib.data.value == 0x01 and capabilities.presenceSensor.presence("present") or capabilities.presenceSensor.presence("not present"))
-  else
+  if device:supports_capability(capabilities.motionSensor) then
     device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  else
+    device:emit_event(ib.data.value == 0x01 and capabilities.presenceSensor.presence("present") or capabilities.presenceSensor.presence("not present"))
   end
 end
 
