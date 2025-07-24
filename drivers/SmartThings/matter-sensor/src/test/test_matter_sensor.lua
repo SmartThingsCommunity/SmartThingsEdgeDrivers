@@ -345,7 +345,7 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "Test profile change on init",
+  "Test profile change following receival of Power Source Attribute List",
   function()
     test.socket.matter:__queue_receive({
       mock_device_presence_sensor.id,
