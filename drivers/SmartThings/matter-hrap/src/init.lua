@@ -16,8 +16,6 @@ local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local utils = require "lustre.utils"
-local log = require "log"
-
 
 -- Include driver-side definitions when lua libs api version is <13
 local version = require "version"
