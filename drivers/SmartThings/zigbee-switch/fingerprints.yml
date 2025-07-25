@@ -595,6 +595,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "S2 (5502)"
     deviceProfileName: switch-power-firmware-2
+  - id: "ubisys/1151"
+    deviceLabel: Switching Actuator S1-R (Series 2)
+    manufacturer: ubisys
+    model: "1151"
+    deviceProfileName: switch-power
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
