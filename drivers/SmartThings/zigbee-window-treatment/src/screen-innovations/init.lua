@@ -18,6 +18,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local window_shade_utils = require "window_shade_utils"
 local device_management = require "st.zigbee.device_management"
 local utils = require "st.utils"
+local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -62,6 +63,8 @@ local function device_added(self, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
   -- initialize motor state
   device:set_field(MOTOR_STATE, MOTOR_STATE_IDLE)
+  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+  device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
   device.thread:call_with_delay(3, function(d)
     do_refresh(self, device)
   end)

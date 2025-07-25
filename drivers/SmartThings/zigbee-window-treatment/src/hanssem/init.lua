@@ -17,6 +17,7 @@ local data_types = require "st.zigbee.data_types"
 local ZigbeeConstants = require "st.zigbee.constants"
 local generic_body = require "st.zigbee.generic_body"
 local window_shade_utils = require "window_shade_utils"
+local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local TUYA_CLUSTER = 0xEF00
 local DP_TYPE_VALUE = "\x02"
@@ -194,6 +195,8 @@ local function device_added(driver, device)
       SetShadeLevelHandler(driver, device, {args = { shadeLevel = 50 }})
     end)
   end
+  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+  device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
 end
 
 local function device_info_changed(driver, device, event, args)

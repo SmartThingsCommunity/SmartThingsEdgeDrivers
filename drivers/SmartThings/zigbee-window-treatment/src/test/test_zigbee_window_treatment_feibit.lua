@@ -37,7 +37,14 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)end
+  test.mock_device.add_test_device(mock_device)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
+end
 
 test.set_test_init_function(test_init)
 
@@ -221,9 +228,10 @@ test.register_coroutine_test(
         { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
       }
     )
+    -- newly joined devices will ignore the preference
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(30/100 * 254))
+      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(50/100 * 254))
     })
   end
 )
@@ -257,9 +265,10 @@ test.register_coroutine_test(
         { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
       }
     )
+    -- newly joined devices will ignore the preference
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(100/100 * 254))
+      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(50/100 * 254))
     })
   end
 )
@@ -350,6 +359,12 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
       )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+      )
       test.wait_for_events()
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -372,6 +387,12 @@ test.register_coroutine_test(
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
       )
       test.wait_for_events()
 

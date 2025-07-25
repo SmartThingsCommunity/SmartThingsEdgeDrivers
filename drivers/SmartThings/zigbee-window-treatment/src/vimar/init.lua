@@ -18,6 +18,7 @@ local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
 local windowShade = capabilities.windowShade.windowShade
+local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 -- VIMAR WINDOW SHADES BEHAVIOR
 -- 1. Open/Close/SetToLevel command is invoked normally
@@ -134,6 +135,20 @@ local device_init = function(self, device)
   -- Reset Status
   device:set_field(VIMAR_SHADES_CLOSING, false)
   device:set_field(VIMAR_SHADES_OPENING, false)
+
+  -- for windowshadepreset update migration
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+    device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+
+    -- These should only ever be nil once (and at the same time) for already-installed devices
+    -- It can be removed after migration is complete
+    device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+
+    local preset_position = window_shade_utils.get_preset_level(device, "main")
+
+    device:emit_event(capabilities.windowShadePreset.position(preset_position, { visibility = {displayed = false}}))
+    device:set_field(window_preset_defaults.PRESET_LEVEL_KEY, preset_position, {persist = true})
+  end
 end
 
 -- DRIVER HANDLER CONFIGURATION
