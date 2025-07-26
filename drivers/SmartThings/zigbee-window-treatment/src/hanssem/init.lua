@@ -16,6 +16,7 @@ local Messages = require "st.zigbee.messages"
 local data_types = require "st.zigbee.data_types"
 local ZigbeeConstants = require "st.zigbee.constants"
 local generic_body = require "st.zigbee.generic_body"
+local window_shade_utils = require "window_shade_utils"
 local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local TUYA_CLUSTER = 0xEF00
@@ -148,7 +149,7 @@ local function SetShadeLevelHandler(driver, device, capability_command)
 end
 
 local function PresetPositionHandler(driver, device, capability_command)
-  local level = device.preferences.presetPosition or device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, capability_command.component)
   SetShadeLevelHandler(driver, device, {args = { shadeLevel = level }})
 end
 
@@ -193,6 +194,11 @@ local function device_added(driver, device)
     device.thread:call_with_delay(3, function(d)
       SetShadeLevelHandler(driver, device, {args = { shadeLevel = 50 }})
     end)
+  end
+  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+    device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
   end
 end
 

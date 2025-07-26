@@ -34,6 +34,23 @@ local function is_tuya_curtain(opts, driver, device)
   return false
 end
 
+local function init_handler(self, device)
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+
+    -- These should only ever be nil once (and at the same time) for already-installed devices
+    -- It can be removed after migration is complete
+    device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+
+    local preset_position = device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or
+      (device.preferences ~= nil and device.preferences.presetPosition) or
+      window_preset_defaults.PRESET_LEVEL
+
+    device:emit_event(capabilities.windowShadePreset.position(preset_position, { visibility = {displayed = false}}))
+    device:set_field(window_preset_defaults.PRESET_LEVEL_KEY, preset_position, {persist = true})
+  end
+end
+
 local do_configure = function(driver, device)
   -- configure ApplicationVersion to keep device online, tuya hub also uses this attribute
   tuya_utils.send_magic_spell(device)
@@ -45,6 +62,11 @@ local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
   device:emit_event(capabilities.windowShade.windowShade.closed())
+  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+    device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
+  end
 end
 
 local function increase_packet_id(packet_id)
@@ -97,7 +119,10 @@ local function window_shade_level(driver, device, command)
 end
 
 local function window_shade_preset(driver, device)
-  local level = device.preferences and device.preferences.presetPosition or window_preset_defaults.PRESET_LEVEL
+  local level = device:get_latest_state("main", "windowShadePreset", "position") or
+    device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or
+    (device.preferences ~= nil and device.preferences.presetPosition) or
+    window_preset_defaults.PRESET_LEVEL
   tuya_utils.send_tuya_command(device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00'..string.pack(">I2", level), packet_id)
   packet_id = increase_packet_id(packet_id)
 end
@@ -127,6 +152,7 @@ end
 local tuya_curtain_driver = {
   NAME = "tuya curtain",
   lifecycle_handlers = {
+    init = init_handler,
     added = device_added,
     infoChanged = device_info_changed,
     doConfigure = do_configure

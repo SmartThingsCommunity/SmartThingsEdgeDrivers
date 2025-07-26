@@ -16,6 +16,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local aqara_utils = require "aqara/aqara_utils"
+local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local Groups = clusters.Groups
 local Basic = clusters.Basic
@@ -47,6 +48,11 @@ local function device_added(driver, device)
   device:emit_event(hookLockState.hookLockState.unlocked())
   device:emit_event(chargingState.chargingState.stopped())
   device:emit_event(capabilities.battery.battery(100))
+  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+    device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
+  end
 end
 
 local function do_refresh(self, device)

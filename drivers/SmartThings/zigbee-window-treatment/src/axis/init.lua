@@ -14,9 +14,10 @@
 
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
+local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local Basic = zcl_clusters.Basic
 local Level = zcl_clusters.Level
@@ -50,7 +51,7 @@ local function window_shade_level_cmd_handler(driver, device, command)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
-  local level = device.preferences and device.preferences.presetPosition or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, command.component)
   window_shade_set_level(device, command, level)
 end
 
@@ -116,6 +117,11 @@ local device_added = function(self, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false } }))
   device:set_field(SOFTWARE_VERSION, 0)
   device:send(Basic.attributes.SWBuildID:read(device))
+  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+    device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
+  end
 end
 
 local axis_handler = {
