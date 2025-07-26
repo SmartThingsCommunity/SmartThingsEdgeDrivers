@@ -393,7 +393,7 @@ preferences:
     preferenceType: enumeration
     definition:
       options:
-        "0": "Custom (User-defined)"
+        "0": "Custom (User defined)"
         "1": "X-Small"
         "2": "Small"
         "3": "Medium"

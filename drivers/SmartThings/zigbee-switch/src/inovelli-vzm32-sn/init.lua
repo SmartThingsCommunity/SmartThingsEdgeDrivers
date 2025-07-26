@@ -126,7 +126,6 @@ local key_mmwave_preferences = {
   "parameter112",
   "parameter113",
   "parameter114",
-  "parameter117",
 }
 
 local function button_to_component(buttonId)
@@ -175,6 +174,17 @@ local function contains(array, value)
   return false
 end
 
+local function configure_illuminance_reporting(device)
+  local min_lux_change = 15
+  local value = math.floor(10000 * math.log10(min_lux_change) + 1)
+  device:send(clusters.IlluminanceMeasurement.attributes.MeasuredValue:configure_reporting(
+      device,
+      10,   -- Minimum reporting interval (seconds)
+      600,  -- Maximum reporting interval (seconds)
+      value    -- Reportable change (in raw unit values)
+  ))
+end
+
 local function info_changed(driver, device, event, args)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     local time_diff = 3
@@ -183,6 +193,7 @@ local function info_changed(driver, device, event, args)
         time_diff = os.difftime(os.time(), last_clock_set_time)
     end
     device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
+    configure_illuminance_reporting(device)
 
     if time_diff > 2 then
       local preferences = preference_map
@@ -224,16 +235,6 @@ local function info_changed(driver, device, event, args)
   end
 end
 
-local function configure_illuminance_reporting(device)
-  local value = math.floor(10000 * math.log10(15) + 1)
-  device:send(clusters.IlluminanceMeasurement.attributes.MeasuredValue:configure_reporting(
-      device,
-      10,   -- Minimum reporting interval (seconds)
-      600,  -- Maximum reporting interval (seconds)
-      15    -- Reportable change (in raw unit values)
-  ))
-end
-
 local do_configure = function(self, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:refresh()
@@ -245,13 +246,6 @@ local do_configure = function(self, device)
     -- Retrieve Neutral Setting "Parameter 21"
     device:send(cluster_base.read_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, 21, MFG_CODE))
     device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
-
-    device:send(clusters.IlluminanceMeasurement.attributes.MeasuredValue:configure_reporting(
-      device,
-      10,   -- Minimum reporting interval (seconds)
-      60,  -- Maximum reporting interval (seconds)
-      25    -- Reportable change (in raw unit values)
-    ))
 
     -- Additional one time configuration
     if  device:supports_capability(capabilities.powerMeter) then
