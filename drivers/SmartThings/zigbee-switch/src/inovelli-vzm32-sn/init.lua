@@ -216,7 +216,7 @@ local function info_changed(driver, device, event, args)
             else
               device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, new_parameter_value))
             end
-        end
+          end
         end
       end
       device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
@@ -224,10 +224,21 @@ local function info_changed(driver, device, event, args)
   end
 end
 
+local function configure_illuminance_reporting(device)
+  local value = math.floor(10000 * math.log10(15) + 1)
+  device:send(clusters.IlluminanceMeasurement.attributes.MeasuredValue:configure_reporting(
+      device,
+      10,   -- Minimum reporting interval (seconds)
+      600,  -- Maximum reporting interval (seconds)
+      15    -- Reportable change (in raw unit values)
+  ))
+end
+
 local do_configure = function(self, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:refresh()
     device:configure()
+    configure_illuminance_reporting(device)
 
     device:send(device_management.build_bind_request(device, PRIVATE_CLUSTER_ID, self.environment_info.hub_zigbee_eui, 2)) -- Bind device for button presses.
 
@@ -424,7 +435,6 @@ end
 
 local function illuminance_attr_handler(driver, device, illuminance, zb_rx)
   local lux = math.floor(10 ^ ((illuminance.value - 1) / 10000))
-  print("illuminance: " .. lux)
   device:emit_event(capabilities.illuminanceMeasurement.illuminance({value = lux, unit = "lux" }))
 end
 

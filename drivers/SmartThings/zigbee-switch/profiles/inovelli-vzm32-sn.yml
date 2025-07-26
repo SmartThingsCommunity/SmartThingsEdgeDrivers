@@ -277,7 +277,7 @@ preferences:
       default: 5
   - name: "parameter101"
     title: "101. mmWave Height Minimum (Floor)"
-    description: "Minimum range of the Z-Axis in mm"
+    description: "Minimum range of the Z-Axis in cm"
     required: true
     preferenceType: number
     definition:
@@ -286,7 +286,7 @@ preferences:
       default: -300
   - name: "parameter102"
     title: "102. mmWave Height Maximum (Ceiling)"
-    description: "Maximum range of the Z-Axis in mm"
+    description: "Maximum range of the Z-Axis in cm"
     required: true
     preferenceType: number
     definition:
@@ -295,7 +295,7 @@ preferences:
       default: 300
   - name: "parameter103"
     title: "103. mmWave Width Minimum (Left)"
-    description: "Minimum range of the X-Axis in mm"
+    description: "Minimum range of the X-Axis in cm"
     required: true
     preferenceType: number
     definition:
@@ -304,7 +304,7 @@ preferences:
       default: -600
   - name: "parameter104"
     title: "104. mmWave Width Maximum (Right)"
-    description: "Maximum range of the X-Axis in mm"
+    description: "Maximum range of the X-Axis in cm"
     required: true
     preferenceType: number
     definition:
@@ -313,7 +313,7 @@ preferences:
       default: 600
   - name: "parameter105"
     title: "105. mmWave Depth Minimum (Near)"
-    description: "Minimum range of the Y-Axis in mm"
+    description: "Minimum range of the Y-Axis in cm"
     required: true
     preferenceType: number
     definition:
@@ -322,7 +322,7 @@ preferences:
       default: 0
   - name: "parameter106"
     title: "106. mmWave Depth Maximum (Far)"
-    description: "Maximum range of the Y-Axis in mm"
+    description: "Maximum range of the Y-Axis in cm"
     required: true
     preferenceType: number
     definition:
@@ -394,7 +394,9 @@ preferences:
     definition:
       options:
         "0": "Custom (User-defined)"
-        "1": "Small"
-        "2": "Medium"
-        "3": "Large"
+        "1": "X-Small"
+        "2": "Small"
+        "3": "Medium"
+        "4": "Large"
+        "5": "X-Large"
       default: 0
