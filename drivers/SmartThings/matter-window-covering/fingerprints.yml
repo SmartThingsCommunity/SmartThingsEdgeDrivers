@@ -24,7 +24,13 @@ matterManufacturer:
     deviceLabel: Eve MotionBlinds for Curtains
     vendorId: 0x130A
     productId: 0x0064
-    deviceProfileName: window-covering-battery  
+    deviceProfileName: window-covering-battery
+# SmartWave
+  - id: "5376/10001"
+    deviceLabel: SmartWave Motorized Roller Shades 100 Blackout Flex
+    vendorId: 0x1500
+    productId: 0x2711
+    deviceProfileName: window-covering-battery
 #Zemismart
   - id: "Zemismart MT01 Slide Curtain"
     deviceLabel: Zemismart MT01 Slide Curtain
@@ -65,7 +71,7 @@ matterManufacturer:
     deviceLabel: Zemismart ZM24A Smart Curtain
     vendorId: 0x139C
     productId: 0xFA17
-    deviceProfileName: window-covering  
+    deviceProfileName: window-covering
 #WISTAR
   - id: "5207/17"
     deviceLabel: WISTAR WSER40 Smart Tubular Motor
@@ -81,6 +87,42 @@ matterManufacturer:
     deviceLabel: WISTAR WSERD30-B Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0002
+    deviceProfileName: window-covering-battery
+#Yooksmart
+  - id: "5411/1052"
+    deviceLabel: Smart WindowCovering Series
+    vendorId: 0x1523
+    productId: 0x041C
+    deviceProfileName: window-covering-battery
+  - id: "5411/2660"
+    deviceLabel: Smart WindowCovering Series
+    vendorId: 0x1523
+    productId: 0x0A64
+    deviceProfileName: window-covering-battery
+  - id: "5411/2661"
+    deviceLabel: Smart WindowCovering Series
+    vendorId: 0x1523
+    productId: 0x0A65
+    deviceProfileName: window-covering-battery
+  - id: "5411/2662"
+    deviceLabel: Smart WindowCovering Series
+    vendorId: 0x1523
+    productId: 0x0A66
+    deviceProfileName: window-covering-battery
+  - id: "5411/2663"
+    deviceLabel: Smart WindowCovering Series
+    vendorId: 0x1523
+    productId: 0x0A67
+    deviceProfileName: window-covering-battery
+  - id: "5411/2664"
+    deviceLabel: Smart WindowCovering Series
+    vendorId: 0x1523
+    productId: 0x0A68
+    deviceProfileName: window-covering-battery
+  - id: "5411/2665"
+    deviceLabel: Smart WindowCovering Series
+    vendorId: 0x1523
+    productId: 0x0A69
     deviceProfileName: window-covering-battery
 matterGeneric:
   - id: "windowcovering"
