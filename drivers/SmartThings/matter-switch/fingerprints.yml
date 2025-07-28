@@ -785,7 +785,7 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x1029
     deviceProfileName: plug-power-energy-powerConsumption
-  - id: 5264/4101
+  - id: "5264/4101"
     deviceLabel: Shelly 2PM Gen3
     vendorId: 0x1490
     productId: 0x1005
