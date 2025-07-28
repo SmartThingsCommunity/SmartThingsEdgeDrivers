@@ -24,7 +24,13 @@ matterManufacturer:
     deviceLabel: Eve MotionBlinds for Curtains
     vendorId: 0x130A
     productId: 0x0064
-    deviceProfileName: window-covering-battery  
+    deviceProfileName: window-covering-battery
+# SmartWave
+  - id: "5376/10001"
+    deviceLabel: SmartWave Motorized Roller Shades 100 Blackout Flex
+    vendorId: 0x1500
+    productId: 0x2711
+    deviceProfileName: window-covering-battery
 #Zemismart
   - id: "Zemismart MT01 Slide Curtain"
     deviceLabel: Zemismart MT01 Slide Curtain
@@ -65,7 +71,7 @@ matterManufacturer:
     deviceLabel: Zemismart ZM24A Smart Curtain
     vendorId: 0x139C
     productId: 0xFA17
-    deviceProfileName: window-covering  
+    deviceProfileName: window-covering
 #WISTAR
   - id: "5207/17"
     deviceLabel: WISTAR WSER40 Smart Tubular Motor
