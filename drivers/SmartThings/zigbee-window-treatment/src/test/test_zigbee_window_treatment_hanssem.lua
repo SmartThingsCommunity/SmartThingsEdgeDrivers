@@ -95,12 +95,6 @@ test.register_coroutine_test(
       )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
-    )
     test.mock_time.advance_time(3)
     test.socket.zigbee:__expect_send({
       mock_device.id,

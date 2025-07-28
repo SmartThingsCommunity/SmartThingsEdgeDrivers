@@ -266,12 +266,6 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main",
           capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
       )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
-      )
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.wait_for_events()
       test.socket.zigbee:__set_channel_ordering("relaxed")

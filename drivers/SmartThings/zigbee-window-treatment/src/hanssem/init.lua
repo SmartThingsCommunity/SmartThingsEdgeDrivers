@@ -195,11 +195,6 @@ local function device_added(driver, device)
       SetShadeLevelHandler(driver, device, {args = { shadeLevel = 50 }})
     end)
   end
-  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
-  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
-      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
-    device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
-  end
 end
 
 local function device_info_changed(driver, device, event, args)

@@ -117,11 +117,6 @@ local device_added = function(self, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false } }))
   device:set_field(SOFTWARE_VERSION, 0)
   device:send(Basic.attributes.SWBuildID:read(device))
-  device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
-  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
-      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
-    device:emit_event(capabilities.windowShadePreset.position(window_preset_defaults.PRESET_LEVEL, { visibility = {displayed = false}}))
-  end
 end
 
 local axis_handler = {
