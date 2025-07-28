@@ -2872,6 +2872,12 @@ matterGeneric:
       - id: 0x010D # Extended Color Light
       - id: 0x002B # Fan
     deviceProfileName: light-color-level-fan
+  - id: "matter/dimmable/light/motion"
+    deviceLabel: Matter Dimmable Light Occupancy Sensor
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x0107 # Occupancy Sensor
+    deviceProfileName: light-level-motion
 
 matterThing:
   - id: SmartThings/MatterThing
