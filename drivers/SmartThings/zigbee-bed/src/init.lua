@@ -23,6 +23,7 @@ local zigbee_bed_template = {
   sub_drivers = {
     require("shus-mattress"),
   },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_bed_template, zigbee_bed_template.supported_capabilities)
