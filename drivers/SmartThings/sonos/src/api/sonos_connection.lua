@@ -166,8 +166,12 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
       return
     end
 
-    _, err =
-      Router.open_socket_for_player(household_id, coordinator_id, coordinator.websocketUrl, api_key)
+    _, err = Router.open_socket_for_player(
+      household_id,
+      coordinator_id,
+      coordinator.player.websocketUrl,
+      api_key
+    )
     if err ~= nil then
       log.error(
         string.format(
@@ -302,10 +306,13 @@ end
 --- @return SonosConnection
 function SonosConnection.new(driver, device)
   log.debug(string.format("Creating new SonosConnection for %s", device.label))
-  local self = setmetatable(
-    { driver = driver, device = device, _listener_uuids = {}, _initialized = false, _reconnecting = false },
-    SonosConnection
-  )
+  local self = setmetatable({
+    driver = driver,
+    device = device,
+    _listener_uuids = {},
+    _initialized = false,
+    _reconnecting = false,
+  }, SonosConnection)
 
   -- capture the label here in case something goes wonky like a callback being fired after a
   -- device is removed
@@ -358,19 +365,28 @@ function SonosConnection.new(driver, device)
         local household_id, current_coordinator =
           self.driver.sonos:get_coordinator_for_device(self.device)
         local _, player_id = self.driver.sonos:get_player_for_device(self.device)
-        self.driver.sonos:update_household_info(header.householdId, body, self.device)
+        self.driver.sonos:update_household_info(header.householdId, body, self.driver)
         self.driver.sonos:update_device_record_from_state(header.householdId, self.device)
         local _, updated_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
 
-        Router.cleanup_unused_sockets(self.driver)
-
-        if not self:coordinator_running() then
-          --TODO this is not infallible
-          _open_coordinator_socket(self, household_id, player_id)
+        local bonded = self.device:get_field(PlayerFields.BONDED)
+        if bonded then
+          self:stop()
         end
 
-        if current_coordinator ~= updated_coordinator then
-          self:refresh_subscriptions()
+        Router.cleanup_unused_sockets(self.driver)
+
+        if not bonded then
+          if not self:coordinator_running() then
+            --TODO this is not infallible
+            _open_coordinator_socket(self, household_id, player_id)
+          end
+
+          if current_coordinator ~= updated_coordinator then
+            self:refresh_subscriptions()
+          end
+        else
+          self.device:offline()
         end
       elseif header.type == "playerVolume" then
         log.trace(string.format("PlayerVolume type message for %s", device_name))
@@ -477,7 +493,7 @@ function SonosConnection.new(driver, device)
               return
             end
 
-            local url_ip = lb_utils.force_url_table(coordinator_player.websocketUrl).host
+            local url_ip = lb_utils.force_url_table(coordinator_player.player.websocketUrl).host
             local base_url = lb_utils.force_url_table(
               string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
             )
@@ -590,7 +606,7 @@ function SonosConnection:coordinator_running()
       )
     )
   end
-  return type(unique_key) == "string" and Router.is_connected(unique_key) and self._initialized
+  return type(unique_key) == "string" and Router.is_connected(unique_key)
 end
 
 function SonosConnection:refresh_subscriptions(maybe_reply_tx)
