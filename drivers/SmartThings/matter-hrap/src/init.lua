@@ -13,9 +13,12 @@
 -- limitations under the License.
 
 local MatterDriver = require "st.matter.driver"
+local embedded_cluster_utils = require "embedded-cluster-utils"
+local im = require "st.matter.interaction_model"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local utils = require "lustre.utils"
+local lustre_utils = require "lustre.utils"
+local st_utils = require "st.utils"
 local log = require "log"
 
 
@@ -42,7 +45,7 @@ local function ssid_attribute_handler(driver, device, ib)
     device.log.info("Ssid is null. Per the spec, no primary Wi-Fi network is available at the moment.")
     return
   end
-  local valid_utf8, utf8_err = utils.validate_utf8(ib.data.value)
+  local valid_utf8, utf8_err = lustre_utils.validate_utf8(ib.data.value)
   if valid_utf8 then
     device:emit_event_for_endpoint(ib.endpoint, capabilities.wifiInformation.ssid({ value = ib.data.value }))
   else
@@ -86,27 +89,43 @@ local TLV_TYPE_ATTR_MAP = {
 }
 
 local function dataset_response_handler(driver, device, ib)
-  if not ib.data.value then
-    log.debug("In dataset_response_handler, received an empty operational dataset.")
+  if ib.status ~= im.InteractionResponse.Status.SUCCESS then
+    device.log.error("Failed to retrieve thread operational dataset")
+    return
+  elseif not ib.info_block.data.elements.dataset then
+    device.log.debug("In dataset_response_handler, received an empty operational dataset")
     return
   end
 
+  local operational_dataset_length = ib.info_block.data.elements.dataset.byte_length
+  local spec_defined_max_dataset_length = 254
+  if operational_dataset_length > spec_defined_max_dataset_length then
+      log.error("In dataset_response_handler, operational dataset that was received is too long")
+      return
+  end
+
   -- parse dataset
-  local dataset_length = #ib.data.value
+  local operational_dataset = ib.info_block.data.elements.dataset.value
   local cur_byte = 1
-  local max_bytes = 254 -- ensure while loop breaks at max byte size (254)
-  while (cur_byte + 1 <= dataset_length) or (cur_byte > max_bytes) do
-    local type = string.byte(ib.data.value, cur_byte)
-    local value_length = string.byte(ib.data.value, cur_byte + 1)
-    if (cur_byte + 1 + value_length) > dataset_length then
+  while cur_byte + 1 <= operational_dataset_length do
+    local tlv_type = string.byte(operational_dataset, cur_byte)
+    local tlv_length = string.byte(operational_dataset, cur_byte + 1)
+    if (cur_byte + 1 + tlv_length) > operational_dataset_length then
       log.error("In dataset_response_handler, received a malformed operational dataaset")
       return
     elseif TLV_TYPE_ATTR_MAP[type] then
+      local tlv_value = operational_dataset:sub(cur_byte + 2, cur_byte + 1 + tlv_type)
+      local tlv_value_as_hex_string = st_utils.bytes_to_hex_string(tlv_value)
       -- emit capability events for threadNetwork attribute-related data
-      local type_value = ib.data.value:sub(cur_byte + 2, cur_byte + 1 + value_length)
-      device:emit_event(TLV_TYPE_ATTR_MAP[type]({ value = utils.bytes_to_hex_string(type_value) }))
+      if type == 0 or type == 1 then
+        device:emit_event(TLV_TYPE_ATTR_MAP[type]({ value = tonumber(tlv_value_as_hex_string, 16) }))
+      elseif type == 3 then
+        device:emit_event(TLV_TYPE_ATTR_MAP[type]({ value = st_utils.get_print_safe_string(tlv_value_as_hex_string) }))
+      else
+        device:emit_event(TLV_TYPE_ATTR_MAP[type]({ value = tlv_value_as_hex_string }))
+      end
     end
-    cur_byte = cur_byte + 2 + value_length
+    cur_byte = cur_byte + 2 + tlv_length
   end
 end
 
@@ -115,7 +134,12 @@ end
 
 local function device_init(driver, device)
   device:subscribe()
-  device:send(clusters.ThreadBorderRouterManagement.server.commands.GetActiveDatasetRequest(device))
+  local tbrm_eps = embedded_cluster_utils.get_endpoints(device, clusters.ThreadBorderRouterManagement.ID)
+  -- local tbrm_eps = device:get_endpoints(clusters.ThreadBorderRouterManagement.ID)
+
+  if tbrm_eps and #tbrm_eps > 0 then
+    device:send(clusters.ThreadBorderRouterManagement.server.commands.GetActiveDatasetRequest(device, tbrm_eps[1]))
+  end
 end
 
 
