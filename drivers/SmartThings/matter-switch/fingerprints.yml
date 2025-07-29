@@ -177,6 +177,13 @@ matterManufacturer:
     productId: 0x1003
     deviceProfileName: 4-button-battery
 
+#Eufy
+  - id: "5427/19"
+    deviceLabel: eufy Permanent Outdoor Lights S4
+    vendorId: 0x1533
+    productId: 0x0013
+    deviceProfileName: light-color-level-2200K-6500K
+
 #Eve
   - id: "Eve/Energy/US"
     deviceLabel: Eve Energy
