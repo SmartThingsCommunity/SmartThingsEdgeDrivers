@@ -206,6 +206,8 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
+  device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
+  device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is madatory
 end
 
 -- This function check busy_state and if busy_state is false, set it to true(current time)

@@ -555,6 +555,26 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2251
     deviceProfileName: 2-button-battery
+  - id: "4142/8800"
+    deviceLabel: LG Smart Plug
+    vendorId: 0x102E
+    productId: 0x2260
+    deviceProfileName: plug-power
+  - id: "4142/8704"
+    deviceLabel: LG Smart Wall Switch (1 Button)
+    vendorId: 0x102E
+    productId: 0x2200
+    deviceProfileName: light-binary
+  - id: "4142/8705"
+    deviceLabel: LG Smart Wall Switch (2 Button)
+    vendorId: 0x102E
+    productId: 0x2201
+    deviceProfileName: light-binary
+  - id: "4142/8706"
+    deviceLabel: LG Smart Wall Switch (3 Button)
+    vendorId: 0x102E
+    productId: 0x2202
+    deviceProfileName: light-binary
 #Lifx
   - id: "5155/161"
     deviceLabel: LIFX Neon Outdoor
@@ -764,6 +784,11 @@ matterManufacturer:
     deviceLabel: Shelly 1PM Gen4
     vendorId: 0x1490
     productId: 0x1029
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "5264/4101"
+    deviceLabel: Shelly 2PM Gen3
+    vendorId: 0x1490
+    productId: 0x1005
     deviceProfileName: plug-power-energy-powerConsumption
 #SONOFF
   - id: "SONOFF MINIR4M"
@@ -2667,6 +2692,21 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0x0388
     deviceProfileName: matter-bridge
+  - id: "5020/43778"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB02
+    deviceProfileName: switch-binary
+  - id: "5020/43779"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB03
+    deviceProfileName: switch-binary
+  - id: "5020/43781"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB05
+    deviceProfileName: switch-binary
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
@@ -2832,6 +2872,12 @@ matterGeneric:
       - id: 0x010D # Extended Color Light
       - id: 0x002B # Fan
     deviceProfileName: light-color-level-fan
+  - id: "matter/dimmable/light/motion"
+    deviceLabel: Matter Dimmable Light Occupancy Sensor
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x0107 # Occupancy Sensor
+    deviceProfileName: light-level-motion
 
 matterThing:
   - id: SmartThings/MatterThing
