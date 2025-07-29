@@ -81,6 +81,22 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2010
     deviceProfileName: aqs-temp-humidity-co2-pm1-pm25-pm10-meas
+  # Maco
+  - id: "5447/1001"
+    deviceLabel: Sense by MACO | Window Pro T&T
+    vendorId: 0x1547
+    productId: 0x03E9
+    deviceProfileName: contact-battery
+  - id: "5447/1003"
+    deviceLabel: Sense by MACO | Casement
+    vendorId: 0x1547
+    productId: 0x03EB
+    deviceProfileName: contact-battery
+  - id: "5447/1004"
+    deviceLabel: Sense by MACO | Door
+    vendorId: 0x1547
+    productId: 0x03EC
+    deviceProfileName: contact-battery
   # Meross
   - id: "4933/16897"
     deviceLabel: Smart Presence Sensor
