@@ -790,6 +790,19 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x1005
     deviceProfileName: plug-power-energy-powerConsumption
+
+#SmartSetup
+  - id: "5385/4"
+    deviceLabel: SmartSetup Smart Multi-Switch
+    vendorId: 0x1509
+    productId: 0x0004
+    deviceProfileName: switch-binary
+  - id: "5385/1"
+    deviceLabel: SmartSetup Smart Switch
+    vendorId: 0x1509
+    productId: 0x0001
+    deviceProfileName: switch-binary
+
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
