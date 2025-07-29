@@ -67,7 +67,10 @@ local function added_handler(driver, device)
   device:emit_event(capabilities.batteryLevel.type("CR1632"))
   device:emit_event(capabilities.batteryLevel.quantity(1))
   device:emit_event(capabilities.batteryLevel.battery("normal"))
+  if device:get_latest_state("main", capabilities.contactSensor.ID, capabilities.contactSensor.contact.NAME) == nil and
+    device:supports_capability(capabilities.contactSensor) then
   device:emit_event(capabilities.contactSensor.contact.open())
+  end
 end
 
 local function contact_status_handler(self, device, value, zb_rx)
