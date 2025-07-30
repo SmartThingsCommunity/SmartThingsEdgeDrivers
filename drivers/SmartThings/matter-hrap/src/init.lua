@@ -35,7 +35,7 @@ end
 local function border_router_name_attribute_handler(driver, device, ib)
   -- per the spec, the recommended attribute format is <VendorName> <ProductName>._meshcop._udp. This logic removes the meschop suffix IFF it is present
   local meshCop_name = ib.data.value
-  local terminal_display_char = (string.find(meshCop_name, "._mescop._udp") or 64) - 1 -- where 64-1=63, the maximum allowed length for BorderRouterName
+  local terminal_display_char = (string.find(meshCop_name, "._meshcop._udp") or 64) - 1 -- where 64-1=63, the maximum allowed length for BorderRouterName
   local display_name = string.sub(meshCop_name, 1, terminal_display_char)
   device:emit_event_for_endpoint(ib.endpoint, capabilities.threadBorderRouter.borderRouterName({ value = display_name }))
 end
@@ -49,7 +49,7 @@ local function ssid_attribute_handler(driver, device, ib)
   if valid_utf8 then
     device:emit_event_for_endpoint(ib.endpoint, capabilities.wifiInformation.ssid({ value = ib.data.value }))
   else
-    device.log.info("UTF8 validation of Ssid failed: Error: '"..utf8_err.."'.")
+    device.log.info("UTF-8 validation of Ssid failed: Error: '"..utf8_err.."'.")
   end
 end
 
@@ -80,20 +80,21 @@ end
 
 --[[ COMMAND HANDLERS ]]--
 
+local threadNetwork = capabilities.threadNetwork
 local TLV_TYPE_ATTR_MAP = {
-  [0] = capabilities.threadNetwork.channel,
-  [1] = capabilities.threadNetwork.panId,
-  [2] = capabilities.threadNetwork.extendedPanId,
-  [3] = capabilities.threadNetwork.networkName,
-  [5] = capabilities.threadNetwork.networkKey,
+  [0] = threadNetwork.channel,
+  [1] = threadNetwork.panId,
+  [2] = threadNetwork.extendedPanId,
+  [3] = threadNetwork.networkName,
+  [5] = threadNetwork.networkKey,
 }
 
 local function dataset_response_handler(driver, device, ib)
   if ib.status ~= im.InteractionResponse.Status.SUCCESS then
-    device.log.error("Failed to retrieve thread operational dataset")
+    log.error("Failed to retrieve thread operational dataset")
     return
   elseif not ib.info_block.data.elements.dataset then
-    device.log.debug("In dataset_response_handler, received an empty operational dataset")
+    log.debug("In dataset_response_handler, received an empty operational dataset")
     return
   end
 
@@ -113,17 +114,19 @@ local function dataset_response_handler(driver, device, ib)
     if (cur_byte + 1 + tlv_length) > operational_dataset_length then
       log.error("In dataset_response_handler, received a malformed operational dataaset")
       return
-    elseif TLV_TYPE_ATTR_MAP[type] then
-      local tlv_value = operational_dataset:sub(cur_byte + 2, cur_byte + 1 + tlv_type)
-      local tlv_value_as_hex_string = st_utils.bytes_to_hex_string(tlv_value)
-      -- emit capability events for threadNetwork attribute-related data
-      if type == 0 or type == 1 then
-        device:emit_event(TLV_TYPE_ATTR_MAP[type]({ value = tonumber(tlv_value_as_hex_string, 16) }))
-      elseif type == 3 then
-        device:emit_event(TLV_TYPE_ATTR_MAP[type]({ value = st_utils.get_print_safe_string(tlv_value_as_hex_string) }))
-      else
-        device:emit_event(TLV_TYPE_ATTR_MAP[type]({ value = tlv_value_as_hex_string }))
+    end
+    local tlv_mapped_attr = TLV_TYPE_ATTR_MAP[tlv_type]
+    if tlv_mapped_attr then
+      local tlv_value = operational_dataset:sub(cur_byte + 2, cur_byte + 1 + tlv_length)
+      -- reformat data as needed for threadNetwork capability data
+      if tlv_mapped_attr == threadNetwork.channel or tlv_mapped_attr == threadNetwork.panId then
+        -- string.unpack() converts the raw bytes to an int using a fmt parameter 
+        local byte_format_specification = ">I" .. tlv_length
+        tlv_value = string.unpack(byte_format_specification, tlv_value)
+      elseif tlv_mapped_attr ~= threadNetwork.networkName then
+        tlv_value = st_utils.bytes_to_hex_string(tlv_value)
       end
+      device:emit_event(tlv_mapped_attr({ value = tlv_value }))
     end
     cur_byte = cur_byte + 2 + tlv_length
   end
@@ -135,8 +138,6 @@ end
 local function device_init(driver, device)
   device:subscribe()
   local tbrm_eps = embedded_cluster_utils.get_endpoints(device, clusters.ThreadBorderRouterManagement.ID)
-  -- local tbrm_eps = device:get_endpoints(clusters.ThreadBorderRouterManagement.ID)
-
   if tbrm_eps and #tbrm_eps > 0 then
     device:send(clusters.ThreadBorderRouterManagement.server.commands.GetActiveDatasetRequest(device, tbrm_eps[1]))
   end

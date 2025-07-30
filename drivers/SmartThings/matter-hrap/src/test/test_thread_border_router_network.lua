@@ -153,7 +153,7 @@ test.register_message_test(
         direction = "receive",
         message = {
             mock_device.id,
-            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "john foo._mescop._udp")
+            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "john foo._meshcop._udp")
         }
     },
     {
@@ -166,7 +166,7 @@ test.register_message_test(
         direction = "receive",
         message = {
             mock_device.id,
-            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "jane bar._mescop._udp")
+            clusters.ThreadBorderRouterManagement.attributes.BorderRouterName:build_test_report_data(mock_device, 1, "jane bar._meshcop._udp")
         }
     },
     {
