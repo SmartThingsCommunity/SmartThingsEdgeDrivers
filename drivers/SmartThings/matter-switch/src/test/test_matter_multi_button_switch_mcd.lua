@@ -193,12 +193,17 @@ local function configure_buttons()
 end
 
 local function test_init()
+  test.disable_startup_messages()
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   mock_device:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  configure_buttons()
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "light-level-3-button" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -217,9 +222,7 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", mock_device_ep5)
   })
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  configure_buttons()
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
 end
 
 local function test_init_mcd_unsupported_switch_device_type()
@@ -236,6 +239,8 @@ local function test_init_mcd_unsupported_switch_device_type()
       subscribe_request:merge(cluster:subscribe(mock_device_mcd_unsupported_switch_device_type))
     end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "init" })
   test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
   mock_device_mcd_unsupported_switch_device_type:set_field("__ELECTRICAL_TOPOLOGY", {topology = false, tags_on_ep = {}}, {persist = false}) -- since we're assuming this would have happened during device_added in this case.
   test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "doConfigure" })

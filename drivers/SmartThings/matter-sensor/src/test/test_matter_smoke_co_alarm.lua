@@ -73,12 +73,15 @@ local cluster_subscribe_list = {
 }
 
 local function test_init()
+  test.disable_startup_messages()
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
