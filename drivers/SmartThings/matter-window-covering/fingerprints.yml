@@ -25,6 +25,12 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x0064
     deviceProfileName: window-covering-battery
+# Mamaba
+  - id: "4965/4097"
+    deviceLabel: Wi-Fi Curtain
+    vendorId: 0x1365
+    productId: 0x1001
+    deviceProfileName: window-covering
 # SmartWave
   - id: "5376/10001"
     deviceLabel: SmartWave Motorized Roller Shades 100 Blackout Flex
