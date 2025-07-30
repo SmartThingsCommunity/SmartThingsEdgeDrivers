@@ -67,7 +67,7 @@ local function test_init()
     test.mock_device.add_test_device(mock_device)
     test.socket.matter:__expect_send({
       mock_device.id,
-      clusters.ThreadBorderRouterManagement.server.commands.GetActiveDatasetRequest(mock_device),
+      clusters.ThreadBorderRouterManagement.server.commands.GetActiveDatasetRequest(mock_device, 1),
     }
   )
 
@@ -235,6 +235,49 @@ test.register_message_test(
         }
     }
   }
+)
+
+local hex_dataset = [[
+0E 08 00 00 68 87 D0 B2 00 00 00 03 00 00 18 35
+06 00 04 00 1F FF C0 02 08 25 31 25 A9 B2 16 7F
+35 07 08 FD 6E D1 57 02 B4 CD BF 05 10 33 AF 36
+F8 13 8E 8F F9 50 6D 67 22 9B FD F2 40 03 0D 53
+54 2D 35 30 33 32 30 30 31 31 39 36 01 02 D9 78
+04 10 E2 29 D8 2A 84 B2 7D A1 AC 8D D8 71 64 AC
+66 7F 0C 04 02 A0 FF F8
+]]
+
+local serializable_hex_dataset = hex_dataset:gsub("%s+", ""):gsub("..", function(cc)
+    return string.char(tonumber(cc, 16))
+end)
+
+test.register_coroutine_test(
+    "Thread DatasetResponse parsing should emit the correct capability events",
+    function()
+        test.socket.matter:__queue_receive({
+            mock_device.id,
+            clusters.ThreadBorderRouterManagement.client.commands.DatasetResponse:build_test_command_response(
+                mock_device,
+                1,
+                serializable_hex_dataset
+            )
+        })
+        test.socket.capability:__expect_send(
+            mock_device:generate_test_message("main", capabilities.threadNetwork.channel({ value = 24 }))
+        )
+        test.socket.capability:__expect_send(
+            mock_device:generate_test_message("main", capabilities.threadNetwork.extendedPanId({ value = "253125a9b2167f35" }))
+        )
+        test.socket.capability:__expect_send(
+            mock_device:generate_test_message("main", capabilities.threadNetwork.networkKey({ value = "33af36f8138e8ff9506d67229bfdf240" }))
+        )
+        test.socket.capability:__expect_send(
+            mock_device:generate_test_message("main", capabilities.threadNetwork.networkName({ value = "ST-5032001196" }))
+        )
+        test.socket.capability:__expect_send(
+            mock_device:generate_test_message("main", capabilities.threadNetwork.panId({ value = 55672 }))
+        )
+    end
 )
 
 test.run_registered_tests()

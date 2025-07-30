@@ -118,11 +118,9 @@ local function dataset_response_handler(driver, device, ib)
     local tlv_mapped_attr = TLV_TYPE_ATTR_MAP[tlv_type]
     if tlv_mapped_attr then
       local tlv_value = operational_dataset:sub(cur_byte + 2, cur_byte + 1 + tlv_length)
-      -- reformat data as needed for threadNetwork capability data
+      -- format data as required by threadNetwork attribute properties
       if tlv_mapped_attr == threadNetwork.channel or tlv_mapped_attr == threadNetwork.panId then
-        -- string.unpack() converts the raw bytes to an int using a fmt parameter 
-        local byte_format_specification = ">I" .. tlv_length
-        tlv_value = string.unpack(byte_format_specification, tlv_value)
+        tlv_value = st_utils.deserialize_int(tlv_value, tlv_length)
       elseif tlv_mapped_attr ~= threadNetwork.networkName then
         tlv_value = st_utils.bytes_to_hex_string(tlv_value)
       end
