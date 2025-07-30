@@ -411,6 +411,14 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
+
+# Govee
+  - id: "4999/24584"
+    deviceLabel: Govee Smart Bulb
+    vendorId: 0x1387
+    productId: 0x6008
+    deviceProfileName: light-color-level-2700K-6500K
+
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
