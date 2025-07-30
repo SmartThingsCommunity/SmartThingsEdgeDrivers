@@ -174,6 +174,11 @@ local matter_driver_template = {
     [capabilities.wifiInformation.ID] = {
       clusters.WiFiNetworkManagement.attributes.Ssid,
     }
+  },
+  supported_capabilities = {
+    capabilities.threadBorderRouter,
+    capabilities.threadNetwork,
+    capabilities.wifiInformation,
   }
 }
 
