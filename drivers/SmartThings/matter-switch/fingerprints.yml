@@ -154,6 +154,13 @@ matterManufacturer:
     productId: 0x1388
     deviceProfileName: 12-button-keyboard
 
+#Edishine
+  - id: "5458/3328"
+    deviceLabel: Edishine Smart Led Bulb
+    vendorId: 0x1552
+    productId: 0x0D00
+    deviceProfileName: light-color-level
+
 #ELEGRP
   - id: "5158/3"
     deviceLabel: ELEGRP Smart Mini Plug
