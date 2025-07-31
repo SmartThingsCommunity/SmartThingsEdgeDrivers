@@ -2052,7 +2052,7 @@ test.register_message_test(
         direction = "send",
         message = {
           "register_native_capability_attr_handler",
-          { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+          { device_uuid = mock_parent.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
         }
       }
     }
