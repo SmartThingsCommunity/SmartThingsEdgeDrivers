@@ -589,7 +589,7 @@ zigbeeManufacturer:
     deviceLabel: INGENIUM Light
     manufacturer: ubisys
     model: "D1 (5503)"
-    deviceProfileName: on-off-level
+    deviceProfileName: switch-level-power
   - id: "ubisys/S2 (5502)"
     deviceLabel: ubisys S2
     manufacturer: ubisys
