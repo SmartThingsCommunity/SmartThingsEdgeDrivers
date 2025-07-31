@@ -586,7 +586,7 @@ zigbeeManufacturer:
     model: "TRADFRI bulb E27 WW clear 250lm"
     deviceProfileName: on-off-level
   - id: "ubisys/D1 (5503)"
-    deviceLabel: INGENIUM Light
+    deviceLabel: Dimmer D1
     manufacturer: ubisys
     model: "D1 (5503)"
     deviceProfileName: switch-level-power
@@ -600,11 +600,6 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "1151"
     deviceProfileName: switch-power
-  - id: "ubisys/D1 (5503)"
-    deviceLabel: Dimmer D1
-    manufacturer: ubisys
-    model: D1 (5503)
-    deviceProfileName: switch-level-power
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
