@@ -73,14 +73,6 @@ local function sensor_binary_report_handler(self, device, cmd)
   device:emit_event(event)
 end
 
-local function sensor_multilevel_report_handler(self, device, cmd)
-  if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
-    local scale = 'C'
-    if (cmd.args.scale == SensorMultilevel.scale.temperature.FAHRENHEIT) then scale = 'F' end
-    device:emit_event(capabilities.temperatureMeasurement.temperature({value = cmd.args.sensor_value, unit = scale}))
-  end
-end
-
 local function do_configure(driver, device)
   configurations.initial_configuration(driver, device)
   -- The flood sensor can be hardwired, so update any preferences
@@ -101,9 +93,6 @@ local fibaro_flood_sensor = {
     [cc.SENSOR_BINARY] = {
       [SensorBinary.REPORT] = sensor_binary_report_handler
     },
-    [cc.SENSOR_MULTILEVEL] = {
-      [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
-    }
   },
   lifecycle_handlers = {
     doConfigure = do_configure
