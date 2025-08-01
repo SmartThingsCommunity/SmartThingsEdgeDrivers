@@ -4,6 +4,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
 local data_types = require "st.zigbee.data_types"
 local aqara_utils = require "aqara/aqara_utils"
+local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
