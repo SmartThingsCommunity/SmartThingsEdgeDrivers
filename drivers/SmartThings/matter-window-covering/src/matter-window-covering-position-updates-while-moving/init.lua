@@ -44,39 +44,32 @@ local function is_matter_window_covering_position_updates_while_moving(opts, dri
   return false
 end
 
-local function reverse_polarity_if_needed(device, value)
-  if device:get_field(REVERSE_POLARITY) then
-    return value
-  end
-  return 100 - value
-end
-
 local function device_init(driver, device)
   device:subscribe()
 end
 
 -- current lift percentage, changed to 100ths percent
 local function current_pos_handler(driver, device, ib, response)
-  local position = 0
-  if ib.data.value ~= nil then
-    position = reverse_polarity_if_needed(device, math.floor((ib.data.value / 100)))
-    device:emit_event_for_endpoint(
-      ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position)
-    )
+  if ib.data.value == nil then
+    return
   end
+  local position = 100 - math.floor(ib.data.value / 100)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(position))
+  local windowShade = capabilities.windowShade.windowShade
+  local reverse = device:get_field(REVERSE_POLARITY)
   local state_machine = device:get_field(STATE_MACHINE)
-  -- When stat_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
+  -- When state_machine is STATE_IDLE or STATE_CURRENT_POSITION_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_MOVING then
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
   elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED or state_machine == nil then
     if position == 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.closed())
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
     elseif position == 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.open())
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closed() or windowShade.open())
     elseif position > 0 and position < 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.partially_open())
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
     else
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShade.windowShade.unknown())
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
     end
     device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
   end
@@ -89,33 +82,34 @@ local function current_status_handler(driver, device, ib, response)
                      "main", capabilities.windowShadeLevel.ID,
                        capabilities.windowShadeLevel.shadeLevel.NAME
                    ) or DEFAULT_LEVEL
-  position = reverse_polarity_if_needed(device, position)
   for _, rb in ipairs(response.info_blocks) do
     if rb.info_block.attribute_id == clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID and
        rb.info_block.cluster_id == clusters.WindowCovering.ID and
        rb.info_block.data ~= nil and
        rb.info_block.data.value ~= nil then
-      position = reverse_polarity_if_needed(device, math.floor((rb.info_block.data.value / 100)))
+      position = math.floor(rb.info_block.data.value / 100)
     end
   end
-  local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL --Could use LIFT instead
+  position = 100 - position
+  local reverse = device:get_field(REVERSE_POLARITY)
+  local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL
   local state_machine = device:get_field(STATE_MACHINE)
-  -- When stat_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
+  -- When state_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
   if state_machine == StateMachineEnum.STATE_IDLE then
     if state == 1 then -- opening
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and attr.closing() or attr.opening())
       device:set_field(STATE_MACHINE, StateMachineEnum.STATE_MOVING)
     elseif state == 2 then -- closing
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and attr.opening() or attr.closing())
       device:set_field(STATE_MACHINE, StateMachineEnum.STATE_MOVING)
     end
   elseif state_machine == StateMachineEnum.STATE_MOVING then
     if state == 0 then -- not moving
       device:set_field(STATE_MACHINE, StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED)
     elseif state == 1 then -- opening
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.opening())
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and attr.closing() or attr.opening())
     elseif state == 2 then -- closing
-      device:emit_event_for_endpoint(ib.endpoint_id, attr.closing())
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and attr.opening() or attr.closing())
     else
       device:emit_event_for_endpoint(ib.endpoint_id, attr.unknown())
       device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
@@ -123,9 +117,9 @@ local function current_status_handler(driver, device, ib, response)
   elseif state_machine == StateMachineEnum.STATE_CURRENT_POSITION_FIRED then
     if state == 0 then -- not moving
       if position == 100 then
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.open())
+        device:emit_event_for_endpoint(ib.endpoint_id, reverse and attr.closed() or attr.open())
       elseif position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, attr.closed())
+        device:emit_event_for_endpoint(ib.endpoint_id, reverse and attr.open() or attr.closed())
       else
         device:emit_event_for_endpoint(ib.endpoint_id, attr.partially_open())
       end
