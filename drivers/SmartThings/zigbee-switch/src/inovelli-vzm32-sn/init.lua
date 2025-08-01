@@ -448,9 +448,7 @@ local function handle_resetEnergyMeter(self, device)
     MFG_CODE,
     utils.serialize_int(0,1,false,false)))
  
-  -- Read total energy consumption (kWh)
   device:send(clusters.SimpleMetering.attributes.CurrentSummationDelivered:read(device))
-  -- Alternative power reading from Electrical Measurement cluster
   device:send(clusters.ElectricalMeasurement.attributes.ActivePower:read(device))
 end
 
