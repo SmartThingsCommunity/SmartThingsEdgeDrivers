@@ -249,6 +249,9 @@ local function initialize_mock_device(generic_mock_device, generic_subscribed_at
   test.mock_device.add_test_device(generic_mock_device)
 end
 
+-- TODO add tests for configuration using modular profiles
+test.set_rpc_version(7)
+
 local function test_init()
   local subscribed_attributes = {
     [capabilities.relativeHumidityMeasurement.ID] = {
