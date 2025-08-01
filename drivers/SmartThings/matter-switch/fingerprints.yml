@@ -154,6 +154,13 @@ matterManufacturer:
     productId: 0x1388
     deviceProfileName: 12-button-keyboard
 
+#Edishine
+  - id: "5458/3328"
+    deviceLabel: Edishine Smart Led Bulb
+    vendorId: 0x1552
+    productId: 0x0D00
+    deviceProfileName: light-color-level
+
 #ELEGRP
   - id: "5158/3"
     deviceLabel: ELEGRP Smart Mini Plug
@@ -176,6 +183,13 @@ matterManufacturer:
     vendorId: 0x1432
     productId: 0x1003
     deviceProfileName: 4-button-battery
+
+#Eufy
+  - id: "5427/19"
+    deviceLabel: eufy Permanent Outdoor Lights S4
+    vendorId: 0x1533
+    productId: 0x0013
+    deviceProfileName: light-color-level-2200K-6500K
 
 #Eve
   - id: "Eve/Energy/US"
@@ -404,6 +418,14 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
+
+# Govee
+  - id: "4999/24584"
+    deviceLabel: Govee Smart Bulb
+    vendorId: 0x1387
+    productId: 0x6008
+    deviceProfileName: light-color-level-2700K-6500K
+
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
@@ -555,6 +577,26 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2251
     deviceProfileName: 2-button-battery
+  - id: "4142/8800"
+    deviceLabel: LG Smart Plug
+    vendorId: 0x102E
+    productId: 0x2260
+    deviceProfileName: plug-power
+  - id: "4142/8704"
+    deviceLabel: LG Smart Wall Switch (1 Button)
+    vendorId: 0x102E
+    productId: 0x2200
+    deviceProfileName: light-binary
+  - id: "4142/8705"
+    deviceLabel: LG Smart Wall Switch (2 Button)
+    vendorId: 0x102E
+    productId: 0x2201
+    deviceProfileName: light-binary
+  - id: "4142/8706"
+    deviceLabel: LG Smart Wall Switch (3 Button)
+    vendorId: 0x102E
+    productId: 0x2202
+    deviceProfileName: light-binary
 #Lifx
   - id: "5155/161"
     deviceLabel: LIFX Neon Outdoor
@@ -740,11 +782,49 @@ matterManufacturer:
     vendorId: 0x1490
     productId: 0x1018
     deviceProfileName: plug-binary
+  - id: "5264/4115"
+    deviceLabel: Shelly 2L Gen3
+    vendorId: 0x1490
+    productId: 0x1013
+    deviceProfileName: plug-binary
+  - id: "5264/4116"
+    deviceLabel: Shelly 1L Gen3
+    vendorId: 0x1490
+    productId: 0x1014
+    deviceProfileName: plug-binary
+  - id: "5264/4117"
+    deviceLabel: Shelly 1 Mini Gen3
+    vendorId: 0x1490
+    productId: 0x1015
+    deviceProfileName: plug-binary
   - id: "5264/4118"
     deviceLabel: Shelly 1PM Mini Gen3
     vendorId: 0x1490
     productId: 0x1016
     deviceProfileName: plug-binary
+  - id: "5264/4137"
+    deviceLabel: Shelly 1PM Gen4
+    vendorId: 0x1490
+    productId: 0x1029
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "5264/4101"
+    deviceLabel: Shelly 2PM Gen3
+    vendorId: 0x1490
+    productId: 0x1005
+    deviceProfileName: plug-power-energy-powerConsumption
+
+#SmartSetup
+  - id: "5385/4"
+    deviceLabel: SmartSetup Smart Multi-Switch
+    vendorId: 0x1509
+    productId: 0x0004
+    deviceProfileName: switch-binary
+  - id: "5385/1"
+    deviceLabel: SmartSetup Smart Switch
+    vendorId: 0x1509
+    productId: 0x0001
+    deviceProfileName: switch-binary
+
 #SONOFF
   - id: "SONOFF MINIR4M"
     deviceLabel: Smart Plug-in Unit
@@ -2647,6 +2727,21 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0x0388
     deviceProfileName: matter-bridge
+  - id: "5020/43778"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB02
+    deviceProfileName: switch-binary
+  - id: "5020/43779"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB03
+    deviceProfileName: switch-binary
+  - id: "5020/43781"
+    deviceLabel: Zemismart WiFi Smart Switch
+    vendorId: 0x139C
+    productId: 0xAB05
+    deviceProfileName: switch-binary
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
@@ -2812,6 +2907,12 @@ matterGeneric:
       - id: 0x010D # Extended Color Light
       - id: 0x002B # Fan
     deviceProfileName: light-color-level-fan
+  - id: "matter/dimmable/light/motion"
+    deviceLabel: Matter Dimmable Light Occupancy Sensor
+    deviceTypes:
+      - id: 0x0101 # Dimmable Light
+      - id: 0x0107 # Occupancy Sensor
+    deviceProfileName: light-level-motion
 
 matterThing:
   - id: SmartThings/MatterThing

@@ -159,6 +159,11 @@ zigbeeManufacturer:
     manufacturer: Samjin
     model: button
     deviceProfileName: one-button-temp-battery
+  - id: SlateSwitch/button
+    deviceLabel: Slate Switch Button
+    manufacturer: zunzunbee
+    model: SSWZ8T
+    deviceProfileName: eight-buttons-temp-battery
   - id: eWeLink/WB01
     deviceLabel: eWeLink Button
     manufacturer: eWeLink

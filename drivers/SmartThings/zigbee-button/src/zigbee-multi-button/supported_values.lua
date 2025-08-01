@@ -32,6 +32,7 @@ local devices = {
   BUTTON_PUSH_HELD_8 = {
     MATCHING_MATRIX = {
       { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+      { mfr = "zunzunbee", model = "SSWZ8T" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 8

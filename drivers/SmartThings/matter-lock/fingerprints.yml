@@ -61,7 +61,12 @@ matterManufacturer:
     deviceLabel: Level Lock Pro
     vendorId: 0x129F
     productId: 0x0004
-    deviceProfileName: lock-nocodes-notamper  
+    deviceProfileName: lock-nocodes-notamper
+  - id: "4767/5"
+    deviceLabel: Level Lock (Matter)
+    vendorId: 0x129F
+    productId: 0x0005
+    deviceProfileName: lock-nocodes-notamper
   #Nuki
   - id: "4957/161"
     deviceLabel: Nuki Smart Lock Ultra
