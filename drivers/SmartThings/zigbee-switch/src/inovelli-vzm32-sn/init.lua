@@ -31,6 +31,7 @@ local INOVELLI_VZM32_SN_FINGERPRINTS = {
 local PRIVATE_CLUSTER_ID = 0xFC31
 local PRIVATE_CLUSTER_MMWAVE_ID = 0xFC32
 local PRIVATE_CMD_NOTIF_ID = 0x01
+local PRIVATE_CMD_ENERGY_RESET_ID = 0x02
 local PRIVATE_CMD_SCENE_ID =0x00
 local PRIVATE_CMD_MMWAVE_ID = 0x00
 local MFG_CODE = 0x122F
@@ -439,6 +440,20 @@ local function illuminance_attr_handler(driver, device, illuminance, zb_rx)
   device:emit_event(capabilities.illuminanceMeasurement.illuminance({value = lux, unit = "lux" }))
 end
 
+local function handle_resetEnergyMeter(self, device)
+  device:send(cluster_base.build_manufacturer_specific_command(
+    device,
+    PRIVATE_CLUSTER_ID,
+    PRIVATE_CMD_ENERGY_RESET_ID,
+    MFG_CODE,
+    utils.serialize_int(0,1,false,false)))
+ 
+  -- Read total energy consumption (kWh)
+  device:send(clusters.SimpleMetering.attributes.CurrentSummationDelivered:read(device))
+  -- Alternative power reading from Electrical Measurement cluster
+  device:send(clusters.ElectricalMeasurement.attributes.ActivePower:read(device))
+end
+
 local inovelli_vzm32_sn = {
   NAME = "inovelli vzm32-sn handler",
   lifecycle_handlers = {
@@ -481,6 +496,9 @@ local inovelli_vzm32_sn = {
     },
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temperature
+    },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = handle_resetEnergyMeter,
     }
   },
   can_handle = is_inovelli_vzm32_sn
