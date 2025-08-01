@@ -194,6 +194,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 local function configure_buttons()
   for key = 1, 12 do
     local component = "F" .. key
+    if key == 1 then component = "main" end
     test.socket.capability:__expect_send(mock_device:generate_test_message(component, capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(mock_device:generate_test_message(component, capabilities.button.button.pushed({state_change = false})))
   end
@@ -233,7 +234,7 @@ test.register_coroutine_test(
         clusters.Switch.events.InitialPress:build_test_event_report(mock_device, key, {new_position = 1})
       })
       test.socket.capability:__expect_send(
-        mock_device:generate_test_message("F" .. key, capabilities.button.button.pushed({state_change = true}))
+        mock_device:generate_test_message(key == 1 and "main" or "F" .. key, capabilities.button.button.pushed({state_change = true}))
       )
     end
   end
