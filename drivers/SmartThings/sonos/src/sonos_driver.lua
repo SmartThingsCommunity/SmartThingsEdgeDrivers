@@ -42,10 +42,26 @@ local ONE_HOUR_IN_SECONDS = 3600
 ---@field private waiting_for_oauth_token boolean
 ---@field private startup_state_received boolean
 ---@field private devices_waiting_for_startup_state SonosDevice[]
+---@field package bonded_devices table<string, boolean> map of Device device_network_id to a boolean indicating if the device is currently known as a bonded device.
 ---
 ---@field public ssdp_task SonosPersistentSsdpTask?
 ---@field private ssdp_event_thread_handle table?
 local SonosDriver = {}
+
+---@param device SonosDevice
+function SonosDriver:update_bonded_device_tracking(device)
+  local already_bonded = self.bonded_devices[device.device_network_id]
+  local currently_bonded = device:get_field(PlayerFields.BONDED)
+  self.bonded_devices[device.device_network_id] = currently_bonded
+
+  if currently_bonded and not already_bonded then
+    device:offline()
+  end
+
+  if already_bonded and not currently_bonded then
+    SonosDriverLifecycleHandlers.initialize_device(self, device)
+  end
+end
 
 function SonosDriver:has_received_startup_state()
   return self.startup_state_received
@@ -127,13 +143,13 @@ end
 function SonosDriver:handle_augmented_store_delete(update_key)
   if update_key == "endpointAppInfo" then
     if update_key == "endpointAppInfo" then
-      log.trace "deleting endpoint app info"
+      log.trace("deleting endpoint app info")
       self.oauth.endpoint_app_info = nil
     elseif update_key == "sonosOAuthToken" then
-      log.trace "deleting OAuth Token"
+      log.trace("deleting OAuth Token")
       self.oauth.token = nil
     elseif update_key == "force_oauth" then
-      log.trace "deleting Force OAuth"
+      log.trace("deleting Force OAuth")
       self.oauth.force_oauth = nil
     else
       log.debug(string.format("received delete of unexpected key: %s", update_key))
@@ -184,11 +200,15 @@ function SonosDriver:notify_augmented_data_changed(update_kind, update_key, upda
     )
   end
 
-  if
-    self.oauth.endpoint_app_info
+  local maybe_token, _ = self:get_oauth_token()
+
+  local should_request_token = self.oauth.endpoint_app_info
     and self.oauth.endpoint_app_info.state == "connected"
     and not already_connected
-  then
+    and type(maybe_token) ~= "table"
+    and not self:is_waiting_for_oauth_token()
+
+  if should_request_token then
     local _, err = self:request_oauth_token()
     if err then
       log.error(string.format("Request OAuth token error: %s", err))
@@ -220,7 +240,7 @@ end
 
 --- Check if the driver is able to authenticate against the given household_id
 --- with what credentials it currently possesses.
----@param info_or_device SonosDevice | { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }
+---@param info_or_device SonosDevice | SpeakerDiscoveryInfo
 ---@return boolean? auth_success true if the driver can authenticate against the provided arguments, false otherwise
 ---@return string? api_key_or_err if `auth_success` is true, this will be the API key that is known to auth. If `auth_success` is false, this will be nil. If `auth_success` is `nil`, this will be an error message.
 function SonosDriver:check_auth(info_or_device)
@@ -240,13 +260,6 @@ function SonosDriver:check_auth(info_or_device)
   local rest_url, household_id, sw_gen
   if type(info_or_device) == "table" then
     if
-      type(info_or_device.ssdp_info) == "table" and type(info_or_device.discovery_info) == "table"
-    then
-      ---@cast info_or_device { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo }
-      rest_url = net_url.parse(info_or_device.discovery_info.restUrl)
-      household_id = info_or_device.ssdp_info.household_id
-      sw_gen = info_or_device.discovery_info.device.swGen
-    elseif
       type(info_or_device.get_field) == "function"
       and type(info_or_device.set_field) == "function"
       and info_or_device.id
@@ -255,6 +268,11 @@ function SonosDriver:check_auth(info_or_device)
       rest_url = net_url.parse(info_or_device:get_field(PlayerFields.REST_URL))
       household_id = self.sonos:get_sonos_ids_for_device(info_or_device)
       sw_gen = info_or_device:get_field(PlayerFields.SW_GEN)
+    else
+      ---@cast info_or_device SpeakerDiscoveryInfo
+      rest_url = net_url.parse(info_or_device.rest_url)
+      household_id = info_or_device.household_id
+      sw_gen = info_or_device.sw_gen
     end
   end
 
@@ -265,11 +283,7 @@ function SonosDriver:check_auth(info_or_device)
         (
           (
             type(info_or_device) == "table"
-            and (
-              info_or_device.label
-              or info_or_device.id
-              or info_or_device.discovery_info.device.name
-            )
+            and (info_or_device.label or info_or_device.id or info_or_device.name)
           ) or "<unknown Sonos device>"
         )
       )
@@ -322,6 +336,17 @@ function SonosDriver:check_auth(info_or_device)
     )
 end
 
+---@return boolean is_connected
+function SonosDriver:is_account_linked()
+  return (
+    self.oauth
+    and self.oauth.endpoint_app_info
+    and self.oauth.endpoint_app_info.state == "connected"
+  )
+      and true
+    or false
+end
+
 ---@return any? ret nil on permissions violation
 ---@return string? error nil on success
 function SonosDriver:request_oauth_token()
@@ -333,13 +358,17 @@ function SonosDriver:request_oauth_token()
     log.warn(string.format("get oauth token error: %s", maybe_err))
   end
   if type(maybe_token) == "table" and type(maybe_token.accessToken) == "string" then
+    self.waiting_for_oauth_token = false
     self.oauth_token_bus:send(maybe_token)
+    return true
   end
   local result, err = security.get_sonos_oauth()
   if not result then
     return nil, string.format("Error requesting OAuth token via Security API: %s", err)
   end
-  self.waiting_for_oauth_token = true
+  -- if the account isn't linked, then we're not actually "waiting" for the token yet,
+  -- because we need to wait for the account link to succeed and the endpoint app upsert
+  self.waiting_for_oauth_token = self:is_account_linked()
   return result, err
 end
 
@@ -419,27 +448,32 @@ local function make_ssdp_event_handler(
             end
           end
           if receiver == discovery_event_subscription then
-            ---@type { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }?
+            ---@type { speaker_info: SpeakerDiscoveryInfo, force_refresh: boolean }
             local event, recv_err = discovery_event_subscription:receive()
 
             if event then
-              local unique_key = utils.sonos_unique_key_from_ssdp(event.ssdp_info)
+              local speaker_info = event.speaker_info
               if
-                event.force_refresh or not (unauthorized[unique_key] or discovered[unique_key])
+                event.force_refresh
+                or not (
+                  unauthorized[speaker_info.unique_key]
+                  or discovered[speaker_info.unique_key]
+                  or driver.bonded_devices[speaker_info.mac_addr]
+                )
               then
-                local _, api_key = driver:check_auth(event)
+                local _, api_key = driver:check_auth(event.speaker_info)
                 local success, handle_err, err_code =
-                  driver:handle_player_discovery_info(api_key, event)
+                  driver:handle_player_discovery_info(api_key, event.speaker_info)
                 if not success then
                   if err_code == "ERROR_NOT_AUTHORIZED" then
-                    unauthorized[unique_key] = event
+                    unauthorized[speaker_info.unique_key] = event
                   end
                   log.warn_with(
-                    { hub_logs = true },
+                    { hub_logs = false },
                     string.format("Failed to handle discovered speaker: %s", handle_err)
                   )
                 else
-                  discovered[unique_key] = true
+                  discovered[speaker_info.unique_key] = true
                 end
               end
             else
@@ -473,31 +507,29 @@ function SonosDriver:start_ssdp_event_task()
 end
 
 ---@param api_key string
----@param info { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }
+---@param info SpeakerDiscoveryInfo
 ---@param device SonosDevice?
 ---@return boolean|nil response nil or false on failure
 ---@return nil|string error the error reason on failure, nil on success
 ---@return nil|string error_code the Sonos error code, if available
 function SonosDriver:handle_player_discovery_info(api_key, info, device)
-  -- If the SSDP Group Info is an empty string, then that means it's the non-primary
-  -- speaker in a bonded set (e.g. a home theater system, a stereo pair, etc).
-  -- These aren't the same as speaker groups, and bonded speakers can't be controlled
-  -- via websocket at all. So we ignore all bonded non-primary speakers
-  if #info.ssdp_info.group_id == 0 then
-    return nil,
-      string.format(
-        "Player %s is a non-primary bonded Sonos device, ignoring",
-        info.discovery_info.device.name
-      )
+  local discovery_info_mac_addr = info.mac_addr
+  local bonded = info:is_bonded()
+  self.bonded_devices[discovery_info_mac_addr] = bonded
+
+  local maybe_device = self:get_device_by_dni(discovery_info_mac_addr)
+  if maybe_device then
+    maybe_device:set_field(PlayerFields.BONDED, bonded, { persist = false })
+    self:update_bonded_device_tracking(maybe_device)
   end
 
   api_key = api_key or self:get_fallback_api_key()
 
-  local rest_url = net_url.parse(info.discovery_info.restUrl)
+  local rest_url = net_url.parse(info.rest_url)
   local maybe_token, no_token_reason = self:get_oauth_token()
   local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
   local response, response_err =
-    SonosApi.RestApi.get_groups_info(rest_url, info.ssdp_info.household_id, headers)
+    SonosApi.RestApi.get_groups_info(rest_url, info.household_id, headers)
 
   if response_err then
     return nil, string.format("Error while making REST API call: %s", response_err)
@@ -507,7 +539,7 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
     local additional_info = response.reason or response.wwwAuthenticate
     local error_string = string.format(
       '`getGroups` response error for player "%s":\n\tError Code: %s',
-      info.discovery_info.device.name,
+      info.name,
       response.errorCode
     )
 
@@ -524,7 +556,7 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
     return nil, error_string, response.errorCode
   end
 
-  local sw_gen = info.discovery_info.device.swGen
+  local sw_gen = info.sw_gen
   local is_s1 = sw_gen == 1
   local response_valid
   if is_s1 then
@@ -543,12 +575,11 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
   end
 
   --- @cast response SonosGroupsResponseBody
-  self.sonos:update_household_info(info.ssdp_info.household_id, response)
+  self.sonos:update_household_info(info.household_id, response, self)
 
   local device_to_update, device_mac_addr
 
-  local maybe_device_id =
-    self.sonos:get_device_id_for_player(info.ssdp_info.household_id, info.discovery_info.playerId)
+  local maybe_device_id = self.sonos:get_device_id_for_player(info.household_id, info.player_id)
 
   if device then
     device_to_update = device
@@ -562,10 +593,10 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
   end
 
   if not device_mac_addr then
-    if not (info and info.discovery_info and info.discovery_info.device) then
+    if not (info and info.mac_addr) then
       return nil, st_utils.stringify_table(info, "Sonos Discovery Info has unexpected structure")
     end
-    device_mac_addr = utils.extract_mac_addr(info.discovery_info.device)
+    device_mac_addr = discovery_info_mac_addr
   end
 
   if not device_to_update then
@@ -578,11 +609,9 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
   if device_to_update then
     self.dni_to_device_id[device_mac_addr] = device_to_update.id
     self.sonos:associate_device_record(device_to_update, info)
-  else
-    local name = info.discovery_info.device.name
-      or info.discovery_info.device.modelDisplayName
-      or "Unknown Sonos Player"
-    local model = info.discovery_info.device.modelDisplayName or "Unknown Sonos Model"
+  elseif not bonded then
+    local name = info.name or info.model_display_name or "Unknown Sonos Player"
+    local model = info.model_display_name or "Unknown Sonos Model"
     local try_create_message = {
       type = "LAN",
       device_network_id = device_mac_addr,
@@ -590,7 +619,7 @@ function SonosDriver:handle_player_discovery_info(api_key, info, device)
       label = name,
       model = model,
       profile = "sonos-player",
-      vendor_provided_label = info.discovery_info.device.model,
+      vendor_provided_label = info.model,
     }
 
     self:try_create_device(try_create_message)
@@ -631,6 +660,7 @@ function SonosDriver.new_driver_template()
     waiting_for_oauth_token = false,
     startup_state_received = false,
     devices_waiting_for_startup_state = {},
+    bonded_devices = utils.new_mac_address_keyed_table(),
     dni_to_device_id = utils.new_mac_address_keyed_table(),
     lifecycle_handlers = SonosDriverLifecycleHandlers,
     capability_handlers = {
