@@ -1114,7 +1114,6 @@ end
 
 local function supports_modular_profile(device)
   local device_type = get_device_type(device)
-  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
 
   return version.api >= 14 and version.rpc >= 8 and
     (device_type == AP_DEVICE_TYPE_ID or
