@@ -242,6 +242,7 @@ local do_configure = function(self, device)
     configure_illuminance_reporting(device)
 
     device:send(device_management.build_bind_request(device, PRIVATE_CLUSTER_ID, self.environment_info.hub_zigbee_eui, 2)) -- Bind device for button presses.
+    device:send(device_management.build_bind_request(device, OccupancySensing.ID, self.environment_info.hub_zigbee_eui))
 
     -- Retrieve Neutral Setting "Parameter 21"
     device:send(cluster_base.read_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, 21, MFG_CODE))
@@ -273,6 +274,12 @@ local device_init = function(self, device)
     end
     if device:get_latest_state("main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) == nil and device:supports_capability(capabilities.energyMeter)then
       device:emit_event(capabilities.energyMeter.energy(0))
+    end
+    if device:get_latest_state("main", capabilities.illuminanceMeasurement.ID, capabilities.illuminanceMeasurement.illuminance.NAME) == nil and device:supports_capability(capabilities.illuminanceMeasurement) then
+      device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
+    end
+    if device:get_latest_state("main", capabilities.motionSensor.ID, capabilities.motionSensor.motion.NAME) == nil and device:supports_capability(capabilities.motionSensor) then
+      device:emit_event(capabilities.motionSensor.motion.active())
     end
 
     for _, component in pairs(device.profile.components) do
