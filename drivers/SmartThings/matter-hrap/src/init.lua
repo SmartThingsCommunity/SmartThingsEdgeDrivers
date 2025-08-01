@@ -19,14 +19,14 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local lustre_utils = require "lustre.utils"
 local st_utils = require "st.utils"
+local version = require "version"
 local log = require "log"
 
 
 -- Include driver-side definitions when lua libs api version is <13
-local version = require "version"
 if version.api < 13 then
   clusters.ThreadBorderRouterManagement = require "ThreadBorderRouterManagement"
-  clusters.WifiNetworkManagement = require "WiFiNetworkManagement"
+  clusters.WiFiNetworkManagement = require "WiFiNetworkManagement"
 end
 
 
