@@ -1,79 +1,72 @@
-name: 12-button-keyboard
+name: eight-buttons-temp-battery
 components:
   - id: main
-    label: F1
     capabilities:
       - id: button
+        version: 1
+      - id: battery
+        version: 1
+      - id: tone
         version: 1
       - id: firmwareUpdate
         version: 1
       - id: refresh
         version: 1
-    categories:
-    - name: RemoteController
-  - id: F2
-    capabilities:
-      - id: button
+      - id: temperatureMeasurement
         version: 1
     categories:
-    - name: RemoteController
-  - id: F3
-    capabilities:
-      - id: button
-        version: 1
-    categories:
-    - name: RemoteController
-  - id: F4
-    capabilities:
-      - id: button
-        version: 1
-    categories:
-    - name: RemoteController
-  - id: F5
-    capabilities:
-      - id: button
-        version: 1
-    categories:
-    - name: RemoteController
-  - id: F6
-    capabilities:
-      - id: button
-        version: 1
-    categories:
-    - name: RemoteController
-  - id: F7
-    capabilities:
-      - id: button
-        version: 1
-    categories:
-    - name: RemoteController
-  - id: F8
+      - name: RemoteController
+  - id: button1
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F9
+  - id: button2
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F10
+  - id: button3
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F11
+  - id: button4
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
-  - id: F12
+  - id: button5
     capabilities:
       - id: button
         version: 1
     categories:
       - name: RemoteController
+  - id: button6
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button7
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button8
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: b85e2d6f-0ea4-38e2-b5f4-31c3873b1920
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
