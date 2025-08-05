@@ -1,4 +1,10 @@
 matterManufacturer:
+#Ezviz
+  - id: "5172/4096"
+    deviceLabel: A3 Home Gateway
+    vendorId: 0x1434
+    productId: 0x1000
+    deviceProfileName: matter-bridge
 #Aqara
   - id: "4447/6145"
     deviceLabel: Aqara LED Bulb T2 RGB CCT
