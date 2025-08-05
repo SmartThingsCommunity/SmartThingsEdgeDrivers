@@ -50,6 +50,7 @@ local CURRENT_HUESAT_ATTR_MAX = 254
 -- table for devices that joined prior to this transition, and is also used for
 -- button devices that require component mapping.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 local COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
@@ -62,8 +63,7 @@ local COLOR_MODE = "__color_mode"
 
 local updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = COMPONENT_TO_ENDPOINT_MAP },
-  { current_field_name = "__switch_intialized", updated_field_name = nil },
-  { current_field_name = "__energy_management_endpoint", updated_field_name = nil }
+  { current_field_name = "__switch_intialized", updated_field_name = nil }
 }
 
 local HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
@@ -174,21 +174,20 @@ local device_type_attribute_map = {
   }
 }
 
-local device_overrides_per_vendor = {
+local child_device_profile_overrides_per_vendor_id = {
   [0x1321] = {
     { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
     { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
   [0x115F] = {
-    { product_id = 0x1003, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1004, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x1005, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    { product_id = 0x1006, combo_switch_button = false }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    { product_id = 0x1008, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1009, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x100A, combo_switch_button = false }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
   }
-
 }
 
 local detect_matter_thing
@@ -203,12 +202,6 @@ local RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer
 local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 local SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 local CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
-
-local ELECTRICAL_SENSOR_EPS = "__ELECTRICAL_SENSOR_EPS"
-
-local profiling_data = {
-  ELECTRICAL_TOPOLOGY = "__ELECTRICAL_TOPOLOGY",
-}
 
 -- Return an ISO-8061 timestamp in UTC
 local function iso8061Timestamp(time)
@@ -237,30 +230,28 @@ local function send_import_poll_report(device, latest_total_imported_energy_wh)
     energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
   end
 
-  -- Report the energy consumed during the time interval on the first device that supports it. The unit of these values should be 'Wh'
-  if device:get_parent_device() and device:get_parent_device():supports_capability(capabilities.powerConsumptionReport) then
-    device = device:get_parent_device()
-  elseif device:get_parent_device() ~= nil then
-    device = device:get_parent_device():get_child_list()[1]
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  if not device:get_field(ENERGY_MANAGEMENT_ENDPOINT) then
+    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+      start = iso8061Timestamp(last_time),
+      ["end"] = iso8061Timestamp(current_time - 1),
+      deltaEnergy = energy_delta_wh,
+      energy = latest_total_imported_energy_wh
+    }))
+  else
+    device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT),capabilities.powerConsumptionReport.powerConsumption({
+      start = iso8061Timestamp(last_time),
+      ["end"] = iso8061Timestamp(current_time - 1),
+      deltaEnergy = energy_delta_wh,
+      energy = latest_total_imported_energy_wh
+    }))
   end
-  local component = device.profile.components["main"]
-  device:emit_component_event(component, capabilities.powerConsumptionReport.powerConsumption({
-    start = iso8061Timestamp(last_time),
-    ["end"] = iso8061Timestamp(current_time - 1),
-    deltaEnergy = energy_delta_wh,
-    energy = latest_total_imported_energy_wh
-  }))
-
 end
 
 local function create_poll_report_schedule(device)
   local import_timer = device.thread:call_on_schedule(
     device:get_field(IMPORT_REPORT_TIMEOUT), function()
-    local total_imported_energy = 0
-    for _, energy_report in pairs(device:get_field(TOTAL_IMPORTED_ENERGY)) do
-      total_imported_energy = total_imported_energy + energy_report
-    end
-    send_import_poll_report(device, total_imported_energy)
+    send_import_poll_report(device, device:get_field(TOTAL_IMPORTED_ENERGY))
     end, "polling_import_report_schedule_timer"
   )
   device:set_field(RECURRING_IMPORT_REPORT_POLL_TIMER, import_timer)
@@ -284,8 +275,10 @@ local function set_poll_report_timer_and_schedule(device, is_cumulative_report)
     local second_timestamp = os.time()
     local report_interval_secs = second_timestamp - first_timestamp
     device:set_field(IMPORT_REPORT_TIMEOUT, math.max(report_interval_secs, MINIMUM_ST_ENERGY_REPORT_INTERVAL))
-    -- the poll schedule is only needed for devices that support powerConsumptionReport
-    if device:supports_capability(capabilities.powerConsumptionReport) then
+    -- the poll schedule is only needed for devices that support powerConsumption
+    -- and enable powerConsumption when energy management is defined in root endpoint(0).
+    if device:supports_capability(capabilities.powerConsumptionReport) or
+       device:get_field(ENERGY_MANAGEMENT_ENDPOINT) then
       create_poll_report_schedule(device)
     end
     device:set_field(IMPORT_POLL_TIMER_SETTING_ATTEMPTED, true)
@@ -326,19 +319,6 @@ local function create_multi_press_values_list(size, supportsHeld)
     table.insert(list, string.format("pushed_%dx", i))
   end
   return list
-end
-
--- get a list of endpoints for a specified device type.
-local function get_endpoints_by_dt(device, device_type_id)
-  local dt_eps = {}
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == device_type_id then
-        table.insert(dt_eps, ep.endpoint_id)
-      end
-    end
-  end
-  return dt_eps
 end
 
 local function tbl_contains(array, value)
@@ -405,13 +385,21 @@ end
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
 local function device_type_supports_button_switch_combination(device, endpoint_id)
-  for _, fingerprint in ipairs(device_overrides_per_vendor[AQARA_MANUFACTURER_ID] or {}) do
-    if fingerprint.product_id == device.manufacturer_info.product_id and fingerprint.combo_switch_button == false then
-      return false -- For Aqara Dimmer Switch with Button.
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == endpoint_id then
+      for _, dt in ipairs(ep.device_types) do
+        if dt.device_type_id == DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+          for _, fingerprint in ipairs(child_device_profile_overrides_per_vendor_id[0x115F]) do
+            if device.manufacturer_info.product_id == fingerprint.product_id then
+              return false -- For Aqara Dimmer Switch with Button.
+            end
+          end
+          return true
+        end
+      end
     end
   end
-  local dimmable_eps = get_endpoints_by_dt(device, DIMMABLE_LIGHT_DEVICE_TYPE_ID)
-  return tbl_contains(dimmable_eps, endpoint_id)
+  return false
 end
 
 local function get_first_non_zero_endpoint(endpoints)
@@ -492,42 +480,43 @@ local function check_field_name_updates(device)
   end
 end
 
-local function assign_switch_profile(device, switch_ep, is_child_device, electrical_tags)
+local function assign_child_profile(device, child_ep)
   local profile
+
   for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == switch_ep then
+    if ep.endpoint_id == child_ep then
       -- Some devices report multiple device types which are a subset of
       -- a superset device type (For example, Dimmable Light is a superset of
       -- On/Off light). This mostly applies to the four light types, so we will want
       -- to match the profile for the superset device type. This can be done by
       -- matching to the device type with the highest ID
-      -- Note: Electrical Sensor does not follow the above logic, so it's ignored
       local id = 0
       for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id ~= ELECTRICAL_SENSOR_ID then
-          id = math.max(id, dt.device_type_id)
-        end
+        id = math.max(id, dt.device_type_id)
       end
       profile = device_type_profile_map[id]
       break
     end
   end
 
-  if electrical_tags ~= nil and (profile == "plug-binary" or profile == "plug-level" or profile == "light-binary") then
-    profile = string.gsub(profile, "-binary", "") .. electrical_tags
+  -- Check if device has an overridden child profile that differs from the profile that would match
+  -- the child's device type for the following two cases:
+  --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
+  --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
+  --      determined in the "for" loop above (e.g., light-binary)
+  --   2. The selected profile for the child device matches the initial profile defined in
+  --      child_device_profile_overrides
+  for id, vendor in pairs(child_device_profile_overrides_per_vendor_id) do
+    for _, fingerprint in ipairs(vendor) do
+      if device.manufacturer_info.product_id == fingerprint.product_id and
+         ((device.manufacturer_info.vendor_id == AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
+         return fingerprint.target_profile
+      end
+    end
   end
 
-  if is_child_device then
-      -- Check if child device has an overridden child profile that differs from the child's generic device type profile
-      for _, fingerprint in ipairs(device_overrides_per_vendor[device.manufacturer_info.vendor_id] or {}) do
-        if device.manufacturer_info.product_id == fingerprint.product_id and profile == fingerprint.initial_profile then
-          return fingerprint.target_profile
-        end
-      end
-    -- default to "switch-binary" if no child profile is found
-    return profile or "switch-binary"
-  end
-  return profile
+  -- default to "switch-binary" if no profile is found
+  return profile or "switch-binary"
 end
 
 local function configure_buttons(device)
@@ -609,8 +598,7 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
         local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local electrical_tags = device:get_field(profiling_data.ELECTRICAL_TOPOLOGY).tags_on_ep[ep]
-        local child_profile = assign_switch_profile(device, ep, true, electrical_tags)
+        local child_profile = assign_child_profile(device, ep)
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
@@ -622,6 +610,10 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
           }
         )
         parent_child_device = true
+        if _ == 1 and string.find(child_profile, "energy") then
+          -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+          device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
+        end
       end
     end
   end
@@ -656,7 +648,8 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
   end
 end
 
-local function initialize_buttons(driver, device, main_endpoint)
+local function initialize_buttons_and_switches(driver, device, main_endpoint)
+  local profile_found = false
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     build_button_profile(device, main_endpoint, #button_eps)
@@ -664,59 +657,32 @@ local function initialize_buttons(driver, device, main_endpoint)
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
     build_button_component_map(device, main_endpoint, button_eps)
     configure_buttons(device)
-    return true
+    profile_found = true
   end
-end
 
-local function collect_and_store_electrical_sensor_info(driver, device)
-  local el_dt_eps = get_endpoints_by_dt(device, ELECTRICAL_SENSOR_ID)
-  local electrical_sensor_eps = {}
-  local avail_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  for _, ep in ipairs(device.endpoints) do
-    if tbl_contains(el_dt_eps, ep.endpoint_id) then
-      local electrical_ep_info = {}
-      electrical_ep_info.endpoint_id = ep.endpoint_id
-      for _, cluster in ipairs(ep.clusters) do
-        if cluster.cluster_id == clusters.ElectricalEnergyMeasurement.ID then
-          electrical_ep_info.energy = true
-        elseif cluster.cluster_id == clusters.ElectricalPowerMeasurement.ID then
-          electrical_ep_info.power = true
-        elseif cluster.cluster_id == clusters.PowerTopology.ID then
-          electrical_ep_info.topology = cluster.feature_map
-          if cluster.feature_map == clusters.PowerTopology.types.Feature.SET_TOPOLOGY then
-            avail_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
-            electrical_ep_info.availableEndpoints = false
-          end
-        end
-      end
-      table.insert(electrical_sensor_eps, electrical_ep_info)
-    end
-  end
-  if #avail_eps_req.info_blocks ~= 0 then
-    device:send(avail_eps_req)
-  end
-  device:set_field(ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
-end
-
-local function initialize_switches(driver, device, main_endpoint)
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
   -- while building switch child profiles
   local num_switch_server_eps = build_child_switch_profiles(driver, device, main_endpoint)
-  if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
-  end
 
   -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
   -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
   -- Note: since their device type isn't supported, these devices join as a matter-thing.
   if num_switch_server_eps > 0 and detect_matter_thing(device) then
     handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
-    return true
+    profile_found = true
   end
+  return profile_found
 end
 
 local function detect_bridge(device)
-  return #get_endpoints_by_dt(device, AGGREGATOR_DEVICE_TYPE_ID) > 0
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == AGGREGATOR_DEVICE_TYPE_ID then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 local function device_init(driver, device)
@@ -733,11 +699,6 @@ local function device_init(driver, device)
       if ep.endpoint_id ~= main_endpoint then
         local id = 0
         for _, dt in ipairs(ep.device_types) do
-          if dt.device_type_id == ELECTRICAL_SENSOR_ID then
-            for _, attr in pairs(device_type_attribute_map[ELECTRICAL_SENSOR_ID]) do
-              device:add_subscribed_attribute(attr)
-            end
-          end
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(device_type_attribute_map[id] or {}) do
@@ -755,31 +716,34 @@ local function device_init(driver, device)
   end
 end
 
-local function profiling_data_still_required(device)
-  for _, field in pairs(profiling_data) do
-    if device:get_field(field) == nil then
-      return true -- data still required if a field is nil
-    end
-  end
-  return false
-end
-
 local function match_profile(driver, device)
-  if profiling_data_still_required(device) then return end
-
   local main_endpoint = find_default_endpoint(device)
-
   -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-  local button_profile_found = initialize_buttons(driver, device, main_endpoint)
-  local switch_profile_found = initialize_switches(driver, device, main_endpoint)
-  if button_profile_found or switch_profile_found then
+  local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
+  if device:get_field(IS_PARENT_CHILD_DEVICE) then
+    device:set_find_child(find_child)
+  end
+  if profile_found then
     return
   end
 
   local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
+  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
   local profile_name = nil
-  if #valve_eps > 0 then
+  local level_support = ""
+  if #level_eps > 0 then
+    level_support = "-level"
+  end
+  if #energy_eps > 0 and #power_eps > 0 then
+    profile_name = "plug" .. level_support .. "-power-energy-powerConsumption"
+  elseif #energy_eps > 0 then
+    profile_name = "plug" .. level_support .. "-energy-powerConsumption"
+  elseif #power_eps > 0 then
+    profile_name = "plug" .. level_support .. "-power"
+  elseif #valve_eps > 0 then
     profile_name = "water-valve"
     if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
       {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
@@ -790,24 +754,6 @@ local function match_profile(driver, device)
   end
   if profile_name then
     device:try_update_metadata({ profile = profile_name })
-    return
-  end
-
-  -- after doing all previous profiling steps, attempt to re-profile main/parent switch/plug device
-  local electrical_tags = device:get_field(profiling_data.ELECTRICAL_TOPOLOGY).tags_on_ep[main_endpoint]
-  profile_name = assign_switch_profile(device, main_endpoint, false, electrical_tags)
-  -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
-  -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
-  if profile_name and profile_name ~= "light-level-colorTemperature" and profile_name ~= "light-color-level" then
-    if profile_name == "light-level" and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
-      profile_name = "light-level-motion"
-    end
-    device:try_update_metadata({profile = profile_name})
-  end
-
-  -- clear all profiling data fields after profiling is complete.
-  for _, field in pairs(profiling_data) do
-    device:set_field(field, nil)
   end
 end
 
@@ -1179,56 +1125,26 @@ local function occupancy_attr_handler(driver, device, ib, response)
   device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
-local function available_endpoints_handler(driver, device, ib, response)
-  local electrical_sensor_eps = device:get_field(ELECTRICAL_SENSOR_EPS)
-  local avail_eps_req_complete = true
-  local electrical_tags_per_ep = {}
-  table.sort(ib.data.elements)
-  for _, info in ipairs(electrical_sensor_eps or {}) do
-    if info.endpoint_id == ib.endpoint_id then
-      info.availableEndpoints = ib.data.elements
-    elseif info.availableEndpoints == false then -- an endpoint is found that hasn't been updated through this handler.
-      avail_eps_req_complete = false
-    end
-    if avail_eps_req_complete then
-      local electrical_tags = ""
-      if info.power then electrical_tags = electrical_tags .. "-power" end
-      if info.energy then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
-      electrical_tags_per_ep[info.availableEndpoints[1].value] = electrical_tags -- set tags on first available endpoint
-    end
-  end
-  if avail_eps_req_complete == false then
-    device:set_field(ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
-  else
-    local topology_data = {}
-    topology_data.topology = clusters.PowerTopology.types.Feature.SET_TOPOLOGY
-    topology_data.tags_on_ep = electrical_tags_per_ep
-    device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, topology_data)
-    device:set_field(ELECTRICAL_SENSOR_EPS, nil)
-    match_profile(driver, device)
-  end
-end
-
 local function cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
-    local component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    local total_imported_energy = device:get_field(TOTAL_IMPORTED_ENERGY) or {}
-    total_imported_energy[ib.endpoint_id] = watt_hour_value
-    device:set_field(TOTAL_IMPORTED_ENERGY, total_imported_energy, {persist = true})
-    device:emit_component_event(component, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    device:set_field(TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
+    if ib.endpoint_id ~= 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    else
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    end
   end
 end
 
 local function per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
-    local component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    local total_imported_energy = device:get_field(TOTAL_IMPORTED_ENERGY) or {}
-    local latest_energy_report = total_imported_energy[ib.endpoint_id] or 0
-    total_imported_energy[ib.endpoint_id] = latest_energy_report + watt_hour_value
-    device:set_field(TOTAL_IMPORTED_ENERGY, total_imported_energy, {persist = true})
-    device:emit_component_event(component, capabilities.energyMeter.energy({ value = total_imported_energy[ib.endpoint_id], unit = "Wh" }))
+    local latest_energy_report = device:get_field(TOTAL_IMPORTED_ENERGY) or 0
+    local summed_energy_report = latest_energy_report + watt_hour_value
+    device:set_field(TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
+    device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
   end
 end
 
@@ -1279,12 +1195,14 @@ local function short_release_event_handler(driver, device, ib, response)
 end
 
 local function active_power_handler(driver, device, ib, response)
-  local component = device.profile.components["main"]
   if ib.data.value then
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:emit_component_event(component, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
-  else
-    device:emit_component_event(component, capabilities.powerMeter.power({ value = 0, unit = "W"}))
+    if ib.endpoint_id ~= 0 then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    else
+      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+      device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    end
   end
 end
 
@@ -1398,22 +1316,8 @@ local function device_added(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     local req = clusters.OnOff.attributes.OnOff:read(device)
     device:send(req)
-  elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    collect_and_store_electrical_sensor_info(driver, device)
-    local electrical_sensor_eps = device:get_field(ELECTRICAL_SENSOR_EPS)
-    if #electrical_sensor_eps == 0 then
-      device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, {topology = false, tags_on_ep = {}})
-      device:set_field(ELECTRICAL_SENSOR_EPS, nil)
-    elseif electrical_sensor_eps[1].topology == clusters.PowerTopology.types.Feature.NODE_TOPOLOGY then
-      local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-      table.sort(switch_eps)
-      local electrical_tags = ""
-      if electrical_sensor_eps[1].power then electrical_tags = electrical_tags .. "-power" end
-      if electrical_sensor_eps[1].energy then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
-      device:set_field(profiling_data.ELECTRICAL_TOPOLOGY, {topology = clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, tags_on_ep = {[switch_eps[1]] = electrical_tags}})
-      device:set_field(ELECTRICAL_SENSOR_EPS, nil)
-    end
   end
+
   -- call device init in case init is not called after added due to device caching
   device_init(driver, device)
 end
@@ -1570,9 +1474,6 @@ local matter_driver_template = {
       [clusters.ElectricalEnergyMeasurement.ID] = {
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = energy_report_handler_factory(true),
         [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = energy_report_handler_factory(false),
-      },
-      [clusters.PowerTopology.ID] = {
-        [clusters.PowerTopology.attributes.AvailableEndpoints.ID] = available_endpoints_handler,
       },
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = valve_state_attr_handler,
