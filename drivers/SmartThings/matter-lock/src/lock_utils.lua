@@ -25,7 +25,6 @@ local lock_utils = {
   COTA_CODE_NAME = "ST Remote Operation Code",
   COTA_CRED_INDEX = "cotaCredIndex",
   NONFUNCTIONAL = "nonFunctional",
-  COTA_READ_INITIALIZED = "cotaReadInitialized",
   BUSY_STATE = "busyState",
   COMMAND_NAME = "commandName",
   USER_NAME = "userName",
@@ -97,6 +96,21 @@ function lock_utils.code_deleted(device, code_slot)
   device:emit_event(event)
   lock_utils.reset_code_state(device, code_slot)
   return lock_codes
+end
+
+local updated_fields = {
+  { current_field_name = "cotaReadInitialized", updated_field_name = nil }
+}
+
+function lock_utils.check_field_name_updates(device)
+  for _, field in ipairs(updated_fields) do
+    if device:get_field(field.current_field_name) then
+      if field.updated_field_name ~= nil then
+        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
+      end
+      device:set_field(field.current_field_name, nil)
+    end
+  end
 end
 
 --[[]]
