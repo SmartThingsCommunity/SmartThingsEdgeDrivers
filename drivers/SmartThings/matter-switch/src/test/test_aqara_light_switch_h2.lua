@@ -38,8 +38,7 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 2 },
-        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 5 },
-        {cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 1 } -- NODE_TOPOLOGY
+        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 5 }
       },
       device_types = {
         {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode
@@ -178,12 +177,10 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-
-  -- Test added -> doConfigure logic
-  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
-  aqara_mock_device:expect_metadata_update({ profile = "4-button" })
+  test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
+  test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
+  test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="4-button"}
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.mock_device.add_test_device(aqara_mock_device)
   -- to test powerConsumptionReport
@@ -280,7 +277,7 @@ test.register_coroutine_test(
         {
           -- don't use "aqara_mock_children[aqara_child1_ep].id,"
           -- because energy management is at the root endpoint.
-          aqara_mock_children[aqara_child1_ep].id,
+          aqara_mock_device.id,
           clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(aqara_mock_device, 1, 17000)
         }
       )
@@ -292,7 +289,7 @@ test.register_coroutine_test(
 
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_children[aqara_child1_ep].id,
+          aqara_mock_device.id,
           clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_19)
         }
       )
@@ -305,7 +302,7 @@ test.register_coroutine_test(
       -- This is because related variable settings are required in set_poll_report_timer_and_schedule().
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_children[aqara_child1_ep].id,
+          aqara_mock_device.id,
           clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_29)
         }
       )
@@ -316,8 +313,10 @@ test.register_coroutine_test(
 
       test.socket.matter:__queue_receive(
         {
-          aqara_mock_children[aqara_child1_ep].id,
-          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_39)
+          aqara_mock_device.id,
+          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
+            aqara_mock_device, 1, cumulative_report_val_39
+          )
         }
       )
 
