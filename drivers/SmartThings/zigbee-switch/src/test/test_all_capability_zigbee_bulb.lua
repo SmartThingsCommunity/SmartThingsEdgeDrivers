@@ -202,6 +202,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
       }
     }
 )
@@ -340,7 +348,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 5)
+                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -354,7 +362,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 5)
+                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -552,6 +560,7 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 556)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
+    mock_device:expect_native_attr_handler_registration("colorTemperature", "colorTemperature")
   end
 )
 

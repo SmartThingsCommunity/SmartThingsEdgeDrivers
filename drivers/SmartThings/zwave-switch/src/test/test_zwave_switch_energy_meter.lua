@@ -64,6 +64,14 @@ test.register_message_test(
           meter_value = 27})
         )}
       },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_switch.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
+      }
     }
 )
 
