@@ -574,7 +574,7 @@ local function aliro_ble_advertising_version_handler(driver, device, ib, respons
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! aliro_ble_advertising_version_handler !!!!!!!!!!!!!"))
   device.log.info_with({hub_logs=true}, string.format("!!!!!!!!!!!!!!! value: %s !!!!!!!!!!!!!", ib.data.value))
   if ib.data.value ~= nil then
-    device:emit_event(capabilities.lockAliro.bleAdvertisingVersion(ib.data.value, {visibility = {displayed = false}}))
+    device:emit_event(capabilities.lockAliro.bleAdvertisingVersion(string.format("%s", ib.data.value), {visibility = {displayed = false}}))
   end
 end
 
@@ -3424,8 +3424,6 @@ local function handle_set_endpoint_key(driver, device, command)
     ))
 
     -- needs to be removed
-    device.log.info_with({hub_logs=true}, string.format("entry.keyType: %s", entry.keyType))
-    device.log.info_with({hub_logs=true}, string.format("entry.keyId: %s", entry.keyId))
     device.log.info_with({hub_logs=true}, string.format("keyId: %s", keyId))
 
     -- Find existing endpoint key
@@ -3524,7 +3522,7 @@ local function handle_clear_endpoint_key(driver, device, command)
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.DEVICE_KEY_ID, keyId, {persist = true})
   device:set_field(lock_utils.ENDPOINT_KEY_TYPE, keyType, {persist = true})
-  device:set_field(lock_utils.COMMAND_REQUEST_ID, requestId, {persist = true})
+  device:set_field(lock_utils.COMMAND_REQUEST_ID, reqId, {persist = true})
 
   -- Get latest aliro table
   local aliro_table = utils.deep_copy(device:get_latest_state(
