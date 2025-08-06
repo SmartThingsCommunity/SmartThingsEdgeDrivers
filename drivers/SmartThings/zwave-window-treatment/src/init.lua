@@ -78,6 +78,12 @@ local driver_template = {
     added = added_handler,
     infoChanged = info_changed
   },
+  capability_handlers = {
+    [capabilities.windowShadePreset.ID] = {
+      [capabilities.windowShadePreset.commands.setPresetPosition.NAME] = window_preset_defaults.set_preset_position_cmd,
+      [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_preset_defaults.window_shade_preset_cmd,
+    }
+  },
   sub_drivers = {
     require("springs-window-fashion-shade"),
     require("iblinds-window-treatment"),
