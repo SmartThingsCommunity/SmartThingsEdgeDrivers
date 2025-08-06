@@ -75,7 +75,7 @@ local cluster_subscribe_list = {
 
 local function test_init()
   -- The startup messages are enabled, so this device will get an init,
-  -- and doConfigure (because provisioing_state is TYPED on the device).
+  -- and doConfigure (because provisioning_state is TYPED on the device).
   test.mock_device.add_test_device(mock_device)
 
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)

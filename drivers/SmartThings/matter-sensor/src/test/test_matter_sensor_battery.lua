@@ -56,20 +56,21 @@ local cluster_subscribe_list_humidity_battery = {
 }
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_humidity_battery)
   local subscribe_request_humidity_battery = cluster_subscribe_list_humidity_battery[1]:subscribe(mock_device_humidity_battery)
   for i, cluster in ipairs(cluster_subscribe_list_humidity_battery) do
     if i > 1 then
       subscribe_request_humidity_battery:merge(cluster:subscribe(mock_device_humidity_battery))
     end
   end
-
   test.socket.matter:__expect_send({mock_device_humidity_battery.id, subscribe_request_humidity_battery})
-  test.mock_device.add_test_device(mock_device_humidity_battery)
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "init" })
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "doConfigure" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device_humidity_battery.id, read_attribute_list})
-  test.socket.device_lifecycle:__queue_receive({ mock_device_humidity_battery.id, "doConfigure" })
   mock_device_humidity_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
