@@ -135,7 +135,7 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
 
-  --doConfigure sets the provisioing state to provisioned
+  --doConfigure sets the provisioning state to provisioned
   test.socket.matter:__expect_send({mock_device.id, clusters.PowerSource.attributes.AttributeList:read()})
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   expect_configure_buttons()
@@ -149,9 +149,6 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   expect_configure_buttons()
 end
-
-
-
 test.set_test_init_function(test_init)
 
 test.register_message_test(
