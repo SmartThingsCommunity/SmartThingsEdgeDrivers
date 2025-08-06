@@ -17,7 +17,6 @@ local device_management = require "st.zigbee.device_management"
 local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 local Basic = zcl_clusters.Basic
 local Level = zcl_clusters.Level

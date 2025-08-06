@@ -18,7 +18,6 @@ local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
 local windowShade = capabilities.windowShade.windowShade
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 
 -- VIMAR WINDOW SHADES BEHAVIOR
 -- 1. Open/Close/SetToLevel command is invoked normally
@@ -147,7 +146,7 @@ local device_init = function(self, device)
     local preset_position = window_shade_utils.get_preset_level(device, "main")
 
     device:emit_event(capabilities.windowShadePreset.position(preset_position, { visibility = {displayed = false}}))
-    device:set_field(window_preset_defaults.PRESET_LEVEL_KEY, preset_position, {persist = true})
+    device:set_field(window_shade_utils.PRESET_LEVEL_KEY, preset_position, {persist = true})
   end
 end
 
