@@ -20,8 +20,8 @@ local tuya_utils = require "tuya_utils"
 local Basic = clusters.Basic
 local packet_id = 0
 
-PRESET_LEVEL = 50
-PRESET_LEVEL_KEY = "_presetLevel"
+local PRESET_LEVEL = 50
+local PRESET_LEVEL_KEY = "_presetLevel"
 
 local FINGERPRINTS = {
   { mfr = "_TZE284_nladmfvf", model = "TS0601"}
