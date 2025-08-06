@@ -26,6 +26,11 @@ local SHINASYSTEM_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "SBM300ZB1", endpoint_num = 0x01 },
   { mfr = "ShinaSystem", model = "SBM300ZB2", endpoint_num = 0x02 },
   { mfr = "ShinaSystem", model = "SBM300ZB3", endpoint_num = 0x03 },
+  { mfr = "ShinaSystem", model = "SBM300ZC1", endpoint_num = 0x01 },
+  { mfr = "ShinaSystem", model = "SBM300ZC2", endpoint_num = 0x02 },
+  { mfr = "ShinaSystem", model = "SBM300ZC3", endpoint_num = 0x03 },
+  { mfr = "ShinaSystem", model = "SBM300ZC4", endpoint_num = 0x04 },
+  { mfr = "ShinaSystem", model = "SQM300ZC4", endpoint_num = 0x04 }
 }
 
 local is_shinasystem_button = function(opts, driver, device)
