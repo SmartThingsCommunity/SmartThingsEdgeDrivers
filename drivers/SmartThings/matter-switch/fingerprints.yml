@@ -237,6 +237,14 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x005D
     deviceProfileName: switch-binary
+    
+#Ezviz
+  - id: "5172/4096"
+    deviceLabel: A3 Home Gateway
+    vendorId: 0x1434
+    productId: 0x1000
+    deviceProfileName: matter-bridge
+    
 #GE
   - id: "4921/177"
     deviceLabel: Cync Full Color 2 Inch Wafer
