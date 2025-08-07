@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -86,6 +85,8 @@ local mock_device_onoff = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
   local subscribed_attributes = {
     [capabilities.fanMode.ID] = {
       clusters.FanControl.attributes.FanModeSequence,
@@ -117,16 +118,16 @@ local function test_init()
       end
     end
   end
-
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
   mock_device:expect_metadata_update({ profile = "extractor-hood-hepa-ac-wind" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_onoff()
+  test.disable_startup_messages()
   local cluster_subscribe_list = {
     clusters.FanControl.attributes.FanModeSequence,
     clusters.FanControl.attributes.FanMode,
@@ -135,15 +136,16 @@ local function test_init_onoff()
     clusters.FanControl.attributes.WindSetting,
     clusters.OnOff.attributes.OnOff
   }
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_onoff)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device))
+      subscribe_request:merge(cluster:subscribe(mock_device_onoff))
     end
   end
-  test.socket.matter:__expect_send({mock_device_onoff.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_onoff)
   test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "init" })
+  test.socket.matter:__expect_send({mock_device_onoff.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_onoff.id, "doConfigure"})
   mock_device_onoff:expect_metadata_update({ profile = "extractor-hood-wind-light" })
   mock_device_onoff:expect_metadata_update({ provisioning_state = "PROVISIONED" })

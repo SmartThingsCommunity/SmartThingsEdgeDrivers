@@ -12,10 +12,10 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 local test = require "integration_test"
+test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -35,15 +35,15 @@ local mock_device = test.mock_device.build_test_matter_device({
       }
     },
     {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
-          {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
-        }
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
       }
+    }
   }
 })
 
@@ -64,18 +64,18 @@ local mock_device_configure = test.mock_device.build_test_matter_device({
       }
     },
     {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
-          {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
-          {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
-        },
-        device_types = {
-          {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
-        }
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
       }
+    }
   }
 })
 
