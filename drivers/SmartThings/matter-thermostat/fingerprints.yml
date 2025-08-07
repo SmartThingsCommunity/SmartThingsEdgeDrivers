@@ -55,6 +55,12 @@ matterManufacturer:
     vendorId: 0x134E
     productId: 0x0002
     deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
+  #720
+  - id: "5482/1"
+    deviceLabel: xCREAS Smart Air Purifier Cyclone400
+    vendorId: 0x156A
+    productId: 0x0001
+    deviceProfileName: air-purifier-modular
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
@@ -159,9 +165,3 @@ matterGeneric:
       - id: 0x0510 # Electrical Sensor
       - id: 0x0301 # Thermostat
     deviceProfileName: heat-pump-thermostat
-#720
-  - id: "5482/1"
-    deviceLabel: xCREAS Smart Air Purifier Cyclone400
-    vendorId: 0x156A
-    productId: 0x0001
-    deviceProfileName: air-purifier-modular
