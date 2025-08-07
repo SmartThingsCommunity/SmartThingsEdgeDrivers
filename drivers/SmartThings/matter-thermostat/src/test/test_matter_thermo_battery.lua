@@ -17,6 +17,8 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local uint32 = require "st.matter.data_types.Uint32"
 
+test.set_rpc_version(7)
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-batteryLevel.yml"),
   manufacturer_info = {
@@ -70,17 +72,6 @@ local cluster_subscribe = {
 }
 
 local function test_init()
-  -- test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  -- local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
-  -- read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
-  -- read_req:merge(clusters.FanControl.attributes.WindSupport:read())
-  -- read_req:merge(clusters.FanControl.attributes.RockSupport:read())
-  -- read_req:merge(clusters.FanControl.attributes.RockSupport:read())
-  -- read_req:merge(clusters.Thermostat.attributes.AttributeList:read())
-  -- read_req:merge(clusters.PowerSource.attributes.AttributeList:read())
-  -- test.socket.matter:__expect_send({mock_device.id, read_req})
-
-  -- test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request= cluster_subscribe[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe) do
     if i > 1 then
