@@ -434,6 +434,13 @@ matterManufacturer:
     productId: 0x6008
     deviceProfileName: light-color-level-2700K-6500K
 
+# Intecular
+  - id: "5226/32769"
+    deviceLabel: InvisOutlet
+    vendorId: 0x146A
+    productId: 0x8001
+    deviceProfileName: switch-binary
+
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
