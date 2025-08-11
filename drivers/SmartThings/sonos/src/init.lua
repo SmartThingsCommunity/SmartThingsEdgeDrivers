@@ -39,6 +39,6 @@ if api_version < 14 then
   driver:start_ssdp_event_task()
 end
 
-log.info "Starting Sonos run loop"
+log.info("Starting Sonos run loop")
 driver:run()
-log.info "Exiting Sonos run loop"
+log.info("Exiting Sonos run loop")
