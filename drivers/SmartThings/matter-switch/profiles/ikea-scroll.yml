@@ -1,0 +1,39 @@
+name: ikea-scroll
+components:
+  - id: main
+    capabilities:
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: group1
+    label: Group 1
+    capabilities:
+      - id: switchLevel
+        version: 1
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: group2
+    label: Group 2
+    capabilities:
+      - id: switchLevel
+        version: 1
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: group3
+    label: Group 3
+    capabilities:
+      - id: switchLevel
+        version: 1
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
