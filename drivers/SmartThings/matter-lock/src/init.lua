@@ -143,6 +143,14 @@ end
 
 local function max_pin_code_len_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCodes.maxCodeLength(ib.data.value, {visibility = {displayed = false}}))
+  -- Device may require pin for remote operation if it supports COTA and PIN features.
+  local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
+  if #eps == 0 then
+    device.log.debug("Device will not require PIN for remote operation")
+    device:set_field(lock_utils.COTA_CRED, false, {persist = true})
+  else
+    device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
+  end
 end
 
 local function min_pin_code_len_handler(driver, device, ib, response)
@@ -598,22 +606,9 @@ local function do_configure(driver, device)
 end
 
 local function device_init(driver, device)
+  lock_utils.check_field_name_updates(device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
-
-  -- check if we have a missing COTA credential. Only run this if it has not been run before (i.e. in device added),
-  -- because there is a delay built into the COTA process and we do not want to start two COTA generations at the same time
-  -- in the event this was triggered on add.
-  if not device:get_field(lock_utils.COTA_READ_INITIALIZED) or not device:get_field(lock_utils.COTA_CRED) then
-    local eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
-    if #eps == 0 then
-      device.log.debug("Device will not require PIN for remote operation")
-      device:set_field(lock_utils.COTA_CRED, false, {persist = true})
-    else
-      device:send(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
-      device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
-    end
-  end
 end
 
 local function device_added(driver, device)
@@ -645,16 +640,6 @@ local function device_added(driver, device)
       command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
       args = {}
     })
-
-    --Device may require pin for remote operation if it supports COTA and PIN features.
-    eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.DoorLockFeature.CREDENTIALSOTA | DoorLock.types.DoorLockFeature.PIN_CREDENTIALS})
-    if #eps == 0 then
-      device.log.debug("Device will not require PIN for remote operation")
-      device:set_field(lock_utils.COTA_CRED, false, {persist = true})
-    else
-      req:merge(DoorLock.attributes.RequirePINforRemoteOperation:read(device, eps[1]))
-      device:set_field(lock_utils.COTA_READ_INITIALIZED, true, {persist = true})
-    end
     device:send(req)
   end
 end
