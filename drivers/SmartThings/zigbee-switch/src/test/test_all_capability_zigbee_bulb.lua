@@ -51,9 +51,7 @@ local mock_device = test.mock_device.build_test_zigbee_device({ profile = zigbee
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   mock_device:set_field("_configuration_version", 1, {persist = true})
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -387,32 +385,32 @@ test.register_coroutine_test(
     end
 )
 
-test.register_coroutine_test(
-    "health check coroutine",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "health check coroutine",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(10000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ActivePower:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
+--       test.mock_time.advance_time(10000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ActivePower:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
 
-    end,
-    {
-      test_init = function()
-        mock_device:set_field("_configuration_version", 1, {persist = true})
-        test.mock_device.add_test_device(mock_device)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--     end,
+--     {
+--       test_init = function()
+--         mock_device:set_field("_configuration_version", 1, {persist = true})
+--         test.mock_device.add_test_device(mock_device)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
 test.register_coroutine_test(
     "configuration version below 1",

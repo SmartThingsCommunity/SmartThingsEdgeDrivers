@@ -183,8 +183,17 @@ end
 function SonosState:update_device_record_group_info(household, group, device)
   local player_id = device:get_field(PlayerFields.PLAYER_ID)
   local group_role
-  if (player_id and group and group.id and group.coordinatorId) and player_id == group.coordinatorId then
-    local player_ids_list = household.groups[group.id].playerIds or {}
+  if
+    (
+      type(household) == "table"
+      and type(household.groups) == "table"
+      and player_id
+      and group
+      and group.id
+      and group.coordinatorId
+    ) and player_id == group.coordinatorId
+  then
+    local player_ids_list = (household.groups[group.id] or {}).playerIds or {}
     if #player_ids_list > 1 then
       group_role = "primary"
     else
@@ -225,6 +234,10 @@ end
 ---@param player_id PlayerId
 ---@return string? device_id
 function SonosState:get_device_id_for_player(household_id, player_id)
+  if type(player_id) ~= "string" then
+    log.error(string.format("invalid player id provided: %s", player_id))
+    return nil
+  end
   local household = _STATE.households[household_id]
   if not household then
     log.error(string.format("No record of Sonos household with id %s", household_id))
@@ -236,6 +249,10 @@ end
 ---@param id HouseholdId
 ---@return SonosHousehold
 function SonosState:get_household(id)
+  if type(id) ~= "string" then
+    log.error(string.format("invalid household id provided: %s", id))
+    return nil
+  end
   return _STATE.households[id]
 end
 
@@ -302,6 +319,10 @@ function SonosState:get_group_for_player(household_id, player_id)
       true
     )
   )
+  if type(player_id) ~= "string" then
+    log.error(string.format("invalid player id provided: %s", player_id))
+    return nil
+  end
   local household = _STATE.households[household_id]
   if household == nil then
     log.error(
@@ -325,6 +346,10 @@ function SonosState:get_coordinator_for_player(household_id, player_id)
       true
     )
   )
+  if type(player_id) ~= "string" then
+    log.error(string.format("invalid player id provided: %s", player_id))
+    return nil
+  end
   return self:get_coordinator_for_group(
     household_id,
     self:get_group_for_player(household_id, player_id)
@@ -343,6 +368,10 @@ function SonosState:get_coordinator_for_group(household_id, group_id)
       true
     )
   )
+  if type(group_id) ~= "string" then
+    log.error(string.format("invalid group id provided: %s", group_id))
+    return nil
+  end
   local household = _STATE.households[household_id]
   if household == nil then
     log.error(
@@ -359,7 +388,14 @@ function SonosState:get_coordinator_for_group(household_id, group_id)
         false
       )
   end
-  return household.groups[group_id].coordinatorId
+
+  local group = (household.groups or {})[group_id]
+  if type(group) ~= "table" then
+    log.error(string.format("No known group for id %s in household %s", group_id, household_id))
+    return
+  end
+
+  return group.coordinatorId
 end
 
 --- @param device SonosDevice
@@ -412,6 +448,9 @@ end
 --- @return PlayerId|nil player_id nil on error
 --- @return nil|string error nil on success
 function SonosState:get_player_for_device(device)
+  if type(device) ~= "table" then
+    return nil, string.format("Invalid device argument for get_player_for_device: %s", device)
+  end
   local household_id, _, player_id, err = self:get_sonos_ids_for_device(device)
   if err then
     return nil, nil, err
@@ -424,6 +463,9 @@ end
 --- @return GroupId|nil group_id nil on error
 --- @return nil|string error nil on success
 function SonosState:get_group_for_device(device)
+  if type(device) ~= "table" then
+    return nil, string.format("Invalid device argument for get_player_for_device: %s", device)
+  end
   local household_id, group_id, _, err = self:get_sonos_ids_for_device(device)
   if err then
     return nil, nil, err
@@ -436,6 +478,9 @@ end
 --- @return PlayerId|nil coordinator_id nil on error
 --- @return nil|string error nil on success
 function SonosState:get_coordinator_for_device(device)
+  if type(device) ~= "table" then
+    return nil, string.format("Invalid device argument for get_player_for_device: %s", device)
+  end
   local household_id, group_id, _, err = self:get_sonos_ids_for_device(device)
   if err then
     return nil, nil, err

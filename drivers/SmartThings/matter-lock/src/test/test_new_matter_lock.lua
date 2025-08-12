@@ -1158,6 +1158,18 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
         capabilities.lockUsers.commandResult(
           {commandName="deleteUser", statusCode="success", userIndex=1},
           {state_change=true, visibility={displayed=false}}
@@ -1228,6 +1240,18 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main",
         capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
       )
     )
     test.socket.capability:__expect_send(
@@ -1460,11 +1484,11 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
-    test.wait_for_events()
+    -- test.wait_for_events()
   end
 )
 

@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,12 +13,19 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+test.set_rpc_version(5)
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local version = require "version"
 
-clusters.OvenMode = require "OvenMode"
-clusters.TemperatureControl = require "TemperatureControl"
+if version.api < 10 then
+  clusters.TemperatureControl = require "TemperatureControl"
+end
+
+if version.api < 12 then
+  clusters.OvenMode = require "OvenMode"
+end
 
 local dishwasher_ep = 1
 local washer_ep = 1
@@ -285,7 +292,6 @@ local function test_init_dishwasher()
   test.socket.matter:__expect_send({ mock_device_dishwasher.id, subscribe_request })
   test.mock_device.add_test_device(mock_device_dishwasher)
   test.socket.device_lifecycle:__queue_receive({ mock_device_dishwasher.id, "added" })
-  test.set_rpc_version(5)
 end
 
 local function test_init_washer_dryer()
@@ -714,7 +720,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
@@ -754,7 +760,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-6.0,maximum=20.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-6.0,maximum=20.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
@@ -794,7 +800,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -17.0, unit = "C"}))
@@ -834,7 +840,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-24.0,maximum=-12.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-24.0,maximum=-12.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -15.0, unit = "C"}))

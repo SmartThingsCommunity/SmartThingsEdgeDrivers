@@ -22,7 +22,8 @@ local function can_handle(opts, driver, device, cmd, ...)
     for _, fp in ipairs(FPS) do
       if device:id_match(fp.mfr, fp.prod, fp.model) then return false end
     end
-    return true
+    local subdriver = require("apiv6_bugfix")
+    return true, subdriver
   else
     return false
   end

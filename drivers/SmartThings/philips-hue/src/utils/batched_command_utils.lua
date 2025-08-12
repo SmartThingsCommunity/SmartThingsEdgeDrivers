@@ -114,20 +114,20 @@ function batched_command_utils.sort_batch(driver, batch)
   for _, to_inspect in ipairs(batch) do
     -- Check if we can handle this in a batch
     if not batched_command_utils.get_handler(to_inspect) then
-      misfits.insert(to_inspect)
+      table.insert(misfits, to_inspect)
       goto continue
     end
 
     -- First key off bridge.
     local device = driver:get_device_info(to_inspect.device_uuid)
     if not device then
-      misfits.insert(to_inspect)
+      table.insert(misfits, to_inspect)
       goto continue
     end
     local parent_id = device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
     local bridge_device = utils.get_hue_bridge_for_device(driver, device, parent_id, true)
     if not bridge_device then
-      misfits.insert(to_inspect)
+      table.insert(misfits, to_inspect)
       goto continue
     end
     sorted_batch[bridge_device] = sorted_batch[bridge_device] or KVCounter()

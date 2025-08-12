@@ -23,7 +23,10 @@ local WakeUp = (require "st.zwave.CommandClass.WakeUp")({version=1})
 local ENERWAVE_MFR = 0x011A
 
 local function can_handle_enerwave_motion_sensor(opts, driver, device, cmd, ...)
-  return device.zwave_manufacturer_id == ENERWAVE_MFR
+  if device.zwave_manufacturer_id == ENERWAVE_MFR then
+    local subdriver = require("enerwave-motion-sensor")
+    return true, subdriver
+  else return false end
 end
 
 local function wakeup_notification(driver, device, cmd)

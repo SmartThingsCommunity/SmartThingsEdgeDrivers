@@ -55,9 +55,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-  test.socket.zigbee:__expect_send({
+  test.mock_device.add_test_device(mock_device)  test.socket.zigbee:__expect_send({
       mock_device.id,
       Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device)
     })

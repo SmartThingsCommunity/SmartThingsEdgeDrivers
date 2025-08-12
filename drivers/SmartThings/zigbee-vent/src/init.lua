@@ -153,7 +153,8 @@ local zigbee_vent_driver = {
   lifecycle_handlers = {
     doConfigure = do_configure,
     added = refresh_handler
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_vent_driver, zigbee_vent_driver.supported_capabilities)

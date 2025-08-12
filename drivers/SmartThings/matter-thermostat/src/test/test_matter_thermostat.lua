@@ -615,7 +615,14 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.on())
     },
-
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        FanMode:build_test_report_data(mock_device, 1, FanMode.OFF)
+      }
+    }
   }
 )
 

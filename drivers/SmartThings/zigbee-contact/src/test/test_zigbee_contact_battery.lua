@@ -65,9 +65,7 @@ zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device_sengled)
   test.mock_device.add_test_device(mock_device_nyce)
-  test.mock_device.add_test_device(mock_device_visonic)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device_visonic)end
 
 local test_devices = {}
 test_devices[mock_device_visonic.id] = mock_device_visonic

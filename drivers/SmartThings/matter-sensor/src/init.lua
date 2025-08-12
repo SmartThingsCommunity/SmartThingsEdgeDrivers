@@ -115,10 +115,6 @@ end
 local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
-  if device:supports_capability(capabilities.motionSensor) then
-    profile_name = profile_name .. "-motion"
-  end
-
   if device:supports_capability(capabilities.contactSensor) then
     profile_name = profile_name .. "-contact"
   end
@@ -171,6 +167,22 @@ local function match_profile(driver, device, battery_supported)
 
   local concatenated_preferences = supports_sensitivity_preferences(device)
   profile_name = profile_name .. concatenated_preferences
+
+  if device:supports_capability(capabilities.motionSensor) then
+    local occupancy_support = "-motion"
+    -- If the Occupancy Sensing Cluster’s revision is >= 5 (corresponds to Lua Libs version 13+), and any of the AIR / RAD / RFS / VIS
+    -- features are supported by the device, use the presenceSensor capability. Otherwise, use the motionSensor capability. Currently,
+    -- presenceSensor only used for devices fingerprinting to the motion-illuminance-temperature-humidity-battery profile.
+    if profile_name == "-illuminance-temperature-humidity-battery" and version.api >= 13 then
+      if #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.ACTIVE_INFRARED}) > 0 or
+        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RADAR}) > 0 or
+        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RF_SENSING}) > 0 or
+        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.VISION}) then
+        occupancy_support = "-presence"
+      end
+    end
+    profile_name = occupancy_support .. profile_name
+  end
 
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
@@ -355,7 +367,11 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
 end
 
 local function occupancy_attr_handler(driver, device, ib, response)
-  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  if device:supports_capability(capabilities.motionSensor) then
+    device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  else
+    device:emit_event(ib.data.value == 0x01 and capabilities.presenceSensor.presence("present") or capabilities.presenceSensor.presence("not present"))
+  end
 end
 
 local function pressure_attr_handler(driver, device, ib, response)
@@ -461,6 +477,9 @@ local matter_driver_template = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
     },
     [capabilities.motionSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.presenceSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
     },
     [capabilities.contactSensor.ID] = {
@@ -591,6 +610,7 @@ local matter_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.contactSensor,
     capabilities.motionSensor,
+    capabilities.presenceSensor,
     capabilities.button,
     capabilities.battery,
     capabilities.batteryLevel,

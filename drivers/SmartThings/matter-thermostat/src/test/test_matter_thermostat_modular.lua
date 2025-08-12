@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -50,6 +50,9 @@ local mock_device_basic = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1}, -- Thermostat
       }
     }
   }
@@ -110,7 +113,7 @@ local expected_metadata = {
       "main",
       {
         "relativeHumidityMeasurement",
-        "thermostatFanMode",
+        "fanMode",
         "thermostatHeatingSetpoint",
         "thermostatCoolingSetpoint"
       },

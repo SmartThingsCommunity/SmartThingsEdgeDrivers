@@ -26,7 +26,8 @@ local AEOTEC_MULTISENSOR_FINGERPRINTS = {
 local function can_handle_aeotec_multisensor(opts, self, device, ...)
   for _, fingerprint in ipairs(AEOTEC_MULTISENSOR_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
+      local subdriver = require("aeotec-multisensor")
+      return true, subdriver
     end
   end
   return false

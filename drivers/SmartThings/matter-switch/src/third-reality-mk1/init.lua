@@ -43,7 +43,7 @@ local function endpoint_to_component(device, ep)
       return component
     end
   end
-  return "F1"
+  return "main"
 end
 
 -- override subscribe function to prevent subscribing to additional events from the main driver
@@ -58,12 +58,12 @@ local function configure_buttons(device)
   local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   for _, ep in ipairs(ms_eps) do
     if device.profile.components[endpoint_to_component(device, ep)] then
-      device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
+      device.log.info(string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
       device:emit_event_for_endpoint(ep, supportedButtonValues_event)
       device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
     else
-      device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
+      device.log.info(string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end
   end
 end
@@ -72,9 +72,9 @@ local function build_button_component_map(device)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   table.sort(button_eps)
   local component_map = {}
-  for component_num, ep in ipairs(button_eps) do
-    local button_component = "F" .. component_num
-    component_map[button_component] = ep
+  component_map["main"] = button_eps[1]
+  for component_num = 2, 12 do
+    component_map["F" .. component_num] = button_eps[component_num]
   end
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end

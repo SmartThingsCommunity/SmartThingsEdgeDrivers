@@ -18,7 +18,11 @@ hub:
   - id: "cooktop-hub"
     deviceLabel: SmartThings Hub
     hardwareType: SAMSUNG_COOKTOP_TIZEN_OPEN 
-    deviceProfileName: cooktop-hub  
+    deviceProfileName: cooktop-hub
+  - id: "v4-hub"
+    deviceLabel: SmartThings Hub
+    hardwareType: V4_HUB
+    deviceProfileName: v4-hub
 hubThing:
   - id: "hub-thing"
     deviceLabel: SmartThings Hub

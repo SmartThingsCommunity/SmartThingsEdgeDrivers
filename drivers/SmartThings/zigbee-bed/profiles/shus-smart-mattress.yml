@@ -1,0 +1,31 @@
+name: shus-smart-mattress
+components:
+  - id: main
+    capabilities:
+      - id: firmwareUpdate
+        ephemeral: false
+      - id: refresh
+        ephemeral: false
+      - id: stse.aiMode
+        version: 1
+        ephemeral: false
+      - id: stse.autoInflation
+        version: 1
+        ephemeral: false
+      - id: stse.strongExpMode
+        version: 1
+        ephemeral: false
+      - id: stse.leftControl
+        version: 1
+        ephemeral: false
+      - id: stse.rightControl
+        version: 1
+        ephemeral: false
+      - id: stse.mattressHardness
+        version: 1
+        ephemeral: false
+      - id: stse.yoga
+        version: 1
+        ephemeral: false
+    categories:
+      - name: Bed

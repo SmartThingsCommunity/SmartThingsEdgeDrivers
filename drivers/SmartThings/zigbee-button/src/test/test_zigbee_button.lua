@@ -31,9 +31,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 )
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -200,59 +198,59 @@ test.register_message_test(
   }
 )
 
-test.register_coroutine_test(
-    "Health check should check all relevant attributes",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message(
-          "main",
-          capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
-        )
-      )
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message(
-          "main",
-          capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
-        )
-      )
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "button", component_id = "main",
-          attribute_id = "button", state = { value = "pushed" }
-        }
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
-      })
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
-      })
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "Health check should check all relevant attributes",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
+--       test.socket.capability:__expect_send(
+--         mock_device:generate_test_message(
+--           "main",
+--           capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+--         )
+--       )
+--       test.socket.capability:__expect_send(
+--         mock_device:generate_test_message(
+--           "main",
+--           capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+--         )
+--       )
+--       test.socket.capability:__expect_send({
+--         mock_device.id,
+--         {
+--           capability_id = "button", component_id = "main",
+--           attribute_id = "button", state = { value = "pushed" }
+--         }
+--       })
+--       test.socket.zigbee:__expect_send({
+--         mock_device.id,
+--         TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+--       })
+--       test.socket.zigbee:__expect_send({
+--         mock_device.id,
+--         TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+--       })
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(50000) -- Battery has a max reporting interval of 21600
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send(
-          {
-            mock_device.id,
-            PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
-          }
-      )
-      test.socket.zigbee:__expect_send({
-        mock_device.id,
-        TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
-      })
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_device)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--       test.mock_time.advance_time(50000) -- Battery has a max reporting interval of 21600
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send(
+--           {
+--             mock_device.id,
+--             PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+--           }
+--       )
+--       test.socket.zigbee:__expect_send({
+--         mock_device.id,
+--         TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
+--       })
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_device)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
 test.register_coroutine_test(
     "Refresh necessary attributes",

@@ -22,9 +22,7 @@ local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version = 5})
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1})
 
-local HOMESEER_MULTI_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x001E, productType = 0x0002, productId = 0x0001 }, -- Homeseer multi sensor HSM100
-}
+local HOMESEER_MULTI_SENSOR_FINGERPRINTS = { manufacturerId = 0x001E, productType = 0x0002, productId = 0x0001 } -- Homeseer multi sensor HSM100
 
 --- Determine whether the passed device is homeseer multi sensor
 ---
@@ -32,12 +30,13 @@ local HOMESEER_MULTI_SENSOR_FINGERPRINTS = {
 --- @param device Device device instance
 --- @return boolean true if the device proper, else false
 local function can_handle_homeseer_multi_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(HOMESEER_MULTI_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
+  if device:id_match(
+      HOMESEER_MULTI_SENSOR_FINGERPRINTS.manufacturerId,
+      HOMESEER_MULTI_SENSOR_FINGERPRINTS.productType,
+      HOMESEER_MULTI_SENSOR_FINGERPRINTS.productId) then
+    local subdriver = require("homeseer-multi-sensor")
+    return true, subdriver
+  else return false end
 end
 
 local function basic_set_handler(self, device, cmd)

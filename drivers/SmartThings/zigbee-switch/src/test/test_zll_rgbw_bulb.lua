@@ -29,7 +29,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "AduroSmart Eria",
         model = "ZLL-ExtendedColor",
-        server_clusters = { 0x0006, 0x0008, 0x0300 }
+        server_clusters = { 0x0006, 0x0008, 0x0300 },
+        profile_id = 0xC05E,
       }
     }
   }
@@ -107,6 +108,30 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end
+)
+
+test.register_coroutine_test(
+    "ZLL periodic poll should occur",
+    function()
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
+      test.wait_for_events()
+
+      test.mock_time.advance_time(5*60)
+      test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+      test.wait_for_events()
+    end,
+    {
+      test_init = function()
+        test.mock_device.add_test_device(mock_device)
+        test.timer.__create_and_queue_test_time_advance_timer(5*60, "interval", "polling")
+      end
+    }
 )
 
 test.register_coroutine_test(

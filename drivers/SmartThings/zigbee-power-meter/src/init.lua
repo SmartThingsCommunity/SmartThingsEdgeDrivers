@@ -57,7 +57,8 @@ local zigbee_power_meter_driver_template = {
   lifecycle_handlers = {
     init = device_init,
     doConfigure = do_configure,
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_power_meter_driver_template, zigbee_power_meter_driver_template.supported_capabilities)

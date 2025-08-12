@@ -54,7 +54,8 @@ local zigbee_valve_driver_template = {
   sub_drivers = {
     require("sinope"),
     require("ezex")
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_valve_driver_template, zigbee_valve_driver_template.supported_capabilities)

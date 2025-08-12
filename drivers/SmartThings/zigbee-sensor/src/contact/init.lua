@@ -26,7 +26,7 @@ local generic_contact_sensor = {
   supported_capabilities = {
     capabilities.contactSensor
   },
-  can_handle = is_contact_sensor
+  can_handle = is_contact_sensor,
 }
 defaults.register_for_default_handlers(generic_contact_sensor, generic_contact_sensor.supported_capabilities)
 return generic_contact_sensor

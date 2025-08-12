@@ -1,6 +1,7 @@
 name: 12-button-keyboard
 components:
-  - id: F1
+  - id: main
+    label: F1
     capabilities:
       - id: button
         version: 1

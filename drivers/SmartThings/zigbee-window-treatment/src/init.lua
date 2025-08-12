@@ -41,7 +41,8 @@ local zigbee_window_treatment_driver_template = {
     require("screen-innovations")},
   lifecycle_handlers = {
     added = added_handler
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_window_treatment_driver_template, zigbee_window_treatment_driver_template.supported_capabilities)

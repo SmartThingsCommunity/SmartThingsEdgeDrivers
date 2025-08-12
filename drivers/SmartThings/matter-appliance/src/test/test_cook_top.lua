@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -90,21 +90,21 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-    "Verify device profile update",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
-      mock_device:expect_metadata_update({ profile = "cook-surface-one-tl-cook-surface-two-tl" })
-      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+  "Verify device profile update",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
+    mock_device:expect_metadata_update({ profile = "cook-surface-one-tl-cook-surface-two-tl" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
 )
 
 test.register_coroutine_test(
-    "Assert component to endpoint map",
-    function()
-      local component_to_endpoint_map = mock_device:get_field("__component_to_endpoint_map")
-      assert(component_to_endpoint_map["cookSurfaceOne"] == COOK_SURFACE_ONE_ENDPOINT, "Cook Surface One Endpoint must be 2")
-      assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT, "Cook Surface Two Endpoint must be 3")
-    end
+  "Assert component to endpoint map",
+  function()
+    local component_to_endpoint_map = mock_device:get_field("__component_to_endpoint_map")
+    assert(component_to_endpoint_map["cookSurfaceOne"] == COOK_SURFACE_ONE_ENDPOINT, "Cook Surface One Endpoint must be 2")
+    assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT, "Cook Surface Two Endpoint must be 3")
+  end
 )
 
 test.register_message_test(

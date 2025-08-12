@@ -26,7 +26,9 @@ local unofficial_tuya_driver_template = {
     require("curtain"),
     require("motion-sensor"),
     require("smoke-detector"),
-    require("switch")}
+    require("switch")
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(unofficial_tuya_driver_template, unofficial_tuya_driver_template.supported_capabilities)

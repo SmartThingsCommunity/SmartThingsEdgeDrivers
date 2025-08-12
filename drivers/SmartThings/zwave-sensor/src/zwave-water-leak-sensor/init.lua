@@ -35,7 +35,8 @@ local WATER_LEAK_SENSOR_FINGERPRINTS = {
 local function can_handle_water_leak_sensor(opts, driver, device, ...)
   for _, fingerprint in ipairs(WATER_LEAK_SENSOR_FINGERPRINTS) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
+      local subdriver = require("zwave-water-leak-sensor")
+      return true, subdriver
     end
   end
   return false
