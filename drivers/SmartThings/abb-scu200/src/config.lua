@@ -34,14 +34,14 @@ config.EDGE_CHILD_WATER_METER_VERSION         = 1
 config.EDGE_CHILD_GAS_METER_VERSION           = 1
 config.EDGE_CHILD_USB_ENERGY_METER_VERSION    = 1
 
-config.EDGE_CHILD_CURRENT_SENSOR_PROFILE                     = "abb.scu200.current-sensor.v1"
-config.EDGE_CHILD_ENERGY_METER_MODULE_PROFILE                = "abb.scu200.energy-meter-module.v1"
-config.EDGE_CHILD_AUXILIARY_CONTACT_PROFILE                  = "abb.scu200.auxiliary-contact.v1"
-config.EDGE_CHILD_OUTPUT_MODULE_PROFILE                      = "abb.scu200.output-module.v1"
-config.EDGE_CHILD_ENERGY_METER_PROFILE                       = "abb.scu200.energy-meter.v1"
-config.EDGE_CHILD_WATER_METER_PROFILE                        = "abb.scu200.water-meter.v1"
-config.EDGE_CHILD_GAS_METER_PROFILE                          = "abb.scu200.gas-meter.v1"
-config.EDGE_CHILD_USB_ENERGY_METER_PROFILE                   = "abb.scu200.usb-energy-meter.v1"
+config.EDGE_CHILD_CURRENT_SENSOR_CONSUMPTION_PROFILE  = "abb.scu200.current-sensor-consumption.v1"
+config.EDGE_CHILD_CURRENT_SENSOR_PRODUCTION_PROFILE   = "abb.scu200.current-sensor-production.v1"
+config.EDGE_CHILD_AUXILIARY_CONTACT_PROFILE           = "abb.scu200.auxiliary-contact.v1"
+config.EDGE_CHILD_OUTPUT_MODULE_PROFILE               = "abb.scu200.output-module.v1"
+config.EDGE_CHILD_ENERGY_METER_PROFILE                = "abb.scu200.energy-meter.v1"
+config.EDGE_CHILD_WATER_METER_PROFILE                 = "abb.scu200.water-meter.v1"
+config.EDGE_CHILD_GAS_METER_PROFILE                   = "abb.scu200.gas-meter.v1"
+config.EDGE_CHILD_USB_ENERGY_METER_PROFILE            = "abb.scu200.usb-energy-meter.v1"
 
 config.EDGE_CHILD_CURRENT_SENSOR_REFRESH_PERIOD      = 30
 config.EDGE_CHILD_ENERGY_METER_MODULE_REFRESH_PERIOD = 30

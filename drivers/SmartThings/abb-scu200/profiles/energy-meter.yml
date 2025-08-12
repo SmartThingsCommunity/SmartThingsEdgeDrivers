@@ -16,8 +16,25 @@ components:
     version: 1
   categories: 
   - name: CurbPowerMeter
+- id: consumptionMeter
+  label: "From Grid"
+  capabilities:
+  - id: powerConsumptionReport
+    version: 1
+  - id: energyMeter
+    version: 1
+  categories: 
+  - name: CurbPowerMeter
 - id: productionMeter
   label: "To Grid"
+  capabilities:
+  - id: powerConsumptionReport
+    version: 1
+  - id: energyMeter
+    version: 1
+  categories:
+  - name: CurbPowerMeter
+- id: surplus
   capabilities:
   - id: powerConsumptionReport
     version: 1

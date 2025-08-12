@@ -31,48 +31,27 @@ local function refresh_current_sensor(driver, device, values)
 
     -- Refresh Active Energy
     local activeEnergy = values.activeEnergy
-    local isExport = values.isExport
 
-    if activeEnergy ~= nil and isExport ~= nil then
-        -- Determine Consumption and Production Active Energy values
-        local consumptionActiveEnergy = activeEnergy
-        local productionActiveEnergy = 0.0
-
-        if isExport then
-            consumptionActiveEnergy = 0.0
-            productionActiveEnergy = activeEnergy
-        end
-
-        -- Refresh Active Energy Consumption
-        log.trace("refresh_current_sensor(): Refreshing Active Energy Consumption, dni = " .. dni)
-        device.profile.components["main"]:emit_event(caps.energyMeter.energy({value=consumptionActiveEnergy, unit="kWh"}))
-        
-        -- Refresh Active Energy Production
-        log.trace("refresh_current_sensor(): Refreshing Active Energy Production, dni = " .. dni)
-        device.profile.components["productionMeter"]:emit_event(caps.energyMeter.energy({value=productionActiveEnergy, unit="kWh"}))
+    if activeEnergy ~= nil then
+        -- Refresh Active Energy
+        log.trace("refresh_current_sensor(): Refreshing Active Energy, dni = " .. dni)
+        device.profile.components["main"]:emit_event(caps.energyMeter.energy({value=activeEnergy, unit="kWh"}))
     
-        -- Verify whether the appropriate time have elapsed to report the energy consumption and production
+        -- Verify whether the appropriate time have elapsed to report the energy values
         local last_energy_report = device:get_field(fields.LAST_ENERGY_REPORT) or 0.0
 
-        if (os.time() - last_energy_report) >= config.EDGE_CHILD_ENERGY_REPORT_INTERVAL then  -- Report the energy consumption and production periodically
-            local current_consumption_report = device:get_latest_state("main", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
-            local current_production_report = device:get_latest_state("productionMeter", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
+        if (os.time() - last_energy_report) >= config.EDGE_CHILD_ENERGY_REPORT_INTERVAL then  -- Report the energy consumption/production periodically
+            local current_consumption_production_report = device:get_latest_state("main", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
         
-            -- Calculate delta consumption and production energy
-            local delta_consumption_energy = 0.0
-            if current_consumption_report ~= nil then
-                delta_consumption_energy = math.max((consumptionActiveEnergy * 1000) - current_consumption_report.energy, 0.0)
+            -- Calculate delta consumption/production energy
+            local delta_consumption_production_report = 0.0
+            if current_consumption_production_report ~= nil then
+                delta_consumption_production_report = math.max((activeEnergy * 1000) - current_consumption_production_report.energy, 0.0)
             end
 
-            local delta_production_energy = 0.0
-            if current_production_report ~= nil then
-                delta_production_energy = math.max((productionActiveEnergy * 1000) - current_production_report.energy, 0.0)
-            end
-
-            -- Refresh Power Consumption / Production Report
-            log.trace("refresh_current_sensor(): Refreshing Power Consumption / Production Report, dni = " .. dni)
-            device.profile.components["main"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=consumptionActiveEnergy * 1000, deltaEnergy=delta_consumption_energy}))
-            device.profile.components["productionMeter"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=productionActiveEnergy * 1000, deltaEnergy=delta_production_energy}))
+            -- Refresh Power Energy Report
+            log.trace("refresh_current_sensor(): Refreshing Energy Report, dni = " .. dni)
+            device.profile.components["main"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergy * 1000, deltaEnergy=delta_consumption_production_report}))
 
             -- Save date of the last energy report
             local current_energy_report = last_energy_report + config.EDGE_CHILD_ENERGY_REPORT_INTERVAL
@@ -84,137 +63,6 @@ local function refresh_current_sensor(driver, device, values)
         else
             log.debug("refresh_current_sensor(): " .. config.EDGE_CHILD_ENERGY_REPORT_INTERVAL .. " seconds haven't elapsed yet! Last consumption was at " .. last_energy_report .. ", dni = " .. dni)
         end
-    end
-
-    return true
-end
-
-local function refresh_energy_meter_module(driver, device, values)
-    local dni = utils.get_dni_from_device(device)
-    log.info("refresh_energy_meter_module(): Refreshing data of Energy Meter Module, dni = " .. dni)
-
-    -- Refresh Voltage Measurement
-    local voltage = values.voltage
-
-    if voltage ~= nil then
-        log.trace("refresh_energy_meter_module(): Refreshing Voltage Measurement, dni = " .. dni)
-        device.profile.components["main"]:emit_event(caps.voltageMeasurement.voltage({value=voltage, unit="V"}))
-    end
-
-    -- Refresh Current Measurement
-    local current = values.current
-
-    if current ~= nil then
-        log.trace("refresh_energy_meter_module(): Refreshing Current Measurement, dni = " .. dni)
-        device.profile.components["main"]:emit_event(caps.currentMeasurement.current({value=current, unit="A"}))
-    end
-
-    -- Refresh Active Power
-    local activePower = values.activePower
-
-    if activePower ~= nil then
-        log.trace("refresh_energy_meter_module(): Refreshing Active Power, dni = " .. dni)
-        device.profile.components["main"]:emit_event(caps.powerMeter.power({value=activePower, unit="W"}))
-    end
-
-    -- Refresh Active Energy Net, Import & Export Total
-    local activeEnergyNetTotal = values.activeEnergyNetTotal
-    local activeEnergyImportTotal = values.activeEnergyImportTotal
-    local activeEnergyExportTotal = values.activeEnergyExportTotal
-
-    if activeEnergyNetTotal ~= nil and activeEnergyImportTotal ~= nil and activeEnergyExportTotal ~= nil then
-        -- Refresh Active Energy Net Total
-        log.trace("refresh_energy_meter_module(): Refreshing Active Energy Net Total, dni = " .. dni)
-        device.profile.components["main"]:emit_event(caps.energyMeter.energy({value=activeEnergyNetTotal, unit="kWh"}))
-
-        -- Refresh Active Energy Import Total
-        log.trace("refresh_energy_meter_module(): Refreshing Active Energy Import Total, dni = " .. dni)
-        device.profile.components["consumptionMeter"]:emit_event(caps.energyMeter.energy({value=activeEnergyImportTotal, unit="kWh"}))
-        
-        -- Refresh Active Energy Export Total
-        log.trace("refresh_energy_meter_module(): Refreshing Active Energy Export Total, dni = " .. dni)
-        device.profile.components["productionMeter"]:emit_event(caps.energyMeter.energy({value=activeEnergyExportTotal, unit="kWh"}))
-    
-        -- Verify whether the appropriate time have elapsed to report the energy net, consumption and production
-        local last_energy_report = device:get_field(fields.LAST_ENERGY_REPORT) or 0.0
-
-        if (os.time() - last_energy_report) >= config.EDGE_CHILD_ENERGY_REPORT_INTERVAL then  -- Report the energy net, consumption and production periodically
-            local current_net_report = device:get_latest_state("main", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
-            local current_consumption_report = device:get_latest_state("consumptionMeter", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
-            local current_production_report = device:get_latest_state("productionMeter", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
-
-            -- Make net energy data zero if negative
-            activeEnergyNetTotal = math.max(activeEnergyNetTotal, 0.0)
-
-            -- Calculate delta net, consumption and production energy
-            local delta_net_energy = 0.0
-            if current_net_report ~= nil then
-                delta_net_energy = math.max((activeEnergyNetTotal * 1000) - current_net_report.energy, 0.0)
-            end
-
-            local delta_consumption_energy = 0.0
-            if current_consumption_report ~= nil then
-                delta_consumption_energy = math.max((activeEnergyImportTotal * 1000) - current_consumption_report.energy, 0.0)
-            end
-
-            local delta_production_energy = 0.0
-            if current_production_report ~= nil then
-                delta_production_energy = math.max((activeEnergyExportTotal * 1000) - current_production_report.energy, 0.0)
-            end
-
-            -- Refresh Power Net, Consumption & Production Report
-            log.trace("refresh_energy_meter_module(): Refreshing Power Net, Consumption & Production Report, dni = " .. dni)
-            device.profile.components["main"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyNetTotal * 1000, deltaEnergy=delta_net_energy}))
-            device.profile.components["consumptionMeter"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyImportTotal * 1000, deltaEnergy=delta_consumption_energy}))
-            device.profile.components["productionMeter"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyExportTotal * 1000, deltaEnergy=delta_production_energy}))
-
-            -- Save date of the last consumption
-            local current_energy_report = last_energy_report + config.EDGE_CHILD_ENERGY_REPORT_INTERVAL
-            if (current_energy_report + config.EDGE_CHILD_ENERGY_REPORT_INTERVAL) < os.time() then
-                current_energy_report = os.time()
-            end
-
-            device:set_field(fields.LAST_ENERGY_REPORT, current_energy_report, {persist=false})
-        else
-            log.debug("refresh_energy_meter_module(): " .. config.EDGE_CHILD_ENERGY_REPORT_INTERVAL .. " seconds haven't elapsed yet! Last consumption was at " .. last_energy_report .. ", dni = " .. dni)
-        end
-    end
-
-    return true
-end
-
-local function refresh_auxiliary_contact(driver, device, values)
-    local dni = utils.get_dni_from_device(device)
-    log.info("refresh_auxiliary_contact(): Refreshing data of Auxiliary Contact, dni = " .. dni)
-
-    -- Refresh Contact Sensor
-    local isClosed = values.isClosed
-
-    if isClosed ~= nil then
-        log.trace("refresh_auxiliary_contact(): Refreshing Switch, dni = " .. dni)
-
-        if isClosed then
-            device:emit_event(caps.switch.switch.on())
-        else
-            device:emit_event(caps.switch.switch.off())
-        end
-    end
-
-    return true
-end
-
-local function refresh_output_module(driver, device, values)
-    local dni = utils.get_dni_from_device(device)
-    log.info("refresh_output_module(): Refreshing data of Output Module, dni = " .. dni)
-
-    -- Refresh Switch
-    local isClosed = values.isClosed
-    log.trace("refresh_output_module(): Refreshing Switch, dni = " .. dni)
-
-    if isClosed then
-        device:emit_event(caps.switch.switch.on())
-    else
-        device:emit_event(caps.switch.switch.off())
     end
 
     return true
@@ -241,34 +89,60 @@ local function refresh_energy_meter(driver, device, values)
     end
 
     -- Refresh Active Power
-    local activePowerTotal = values.activePowerTotal
+    local activePower = values.activePowerTotal
 
-    if activePowerTotal ~= nil then
+    if activePower ~= nil then
         log.trace("refresh_energy_meter(): Refreshing Active Power, dni = " .. dni)
-        device.profile.components["main"]:emit_event(caps.powerMeter.power({value=activePowerTotal, unit="W"}))
+        device.profile.components["main"]:emit_event(caps.powerMeter.power({value=activePower, unit="W"}))
     end
 
-    -- Refresh Active Energy Import/Export Total
+    -- Refresh Active Energy Net, Import & Export Total
+    local activeEnergyNetTotal = values.activeEnergyNetTotal
     local activeEnergyImportTotal = values.activeEnergyImportTotal
     local activeEnergyExportTotal = values.activeEnergyExportTotal
 
-    if activeEnergyImportTotal ~= nil and activeEnergyExportTotal ~= nil then
+    if activeEnergyNetTotal == nil then
+        if activeEnergyImportTotal ~= nil and activeEnergyExportTotal ~= nil then
+            -- If only Import and Export Total are available, calculate Net Total
+            activeEnergyNetTotal = activeEnergyImportTotal - activeEnergyExportTotal
+        end
+    end
+
+    local activeEnergyNetPositive = math.max(activeEnergyNetTotal, 0.0)
+    local activeEnergyNetNegative = math.min(activeEnergyNetTotal, 0.0) * -1  -- Convert to positive value
+
+    if activeEnergyNetTotal ~= nil and activeEnergyImportTotal ~= nil and activeEnergyExportTotal ~= nil then
+        -- Refresh Active Energy Net Positive
+        log.trace("refresh_energy_meter(): Refreshing Active Energy Net Positive, dni = " .. dni)
+        device.profile.components["main"]:emit_event(caps.energyMeter.energy({value=activeEnergyNetPositive, unit="kWh"}))
+
         -- Refresh Active Energy Import Total
         log.trace("refresh_energy_meter(): Refreshing Active Energy Import Total, dni = " .. dni)
-        device.profile.components["main"]:emit_event(caps.energyMeter.energy({value=activeEnergyImportTotal, unit="kWh"}))
+        device.profile.components["consumptionMeter"]:emit_event(caps.energyMeter.energy({value=activeEnergyImportTotal, unit="kWh"}))
         
         -- Refresh Active Energy Export Total
         log.trace("refresh_energy_meter(): Refreshing Active Energy Export Total, dni = " .. dni)
         device.profile.components["productionMeter"]:emit_event(caps.energyMeter.energy({value=activeEnergyExportTotal, unit="kWh"}))
+
+        -- Refresh Active Energy Net Negative
+        log.trace("refresh_energy_meter(): Refreshing Active Energy Net Negative, dni = " .. dni)
+        device.profile.components["surplus"]:emit_event(caps.energyMeter.energy({value=activeEnergyNetNegative, unit="kWh"}))
     
-        -- Verify whether the appropriate time have elapsed to report the energy consumption and production
+        -- Verify whether the appropriate time have elapsed to report the energy net, consumption and production
         local last_energy_report = device:get_field(fields.LAST_ENERGY_REPORT) or 0.0
 
-        if (os.time() - last_energy_report) >= config.EDGE_CHILD_ENERGY_REPORT_INTERVAL then  -- Report the energy consumption and production periodically
-            local current_consumption_report = device:get_latest_state("main", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
+        if (os.time() - last_energy_report) >= config.EDGE_CHILD_ENERGY_REPORT_INTERVAL then  -- Report the energy net, consumption and production periodically
+            local current_net_positive_report = device:get_latest_state("main", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
+            local current_consumption_report = device:get_latest_state("consumptionMeter", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
             local current_production_report = device:get_latest_state("productionMeter", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
+            local current_net_negative_report = device:get_latest_state("surplus", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
 
-            -- Calculate delta consumption and production energy
+            -- Calculate delta net, consumption and production energy
+            local delta_net_positive_report = 0.0
+            if current_net_positive_report ~= nil then
+                delta_net_positive_report = math.max((activeEnergyNetPositive * 1000) - current_net_positive_report.energy, 0.0)
+            end
+
             local delta_consumption_energy = 0.0
             if current_consumption_report ~= nil then
                 delta_consumption_energy = math.max((activeEnergyImportTotal * 1000) - current_consumption_report.energy, 0.0)
@@ -279,10 +153,17 @@ local function refresh_energy_meter(driver, device, values)
                 delta_production_energy = math.max((activeEnergyExportTotal * 1000) - current_production_report.energy, 0.0)
             end
 
-            -- Refresh Power Consumption / Production Report
-            log.trace("refresh_energy_meter(): Refreshing Power Consumption / Production Report, dni = " .. dni)
-            device.profile.components["main"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyImportTotal * 1000, deltaEnergy=delta_consumption_energy}))
+            local delta_net_negative_report = 0.0
+            if current_net_negative_report ~= nil then
+                delta_net_negative_report = math.max((activeEnergyNetNegative * 1000) - current_net_negative_report.energy, 0.0)
+            end
+
+            -- Refresh Power Net Positive, Consumption, Production & Net Negative Report
+            log.trace("refresh_energy_meter(): Refreshing Power Net Positive, Consumption, Production & Net Negative Report, dni = " .. dni)
+            device.profile.components["main"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyNetPositive * 1000, deltaEnergy=delta_net_positive_report}))
+            device.profile.components["consumptionMeter"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyImportTotal * 1000, deltaEnergy=delta_consumption_energy}))
             device.profile.components["productionMeter"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyExportTotal * 1000, deltaEnergy=delta_production_energy}))
+            device.profile.components["surplus"]:emit_event(caps.powerConsumptionReport.powerConsumption({energy=activeEnergyNetNegative * 1000, deltaEnergy=delta_net_negative_report}))
 
             -- Save date of the last consumption
             local current_energy_report = last_energy_report + config.EDGE_CHILD_ENERGY_REPORT_INTERVAL
@@ -294,6 +175,55 @@ local function refresh_energy_meter(driver, device, values)
         else
             log.debug("refresh_energy_meter(): " .. config.EDGE_CHILD_ENERGY_REPORT_INTERVAL .. " seconds haven't elapsed yet! Last consumption was at " .. last_energy_report .. ", dni = " .. dni)
         end
+    end
+
+    return true
+end
+
+local function refresh_auxiliary_contact(driver, device, values)
+    local dni = utils.get_dni_from_device(device)
+    log.info("refresh_auxiliary_contact(): Refreshing data of Auxiliary Contact, dni = " .. dni)
+
+    -- Refresh Contact Sensor
+    local isClosed = values.isClosed
+
+    if isClosed ~= nil then
+        log.trace("refresh_auxiliary_contact(): Refreshing Switch, dni = " .. dni)
+
+        if isClosed == 1 then
+            isClosed = true
+        else
+            isClosed = false
+        end
+
+        if isClosed then
+            device:emit_event(caps.switch.switch.on())
+        else
+            device:emit_event(caps.switch.switch.off())
+        end
+    end
+
+    return true
+end
+
+local function refresh_output_module(driver, device, values)
+    local dni = utils.get_dni_from_device(device)
+    log.info("refresh_output_module(): Refreshing data of Output Module, dni = " .. dni)
+
+    -- Refresh Switch
+    local isClosed = values.isClosed
+    log.trace("refresh_output_module(): Refreshing Switch, dni = " .. dni)
+
+    if isClosed == 1 then
+        isClosed = true
+    else
+        isClosed = false
+    end
+
+    if isClosed then
+        device:emit_event(caps.switch.switch.on())
+    else
+        device:emit_event(caps.switch.switch.off())
     end
 
     return true
@@ -425,7 +355,7 @@ function device_refresher.refresh_device(driver, device, values)
 
     local refresh_methods = {
         [utils.get_thing_exact_type(config.EDGE_CHILD_CURRENT_SENSOR_TYPE)]      = refresh_current_sensor,
-        [utils.get_thing_exact_type(config.EDGE_CHILD_ENERGY_METER_MODULE_TYPE)] = refresh_energy_meter_module,
+        [utils.get_thing_exact_type(config.EDGE_CHILD_ENERGY_METER_MODULE_TYPE)] = refresh_energy_meter,
         [utils.get_thing_exact_type(config.EDGE_CHILD_AUXILIARY_CONTACT_TYPE)]   = refresh_auxiliary_contact,
         [utils.get_thing_exact_type(config.EDGE_CHILD_OUTPUT_MODULE_TYPE)]       = refresh_output_module,
         [utils.get_thing_exact_type(config.EDGE_CHILD_ENERGY_METER_TYPE)]        = refresh_energy_meter,
