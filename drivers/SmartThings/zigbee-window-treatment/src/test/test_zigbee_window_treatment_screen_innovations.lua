@@ -45,7 +45,14 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)end
+  test.mock_device.add_test_device(mock_device)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
+end
 
 test.set_test_init_function(test_init)
 

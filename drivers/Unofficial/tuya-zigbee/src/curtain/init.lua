@@ -17,9 +17,11 @@ local clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
 local device_management = require "st.zigbee.device_management"
 local tuya_utils = require "tuya_utils"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
 local Basic = clusters.Basic
 local packet_id = 0
+
+local PRESET_LEVEL = 50
+local PRESET_LEVEL_KEY = "_presetLevel"
 
 local FINGERPRINTS = {
   { mfr = "_TZE284_nladmfvf", model = "TS0601"}
@@ -32,6 +34,23 @@ local function is_tuya_curtain(opts, driver, device)
     end
   end
   return false
+end
+
+local function init_handler(self, device)
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+      device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+
+    -- These should only ever be nil once (and at the same time) for already-installed devices
+    -- It can be removed after migration is complete
+    device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+
+    local preset_position = device:get_field(PRESET_LEVEL_KEY) or
+      (device.preferences ~= nil and device.preferences.presetPosition) or
+      PRESET_LEVEL
+
+    device:emit_event(capabilities.windowShadePreset.position(preset_position, { visibility = {displayed = false}}))
+    device:set_field(PRESET_LEVEL_KEY, preset_position, {persist = true})
+  end
 end
 
 local do_configure = function(driver, device)
@@ -97,9 +116,17 @@ local function window_shade_level(driver, device, command)
 end
 
 local function window_shade_preset(driver, device)
-  local level = device.preferences and device.preferences.presetPosition or window_preset_defaults.PRESET_LEVEL
+  local level = device:get_latest_state("main", "windowShadePreset", "position") or
+    device:get_field(PRESET_LEVEL_KEY) or
+    (device.preferences ~= nil and device.preferences.presetPosition) or
+    PRESET_LEVEL
   tuya_utils.send_tuya_command(device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00'..string.pack(">I2", level), packet_id)
   packet_id = increase_packet_id(packet_id)
+end
+
+local function set_preset_position_cmd(driver, device, command)
+  device:emit_component_event({id = command.component}, capabilities.windowShadePreset.position(command.args.position))
+  device:set_field(PRESET_LEVEL_KEY, command.args.position, {persist = true})
 end
 
 local function tuya_cluster_handler(driver, device, zb_rx)
@@ -127,6 +154,7 @@ end
 local tuya_curtain_driver = {
   NAME = "tuya curtain",
   lifecycle_handlers = {
+    init = init_handler,
     added = device_added,
     infoChanged = device_info_changed,
     doConfigure = do_configure
@@ -141,7 +169,8 @@ local tuya_curtain_driver = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level
     },
     [capabilities.windowShadePreset.ID] = {
-      [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_preset
+      [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_preset,
+      [capabilities.windowShadePreset.commands.setPresetPosition.NAME] = set_preset_position_cmd
     }
   },
   zigbee_handlers = {
