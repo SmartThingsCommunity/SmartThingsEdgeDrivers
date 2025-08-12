@@ -1,4 +1,4 @@
-name: media-video-speaker
+name: media-video-player-speaker
 components:
 - id: main
   capabilities:
@@ -26,4 +26,3 @@ components:
     version: 1
   categories:
   - name: Speaker
-  
