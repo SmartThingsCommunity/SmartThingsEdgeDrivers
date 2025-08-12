@@ -1964,6 +1964,9 @@ local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / 1000
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W" }))
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("powerMeter","power")
+    end
   end
 end
 
