@@ -93,11 +93,7 @@ function device_manager.refresh(driver, device)
         status = status or "nil"
         log.error("device_manager.refresh(): Failed to get device by id, dni = " .. dni .. ", err = " .. err .. ", status = " .. status)
 
-        if status == 404 then
-            log.info("device_manager.refresh(): Deleted, dni = " .. dni)
-
-            device:offline()
-        end
+        device:offline()
 
         return
     end

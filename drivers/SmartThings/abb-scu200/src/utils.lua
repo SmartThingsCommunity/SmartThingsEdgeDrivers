@@ -80,9 +80,16 @@ end
 
 -- Method for getting the thing profile reference
 function utils.get_thing_profile_ref(thing_info)
+    if thing_info.type == utils.get_thing_exact_type(config.EDGE_CHILD_CURRENT_SENSOR_TYPE) then
+        if thing_info.isExport then
+            return config.EDGE_CHILD_CURRENT_SENSOR_PRODUCTION_PROFILE
+        else
+            return config.EDGE_CHILD_CURRENT_SENSOR_CONSUMPTION_PROFILE
+        end
+    end
+
     local thing_profiles = {
-        [utils.get_thing_exact_type(config.EDGE_CHILD_CURRENT_SENSOR_TYPE)]      = config.EDGE_CHILD_CURRENT_SENSOR_PROFILE,
-        [utils.get_thing_exact_type(config.EDGE_CHILD_ENERGY_METER_MODULE_TYPE)] = config.EDGE_CHILD_ENERGY_METER_MODULE_PROFILE,
+        [utils.get_thing_exact_type(config.EDGE_CHILD_ENERGY_METER_MODULE_TYPE)] = config.EDGE_CHILD_ENERGY_METER_PROFILE,
         [utils.get_thing_exact_type(config.EDGE_CHILD_AUXILIARY_CONTACT_TYPE)]   = config.EDGE_CHILD_AUXILIARY_CONTACT_PROFILE,
         [utils.get_thing_exact_type(config.EDGE_CHILD_OUTPUT_MODULE_TYPE)]       = config.EDGE_CHILD_OUTPUT_MODULE_PROFILE,
         [utils.get_thing_exact_type(config.EDGE_CHILD_ENERGY_METER_TYPE)]        = config.EDGE_CHILD_ENERGY_METER_PROFILE,
