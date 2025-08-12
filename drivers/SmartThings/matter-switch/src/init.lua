@@ -940,7 +940,10 @@ end
 
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
-    local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
+    local level = ib.data.value
+    if level > 0 then
+      level = math.max(1, utils.round(level / 254.0 * 100))
+    end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
     if type(device.register_native_capability_attr_handler) == "function" then
       device:register_native_capability_attr_handler("switchLevel", "level")
