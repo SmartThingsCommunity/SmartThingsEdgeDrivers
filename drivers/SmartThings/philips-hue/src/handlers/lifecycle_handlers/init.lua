@@ -135,15 +135,12 @@ local valid_migration_kwargs = {
   "force_migrate_type"
 }
 function LifecycleHandlers.migrate_device(driver, device, ...)
+  local migration_kwargs = select(-1, ...)
   local opts = {}
-  local args = table.pack(...)
-  if #args > 0 then
-    local migration_kwargs = select(-1, ...)
-    if type(migration_kwargs) == "table" then
-      for _, key in ipairs(valid_migration_kwargs) do
-        if migration_kwargs[key] then
-          opts[key] = migration_kwargs[key]
-        end
+  if type(migration_kwargs) == "table" then
+    for _, key in ipairs(valid_migration_kwargs) do
+      if migration_kwargs[key] then
+        opts[key] = migration_kwargs[key]
       end
     end
   end
