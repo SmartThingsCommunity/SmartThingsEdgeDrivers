@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -84,21 +83,41 @@ local mock_device_variable_speed = test.mock_device.build_test_matter_device({
   }
 })
 
+local supported_key_codes = {
+  "UP",
+  "DOWN",
+  "LEFT",
+  "RIGHT",
+  "SELECT",
+  "BACK",
+  "EXIT",
+  "MENU",
+  "SETTINGS",
+  "HOME",
+  "NUMBER0",
+  "NUMBER1",
+  "NUMBER2",
+  "NUMBER3",
+  "NUMBER4",
+  "NUMBER5",
+  "NUMBER6",
+  "NUMBER7",
+  "NUMBER8",
+  "NUMBER9"
+}
 
 local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.MediaPlayback.attributes.CurrentState
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device))
-    end
-  end
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  subscribe_request:merge(cluster_subscribe_list[2]:subscribe(mock_device))
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -116,41 +135,16 @@ local function test_init()
   )
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
-      "main", capabilities.keypadInput.supportedKeyCodes({
-        "UP",
-        "DOWN",
-        "LEFT",
-        "RIGHT",
-        "SELECT",
-        "BACK",
-        "EXIT",
-        "MENU",
-        "SETTINGS",
-        "HOME",
-        "NUMBER0",
-        "NUMBER1",
-        "NUMBER2",
-        "NUMBER3",
-        "NUMBER4",
-        "NUMBER5",
-        "NUMBER6",
-        "NUMBER7",
-        "NUMBER8",
-        "NUMBER9"
-      })
+      "main", capabilities.keypadInput.supportedKeyCodes(supported_key_codes)
     )
   )
 
   test.mock_device.add_test_device(mock_device_variable_speed)
-  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_variable_speed)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    print(i)
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_variable_speed))
-    end
-    print(subscribe_request)
-  end
+  test.socket.device_lifecycle:__queue_receive({ mock_device_variable_speed.id, "added" })
+
   test.socket.device_lifecycle:__queue_receive({ mock_device_variable_speed.id, "init" })
+  subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_variable_speed)
+  subscribe_request:merge(cluster_subscribe_list[2]:subscribe(mock_device_variable_speed))
   test.socket.matter:__expect_send({mock_device_variable_speed.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_variable_speed.id, "doConfigure" })
@@ -168,28 +162,7 @@ local function test_init()
   )
   test.socket.capability:__expect_send(
     mock_device_variable_speed:generate_test_message(
-      "main", capabilities.keypadInput.supportedKeyCodes({
-        "UP",
-        "DOWN",
-        "LEFT",
-        "RIGHT",
-        "SELECT",
-        "BACK",
-        "EXIT",
-        "MENU",
-        "SETTINGS",
-        "HOME",
-        "NUMBER0",
-        "NUMBER1",
-        "NUMBER2",
-        "NUMBER3",
-        "NUMBER4",
-        "NUMBER5",
-        "NUMBER6",
-        "NUMBER7",
-        "NUMBER8",
-        "NUMBER9"
-      })
+      "main", capabilities.keypadInput.supportedKeyCodes(supported_key_codes)
     )
   )
 end
@@ -637,28 +610,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message(
           "main",
-          capabilities.keypadInput.supportedKeyCodes({
-            "UP",
-            "DOWN",
-            "LEFT",
-            "RIGHT",
-            "SELECT",
-            "BACK",
-            "EXIT",
-            "MENU",
-            "SETTINGS",
-            "HOME",
-            "NUMBER0",
-            "NUMBER1",
-            "NUMBER2",
-            "NUMBER3",
-            "NUMBER4",
-            "NUMBER5",
-            "NUMBER6",
-            "NUMBER7",
-            "NUMBER8",
-            "NUMBER9",
-          })
+          capabilities.keypadInput.supportedKeyCodes(supported_key_codes)
         )
       )
 
@@ -688,28 +640,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device_variable_speed:generate_test_message(
           "main",
-          capabilities.keypadInput.supportedKeyCodes({
-            "UP",
-            "DOWN",
-            "LEFT",
-            "RIGHT",
-            "SELECT",
-            "BACK",
-            "EXIT",
-            "MENU",
-            "SETTINGS",
-            "HOME",
-            "NUMBER0",
-            "NUMBER1",
-            "NUMBER2",
-            "NUMBER3",
-            "NUMBER4",
-            "NUMBER5",
-            "NUMBER6",
-            "NUMBER7",
-            "NUMBER8",
-            "NUMBER9",
-          })
+          capabilities.keypadInput.supportedKeyCodes(supported_key_codes)
         )
       )
 
