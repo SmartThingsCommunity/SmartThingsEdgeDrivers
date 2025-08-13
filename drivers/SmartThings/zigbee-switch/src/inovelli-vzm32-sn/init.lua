@@ -21,6 +21,7 @@ local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
 local configurations = require "configurations"
 local OccupancySensing = clusters.OccupancySensing
+local OTAUpgrade = clusters.OTAUpgrade
 
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
