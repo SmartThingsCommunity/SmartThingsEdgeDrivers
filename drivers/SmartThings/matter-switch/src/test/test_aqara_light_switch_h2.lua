@@ -17,11 +17,8 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
-
 local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
-
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1
