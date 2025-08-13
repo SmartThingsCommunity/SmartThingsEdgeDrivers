@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 local test = require "integration_test"
+test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"

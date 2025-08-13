@@ -56,6 +56,8 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LaundryWasherMode.attributes.CurrentMode,
@@ -76,8 +78,9 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
   local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
   read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())

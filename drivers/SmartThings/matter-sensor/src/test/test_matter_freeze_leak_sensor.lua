@@ -19,72 +19,61 @@ local clusters = require "st.matter.clusters"
 clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 
 local mock_device_freeze_leak = test.mock_device.build_test_matter_device({
-    profile = t_utils.get_profile_definition("freeze-leak-fault-freezeSensitivity-leakSensitivity.yml"),
-    manufacturer_info = {
-      vendor_id = 0x0000,
-      product_id = 0x0000,
+  profile = t_utils.get_profile_definition("freeze-leak-fault-freezeSensitivity-leakSensitivity.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
     },
-    endpoints = {
-      {
-        endpoint_id = 0,
-        clusters = {
-          {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
-        },
-        device_types = {
-          {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
-        }
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER", feature_map = 31},
       },
-      {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER", feature_map = 31},
-        },
-        device_types = {
-          {device_type_id = 0x0043, device_type_revision = 1} -- Water Leak Detector
-        }
+      device_types = {
+        {device_type_id = 0x0043, device_type_revision = 1} -- Water Leak Detector
+      }
+    },
+    {
+      endpoint_id = 2,
+      clusters = {
+        {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER", feature_map = 31},
       },
-      {
-        endpoint_id = 2,
-        clusters = {
-          {cluster_id = clusters.BooleanState.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.BooleanStateConfiguration.ID, cluster_type = "SERVER", feature_map = 31},
-        },
-        device_types = {
-          {device_type_id = 0x0041, device_type_revision = 1} -- Water Freeze Detector
-        }
+      device_types = {
+        {device_type_id = 0x0041, device_type_revision = 1} -- Water Freeze Detector
       }
     }
+  }
 })
 
-local subscribed_attributes = {
-  clusters.BooleanState.attributes.StateValue,
-  clusters.BooleanStateConfiguration.attributes.SensorFault,
-}
-
 local function test_init_freeze_leak()
-  local subscribe_request = subscribed_attributes[1]:subscribe(mock_device_freeze_leak)
-  for i, cluster in ipairs(subscribed_attributes) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_freeze_leak))
-    end
-  end
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_freeze_leak)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_freeze_leak.id, "added" })
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_freeze_leak.id, "init" })
   test.socket.matter:__expect_send({mock_device_freeze_leak.id, clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(mock_device_freeze_leak, 1)})
   test.socket.matter:__expect_send({mock_device_freeze_leak.id, clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(mock_device_freeze_leak, 2)})
+  local subscribe_request = clusters.BooleanState.attributes.StateValue:subscribe(mock_device_freeze_leak)
+  subscribe_request:merge(clusters.BooleanStateConfiguration.attributes.SensorFault:subscribe(mock_device_freeze_leak))
   test.socket.matter:__expect_send({mock_device_freeze_leak.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device_freeze_leak)
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_freeze_leak.id, "doConfigure" })
+  mock_device_freeze_leak:expect_metadata_update({ profile = "freeze-leak-fault-freezeSensitivity-leakSensitivity" })
+  mock_device_freeze_leak:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init_freeze_leak)
-
-test.register_coroutine_test(
-  "Test profile change on init for Freeze and Leak combined device type",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_freeze_leak.id, "doConfigure" })
-    mock_device_freeze_leak:expect_metadata_update({ profile = "freeze-leak-fault-freezeSensitivity-leakSensitivity" })
-    mock_device_freeze_leak:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end,
-  { test_init = test_init_freeze_leak }
-)
 
 test.register_message_test(
   "Boolean state freeze detection reports should generate correct messages",

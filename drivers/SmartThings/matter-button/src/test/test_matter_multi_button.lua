@@ -113,7 +113,7 @@ end
 
 test.set_test_init_function(test_init)
 
--- this one is failing because it expects added or 
+-- this one is failing because it expects added or
 test.register_message_test(
   "Handle single press sequence, no hold", {
   {
