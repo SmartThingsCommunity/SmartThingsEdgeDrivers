@@ -186,6 +186,15 @@ local function configure_illuminance_reporting(device)
   ))
 end
 
+local function send_ota_image_notify(device)
+  local PAYLOAD_TYPE = 0x00
+  local QUERY_JITTER = 100
+  local MFG_CODE     = MFG_CODE
+  local IMAGE_TYPE   = 0xFFFF
+  local NEW_VERSION  = 0xFFFFFFFF
+  device:send(OTAUpgrade.commands.ImageNotify(device, PAYLOAD_TYPE, QUERY_JITTER, MFG_CODE, IMAGE_TYPE, NEW_VERSION))
+end
+
 local function info_changed(driver, device, event, args)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     local time_diff = 3
@@ -241,6 +250,8 @@ local do_configure = function(self, device)
     device:refresh()
     device:configure()
     configure_illuminance_reporting(device)
+    send_ota_image_notify(device)
+
 
     device:send(device_management.build_bind_request(device, PRIVATE_CLUSTER_ID, self.environment_info.hub_zigbee_eui, 2)) -- Bind device for button presses.
     device:send(device_management.build_bind_request(device, OccupancySensing.ID, self.environment_info.hub_zigbee_eui))
