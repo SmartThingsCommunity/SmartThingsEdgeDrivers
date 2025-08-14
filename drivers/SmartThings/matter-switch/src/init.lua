@@ -1325,8 +1325,12 @@ local function device_added(driver, device)
     device:send(req)
   end
 
-  -- call device init in case init is not called after added due to device caching
-  device_init(driver, device)
+
+  -- The device init event is guaranteed in FW versions 58+, so this is only needed for older hubs
+  if version.rpc < 10 then
+    -- call device init in case init is not called after added due to device caching
+    device_init(driver, device)
+  end
 end
 
 local function temperature_attr_handler(driver, device, ib, response)
