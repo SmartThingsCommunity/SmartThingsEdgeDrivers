@@ -81,7 +81,7 @@ end
 -- Method for getting the thing profile reference
 function utils.get_thing_profile_ref(thing_info)
     if thing_info.type == utils.get_thing_exact_type(config.EDGE_CHILD_CURRENT_SENSOR_TYPE) then
-        if thing_info.isExport then
+        if thing_info.properties.isExport then
             return config.EDGE_CHILD_CURRENT_SENSOR_PRODUCTION_PROFILE
         else
             return config.EDGE_CHILD_CURRENT_SENSOR_CONSUMPTION_PROFILE
