@@ -101,6 +101,9 @@ local function try_add_thing(driver, parent_device, thing_dni, thing_info)
     if thing_info.type == utils.get_thing_exact_type(config.EDGE_CHILD_WATER_METER_TYPE) or thing_info.type == utils.get_thing_exact_type(config.EDGE_CHILD_GAS_METER_TYPE) then
         log.warn("try_add_thing(): Not supported thing type: " .. thing_info.type)
         return false
+    elseif thing_info.type == utils.get_thing_exact_type(config.EDGE_CHILD_CURRENT_SENSOR_TYPE) and thing_info.properties.isExport then
+        log.warn("try_add_thing(): Current sensor with production data is not supported")
+        return false
     end
 
     local profile_ref = utils.get_thing_profile_ref(thing_info)
