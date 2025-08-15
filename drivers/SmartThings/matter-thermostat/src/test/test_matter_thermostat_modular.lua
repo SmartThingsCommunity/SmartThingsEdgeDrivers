@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
@@ -26,6 +27,43 @@ local mock_device_basic = test.mock_device.build_test_matter_device({
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
+        {
+          cluster_id = clusters.Thermostat.ID,
+          cluster_revision=5,
+          cluster_type="SERVER",
+          feature_map=3, -- Heat and Cool features
+        },
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1}, -- Thermostat
+      }
+    }
+  }
+})
+
+local mock_device_speed_percent = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("thermostat-modular.yml"),
+  manufacturer_info = {
+    vendor_id = 0x1575,
+    product_id = 0x0001,
   },
   endpoints = {
     {
@@ -95,6 +133,31 @@ local function test_init()
   subscribe_request_basic = initialize_mock_device(mock_device_basic, subscribed_attributes)
 end
 
+local function test_init_speed_percent()
+  local subscribed_attributes_speed_percent = {
+    clusters.Thermostat.attributes.LocalTemperature,
+    clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+    clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+    clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+    clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+    clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
+    clusters.Thermostat.attributes.SystemMode,
+    clusters.Thermostat.attributes.ThermostatRunningState,
+    clusters.Thermostat.attributes.ControlSequenceOfOperation,
+    clusters.TemperatureMeasurement.attributes.MeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+    clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+    clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+    clusters.FanControl.attributes.FanMode,
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.PercentCurrent,
+    clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.PowerSource.attributes.BatChargeLevel,
+  }
+  initialize_mock_device(mock_device_speed_percent, subscribed_attributes_speed_percent)
+end
+
 -- run the profile configuration tests
 local function test_thermostat_device_type_update_modular_profile(generic_mock_device, expected_metadata, subscribe_request)
   test.socket.device_lifecycle:__queue_receive({generic_mock_device.id, "doConfigure"})
@@ -130,6 +193,23 @@ test.register_coroutine_test(
     test_thermostat_device_type_update_modular_profile(mock_device_basic, expected_metadata, subscribe_request_basic)
   end,
   { test_init = test_init }
+)
+
+test.register_coroutine_test(
+  "Specific devices support the fanSpeedPercent capability",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_speed_percent.id,
+        clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device_speed_percent, 1, 29)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_speed_percent:generate_test_message("main", capabilities.fanSpeedPercent.percent(29))
+    )
+  end,
+  { test_init = test_init_speed_percent }
 )
 
 -- run tests
