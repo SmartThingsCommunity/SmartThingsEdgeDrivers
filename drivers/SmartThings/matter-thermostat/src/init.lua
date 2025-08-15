@@ -1020,6 +1020,7 @@ local function match_modular_profile_thermostat(driver, device)
     for _, p in ipairs(THERMOSTAT_SUPPORTED_PERCENT_PRODUCTS) do
       if device.manufacturer_info.vendor_id == p[1] and device.manufacturer_info.product_id == p[2] then
         table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
+        break
       end
     end
   end
