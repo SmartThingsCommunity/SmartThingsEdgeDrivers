@@ -35,7 +35,6 @@ if version.api < 13 then
   clusters.Global = require "Global"
 end
 
-local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local RUN_MODE_SUPPORTED_MODES = "__run_mode_supported_modes"
 local CURRENT_RUN_MODE = "__current_run_mode"
 local CLEAN_MODE_SUPPORTED_MODES = "__clean_mode_supported_modes"
@@ -193,7 +192,6 @@ local function update_supported_arguments(device, ep, current_run_mode, current_
 
   -- Set Supported Operating State Commands
   local cap_op_cmds = capabilities.robotCleanerOperatingState.commands
-  local cap_op_enum = capabilities.robotCleanerOperatingState.operatingState
   local supported_op_commands = {}
 
   if can_send_state_command(device, cap_op_cmds.goHome.NAME, current_state, nil) == true then
@@ -209,14 +207,6 @@ local function update_supported_arguments(device, ep, current_run_mode, current_
     supported_op_commands, {visibility = {displayed = false}}
   )
   device:emit_event_for_endpoint(ep, event)
-
-  -- Check whether non-idle mode can be selected or not
-  local can_be_non_idle = false
-  if current_tag == clusters.RvcRunMode.types.ModeTag.IDLE and
-    (current_state == cap_op_enum.stopped.NAME or current_state == cap_op_enum.paused.NAME or
-     current_state == cap_op_enum.docked.NAME or current_state == cap_op_enum.charging.NAME) then
-      can_be_non_idle = true
-  end
 end
 
 -- Matter Handlers --
