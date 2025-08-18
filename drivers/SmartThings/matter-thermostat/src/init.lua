@@ -985,14 +985,16 @@ local function match_modular_profile_air_purifer(driver, device)
 
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
-  local total_supported_capabilities = optional_supported_component_capabilities
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airPurifierFanMode.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.fanSpeedPercent.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
+  if version.api < 15 and version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airPurifierFanMode.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.fanSpeedPercent.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+    device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
 end
 
 local function match_modular_profile_thermostat(driver, device)
@@ -1035,14 +1037,16 @@ local function match_modular_profile_thermostat(driver, device)
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
-  local total_supported_capabilities = optional_supported_component_capabilities
-  table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
-  table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
-  table.insert(main_component_capabilities, capabilities.refresh.ID)
-  table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
+  if version.api < 15 and version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+    table.insert(main_component_capabilities, capabilities.refresh.ID)
+    table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+    device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
 end
 
 local function match_modular_profile_room_ac(driver, device)
@@ -1086,15 +1090,17 @@ local function match_modular_profile_room_ac(driver, device)
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
-  local total_supported_capabilities = optional_supported_component_capabilities
-  table.insert(main_component_capabilities, capabilities.switch.ID)
-  table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
-  table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
-  table.insert(main_component_capabilities, capabilities.refresh.ID)
-  table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
+  if version.api < 15 and version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(main_component_capabilities, capabilities.switch.ID)
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+    table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
+    table.insert(main_component_capabilities, capabilities.refresh.ID)
+    table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+    device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
 end
 
 local function match_modular_profile(driver, device, device_type)

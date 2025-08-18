@@ -401,13 +401,15 @@ local function match_modular_profile(driver, device)
 
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
-  local total_supported_capabilities = optional_supported_component_capabilities
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airQualityHealthConcern.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
+  if version.api < 15 and version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airQualityHealthConcern.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+    device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
 end
 
 local function do_configure(driver, device)
