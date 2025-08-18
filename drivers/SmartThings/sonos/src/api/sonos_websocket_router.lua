@@ -44,6 +44,16 @@ cosock.spawn(function()
       if wss ~= nil then
         log.trace(string.format("Closing websocket for player %s", unique_key))
         wss:close(CloseCode.normal(), "Shutdown requested by client")
+        local ws_id = wss.id
+        for _, uuid in ipairs((listener_ids_for_socket[ws_id] or {})) do
+            local listener = listeners[uuid]
+
+            if listener ~= nil then
+              listener.on_close(uuid)
+            end
+            listeners[uuid] = nil
+        end
+        listener_ids_for_socket[ws_id] = nil
       end
       websockets[unique_key] = nil
     end
@@ -292,17 +302,7 @@ function SonosWebSocketRouter.close_socket_for_player(target)
   local ws = websockets[target]
 
   if ws ~= nil then
-    local ws_id = ws.id
     table.insert(pending_close, target)
-    for _, uuid in ipairs((listener_ids_for_socket[ws_id] or {})) do
-      local listener = listeners[uuid]
-
-      if listener ~= nil then
-        listener.on_close(uuid)
-      end
-      listeners[uuid] = nil
-    end
-    listener_ids_for_socket[ws_id] = nil
     return true
   else
     return nil, string.format("No currently open connection for %s", target)
