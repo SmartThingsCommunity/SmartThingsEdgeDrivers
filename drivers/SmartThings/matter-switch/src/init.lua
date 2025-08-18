@@ -1206,6 +1206,9 @@ local function active_power_handler(driver, device, ib, response)
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     if ib.endpoint_id ~= 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+      if type(device.register_native_capability_attr_handler) == "function" then
+        device:register_native_capability_attr_handler("powerMeter","power")
+      end
     else
       -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
       device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))

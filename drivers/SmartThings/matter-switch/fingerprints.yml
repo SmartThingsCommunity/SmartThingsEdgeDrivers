@@ -2755,6 +2755,11 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xAB05
     deviceProfileName: switch-binary
+  - id: "5020/903"
+    deviceLabel: Zemismart M1 Hub
+    vendorId: 0x139C
+    productId: 0x0387
+    deviceProfileName: matter-bridge
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"

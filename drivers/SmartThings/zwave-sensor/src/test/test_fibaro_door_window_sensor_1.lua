@@ -255,6 +255,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.open())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor1.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
@@ -271,6 +279,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor1.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
