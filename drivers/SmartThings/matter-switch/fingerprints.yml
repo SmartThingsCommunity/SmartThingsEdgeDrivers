@@ -241,7 +241,7 @@ matterManufacturer:
     deviceLabel: Eve Light Switch
     vendorId: 0x130A
     productId: 0x0043
-    deviceProfileName: light-binary
+    deviceProfileName: switch-binary
 
 #Ezviz
   - id: "5172/4096"
