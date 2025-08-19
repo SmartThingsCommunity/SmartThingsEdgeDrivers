@@ -25,8 +25,6 @@ if not security_load_success then
   security = nil
 end
 
-local ONE_HOUR_IN_SECONDS = 3600
-
 ---@class SonosDriver: Driver
 ---
 ---@field public datastore table<string, any> driver persistent store
@@ -384,13 +382,6 @@ function SonosDriver:get_oauth_token()
     local now = os.time()
     -- token has not expired yet
     if now < expiration then
-      -- token is expiring soon, so we pre-emptively refresh
-      if math.abs(expiration - now) < ONE_HOUR_IN_SECONDS then
-        local result, err = security.get_sonos_oauth()
-        if not result then
-          log.warn(string.format("Error requesting OAuth token via Security API: %s", err))
-        end
-      end
       return self.oauth.token
     else
       return nil, "token expired"
