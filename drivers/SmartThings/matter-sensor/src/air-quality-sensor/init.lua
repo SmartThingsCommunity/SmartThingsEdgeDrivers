@@ -401,8 +401,8 @@ local function match_modular_profile(driver, device)
 
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW. 
-  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.  
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
   if version.api < 15 or version.rpc < 9 then
     -- add mandatory capabilities for subscription
     local total_supported_capabilities = optional_supported_component_capabilities
