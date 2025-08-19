@@ -125,7 +125,7 @@ matterManufacturer:
     productId: 0x0010
     deviceProfileName: window-covering  
   - id: "5207/19"
-    deviceLabel: WISTAR WSERD60 Smart Tubular Motor
+    deviceLabel: WISTAR WSER60 Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0013
     deviceProfileName: window-covering  
