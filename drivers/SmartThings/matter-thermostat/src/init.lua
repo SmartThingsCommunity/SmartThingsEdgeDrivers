@@ -985,7 +985,9 @@ local function match_modular_profile_air_purifer(driver, device)
 
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  if version.api < 15 and version.rpc < 9 then
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW. 
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.  
+  if version.api < 15 or version.rpc < 9 then
     -- add mandatory capabilities for subscription
     local total_supported_capabilities = optional_supported_component_capabilities
     table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airPurifierFanMode.ID)
@@ -1037,7 +1039,9 @@ local function match_modular_profile_thermostat(driver, device)
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  if version.api < 15 and version.rpc < 9 then
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW. 
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.  
+  if version.api < 15 or version.rpc < 9 then
     -- add mandatory capabilities for subscription
     local total_supported_capabilities = optional_supported_component_capabilities
     table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
@@ -1090,7 +1094,9 @@ local function match_modular_profile_room_ac(driver, device)
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  if version.api < 15 and version.rpc < 9 then
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW. 
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.  
+  if version.api < 15 or version.rpc < 9 then
     -- add mandatory capabilities for subscription
     local total_supported_capabilities = optional_supported_component_capabilities
     table.insert(main_component_capabilities, capabilities.switch.ID)
