@@ -539,25 +539,34 @@ local function get_endpoints_for_dt(device, device_type)
 end
 
 local function get_device_type(device)
-  local device_type_found = {}
+  -- For cases where a device has multiple device types, this list indicates which
+  -- device type will be the "main" device type for purposes of selecting a profile
+  -- with an appropriate category. This is done to promote consistency between
+  -- devices with similar device type compositions that may report their device types
+  -- listed in different orders
+  local device_type_priority = {
+    [RAC_DEVICE_TYPE_ID] = 1,
+    [AP_DEVICE_TYPE_ID] = 2,
+    [THERMOSTAT_DEVICE_TYPE_ID] = 3,
+    [FAN_DEVICE_TYPE_ID] = 4,
+    [WATER_HEATER_DEVICE_TYPE_ID] = 5,
+    [HEAT_PUMP_DEVICE_TYPE_ID] = 6
+  }
+
+  local main_device_type = false
+
   for _, ep in ipairs(device.endpoints) do
     if ep.device_types ~= nil then
       for _, dt in ipairs(ep.device_types) do
-        device_type_found[dt.device_type_id] = true
+        if not device_type_priority[main_device_type] or (device_type_priority[dt.device_type_id] and
+          device_type_priority[dt.device_type_id] < device_type_priority[main_device_type]) then
+          main_device_type = dt.device_type_id
+        end
       end
     end
   end
 
-  for _, id in ipairs({
-    RAC_DEVICE_TYPE_ID,
-    AP_DEVICE_TYPE_ID,
-    THERMOSTAT_DEVICE_TYPE_ID,
-    FAN_DEVICE_TYPE_ID,
-    WATER_HEATER_DEVICE_TYPE_ID,
-    HEAT_PUMP_DEVICE_TYPE_ID
-  }) do if device_type_found[id] then return id end end
-
-  return false
+  return main_device_type
 end
 
 local AIR_QUALITY_MAP = {
@@ -1088,17 +1097,14 @@ local function match_modular_profile_room_ac(driver, device)
   device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
 end
 
-local function match_modular_profile(driver, device)
+local function match_modular_profile(driver, device, device_type)
   if profiling_data_still_required(device) then return end
-
-  local device_type = get_device_type(device)
-  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
 
   if device_type == AP_DEVICE_TYPE_ID then
     match_modular_profile_air_purifer(driver, device)
   elseif device_type == RAC_DEVICE_TYPE_ID then
     match_modular_profile_room_ac(driver, device)
-  elseif #thermostat_eps > 0 then
+  elseif device_type == THERMOSTAT_DEVICE_TYPE_ID then
     match_modular_profile_thermostat(driver, device)
   else
     device.log.warn_with({hub_logs=true}, "Device type is not supported by modular profile in thermostat driver, trying profile switch instead")
@@ -1113,18 +1119,22 @@ local function match_modular_profile(driver, device)
 end
 
 local function supports_modular_profile(device)
+  local supported_modular_device_types = {
+    AP_DEVICE_TYPE_ID,
+    RAC_DEVICE_TYPE_ID,
+    THERMOSTAT_DEVICE_TYPE_ID,
+  }
   local device_type = get_device_type(device)
-  local thermostat_eps = device:get_endpoints(clusters.Thermostat.ID)
-
-  return version.api >= 14 and version.rpc >= 8 and
-    (device_type == AP_DEVICE_TYPE_ID or
-     device_type == RAC_DEVICE_TYPE_ID or
-    (device_type == false and #thermostat_eps > 0))
+  if not tbl_contains(supported_modular_device_types, device_type) then
+    device_type = false
+  end
+  return version.api >= 14 and version.rpc >= 8 and device_type
 end
 
 function match_profile(driver, device)
-  if supports_modular_profile(device) then
-    match_modular_profile(driver, device)
+  local modular_device_type = supports_modular_profile(device)
+  if modular_device_type then
+    match_modular_profile(driver, device, modular_device_type)
   else
     match_profile_switch(driver, device)
   end
@@ -1954,6 +1964,9 @@ local function active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / 1000
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W" }))
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("powerMeter","power")
+    end
   end
 end
 

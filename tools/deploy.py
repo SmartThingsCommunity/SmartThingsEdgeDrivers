@@ -79,6 +79,9 @@ if response.status_code != 200:
   print("Failed to retrieve channel's current drivers")
   print("Error code: "+str(response.status_code))
   print("Error response: "+response.text)
+  # if we cant get the existing drivers in the channel the bulk upload will
+  # unassign drivers from the channel. Exit to fail the deploy with a fail status
+  exit(1)
 else:
   response_json = json.loads(response.text)["items"]
   for driver in response_json:
@@ -95,6 +98,12 @@ else:
         "driverVersion": driver[VERSION]
       }
     )
+    if driver_info_response.status_code != 200:
+      print("Failed to retrieve detailed driver info for {driver}")
+      print("Error code: " + str(driver_info_response.status_code))
+      print("Error response: "+ driver_info_response.text)
+      exit(1)
+
     driver_info_response_json = json.loads(driver_info_response.text)["items"][0]
     if PACKAGEKEY in driver_info_response_json:
       packageKey = driver_info_response_json[PACKAGEKEY]

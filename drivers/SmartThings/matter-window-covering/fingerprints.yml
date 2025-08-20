@@ -25,6 +25,17 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x0064
     deviceProfileName: window-covering-battery
+  - id: "4874/96"
+    deviceLabel: Eve Shutter Switch
+    vendorId: 0x130A
+    productId: 0x0060
+    deviceProfileName: window-covering
+# Mamaba
+  - id: "4965/4097"
+    deviceLabel: Wi-Fi Curtain
+    vendorId: 0x1365
+    productId: 0x1001
+    deviceProfileName: window-covering
 # SmartWave
   - id: "5376/10001"
     deviceLabel: SmartWave Motorized Roller Shades 100 Blackout Flex
