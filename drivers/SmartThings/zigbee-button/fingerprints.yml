@@ -134,6 +134,31 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SBM300ZB3
     deviceProfileName: three-buttons-battery
+  - id: "ShinaSystem/SBM300ZC1"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC1
+    deviceProfileName: one-button-battery
+  - id: "ShinaSystem/SBM300ZC2"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC2
+    deviceProfileName: two-buttons-battery
+  - id: "ShinaSystem/SBM300ZC3"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC3
+    deviceProfileName: three-buttons-battery
+  - id: "ShinaSystem/SBM300ZC4"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC4
+    deviceProfileName: four-buttons-battery
+  - id: "ShinaSystem/SQM300ZC4"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SQM300ZC4
+    deviceProfileName: four-buttons-battery
   - id: OSRAM/LIGHTIFY Dimming Switch
     deviceLabel: OSRAM Button
     manufacturer: OSRAM
@@ -159,6 +184,11 @@ zigbeeManufacturer:
     manufacturer: Samjin
     model: button
     deviceProfileName: one-button-temp-battery
+  - id: SlateSwitch/button
+    deviceLabel: Slate Switch Button
+    manufacturer: zunzunbee
+    model: SSWZ8T
+    deviceProfileName: eight-buttons-temp-battery
   - id: eWeLink/WB01
     deviceLabel: eWeLink Button
     manufacturer: eWeLink

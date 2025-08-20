@@ -362,12 +362,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     },
     {
       channel = "capability",
@@ -378,9 +378,16 @@ test.register_message_test(
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(mock_device, Meter:Get({ scale = 2 }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
-  },
-  { inner_block_ordering = "relaxed" }
+  }
 )
 
 test.register_message_test(
@@ -396,12 +403,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
+      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
     },
     {
       channel = "capability",
@@ -412,9 +419,16 @@ test.register_message_test(
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(mock_device, Meter:Get({ scale = 2 }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
-  },
-  { inner_block_ordering = "relaxed" }
+  }
 )
 
 test.register_message_test(

@@ -593,7 +593,7 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
   local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-  for _, ep in ipairs(switch_eps) do
+  for idx, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
@@ -610,7 +610,7 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
           }
         )
         parent_child_device = true
-        if _ == 1 and string.find(child_profile, "energy") then
+        if idx == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
           device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
@@ -695,8 +695,15 @@ local function device_init(driver, device)
     end
     local main_endpoint = find_default_endpoint(device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
-    for _, ep in ipairs(device.endpoints) do
+    for idx, ep in ipairs(device.endpoints) do
       if ep.endpoint_id ~= main_endpoint then
+        if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+          local child_profile = assign_child_profile(device, ep)
+          if idx == 1 and string.find(child_profile, "energy") then
+            -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+            device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
+          end
+        end
         local id = 0
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)
@@ -1199,6 +1206,9 @@ local function active_power_handler(driver, device, ib, response)
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     if ib.endpoint_id ~= 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+      if type(device.register_native_capability_attr_handler) == "function" then
+        device:register_native_capability_attr_handler("powerMeter","power")
+      end
     else
       -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
       device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
