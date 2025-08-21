@@ -10,7 +10,7 @@ local onoff_cluster = clusters.OnOff
 
 local ELEVATOR_DEVICE_TYPE_ID = 0xFF02
 
-local function on_off_attr_handler(_, device, ib, _)
+local function on_off_attr_handler(driver, device, ib, response)
   if ib.data.value then
     device:emit_event_for_endpoint(ib.endpoint_id, elevator_cap.callStatus.called())
   else
@@ -34,16 +34,16 @@ local function find_default_endpoint(device, cluster)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
-local function component_to_endpoint(device, _)
+local function component_to_endpoint(device, component_name, cluster_id)
   return find_default_endpoint(device, clusters.OnOff.ID)
 end
 
-local function device_init(_, device)
+local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
 end
 
-local function info_changed(_, device)
+local function info_changed(driver, device, event, args)
   device:add_subscribed_attribute(onoff_cluster.attributes.OnOff)
   device:subscribe()
 end

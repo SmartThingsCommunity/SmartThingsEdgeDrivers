@@ -18,9 +18,9 @@ local function on_off_attr_handler(driver, device, ib, response)
   end
 end
 
-local function handle_valve_command(driver, device, cmd, cluster_command)
+local function handle_valve_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = cluster_command(device, endpoint_id)
+  local req = onoff_cluster.server.commands.Off(device, endpoint_id)
   device:send(req)
 end
 
@@ -34,16 +34,16 @@ local function find_default_endpoint(device, cluster)
   return device.MATTER_DEFAULT_ENDPOINT
 end
 
-local function component_to_endpoint(device, _)
+local function component_to_endpoint(device, component_name, cluster_id)
   return find_default_endpoint(device, onoff_cluster.ID)
 end
 
-local function device_init(_, device)
+local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
 end
 
-local function info_changed(_, device)
+local function info_changed(driver, device, event, args)
   device:add_subscribed_attribute(onoff_cluster.attributes.OnOff)
   device:subscribe()
 end
@@ -75,9 +75,7 @@ local gas_valve_handler = {
   },
   capability_handlers = {
     [valve_cap.ID] = {
-      [valve_cap.commands.close.NAME] = function(driver, device, cmd)
-        handle_valve_command(driver, device, cmd, onoff_cluster.server.commands.Off)
-      end,
+      [valve_cap.commands.close.NAME] = handle_valve_close,
     }
   },
   supported_capabilities = {
