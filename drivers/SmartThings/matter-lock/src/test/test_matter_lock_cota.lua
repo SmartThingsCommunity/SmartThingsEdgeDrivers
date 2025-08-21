@@ -70,7 +70,6 @@ local function test_init()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
-  test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(mock_device, 10)})
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -108,8 +107,8 @@ local function expect_kick_off_cota_process(device)
   local req = DoorLock.attributes.MaxPINCodeLength:read(device, 10)
   req:merge(DoorLock.attributes.MinPINCodeLength:read(device, 10))
   req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(device, 10))
-  req:merge(DoorLock.attributes.RequirePINforRemoteOperation:read(device, 10))
   test.socket.matter:__expect_send({device.id, req})
+
   expect_reload_all_codes_messages(device)
   test.wait_for_events()
 
@@ -118,6 +117,19 @@ local function expect_kick_off_cota_process(device)
     device.id,
     DoorLock.attributes.NumberOfPINUsersSupported:build_test_report_data(device, 10, 16),
   })
+
+  test.wait_for_events()
+  test.socket.matter:__queue_receive({
+    device.id,
+    DoorLock.attributes.MaxPINCodeLength:build_test_report_data(device, 10, 8),
+  })
+  test.socket.capability:__expect_send(
+    device:generate_test_message(
+      "main",
+      capabilities.lockCodes.maxCodeLength(8, {visibility = {displayed = false}})
+    )
+  )
+  test.socket.matter:__expect_send({device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(device, 10)})
 
   -- The creation of advance timers, advancing time, and waiting for events
   -- is done to ensure a correct order of operations and allow for all the

@@ -61,7 +61,6 @@ local function test_init()
   subscribe_request:merge(DoorLock.attributes.NumberOfPINUsersSupported:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.MinPINCodeLength:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
@@ -232,6 +231,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(8, {visibility = {displayed = false}}))
     )
+    test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(mock_device, 1)})
   end
 )
 
