@@ -443,7 +443,7 @@ matterManufacturer:
   - id: "4107/2049"
     deviceLabel: Hue W 1600 A21 E26 1P NAM
     vendorId: 0x100B
-    productId: 0x0801g
+    productId: 0x0801
     deviceProfileName: light-level
   - id: "4107/297"
     deviceLabel: Hue WCA 650 BR30 E26 1P NAM
