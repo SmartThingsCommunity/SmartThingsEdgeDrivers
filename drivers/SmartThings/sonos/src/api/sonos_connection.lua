@@ -240,60 +240,12 @@ local function _legacy_reconnect_task(sonos_conn)
 end
 
 ---@param sonos_conn SonosConnection
-local function _oauth_reconnect_task(sonos_conn)
-  log.debug("Spawning reconnect task for ", sonos_conn.device.label)
-  local check_auth = sonos_conn.driver:check_auth(sonos_conn.device)
-  local unauthorized = (check_auth == false)
-  if unauthorized and not sonos_conn.driver:is_waiting_for_oauth_token() then
-    sonos_conn.driver:request_oauth_token()
-  end
-  local token_receive_handle, err = sonos_conn.driver:oauth_token_event_subscribe()
-  if not token_receive_handle then
-    log.warn(string.format("error creating oauth token receive handle for respawn task: %s", err))
-  end
-  cosock.spawn(function()
-    local backoff = backoff_builder(60, 1, 0.1)
-    while not sonos_conn:is_running() do
-      if sonos_conn.driver:is_waiting_for_oauth_token() and token_receive_handle then
-        local token, channel_error = token_receive_handle:receive()
-        if not token then
-          log.warn(string.format("Error requesting token: %s", channel_error))
-          local _, get_token_err = sonos_conn.driver:get_oauth_token()
-          if get_token_err then
-            log.warn(string.format("notice: get_oauth_token -> %s", get_token_err))
-          end
-        end
-      else
-        local start_success = sonos_conn:start()
-        if start_success then
-          sonos_conn._reconnecting = false
-          return
-        end
-      end
-
-      check_auth = sonos_conn.driver:check_auth(sonos_conn.device)
-      unauthorized = (check_auth == false)
-
-      if unauthorized and not sonos_conn.driver:is_waiting_for_oauth_token() then
-        sonos_conn.driver:request_oauth_token()
-      end
-      cosock.socket.sleep(backoff())
-    end
-    sonos_conn._reconnecting = false
-  end, string.format("%s Reconnect Task", sonos_conn.device.label))
-end
-
----@param sonos_conn SonosConnection
 local function _spawn_reconnect_task(sonos_conn)
   if sonos_conn._reconnecting then
     return
   end
   sonos_conn._reconnecting = true
-  if type(api_version) == "number" and api_version >= 14 then
-    _oauth_reconnect_task(sonos_conn)
-  else
-    _legacy_reconnect_task(sonos_conn)
-  end
+  _legacy_reconnect_task(sonos_conn)
 end
 
 --- Create a new Sonos connection to manage the given device
@@ -339,10 +291,6 @@ function SonosConnection.new(driver, device)
             device.log.warn(
               string.format("WebSocket connection no longer authorized, disconnecting")
             )
-            local _, security_err = driver:request_oauth_token()
-            if security_err then
-              log.warn(string.format("Error during request for oauth token: %s", security_err))
-            end
             -- closing the socket directly without calling `:stop()` triggers the reconnect loop,
             -- which is where we wait for the token to come in.
             local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
