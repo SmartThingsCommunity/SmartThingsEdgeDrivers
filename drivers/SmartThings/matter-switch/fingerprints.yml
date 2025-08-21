@@ -439,6 +439,13 @@ matterManufacturer:
     productId: 0x6008
     deviceProfileName: light-color-level-2700K-6500K
 
+# Hue
+  - id: "4107/2049"
+    deviceLabel: Hue W 1600 A21 E26 1P NAM
+    vendorId: 0x100B
+    productId: 0x0801
+    deviceProfileName: light-level
+
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW
