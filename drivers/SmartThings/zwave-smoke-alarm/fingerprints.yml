@@ -63,3 +63,9 @@ zwaveManufacturer:
     productType: 0x0004
     productId: 0x0003
     deviceProfileName: co-battery
+  - id: 0371/0002/0032
+    deviceLabel: Aeotec SmokeShield
+    manufacturerId: 0x0371
+    productType: 0x0002
+    productId: 0x0032
+    deviceProfileName: aeotec-smoke-shield

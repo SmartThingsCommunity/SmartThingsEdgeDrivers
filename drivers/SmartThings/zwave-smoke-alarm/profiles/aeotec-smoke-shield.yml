@@ -1,0 +1,14 @@
+name: aeotec-smoke-shield
+components:
+- id: main
+  capabilities:
+  - id: smokeDetector
+    version: 1
+  - id: battery
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmokeDetector

@@ -88,6 +88,7 @@ local driver_template = {
     require("zwave-smoke-co-alarm-v2"),
     require("fibaro-smoke-sensor"),
     require("apiv6_bugfix"),
+    require("aeotec-smoke-shield"),
   },
   lifecycle_handlers = {
     init = device_init,
