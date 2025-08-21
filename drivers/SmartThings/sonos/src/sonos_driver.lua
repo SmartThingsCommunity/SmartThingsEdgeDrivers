@@ -194,7 +194,7 @@ function SonosDriver:handle_startup_state_received()
     local token_refresher = require "token_refresher"
     token_refresher.spawn_token_refresher(self)
   end
-  self.startup_state_received = true 
+  self.startup_state_received = true
   for _, device in pairs(self.devices_waiting_for_startup_state) do
     SonosDriverLifecycleHandlers.initialize_device(self, device)
   end

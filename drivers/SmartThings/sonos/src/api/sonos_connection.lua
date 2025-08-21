@@ -291,10 +291,6 @@ function SonosConnection.new(driver, device)
             device.log.warn(
               string.format("WebSocket connection no longer authorized, disconnecting")
             )
-            local _, security_err = driver:request_oauth_token()
-            if security_err then
-              log.warn(string.format("Error during request for oauth token: %s", security_err))
-            end
             -- closing the socket directly without calling `:stop()` triggers the reconnect loop,
             -- which is where we wait for the token to come in.
             local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
