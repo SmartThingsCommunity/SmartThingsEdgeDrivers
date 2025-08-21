@@ -460,7 +460,7 @@ matterManufacturer:
     deviceLabel: InvisOutlet
     vendorId: 0x146A
     productId: 0x8001
-    deviceProfileName: switch-binary
+    deviceProfileName: plug-binary
 
 #Ledvance
   - id: "4489/843"
