@@ -353,6 +353,34 @@ function SonosDriver:get_oauth_token()
   return nil, "no token"
 end
 
+function SonosDriver:wait_for_oauth_token(timeout)
+  if api_version < 14 or security == nil then
+    return nil, "not supported"
+  end
+
+  if not self:oauth_is_connected() then
+    return nil, "not connected"
+  end
+
+  -- See if a valid token is already available
+  local maybe_token, _ = self:get_oauth_token()
+  if maybe_token then
+    -- return the valid token
+    return maybe_token
+  end
+  -- Subscribe to the token event bus. A new token has been/will be requested
+  -- by the token refresher task.
+  local token_bus, err = self:oauth_token_event_subscribe()
+  if token_bus then
+    token_bus:settimeout(timeout)
+    -- Wait for the new token to come in
+    token_bus:receive()
+    -- Call `SonosDriver:get_oauth_token` again to ensure the token is valid.
+    return self:get_oauth_token()
+  end
+  return nil, err
+end
+
 function SonosDriver:oauth_is_connected()
   return (api_version >= 14 and security ~= nil)
     and self.oauth
