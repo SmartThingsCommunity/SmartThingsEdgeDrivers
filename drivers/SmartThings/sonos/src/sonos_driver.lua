@@ -98,11 +98,6 @@ function SonosDriver:handle_augmented_data_change(update_key, decoded)
   end
 end
 
----@return boolean
-function SonosDriver:is_waiting_for_oauth_token()
-  return (api_version >= 14 and security ~= nil) and self.waiting_for_oauth_token
-end
-
 ---@return (cosock.Bus.Subscription)? receiver the subscription receiver if the bus hasn't been closed, nil if closed
 ---@return nil|"not supported"|"closed" err_msg "not supported" on old API versions, "closed" if the bus is closed, nil on success
 function SonosDriver:oauth_token_event_subscribe()
@@ -189,17 +184,6 @@ function SonosDriver:notify_augmented_data_changed(update_kind, update_key, upda
         true
       )
     )
-  end
-
-  if
-    self.oauth.endpoint_app_info
-    and self.oauth.endpoint_app_info.state == "connected"
-    and not already_connected
-  then
-    local _, err = self:request_oauth_token()
-    if err then
-      log.error(string.format("Request OAuth token error: %s", err))
-    end
   end
 end
 
@@ -326,27 +310,6 @@ function SonosDriver:check_auth(info_or_device)
       "Unable to determine Authentication Status for %s",
       st_utils.stringify_table(info_or_device)
     )
-end
-
----@return any? ret nil on permissions violation
----@return string? error nil on success
-function SonosDriver:request_oauth_token()
-  if api_version < 14 or security == nil then
-    return nil, "not supported"
-  end
-  local maybe_token, maybe_err = self:get_oauth_token()
-  if maybe_err then
-    log.warn(string.format("get oauth token error: %s", maybe_err))
-  end
-  if type(maybe_token) == "table" and type(maybe_token.accessToken) == "string" then
-    self.oauth_token_bus:send(maybe_token)
-  end
-  local result, err = security.get_sonos_oauth()
-  if not result then
-    return nil, string.format("Error requesting OAuth token via Security API: %s", err)
-  end
-  self.waiting_for_oauth_token = true
-  return result, err
 end
 
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
@@ -627,7 +590,6 @@ function SonosDriver.new_driver_template()
     oauth_token_bus = oauth_token_bus,
     oauth_info_bus = oauth_info_bus,
     oauth = {},
-    waiting_for_oauth_token = false,
     startup_state_received = false,
     devices_waiting_for_startup_state = {},
     dni_to_device_id = utils.new_mac_address_keyed_table(),
