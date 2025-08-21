@@ -173,9 +173,7 @@ end
 ---@param update_key "endpointAppInfo"|"sonosOAuthToken"
 ---@param update_value string
 function SonosDriver:notify_augmented_data_changed(update_kind, update_key, update_value)
-  local already_connected = self.oauth
-    and self.oauth.endpoint_app_info
-    and self.oauth.endpoint_app_info.state == "connected"
+  local already_connected = self:oauth_is_connected()
   log.info(string.format("Already connected? %s", already_connected))
   if update_kind == "snapshot" then
     self:update_after_startup_state_received()
@@ -235,12 +233,7 @@ end
 function SonosDriver:check_auth(info_or_device)
   local maybe_token, _ = self:get_oauth_token()
 
-  local token_valid = (api_version >= 14 and security ~= nil)
-    and self.oauth
-    and self.oauth.endpoint_app_info
-    and self.oauth.endpoint_app_info.state == "connected"
-    and maybe_token ~= nil
-  if token_valid then
+  if maybe_token then
     return true, SonosApi.api_keys.oauth_key
   elseif self.oauth.force_oauth then
     return false
@@ -353,23 +346,14 @@ function SonosDriver:request_oauth_token()
 end
 
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
----@return "token expired"|"no token"|"not supported"|nil reason the reason a token was not provided, nil if there is a valid token available
+---@return "token expired"|"no token"|"not supported"|"not connected"|nil reason the reason a token was not provided, nil if there is a valid token available
 function SonosDriver:get_oauth_token()
   if api_version < 14 or security == nil then
     return nil, "not supported"
   end
-  self.hub_augmented_driver_data = self.hub_augmented_driver_data or {}
-  local decode_success, maybe_token =
-    pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
-  if
-    decode_success
-    and type(maybe_token) == "table"
-    and type(maybe_token.accessToken) == "string"
-    and type(maybe_token.expiresAt) == "number"
-  then
-    self.oauth.token = maybe_token
-  elseif self.hub_augmented_driver_data.sonosOAuthToken ~= nil then
-    log.warn(string.format("Unable to JSON decode token from hub augmented data: %s", maybe_token))
+
+  if not self:oauth_is_connected() then
+    return nil, "not connected"
   end
 
   if self.oauth.token then
@@ -384,6 +368,13 @@ function SonosDriver:get_oauth_token()
   end
 
   return nil, "no token"
+end
+
+function SonosDriver:oauth_is_connected()
+  return (api_version >= 14 and security ~= nil)
+    and self.oauth
+    and self.oauth.endpoint_app_info
+    and self.oauth.endpoint_app_info.state == "connected"
 end
 
 ---Create a cosock task that handles events from the persistent SSDP task.
