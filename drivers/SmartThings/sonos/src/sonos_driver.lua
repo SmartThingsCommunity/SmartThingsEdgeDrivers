@@ -36,8 +36,8 @@ end
 ---@field public sonos SonosState Local state related to the sonos systems
 ---@field public discovery fun(driver: SonosDriver, opts: table, should_continue: fun(): boolean)
 ---@field private oauth_token_bus cosock.Bus.Sender bus for broadcasting new oauth tokens that arrive on the environment channel
+---@field private oauth_info_bus cosock.Bus.Sender bus for broadcasting new endpoint app info that arrives on the environment channel
 ---@field private oauth { token: {accessToken: string, expiresAt: number}, endpoint_app_info: { state: "connected"|"disconnected" }, force_oauth: boolean? } cached OAuth info
----@field private waiting_for_oauth_token boolean
 ---@field private startup_state_received boolean
 ---@field private devices_waiting_for_startup_state SonosDevice[]
 ---@field package bonded_devices table<string, boolean> map of Device device_network_id to a boolean indicating if the device is currently known as a bonded device.
@@ -103,9 +103,9 @@ end
 function SonosDriver:handle_augmented_data_change(update_key, decoded)
   if update_key == "endpointAppInfo" then
     self.oauth.endpoint_app_info = decoded
+    self.oauth_info_bus:send(decoded)
   elseif update_key == "sonosOAuthToken" then
     self.oauth.token = decoded
-    self.waiting_for_oauth_token = false
     self.oauth_token_bus:send(decoded)
   elseif update_key == "force_oauth" then
     self.oauth.force_oauth = decoded
@@ -128,6 +128,15 @@ function SonosDriver:oauth_token_event_subscribe()
   return self.oauth_token_bus:subscribe()
 end
 
+---@return (cosock.Bus.Subscription)? receiver the subscription receiver if the bus hasn't been closed, nil if closed
+---@return nil|"not supported"|"closed" err_msg "not supported" on old API versions, "closed" if the bus is closed, nil on success
+function SonosDriver:oauth_info_event_subscribe()
+  if api_version < 14 or security == nil then
+    return nil, "not supported"
+  end
+  return self.oauth_info_bus:subscribe()
+end
+
 function SonosDriver:update_after_startup_state_received()
   for k, v in pairs(self.hub_augmented_driver_data) do
     local decode_success, decoded = pcall(json.decode, v)
@@ -143,9 +152,11 @@ function SonosDriver:handle_augmented_store_delete(update_key)
     if update_key == "endpointAppInfo" then
       log.trace("deleting endpoint app info")
       self.oauth.endpoint_app_info = nil
+      self.oauth_info_bus:send(nil)
     elseif update_key == "sonosOAuthToken" then
       log.trace("deleting OAuth Token")
       self.oauth.token = nil
+      self.oauth_token_bus:send(nil)
     elseif update_key == "force_oauth" then
       log.trace("deleting Force OAuth")
       self.oauth.force_oauth = nil
@@ -639,11 +650,13 @@ end
 
 function SonosDriver.new_driver_template()
   local oauth_token_bus = cosock.bus()
+  local oauth_info_bus = cosock.bus()
 
   local template = {
     sonos = SonosState.instance(),
     discovery = SonosDisco.discover,
     oauth_token_bus = oauth_token_bus,
+    oauth_info_bus = oauth_info_bus,
     oauth = {},
     waiting_for_oauth_token = false,
     startup_state_received = false,
