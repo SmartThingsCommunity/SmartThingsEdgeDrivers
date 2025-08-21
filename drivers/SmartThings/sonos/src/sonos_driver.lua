@@ -194,7 +194,7 @@ function SonosDriver:handle_startup_state_received()
     local token_refresher = require "token_refresher"
     token_refresher.spawn_token_refresher(self)
   end
-  self.startup_state_received = true
+  self.startup_state_received = true 
   for _, device in pairs(self.devices_waiting_for_startup_state) do
     SonosDriverLifecycleHandlers.initialize_device(self, device)
   end
@@ -335,6 +335,28 @@ function SonosDriver:get_oauth_token()
   end
 
   return nil, "no token"
+end
+
+function SonosDriver:wait_for_oauth_token(timeout)
+  if api_version < 14 or security == nil then
+    return nil, "not supported"
+  end
+
+  if not self:oauth_is_connected() then
+    return nil, "not connected"
+  end
+
+  local maybe_token, _ = self:get_oauth_token()
+  if maybe_token then
+    return maybe_token
+  end
+  local token_bus, err = self:oauth_token_event_subscribe()
+  if token_bus then
+    token_bus:settimeout(timeout)
+    token_bus:receive()
+    return self:get_oauth_token()
+  end
+  return nil, err
 end
 
 function SonosDriver:oauth_is_connected()

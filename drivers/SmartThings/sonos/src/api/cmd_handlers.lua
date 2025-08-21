@@ -24,9 +24,9 @@ local function _do_send_to_group(driver, device, payload)
   local household_id, group_id = driver.sonos:get_group_for_device(device)
   payload[1].householdId = household_id
   payload[1].groupId = group_id
-  local maybe_token, err = driver:get_oauth_token()
+  local maybe_token, err = driver:wait_for_oauth_token(30)
   if err then
-    log.warn(string.format("notice: get_oauth_token -> %s", err))
+    log.warn(string.format("notice: wait_for_oauth_token -> %s", err))
   end
 
   if maybe_token then
@@ -40,9 +40,9 @@ local function _do_send_to_self(driver, device, payload)
   local household_id, player_id = driver.sonos:get_player_for_device(device)
   payload[1].householdId = household_id
   payload[1].playerId = player_id
-  local maybe_token, err = driver:get_oauth_token()
+  local maybe_token, err = driver:wait_for_oauth_token(30)
   if err then
-    log.warn(string.format("notice: get_oauth_token -> %s", err))
+    log.warn(string.format("notice: wait_for_oauth_token -> %s", err))
   end
 
   if maybe_token then
