@@ -5,32 +5,35 @@ local log = require "log"
 
 local module = {}
 
-local STATES = {
-  -- OAuth is not connected.
-  DISCONNECTED       = 1,
-  -- Driver has a valid token.
-  WAITING_FOR_EXPIRE = 2,
-  -- Driver either doesn't have a token or it is invalid.
-  REQUEST_TOKEN      = 3,
+local ACTIONS = {
+  -- This action waits for an event via the oauth endpoint app info bus in order to determine
+  -- when the driver goes from a disconnected to connected state.
+  WAIT_FOR_CONNECTED = 1,
+  -- This action will wait for the current valid token to expire. It will also handle a new token
+  -- event to redetermine the current action. New tokens that come in during this action will likely
+  -- be from debug testing.
+  WAIT_FOR_EXPIRE = 2,
+  -- This action requests a new token and waits for it to come in.
+  REQUEST_TOKEN = 3,
 }
 
-local STATE_STRINGIFY = {
-  [STATES.DISCONNECTED] = "disconnected",
-  [STATES.WAITING_FOR_EXPIRE] = "waiting for expire",
-  [STATES.REQUEST_TOKEN] = "requesting token",
+local ACTION_STRINGIFY = {
+  [ACTIONS.WAIT_FOR_CONNECTED] = "wait for connected",
+  [ACTIONS.WAIT_FOR_EXPIRE] = "wait for expire",
+  [ACTIONS.REQUEST_TOKEN] = "request token",
 }
 
 local Refresher = {}
 Refresher.__index = Refresher
 
---- Determine which state the refresher should be in.
---- Any state can go to any state so this just depends on:
+--- Determine which action the refresher should take.
+--- This just depends on:
 --- - Is Oauth connected?
 --- - Do we have a valid token?
-function Refresher:determine_state()
+function Refresher:determine_action()
   if not self.driver:oauth_is_connected() then
     -- Oauth is disconnected so no point in trying to request a token until we are connected.
-    return STATES.DISCONNECTED
+    return ACTIONS.WAIT_FOR_CONNECTED
   end
   local token, _ = self.driver:get_oauth_token()
   if token then
@@ -38,24 +41,33 @@ function Refresher:determine_state()
     local expiration = math.floor(token.expiresAt / 1000)
     if (expiration - now) > 60 then
       -- Token is valid and not expiring in the next 60 seconds.
-      return STATES.WAITING_FOR_EXPIRE
+      return ACTIONS.WAIT_FOR_EXPIRE
     end
   end
   -- We don't have a valid token or it is about to expire soon.
-  return STATES.REQUEST_TOKEN
+  return ACTIONS.REQUEST_TOKEN
 end
 
 --- Waits for a token event with a timeout.
-function Refresher:receive_token(timeout)
-  local token_bus, _ = self.driver:oauth_token_event_subscribe()
+--- @param timeout number How long the function will wait for a new token
+function Refresher:try_wait_for_token_event(timeout)
+  local token_bus, err = self.driver:oauth_token_event_subscribe()
+  if err == "closed" then
+    self.token_bus_closed = true
+  end
   if token_bus then
     token_bus:settimeout(timeout)
     token_bus:receive()
   end
 end
 
---- Waits for either a new token to arrive or the current one to expire.
-function Refresher:wait_for_expire()
+--- Waits for the current token to expire or a new token event.
+---
+--- The likely outcome of this function is to wait the entire expiration timeout. It will
+--- also listen for token events just in case a new token with a new expiration is sent to the driver.
+--- A new token would most likely come from developer testing, but since the new token requests are
+--- not synchronous one could come from an earlier request.
+function Refresher:wait_for_expire_or_token_event()
   local maybe_token, err = self.driver:get_oauth_token()
   if not maybe_token then
     -- Something got funky in the state machine
@@ -68,30 +80,36 @@ function Refresher:wait_for_expire()
   local timeout = math.max(expiration - now, 0)
 
   log.debug(string.format("Token will refresh in %d seconds", timeout))
-  -- Wait while trying to receive the token in case it gets updated for some reason.
-  self:receive_token(timeout)
+  -- Wait while trying to receive a token event in case it gets updated for some reason.
+  self:try_wait_for_token_event(timeout)
 end
 
---- Waits for an oauth info event.
-function Refresher:disconnected()
-  local info_sub = self.driver:oauth_info_event_subscribe()
+--- Waits for an oauth endpoint app info event indefinitely.
+---
+--- A new info event indicates that `Refresher:determine_action` should be called to check if oauth
+--- is now connected.
+function Refresher:wait_for_info_event()
+  local info_sub, err = self.driver:oauth_info_event_subscribe()
+  if err == "closed" then
+    self.info_bus_closed = true
+  end
   if info_sub then
     info_sub:receive()
   end
 end
 
---- Requests a token then waits for it to arrive.
+--- Requests a token then waits for a new token event.
 function Refresher:request_token()
   local result, err = security.get_sonos_oauth()
   if not result then
     log.warn(string.format("Failed to request oauth token: %s", err))
   end
   -- Try to receive token even if the request failed.
-  self:receive_token(10)
+  self:try_wait_for_token_event(10)
   local maybe_token, _ = self.driver:get_oauth_token()
   if maybe_token then
     -- token is valid, reset backoff
-    self.token_backoff = utils.backoff_builder(5 * 60, 5, 0.1)
+    self.token_backoff = utils.backoff_builder(30 * 60, 5, 0.1)
   else
     -- We either didn't receive a token or it is not valid.
     -- Backoff and maybe we will receive it in that time, or we retry.
@@ -101,23 +119,29 @@ end
 
 function module.spawn_token_refresher(driver)
   local refresher = setmetatable({ driver = driver,
-                                   token_backoff = utils.backoff_builder(5 * 60, 5, 0.1),
+                                   token_backoff = utils.backoff_builder(30 * 60, 5, 0.1),
                                   },
                                   Refresher)
   cosock.spawn(function ()
     while true do
       -- We can always determine what we should be doing based off the information we have,
-      -- any state can go to any state depending on what needs to be done.
-      local state = refresher:determine_state()
-      log.info(string.format("Token refresher state: %s", STATE_STRINGIFY[state]))
-      if state == STATES.DISCONNECTED then
-        refresher:disconnected()
-      elseif state == STATES.WAITING_FOR_EXPIRE then
-        refresher:wait_for_expire()
-      elseif state == STATES.REQUEST_TOKEN then
+      -- any action can proceed action depending on what needs to be done.
+      local action = refresher:determine_action()
+      log.info(string.format("Token refresher action: %s", ACTION_STRINGIFY[action]))
+      if action == ACTIONS.WAIT_FOR_CONNECTED then
+        refresher:wait_for_info_event()
+      elseif action == ACTIONS.WAIT_FOR_EXPIRE then
+        refresher:wait_for_expire_or_token_event()
+      elseif action == ACTIONS.REQUEST_TOKEN then
         refresher:request_token()
       else
-        log.warn(string.format("Bad token refresher state: %s", state))
+        log.error(string.format("Token refresher task exiting due to bad token refresher action: %s", action))
+        return
+      end
+      if refresher.token_bus_closed or refresher.info_bus_closed then
+        log.error(string.format("Token refresher task exiting. Token bus closed: %s Info bus close: %s",
+          refresher.token_bus_closed, refresher.info_bus_closed))
+        return
       end
     end
   end, "token refresher task")
