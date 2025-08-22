@@ -1,4 +1,4 @@
-matterGeneric:
+matterManufacturer:
   - id: "elevator"
     deviceLabel: "Elevator"
     deviceTypes:
