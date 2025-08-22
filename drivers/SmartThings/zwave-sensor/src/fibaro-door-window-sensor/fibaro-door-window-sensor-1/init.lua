@@ -68,10 +68,13 @@ end
 
 local function device_added(driver, device)
   do_refresh(driver, device)
-  device:emit_event(capabilities.tamperAlert.tamper.clear())
-  device:emit_event(capabilities.contactSensor.contact.open())
+  if device:get_latest_state("main", capabilities.contactSensor.ID, capabilities.contactSensor.contact.NAME) == nil and device:supports_capability(capabilities.contactSensor) then
+    device:emit_event(capabilities.contactSensor.contact.open())
+  end
+  if device:get_latest_state("main", capabilities.tamperAlert.ID, capabilities.tamperAlert.tamper.NAME) == nil and device:supports_capability(capabilities.tamperAlert) then
+    device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end
 end
-
 
 local fibaro_door_window_sensor_1 = {
   NAME = "fibaro door window sensor 1",

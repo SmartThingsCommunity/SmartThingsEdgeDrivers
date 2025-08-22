@@ -34,9 +34,15 @@ local function can_handle_fibaro_door_window_sensor_2(opts, driver, device, cmd,
 end
 
 local function device_added(self, device)
-  device:emit_event(capabilities.tamperAlert.tamper.clear())
-  device:emit_event(capabilities.contactSensor.contact.open())
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  if device:get_latest_state("main", capabilities.tamperAlert.ID, capabilities.tamperAlert.tamper.NAME) == nil and device:supports_capability(capabilities.tamperAlert) then
+    device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end
+  if device:get_latest_state("main", capabilities.contactSensor.ID, capabilities.contactSensor.contact.NAME) == nil and device:supports_capability(capabilities.contactSensor) then
+    device:emit_event(capabilities.contactSensor.contact.open())
+  end
+  if device:get_latest_state("main", capabilities.temperatureAlarm.ID, capabilities.temperatureAlarm.temperatureAlarm.NAME) == nil and device:supports_capability(capabilities.temperatureAlarm) then
+    device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  end
 end
 
 local function alarm_report_handler(self, device, cmd)

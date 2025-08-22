@@ -116,11 +116,13 @@ local function device_added(driver, device)
   device:emit_event(capabilities.temperatureMeasurement.temperature({value = 27.0, unit = "C"}))
   device:emit_event(capabilities.thermostatMode.thermostatMode.manual())
   device:emit_event(capabilities.valve.valve.open())
-  device:emit_component_event(device.profile.components.ChildLock, capabilities.lock.lock.unlocked())
   device:emit_event(capabilities.hardwareFault.hardwareFault.clear())
   device:emit_event(valveCalibration.calibrationState.calibrationPending())
   device:emit_event(invisibleCapabilities.invisibleCapabilities({""}))
   device:emit_event(capabilities.battery.battery(100))
+  if device:get_latest_state("main", capabilities.lock.ID, capabilities.lock.lock.NAME) == nil and device:supports_capability(capabilities.lock) then
+    device:emit_component_event(device.profile.components.ChildLock, capabilities.lock.lock.unlocked())
+  end
 end
 
 local function thermostat_alarm_status_handler(driver, device, value, zb_rx)
