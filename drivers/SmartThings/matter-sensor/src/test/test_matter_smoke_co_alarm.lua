@@ -27,6 +27,7 @@ end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("smoke-co-temp-humidity-comeas.yml"),
+  _provisioning_state = "TYPED", -- we want this to have doConfigure on startup
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -73,6 +74,10 @@ local cluster_subscribe_list = {
 }
 
 local function test_init()
+  -- The startup messages are enabled, so this device will get an init,
+  -- and doConfigure (because provisioning_state is TYPED on the device).
+  test.mock_device.add_test_device(mock_device)
+
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -80,11 +85,9 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.mock_device.add_test_device(mock_device)
 end
 
 test.set_test_init_function(test_init)
