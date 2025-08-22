@@ -11,14 +11,18 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
+
 local test = require "integration_test"
-test.set_rpc_version(8)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
+local uint32 = require "st.matter.data_types.Uint32"
 local version = require "version"
+
+test.disable_startup_messages()
 
 if version.api < 10 then
   clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
@@ -224,6 +228,21 @@ local cluster_subscribe_list_configured = {
 }
 
 local function test_init_basic()
+  test.mock_device.add_test_device(mock_device_basic)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "added" })
+  local read_attributes = {
+    clusters.Thermostat.attributes.ControlSequenceOfOperation,
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.WindSupport,
+    clusters.FanControl.attributes.RockSupport,
+  }
+  local read_request = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  for _, clus in ipairs(read_attributes) do
+    read_request:merge(clus:read(mock_device_basic))
+  end
+  test.socket.matter:__expect_send({ mock_device_basic.id, read_request })
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "init" })
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_basic)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -231,10 +250,25 @@ local function test_init_basic()
     end
   end
   test.socket.matter:__expect_send({mock_device_basic.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device_basic)
 end
 
 local function test_init_ap_thermo_aqs_preconfigured()
+  test.mock_device.add_test_device(mock_device_ap_thermo_aqs)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "added" })
+  local read_attributes = {
+    clusters.Thermostat.attributes.AttributeList,
+    clusters.Thermostat.attributes.ControlSequenceOfOperation,
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.WindSupport,
+    clusters.FanControl.attributes.RockSupport,
+  }
+  local read_request = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  for _, clus in ipairs(read_attributes) do
+    read_request:merge(clus:read(mock_device_ap_thermo_aqs))
+  end
+  test.socket.matter:__expect_send({ mock_device_ap_thermo_aqs.id, read_request })
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "init" })
   local subscribe_request = nil
   for _, attributes in pairs(cluster_subscribe_list_configured) do
     for _, attribute in ipairs(attributes) do
@@ -246,7 +280,6 @@ local function test_init_ap_thermo_aqs_preconfigured()
     end
   end
   test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device_ap_thermo_aqs)
 end
 
 local expected_update_metadata= {
@@ -283,11 +316,16 @@ local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_basic)
 test.register_coroutine_test(
   "Test profile change on init for basic Air Purifier device",
   function()
-    mock_device_basic:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
-    mock_device_basic:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
     test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "doConfigure" })
+    test.socket.matter:__queue_receive({
+      mock_device_basic.id,
+      clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_basic, 1, {uint32(0)})
+    })
     mock_device_basic:expect_metadata_update(expected_update_metadata)
     mock_device_basic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+    test.wait_for_events()
+
     local device_info_copy = utils.deep_copy(mock_device_basic.raw_st_data)
     device_info_copy.profile.id = "air-purifier-modular"
     local device_info_json = dkjson.encode(device_info_copy)
@@ -339,7 +377,6 @@ local expected_update_metadata= {
 
 local subscribe_request = nil
 for _, attributes in pairs(cluster_subscribe_list_configured) do
-  print("Adding attribute to subscribe", attributes)
   for _, attribute in ipairs(attributes) do
     if subscribe_request == nil then
       subscribe_request = attribute:subscribe(mock_device_ap_thermo_aqs)
@@ -352,11 +389,17 @@ end
 test.register_coroutine_test(
   "Test profile change on init for AP and Thermo and AQS combined device type",
   function()
-    mock_device_ap_thermo_aqs:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
-    mock_device_ap_thermo_aqs:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
     test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "doConfigure" })
-    mock_device_ap_thermo_aqs:expect_metadata_update(expected_update_metadata)
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device_ap_thermo_aqs.id,
+      clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_ap_thermo_aqs, 1, {uint32(0)})
+    })
+    mock_device_ap_thermo_aqs:expect_metadata_update(expected_update_metadata)
+
+    test.wait_for_events()
+
     local device_info_copy = utils.deep_copy(mock_device_ap_thermo_aqs.raw_st_data)
     device_info_copy.profile.id = "air-purifier-modular"
     local device_info_json = dkjson.encode(device_info_copy)

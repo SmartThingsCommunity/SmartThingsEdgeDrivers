@@ -232,6 +232,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )
@@ -251,6 +259,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )
