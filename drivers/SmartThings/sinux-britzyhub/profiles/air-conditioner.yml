@@ -1,0 +1,20 @@
+name: air-conditioner
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: temperatureMeasurement
+        version: 1
+      - id: thermostatMode
+        version: 1
+        config:
+          values:
+            - key: "thermostatMode.value"
+              enabledValues:
+                - off
+                - cool
+      - id: thermostatCoolingSetpoint
+        version: 1
+    categories:
+      - name: AirConditioner

@@ -1,4 +1,4 @@
-name: ventilator
+name: vent
 components:
   - id: main
     capabilities:
