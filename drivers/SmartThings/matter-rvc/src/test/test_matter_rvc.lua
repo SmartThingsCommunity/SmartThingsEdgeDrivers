@@ -31,6 +31,7 @@ if version.api < 13 then
 end
 
 local APPLICATION_ENDPOINT = 10
+local SERVICE_AREA_PROFILED = "__SERVICE_AREA_PROFILED"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("rvc-clean-mode-service-area.yml"),
@@ -64,6 +65,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  mock_device:set_field(SERVICE_AREA_PROFILED, true, { persist = true })
   local subscribed_attributes = {
     [capabilities.mode.ID] = {
         clusters.RvcRunMode.attributes.SupportedModes,
