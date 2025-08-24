@@ -39,6 +39,7 @@ local RUN_MODE_SUPPORTED_MODES = "__run_mode_supported_modes"
 local CURRENT_RUN_MODE = "__current_run_mode"
 local CLEAN_MODE_SUPPORTED_MODES = "__clean_mode_supported_modes"
 local OPERATING_STATE_SUPPORTED_COMMANDS = "__operating_state_supported_commands"
+local SERVICE_AREA_PROFILED = "__SERVICE_AREA_PROFILED"
 
 local subscribed_attributes = {
   [capabilities.mode.ID] = {
@@ -76,12 +77,7 @@ local function component_to_endpoint(device, component_name)
   return find_default_endpoint(device, clusters.RvcOperationalState.ID)
 end
 
-local function device_init(driver, device)
-  device:subscribe()
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-end
-
-local function do_configure(driver, device)
+local function match_profile(driver, device)
   local clean_mode_eps = device:get_endpoints(clusters.RvcCleanMode.ID) or {}
   local service_area_eps = embedded_cluster_utils.get_endpoints(device, clusters.ServiceArea.ID) or {}
 
@@ -95,6 +91,20 @@ local function do_configure(driver, device)
 
   device.log.info_with({hub_logs = true}, string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
+end
+
+local function device_init(driver, device)
+  device:subscribe()
+  device:set_component_to_endpoint_fn(component_to_endpoint)
+  if not device:get_field(SERVICE_AREA_PROFILED) and #device:get_endpoints(clusters.ServiceArea.ID) > 0 then
+    match_profile(driver, device)
+    device:set_field(SERVICE_AREA_PROFILED, true)
+  end
+end
+
+local function do_configure(driver, device)
+  match_profile(driver, device)
+  device:set_field(SERVICE_AREA_PROFILED, true)
   device:send(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
 end
 
