@@ -289,7 +289,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
+local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
