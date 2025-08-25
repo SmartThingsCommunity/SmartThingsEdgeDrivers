@@ -14,12 +14,14 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
+local t_utils = require "integration_test.utils"
+local version = require "version"
 
-clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
@@ -56,7 +58,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       device_types = {
         { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
       }
-    },
+    }
   },
 })
 
@@ -238,6 +240,14 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({value = 17.0, unit="W"}))
     },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
+    }
   }
 )
 

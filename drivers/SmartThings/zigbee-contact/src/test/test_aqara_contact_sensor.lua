@@ -87,7 +87,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.batteryLevel.battery("normal")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.contactSensor.contact.open()))
+      capabilities.contactSensor.contact.closed()))
   end
 )
 

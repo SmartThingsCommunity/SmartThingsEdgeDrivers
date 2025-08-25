@@ -83,6 +83,8 @@ local device_desc = {
 }
 
 local test_init_common = function(device)
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(device)
   local cluster_subscribe_list = {
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
@@ -107,7 +109,6 @@ local test_init_common = function(device)
       subscribe_request:merge(cluster:subscribe(device))
     end
   end
-  test.socket.matter:__expect_send({ device.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ device.id, "added" })
   local read_request_on_added = {
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
@@ -124,7 +125,8 @@ local test_init_common = function(device)
     device.id, read_request
   })
 
-  test.mock_device.add_test_device(device)
+  test.socket.device_lifecycle:__queue_receive({ device.id, "init" })
+  test.socket.matter:__expect_send({ device.id, subscribe_request })
 end
 
 local mock_device = test.mock_device.build_test_matter_device(device_desc)
@@ -184,6 +186,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 40.0, unit = "C" }))
     },
     {
@@ -193,6 +200,11 @@ test.register_message_test(
         mock_device.id,
         clusters.Thermostat.server.attributes.OccupiedHeatingSetpoint:build_test_report_data(mock_device, THERMOSTAT_TWO_EP, 23*100)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
     },
     {
       channel = "capability",
@@ -216,6 +228,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 39.0, unit = "C" }))
     },
     {
@@ -225,6 +242,11 @@ test.register_message_test(
         mock_device.id,
         clusters.Thermostat.server.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, THERMOSTAT_TWO_EP, 19*100)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
     },
     {
       channel = "capability",

@@ -48,7 +48,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
           {
             mock_springs_window_fashion_shade.id,
-            { capability = "windowShadePreset", command = "presetPosition", args = {} }
+            { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
           }
       )
       test.socket.zwave:__expect_send(

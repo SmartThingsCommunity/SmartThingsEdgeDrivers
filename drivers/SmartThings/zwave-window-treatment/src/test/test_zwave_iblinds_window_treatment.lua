@@ -214,7 +214,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_blind.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(
@@ -251,7 +251,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_blind.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(
@@ -374,7 +374,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_blind_v3.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(
@@ -415,7 +415,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
         {
           mock_blind_v3.id,
-          { capability = "windowShadePreset", command = "presetPosition", args = {} }
+          { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
         }
       )
       test.socket.capability:__expect_send(

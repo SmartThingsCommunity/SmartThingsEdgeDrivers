@@ -201,6 +201,8 @@ local function configure_buttons()
 end
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.Switch.events.InitialPress
   }
@@ -208,13 +210,17 @@ local function test_init()
   for i, clus in ipairs(cluster_subscribe_list) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "12-button-keyboard" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   configure_buttons()
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "12-buttons-keyboard"
   local device_info_json = dkjson.encode(device_info_copy)
