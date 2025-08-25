@@ -101,7 +101,9 @@ local function beep_handler(self, device, command)
 end
 
 local function added_handler(self, device)
-  device:emit_event(PresenceSensor.presence("present"))
+  if device:get_latest_state("main", PresenceSensor.ID, PresenceSensor.presence.NAME) == nil and device:supports_capability(PresenceSensor) then
+    device:emit_event(PresenceSensor.presence("present"))
+  end
 end
 
 local function init_handler(self, device, event, args)

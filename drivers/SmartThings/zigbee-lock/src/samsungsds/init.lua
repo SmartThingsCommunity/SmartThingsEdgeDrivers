@@ -59,7 +59,9 @@ end
 
 local device_added = function(self, device)
   lock_utils.populate_state_from_data(device)
-  device:emit_event(capabilities.lock.lock.unlocked())
+  if device:get_latest_state("main", capabilities.lock.ID, capabilities.lock.lock.NAME) == nil and device:supports_capability(capabilities.lock) then
+    device:emit_event(capabilities.lock.lock.unlocked())
+  end
   device:emit_event(capabilities.battery.battery(100))
 end
 
