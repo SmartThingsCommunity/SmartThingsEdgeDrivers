@@ -15,19 +15,28 @@
 --Note: Currently only support for window shades with the PositionallyAware Feature
 --Note: No support for setting device into calibration mode, it must be done manually
 local capabilities = require "st.capabilities"
+local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local log = require "log"
-local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
 
 local CURRENT_LIFT = "__current_lift"
 local CURRENT_TILT = "__current_tilt"
+local REVERSE_POLARITY = "__reverse_polarity"
+local STATE_MACHINE = "__state_machine"
+
+local StateMachineEnum = {
+  STATE_IDLE = 0x00,
+  STATE_MOVING = 0x01,
+  STATE_OPERATIONAL_STATE_FIRED = 0x02,
+  STATE_CURRENT_POSITION_FIRED = 0x03
+}
+
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
   BATTERY_LEVEL = "BATTERY_LEVEL",
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
-local REVERSE_POLARITY = "__reverse_polarity"
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -70,6 +79,7 @@ end
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+  device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
 end
 
 local function do_configure(driver, device)
@@ -187,15 +197,49 @@ local function handle_shade_tilt_level(driver, device, cmd)
   device:send(req)
 end
 
+--- Update the window shade status according to the lift and tilt positions.
+---   LIFT     TILT      Window Shade
+---   100      any       Open
+---   1-99     any       Partially Open
+---   0        1-100     Partially Open
+---   0        0         Closed
+---   0        nil       Closed
+---   nil      100       Open
+---   nil      1-99      Partially Open
+---   nil      0         Closed
+--- Note that lift or tilt may be nil if either the window shade does not
+--- support them or if they haven't been received from a device report yet.
+local function update_shade_status(device, endpoint_id, lift_position, tilt_position)
+  local windowShade = capabilities.windowShade.windowShade
+  local reverse = device:get_field(REVERSE_POLARITY)
+  if lift_position == nil then
+    if tilt_position == 0 then
+      device:emit_event_for_endpoint(endpoint_id, reverse and windowShade.open() or windowShade.closed())
+    elseif tilt_position == 100 then
+      device:emit_event_for_endpoint(endpoint_id, reverse and windowShade.closed() or windowShade.open())
+    else
+      device:emit_event_for_endpoint(endpoint_id, windowShade.partially_open())
+    end
+  elseif lift_position == 100 then
+    device:emit_event_for_endpoint(endpoint_id, reverse and windowShade.closed() or windowShade.open())
+  elseif lift_position > 0 then
+    device:emit_event_for_endpoint(endpoint_id, windowShade.partially_open())
+  elseif lift_position == 0 then
+    if tilt_position == nil or tilt_position == 0 then
+      device:emit_event_for_endpoint(endpoint_id, reverse and windowShade.open() or windowShade.closed())
+    elseif tilt_position > 0 then
+      device:emit_event_for_endpoint(endpoint_id, windowShade.partially_open())
+    end
+  else
+    device:emit_event_for_endpoint(endpoint_id, windowShade.unknown())
+  end
+end
+
 -- current lift/tilt percentage, changed to 100ths percent
 local current_pos_handler = function(attribute)
   return function(driver, device, ib, response)
-    if ib.data.value == nil then
-      return
-    end
-    local windowShade = capabilities.windowShade.windowShade
+    if ib.data.value == nil then return end
     local position = 100 - math.floor(ib.data.value / 100)
-    local reverse = device:get_field(REVERSE_POLARITY)
     device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
 
     if attribute == capabilities.windowShadeLevel.shadeLevel then
@@ -204,58 +248,48 @@ local current_pos_handler = function(attribute)
       device:set_field(CURRENT_TILT, position)
     end
 
-    local lift_position = device:get_field(CURRENT_LIFT)
-    local tilt_position = device:get_field(CURRENT_TILT)
-
-    -- Update the window shade status according to the lift and tilt positions.
-    --   LIFT     TILT      Window Shade
-    --   100      any       Open
-    --   1-99     any       Partially Open
-    --   0        1-100     Partially Open
-    --   0        0         Closed
-    --   0        nil       Closed
-    --   nil      100       Open
-    --   nil      1-99      Partially Open
-    --   nil      0         Closed
-    -- Note that lift or tilt may be nil if either the window shade does not
-    -- support them or if they haven't been received from a device report yet.
-
-    if lift_position == nil then
-      if tilt_position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
-      elseif tilt_position == 100 then
-        device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closed() or windowShade.open())
-      else
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
-      end
-
-    elseif lift_position == 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closed() or windowShade.open())
-
-    elseif lift_position > 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
-
-    elseif lift_position == 0 then
-      if tilt_position == nil or tilt_position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
-      elseif tilt_position > 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
-      end
+    local state_machine = device:get_field(STATE_MACHINE)
+    -- When state_machine is STATE_CURRENT_POSITION_FIRED, nothing to do
+    if state_machine == StateMachineEnum.STATE_MOVING then
+      device:set_field(STATE_MACHINE, StateMachineEnum.STATE_CURRENT_POSITION_FIRED)
+    elseif state_machine == StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED or
+      state_machine == StateMachineEnum.STATE_IDLE or state_machine == nil then
+      update_shade_status(device, ib.endpoint_id, device:get_field(CURRENT_LIFT), device:get_field(CURRENT_TILT))
+      device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
     end
   end
 end
 
 -- checks the current position of the shade
 local function current_status_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
   local windowShade = capabilities.windowShade.windowShade
   local reverse = device:get_field(REVERSE_POLARITY)
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL
-  if state == 1 then -- opening
-    device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closing() or windowShade.opening())
-  elseif state == 2 then -- closing
-    device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.opening() or windowShade.closing())
-  elseif state ~= 0 then -- unknown
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
+  local state_machine = device:get_field(STATE_MACHINE)
+  -- When state_machine is STATE_OPERATIONAL_STATE_FIRED, nothing to do
+  if state_machine == StateMachineEnum.STATE_IDLE then
+    if state == 1 then -- opening
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closing() or windowShade.opening())
+      device:set_field(STATE_MACHINE, StateMachineEnum.STATE_MOVING)
+    elseif state == 2 then -- closing
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.opening() or windowShade.closing())
+      device:set_field(STATE_MACHINE, StateMachineEnum.STATE_MOVING)
+    end
+  elseif state_machine == StateMachineEnum.STATE_MOVING then
+    if state == 0 then -- not moving
+      device:set_field(STATE_MACHINE, StateMachineEnum.STATE_OPERATIONAL_STATE_FIRED)
+    elseif state == 1 then -- opening
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closing() or windowShade.opening())
+    elseif state == 2 then -- closing
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.opening() or windowShade.closing())
+    else
+      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
+      device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
+    end
+  elseif state_machine == StateMachineEnum.STATE_CURRENT_POSITION_FIRED then
+    update_shade_status(device, ib.endpoint_id, device:get_field(CURRENT_LIFT), device:get_field(CURRENT_TILT))
+    device:set_field(STATE_MACHINE, StateMachineEnum.STATE_IDLE)
   end
 end
 
@@ -368,10 +402,6 @@ local matter_driver_template = {
     capabilities.windowShadePreset,
     capabilities.battery,
     capabilities.batteryLevel,
-  },
-  sub_drivers = {
-    -- for devices sending a position update while device is in motion
-    require("matter-window-covering-position-updates-while-moving")
   }
 }
 
