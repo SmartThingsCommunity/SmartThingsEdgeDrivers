@@ -1,0 +1,85 @@
+name: button-profile-panic-frient
+components:
+  - id: main
+    capabilities:
+      - id: button
+        version: 1
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+      - id: panicAlarm
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - title: "LED Color"
+    name: ledColor
+    description: "Color of LED when button is pressed (since it is a battery powered device, it is recommended to press the button to wake it up right before or right after changing this setting)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Off"
+        1: "Red"
+        2: "Green"
+        3: "Yellow"
+      default: "2"
+  - title: "Button press delay (ms)"
+    name: buttonDelay
+    description: "Delay before button press is registered in milliseconds (since it is a battery powered device, it is recommended to press the button to wake it up right before or right after changing this setting)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 8000
+      default: 100
+  - title: "Use as Panic Button"
+    name: panicButton
+    description: "Use as Panic Button (since it is a battery powered device, it is recommended to press the button to wake it up right before or right after changing this setting. May take up to 1 minute to reconfigure the device)." 
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0xFFFF: "Off"
+        0x002C: "On"
+      default: "0x002C"
+  - title: "Hold to activate alarm (ms)"
+    name: buttonAlarmDelay
+    description: "Delay before button press is registered as alarm in milliseconds (since it is a battery powered device, it is recommended to press the button to wake it up right before or right after changing this setting)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 8000
+      default: 2000
+  - title: "Hold to cancel alarm (ms)"
+    name: buttonCancelDelay
+    description: "Delay before button press cancels alarm in milliseconds (since it is a battery powered device, it is recommended to press the button to wake it up right before or right after changing this setting)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 8000
+      default: 2000
+  - title: "Auto alarm cancel (s)"
+    name: autoCancel
+    description: "Set the time the alarm will be automatically canceled in seconds (since it is a battery powered device, it is recommended to press the button to wake it up right before or right after changing this setting)." 
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65536
+      default: 10
+  - title: "Alarm LED behavior"
+    name: alarmBehavior
+    description: "Choose the behavior of the LED when the alarm is triggered (since it is a battery powered device, it is recommended to press the button to wake it up right before or right after changing this setting)." 
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Immediate"
+        1: "Wait for confirmation"
+      default: "0"
