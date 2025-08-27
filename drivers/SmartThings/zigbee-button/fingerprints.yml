@@ -19,6 +19,11 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: SOS-EM
     deviceProfileName: button-profile
+  - id: "frient A/S/MBTZB-110"
+    deviceLabel: frient Button
+    manufacturer: frient A/S
+    model: MBTZB-110
+    deviceProfileName: button-profile-frient
   - id: "frient A/S/SBTZB-110"
     deviceLabel: frient Button
     manufacturer: frient A/S
