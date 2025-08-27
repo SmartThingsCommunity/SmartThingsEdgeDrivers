@@ -72,7 +72,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
-        ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 5)
+        ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)
       }
     )
     test.socket.zigbee:__expect_send(
@@ -90,7 +90,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
-        SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 5)
+        SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)
       }
     )
 
