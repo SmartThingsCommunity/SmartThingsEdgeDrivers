@@ -728,7 +728,7 @@ end
 ----------------
 -- User Table --
 ----------------
-local function add_user_to_table(device, userIdx, usrType)
+local function add_user_to_table(device, userIdx, userName, userType)
   -- Get latest user table
   local user_table = utils.deep_copy(device:get_latest_state(
     "main",
@@ -738,11 +738,11 @@ local function add_user_to_table(device, userIdx, usrType)
   ))
 
   -- Add new entry to table
-  table.insert(user_table, {userIndex = userIdx, userType = usrType})
+  table.insert(user_table, {userIndex = userIdx, userName = userName, userType = userType})
   device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
 end
 
-local function update_user_in_table(device, userIdx, usrType)
+local function update_user_in_table(device, userIdx, userName, userType)
   -- Get latest user table
   local user_table = utils.deep_copy(device:get_latest_state(
     "main",
@@ -762,7 +762,8 @@ local function update_user_in_table(device, userIdx, usrType)
 
   -- Update user entry
   if i ~= 0 then
-    user_table[i].userType = usrType
+    user_table[i].userType = userType
+    user_table[i].userName = userName
     device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
   end
 end
@@ -1214,7 +1215,7 @@ local function delete_aliro_from_table_as_user(device, userIdx)
   local new_aliro_table = {}
 
   -- Re-create credential table
-  for index, entry in pairs(cred_table) do
+  for index, entry in pairs(aliro_table) do
     if entry.userIndex ~= userIdx then
       table.insert(new_aliro_table, entry)
     end
@@ -1269,7 +1270,7 @@ local function handle_update_user(driver, device, command)
   local cmdName = "updateUser"
   local userIdx = command.args.userIndex
   local userName = command.args.userName
-  local userType = command.args.lockUserType
+  local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
     userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
@@ -1296,6 +1297,7 @@ local function handle_update_user(driver, device, command)
   -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
+  device:set_field(lock_utils.USER_NAME, userName, {persist = true})
   device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
 
   -- Send command
@@ -1406,6 +1408,7 @@ local function set_user_response_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local userName = device:get_field(lock_utils.USER_NAME)
   local userType = device:get_field(lock_utils.USER_TYPE)
   local status = "success"
   if ib.status == DoorLock.types.DlStatus.FAILURE then
@@ -1419,9 +1422,9 @@ local function set_user_response_handler(driver, device, ib, response)
   -- Update User in table
   if status == "success" then
     if cmdName == "addUser" then
-      add_user_to_table(device, userIdx, userType)
+      add_user_to_table(device, userIdx, userName, userType)
     elseif cmdName == "updateUser" then
-      update_user_in_table(device, userIdx, userType)
+      update_user_in_table(device, userIdx, userName, userType)
     end
   else
     device.log.warn(string.format("Failed to set user: %s", status))
@@ -1695,7 +1698,7 @@ local function set_pin_response_handler(driver, device, ib, response)
 
     -- If user is added also, update User table
     if userIdx == nil then
-      add_user_to_table(device, elements.user_index.value, userType)
+      add_user_to_table(device, elements.user_index.value, nil, userType)
     end
 
     -- Update Credential table
@@ -1843,7 +1846,7 @@ local function set_issuer_key_response_handler(driver, device, ib, response)
     -- If user is added also, update User table
     if userIdx == nil then
       userIdx = elements.user_index.value
-      add_user_to_table(device, userIdx, "adminMember")
+      add_user_to_table(device, userIdx, nil, "adminMember")
     end
 
     -- Update Aliro table
@@ -1966,7 +1969,7 @@ local function set_endpoint_key_response_handler(driver, device, ib, response)
     -- If user is added also, update User table
     if userIdx == nil then
       userIdx = elements.user_index.value
-      add_user_to_table(device, userIdx, "adminMember")
+      add_user_to_table(device, userIdx, nil, "adminMember")
     end
 
     -- Update Aliro table
@@ -2184,8 +2187,10 @@ local function delete_pin_response_handler(driver, device, ib, response)
   local userIdx = 0
   if status == "success" then
     userIdx = delete_credential_from_table(device, credIdx)
-    if userIdx == 0 then
-      userIdx = nil
+    if userIdx ~= 0 and has_credentials(device, userIdx) == false then
+      delete_user_from_table(device, userIdx)
+      delete_week_schedule_from_table_as_user(device, userIdx)
+      delete_year_schedule_from_table_as_user(device, userIdx)
     end
   else
     device.log.warn(string.format("Failed to clear credential: %s", status))
@@ -2228,12 +2233,11 @@ local function clear_issuer_key_response_handler(driver, device, ib, response)
   -- if status is success, delete entry from table
   if status == "success" then
     delete_aliro_from_table(device, userIdx, "issuerKey", nil)
-  end
-
-  if has_credentials(device, userIdx) == false then
-    delete_user_from_table(device, userIdx)
-    delete_week_schedule_from_table_as_user(device, userIdx)
-    delete_year_schedule_from_table_as_user(device, userIdx)
+    if has_credentials(device, userIdx) == false then
+      delete_user_from_table(device, userIdx)
+      delete_week_schedule_from_table_as_user(device, userIdx)
+      delete_year_schedule_from_table_as_user(device, userIdx)
+    end
   end
 
   -- Update commandResult
@@ -2272,6 +2276,11 @@ local function clear_endpoint_key_response_handler(driver, device, ib, response)
   -- if status is success, delete entry from table
   if status == "success" then
     delete_aliro_from_table(device, userIdx, keyType, deviceKeyId)
+    if has_credentials(device, userIdx) == false then
+      delete_user_from_table(device, userIdx)
+      delete_week_schedule_from_table_as_user(device, userIdx)
+      delete_year_schedule_from_table_as_user(device, userIdx)
+    end
   end
 
   -- Update commandResult
