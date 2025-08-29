@@ -84,6 +84,51 @@ matterManufacturer:
     productId: 0xFA17
     deviceProfileName: window-covering
 #WISTAR
+  - id: "5207/3"
+    deviceLabel: WISTAR WSERD16-B Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0003
+    deviceProfileName: window-covering-battery
+  - id: "5207/4"
+    deviceLabel: WISTAR WSERD24 Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0004
+    deviceProfileName: window-covering  
+  - id: "5207/5"
+    deviceLabel: WISTAR WSERD40-B Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0005
+    deviceProfileName: window-covering-battery
+  - id: "5207/6"
+    deviceLabel: WISTAR WSERD40-L Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0006
+    deviceProfileName: window-covering-battery
+  - id: "5207/7"
+    deviceLabel: WISTAR WSERD40-T Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0007
+    deviceProfileName: window-covering 
+  - id: "5207/8"
+    deviceLabel: WISTAR WSERD50-B Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0008
+    deviceProfileName: window-covering-battery
+  - id: "5207/9"
+    deviceLabel: WISTAR WSERD50-L Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0009
+    deviceProfileName: window-covering-battery
+  - id: "5207/16"
+    deviceLabel: WISTAR WSERD50-T Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0010
+    deviceProfileName: window-covering  
+  - id: "5207/19"
+    deviceLabel: WISTAR WSER60 Smart Tubular Motor
+    vendorId: 0x1457
+    productId: 0x0013
+    deviceProfileName: window-covering  
   - id: "5207/17"
     deviceLabel: WISTAR WSER40 Smart Tubular Motor
     vendorId: 0x1457

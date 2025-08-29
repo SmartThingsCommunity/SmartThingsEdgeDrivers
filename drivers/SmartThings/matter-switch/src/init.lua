@@ -289,7 +289,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
+local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -1206,12 +1206,12 @@ local function active_power_handler(driver, device, ib, response)
     local watt_value = ib.data.value / CONVERSION_CONST_MILLIWATT_TO_WATT
     if ib.endpoint_id ~= 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
-      if type(device.register_native_capability_attr_handler) == "function" then
-        device:register_native_capability_attr_handler("powerMeter","power")
-      end
     else
       -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
       device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    end
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("powerMeter","power")
     end
   end
 end

@@ -57,6 +57,8 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.DishwasherMode.attributes.CurrentMode,
@@ -71,7 +73,6 @@ local function test_init()
     clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
     clusters.TemperatureControl.attributes.SupportedTemperatureLevels
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -79,12 +80,13 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
   read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
   test.socket.matter:__expect_send({mock_device.id, read_req})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
   mock_device:expect_metadata_update({ profile = "dishwasher-tn-tl" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end

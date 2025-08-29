@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
 local version = require "version"
 local clusters = require "st.matter.clusters"
 
@@ -107,29 +106,6 @@ end
 test.set_test_init_function(test_init)
 
 test.register_message_test(
-  "Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 90 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, WATER_HEATER_EP,
-          utils.round((90 - 32) * (5 / 9.0) * 100))
-      }
-    }
-  }
-)
-
-test.register_message_test(
   "Heating setpoint reports should generate correct messages",
   {
     {
@@ -139,6 +115,12 @@ test.register_message_test(
         mock_device.id,
         clusters.Thermostat.server.attributes.OccupiedHeatingSetpoint:build_test_report_data(mock_device, 1, 70*100)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 0.00, maximum = 100.00, step = 0.1 }, unit = "C" }))
     },
     {
       channel = "capability",
@@ -165,28 +147,6 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, WATER_HEATER_EP, 80*100)
-      }
-    }
-  }
-)
-
-test.register_message_test(
-  "Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 100 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, WATER_HEATER_EP, utils.round((100 - 32) * (5 / 9.0) * 100))
       }
     }
   }

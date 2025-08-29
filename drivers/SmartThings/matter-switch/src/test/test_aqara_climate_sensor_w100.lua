@@ -18,7 +18,6 @@ local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
 local uint32 = require "st.matter.data_types.Uint32"
-
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
 
@@ -121,6 +120,8 @@ local function configure_buttons()
 end
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(aqara_mock_device)
   local cluster_subscribe_list = {
     clusters.PowerSource.server.attributes.BatPercentRemaining,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
@@ -140,17 +141,17 @@ local function test_init()
     end
   end
 
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "init" })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
   configure_buttons()
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.mock_device.add_test_device(aqara_mock_device)
-  test.set_rpc_version(5)
-
-  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
   device_info_copy.profile.id = "3-button-battery-temperature-humidity"

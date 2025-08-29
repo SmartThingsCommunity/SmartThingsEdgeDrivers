@@ -99,7 +99,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.Switch.server.events.MultiPressComplete,
 }
 
-local function configure_buttons()
+local function expect_configure_buttons()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
 
@@ -116,28 +116,39 @@ local function configure_buttons()
   test.socket.capability:__expect_send(mock_device:generate_test_message("button5", button_attr.pushed({state_change = false})))
 end
 
+-- All messages queued and expectations set are done before the driver is actually run
 local function test_init()
+  -- we dont want the integration test framework to generate init/doConfigure, we are doing that here
+  -- so we can set the proper expectations on those events.
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device) -- make sure the cache is populated
+
+  -- added sets a bunch of fields on the device, and calls init
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.mock_device.add_test_device(mock_device)
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
-  configure_buttons()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
+  -- init results in subscription interaction
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+
+  --doConfigure sets the provisioning state to provisioned
+  test.socket.matter:__expect_send({mock_device.id, clusters.PowerSource.attributes.AttributeList:read()})
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  expect_configure_buttons()
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+
+  -- simulate the profile change update taking affect and the device info changing
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "5-buttons-battery"
   local device_info_json = dkjson.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  configure_buttons()
+  expect_configure_buttons()
 end
-
 test.set_test_init_function(test_init)
 
 test.register_message_test(

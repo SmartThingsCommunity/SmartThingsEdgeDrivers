@@ -173,7 +173,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "SensorMultilevel report temperature should be handled as temperature",
+  "SensorMultilevel report temperature (C) should be handled as temperature",
   {
     {
       channel = "zwave",
@@ -188,12 +188,20 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 30, unit = "C" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )
 
 test.register_message_test(
-  "SensorMultilevel report temperature should be handled as temperature",
+  "SensorMultilevel report temperature (F) should be handled as temperature",
   {
     {
       channel = "zwave",
@@ -208,6 +216,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70, unit = "F" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )
@@ -266,6 +282,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
     }
   }
 )
@@ -286,6 +310,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
     }
   }
 )

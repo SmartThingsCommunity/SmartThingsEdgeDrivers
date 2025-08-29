@@ -15,7 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
 
 local clusters = require "st.matter.clusters"
 
@@ -222,6 +221,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 40.0, unit = "C" }))
     }
   }
@@ -237,6 +241,11 @@ test.register_message_test(
         mock_device.id,
         clusters.Thermostat.server.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 1, 40*100)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
     },
     {
       channel = "capability",
@@ -698,28 +707,6 @@ test.register_message_test(
 			message = {
 				mock_device.id,
 				clusters.Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 1, 25*100)
-			}
-		}
-	}
-)
-
-test.register_message_test(
-	"Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
-	{
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 64 } }
-			}
-		},
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1, utils.round((64 - 32) * (5 / 9.0) * 100))
 			}
 		}
 	}

@@ -43,12 +43,21 @@ local mock_device_record = {
 local mock_device = test.mock_device.build_test_matter_device(mock_device_record)
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+  )
+  mock_device:expect_metadata_update({ profile = "lock-without-codes" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)

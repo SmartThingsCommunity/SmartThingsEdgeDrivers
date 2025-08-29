@@ -17,6 +17,8 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local uint32 = require "st.matter.data_types.Uint32"
 
+test.set_rpc_version(7)
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-batteryLevel.yml"),
   manufacturer_info = {

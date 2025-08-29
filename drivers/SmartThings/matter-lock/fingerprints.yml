@@ -99,6 +99,17 @@ matterManufacturer:
     vendorId: 0x147F
     productId: 0x0001
     deviceProfileName: lock-user-pin-battery
+  - id: "5247/8"
+    deviceLabel: ULTRALOQ Bolt Smart Matter Door Lock
+    vendorId: 0x147F
+    productId: 0x0008
+    deviceProfileName: lock-user-pin-battery
+  #Yale
+  - id: "4125/33040"
+    deviceLabel: Yale Lock with Matter
+    vendorId: 0x101D
+    productId: 0x8110
+    deviceProfileName: lock-user-pin-schedule-battery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

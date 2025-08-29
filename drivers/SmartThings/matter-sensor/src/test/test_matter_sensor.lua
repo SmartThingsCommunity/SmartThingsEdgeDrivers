@@ -118,7 +118,6 @@ end
 local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_on_init(mock_device)})
   test.mock_device.add_test_device(mock_device)
-  test.set_rpc_version(5)
 end
 test.set_test_init_function(test_init)
 
@@ -134,8 +133,10 @@ local function subscribe_on_init_presence_sensor(dev)
 end
 
 local function test_init_presence_sensor()
-  test.socket.matter:__expect_send({mock_device_presence_sensor.id, subscribe_on_init_presence_sensor(mock_device_presence_sensor)})
+  test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device_presence_sensor)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_presence_sensor.id, "init" })
+  test.socket.matter:__expect_send({mock_device_presence_sensor.id, subscribe_on_init_presence_sensor(mock_device_presence_sensor)})
   test.socket.device_lifecycle:__queue_receive({ mock_device_presence_sensor.id, "doConfigure" })
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device_presence_sensor.id, read_attribute_list})

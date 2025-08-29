@@ -17,11 +17,8 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
-
 local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
-
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1
@@ -159,7 +156,8 @@ local function configure_buttons()
 end
 
 local function test_init()
-  local opts = { persist = true }
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(aqara_mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.Switch.server.events.InitialPress,
@@ -176,13 +174,16 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(aqara_mock_device))
     end
   end
+
+  -- Test added -> doConfigure logic
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "init" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
-  test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
-  test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
-  test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="4-button"}
+  configure_buttons()
+  aqara_mock_device:expect_metadata_update({ profile = "4-button" })
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.mock_device.add_test_device(aqara_mock_device)
   -- to test powerConsumptionReport
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 
@@ -206,11 +207,6 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", aqara_child2_ep)
   })
 
-  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
-  configure_buttons()
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-
-  aqara_mock_device:set_field(DEFERRED_CONFIGURE, true, opts)
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
   device_info_copy.profile.id = "4-button"
   local device_info_json = dkjson.encode(device_info_copy)
