@@ -70,6 +70,48 @@ local devices = {
       switchType = {parameter_number = 22, size = 1}
     }
   },
+  INOVELLI_VZW32_SN = {
+    MATCHING_MATRIX = {
+      mfrs = 0x031E,
+      product_types = {0x0017},
+      product_ids = 0x0001
+    },
+    PARAMETERS = {
+      parameter158 = {parameter_number = 158, size = 1},
+      parameter22 = {parameter_number = 22, size = 1},
+      parameter52 = {parameter_number = 52, size = 1},
+      parameter1 = {parameter_number = 1, size = 1},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter4 = {parameter_number = 4, size = 1},
+      parameter9 = {parameter_number = 9, size = 1},
+      parameter10 = {parameter_number = 10, size = 1},
+      parameter15 = {parameter_number = 15, size = 1},
+      parameter18 = {parameter_number = 18, size = 1},
+      parameter19 = {parameter_number = 19, size = 2},
+      parameter20 = {parameter_number = 20, size = 2},
+      parameter50 = {parameter_number = 50, size = 1},
+      parameter95 = {parameter_number = 95, size = 1},
+      parameter96 = {parameter_number = 96, size = 1},
+      parameter97 = {parameter_number = 97, size = 1},
+      parameter98 = {parameter_number = 98, size = 1},
+      parameter101 = {parameter_number = 101, size = 2},
+      parameter102 = {parameter_number = 102, size = 2},
+      parameter103 = {parameter_number = 103, size = 2},
+      parameter104 = {parameter_number = 104, size = 2},
+      parameter105 = {parameter_number = 105, size = 2},
+      parameter106 = {parameter_number = 106, size = 2},
+      parameter108 = {parameter_number = 108, size = 4},
+      parameter110 = {parameter_number = 110, size = 2},
+      parameter111 = {parameter_number = 111, size = 1},
+      parameter112 = {parameter_number = 112, size = 1},
+      parameter113 = {parameter_number = 113, size = 1},
+      parameter114 = {parameter_number = 114, size = 4},
+      parameter117 = {parameter_number = 117, size = 1},
+      parameter118 = {parameter_number = 118, size = 2},
+      parameter119 = {parameter_number = 119, size = 2}
+    }
+  },
   QUBINO_FLUSH_DIMMER = {
     MATCHING_MATRIX = {
       mfrs = 0x0159,
