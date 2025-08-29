@@ -171,7 +171,7 @@ for partner in partners:
             if response.status_code == 500 or response.status_code == 429:
               retries = retries + 1
               if retries > 3:
-                with open(FAILURE_FILE, 'a') as f:
+                with open("../.."+FAILURE_FILE, 'a') as f: # go up to the root directory to output, since we've changed dirs to the partner directory
                   f.write("Failed to upload driver to "+ENVIRONMENT+": "+driver)
                   f.write("Error code: "+str(response.status_code))
                   f.write("Error response: "+response.text)
