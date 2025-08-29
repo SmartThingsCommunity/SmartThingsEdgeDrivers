@@ -63,11 +63,17 @@ local function do_configure(self, device)
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(driver, device)
   device:emit_event(capabilities.batteryLevel.type("CR1632"))
   device:emit_event(capabilities.batteryLevel.quantity(1))
   device:emit_event(capabilities.batteryLevel.battery("normal"))
-  device:emit_event(capabilities.contactSensor.contact.closed())
+  emit_event_if_latest_state_missing(device, "main", capabilities.contactSensor, capabilities.contactSensor.contact.NAME, capabilities.contactSensor.contact.open())
 end
 
 local function contact_status_handler(self, device, value, zb_rx)
