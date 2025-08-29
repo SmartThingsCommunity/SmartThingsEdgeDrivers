@@ -5,8 +5,6 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=
 local Version = (require "st.zwave.CommandClass.Version")({ version=1 })
 --- @type st.zwave.CommandClass.Association
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
---- @type st.zwave.constants
-local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 --- @type st.zwave.CommandClass.Basic
@@ -14,7 +12,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
 local preferencesMap = require "preferences"
-
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
@@ -43,7 +40,7 @@ local INOVELLI_VZW32_SN_FINGERPRINTS = {
 --- @return table dst_channels destination channels e.g. {2} for Z-Wave channel 2 or {} for unencapsulated
 local function component_to_endpoint(device, component_id)
   local ep_num = component_id:match("switch(%d)")
-  return { ep_num and tonumber(ep_num) } 
+  return { ep_num and tonumber(ep_num) }
 end
 
 --- Map end_point(channel) to Z-Wave endpoint 9 channel)
@@ -85,7 +82,6 @@ local preferences_to_numeric_value = function(new_value)
 end
 
 local preferences_calculate_parameter = function(new_value, type, number)
-  local numeric = tonumber(new_value)
   if type == 4 and new_value > 2147483647 then
     return ((4294967296 - new_value) * -1)
   elseif type == 2 and new_value > 32767 then
@@ -110,35 +106,37 @@ local function add_child(driver,parent,profile,child_type)
 end
 
 local function initialize(device)
-  if device:get_latest_state("main", capabilities.illuminanceMeasurement.ID, capabilities.illuminanceMeasurement.illuminance.NAME) == null then
+  if device:get_latest_state("main", capabilities.illuminanceMeasurement.ID, capabilities.illuminanceMeasurement.illuminance.NAME) == nil then
     device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
   end
-  if device:get_latest_state("main", capabilities.motionSensor.ID, capabilities.motionSensor.motion.NAME) == null then
+  if device:get_latest_state("main", capabilities.motionSensor.ID, capabilities.motionSensor.motion.NAME) == nil then
     device:emit_event(capabilities.motionSensor.motion.active())
   end
-  if device:get_latest_state("main", capabilities.powerMeter.ID, capabilities.powerMeter.power.NAME) == null then
+  if device:get_latest_state("main", capabilities.powerMeter.ID, capabilities.powerMeter.power.NAME) == nil then
     device:emit_event(capabilities.powerMeter.power(0))
   end
-  if device:get_latest_state("main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) == null then
+  if device:get_latest_state("main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) == nil then
     device:emit_event(capabilities.energyMeter.energy(0))
   end
-  if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == null then
+  if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil then
     device:emit_event(capabilities.switchLevel.level(0))
   end
 
   for _, component in pairs(device.profile.components) do
     if string.find(component.id, "button") ~= nil then
-      device:emit_component_event(
-        component,
-        capabilities.button.supportedButtonValues(
-          {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
-          { visibility = { displayed = false } }
+      if device:get_latest_state(component.id, capabilities.button.ID, capabilities.button.supportedButtonValues.NAME) == nil then
+        device:emit_component_event(
+          component,
+          capabilities.button.supportedButtonValues(
+            {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+            { visibility = { displayed = false } }
+          )
         )
-      )
-      device:emit_component_event(
-        component,
-        capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
-      )
+        device:emit_component_event(
+          component,
+          capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
+        )
+      end
     end
   end
 end
@@ -158,6 +156,7 @@ end
 local function set_color(driver, device, command)
   device:emit_event(capabilities.colorControl.hue(command.args.color.hue))
   device:emit_event(capabilities.colorControl.saturation(command.args.color.saturation))
+  device:emit_event(capabilities.switch.switch("on"))
   local dev = device:get_parent_device()
   local config = Configuration:Set({
     parameter_number=NOTIFICATION_PARAMETER_NUMBER,
@@ -173,6 +172,7 @@ end
 local function set_color_temperature(driver, device, command)
   device:emit_event(capabilities.colorControl.hue(100))
   device:emit_event(capabilities.colorTemperature.colorTemperature(command.args.temperature))
+  device:emit_event(capabilities.switch.switch("on"))
   local dev = device:get_parent_device()
   local config = Configuration:Set({
     parameter_number=NOTIFICATION_PARAMETER_NUMBER,
@@ -295,24 +295,6 @@ local function version_report(driver, device, cmd)
   log.info("Firmware Version: "..cmd.args.firmware_0_version.."."..cmd.args.firmware_0_sub_version)
 end
 
-local function notification_report_handler(self, device, cmd)
-  local event
-  if cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
-    if cmd.args.event == Notification.event.home_security.MOTION_DETECTION then
-      event = cmd.args.notification_status == 0 and capabilities.motionSensor.motion.inactive() or capabilities.motionSensor.motion.active()
-    elseif cmd.args.event == Notification.event.home_security.STATE_IDLE then
-      if #cmd.args.event_parameter >= 1 and string.byte(cmd.args.event_parameter, 1) == 8 then
-        event = capabilities.motionSensor.motion.inactive()
-      else
-        event = capabilities.tamperAlert.tamper.clear()
-      end
-    end
-  end
-  if (event ~= nil) then
-    device:emit_event(event)
-  end
-end
-
 local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = capabilities.button.button.pushed,
   [CentralScene.key_attributes.KEY_RELEASED] = capabilities.button.button.held,
@@ -369,7 +351,6 @@ local inovelli_vzw32_sn = {
     init = device_init,
     infoChanged = info_changed,
   },
-  
   zwave_handlers = {
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = function() end -- Empty function since configuration_report was unused
