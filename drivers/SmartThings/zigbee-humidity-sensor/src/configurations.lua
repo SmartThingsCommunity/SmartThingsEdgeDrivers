@@ -22,24 +22,33 @@ local PowerConfiguration = clusters.PowerConfiguration
 local devices = {
   FRIENT_HUMIDITY_TEMP_SENSOR = {
     FINGERPRINTS = {
-      { mfr = "frient A/S", model = "HMSZB-110" }
+      { mfr = "frient A/S", model = "HMSZB-110" },
+      { mfr = "frient A/S", model = "HMSZB-120" }
     },
     CONFIGURATION = {
       {
         cluster = RelativeHumidity.ID,
         attribute = RelativeHumidity.attributes.MeasuredValue.ID,
         minimum_interval = 60,
-        maximum_interval = 600,
+        maximum_interval = 3600,
         data_type = RelativeHumidity.attributes.MeasuredValue.base_type,
-        reportable_change = 100
+        reportable_change = 300
       },
       {
         cluster = TemperatureMeasurement.ID,
         attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
-        minimum_interval = 60,
-        maximum_interval = 600,
+        minimum_interval = 30,
+        maximum_interval = 3600,
         data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
-        reportable_change = 10
+        reportable_change = 100
+      },
+      {
+        cluster = PowerConfiguration.ID,
+        attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
+        minimum_interval = 30 ,
+        maximum_interval = 21600,
+        data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
+        reportable_change = 1
       }
     }
   },
