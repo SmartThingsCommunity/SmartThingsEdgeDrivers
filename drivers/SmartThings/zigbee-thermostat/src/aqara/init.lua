@@ -110,17 +110,23 @@ local function device_init(driver, device)
   do_refresh(driver, device)
 end
 
+local function emit_component_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component.id, capability.ID, attribute_name) == nil then
+    device:emit_component_event(component, value)
+  end
+end
+
 local function device_added(driver, device)
   supported_thermostat_modes_handler(driver, device, nil)
   device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"}))
   device:emit_event(capabilities.temperatureMeasurement.temperature({value = 27.0, unit = "C"}))
   device:emit_event(capabilities.thermostatMode.thermostatMode.manual())
-  device:emit_event(capabilities.valve.valve.open())
-  device:emit_component_event(device.profile.components.ChildLock, capabilities.lock.lock.unlocked())
   device:emit_event(capabilities.hardwareFault.hardwareFault.clear())
   device:emit_event(valveCalibration.calibrationState.calibrationPending())
   device:emit_event(invisibleCapabilities.invisibleCapabilities({""}))
   device:emit_event(capabilities.battery.battery(100))
+  emit_component_event_if_latest_state_missing(device, device.profile.components.main, capabilities.valve, capabilities.valve.valve.NAME, capabilities.valve.valve.open())
+  emit_component_event_if_latest_state_missing(device, device.profile.components.ChildLock, capabilities.lock, capabilities.lock.lock.NAME, capabilities.lock.lock.unlocked())
 end
 
 local function thermostat_alarm_status_handler(driver, device, value, zb_rx)

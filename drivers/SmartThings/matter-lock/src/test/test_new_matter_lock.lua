@@ -55,6 +55,13 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+  )
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
@@ -68,22 +75,15 @@ local function test_init()
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ profile = "lock-user-pin" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+  )
 end
 
 test.set_test_init_function(test_init)
-
-test.register_coroutine_test(
-  "Assert profile applied over doConfigure",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "lock-user-pin" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-    )
-  end
-)
 
 test.register_coroutine_test(
   "Handle received OperatingMode(Normal, Vacation) from Matter device.",

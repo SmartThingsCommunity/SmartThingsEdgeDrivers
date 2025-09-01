@@ -158,6 +158,12 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2030
     deviceProfileName: motion-illuminance-battery
+  # Sensereo
+  - id: "5526/1"
+    deviceLabel: Sensereo Matter Smoke Alarm MS1
+    vendorId: 0x1596
+    productId: 0x0001
+    deviceProfileName: smoke-battery
   # Siterwell
   - id: "4736/847"
     deviceLabel: Siterwell Door Window Sensor
