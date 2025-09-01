@@ -285,6 +285,9 @@ end
 
 local function resetEnergyMeter(self, device)
   device:send(clusters.OnOff.server.commands.On(device))
+  -- Reset Power consumption
+  device:set_field(constants.ENERGY_METER_OFFSET, 0, {persist = true})
+  device:set_field("LAST_SAVE_TICK", os.time(), {persist = false})
 end
 local function do_configure(driver, device)
   device:configure()
