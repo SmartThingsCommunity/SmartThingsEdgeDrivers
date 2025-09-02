@@ -329,6 +329,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_parent_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
       }
     }
 )
@@ -348,6 +356,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
       }
     }
 )

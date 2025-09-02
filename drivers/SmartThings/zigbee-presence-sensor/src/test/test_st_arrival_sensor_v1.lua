@@ -68,10 +68,17 @@ end
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local add_device = function()
+  -- The initial presenceSensor event should be send during the device's first time onboarding
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
     capabilities.presenceSensor.presence("present")
   ))
+  test.wait_for_events()
+end
+
+local add_device_after_switch_over = function()
+  -- Avoid sending the initial presenceSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+  test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.wait_for_events()
 end
 
@@ -126,6 +133,7 @@ test.register_coroutine_test(
     "Added lifecycle should be handlded",
     function ()
       add_device()
+      add_device_after_switch_over()
     end
 )
 
