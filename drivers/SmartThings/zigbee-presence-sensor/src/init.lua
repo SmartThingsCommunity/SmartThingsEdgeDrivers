@@ -139,8 +139,14 @@ local function beep_handler(self, device, command)
   device:send(IdentifyCluster.server.commands.Identify(device, BEEP_IDENTIFY_TIME))
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
-  device:emit_event(PresenceSensor.presence("present"))
+  emit_event_if_latest_state_missing(device, "main", PresenceSensor, PresenceSensor.presence.NAME, PresenceSensor.presence("present"))
   device:set_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS, false, {persist = true})
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end

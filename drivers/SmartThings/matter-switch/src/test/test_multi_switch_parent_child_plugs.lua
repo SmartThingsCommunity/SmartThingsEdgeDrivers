@@ -15,8 +15,9 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-
 local clusters = require "st.matter.clusters"
+
+test.disable_startup_messages()
 
 local child_profile = t_utils.get_profile_definition("plug-binary.yml")
 local child_profile_override = t_utils.get_profile_definition("switch-binary.yml")
@@ -132,16 +133,21 @@ for i, endpoint in ipairs(mock_device.endpoints) do
 end
 
 local function test_init()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
   end
@@ -177,16 +183,21 @@ for i, endpoint in ipairs(mock_device_child_profile_override.endpoints) do
 end
 
 local function test_init_child_profile_override()
+  test.mock_device.add_test_device(mock_device_child_profile_override)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_child_profile_override)
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "added" })
+  test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "init" })
   test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "doConfigure" })
   mock_device_child_profile_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  test.mock_device.add_test_device(mock_device_child_profile_override)
   for _, child in pairs(mock_children_child_profile_override) do
     test.mock_device.add_test_device(child)
   end

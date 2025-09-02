@@ -54,6 +54,8 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.OperationalState.attributes.OperationalState,
     clusters.OperationalState.attributes.OperationalError,
@@ -63,17 +65,19 @@ local function test_init()
     clusters.MicrowaveOvenControl.attributes.MaxCookTime,
     clusters.MicrowaveOvenControl.attributes.CookTime
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device.id, clusters.MicrowaveOvenControl.attributes.MaxCookTime:read(
     mock_device, APPLICATION_ENDPOINT) })
-  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function init_supported_microwave_oven_modes()

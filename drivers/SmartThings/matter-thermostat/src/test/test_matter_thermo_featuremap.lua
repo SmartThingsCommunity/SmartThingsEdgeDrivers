@@ -15,8 +15,9 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
 local clusters = require "st.matter.clusters"
+
+test.set_rpc_version(7)
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
