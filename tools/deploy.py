@@ -9,7 +9,7 @@ print(BRANCH)
 print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
 branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
-ENVIRONMENT_URL = os.environ.get(ENVIRONMENT+'_ENVIRONMENT_URL')
+ENVIRONMENT_URL = os.environ.get('ENVIRONMENT_URL')
 if not ENVIRONMENT_URL:
   print("No environment url specified, aborting.")
   exit(0)

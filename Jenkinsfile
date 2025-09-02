@@ -1,9 +1,9 @@
 def getEnvName() {
   def branch = "${env.GIT_BRANCH}"
   print branch
-  if (branch == "origin/main") {return "ALPHA"}
-  else if (branch == "origin/beta") {return "BETA"}
-  else if (branch == "origin/production") {return "PROD"}
+  if (branch == "origin/jenkins-refactor") {return "ALPHA"}
+  else if (branch == "origin/jenkins-refactor-beta") {return "BETA"}
+  else if (branch == "origin/jenkins-refactor-production") {return "PROD"}
 }
 
 def getChangedDrivers() {
@@ -28,13 +28,14 @@ pipeline {
   agent {
     docker {
       image 'python:3.10'
-      label 'production'
+      label "${params.NODE_LABEL ?: 'production'}"
       args '--entrypoint= -u 0:0'
     }
   }
   environment {
     BRANCH = getEnvName()
     CHANGED_DRIVERS = getChangedDrivers()
+    ENVIRONMENT = "${env.NODE_LABEL.toUpperCase()}"
   }
   stages {
     stage('requirements') {
@@ -51,18 +52,10 @@ pipeline {
       }
     }
     stage('update') {
-      matrix {
-        axes {
-          axis {
-            name 'ENVIRONMENT'
-            values 'DEV', 'STAGING', 'ACCEPTANCE', 'PRODUCTION'
-          }
-        }
-        stages {
-          stage('environment_update') {
-            steps {
-              sh 'python3 tools/deploy.py'
-            }
+      stages {
+        stage('environment_update') {
+          steps {
+            sh 'python3 tools/deploy.py'
           }
         }
       }
