@@ -168,7 +168,7 @@ end
 ---@param update_key "endpointAppInfo"|"sonosOAuthToken"
 ---@param update_value string
 function SonosDriver:notify_augmented_data_changed(update_kind, update_key, update_value)
-  local already_connected = self:oauth_is_connected()
+  local already_connected = self:oauth_app_connected()
   log.info(string.format("Already connected? %s", already_connected))
   if update_kind == "snapshot" then
     self:update_after_startup_state_received()
@@ -319,7 +319,7 @@ function SonosDriver:get_oauth_token()
     return nil, "not supported"
   end
 
-  if not self:oauth_is_connected() then
+  if not self:oauth_app_connected() then
     return nil, "not connected"
   end
 
@@ -342,7 +342,7 @@ function SonosDriver:wait_for_oauth_token(timeout)
     return nil, "not supported"
   end
 
-  if not self:oauth_is_connected() then
+  if not self:oauth_app_connected() then
     return nil, "not connected"
   end
 
@@ -365,7 +365,7 @@ function SonosDriver:wait_for_oauth_token(timeout)
   return nil, err
 end
 
-function SonosDriver:oauth_is_connected()
+function SonosDriver:oauth_app_connected()
   return (api_version >= 14 and security ~= nil)
     and self.oauth
     and self.oauth.endpoint_app_info

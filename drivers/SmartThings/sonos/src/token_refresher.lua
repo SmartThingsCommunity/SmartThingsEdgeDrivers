@@ -31,7 +31,7 @@ Refresher.__index = Refresher
 --- - Is Oauth connected?
 --- - Do we have a valid token?
 function Refresher:determine_action()
-  if not self.driver:oauth_is_connected() then
+  if not self.driver:oauth_app_connected() then
     -- Oauth is disconnected so no point in trying to request a token until we are connected.
     return ACTIONS.WAIT_FOR_CONNECTED
   end
