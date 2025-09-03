@@ -439,6 +439,29 @@ matterManufacturer:
     productId: 0x6008
     deviceProfileName: light-color-level-2700K-6500K
 
+# Hue
+  - id: "4107/2049"
+    deviceLabel: Hue W 1600 A21 E26 1P NAM
+    vendorId: 0x100B
+    productId: 0x0801
+    deviceProfileName: light-level
+  - id: "4107/297"
+    deviceLabel: Hue WCA 650 BR30 E26 1P NAM
+    vendorId: 0x100B
+    productId: 0x0129
+    deviceProfileName: light-color-level
+  - id: "4107/2048"
+    deviceLabel: Hue WA 810 A19 E26 1P NAM
+    vendorId: 0x100B
+    productId: 0x0800
+    deviceProfileName: light-level-colorTemperature
+# Intecular
+  - id: "5226/32769"
+    deviceLabel: InvisOutlet
+    vendorId: 0x146A
+    productId: 0x8001
+    deviceProfileName: plug-binary
+
 #Ledvance
   - id: "4489/843"
     deviceLabel: Matter Filament RGBW

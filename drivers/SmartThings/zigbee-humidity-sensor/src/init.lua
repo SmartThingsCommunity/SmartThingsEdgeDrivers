@@ -90,6 +90,6 @@ local zigbee_humidity_driver = {
   health_check = false,
 }
 
-defaults.register_for_default_handlers(zigbee_humidity_driver, zigbee_humidity_driver.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_humidity_driver, zigbee_humidity_driver.supported_capabilities, {native_capability_attrs_enabled = true})
 local driver = ZigbeeDriver("zigbee-humidity-sensor", zigbee_humidity_driver)
 driver:run()

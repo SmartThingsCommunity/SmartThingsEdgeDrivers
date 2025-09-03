@@ -15,8 +15,10 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-
 local clusters = require "st.matter.clusters"
+
+test.disable_startup_messages()
+
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
 local OPTIONS_OVERRIDE = 0x01
@@ -159,6 +161,7 @@ for i, endpoint in ipairs(mock_device.endpoints) do
 end
 
 local function test_init()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
@@ -178,12 +181,16 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  test.mock_device.add_test_device(mock_device)
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
   end
@@ -225,6 +232,7 @@ for i, endpoint in ipairs(mock_device_parent_child_endpoints_non_sequential.endp
 end
 
 local function test_init_parent_child_endpoints_non_sequential()
+  test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
@@ -244,12 +252,16 @@ local function test_init_parent_child_endpoints_non_sequential()
       subscribe_request:merge(cluster:subscribe(mock_device_parent_child_endpoints_non_sequential))
     end
   end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "added" })
+  test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "init" })
   test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "doConfigure" })
   mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)
   for _, child in pairs(mock_children_non_sequential) do
     test.mock_device.add_test_device(child)
   end
