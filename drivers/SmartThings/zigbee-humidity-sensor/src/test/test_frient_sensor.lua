@@ -222,7 +222,7 @@ test.register_coroutine_test(
                                                    humiditySensitivity
                                            )
         })
-        
+
         test.mock_time.advance_time(5)
         test.socket.zigbee:__expect_send({
             mock_device.id,
