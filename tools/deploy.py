@@ -16,7 +16,7 @@ if not ENVIRONMENT_URL:
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
 CHANNEL_ID = os.environ.get(BRANCH+'_CHANNEL_ID')
 if not CHANNEL_ID:
-  print("No channel id specified for {BRANCH}, aborting.")
+  print("No channel id specified for "+BRANCH+", aborting.")
   exit(0)
 
 UPDATE_URL = ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers/bulk"
@@ -204,5 +204,5 @@ if response.status_code != 204:
 
 print("Update drivers: ")
 print(drivers_updated)
-print("\nDrivers currently deplpyed: ")
+print("\nDrivers currently deployed: ")
 print(uploaded_drivers.keys())
