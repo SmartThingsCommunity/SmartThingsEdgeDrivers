@@ -8,20 +8,19 @@ DRIVERS_OVERRIDE = os.environ.get('DRIVERS_OVERRIDE') or "[]"
 print(BRANCH)
 print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
-branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
 ENVIRONMENT_URL = os.environ.get('ENVIRONMENT_URL')
 if not ENVIRONMENT_URL:
   print("No environment url specified, aborting.")
   exit(0)
 
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
-CHANNEL_ID = os.environ.get(branch_environment+'CHANNEL_ID')
+CHANNEL_ID = os.environ.get(BRANCH+'_CHANNEL_ID')
 if not CHANNEL_ID:
-  print("No channel id specified, aborting.")
+  print("No channel id specified for {BRANCH}, aborting.")
   exit(0)
 
 UPDATE_URL = ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers/bulk"
-TOKEN = os.environ.get(ENVIRONMENT+'_TOKEN')
+TOKEN = os.environ.get('TOKEN')
 DRIVERID = "driverId"
 VERSION = "version"
 PACKAGEKEY = "packageKey"
