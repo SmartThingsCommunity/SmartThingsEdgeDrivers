@@ -542,6 +542,12 @@ zwaveManufacturer:
     productType: 0x0000
     productId: 0x0001
     deviceProfileName: base-water
+  - id: 1120/256/130
+    deviceLabel: Shelly Wave Motion
+    manufacturerId: 0x0460
+    productId: 0x0082
+    productType: 0x0100
+    deviceProfileName: motion-battery-illuminance
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor
