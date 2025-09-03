@@ -27,8 +27,8 @@ components:
       version: 1
     - id: refresh
       version: 1
-categories:
-  - name: SmartLock
+  categories:
+    - name: SmartLock
 deviceConfig:
   dashboard:
     states:
