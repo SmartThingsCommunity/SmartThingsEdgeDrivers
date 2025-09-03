@@ -222,6 +222,20 @@ test.register_coroutine_test(
                                                    humiditySensitivity
                                            )
         })
+        
+        test.mock_time.advance_time(5)
+        test.socket.zigbee:__expect_send({
+            mock_device.id,
+            PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+        })
+        test.socket.zigbee:__expect_send({
+            mock_device.id,
+            HumidityMeasurement.attributes.MeasuredValue:read(mock_device)
+        })
+        test.socket.zigbee:__expect_send({
+            mock_device.id,
+            TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
+        })
     end
 )
 

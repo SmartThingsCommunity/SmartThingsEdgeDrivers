@@ -44,10 +44,10 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device, event, args)
-    device:configure()
-    device.thread:call_with_delay(5, function()
-      device:refresh()
-    end)
+  device:configure()
+  device.thread:call_with_delay(5, function()
+    device:refresh()
+  end)
 end
 
 local function info_changed(driver, device, event, args)
