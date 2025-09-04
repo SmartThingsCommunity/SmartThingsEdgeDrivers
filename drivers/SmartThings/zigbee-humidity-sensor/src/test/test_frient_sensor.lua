@@ -209,8 +209,6 @@ test.register_coroutine_test(
         }
         test.socket.zigbee:__set_channel_ordering("relaxed")
         test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
-        test.wait_for_events()
-
         local temperatureSensitivity = math.floor(0.9 * 100 + 0.5)
         test.socket.zigbee:__expect_send({ mock_device.id,
                                            TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(
@@ -229,6 +227,8 @@ test.register_coroutine_test(
                                                    humiditySensitivity
                                            )
         })
+        
+        test.wait_for_events()  -- Keep this if needed for any post-event processing, but expects are now before it
     end
 )
 
