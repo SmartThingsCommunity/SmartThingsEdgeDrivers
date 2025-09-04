@@ -227,8 +227,7 @@ test.register_coroutine_test(
                                                    humiditySensitivity
                                            )
         })
-        
-        test.wait_for_events()  -- Keep this if needed for any post-event processing, but expects are now before it
+        test.wait_for_events()
     end
 )
 
