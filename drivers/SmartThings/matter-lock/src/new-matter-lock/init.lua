@@ -160,7 +160,7 @@ local function device_added(driver, device)
   if #battery_feature_eps > 0 then
     device:send(clusters.PowerSource.attributes.AttributeList:read(device))
   else
-    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY)
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
   end
 end
 
@@ -284,6 +284,10 @@ local function match_profile(driver, device)
 end
 
 local function do_configure(driver, device)
+  match_profile(driver, device)
+end
+
+local function driver_switched(driver, device)
   match_profile(driver, device)
 end
 
@@ -480,18 +484,18 @@ local function handle_power_source_attribute_list(driver, device, ib, response)
     -- mark if the device if BatPercentRemaining (Attribute ID 0x0C) or
     -- BatChargeLevel (Attribute ID 0x0E) is present and try profiling.
     if attr.value == 0x0C then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE)
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, { persist = true })
       match_profile(driver, device)
       return
     elseif attr.value == 0x0E then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL)
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, { persist = true })
       match_profile(driver, device)
       return
     end
   end
 
   -- neither BatChargeLevel not BatPercentRemaining were found. Re-profiling without battery.
-  device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY)
+  device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
   match_profile(driver, device)
 end
 
@@ -2160,6 +2164,7 @@ local new_matter_lock_handler = {
     added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     attr = {
