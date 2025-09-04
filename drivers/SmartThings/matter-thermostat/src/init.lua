@@ -81,6 +81,11 @@ local THERMOSTAT_OPERATING_MODE_MAP = {
   [6] = capabilities.thermostatOperatingState.thermostatOperatingState.fan_only,
 }
 
+-- Thermostat:devices that support PercentSetting and PercentCurrent
+local THERMOSTAT_SUPPORTED_PERCENT_PRODUCTS = {
+  {0x1575, 0x0001} -- Xizhen, 81MtAc01
+}
+
 local WIND_MODE_MAP = {
   [0] = capabilities.windMode.windMode.sleepWind,
   [1] = capabilities.windMode.windMode.naturalWind
@@ -1012,6 +1017,12 @@ local function match_modular_profile_thermostat(driver, device)
 
   if #fan_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    for _, p in ipairs(THERMOSTAT_SUPPORTED_PERCENT_PRODUCTS) do
+      if device.manufacturer_info.vendor_id == p[1] and device.manufacturer_info.product_id == p[2] then
+        table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
+        break
+      end
+    end
   end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
