@@ -208,7 +208,6 @@ test.register_coroutine_test(
             }
         }
         test.socket.zigbee:__set_channel_ordering("relaxed")
-        
         test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
         test.wait_for_events()
 
@@ -233,7 +232,6 @@ test.register_coroutine_test(
 
         test.mock_time.advance_time(5)
         test.wait_for_events()
-        
         test.socket.zigbee:__expect_send({
             mock_device.id,
             PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
