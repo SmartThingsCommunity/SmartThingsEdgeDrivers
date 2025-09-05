@@ -68,7 +68,7 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
             if not info then
               device.log.warn(string.format("error receiving device info: %s", recv_err))
             else
-              ---@cast info { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo, force_refresh: boolean }
+              ---@cast info SpeakerDiscoveryInfo
               local auth_success, api_key_or_err = driver:check_auth(info)
               if not auth_success then
                 device:offline()
@@ -164,10 +164,12 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                   return
                 end
                 log.error_with(
-                  { hub_logs = true },
-                  "Error handling Sonos player initialization: %s, error code: %s",
-                  error,
-                  (error_code or "N/A")
+                  { hub_logs = false },
+                  string.format(
+                    "Error handling Sonos player initialization: %s, error code: %s",
+                    error,
+                    (error_code or "N/A")
+                  )
                 )
               end
             end
