@@ -1,0 +1,17 @@
+name: vent
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: airPurifierFanMode
+        version: 1
+        config:
+          values:
+            - key: "airPurifierFanMode.value"
+              enabledValues:
+                - low
+                - medium
+                - high
+    categories:
+      - name: Vent
