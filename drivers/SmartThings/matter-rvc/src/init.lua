@@ -55,9 +55,8 @@ local subscribed_attributes = {
   }
 }
 
-local function find_default_endpoint(device, cluster)
-  local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(cluster)
+local function find_default_endpoint(device, component_name)
+  local eps = device:get_endpoints(clusters.RvcOperationalState.ID)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
@@ -65,13 +64,7 @@ local function find_default_endpoint(device, cluster)
     end
   end
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
-  return res
-end
-
-local function component_to_endpoint(device, component_name)
-  -- Use the find_default_endpoint function to return the first endpoint that
-  -- supports a given cluster.
-  return find_default_endpoint(device, clusters.RvcOperationalState.ID)
+  return device.MATTER_DEFAULT_ENDPOINT
 end
 
 local function match_profile(driver, device)
@@ -92,16 +85,22 @@ end
 
 local function device_init(driver, device)
   device:subscribe()
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  if not device:get_field(SERVICE_AREA_PROFILED) and #device:get_endpoints(clusters.ServiceArea.ID) > 0 then
-    match_profile(driver, device)
-    device:set_field(SERVICE_AREA_PROFILED, true)
+  device:set_component_to_endpoint_fn(find_default_endpoint)
+
+  -- comp/ep map functionality removed 9/5/25.
+  device:set_field("__component_to_endpoint_map", nil)
+
+  if not device:get_field(SERVICE_AREA_PROFILED) then
+    if #device:get_endpoints(clusters.ServiceArea.ID) > 0 then
+      match_profile(driver, device)
+    end
+    device:set_field(SERVICE_AREA_PROFILED, true, { persist = true })
   end
 end
 
 local function do_configure(driver, device)
   match_profile(driver, device)
-  device:set_field(SERVICE_AREA_PROFILED, true)
+  device:set_field(SERVICE_AREA_PROFILED, true, { persist = true })
   device:send(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
 end
 
@@ -531,7 +530,7 @@ local function handle_robot_cleaner_operating_state_start(driver, device, cmd)
     device:send(clusters.RvcOperationalState.commands.Resume(device, endpoint_id))
   elseif can_send_state_command(device, capabilities.mode.commands.setMode.NAME, current_state, current_tag) == true then
     for _, mode in ipairs(supported_run_modes) do
-      endpoint_id = device:component_to_endpoint("runMode")
+      endpoint_id = device:component_to_endpoint(cmd.component)
       if mode.tag == clusters.RvcRunMode.types.ModeTag.CLEANING then
         device:send(clusters.RvcRunMode.commands.ChangeToMode(device, endpoint_id, mode.id))
         return
