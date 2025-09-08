@@ -596,6 +596,17 @@ test.register_coroutine_test("WindowCovering OperationalStatus unknown", functio
   test.socket.matter:__queue_receive(
     {
       mock_device.id,
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 1),
+    }
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShade.windowShade.opening()
+    )
+  )
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
       WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 3),
     }
   )
@@ -878,11 +889,6 @@ test.register_coroutine_test(
         "main", capabilities.windowShadeLevel.shadeLevel(23)
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main", capabilities.windowShade.windowShade.partially_open()
-      )
-    )
     test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
@@ -895,11 +901,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShadeLevel.shadeLevel(21)
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
     test.wait_for_events()
@@ -915,6 +916,12 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
           "main", capabilities.windowShadeLevel.shadeLevel(19)
       )
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
@@ -987,6 +994,12 @@ test.register_coroutine_test(
         "main", capabilities.windowShadeLevel.shadeLevel(23)
       )
     )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShade.windowShade.partially_open()
@@ -1028,6 +1041,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShadeLevel.shadeLevel(100)
       )
     )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+    })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShade.windowShade.closed()
@@ -1067,6 +1084,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(0)
       )
     )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+    })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShade.windowShade.open()
@@ -1083,6 +1104,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(100)
       )
     )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+    })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShade.windowShade.closed()
