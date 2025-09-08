@@ -2888,6 +2888,13 @@ local function handle_set_issuer_key(driver, device, command)
     credential_index = INITIAL_CREDENTIAL_INDEX
   }
 
+  -- Adjustment
+  if userIdx == 0 then
+    userIdx = nil
+  else
+    userType = nil
+  end
+
   -- Check busy state
   local busy = check_busy_state(device)
   if busy == true then
@@ -2906,13 +2913,6 @@ local function handle_set_issuer_key(driver, device, command)
     )
     device:emit_event(event)
     return
-  end
-
-  -- Adjustment
-  if userIdx == 0 then
-    userIdx = nil
-  else
-    userType = nil
   end
 
   -- Save values to field
@@ -3004,6 +3004,12 @@ local function handle_set_endpoint_key(driver, device, command)
   local dataOpType = DoorLock.types.DataOperationTypeEnum.ADD -- Data Operation Type: Add(0), Modify(2)
   local endpointKeyIndex = INITIAL_CREDENTIAL_INDEX
 
+  -- Min user index of commandResult is 1
+  -- 0 should convert to nil before busy check
+  if userIdx == 0 then
+    userIdx = nil
+  end
+
   -- Check busy state
   local busy = check_busy_state(device)
   if busy == true then
@@ -3026,9 +3032,7 @@ local function handle_set_endpoint_key(driver, device, command)
   end
 
   -- Adjustment
-  if userIdx == 0 then
-    userIdx = nil
-  else
+  if userIdx ~= nil then
     userType = nil
 
     -- Get latest aliro table
