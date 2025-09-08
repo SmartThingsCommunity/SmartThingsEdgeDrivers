@@ -55,8 +55,8 @@ local subscribed_attributes = {
   }
 }
 
-local function find_default_endpoint(device, component_name)
-  local eps = device:get_endpoints(clusters.RvcOperationalState.ID)
+local function find_default_endpoint(device, cluster_id)
+  local eps = device:get_endpoints(cluster_id)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then --0 is the matter RootNode endpoint
@@ -85,7 +85,6 @@ end
 
 local function device_init(driver, device)
   device:subscribe()
-  device:set_component_to_endpoint_fn(find_default_endpoint)
 
   -- comp/ep map functionality removed 9/5/25.
   device:set_field("__component_to_endpoint_map", nil)
@@ -501,7 +500,7 @@ end
 -- Capability Handlers --
 local function handle_robot_cleaner_operating_state_start(driver, device, cmd)
   device.log.info("handle_robot_cleaner_operating_state_start")
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = find_default_endpoint(device, clusters.RvcOperationalState.ID)
 
   -- Get current run mode, current tag, current operating state
   local current_run_mode = device:get_field(CURRENT_RUN_MODE)
@@ -530,7 +529,7 @@ local function handle_robot_cleaner_operating_state_start(driver, device, cmd)
     device:send(clusters.RvcOperationalState.commands.Resume(device, endpoint_id))
   elseif can_send_state_command(device, capabilities.mode.commands.setMode.NAME, current_state, current_tag) == true then
     for _, mode in ipairs(supported_run_modes) do
-      endpoint_id = device:component_to_endpoint(cmd.component)
+      endpoint_id = find_default_endpoint(device, clusters.RvcOperationalState.ID)
       if mode.tag == clusters.RvcRunMode.types.ModeTag.CLEANING then
         device:send(clusters.RvcRunMode.commands.ChangeToMode(device, endpoint_id, mode.id))
         return
@@ -541,20 +540,20 @@ end
 
 local function handle_robot_cleaner_operating_state_pause(driver, device, cmd)
   device.log.info("handle_robot_cleaner_operating_state_pause")
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = find_default_endpoint(device, clusters.RvcOperationalState.ID)
   device:send(clusters.RvcOperationalState.commands.Pause(device, endpoint_id))
 end
 
 local function handle_robot_cleaner_operating_state_go_home(driver, device, cmd)
   device.log.info("handle_robot_cleaner_operating_state_go_home")
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = find_default_endpoint(device, clusters.RvcOperationalState.ID)
   device:send(clusters.RvcOperationalState.commands.GoHome(device, endpoint_id))
 end
 
 local function handle_robot_cleaner_mode(driver, device, cmd)
   device.log.info(string.format("handle_robot_cleaner_mode component: %s, mode: %s", cmd.component, cmd.args.mode))
 
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = find_default_endpoint(device, clusters.RvcOperationalState.ID)
   local supported_modes = device:get_field(CLEAN_MODE_SUPPORTED_MODES) or {}
   for _, mode in ipairs(supported_modes) do
     if cmd.args.mode == mode.label then
@@ -573,7 +572,7 @@ local function handle_robot_cleaner_areas_selection(driver, device, cmd)
   for i, areaId in ipairs(cmd.args.areas) do
     table.insert(selectAreas, uint32_dt(areaId))
   end
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = find_default_endpoint(device, clusters.RvcOperationalState.ID)
   if cmd.component == "main" then
     device:send(clusters.ServiceArea.commands.SelectAreas(device, endpoint_id, selectAreas))
   end
