@@ -1,11 +1,11 @@
-import os, subprocess, requests, json, time, yaml, csv
+import os, subprocess, requests, json, time, yaml, csv, strtobool
 
 BRANCH = os.environ.get('BRANCH')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
 CHANGED_DRIVERS = os.environ.get('CHANGED_DRIVERS')
 # configurable from Jenkins to override and manually set the drivers to be uploaded
 DRIVERS_OVERRIDE = os.environ.get('DRIVERS_OVERRIDE') or "[]"
-DRY_RUN = os.environ.get("DRY_RUN") or True
+DRY_RUN = strtobool(os.environ.get("DRY_RUN") or "True")
 print(BRANCH)
 print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
