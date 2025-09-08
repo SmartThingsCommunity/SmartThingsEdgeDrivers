@@ -5,6 +5,7 @@ ENVIRONMENT = os.environ.get('ENVIRONMENT')
 CHANGED_DRIVERS = os.environ.get('CHANGED_DRIVERS')
 # configurable from Jenkins to override and manually set the drivers to be uploaded
 DRIVERS_OVERRIDE = os.environ.get('DRIVERS_OVERRIDE') or "[]"
+DRY_RUN = os.environ.get("DRY_RUN") or True
 print(BRANCH)
 print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
@@ -146,36 +147,39 @@ for partner in partners:
           print(error.stderr)
         retries += 1
       if retries >= 5:
-        print("5 zip failires, skipping "+package_key+" and continuing.")
+        print("5 zip failures, skipping "+package_key+" and continuing.")
         continue
       with open(driver+".zip", 'rb') as driver_package:
         data = driver_package.read()
         response = None
         retries = 0
-        while response == None or (response.status_code == 500 or response.status_code == 429):
-          response = requests.post(
-            UPLOAD_URL,
-            headers={
-              "Content-Type": "application/zip",
-              "Accept": "application/vnd.smartthings+json;v=20200810",
-              "Authorization": "Bearer "+TOKEN,
-              "X-ST-LOG-LEVEL": "DEBUG"},
-            data=data)
-          if response.status_code != 200:
-            print("Failed to upload driver "+driver)
-            print("Error code: "+str(response.status_code))
-            print("Error response: "+response.text)
-            if response.status_code == 500 or response.status_code == 429:
-              retries = retries + 1
-              if retries > 3:
-                break # give up
-              if response.status_code == 429:
-                time.sleep(10)
-          else:
-            print("Uploaded package successfully: "+driver)
-            drivers_updated.append(driver)
-            response_json = json.loads(response.text)
-            uploaded_drivers[package_key] = {DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION]}
+        if DRY_RUN:
+          print("Dry Run, skipping " + driver)
+        else:
+          while response == None or (response.status_code == 500 or response.status_code == 429):
+            response = requests.post(
+              UPLOAD_URL,
+              headers={
+                "Content-Type": "application/zip",
+                "Accept": "application/vnd.smartthings+json;v=20200810",
+                "Authorization": "Bearer "+TOKEN,
+                "X-ST-LOG-LEVEL": "DEBUG"},
+              data=data)
+            if response.status_code != 200:
+              print("Failed to upload driver "+driver)
+              print("Error code: "+str(response.status_code))
+              print("Error response: "+response.text)
+              if response.status_code == 500 or response.status_code == 429:
+                retries = retries + 1
+                if retries > 3:
+                  break # give up
+                if response.status_code == 429:
+                  time.sleep(10)
+            else:
+              print("Uploaded package successfully: "+driver)
+              drivers_updated.append(driver)
+              response_json = json.loads(response.text)
+              uploaded_drivers[package_key] = {DRIVERID: response_json[DRIVERID], VERSION: response_json[VERSION]}
       subprocess.run(["rm", driver+".zip"], capture_output=True)
 
 
