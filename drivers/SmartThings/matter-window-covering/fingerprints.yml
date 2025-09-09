@@ -30,6 +30,12 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x0060
     deviceProfileName: window-covering
+# Griesser
+  - id: "5435/14337"
+    deviceLabel: MSM-1
+    vendorId: 0x153B
+    productId: 0x3801
+    deviceProfileName: window-covering-tilt
 # Mamaba
   - id: "4965/4097"
     deviceLabel: Wi-Fi Curtain
