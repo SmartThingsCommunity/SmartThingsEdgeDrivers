@@ -1,0 +1,58 @@
+name: shelly-wave-motion
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+    config:
+      values:
+        - key: "illuminance.value"
+          range: [0, 10000]
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ContactSensor
+preferences:
+  - name: "ledOpnClsChangeStat"
+    title: "P157: open/close change status"
+    description: "This parameter enables open/close status change by LED indicator."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "LED ind.disabled"
+        1 : "LED ind.enabled"
+      default: 0
+  - name: "sensitivity"
+    title: "P158: sensitivity"
+    description: "Senitivity"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "low sensitivity"
+        1 : "moderate sensitivity"
+        2 : "high sensitivity"
+      default: 0
+  - name: "blindTime"
+    title: "P159: Motion Blind time"
+    description: "Blind time in seconds after last detected motion"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 2
+      maximum : 8
+      default: 5
+  - name: "motionNotdetRepT"
+    title: "P160:Motion not detect.rep.time"
+    description: "Time after last detected motion for device to send motion not detected"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum : 32767
+      default: 30
