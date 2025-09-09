@@ -28,7 +28,7 @@ pipeline {
   agent {
     docker {
       image 'python:3.10'
-      label "${params.NODE_LABEL ?: 'production'}"
+      label "staging"
       args '--entrypoint= -u 0:0'
     }
   }
