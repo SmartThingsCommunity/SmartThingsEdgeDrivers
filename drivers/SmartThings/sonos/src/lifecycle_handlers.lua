@@ -164,10 +164,12 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                   return
                 end
                 log.error_with(
-                  { hub_logs = true },
-                  "Error handling Sonos player initialization: %s, error code: %s",
-                  error,
-                  (error_code or "N/A")
+                  { hub_logs = false },
+                  string.format(
+                    "Error handling Sonos player initialization: %s, error code: %s",
+                    error,
+                    (error_code or "N/A")
+                  )
                 )
               end
             end
