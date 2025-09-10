@@ -48,6 +48,12 @@ matterManufacturer:
     vendorId: 0x1500
     productId: 0x2711
     deviceProfileName: window-covering-battery
+# SmartWings
+  - id: "5231/4097"
+    deviceLabel: SmartWings Window Covering
+    vendorId: 0x146F
+    productId: 0x1001
+    deviceProfileName: window-covering-battery
 #Zemismart
   - id: "Zemismart MT01 Slide Curtain"
     deviceLabel: Zemismart MT01 Slide Curtain
@@ -99,7 +105,7 @@ matterManufacturer:
     deviceLabel: WISTAR WSERD24 Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0004
-    deviceProfileName: window-covering  
+    deviceProfileName: window-covering
   - id: "5207/5"
     deviceLabel: WISTAR WSERD40-B Smart Tubular Motor
     vendorId: 0x1457
@@ -114,7 +120,7 @@ matterManufacturer:
     deviceLabel: WISTAR WSERD40-T Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0007
-    deviceProfileName: window-covering 
+    deviceProfileName: window-covering
   - id: "5207/8"
     deviceLabel: WISTAR WSERD50-B Smart Tubular Motor
     vendorId: 0x1457
@@ -129,12 +135,12 @@ matterManufacturer:
     deviceLabel: WISTAR WSERD50-T Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0010
-    deviceProfileName: window-covering  
+    deviceProfileName: window-covering
   - id: "5207/19"
     deviceLabel: WISTAR WSER60 Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0013
-    deviceProfileName: window-covering  
+    deviceProfileName: window-covering
   - id: "5207/17"
     deviceLabel: WISTAR WSER40 Smart Tubular Motor
     vendorId: 0x1457

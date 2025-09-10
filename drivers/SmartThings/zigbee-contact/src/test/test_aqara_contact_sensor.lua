@@ -81,13 +81,21 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "added lifecycle handler",
   function()
+    -- The initial contactSensor event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.type("CR1632")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.quantity(1)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.batteryLevel.battery("normal")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.contactSensor.contact.closed()))
+      capabilities.contactSensor.contact.open()))
+    test.wait_for_events()
+    -- Avoid sending the initial contactSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.type("CR1632")))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.quantity(1)))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.batteryLevel.battery("normal")))
   end
 )
 
