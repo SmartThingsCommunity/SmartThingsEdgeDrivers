@@ -455,6 +455,12 @@ matterManufacturer:
     vendorId: 0x100B
     productId: 0x0800
     deviceProfileName: light-level-colorTemperature
+# Intecular
+  - id: "5226/32769"
+    deviceLabel: InvisOutlet
+    vendorId: 0x146A
+    productId: 0x8001
+    deviceProfileName: plug-binary
 
 #Ledvance
   - id: "4489/843"
@@ -791,6 +797,17 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Osram
+  - id: "4489/2564"
+    deviceLabel: OSRAM MATTER PLUG UK
+    vendorId: 0x1189
+    productId: 0x0A04
+    deviceProfileName: plug-binary
+  - id: "4489/2757"
+    deviceLabel: SMART MAT P40 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC5
+    deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3

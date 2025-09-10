@@ -194,6 +194,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RVS01031Z
     deviceProfileName: thirdreality-multi-sensor
+  - id: "Aug. Winkhaus SE/FM.V.ZB"
+    deviceLabel: Funkkontakt FM.V.ZB
+    manufacturer: Aug. Winkhaus SE
+    model: FM.V.ZB
+    deviceProfileName: contact-battery-profile
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"
