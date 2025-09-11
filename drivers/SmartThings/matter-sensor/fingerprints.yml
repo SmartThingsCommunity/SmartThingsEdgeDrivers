@@ -102,6 +102,11 @@ matterManufacturer:
     vendorId: 0x1547
     productId: 0x03ED
     deviceProfileName: contact-battery
+  - id: "5447/1002"
+    deviceLabel: Sense by MACO | Window TT
+    vendorId: 0x1547
+    productId: 0x03EA
+    deviceProfileName: contact-battery
   # Meross
   - id: "4933/16897"
     deviceLabel: Smart Presence Sensor
