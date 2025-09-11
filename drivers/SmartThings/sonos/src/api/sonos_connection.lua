@@ -258,6 +258,7 @@ local function _oauth_reconnect_task(sonos_conn)
       local unauthorized = (check_auth == false)
 
       if unauthorized then
+        sonos_conn.driver:alert_unauthorized()
         local token, channel_error = token_receive_handle:receive()
         if not token then
           log.warn(string.format("Error requesting token: %s", channel_error))
@@ -347,6 +348,7 @@ function SonosConnection.new(driver, device)
             else
               Router.close_socket_for_player(unique_key)
             end
+            self.driver:alert_unauthorized()
           end
         end
       elseif header.type == "groups" then
