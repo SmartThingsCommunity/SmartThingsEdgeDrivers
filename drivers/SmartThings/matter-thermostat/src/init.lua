@@ -492,9 +492,14 @@ end
 
 local function device_init(driver, device)
   if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) then
-    -- assume that device is using a modular profile, override supports_capability_by_id
-    -- library function to utilize optional capabilities
-    device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+    if version.api >= 15 and version.rpc >= 9 then
+      -- the device used this modular profile workaround on 0.57 FW but no longer requires this table with >=0.58 FW
+      device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, nil)
+    else
+      -- assume that device is using a modular profile on 0.57 FW, override supports_capability_by_id
+      -- library function to utilize optional capabilities
+      device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
+    end
   end
   device:subscribe()
   device:set_component_to_endpoint_fn(component_to_endpoint)
@@ -985,14 +990,18 @@ local function match_modular_profile_air_purifer(driver, device)
 
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
-  local total_supported_capabilities = optional_supported_component_capabilities
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airPurifierFanMode.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.fanSpeedPercent.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
-  table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
+  if version.api < 15 or version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.airPurifierFanMode.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.fanSpeedPercent.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
+    table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+    device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
 end
 
 local function match_modular_profile_thermostat(driver, device)
@@ -1035,14 +1044,18 @@ local function match_modular_profile_thermostat(driver, device)
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
-  local total_supported_capabilities = optional_supported_component_capabilities
-  table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
-  table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
-  table.insert(main_component_capabilities, capabilities.refresh.ID)
-  table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
+  if version.api < 15 or version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+    table.insert(main_component_capabilities, capabilities.refresh.ID)
+    table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+    device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
 end
 
 local function match_modular_profile_room_ac(driver, device)
@@ -1086,15 +1099,19 @@ local function match_modular_profile_room_ac(driver, device)
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
 
-  -- add mandatory capabilities for subscription
-  local total_supported_capabilities = optional_supported_component_capabilities
-  table.insert(main_component_capabilities, capabilities.switch.ID)
-  table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
-  table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
-  table.insert(main_component_capabilities, capabilities.refresh.ID)
-  table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
+  -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
+  -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
+  if version.api < 15 or version.rpc < 9 then
+    -- add mandatory capabilities for subscription
+    local total_supported_capabilities = optional_supported_component_capabilities
+    table.insert(main_component_capabilities, capabilities.switch.ID)
+    table.insert(main_component_capabilities, capabilities.temperatureMeasurement.ID)
+    table.insert(main_component_capabilities, capabilities.thermostatMode.ID)
+    table.insert(main_component_capabilities, capabilities.refresh.ID)
+    table.insert(main_component_capabilities, capabilities.firmwareUpdate.ID)
 
-  device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+    device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+  end
 end
 
 local function match_modular_profile(driver, device, device_type)
