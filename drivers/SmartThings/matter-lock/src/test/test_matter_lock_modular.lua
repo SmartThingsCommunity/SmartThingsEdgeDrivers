@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 test.add_package_capability("lockAlarm.yml")
 local clusters = require "st.matter.clusters"
@@ -181,9 +180,8 @@ local function test_init()
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
-  -- add test device, handle initial subscribe
+  -- add test device
   test.mock_device.add_test_device(mock_device)
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   -- actual onboarding flow
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send(
@@ -205,7 +203,6 @@ local function test_init_unlatch()
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_unlatch))
   -- add test device, handle initial subscribe
   test.mock_device.add_test_device(mock_device_unlatch)
-  test.socket.matter:__expect_send({mock_device_unlatch.id, subscribe_request})
   -- actual onboarding flow
   test.socket.device_lifecycle:__queue_receive({ mock_device_unlatch.id, "added" })
   test.socket.capability:__expect_send(
@@ -231,9 +228,8 @@ local function test_init_user_pin()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin))
-  -- add test device, handle initial subscribe
+  -- add test device
   test.mock_device.add_test_device(mock_device_user_pin)
-  test.socket.matter:__expect_send({mock_device_user_pin.id, subscribe_request})
   -- actual onboarding flow
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin.id, "added" })
   test.socket.capability:__expect_send(
@@ -261,9 +257,8 @@ local function test_init_user_pin_schedule_unlatch()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin_schedule_unlatch))
-  -- add test device, handle initial subscribe
+  -- add test device
   test.mock_device.add_test_device(mock_device_user_pin_schedule_unlatch)
-  test.socket.matter:__expect_send({mock_device_user_pin_schedule_unlatch.id, subscribe_request})
   -- actual onboarding flow
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin_schedule_unlatch.id, "added" })
   test.socket.capability:__expect_send(
@@ -299,14 +294,17 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
-    mock_device:expect_metadata_update({ profile = "lock" })
+    mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {}}} })
   end
 )
 
 test.register_coroutine_test(
-  "Test lock profile change when BatChargeLevel attribute is available",
+  "Test modular lock profile change when BatChargeLevel attribute is available",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -327,14 +325,17 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
-    mock_device:expect_metadata_update({ profile = "lock-batteryLevel" })
+    mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"batteryLevel"}}} })
   end
 )
 
 test.register_coroutine_test(
-  "Test lock profile change when BatChargeLevel and BatPercentRemaining attributes are available",
+  "Test modular lock profile change when BatChargeLevel and BatPercentRemaining attributes are available",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -356,14 +357,17 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
-    mock_device:expect_metadata_update({ profile = "lock-battery" })
+    mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"battery"}}} })
   end
 )
 
 test.register_coroutine_test(
-  "Test lock-unlatch profile change when attributes related to BAT feature is not available.",
+  "Test modular lock profile change with unlatch when attributes related to BAT feature is not available.",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -383,15 +387,18 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
+      mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
       mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
     )
-    mock_device_unlatch:expect_metadata_update({ profile = "lock-unlatch" })
+    mock_device_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {}}} })
   end,
   { test_init = test_init_unlatch }
 )
 
 test.register_coroutine_test(
-  "Test lock-unlatch profile change when BatChargeLevel attribute is available",
+  "Test lock-unlatch profile change with unlatch when BatChargeLevel attribute is available",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -412,15 +419,18 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
+      mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
       mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
     )
-    mock_device_unlatch:expect_metadata_update({ profile = "lock-unlatch-batteryLevel" })
+    mock_device_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"batteryLevel"}}} })
   end,
   { test_init = test_init_unlatch }
 )
 
 test.register_coroutine_test(
-  "Test lock-unlatch profile change when BatChargeLevel and BatPercentRemaining attributes are available",
+  "Test modular lock profile change with unlatch when BatChargeLevel and BatPercentRemaining attributes are available",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -442,68 +452,14 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
+      mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
       mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
     )
-    mock_device_unlatch:expect_metadata_update({ profile = "lock-unlatch-battery" })
+    mock_device_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"battery"}}} })
   end,
   { test_init = test_init_unlatch }
-)
-
-test.register_coroutine_test(
-  "Test lock-user-pin profile change when attributes related to BAT feature is not available.",
-  function()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device_user_pin.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_user_pin, 1,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_device_user_pin:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-    )
-    mock_device_user_pin:expect_metadata_update({ profile = "lock-user-pin" })
-  end,
-  { test_init = test_init_user_pin }
-)
-
-test.register_coroutine_test(
-  "Test lock-user-pin profile change when BatChargeLevel attribute is available",
-  function()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device_user_pin.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_user_pin, 1,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(14), -- BatChargeLevel
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_device_user_pin:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-    )
-    mock_device_user_pin:expect_metadata_update({ profile = "lock-user-pin-batteryLevel" })
-  end,
-  { test_init = test_init_user_pin }
 )
 
 test.register_coroutine_test(
@@ -529,72 +485,18 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
+      mock_device_user_pin:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
       mock_device_user_pin:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
-    mock_device_user_pin:expect_metadata_update({ profile = "lock-user-pin-battery" })
+    mock_device_user_pin:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "battery"}}} })
   end,
   { test_init = test_init_user_pin }
 )
 
 test.register_coroutine_test(
-  "Test lock-user-pin-schedule-unlatch profile change when attributes related to BAT feature is not available.",
-  function()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device_user_pin_schedule_unlatch.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_user_pin_schedule_unlatch, 1,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_device_user_pin_schedule_unlatch:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
-    )
-    mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-user-pin-schedule-unlatch" })
-  end,
-  { test_init = test_init_user_pin_schedule_unlatch }
-)
-
-test.register_coroutine_test(
-  "Test lock-user-pin-schedule-unlatch profile change when BatChargeLevel attribute is available",
-  function()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device_user_pin_schedule_unlatch.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_user_pin_schedule_unlatch, 1,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(14), -- BatChargeLevel
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_device_user_pin_schedule_unlatch:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
-    )
-    mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-user-pin-schedule-unlatch-batteryLevel" })
-  end,
-  { test_init = test_init_user_pin_schedule_unlatch }
-)
-
-test.register_coroutine_test(
-  "Test lock-user-pin-schedule-unlatch profile change when BatChargeLevel and BatPercentRemaining attributes are available",
+  "Test modular lock profile change with user, pin. schedule, and unlatch supported when BatChargeLevel and BatPercentRemaining attributes are available",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -615,10 +517,14 @@ test.register_coroutine_test(
           })
       }
     )
+     test.socket.capability:__expect_send(
+      mock_device_user_pin_schedule_unlatch:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+    )
     test.socket.capability:__expect_send(
       mock_device_user_pin_schedule_unlatch:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
     )
-    mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-user-pin-schedule-unlatch-battery" })
+    mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}}} })
+
   end,
   { test_init = test_init_user_pin_schedule_unlatch }
 )

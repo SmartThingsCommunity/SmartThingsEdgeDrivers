@@ -134,7 +134,7 @@ local function __case_insensitive_key_index(tbl, key)
       fmt_val = key or "<nil>"
     end
     log.warn_with(
-      { hub_logs = true },
+      { hub_logs = false },
       string.format(
         "Expected `string` key for CaseInsensitiveKeyTable, received (%s: %s)",
         fmt_val,
@@ -157,7 +157,7 @@ local function __case_insensitive_key_newindex(tbl, key, value)
       fmt_val = key or "<nil>"
     end
     log.warn_with(
-      { hub_logs = true },
+      { hub_logs = false },
       string.format(
         "Expected `string` key for CaseInsensitiveKeyTable, received (%s: %s)",
         fmt_val,
@@ -179,11 +179,11 @@ function utils.new_case_insensitive_table()
   return setmetatable({}, _case_insensitive_key_mt)
 end
 
----@param sonos_device_info SonosDeviceInfo
+---@param sonos_device_info SonosDeviceInfoObject
 function utils.extract_mac_addr(sonos_device_info)
   if type(sonos_device_info) ~= "table" or type(sonos_device_info.serialNumber) ~= "string" then
     log.error_with(
-      { hub_logs = true },
+      { hub_logs = false },
       string.format("Bad sonos device info passed to `extract_mac_addr`: %s", sonos_device_info)
     )
   end

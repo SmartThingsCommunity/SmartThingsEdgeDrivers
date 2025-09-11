@@ -56,7 +56,15 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x10E1, 0x2002}  -- VDA
 }
 
-local PROFILE_BASE_NAME = "__profile_base_name"
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
+
+local profiling_data = {
+  BATTERY_SUPPORT = "__BATTERY_SUPPORT",
+}
 
 local subscribed_attributes = {
   [capabilities.lock.ID] = {
@@ -149,15 +157,64 @@ local function device_init(driver, device)
 
 local function device_added(driver, device)
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
+  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+  if #battery_feature_eps > 0 then
+    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
+  else
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
+  end
 end
 
-local function do_configure(driver, device)
+local function match_profile_modular(driver, device)
+  local enabled_optional_component_capability_pairs = {}
+  local main_component_capabilities = {}
+  local modular_profile_name = "lock-modular"
+  for _, device_ep in pairs(device.endpoints) do
+    for _, ep_cluster in pairs(device_ep.clusters) do
+      if ep_cluster.cluster_id == DoorLock.ID then
+        local clus_has_feature = function(feature_bitmap)
+          return DoorLock.are_features_supported(feature_bitmap, ep_cluster.feature_map)
+        end
+        if clus_has_feature(DoorLock.types.Feature.USER) then
+          table.insert(main_component_capabilities, capabilities.lockUsers.ID)
+        end
+        if clus_has_feature(DoorLock.types.Feature.PIN_CREDENTIAL) then
+          table.insert(main_component_capabilities, capabilities.lockCredentials.ID)
+        end
+        if clus_has_feature(DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES) or
+          clus_has_feature(DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES) then
+          table.insert(main_component_capabilities, capabilities.lockSchedules.ID)
+        end
+        if clus_has_feature(DoorLock.types.Feature.UNBOLT) then
+          device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+          device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+          modular_profile_name = "lock-modular-embedded-unlatch" -- use the embedded config specified in this profile for devices supporting "unlatch"
+        else
+          device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+          device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+        end
+        break
+      end
+    end
+  end
+
+  local supported_battery_type = device:get_field(profiling_data.BATTERY_SUPPORT)
+  if supported_battery_type == battery_support.BATTERY_LEVEL then
+    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+  elseif supported_battery_type == battery_support.BATTERY_PERCENTAGE then
+    table.insert(main_component_capabilities, capabilities.battery.ID)
+  end
+
+  table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
+  device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
+end
+
+local function match_profile_switch(driver, device)
   local user_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.USER})
   local pin_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.PIN_CREDENTIAL})
   local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
   local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
   local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
-  local battery_eps = device:get_endpoints(PowerSource.ID, {feature_bitmap = PowerSource.types.PowerSourceFeature.BATTERY})
 
   local profile_name = "lock"
   if #user_eps > 0 then
@@ -175,15 +232,16 @@ local function do_configure(driver, device)
   else
     device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
   end
-  if #battery_eps > 0 then
-    device:set_field(PROFILE_BASE_NAME, profile_name, {persist = true})
-    local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    req:merge(clusters.PowerSource.attributes.AttributeList:read())
-    device:send(req)
-  else
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
+
+  local supported_battery_type = device:get_field(profiling_data.BATTERY_SUPPORT)
+  if supported_battery_type == battery_support.BATTERY_LEVEL then
+    profile_name = profile_name .. "-batteryLevel"
+  elseif supported_battery_type == battery_support.BATTERY_PERCENTAGE then
+    profile_name = profile_name .. "-battery"
   end
+
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
 end
 
 local function info_changed(driver, device, event, args)
@@ -207,6 +265,33 @@ local function info_changed(driver, device, event, args)
   device:subscribe()
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
   device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is madatory
+end
+
+local function profiling_data_still_required(device)
+  for _, field in pairs(profiling_data) do
+    if device:get_field(field) == nil then
+      return true -- data still required if a field is nil
+    end
+  end
+  return false
+end
+
+local function match_profile(driver, device)
+  if profiling_data_still_required(device) then return end
+
+  if version.api >= 15 and version.rpc >= 9 then
+    match_profile_modular(driver, device)
+  else
+    match_profile_switch(driver, device)
+  end
+end
+
+local function do_configure(driver, device)
+  match_profile(driver, device)
+end
+
+local function driver_switched(driver, device)
+  match_profile(driver, device)
 end
 
 -- This function check busy_state and if busy_state is false, set it to true(current time)
@@ -398,27 +483,23 @@ end
 -- Power Source Attribute List --
 ---------------------------------
 local function handle_power_source_attribute_list(driver, device, ib, response)
-  local support_battery_percentage = false
-  local support_battery_level = false
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
+    -- mark if the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present and try profiling.
     if attr.value == 0x0C then
-      support_battery_percentage = true
-    end
-    if attr.value == 0x0E then
-      support_battery_level = true
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, { persist = true })
+      match_profile(driver, device)
+      return
+    elseif attr.value == 0x0E then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, { persist = true })
+      match_profile(driver, device)
+      return
     end
   end
-  local profile_name = device:get_field(PROFILE_BASE_NAME)
-  if profile_name ~= nil then
-    if support_battery_percentage then
-      profile_name = profile_name .. "-battery"
-    elseif support_battery_level then
-      profile_name = profile_name .. "-batteryLevel"
-    end
-    device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
-    device:try_update_metadata({profile = profile_name})
-  end
+
+  -- neither BatChargeLevel nor BatPercentRemaining were found. Re-profiling without battery.
+  device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
+  match_profile(driver, device)
 end
 
 -------------------------------
@@ -2086,6 +2167,7 @@ local new_matter_lock_handler = {
     added = device_added,
     doConfigure = do_configure,
     infoChanged = info_changed,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     attr = {
