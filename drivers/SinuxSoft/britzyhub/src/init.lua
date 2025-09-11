@@ -8,7 +8,6 @@ local matter_driver = MatterDriver("britzyhub-matter", {
   sub_drivers = {
     require ("elevator"),
     require ("gas-valve"),
-    require ("thermostat"),
     require ("vent"),
   }
 })
