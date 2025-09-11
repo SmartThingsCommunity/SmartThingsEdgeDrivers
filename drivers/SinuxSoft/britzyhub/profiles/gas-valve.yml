@@ -4,5 +4,7 @@ components:
     capabilities:
       - id: safetyValve
         version: 1
+      - id: refresh
+        version: 1
     categories:
       - name: GasValve

@@ -13,5 +13,7 @@ components:
                 - low
                 - medium
                 - high
+      - id: refresh
+        version: 1
     categories:
       - name: Vent
