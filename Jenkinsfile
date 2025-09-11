@@ -1,9 +1,9 @@
 def getEnvName() {
   def branch = "${env.GIT_BRANCH}"
   print branch
-  if (branch == "origin/jenkins-refactor") {return "ALPHA"}
-  else if (branch == "origin/jenkins-refactor-beta") {return "BETA"}
-  else if (branch == "origin/jenkins-refactor-production") {return "PROD"}
+  if (branch == "origin/main") {return "ALPHA"}
+  else if (branch == "origin/beta") {return "BETA"}
+  else if (branch == "origin/production") {return "PROD"}
 }
 
 def getChangedDrivers() {
