@@ -17,6 +17,9 @@ components:
     - id: lockSchedules
       version: 1
       optional: true
+    - id: lockAliro
+      version: 1
+      optional: true
     - id: battery
       version: 1
       optional: true

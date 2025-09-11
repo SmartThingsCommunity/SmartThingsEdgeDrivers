@@ -228,6 +228,9 @@ local function match_profile_modular(driver, device)
           device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
           device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
         end
+        if clus_has_feature(DoorLock.types.Feature.ALIRO_PROVISIONING) then
+          table.insert(main_component_capabilities, capabilities.lockAliro.ID)
+        end
         break
       end
     end
