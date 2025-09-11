@@ -304,7 +304,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
           {
             mock_window_shade_switch_multilevel.id,
-            { capability = "windowShadePreset", command = "presetPosition", args = {} }
+            { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
           }
       )
       test.socket.zwave:__expect_send(

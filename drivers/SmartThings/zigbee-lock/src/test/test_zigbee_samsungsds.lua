@@ -1377,10 +1377,16 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Device added function handler",
     function()
+      -- The initial lock event should be send during the device's first time onboarding
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
+      test.wait_for_events()
+      -- Avoid sending the initial lock event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
       test.wait_for_events()
     end
 )

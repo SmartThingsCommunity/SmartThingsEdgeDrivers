@@ -9,6 +9,12 @@ components:
       - id: fanMode
         version: 1
         optional: true
+      - id: fanOscillationMode
+        version: 1
+        optional: true
+      - id: windMode
+        version: 1
+        optional: true
       - id: thermostatFanMode
         version: 1
         optional: true

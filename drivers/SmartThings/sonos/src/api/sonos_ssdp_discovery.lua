@@ -300,7 +300,7 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
     if info_to_send then
       if not (info_to_send.discovery_info and info_to_send.discovery_info.device) then
         log.error_with(
-          { hub_logs = true },
+          { hub_logs = false },
           st_utils.stringify_table(info_to_send, "Sonos Discovery Info has unexpected structure")
         )
         return

@@ -102,6 +102,11 @@ matterManufacturer:
     vendorId: 0x1547
     productId: 0x03ED
     deviceProfileName: contact-battery
+  - id: "5447/1002"
+    deviceLabel: Sense by MACO | Window TT
+    vendorId: 0x1547
+    productId: 0x03EA
+    deviceProfileName: contact-battery
   # Meross
   - id: "4933/16897"
     deviceLabel: Smart Presence Sensor
@@ -158,6 +163,12 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2030
     deviceProfileName: motion-illuminance-battery
+  # Sensereo
+  - id: "5526/1"
+    deviceLabel: Sensereo Matter Smoke Alarm MS1
+    vendorId: 0x1596
+    productId: 0x0001
+    deviceProfileName: smoke-battery
   # Siterwell
   - id: "4736/847"
     deviceLabel: Siterwell Door Window Sensor

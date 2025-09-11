@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
@@ -41,7 +42,8 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_id = clusters.DoorLock.ID,
           cluster_type = "SERVER",
           cluster_revision = 1,
-          feature_map = 0x0001, --u32 bitmap
+          feature_map = clusters.DoorLock.types.Feature.PIN_CREDENTIAL |
+            clusters.DoorLock.types.Feature.USER
         }
       },
       device_types = {
@@ -52,6 +54,8 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  -- subscribe request
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.DoorLock.attributes.OperatingMode:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
@@ -62,8 +66,22 @@ local function test_init()
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockUserChange:subscribe(mock_device))
-  test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+  -- add test device
   test.mock_device.add_test_device(mock_device)
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  -- actual onboarding flow
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+  )
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+  )
+  mock_device:expect_metadata_update({ profile = "lock-user-pin" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)
