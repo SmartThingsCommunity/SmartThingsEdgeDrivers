@@ -1,9 +1,4 @@
 matterGeneric:
-  - id: "air-conditioner"
-    deviceLabel: Air Conditioner
-    deviceTypes:
-      - id: 0x0072
-    deviceProfileName: air-conditioner
   - id: "elevator"
     deviceLabel: Elevator
     deviceTypes:
@@ -14,11 +9,6 @@ matterGeneric:
     deviceTypes:
       - id: 0xFF01
     deviceProfileName: gas-valve
-  - id: "thermostat"
-    deviceLabel: Thermostat
-    deviceTypes:
-      - id: 0x0301
-    deviceProfileName: thermostat
   - id: "vent"
     deviceLabel: Vent
     deviceTypes:
