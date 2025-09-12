@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,9 +14,13 @@
 
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local configurationMap = require "configurations"
+local zcl_clusters = require "st.zigbee.zcl.clusters"
+local HumidityMeasurement = zcl_clusters.RelativeHumidity
+local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 
 local FRIENT_TEMP_HUMUDITY_SENSOR_FINGERPRINTS = {
   { mfr = "frient A/S", model = "HMSZB-110" },
+  { mfr = "frient A/S", model = "HMSZB-120" }
 }
 
 local function can_handle_frient_sensor(opts, driver, device)
@@ -39,10 +43,36 @@ local function device_init(driver, device)
   end
 end
 
+local function do_configure(driver, device, event, args)
+  device:configure()
+  device.thread:call_with_delay(5, function()
+    device:refresh()
+  end)
+end
+
+local function info_changed(driver, device, event, args)
+  for name, value in pairs(device.preferences) do
+    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
+      local sensitivity = math.floor((device.preferences[name]) * 100 + 0.5)
+      if (name == "temperatureSensitivity") then
+        device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 3600, sensitivity))
+      end
+      if (name == "humiditySensitivity") then
+        device:send(HumidityMeasurement.attributes.MeasuredValue:configure_reporting(device, 60, 3600, sensitivity))
+      end
+    end
+  end
+  device.thread:call_with_delay(5, function()
+      device:refresh()
+  end)
+end
+
 local frient_sensor = {
   NAME = "Frient Humidity Sensor",
   lifecycle_handlers = {
-    init = device_init
+    init = device_init,
+    doConfigure = do_configure,
+    infoChanged = info_changed
   },
   can_handle = can_handle_frient_sensor
 }
