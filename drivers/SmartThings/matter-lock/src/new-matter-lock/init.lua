@@ -34,6 +34,7 @@ local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
 local RESPONSE_STATUS_MAP = {
+  [DoorLock.types.DlStatus.SUCCESS] = "success"
   [DoorLock.types.DlStatus.FAILURE] = "failure",
   [DoorLock.types.DlStatus.DUPLICATE] = "duplicate",
   [DoorLock.types.DlStatus.OCCUPIED] = "occupied",
@@ -533,18 +534,6 @@ local function hex_string_to_octet_string(hex_string)
       octet_string = octet_string .. string.char(tonumber(hex, 16))
   end
   return octet_string
-end
-
-local function octet_string_to_hex_string(octet_string)
-  if octet_string == nil then
-    return nil
-  end
-  local hex_string = ""
-  for i = 1, #octet_string do
-      local byte = octet_string:byte(i)
-      hex_string = hex_string .. string.format("%02x", byte)
-  end
-  return hex_string
 end
 
 -----------------------------------
@@ -1643,9 +1632,10 @@ local function set_pin_response_handler(driver, device, ib, response)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local userType = device:get_field(lock_utils.USER_TYPE)
   local credIdx = device:get_field(lock_utils.CRED_INDEX)
-  local status = "success"
   local elements = ib.info_block.data.elements
-  if elements.status.value == DoorLock.types.DlStatus.SUCCESS then
+  local status = RESPONSE_STATUS_MAP[elements.status.value]
+
+  if status == "success" then
     -- Don't save user and credential for COTA
     if cmdName == "addCota" then
       device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
@@ -1702,28 +1692,20 @@ local function set_pin_response_handler(driver, device, ib, response)
     return
   end
 
-  -- Update commandResult
-  status = RESPONSE_STATUS_MAP[elements.status.value]
+  -- In the case DlStatus returns Occupied, this means the current credential index is in use,
+  -- so we must try the next one. If there is not a next index (i.e. it is nil),
+  -- we should mark this as "resourceExhausted" and stop attempting to set the credentials.
   device.log.warn(string.format("Failed to set credential: %s", status))
-
-  -- Set commandResult to error status
-  if status == "duplicate" and cmdName == "addCota" then
-    generate_cota_cred_for_device(device)
-    device.thread:call_with_delay(0, function(t) set_cota_credential(device, credIdx) end)
-    return
-  elseif status ~= "occupied" then
+  if status == "occupied" and elements.next_credential_index.value == nil then
     local command_result_info = {
       commandName = cmdName,
-      statusCode = status
+      statusCode = "resourceExhausted" -- No more available credential index
     }
     device:emit_event(capabilities.lockCredentials.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
     ))
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-    return
-  end
-
-  if elements.next_credential_index.value ~= nil then
+  elseif status == "occupied" then
     -- Get parameters
     local credIdx = elements.next_credential_index.value
     local credential = {
@@ -1756,10 +1738,13 @@ local function set_pin_response_handler(driver, device, ib, response)
         userTypeMatter -- User Type
       )
     )
+  elseif status == "duplicate" and cmdName == "addCota" then
+    generate_cota_cred_for_device(device)
+    device.thread:call_with_delay(0, function(t) set_cota_credential(device, credIdx) end)
   else
     local command_result_info = {
       commandName = cmdName,
-      statusCode = "resourceExhausted" -- No more available credential index
+      statusCode = status
     }
     device:emit_event(capabilities.lockCredentials.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
@@ -1777,10 +1762,10 @@ local function set_issuer_key_response_handler(driver, device, ib, response)
   local userType = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   local issuerKeyIndex = device:get_field(lock_utils.ISSUER_KEY_INDEX)
   local reqId = device:get_field(lock_utils.COMMAND_REQUEST_ID)
-
-  local status = "success"
   local elements = ib.info_block.data.elements
-  if elements.status.value == DoorLock.types.DlStatus.SUCCESS then
+  local status = RESPONSE_STATUS_MAP[elements.status.value]
+
+  if status == "success" then
     -- Delete field data
     device:set_field(lock_utils.ISSUER_KEY, nil, {persist = true})
 
@@ -1807,24 +1792,22 @@ local function set_issuer_key_response_handler(driver, device, ib, response)
     return
   end
 
-  -- Update commandResult
-  status = RESPONSE_STATUS_MAP[elements.status.value] or "occupied"
-
-  if status ~= "occupied" then
+  -- In the case DlStatus returns Occupied, this means the current credential index is in use,
+  -- so we must try the next one. If there is not a next index (i.e. it is nil),
+  -- we should mark this as "resourceExhausted" and stop attempting to set the credentials.
+  device.log.warn(string.format("Failed to set credential: %s", status))
+  if status == "occupied" and elements.next_credential_index.value == nil then
     local command_result_info = {
       commandName = cmdName,
       userIndex = userIdx,
       requestId = reqId,
-      statusCode = status
+      statusCode = "resourceExhausted" -- No more available credential index
     }
     device:emit_event(capabilities.lockAliro.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
     ))
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-    return
-  end
-
-  if elements.next_credential_index.value ~= nil then
+  elseif status == "occupied" then
     -- Get parameters
     if userIdx ~= nil then
       userType = nil
@@ -1858,7 +1841,7 @@ local function set_issuer_key_response_handler(driver, device, ib, response)
       commandName = cmdName,
       userIndex = userIdx,
       requestId = reqId,
-      statusCode = "resourceExhausted" -- No more available credential index
+      statusCode = status
     }
     device:emit_event(capabilities.lockAliro.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
@@ -1875,10 +1858,10 @@ local function set_endpoint_key_response_handler(driver, device, ib, response)
   local keyType = device:get_field(lock_utils.ENDPOINT_KEY_TYPE)
   local endpointKeyIndex = device:get_field(lock_utils.ENDPOINT_KEY_INDEX)
   local reqId = device:get_field(lock_utils.COMMAND_REQUEST_ID)
-
-  local status = "success"
   local elements = ib.info_block.data.elements
-  if elements.status.value == DoorLock.types.DlStatus.SUCCESS then
+  local status = RESPONSE_STATUS_MAP[elements.status.value]
+
+  if status == "success" then
     -- Delete field data
     device:set_field(lock_utils.ENDPOINT_KEY, nil, {persist = true})
 
@@ -1906,24 +1889,24 @@ local function set_endpoint_key_response_handler(driver, device, ib, response)
     return
   end
 
-  -- Update commandResult
-  status = RESPONSE_STATUS_MAP[elements.status.value] or "occupied"
-  if status ~= "occupied" then
+  -- In the case DlStatus returns Occupied, this means the current credential index is in use,
+  -- so we must try the next one. If there is not a next index (i.e. it is nil),
+  -- we should mark this as "resourceExhausted" and stop attempting to set the credentials.
+  device.log.warn(string.format("Failed to set credential: %s", status))
+
+  if status == "occupied" and elements.next_credential_index.value == nil then
     local command_result_info = {
       commandName = cmdName,
       userIndex = userIdx,
       keyId = keyId,
       requestId = reqId,
-      statusCode = status
+      statusCode = "resourceExhausted" -- No more available credential index
     }
     device:emit_event(capabilities.lockAliro.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
     ))
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-    return
-  end
-
-  if elements.next_credential_index.value ~= nil then
+  elseif status == "occupied" then
     -- Get parameters
     if userIdx ~= nil then
       userType = nil
@@ -1958,7 +1941,7 @@ local function set_endpoint_key_response_handler(driver, device, ib, response)
       userIndex = userIdx,
       keyId = keyId,
       requestId = reqId,
-      statusCode = "resourceExhausted" -- No more available credential index
+      statusCode = status
     }
     device:emit_event(capabilities.lockAliro.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
