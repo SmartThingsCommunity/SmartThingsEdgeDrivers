@@ -12,7 +12,7 @@ local device_refresher = {}
 local function refresh_current_sensor(driver, device, values)
     local dni = utils.get_dni_from_device(device)
     log.info("refresh_current_sensor(): Refreshing data of Current Sensor, dni = " .. dni)
-    
+
     -- Refresh Current Measurement
     local current = values.current
 
@@ -36,13 +36,13 @@ local function refresh_current_sensor(driver, device, values)
         -- Refresh Active Energy
         log.trace("refresh_current_sensor(): Refreshing Active Energy, dni = " .. dni)
         device.profile.components["main"]:emit_event(caps.energyMeter.energy({value=activeEnergy, unit="kWh"}))
-    
+
         -- Verify whether the appropriate time have elapsed to report the energy values
         local last_energy_report = device:get_field(fields.LAST_ENERGY_REPORT) or 0.0
 
         if (os.time() - last_energy_report) >= config.EDGE_CHILD_ENERGY_REPORT_INTERVAL then  -- Report the energy consumption/production periodically
             local current_consumption_production_report = device:get_latest_state("main", caps.powerConsumptionReport.ID, caps.powerConsumptionReport.powerConsumption.NAME)
-        
+
             -- Calculate delta consumption/production energy
             local delta_consumption_production_report = 0.0
             if current_consumption_production_report ~= nil then
@@ -119,7 +119,7 @@ local function refresh_energy_meter(driver, device, values)
         -- Refresh Active Energy Import Total
         log.trace("refresh_energy_meter(): Refreshing Active Energy Import Total, dni = " .. dni)
         device.profile.components["consumptionMeter"]:emit_event(caps.energyMeter.energy({value=activeEnergyImportTotal, unit="kWh"}))
-        
+
         -- Refresh Active Energy Export Total
         log.trace("refresh_energy_meter(): Refreshing Active Energy Export Total, dni = " .. dni)
         device.profile.components["productionMeter"]:emit_event(caps.energyMeter.energy({value=activeEnergyExportTotal, unit="kWh"}))
@@ -127,7 +127,7 @@ local function refresh_energy_meter(driver, device, values)
         -- Refresh Active Energy Net Negative
         log.trace("refresh_energy_meter(): Refreshing Active Energy Net Negative, dni = " .. dni)
         device.profile.components["surplus"]:emit_event(caps.energyMeter.energy({value=activeEnergyNetNegative, unit="kWh"}))
-    
+
         -- Verify whether the appropriate time have elapsed to report the energy net, consumption and production
         local last_energy_report = device:get_field(fields.LAST_ENERGY_REPORT) or 0.0
 
@@ -246,7 +246,7 @@ local function refresh_water_meter(driver, device, values)
         log.trace("refresh_water_meter(): Refreshing Water Meter: last hour, dni = " .. dni)
         device:emit_event(caps.waterMeter.lastHour({value=lastHourFlow, unit=unit}))
     end
-    
+
     -- Refresh Water Meter: last 24 hours
     local lastTwentyFourHoursFlow = values.lastTwentyFourHoursFlow
 
@@ -262,7 +262,7 @@ local function refresh_water_meter(driver, device, values)
         log.trace("refresh_water_meter(): Refreshing Water Meter: last 7 days, dni = " .. dni)
         device:emit_event(caps.waterMeter.lastSevenDays({value=lastSevenDaysFlow, unit=unit}))
     end
-    
+
     return true
 end
 
@@ -283,7 +283,7 @@ local function refresh_gas_meter(driver, device, values)
 
     -- Refresh Gas Meter
     local gasMeterVolume = values.gasMeterVolume
-    
+
     if gasMeterVolume ~= nil then
         log.trace("refresh_gas_meter(): Refreshing Gas Meter, dni = " .. dni)
         device:emit_event(caps.gasMeter.gasMeterVolume({value=gasMeterVolume, unit=gasMeterVolumeUnit}))

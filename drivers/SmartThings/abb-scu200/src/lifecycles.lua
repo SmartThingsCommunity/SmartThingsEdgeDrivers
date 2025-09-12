@@ -6,7 +6,6 @@ local utils = require('utils')
 local discovery = require('discovery')
 local commands = require('commands')
 local connection_monitor = require('connection_monitor')
-local device_manager = require('abb.device_manager')
 local eventsource_handler = require("eventsource_handler")
 
 -- Lifecycles handlers for the driver
@@ -40,15 +39,15 @@ function lifecycles.init(driver, device)
         end
 
         -- Refresh the device manually
-        commands.refresh(driver, device, _)
-        
+        commands.refresh(driver, device, nil)
+
         -- Refresh schedule
         local refresh_period = utils.get_thing_refresh_period(device)
 
         device.thread:call_on_schedule(
             refresh_period,
             function ()
-                return commands.refresh(driver, device, _)
+                return commands.refresh(driver, device, nil)
             end,
             "Refresh schedule")
     end

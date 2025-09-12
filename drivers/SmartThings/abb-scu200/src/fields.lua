@@ -12,5 +12,5 @@ local fields = {
     DEVICE_TYPE_BRIDGE = "bridge",
     DEVICE_TYPE_THING = "thing"
 }
-  
+
 return fields

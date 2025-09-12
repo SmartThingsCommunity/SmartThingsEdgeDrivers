@@ -18,7 +18,7 @@ function utils.get_dni_from_device(device)
     else
         local bridge_dni = device.device_network_id
 
-        return bridge_dni, fields.DEVICE_TYPE_BRIDGE 
+        return bridge_dni, fields.DEVICE_TYPE_BRIDGE
     end
 end
 
@@ -41,7 +41,7 @@ end
 -- Get the device IP address
 function utils.get_device_ip_address(device)
     local _, device_type = utils.get_dni_from_device(device)
-    
+
     if device_type == fields.DEVICE_TYPE_BRIDGE then
         return device:get_field(fields.BRIDGE_IPV4)
     else
@@ -145,56 +145,56 @@ function utils.backoff_builder(max, inc, rand)
         if rand then
             randval = math.random() * rand * 2 - rand
         end
-    
+
         local base = inc * (2 ^ count - 1)
         count = count + 1
-    
+
         -- ensure base backoff (not including random factor) is less than max
         if max then base = math.min(base, max) end
-    
+
         -- ensure total backoff is >= 0
         return math.max(base + randval, 0)
     end
 end
 
 -- Method for creating a labeled socket
-function utils.labeled_socket_builder(label, ssl_config)  
+function utils.labeled_socket_builder(label, ssl_config)
     label = (label or "")
     if #label > 0 then
         label = label .. " "
     end
-  
+
     if not ssl_config then
         ssl_config = { mode = "client", protocol = "any", verify = "none", options = "all" }
     end
-  
+
     local function make_socket(host, port, wrap_ssl)
         log.info("utils.labeled_socket_builder(): Creating TCP socket for REST Connection: " .. label)
         local _ = nil
         local sock, err = socket.tcp()
-  
+
         if err ~= nil or (not sock) then
             return nil, (err or "unknown error creating TCP socket")
         end
-  
+
         log.debug("utils.labeled_socket_builder(): Setting TCP socket timeout for REST Connection: " .. label)
         _, err = sock:settimeout(60)
         if err ~= nil then
             return nil, "settimeout error: " .. err
         end
-  
+
         log.debug("utils.labeled_socket_builder(): Connecting TCP socket for REST Connection: " .. label)
         _, err = sock:connect(host, port)
         if err ~= nil then
             return nil, "Connect error: " .. err
         end
-  
+
         log.debug("utils.labeled_socket_builder(): Set Keepalive for TCP socket for REST Connection: " .. label)
         _, err = sock:setoption("keepalive", true)
         if err ~= nil then
             return nil, "Setoption error: " .. err
         end
-  
+
         if wrap_ssl then
             log.debug("utils.labeled_socket_builder(): Creating SSL wrapper for REST Connection: " .. label)
             sock, err = ssl.wrap(sock, ssl_config)
@@ -208,7 +208,7 @@ function utils.labeled_socket_builder(label, ssl_config)
                 return nil, "Error with SSL handshake: " .. err
             end
         end
-  
+
         log.info("utils.labeled_socket_builder(): Successfully created TCP connection: " .. label)
         return sock, err
     end

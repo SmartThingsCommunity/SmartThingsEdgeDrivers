@@ -104,7 +104,7 @@ end
 -- Method for monitoring the connection of the bridge devices
 function device_manager.bridge_monitor(driver, device, bridge_info)
     local child_devices = device:get_child_list()
-    
+
     for _, thing_device in ipairs(child_devices) do
         device.thread:call_with_delay(0, function()  -- Run within bridge thread to use the same connection
             device_manager.refresh(driver, thing_device)
