@@ -4,9 +4,9 @@ local utils = require "st.utils"
 -- Include driver-side definitions when lua libs api version is < 11
 local version = require "version"
 if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
-  clusters.ValveConfigurationAndControl = require "ValveConfigurationAndControl"
+  clusters.ElectricalEnergyMeasurement = require "embedded-clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded-clusters.ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "embedded-clusters.ValveConfigurationAndControl"
 end
 
 local embedded_cluster_utils = {}
