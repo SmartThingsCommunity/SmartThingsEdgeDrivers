@@ -131,6 +131,12 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1001
     deviceProfileName: light-color-level-fan
+#Bosch Smart Home
+  - id: "4617/12310"
+    deviceLabel: Plug Compact [M]
+    vendorId: 0x1209
+    productId: 0x3016
+    deviceProfileName: plug-power-energy-powerConsumption
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
