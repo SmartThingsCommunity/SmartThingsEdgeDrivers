@@ -43,7 +43,7 @@ matterManufacturer:
     deviceLabel: LUX TQ1 Smart Thermostat
     vendorId: 0x1206
     productId: 0x0001
-    deviceProfileName: thermostat-modular
+    deviceProfileName: thermostat-nostate-nobattery
   #Siterwell
   - id: "4736/769"
     deviceLabel: Siterwell Radiator Thermostat
