@@ -46,9 +46,9 @@ end
 --- Convert from x/y/Y to Hue/Saturation
 --- If every value is missing then [x, y, Y] = [0, 0, 1]
 ---
---- @param x number red in range [0x0000, 0xFFFF]
---- @param y number green in range [0x0000, 0xFFFF]
---- @param Y number blue in range [0x0000, 0xFFFF]
+--- @param x number|nil red in range [0x0000, 0xFFFF]
+--- @param y number|nil green in range [0x0000, 0xFFFF]
+--- @param Y number|nil blue in range [0x0000, 0xFFFF]
 --- @returns number, number equivalent hue, saturation, level each in range [0,100]%
 color_utils.safe_xy_to_hsv = function(x, y, Y)
   local safe_x = x ~= nil and x / 65536 or 0
