@@ -262,9 +262,6 @@ local function match_profile_switch(driver, device)
     if #pin_eps > 0 then
       profile_name = profile_name .. "-pin"
     end
-    if #aliro_eps > 0 then
-      profile_name = profile_name .. "-aliro"
-    end
     if #week_schedule_eps + #year_schedule_eps > 0 then
       profile_name = profile_name .. "-schedule"
     end
@@ -2049,7 +2046,6 @@ local function clear_credential_response_handler(driver, device, ib, response)
     local credIdx = device:get_field(lock_utils.CRED_INDEX)
 
     -- find userIdx associated with credIdx, don't use lock utils field in this case
-    userIdx = nil
     userIdx = delete_credential_from_table(device, credIdx)
     if userIdx ~= nil then
       all_user_credentials_removed = not has_credentials(device, userIdx)
