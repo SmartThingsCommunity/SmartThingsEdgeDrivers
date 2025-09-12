@@ -47,7 +47,7 @@ function eventsource_handler.handle_sse_event(driver, bridge, msg)
                 device:online()
             else
                 log.error("eventsource_handler.handle_sse_event(): Failed to update the device's values")
-    
+
                 -- Set device as offline
                 device:offline()
             end

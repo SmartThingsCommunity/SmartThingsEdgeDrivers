@@ -17,17 +17,17 @@ local joined_thing = {}
 -- Method for setting the device fields
 function discovery.set_device_fields(driver, device)
     local dni = utils.get_dni_from_device(device)
-  
+
     if joined_bridge[dni] ~= nil then
         log.info("discovery.set_device_field(): Setting device field for bridge: " .. dni)
         local bridge_cache_value = driver.datastore.bridge_discovery_cache[dni]
-  
+
         device:set_field(fields.BRIDGE_IPV4, bridge_cache_value.ip, {persist = true})
         device:set_field(fields.DEVICE_TYPE, fields.DEVICE_TYPE_BRIDGE, {persist = true})
     elseif joined_thing[dni] ~= nil then
         log.info("discovery.set_device_field(): Setting device field for thing: " .. dni)
         local thing_cache_value = driver.datastore.thing_discovery_cache[dni]
-    
+
         device:set_field(fields.PARENT_BRIDGE_DNI, thing_cache_value.parent_bridge_dni, {persist = true})
         device:set_field(fields.THING_INFO, thing_cache_value.thing_info, {persist = true})
         device:set_field(fields.DEVICE_TYPE, fields.DEVICE_TYPE_THING, {persist = true})
@@ -146,8 +146,8 @@ local function parse_ssdp(data)
     res.status = data:sub(0, data:find('\r\n'))
 
     for line in data:gmatch("[^\r\n]+") do
-        _, _, header, value = string.find(line, "([%w-]+):%s*([%a+-:_ /=?]*)")
-        
+        local _, _, header, value = string.find(line, "([%w-]+):%s*([%a+-:_ /=?]*)")
+
         if header ~= nil and value ~= nil then
             res[header:lower()] = value
         end
@@ -226,7 +226,7 @@ local function discover_bridges(driver)
 
         log.debug("discover_bridges(): Known devices: " .. dni .. " with type: " .. device_type)
     end
-  
+
     -- Find new devices
     local found_devices = discovery.find_devices()
 
@@ -238,8 +238,6 @@ local function discover_bridges(driver)
                 if not joined_bridge[dni] then
                     if try_add_bridge(driver, dni, device) then
                         joined_bridge[dni] = true
-
-                        bridge_ip = device["ip"]
                     end
                 else
                     log.debug("discover_bridges(): Bridge already joined: " .. dni)
@@ -272,7 +270,7 @@ local function discover_things(driver)
 
         if known_devices[bridge_dni] ~= nil and known_devices[bridge_dni]:get_field(fields.CONN_INFO) ~= nil then
             local thing_infos = api.get_thing_infos(bridge_ip, bridge_dni)
-        
+
             if thing_infos and thing_infos.devices ~= nil then
                 for _, thing_info in pairs(thing_infos.devices) do
                     if thing_info ~= nil then

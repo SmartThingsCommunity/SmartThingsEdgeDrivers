@@ -1,6 +1,5 @@
 local caps = require('st.capabilities')
 local log = require('log')
-local cosock = require "cosock"
 local json = require('dkjson')
 
 -- Local imports
@@ -19,7 +18,7 @@ local function post_payload(device, payload)
     local communication_device = device:get_parent_device() or device
     local conn_info = communication_device:get_field(fields.CONN_INFO)
 
-    local response, err, status = conn_info:post_device_by_id(dni, payload)
+    local _, err, status = conn_info:post_device_by_id(dni, payload)
     if not err and status == 200 then
         log.info("post_payload(): Success, dni = " .. dni)
 
@@ -36,7 +35,7 @@ end
 
 -- Switch on command
 function commands.switch_on(driver, device, cmd)
-    local dni, device_type = utils.get_dni_from_device(device)
+    local dni, _ = utils.get_dni_from_device(device)
     log.info("commands.switch_on(): Switching on capablity within dni = " .. dni)
 
     local device_model = utils.get_device_model(device)
@@ -62,7 +61,7 @@ end
 
 -- Switch off commands
 function commands.switch_off(driver, device, cmd)
-    local dni, device_type = utils.get_dni_from_device(device)
+    local dni, _ = utils.get_dni_from_device(device)
     log.info("commands.switch_off(): Switching off capablity within dni = " .. dni)
 
     local device_model = utils.get_device_model(device)
