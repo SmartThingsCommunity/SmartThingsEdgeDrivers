@@ -255,16 +255,12 @@ local function match_profile_switch(driver, device)
   local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
   local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
   local unbolt_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.UNBOLT})
-  local aliro_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.ALIRO_PROVISIONING})
 
   local profile_name = "lock"
   if #user_eps > 0 then
     profile_name = profile_name .. "-user"
     if #pin_eps > 0 then
       profile_name = profile_name .. "-pin"
-    end
-    if #aliro_eps > 0 then
-      profile_name = profile_name .. "-aliro"
     end
     if #week_schedule_eps + #year_schedule_eps > 0 then
       profile_name = profile_name .. "-schedule"
@@ -2050,7 +2046,6 @@ local function clear_credential_response_handler(driver, device, ib, response)
     local credIdx = device:get_field(lock_utils.CRED_INDEX)
 
     -- find userIdx associated with credIdx, don't use lock utils field in this case
-    userIdx = nil
     userIdx = delete_credential_from_table(device, credIdx)
     if userIdx ~= nil then
       all_user_credentials_removed = not has_credentials(device, userIdx)
