@@ -34,13 +34,14 @@ local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
 local RESPONSE_STATUS_MAP = {
-  [DoorLock.types.DlStatus.SUCCESS] = "success"
+  [DoorLock.types.DlStatus.SUCCESS] = "success",
   [DoorLock.types.DlStatus.FAILURE] = "failure",
   [DoorLock.types.DlStatus.DUPLICATE] = "duplicate",
   [DoorLock.types.DlStatus.OCCUPIED] = "occupied",
   [DoorLock.types.DlStatus.INVALID_FIELD] = "invalidCommand",
   [DoorLock.types.DlStatus.RESOURCE_EXHAUSTED] = "resourceExhausted",
-  [DoorLock.types.DlStatus.NOT_FOUND] = "failure"
+  [DoorLock.types.DlStatus.NOT_FOUND] = "failure",
+  [DoorLock.types.DlStatus.INVALID_FIELD] = "invalidCommand"
 }
 
 local WEEK_DAY_MAP = {
@@ -2030,131 +2031,76 @@ local function handle_delete_all_credentials(driver, device, command)
   device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
 end
 
------------------------------------
--- Delete Pin Credential Response --
------------------------------------
-local function delete_pin_response_handler(driver, device, ib, response)
-  -- Get result
-  local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  local credIdx = device:get_field(lock_utils.CRED_INDEX)
-  local status = "success"
-  if ib.status == DoorLock.types.DlStatus.FAILURE then
-    status = "failure"
-  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
-    status = "invalidCommand"
-  end
-
-  -- Delete Pin in table
-  local userIdx = nil
-  if status == "success" then
-    userIdx = delete_credential_from_table(device, credIdx)
-    if userIdx ~= nil and has_credentials(device, userIdx) == false then
-      delete_user_from_table(device, userIdx)
-      delete_week_schedule_from_table_as_user(device, userIdx)
-      delete_year_schedule_from_table_as_user(device, userIdx)
-    end
-  else
-    device.log.warn(string.format("Failed to clear credential: %s", status))
-  end
-
-  -- Update commandResult
-  local command_result_info = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    credentialIndex = credIdx,
-    statusCode = status
-  }
-  device:emit_event(capabilities.lockCredentials.commandResult(
-    command_result_info, {state_change = true, visibility = {displayed = false}}
-  ))
-  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-end
-
--------------------------------------
--- Clear Aliro Credential Response --
--------------------------------------
-local function clear_issuer_key_response_handler(driver, device, ib, response)
-  -- Get result
-  local cmdName = "clearIssuerKey"
-  local userIdx = device:get_field(lock_utils.USER_INDEX)
-  local reqId = device:get_field(lock_utils.COMMAND_REQUEST_ID)
-  local status = "success"
-  if ib.status == DoorLock.types.DlStatus.FAILURE then
-    status = "failure"
-  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
-    status = "invalidCommand"
-  end
-
-  -- if status is success, delete entry from table
-  if status == "success" then
-    delete_aliro_from_table(device, userIdx, "issuerKey", nil)
-    if has_credentials(device, userIdx) == false then
-      delete_user_from_table(device, userIdx)
-      delete_week_schedule_from_table_as_user(device, userIdx)
-      delete_year_schedule_from_table_as_user(device, userIdx)
-    end
-  end
-
-  -- Update commandResult
-  local command_result_info = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    requestId = reqId,
-    statusCode = status
-  }
-  device:emit_event(capabilities.lockAliro.commandResult(
-    command_result_info, {state_change = true, visibility = {displayed = false}}
-  ))
-  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-end
-
-local function clear_endpoint_key_response_handler(driver, device, ib, response)
-  -- Get result
-  local cmdName = "clearEndpointKey"
-  local userIdx = device:get_field(lock_utils.USER_INDEX)
-  local deviceKeyId = device:get_field(lock_utils.DEVICE_KEY_ID)
-  local keyType = device:get_field(lock_utils.ENDPOINT_KEY_TYPE)
-  local reqId = device:get_field(lock_utils.COMMAND_REQUEST_ID)
-  local status = "success"
-  if ib.status == DoorLock.types.DlStatus.FAILURE then
-    status = "failure"
-  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
-    status = "invalidCommand"
-  end
-
-  -- if status is success, delete entry from table
-  if status == "success" then
-    delete_aliro_from_table(device, userIdx, keyType, deviceKeyId)
-    if has_credentials(device, userIdx) == false then
-      delete_user_from_table(device, userIdx)
-      delete_week_schedule_from_table_as_user(device, userIdx)
-      delete_year_schedule_from_table_as_user(device, userIdx)
-    end
-  end
-
-  -- Update commandResult
-  local command_result_info = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    keyId = deviceKeyId,
-    requestId = reqId,
-    statusCode = status
-  }
-  device:emit_event(capabilities.lockAliro.commandResult(
-    command_result_info, {state_change = true, visibility = {displayed = false}}
-  ))
-  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-end
-
+-------------------------------
+-- Clear Credential Response --
+-------------------------------
 local function clear_credential_response_handler(driver, device, ib, response)
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  if cmdName == "deleteCredential" then
-    delete_pin_response_handler(driver, device, ib, response)
-  elseif cmdName == "clearIssuerKey" then
-    clear_issuer_key_response_handler(driver, device, ib, response)
-  elseif cmdName == "clearEndpointKey" then
-    clear_endpoint_key_response_handler(driver, device, ib, response)
+  if cmdName ~= "deleteCredential" and cmdName ~= "clearEndpointKey" and cmdName ~= "clearIssuerKey" then
+    return
   end
+  local status = RESPONSE_STATUS_MAP[ib.status] or "success"
+  local command_result_info = { commandName = cmdName, statusCode = status } -- default command result
+  local userIdx = device:get_field(lock_utils.USER_INDEX)
+  local all_user_credentials_removed = false
+
+  if cmdName == "deleteCredential" and status == "success" then
+    -- Get result from data saved in relevant, associated fields
+    local credIdx = device:get_field(lock_utils.CRED_INDEX)
+
+    -- find userIdx associated with credIdx, don't use lock utils field in this case
+    userIdx = nil
+    userIdx = delete_credential_from_table(device, credIdx)
+    if userIdx ~= nil then
+      all_user_credentials_removed = not has_credentials(device, userIdx)
+    end
+
+    -- set unique command result fields
+    command_result_info.userIndex = userIdx
+    command_result_info.credentialIndex = credIdx
+  elseif cmdName == "clearIssuerKey" and status == "success" then
+    -- Get result from data saved in relevant, associated fields
+    local reqId = device:get_field(lock_utils.COMMAND_REQUEST_ID)
+
+    delete_aliro_from_table(device, userIdx, "issuerKey", nil)
+    all_user_credentials_removed = not has_credentials(device, userIdx)
+
+    -- set unique command result fields
+    command_result_info.userIndex = userIdx
+    command_result_info.requestId = reqId
+  elseif cmdName == "clearEndpointKey" and status == "success" then
+    -- Get result from data saved in relevant, associated fields
+    local deviceKeyId = device:get_field(lock_utils.DEVICE_KEY_ID)
+    local keyType = device:get_field(lock_utils.ENDPOINT_KEY_TYPE)
+    local reqId = device:get_field(lock_utils.COMMAND_REQUEST_ID)
+
+    delete_aliro_from_table(device, userIdx, keyType, deviceKeyId)
+    all_user_credentials_removed = not has_credentials(device, userIdx)
+
+    -- set unique command result fields
+    command_result_info.userIndex = userIdx
+    command_result_info.keyId = deviceKeyId
+    command_result_info.requestId = reqId
+  end
+
+  -- user data if credentials were removed
+  if all_user_credentials_removed then
+    delete_user_from_table(device, userIdx)
+    delete_week_schedule_from_table_as_user(device, userIdx)
+    delete_year_schedule_from_table_as_user(device, userIdx)
+  end
+
+  -- Update commandResult
+  if cmdName == "deleteCredential" then
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+  else
+    device:emit_event(capabilities.lockAliro.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+  end
+  device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
 ---------------------------
