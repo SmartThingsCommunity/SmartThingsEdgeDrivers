@@ -70,7 +70,7 @@ local set_color_temp_handler = utils.safe_wrap_handler(command_handlers.set_colo
 --- @class HueDriver:Driver
 --- @field public ignored_bridges table<string,boolean>
 --- @field public joined_bridges table<string,boolean>
---- @field public hue_identifier_to_device_record table<string,HueChildDevice>
+--- @field public hue_identifier_to_device_record_by_bridge table<string, table<string,HueChildDevice>>
 --- @field public services_for_device_rid table<string,table<string,string>> Map the device resource ID to another map that goes from service rid to service rtype
 --- @field public waiting_grandchildren table<string,{ waiting_resource_info: HueResourceInfo, join_callback: fun(driver: HueDriver, waiting_resource_info: HueResourceInfo, parent_device: HueChildDevice)}[]>?
 --- @field public stray_device_tx table cosock channel
@@ -113,7 +113,7 @@ function HueDriver.new_driver_template(dbg_config)
 
     ignored_bridges = {},
     joined_bridges = {},
-    hue_identifier_to_device_record = {},
+    hue_identifier_to_device_record_by_bridge = {},
     services_for_device_rid = {},
     -- the only real way we have to know which bridge a bulb wants to use at migration time
     -- is by looking at the stored api key so we will make a map to look up bridge IDs with
