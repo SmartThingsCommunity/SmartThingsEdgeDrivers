@@ -120,7 +120,8 @@ local zigbee_button_driver_template = {
   supported_capabilities = {
     capabilities.button,
     capabilities.battery,
-    capabilities.temperatureMeasurement
+    capabilities.panicAlarm,
+    capabilities.temperatureMeasurement,
   },
   zigbee_handlers = {
     attr = {

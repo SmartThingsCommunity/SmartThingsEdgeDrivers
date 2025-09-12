@@ -82,16 +82,9 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                   local token, token_recv_err
                   -- max 30 mins
                   local backoff_builder = utils.backoff_builder(60 * 30, 30, 2)
-                  if not driver:is_waiting_for_oauth_token() then
-                    local _, request_token_err = driver:request_oauth_token()
-                    if request_token_err then
-                      log.warn(string.format("Error sending token request: %s", request_token_err))
-                    end
-                  end
 
                   local backoff_timer = nil
                   while not token do
-                    local send_request = false
                     -- we use the backoff to create a timer and utilize a select loop here, instead of
                     -- utilizing a sleep, so that we can create a long delay on our polling of the cloud
                     -- without putting ourselves in a situation where we're sleeping for an extended period
@@ -117,7 +110,6 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                         --
                         -- This is just in case both receivers are ready, so that we can prioritize
                         -- handling the token instead of putting another request in flight.
-                        send_request = true
                         backoff_timer:handled()
                         backoff_timer = nil
                       end
@@ -137,17 +129,6 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                         )
                       )
                     end
-
-                    if send_request then
-                      if not driver:is_waiting_for_oauth_token() then
-                        local _, request_token_err = driver:request_oauth_token()
-                        if request_token_err then
-                          log.warn(
-                            string.format("Error sending token request: %s", request_token_err)
-                          )
-                        end
-                      end
-                    end
                   end
                 else
                   device.log.error(
@@ -164,10 +145,12 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                   return
                 end
                 log.error_with(
-                  { hub_logs = true },
-                  "Error handling Sonos player initialization: %s, error code: %s",
-                  error,
-                  (error_code or "N/A")
+                  { hub_logs = false },
+                  string.format(
+                    "Error handling Sonos player initialization: %s, error code: %s",
+                    error,
+                    (error_code or "N/A")
+                  )
                 )
               end
             end

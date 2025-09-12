@@ -28,7 +28,7 @@
 ---@field public controlApi { [1]: string }
 
 --- Lua representation of the Sonos `deviceInfo` JSON Object: https://developer.sonos.com/build/control-sonos-players-lan/discover-lan/#deviceInfo-object
---- @class SonosDeviceInfo
+--- @class SonosDeviceInfoObject
 --- @field public _objectType "deviceInfo"
 --- @field public id PlayerId The playerId. Also known as the deviceId. Used to address Sonos devices in the control API.
 --- @field public primaryDeviceId string Identifies the primary device in bonded sets. Primary devices leave the value blank, which omits the key from the message. The field is expected for secondary devices in stereo pairs and satellites in home theater configurations.
@@ -49,7 +49,7 @@
 --- Lua representation of the Sonos `discoveryInfo` JSON object: https://developer.sonos.com/build/control-sonos-players-lan/discover-lan/#discoveryInfo-object
 --- @class SonosDiscoveryInfo
 --- @field public _objectType "discoveryInfo"
---- @field public device SonosDeviceInfo The device object. This object presents immutable data that describes a Sonos device. Use this object to uniquely identify any Sonos device. See below for details.
+--- @field public device SonosDeviceInfoObject The device object. This object presents immutable data that describes a Sonos device. Use this object to uniquely identify any Sonos device. See below for details.
 --- @field public householdId HouseholdId An opaque identifier assigned to the device during registration. This field may be missing prior to registration.
 --- @field public playerId PlayerId The identifier used to address this particular device in the control API.
 --- @field public groupId GroupId The currently assigned groupId, an ephemeral opaque identifier. This value is always correct, including for group members.
@@ -141,6 +141,7 @@
 --- @field public softwareVersion string
 --- @field public websocketUrl string
 --- @field public capabilities SonosCapabilities[]
+--- @field public devices SonosDeviceInfoObject[]
 
 --- Sonos player local state
 --- @class PlayerDiscoveryState

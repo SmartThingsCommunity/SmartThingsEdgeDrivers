@@ -60,7 +60,7 @@ matterManufacturer:
     deviceLabel: xCREAS Smart Air Purifier Cyclone400
     vendorId: 0x156A
     productId: 0x0001
-    deviceProfileName: air-purifier-modular
+    deviceProfileName: air-purifier-hepa-wind-aqs-pm25-meas-pm25-level
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
