@@ -168,6 +168,11 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: MOSZB-141
     deviceProfileName: frient-motion-battery
+  - id: frientA/S/153
+    deviceLabel: frient Motion Sensor 2 Pet
+    manufacturer: frient A/S
+    model: MOSZB-153
+    deviceProfileName: frient-motion-temp-illuminance-battery
   - id: Compacta/ZBMS3-1
     deviceLabel: Smartenit Motion Sensor
     manufacturer: Compacta

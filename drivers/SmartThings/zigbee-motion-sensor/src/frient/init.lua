@@ -37,7 +37,8 @@ local ILLUMINANCE_ENDPOINT = 0x27
 
 local FRIENT_DEVICE_FINGERPRINTS = {
   { mfr = "frient A/S", model = "MOSZB-140"},
-  { mfr = "frient A/S", model = "MOSZB-141"}
+  { mfr = "frient A/S", model = "MOSZB-141"},
+  { mfr = "frient A/S", model = "MOSZB-153"}
 }
 
 local function can_handle_frient_motion_sensor(opts, driver, device)

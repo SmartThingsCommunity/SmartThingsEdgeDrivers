@@ -1,0 +1,57 @@
+name: frient-motion-temp-illuminance-battery
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: MotionSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - title: "Temperature Sensitivity (°C)"
+    name: temperatureSensitivity
+    description: "Minimum change in temperature to report"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.1
+      maximum: 2.0
+      default: 1.0
+  - title: "Motion Turn-Off Delay (s)"
+    name: occupiedToUnoccupiedD
+    description: "Delay in seconds to report after no motion is detected"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65534
+      default: 240
+  - title: "Motion Turn-On Delay (s)"
+    name: unoccupiedToOccupiedD
+    description: "Delay in seconds to report after motion is detected"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65534
+      default: 0
+  - title: "Movement Threshold in Turn-On Delay"
+    name: unoccupiedToOccupiedT
+    description: "Number of movements to detect before reporting motion during the Motion Turn-On Delay"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 254
+      default: 1
