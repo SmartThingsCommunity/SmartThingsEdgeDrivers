@@ -4,11 +4,11 @@ components:
     capabilities:
       - id: switch
         version: 1
-      - id: airPurifierFanMode
+      - id: fanMode
         version: 1
         config:
           values:
-            - key: "airPurifierFanMode.value"
+            - key: "fanMode.value"
               enabledValues:
                 - low
                 - medium

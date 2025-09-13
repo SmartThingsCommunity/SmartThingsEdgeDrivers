@@ -39,8 +39,8 @@ local function component_to_endpoint(device, component_name, cluster_id)
 end
 
 local function device_init(driver, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
   device:subscribe()
+  device:set_component_to_endpoint_fn(component_to_endpoint)
 end
 
 local function info_changed(driver, device, event, args)
