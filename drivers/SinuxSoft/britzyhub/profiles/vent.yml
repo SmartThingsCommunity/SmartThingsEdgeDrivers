@@ -1,0 +1,19 @@
+name: vent
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: fanMode
+        version: 1
+        config:
+          values:
+            - key: "fanMode.value"
+              enabledValues:
+                - low
+                - medium
+                - high
+      - id: refresh
+        version: 1
+    categories:
+      - name: Vent
