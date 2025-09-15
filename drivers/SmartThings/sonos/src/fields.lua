@@ -5,6 +5,7 @@ local Fields = {}
 Fields.SonosPlayerFields = {
   _IS_INIT = "init",
   _IS_SCANNING = "scanning",
+  BONDED = "bonded",
   CONNECTION = "conn",
   UNIQUE_KEY = "unique_key",
   HOUSEHOLD_ID = "householdId",
