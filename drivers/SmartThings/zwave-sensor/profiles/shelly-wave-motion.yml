@@ -29,7 +29,8 @@ preferences:
       default: 0
   - name: "sensitivity"
     title: "P158: sensitivity"
-    description: "Senitivity"
+    description: "Sensitivity"
+
     required: false
     preferenceType: enumeration
     definition:
