@@ -82,6 +82,7 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
                   local token, token_recv_err
                   -- max 30 mins
                   local backoff_builder = utils.backoff_builder(60 * 30, 30, 2)
+                  driver:alert_unauthorized()
 
                   local backoff_timer = nil
                   while not token do
