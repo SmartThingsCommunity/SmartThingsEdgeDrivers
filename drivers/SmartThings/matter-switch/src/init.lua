@@ -191,7 +191,10 @@ local child_device_profile_overrides_per_vendor_id = {
     { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
     { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
     { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-  }
+  },
+  [0xFFF1] = {
+    { product_id = 0x8004, target_profile = "12-buttons-without-main-button"},
+  },
 }
 
 local detect_matter_thing
@@ -293,7 +296,8 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
+-- local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
+local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
 
 local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
 local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
@@ -443,6 +447,14 @@ local function find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
+  if device.manufacturer_info.vendor_id == 0xFFF1 and
+     device.manufacturer_info.product_id == 0x8004 then
+    log.warn(string.format("return main endpoint"))
+    log.info(string.format("Matter default endpoint: %d", device.MATTER_DEFAULT_ENDPOINT))
+    -- In case of Aura, in order to sequentially set the button name to button 1, 2, 3
+    return device.MATTER_DEFAULT_ENDPOINT
+  end
+
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   table.sort(switch_eps)
@@ -587,11 +599,21 @@ local function try_build_button_component_map(device, main_endpoint, button_eps)
   -- create component mapping on the main profile button endpoints
   if STATIC_BUTTON_PROFILE_SUPPORTED[#button_eps] then
     local component_map = {}
-    component_map["main"] = main_endpoint
+    if device.manufacturer_info.vendor_id == 0xFFF1 and
+    device.manufacturer_info.product_id == 0x8004 then
+    else
+      component_map["main"] = main_endpoint
+    end
     for component_num, ep in ipairs(button_eps) do
-      if ep ~= main_endpoint then
+      if device.manufacturer_info.vendor_id == 0xFFF1 and
+      device.manufacturer_info.product_id == 0x8004 then
         local button_component = "button" .. component_num
-        component_map[button_component] = ep
+        component_map[button_component] = ep  
+      else
+        if ep ~= main_endpoint then
+          local button_component = "button" .. component_num
+          component_map[button_component] = ep
+        end
       end
     end
     device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
@@ -616,6 +638,10 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
 
   if not battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
     profile_name = string.gsub(profile_name, "1%-", "") -- remove the "1-" in a device with 1 button ep
+    if device.manufacturer_info.vendor_id == 0xFFF1 and
+    device.manufacturer_info.product_id == 0x8004 then -- for aura smart button
+      profile_name = "12-buttons-without-main-button"
+    end
     device:try_update_metadata({profile = profile_name})
   end
   device:set_field(DEFERRED_CONFIGURE, true)
@@ -736,6 +762,36 @@ local function detect_bridge(device)
     end
   end
   return false
+end
+
+local function print_component_endpoint_map(device)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP)
+
+  if not map then
+    log.warn("❗未找到组件到 endpoint 的映射表")
+    return
+  end
+
+  log.info("📌 SmartThings Component ↔ Endpoint 映射表：")
+  for component, endpoint in pairs(map) do
+    log.info(string.format("  ➤ Component: %-10s → Endpoint: %d", component, endpoint))
+  end
+end
+
+local function clean_supported_values(device)
+  local supported = capabilities.button.supportedButtonValues({"pushed", "double", "held"}, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(1, supported)
+  device:emit_event_for_endpoint(2, supported)
+  device:emit_event_for_endpoint(3, supported)
+  device:emit_event_for_endpoint(4, supported)
+  device:emit_event_for_endpoint(5, supported)
+  device:emit_event_for_endpoint(6, supported)
+  device:emit_event_for_endpoint(7, supported)
+  device:emit_event_for_endpoint(8, supported)
+  device:emit_event_for_endpoint(9, supported)
+  device:emit_event_for_endpoint(10, supported)
+  device:emit_event_for_endpoint(11, supported)
+  device:emit_event_for_endpoint(12, supported)
 end
 
 local function device_init(driver, device)
@@ -1284,6 +1340,7 @@ local function max_press_handler(driver, device, ib, response)
 end
 
 local function info_changed(driver, device, event, args)
+  clean_supported_values(device)
   if device.profile.id ~= args.old_st_store.profile.id then
     if device:supports_capability(capabilities.colorControl) then
       device:set_field(COLOR_MODE_ATTRS_BITMAP, 0x0F) -- all bits enabled: Hue (0x01), Saturation (0x02), X (0x04), and Y (0x08)
@@ -1299,6 +1356,7 @@ local function info_changed(driver, device, event, args)
 end
 
 local function device_added(driver, device)
+  print_component_endpoint_map(device)
   -- refresh child devices to get initial attribute state in case child device
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
