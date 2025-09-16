@@ -82,4 +82,3 @@ end
 setmetatable(ErrorStateStruct, new_mt)
 
 return ErrorStateStruct
-

@@ -36,9 +36,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -125,6 +123,14 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
                                          zigbee_test_utils.build_bind_request(mock_device,
                                                                               zigbee_test_utils.mock_hub_eui,
                                                                               SimpleMetering.ID)
@@ -147,6 +153,14 @@ test.register_coroutine_test(
                                          mock_device.id,
                                          ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 0, 65535, 1)
                                        })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
+                                      })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )

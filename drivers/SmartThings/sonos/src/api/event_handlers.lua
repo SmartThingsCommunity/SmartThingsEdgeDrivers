@@ -1,7 +1,11 @@
 local capabilities = require "st.capabilities"
+local swGenCapability = capabilities["stus.softwareGeneration"]
+
 local log = require "log"
 
 local st_utils = require "st.utils"
+
+local PlayerFields = require "fields".SonosPlayerFields
 
 local CapEventHandlers = {}
 
@@ -9,32 +13,55 @@ CapEventHandlers.PlaybackStatus = {
   Buffering = "PLAYBACK_STATE_BUFFERING",
   Idle = "PLAYBACK_STATE_IDLE",
   Paused = "PLAYBACK_STATE_PAUSED",
-  Playing = "PLAYBACK_STATE_PLAYING"
+  Playing = "PLAYBACK_STATE_PLAYING",
 }
 
+local function _do_emit(device, attribute_event)
+  local bonded = device:get_field(PlayerFields.BONDED)
+  if not bonded then
+    device:emit_event(attribute_event)
+  end
+end
+
+function CapEventHandlers.handle_sw_gen(device, sw_gen)
+  _do_emit(device, swGenCapability.generation(string.format("%s", sw_gen)))
+end
+
 function CapEventHandlers.handle_player_volume(device, new_volume, is_muted)
-  device:emit_event(capabilities.audioVolume.volume(new_volume))
+  _do_emit(device, capabilities.audioVolume.volume(new_volume))
   if is_muted then
-    device:emit_event(capabilities.audioMute.mute.muted())
+    _do_emit(device, capabilities.audioMute.mute.muted())
   else
-    device:emit_event(capabilities.audioMute.mute.unmuted())
+    _do_emit(device, capabilities.audioMute.mute.unmuted())
   end
 end
 
 function CapEventHandlers.handle_group_volume(device, new_volume, is_muted)
-  device:emit_event(capabilities.mediaGroup.groupVolume(new_volume))
+  _do_emit(device, capabilities.mediaGroup.groupVolume(new_volume))
   if is_muted then
-    device:emit_event(capabilities.mediaGroup.groupMute.muted())
+    _do_emit(device, capabilities.mediaGroup.groupMute.muted())
   else
-    device:emit_event(capabilities.mediaGroup.groupMute.unmuted())
+    _do_emit(device, capabilities.mediaGroup.groupMute.unmuted())
   end
+end
+
+function CapEventHandlers.handle_group_role_update(device, group_role)
+  _do_emit(device, capabilities.mediaGroup.groupRole(group_role))
+end
+
+function CapEventHandlers.handle_group_coordinator_update(device, coordinator_id)
+  _do_emit(device, capabilities.mediaGroup.groupPrimaryDeviceId(coordinator_id))
+end
+
+function CapEventHandlers.handle_group_id_update(device, group_id)
+  _do_emit(device, capabilities.mediaGroup.groupId(group_id))
 end
 
 function CapEventHandlers.handle_group_update(device, group_info)
   local groupRole, groupPrimaryDeviceId, groupId = table.unpack(group_info)
-  device:emit_event(capabilities.mediaGroup.groupRole(groupRole))
-  device:emit_event(capabilities.mediaGroup.groupPrimaryDeviceId(groupPrimaryDeviceId))
-  device:emit_event(capabilities.mediaGroup.groupId(groupId))
+  _do_emit(device, capabilities.mediaGroup.groupRole(groupRole))
+  _do_emit(device, capabilities.mediaGroup.groupPrimaryDeviceId(groupPrimaryDeviceId))
+  _do_emit(device, capabilities.mediaGroup.groupId(groupId))
 end
 
 function CapEventHandlers.handle_audio_clip_status(device, clips)
@@ -49,11 +76,11 @@ end
 
 function CapEventHandlers.handle_playback_status(device, playback_state)
   if playback_state == CapEventHandlers.PlaybackStatus.Playing then
-    device:emit_event(capabilities.mediaPlayback.playbackStatus.playing())
+    _do_emit(device, capabilities.mediaPlayback.playbackStatus.playing())
   elseif playback_state == CapEventHandlers.PlaybackStatus.Idle then
-    device:emit_event(capabilities.mediaPlayback.playbackStatus.stopped())
+    _do_emit(device, capabilities.mediaPlayback.playbackStatus.stopped())
   elseif playback_state == CapEventHandlers.PlaybackStatus.Paused then
-    device:emit_event(capabilities.mediaPlayback.playbackStatus.paused())
+    _do_emit(device, capabilities.mediaPlayback.playbackStatus.paused())
   elseif playback_state == CapEventHandlers.PlaybackStatus.Buffering then
     -- TODO the DTH doesn't currently do anything w/ buffering;
     -- might be worth figuring out what to do with this in the future.
@@ -62,7 +89,7 @@ function CapEventHandlers.handle_playback_status(device, playback_state)
 end
 
 function CapEventHandlers.update_favorites(device, new_favorites)
-  device:emit_event(capabilities.mediaPresets.presets(new_favorites))
+  _do_emit(device, capabilities.mediaPresets.presets(new_favorites))
 end
 
 function CapEventHandlers.handle_playback_metadata_update(device, metadata_status_body)
@@ -72,7 +99,12 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
     local is_linein = string.find(metadata_status_body.container.type, "linein", 1, true) ~= nil
     local is_station = string.find(metadata_status_body.container.type, "station", 1, true) ~= nil
     local is_show = string.find(metadata_status_body.container.type, "show", 1, true) ~= nil
-    local is_radio_tracklist = string.find(metadata_status_body.container.type, "trackList.program", 1, true) ~= nil
+    local is_radio_tracklist = string.find(
+      metadata_status_body.container.type,
+      "trackList.program",
+      1,
+      true
+    ) ~= nil
 
     if is_linein then
       audio_track_data.title = metadata_status_body.container.name
@@ -89,8 +121,7 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
   if metadata_status_body.track then
     track_info = metadata_status_body.track
   elseif metadata_status_body.currentItem and metadata_status_body.currentItem.track then
-    track_info = metadata_status_body
-        .currentItem.track
+    track_info = metadata_status_body.currentItem.track
   end
 
   if track_info ~= nil then
@@ -112,7 +143,7 @@ function CapEventHandlers.handle_playback_metadata_update(device, metadata_statu
   end
 
   if type(audio_track_data.title) == "string" then
-    device:emit_event(capabilities.audioTrackData.audioTrackData(audio_track_data))
+    _do_emit(device, capabilities.audioTrackData.audioTrackData(audio_track_data))
   end
 end
 

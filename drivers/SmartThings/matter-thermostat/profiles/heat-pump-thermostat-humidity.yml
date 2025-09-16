@@ -1,0 +1,31 @@
+name: heat-pump-thermostat-humidity
+components:
+- id: main
+  capabilities:
+  - id: energyMeter
+    version: 1
+  - id: powerMeter
+    version: 1
+  - id: powerConsumptionReport
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: HeatPump
+- id: thermostatOne
+  label: Thermostat 1
+  capabilities:
+  - id: thermostatMode
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: thermostatCoolingSetpoint
+    version: 1
+  categories:
+  - name: HeatPump

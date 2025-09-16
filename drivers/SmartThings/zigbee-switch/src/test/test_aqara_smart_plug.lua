@@ -70,10 +70,10 @@ local mock_standard = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
+  mock_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_device)
-  test.mock_device.add_test_device(mock_standard)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  mock_standard:set_field("_configuration_version", 1, {persist = true})
+  test.mock_device.add_test_device(mock_standard)end
 
 test.set_test_init_function(test_init)
 
@@ -178,6 +178,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "switch", component = "main", command = "on", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "on")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device) })
   end
@@ -188,6 +189,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "switch", component = "main", command = "off", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device) })
   end

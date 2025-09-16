@@ -5,6 +5,11 @@ local ssl = require "cosock.ssl"
 ---@type fun(sock: table, config: table?): table?, string?
 ssl.wrap = ssl.wrap
 
+local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
+
 local log = require "log"
 local util = require "lunchbox.util"
 local Request = require "luncheon.request"
@@ -270,6 +275,10 @@ local function connecting_action(source)
         })
         if err ~= nil then return nil, err end
 
+        -- Re-set timeout due to cosock not carrying timeout over in some Lua library versions
+        err = select(2, source._sock:settimeout(60))
+        if err ~= nil then return nil, err end
+
         err = select(2, source._sock:dohandshake())
         if err ~= nil then return nil, err end
       end
@@ -354,7 +363,7 @@ local function open_action(source)
   -- the number of bytes to read per the chunked encoding spec
   local recv_as_num = tonumber(recv, 16)
 
-  if recv_as_num ~= nil then
+  if recv_as_num ~= nil and recv_as_num > 0 then
     recv, err, partial = source._sock:receive(recv_as_num)
     if err then
       if err == "timeout" or err == "wantread" then
@@ -474,7 +483,6 @@ function EventSource.new(url, extra_headers, sock_builder)
   }, EventSource)
 
   cosock.spawn(function()
-    local st_utils = require "st.utils"
     while true do
       if source.ready_state == EventSource.ReadyStates.CLOSED and
           not source._reconnect

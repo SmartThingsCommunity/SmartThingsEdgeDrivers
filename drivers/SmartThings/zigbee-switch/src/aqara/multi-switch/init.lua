@@ -2,6 +2,7 @@ local device_lib = require "st.device"
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local configurations = require "configurations"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
@@ -11,9 +12,12 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.switch.n1acn1",   children = 1, child_profile = "" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1",   children = 2, child_profile = "aqara-switch-child" },
   { mfr = "LUMI", model = "lumi.switch.n3acn1",   children = 3, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.b1laus01", children = 1, child_profile = "" },
   { mfr = "LUMI", model = "lumi.switch.b2laus01", children = 2, child_profile = "aqara-switch-child" },
   { mfr = "LUMI", model = "lumi.switch.l2aeu1",   children = 2, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.n2aeu1",   children = 2, child_profile = "aqara-switch-child" }
+  { mfr = "LUMI", model = "lumi.switch.n2aeu1",   children = 2, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.b2nacn01", children = 2, child_profile = "aqara-switch-child" },
+  { mfr = "LUMI", model = "lumi.switch.b3n01",    children = 3, child_profile = "aqara-switch-child" }
 }
 
 local function is_aqara_products(opts, driver, device)
@@ -98,7 +102,7 @@ end
 local aqara_multi_switch_handler = {
   NAME = "Aqara Multi Switch Handler",
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = is_aqara_products

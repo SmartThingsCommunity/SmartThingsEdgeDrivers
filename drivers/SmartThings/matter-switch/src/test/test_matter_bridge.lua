@@ -70,8 +70,18 @@ local mock_bridge = test.mock_device.build_test_matter_device({
   }
 })
 
+local cluster_subscribe_list = {
+  clusters.OnOff.attributes.OnOff
+}
+
 local function test_init_mock_bridge()
-  test.socket.matter:__set_channel_ordering("relaxed")
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_bridge)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_bridge))
+    end
+  end
+  test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
   test.mock_device.add_test_device(mock_bridge)
 end
 

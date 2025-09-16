@@ -18,6 +18,7 @@ local stDevice = require "st.device"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local configurations = require "configurations"
 
 local Scenes = zcl_clusters.Scenes
 local PRIVATE_CLUSTER_ID = 0x0006
@@ -57,7 +58,7 @@ end
 
 local function create_child_devices(driver, device)
   local switch_amount, button_amount = get_children_info(device)
-  local base_name = device.label:sub(1, device.label:find(" "))
+  local base_name = string.sub(device.label, 0, -2)
   -- Create Switch 2-4
   for i = 2, switch_amount, 1 do
     if find_child(device, i) == nil then
@@ -130,7 +131,7 @@ local wallheroswitch = {
   NAME = "Zigbee Wall Hero Switch",
   lifecycle_handlers = {
     added = device_added,
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     infoChanged = device_info_changed
   },
   zigbee_handlers = {

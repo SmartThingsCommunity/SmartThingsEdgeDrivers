@@ -1,4 +1,5 @@
 local log = require "log"
+local st_utils = require "st.utils"
 
 local Fields = require "fields"
 local HueDeviceTypes = require "hue_device_types"
@@ -17,6 +18,7 @@ function utils.lazy_handler_loader(parent_module)
     {},
     {
       __index = function(tbl, key)
+        if key == nil then return nil end
         if nils[key] then return nil end
         if rawget(tbl, key) == nil then
           local success, mod = pcall(require, string.format("%s.%s", parent_module, key))
@@ -70,7 +72,15 @@ end
 
 function utils.kelvin_to_mirek(kelvin) return 1000000 / kelvin end
 
-function utils.mirek_to_kelvin(mirek) return 1000000 / mirek end
+function utils.mirek_to_kelvin(mirek, with_step_size)
+  local raw_kelvin = 1000000 / mirek
+
+  if type(with_step_size) == "number" then
+    return with_step_size * math.floor(raw_kelvin / with_step_size)
+  end
+
+  return st_utils.round(raw_kelvin)
+end
 
 function utils.str_starts_with(str, start)
   return str:sub(1, #start) == start
@@ -207,6 +217,13 @@ end
 ---@return string? resource_id the Hue RID, or nil on error
 ---@return string? err
 function utils.get_hue_rid(device)
+  if
+    device == nil
+    or (device and (device.id == nil or device.get_field == nil or device.device_network_id == nil))
+  then
+    return nil, string.format("nil or incomplete device record passed to get_hue_rid, device has likely been deleted")
+  end
+
   local resource_id = device:get_field(Fields.RESOURCE_ID)
   if resource_id then
     return resource_id
@@ -329,8 +346,9 @@ end
 ---@param device HueDevice
 ---@param parent_device_id string?
 ---@return HueBridgeDevice? bridge_device
-function utils.get_hue_bridge_for_device(driver, device, parent_device_id)
-  log.trace(string.format("------------------------ Looking for bridge for %s with parent_device_id %s", device.label, device.parent_device_id))
+function utils.get_hue_bridge_for_device(driver, device, parent_device_id, quiet)
+  local _ = quiet or
+    log.trace(string.format("------------------------ Looking for bridge for %s with parent_device_id %s", device.label, device.parent_device_id))
   if utils.is_bridge(driver, device) then
     log.trace(string.format("------------------------- %s is a bridge", device.label))
     return device --[[ @as HueBridgeDevice ]]
@@ -339,16 +357,18 @@ function utils.get_hue_bridge_for_device(driver, device, parent_device_id)
   local parent_device_id = parent_device_id or device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
   local parent_device = driver:get_device_info(parent_device_id)
   if not parent_device then
-    log.trace(string.format("------------------------- get_device_info for %s was nil", parent_device_id))
+    local _ = quiet or
+      log.trace(string.format("------------------------- get_device_info for %s was nil", parent_device_id))
     return nil
   end
 
-  log.trace(string.format("------------------------- parent_device label is %s, checking if bridge", parent_device.label))
+  local _ = quiet or
+    log.trace(string.format("------------------------- parent_device label is %s, checking if bridge", parent_device.label))
   if parent_device and utils.is_bridge(driver, parent_device) then
     return parent_device --[[ @as HueBridgeDevice ]]
   end
 
-  return utils.get_hue_bridge_for_device(driver, parent_device)
+  return utils.get_hue_bridge_for_device(driver, parent_device, nil, quiet)
 end
 
 --- build a exponential backoff time value generator
@@ -442,6 +462,16 @@ function utils.labeled_socket_builder(label)
           ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
       if not sock or err ~= nil then
         return nil, (err and "SSL wrap error: " .. err) or "Unexpected nil socket returned from ssl.wrap"
+      end
+      log.info(
+        string.format(
+          "%sSetting SSL socket timeout for Hue REST Connection", label
+        )
+      )
+      -- Re-set timeout due to cosock not carrying timeout over in some Lua library versions
+      err = select(2, sock:settimeout(60))
+      if err ~= nil then
+        return nil, "settimeout error: " .. err
       end
       log.info(
         string.format(

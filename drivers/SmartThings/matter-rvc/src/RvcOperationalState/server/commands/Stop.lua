@@ -77,4 +77,3 @@ end
 setmetatable(Stop, {__call = Stop.init})
 
 return Stop
-

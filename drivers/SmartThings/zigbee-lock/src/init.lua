@@ -133,7 +133,8 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   code_slot = tonumber(code_slot)
   if (code_slot == device:get_field(lock_utils.CHECKING_CODE)) then
     -- the code we're checking has arrived
-    if (code_slot >= device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)) then
+    local last_slot = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME) - 1
+    if (code_slot >= last_slot) then
       device:emit_event(LockCodes.scanCodes("Complete", { visibility = { displayed = false } }))
       device:set_field(lock_utils.CHECKING_CODE, nil)
     else
@@ -302,6 +303,8 @@ end
 
 local function init(driver, device)
   lock_utils.populate_state_from_data(device)
+  -- temp fix before this can be changed to non-persistent
+  device:set_field(lock_utils.CODE_STATE, nil, { persist = true })
 end
 
 -- The following two functions are from the lock defaults. They are in the base driver temporarily
@@ -320,11 +323,11 @@ local lock_state_handler = function(driver, device, value, zb_rx)
   local delay = device:get_field(DELAY_LOCK_EVENT) or 100
   if (delay < MAX_DELAY) then
     device.thread:call_with_delay(delay+.5, function ()
-      device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value])
+      device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value] or attr.unknown())
     end)
   else
     device:set_field(DELAY_LOCK_EVENT, socket.gettime())
-    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value])
+    device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, LOCK_STATE[value.value] or attr.unknown())
   end
 end
 
@@ -355,7 +358,7 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
   local event = STATUS[event_code]
   if (event ~= nil) then
     event["data"] = {}
-    if (event_code == OperationEventCode.AUTO_LOCK or
+    if (source ~= 0 and event_code == OperationEventCode.AUTO_LOCK or
         event_code == OperationEventCode.SCHEDULE_LOCK or
         event_code == OperationEventCode.SCHEDULE_UNLOCK
       ) then
@@ -363,7 +366,7 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
     else
       event.data.method = METHOD[source]
     end
-    if (source == 0) then --keypad
+    if (source == 0 and device:supports_capability_by_id(capabilities.lockCodes.ID)) then --keypad
       local code_id = zb_rx.body.zcl_body.user_id.value
       local code_name = "Code "..code_id
       local lock_codes = device:get_field("lockCodes")
@@ -389,6 +392,14 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
 
     device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, event)
   end
+end
+
+local function lock(driver, device, command)
+  device:send_to_component(command.component, LockCluster.server.commands.LockDoor(device))
+end
+
+local function unlock(driver, device, command)
+  device:send_to_component(command.component, LockCluster.server.commands.UnlockDoor(device))
 end
 
 local zigbee_lock_driver = {
@@ -426,6 +437,10 @@ local zigbee_lock_driver = {
       [LockCodes.commands.setCode.NAME] = set_code,
       [LockCodes.commands.nameSlot.NAME] = name_slot,
     },
+    [Lock.ID] = {
+      [Lock.commands.lock.NAME] = lock,
+      [Lock.commands.unlock.NAME] = unlock,
+    },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = refresh
     }
@@ -440,7 +455,8 @@ local zigbee_lock_driver = {
     doConfigure = do_configure,
     added = device_added,
     init = init,
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_lock_driver, zigbee_lock_driver.supported_capabilities)

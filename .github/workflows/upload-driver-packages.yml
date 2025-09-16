@@ -40,7 +40,7 @@ jobs:
         run: |
           zip -v ${{env.package_key}}.zip config.yml fingerprints.yml search-parameters.y*ml $(find . -name "*.pem") $(find . -name "*.crt") $(find profiles -name "*.y*ml") $(find . -name "*.lua") -x "*test*"
       - name: Upload packaged driver artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.package_key }}
           path: |
@@ -51,14 +51,14 @@ jobs:
     steps:
       - run: echo ${{ github.event.number }} > pr_number.txt
       - name: Upload pr number artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pr_number
           path: |
             pr_number.txt
       - run: echo ${{ github.head_ref }} > head_ref.txt
       - name: Upload head ref artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: head_ref
           path: |

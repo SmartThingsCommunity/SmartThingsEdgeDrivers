@@ -24,6 +24,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.curtain.v1
     deviceProfileName: window-treatment-aqara
+  - id: "LUMI/lumi.curtain.agl001"
+    deviceLabel: Aqara Curtain Driver E1
+    manufacturer: LUMI
+    model: lumi.curtain.agl001
+    deviceProfileName: window-treatment-aqara-curtain-driver-e1
   - id: "REXENSE/KG0001"
     deviceLabel: Window Treatment
     manufacturer: REXENSE
@@ -112,6 +117,11 @@ zigbeeManufacturer:
     deviceLabel: Screen Innovations Window Treatment
     manufacturer: Screen Innovations
     model: WM25/L-Z
+    deviceProfileName: window-treatment-powerSource
+  - id: "Shade Revolution/Indoor Shade Motors"
+    deviceLabel: Smart Shade
+    manufacturer: Shade Revolution
+    model: Indoor Shade Motors
     deviceProfileName: window-treatment-powerSource
 
 zigbeeGeneric:

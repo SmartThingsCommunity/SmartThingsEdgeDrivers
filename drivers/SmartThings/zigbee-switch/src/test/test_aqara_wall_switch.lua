@@ -68,6 +68,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
   end
 )
 
@@ -77,6 +78,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.on()))
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
   end
 )
 
@@ -86,6 +88,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
   end
 )
 
@@ -95,6 +98,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.off()))
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
   end
 )
 
@@ -103,6 +107,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "switch", component = "main", command = "on", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "on")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device) })
   end
@@ -113,6 +118,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_child.id,
       { capability = "switch", component = "main", command = "on", args = {} } })
+    mock_child:expect_native_cmd_handler_registration("switch", "on")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x02) })
   end
@@ -123,6 +129,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_device.id,
       { capability = "switch", component = "main", command = "off", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device) })
   end
@@ -133,6 +140,7 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_child.id,
       { capability = "switch", component = "main", command = "off", args = {} } })
+    mock_child:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x02) })
   end

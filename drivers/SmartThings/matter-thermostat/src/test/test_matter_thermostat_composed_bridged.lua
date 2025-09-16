@@ -15,8 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -161,6 +159,12 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
+        capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 0.00, maximum = 100.00, step = 0.1 }, unit = "C" }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
         capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 40.0, unit = "C" }))
     }
   }
@@ -176,6 +180,12 @@ test.register_message_test(
         mock_device.id,
         clusters.Thermostat.server.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, 3, 40 * 100)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 0.00, maximum = 100.00, step = 0.1 }, unit = "C" }))
     },
     {
       channel = "capability",
@@ -274,19 +284,26 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 3, 5)
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, 5)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"off", "cool", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 3, 3)
+      }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "emergency heat" }, {visibility={displayed=false}}))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool())
     },
   }
 )
@@ -308,7 +325,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat" }, {visibility={displayed=false}}))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "cool", "heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -322,7 +339,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "heat" }, {visibility={displayed=false}}))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -336,7 +353,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto",  "cool" }, {visibility={displayed=false}}))
+        capabilities.thermostatMode.supportedThermostatModes({ "off",  "cool" }, {visibility={displayed=false}}))
     },
   }
 )
@@ -356,7 +373,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat" }, {visibility={displayed=false}}))
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "cool", "heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "matter",
@@ -369,14 +386,14 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatMode.supportedThermostatModes({ "off", "cool", "heat", "emergency heat" }, {visibility={displayed=false}}))
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main",
-        capabilities.thermostatMode.supportedThermostatModes({ "off", "auto", "cool", "heat", "emergency heat" }, {visibility={displayed=false}}))
-    }
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
+    },
   }
 )
 
@@ -501,29 +518,6 @@ test.register_message_test(
       message = {
         mock_device.id,
         clusters.Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 3, 25 * 100)
-      }
-    }
-  }
-)
-
-test.register_message_test(
-  "Setting the heating setpoint to a Fahrenheit value should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 64 } }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 3,
-          utils.round((64 - 32) * (5 / 9.0) * 100))
       }
     }
   }

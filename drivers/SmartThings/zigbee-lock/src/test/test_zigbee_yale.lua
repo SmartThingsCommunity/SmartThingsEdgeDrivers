@@ -37,9 +37,7 @@ local mock_device = test.mock_device.build_test_zigbee_device({
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -144,6 +142,53 @@ test.register_coroutine_test(
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false }})))
+    end
+)
+
+test.register_coroutine_test(
+    "Setting the master code should result in the correct user type being used",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+      test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 0, "1234", "test" } } })
+      test.socket.zigbee:__expect_send(
+          {
+            mock_device.id,
+            DoorLock.server.commands.SetPINCode(mock_device,
+                                                   0,
+                                                   DoorLockUserStatus.OCCUPIED_ENABLED,
+                                                   DoorLockUserType.MASTER_USER,
+                                                   "1234"
+            )
+          }
+      )
+      test.wait_for_events()
+
+      test.mock_time.advance_time(4)
+      test.socket.zigbee:__expect_send(
+          {
+            mock_device.id,
+            DoorLock.server.commands.GetPINCode(mock_device, 0)
+          }
+      )
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive(
+          {
+            mock_device.id,
+            DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+                mock_device,
+                0x00,
+                DoorLockUserStatus.OCCUPIED_ENABLED,
+                DoorLockUserType.MASTER_USER,
+                "1234"
+            )
+          }
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+          capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "test"}, state_change = true }))
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({["0"] = "test"}), { visibility = { displayed = false }})))
     end
 )
 

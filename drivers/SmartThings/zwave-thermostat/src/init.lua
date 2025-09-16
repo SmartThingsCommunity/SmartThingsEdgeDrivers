@@ -71,6 +71,9 @@ local function set_setpoint_factory(setpoint_type)
         size = 2
       })
     else
+      -- There have been issues with some thermostats failing to handle non-integer values
+      -- correctly. This rounding is intended to be removed.
+      value = utils.round(value)
       set = ThermostatSetpoint:Set({
         setpoint_type = setpoint_type,
         scale = scale,
@@ -124,7 +127,7 @@ local driver_template = {
   }
 }
 
-defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)
+defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
 --- @type st.zwave.Driver
 local thermostat = ZwaveDriver("zwave_thermostat", driver_template)
 thermostat:run()

@@ -78,7 +78,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_switch_binary:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_switch_binary.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -94,7 +102,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_switch_binary:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_switch_binary.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -203,6 +219,7 @@ test.register_coroutine_test(
             { capability = "switch", command = "on", args = {} }
           }
       )
+      mock_switch_basic:expect_native_cmd_handler_registration("switch", "on")
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_switch_basic,
@@ -233,6 +250,7 @@ test.register_coroutine_test(
             { capability = "switch", command = "off", args = {} }
           }
       )
+      mock_switch_basic:expect_native_cmd_handler_registration("switch", "off")
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_switch_basic,
@@ -263,6 +281,7 @@ test.register_coroutine_test(
             { capability = "switch", command = "on", args = {} }
           }
       )
+      mock_switch_binary:expect_native_cmd_handler_registration("switch", "on")
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_switch_binary,
@@ -293,6 +312,7 @@ test.register_coroutine_test(
             { capability = "switch", command = "off", args = {} }
           }
       )
+      mock_switch_binary:expect_native_cmd_handler_registration("switch", "off")
       test.socket.zwave:__expect_send(
           zw_test_utils.zwave_test_build_send_command(
               mock_switch_binary,

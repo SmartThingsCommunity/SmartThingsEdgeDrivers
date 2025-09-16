@@ -32,3 +32,41 @@ matterGeneric:
     deviceTypes:
       - id: 0x0075
     deviceProfileName: dishwasher-tn-tl
+  - id: "matter/extractor-hood"
+    deviceLabel: Matter Extractor Hood
+    deviceTypes:
+      - id: 0x007A
+    deviceProfileName: extractor-hood
+  - id: "matter/extractor-hood/light"
+    deviceLabel: Matter Extractor Hood/Light
+    deviceTypes:
+      - id: 0x007A
+      - id: 0x0100
+    deviceProfileName: extractor-hood-light
+  - id: "matter/extractor-hood/light/switch"
+    deviceLabel: Matter Extractor Hood/Light Switch
+    deviceTypes:
+      - id: 0x007A
+      - id: 0x0103
+    deviceProfileName: extractor-hood-light
+  - id: "matter/laundry-dryer"
+    deviceLabel: Matter Laundry Dryer
+    deviceTypes:
+      - id: 0x007C
+    deviceProfileName: laundry-dryer
+  - id: "matter/cook-top"
+    deviceLabel: Matter Cook Top
+    deviceTypes:
+      - id: 0x0078
+    deviceProfileName: cook-top
+  - id: "matter/microwave-oven"
+    deviceLabel: Matter Microwave Oven
+    deviceTypes:
+      - id: 0x0079
+    deviceProfileName: microwave-oven
+  - id: "matter/oven"
+    deviceLabel: Matter Oven
+    deviceTypes:
+      - id: 0x007B
+      - id: 0x0071
+    deviceProfileName: oven-cabinet-one-tn-cabinet-two-tl-cook-top-cook-surface-one-tl-cook-surface-two-tl

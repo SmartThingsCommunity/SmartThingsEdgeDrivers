@@ -18,6 +18,35 @@ local defaults = require "st.zigbee.defaults"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local constants = require "st.zigbee.constants"
 local configurationMap = require "configurations"
+local TemperatureMeasurement = (require "st.zigbee.zcl.clusters").TemperatureMeasurement
+
+local temperature_measurement_defaults = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP"
+}
+
+local temperature_measurement_min_max_attr_handler = function(minOrMax)
+  return function(driver, device, value, zb_rx)
+    local raw_temp = value.value
+    local celc_temp = raw_temp / 100.0
+    local temp_scale = "C"
+
+    device:set_field(string.format("%s", minOrMax), celc_temp)
+
+    local min = device:get_field(temperature_measurement_defaults.MIN_TEMP)
+    local max = device:get_field(temperature_measurement_defaults.MAX_TEMP)
+
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = temp_scale }))
+        device:set_field(temperature_measurement_defaults.MIN_TEMP, nil)
+        device:set_field(temperature_measurement_defaults.MAX_TEMP, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
+  end
+end
 
 local function device_init(driver, device)
   local configuration = configurationMap.get_device_configuration(device)
@@ -36,6 +65,11 @@ local function device_init(driver, device)
   end
 end
 
+local function added_handler(self, device)
+  device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
+  device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+end
+
 local zigbee_water_driver_template = {
   supported_capabilities = {
     capabilities.waterSensor,
@@ -43,8 +77,17 @@ local zigbee_water_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.battery,
   },
+  zigbee_handlers = {
+    attr = {
+      [TemperatureMeasurement.ID] = {
+        [TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MIN_TEMP),
+        [TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MAX_TEMP),
+      }
+    }
+  },
   lifecycle_handlers = {
-    init = device_init
+    init = device_init,
+    added = added_handler
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   sub_drivers = {
@@ -56,8 +99,10 @@ local zigbee_water_driver_template = {
     require("sengled"),
     require("sinope")
   },
+  health_check = false,
 }
 
-defaults.register_for_default_handlers(zigbee_water_driver_template, zigbee_water_driver_template.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_water_driver_template,
+  zigbee_water_driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
 local zigbee_water_driver = ZigbeeDriver("zigbee-water", zigbee_water_driver_template)
 zigbee_water_driver:run()

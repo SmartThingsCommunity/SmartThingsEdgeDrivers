@@ -33,10 +33,16 @@ local function can_handle_fibaro_door_window_sensor_2(opts, driver, device, cmd,
   return false
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function device_added(self, device)
-  device:emit_event(capabilities.tamperAlert.tamper.clear())
-  device:emit_event(capabilities.contactSensor.contact.open())
-  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
+  emit_event_if_latest_state_missing(device, "main", capabilities.tamperAlert, capabilities.tamperAlert.tamper.NAME, capabilities.tamperAlert.tamper.clear())
+  emit_event_if_latest_state_missing(device, "main", capabilities.contactSensor, capabilities.contactSensor.contact.NAME, capabilities.contactSensor.contact.open())
+  emit_event_if_latest_state_missing(device, "main", capabilities.temperatureAlarm, capabilities.temperatureAlarm.temperatureAlarm.NAME, capabilities.temperatureAlarm.temperatureAlarm.cleared())
 end
 
 local function alarm_report_handler(self, device, cmd)

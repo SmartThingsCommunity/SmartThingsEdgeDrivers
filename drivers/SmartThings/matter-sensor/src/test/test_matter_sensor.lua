@@ -14,9 +14,9 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-
-local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+local t_utils = require "integration_test.utils"
+local uint32 = require "st.matter.data_types.Uint32"
 
 --Note all endpoints are being mapped to the main component
 -- in the matter-sensor driver. If any devices require invoke/write
@@ -51,7 +51,7 @@ local matter_endpoints = {
   {
     endpoint_id = 3,
     clusters = {
-      {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+      {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
       {cluster_id = clusters.OccupancySensing.ID, cluster_type = "SERVER"},
     },
     device_types = {}
@@ -63,26 +63,85 @@ local mock_device = test.mock_device.build_test_matter_device({
   endpoints = matter_endpoints
 })
 
+local matter_endpoints_presence_sensor = {
+  {
+    endpoint_id = 0,
+    clusters = {
+      {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+    },
+    device_types = {
+      {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+    }
+  },
+  {
+    endpoint_id = 1,
+    clusters = {
+      {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
+      {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
+    },
+    device_types = {}
+  },
+  {
+    endpoint_id = 2,
+    clusters = {
+      {cluster_id = clusters.IlluminanceMeasurement.ID, cluster_type = "SERVER"}
+    },
+    device_types = {}
+  },
+  {
+    endpoint_id = 3,
+    clusters = {
+      {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
+      {cluster_id = clusters.OccupancySensing.ID, cluster_type = "SERVER", feature_map = clusters.OccupancySensing.types.Feature.RADAR}
+    },
+    device_types = {}
+  }
+}
+
+local mock_device_presence_sensor = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("motion-illuminance-temperature-humidity-battery.yml"),
+  endpoints = matter_endpoints_presence_sensor
+})
+
 local function subscribe_on_init(dev)
-  local subscribe_request = clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:subscribe(mock_device)
-  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MeasuredValue:subscribe(mock_device))
-  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:subscribe(mock_device))
-  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:subscribe(mock_device))
-  subscribe_request:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(mock_device))
-  subscribe_request:merge(clusters.BooleanState.attributes.StateValue:subscribe(mock_device))
-  subscribe_request:merge(clusters.OccupancySensing.attributes.Occupancy:subscribe(mock_device))
-  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
+  local subscribe_request = clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:subscribe(dev)
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.BooleanState.attributes.StateValue:subscribe(dev))
+  subscribe_request:merge(clusters.OccupancySensing.attributes.Occupancy:subscribe(dev))
+  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(dev))
   return subscribe_request
 end
 
 local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_on_init(mock_device)})
   test.mock_device.add_test_device(mock_device)
-  -- don't check the battery for this device because we are using the catch-all "sensor.yml" profile just for testing
-  mock_device:set_field("__battery_checked", 1, {persist = true})
-  test.set_rpc_version(4)
 end
 test.set_test_init_function(test_init)
+
+local function subscribe_on_init_presence_sensor(dev)
+  local subscribe_request = clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:subscribe(dev)
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MinMeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(dev))
+  subscribe_request:merge(clusters.OccupancySensing.attributes.Occupancy:subscribe(dev))
+  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(dev))
+  return subscribe_request
+end
+
+local function test_init_presence_sensor()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_presence_sensor)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_presence_sensor.id, "init" })
+  test.socket.matter:__expect_send({mock_device_presence_sensor.id, subscribe_on_init_presence_sensor(mock_device_presence_sensor)})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_presence_sensor.id, "doConfigure" })
+  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+  test.socket.matter:__expect_send({mock_device_presence_sensor.id, read_attribute_list})
+  mock_device_presence_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
 
 test.register_message_test(
   "Relative humidity reports should generate correct messages",
@@ -296,6 +355,18 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
     }
   }
+)
+
+test.register_coroutine_test(
+  "Test profile change following receival of Power Source Attribute List",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device_presence_sensor.id,
+      clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_presence_sensor, 2, {uint32(12)})
+    })
+    mock_device_presence_sensor:expect_metadata_update({ profile = "presence-illuminance-temperature-humidity-battery" })
+  end,
+  { test_init = test_init_presence_sensor }
 )
 
 test.run_registered_tests()

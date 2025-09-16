@@ -14,8 +14,10 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-
+local uint32 = require "st.matter.data_types.Uint32"
 local clusters = require "st.matter.clusters"
+
+test.set_rpc_version(7)
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
@@ -205,6 +207,16 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_device_simple)
   test.mock_device.add_test_device(mock_device_no_battery)
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  local read_req = clusters.Thermostat.attributes.ControlSequenceOfOperation:read()
+  read_req:merge(clusters.FanControl.attributes.FanModeSequence:read())
+  read_req:merge(clusters.FanControl.attributes.WindSupport:read())
+  read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+  read_req:merge(clusters.FanControl.attributes.RockSupport:read())
+  read_req:merge(clusters.PowerSource.attributes.AttributeList:read())
+  read_req:merge(clusters.Thermostat.attributes.AttributeList:read())
+  test.socket.matter:__expect_send({mock_device.id, read_req})
 end
 test.set_test_init_function(test_init)
 
@@ -212,9 +224,22 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    --TODO why does provisiong state get added in the do configure event handle, but not the refres?
-    mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only-nostate" })
+    --TODO why does provisiong state get added in the do configure event handle, but not the refres?)
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(12)})
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0x29)})
+      }
+    )
+    mock_device:expect_metadata_update({ profile = "thermostat-humidity-fan-heating-only" })
 end
 )
 
@@ -229,7 +254,13 @@ test.register_coroutine_test(
     end
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({}))
+    -- profile name does not matter, we just check that the name is different in the info_changed handler
+    local updates = {
+      profile = {
+        id = "new-profile"
+      }
+    }
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
 end
 )
 
@@ -237,17 +268,35 @@ test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event due to cluster feature map",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_simple.id, "doConfigure" })
-    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
     mock_device_simple:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_simple.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_simple, 1, {uint32(12)})
+      }
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_simple.id,
+        clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_simple, 1, {uint32(12)})
+      }
+    )
+    mock_device_simple:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
 end
 )
 
 test.register_coroutine_test(
   "Profile change on doConfigure lifecycle event no battery support",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_no_battery.id, "doConfigure" })
+    mock_device_no_battery:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_no_battery.id,
+        clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_no_battery, 1, {uint32(12)})
+      }
+    )
     mock_device_no_battery:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-nobattery" })
-    mock_device_no_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 )
 

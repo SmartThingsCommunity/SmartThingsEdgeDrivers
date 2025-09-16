@@ -13,6 +13,7 @@
 -- limitations under the License.
 local st_device = require "st.device"
 local utils = require "st.utils"
+local configurations = require "configurations"
 
 local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
@@ -36,6 +37,7 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "eWeLink", model = "ZB-SW02", children = 1 },
   { mfr = "eWeLink", model = "ZB-SW03", children = 2 },
   { mfr = "eWeLink", model = "ZB-SW04", children = 3 },
+  { mfr = "SMARTvill", model = "SLA01", children = 0 },
   { mfr = "SMARTvill", model = "SLA02", children = 1 },
   { mfr = "SMARTvill", model = "SLA03", children = 2 },
   { mfr = "SMARTvill", model = "SLA04", children = 3 },
@@ -46,6 +48,10 @@ local MULTI_SWITCH_NO_MASTER_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "SBM300Z4", children = 3 },
   { mfr = "ShinaSystem", model = "SBM300Z5", children = 4 },
   { mfr = "ShinaSystem", model = "SBM300Z6", children = 5 },
+  { mfr = "ShinaSystem", model = "SQM300Z2", children = 1 },
+  { mfr = "ShinaSystem", model = "SQM300Z3", children = 2 },
+  { mfr = "ShinaSystem", model = "SQM300Z4", children = 3 },
+  { mfr = "ShinaSystem", model = "SQM300Z6", children = 5 },
   { model = "E220-KR2N0Z0-HA", children = 1 },
   { model = "E220-KR3N0Z0-HA", children = 2 },
   { model = "E220-KR4N0Z0-HA", children = 3 },
@@ -108,7 +114,7 @@ end
 local multi_switch_no_master = {
   NAME = "multi switch no master",
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = is_multi_switch_no_master

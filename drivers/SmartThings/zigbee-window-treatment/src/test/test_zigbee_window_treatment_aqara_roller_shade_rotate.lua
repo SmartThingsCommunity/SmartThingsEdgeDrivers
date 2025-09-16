@@ -60,9 +60,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -84,7 +82,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle())
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({visibility = { displayed = false }}))
     )
 
     test.socket.zigbee:__expect_send({ mock_device.id,
@@ -239,7 +237,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true}))
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true, visibility = { displayed = false }}))
     )
   end
 )
@@ -256,7 +254,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true}))
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true, visibility = { displayed = false }}))
     )
   end
 )

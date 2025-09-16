@@ -78,4 +78,3 @@ end
 
 setmetatable(OnMode, {__call = OnMode.new_value, __index = OnMode.base_type})
 return OnMode
-

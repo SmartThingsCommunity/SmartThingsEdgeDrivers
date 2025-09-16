@@ -1,7 +1,11 @@
+local capabilities = require "st.capabilities"
 local cosock = require "cosock"
 local log = require "log"
 local json = require "st.json"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Discovery = require "disco"
 local EventSource = require "lunchbox.sse.eventsource"
@@ -17,6 +21,7 @@ local lifecycle_handlers = require "handlers.lifecycle_handlers"
 local hue_multi_service_device_utils = require "utils.hue_multi_service_device_utils"
 local lunchbox_util = require "lunchbox.util"
 local utils = require "utils"
+local grouped_utils = require "utils.grouped_utils"
 
 ---@class hue_bridge_utils
 local hue_bridge_utils = {}
@@ -104,6 +109,11 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                     child_device.log.info_with({ hub_logs = true }, "Marking Online after SSE Reconnect")
                     child_device:online()
                     child_device:set_field(Fields.IS_ONLINE, true)
+                    driver:inject_capability_command(child_device, {
+                      capability = capabilities.refresh.ID,
+                      command = capabilities.refresh.commands.refresh.NAME,
+                      args = {}
+                    })
                   elseif status.status == "connectivity_issue" then
                     child_device.log.info_with({ hub_logs = true }, "Marking Offline after SSE Reconnect")
                     child_device:set_field(Fields.IS_ONLINE, false)
@@ -116,7 +126,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
 
           ::continue::
         end
-      end, string.format("Hue Bridge %s Zigbee Scan Task", bridge_device.label))
+        grouped_utils.queue_group_scan(driver, bridge_device)
+      end, string.format("Hue Bridge %s On Connect Task", bridge_device.label))
     end
 
     eventsource.onerror = function()
@@ -138,8 +149,10 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
         local events, err = table.unpack(json_result, 1, json_result.n)
 
         if not success then
-          log.error_with({ hub_logs = true, },
-            "Couldn't decode JSON in SSE callback: " .. (events or "unexpected nil from pcall catch"))
+          log.error_with(
+            { hub_logs = true, },
+            string.format("Couldn't decode JSON in SSE callback: %s", (events or "unexpected nil from pcall catch"))
+          )
           return
         end
 
@@ -163,6 +176,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                     table.insert(resource_ids, rid)
                   end
                 end
+              elseif grouped_utils.GROUP_TYPES[update_data.type] then
+                grouped_utils.group_update(driver, bridge_device, update_data)
               else
                 --- for a regular message from a device doing something normal,
                 --- you get the resource id of the device service for that device in
@@ -200,6 +215,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                   child_device.log.trace("Attempting to delete Device UUID " .. tostring(child_device.id))
                   driver:do_hue_child_delete(child_device)
                 end
+              elseif grouped_utils.GROUP_TYPES[delete_data.type] then
+                grouped_utils.group_delete(driver, bridge_device, delete_data)
               end
             end
           elseif event.type == "add" then
@@ -223,6 +240,8 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
                     bridge_device
                   )
                 end, "New Device Event Task")
+              elseif grouped_utils.GROUP_TYPES[add_data.type] then
+                grouped_utils.group_add(driver, bridge_device, add_data)
               end
             end
           end
@@ -234,11 +253,12 @@ function hue_bridge_utils.do_bridge_network_init(driver, bridge_device, bridge_u
   end
   bridge_device:set_field(Fields._INIT, true, { persist = false })
   local ids_to_remove = {}
-  for id, device in ipairs(driver._devices_pending_refresh) do
+  for id, device in pairs(driver._devices_pending_refresh) do
     local parent_bridge = utils.get_hue_bridge_for_device(driver, device)
     local bridge_id = parent_bridge and parent_bridge.id
     if bridge_id == bridge_device.id then
       table.insert(ids_to_remove, id)
+      -- we call the handler directly here because we want to use the return value
       local refresh_info = command_handlers.refresh_handler(driver, device)
       if refresh_info and device:get_field(Fields.IS_MULTI_SERVICE) then
         local hue_device_type = utils.determine_device_type(device)

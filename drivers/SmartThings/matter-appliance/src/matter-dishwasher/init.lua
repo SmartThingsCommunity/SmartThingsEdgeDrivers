@@ -1,4 +1,4 @@
--- Copyright 2023 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local common_utils = require "common-utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
+local version = require "version"
 
 local DISHWASHER_DEVICE_TYPE_ID = 0x0075
-local version = require "version"
+
 if version.api < 10 then
   clusters.DishwasherAlarm = require "DishwasherAlarm"
   clusters.DishwasherMode = require "DishwasherMode"
@@ -32,14 +34,8 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
   [clusters.OperationalState.commands.Resume.ID] = "resume",
 }
 
-local SUPPORTED_TEMPERATURE_LEVELS = "__supported_temperature_levels"
 local SUPPORTED_DISHWASHER_MODES = "__supported_dishwasher_modes"
 
-local function device_init(driver, device)
-  device:subscribe()
-end
-
--- Matter Handlers --
 local function is_matter_dishwasher(opts, driver, device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
@@ -51,41 +47,31 @@ local function is_matter_dishwasher(opts, driver, device)
   return false
 end
 
-local function selected_temperature_level_attr_handler(driver, device, ib, response)
+-- Lifecycle Handlers --
+local function do_configure(driver, device)
+  local tn_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_NUMBER})
   local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
-  if #tl_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
-    return
+  local profile_name = "dishwasher"
+  if #tn_eps > 0 then
+    profile_name = profile_name .. "-tn"
+    common_utils.query_setpoint_limits(device)
   end
-  device.log.info_with({ hub_logs = true },
-    string.format("selected_temperature_level_attr_handler: %s", ib.data.value))
-
-  local supportedTemperatureLevels = device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
-  local temperatureLevel = ib.data.value
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
-    if i - 1 == temperatureLevel then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureLevel.temperatureLevel(tempLevel))
-      break
-    end
+  if #tl_eps > 0 then
+    profile_name = profile_name .. "-tl"
   end
+  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
+  device:try_update_metadata({profile = profile_name})
 end
 
-local function supported_temperature_levels_attr_handler(driver, device, ib, response)
-  local tl_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureControl.ID, {feature_bitmap = clusters.TemperatureControl.types.Feature.TEMPERATURE_LEVEL})
-  if #tl_eps == 0 then
-    device.log.warn_with({ hub_logs = true }, string.format("Device does not support TEMPERATURE_LEVEL feature"))
-    return
-  end
-  device.log.info_with({ hub_logs = true },
-    string.format("supported_temperature_levels_attr_handler: %s", ib.data.elements))
+-- Matter Handlers --
+local function temperature_setpoint_attr_handler(driver, device, ib, response)
+  common_utils.temperature_setpoint_attr_handler(device, ib, "dishwasher")
+end
 
-  local supportedTemperatureLevels = {}
-  for _, tempLevel in ipairs(ib.data.elements) do
-    table.insert(supportedTemperatureLevels, tempLevel.value)
+local function setpoint_limit_handler(limit_field)
+  return function(driver, device, ib, response)
+    common_utils.setpoint_limit_handler(device, ib, limit_field, "dishwasher")
   end
-  device:set_field(SUPPORTED_TEMPERATURE_LEVELS, supportedTemperatureLevels, {persist = true})
-  local event = capabilities.temperatureLevel.supportedTemperatureLevels(supportedTemperatureLevels, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function dishwasher_supported_modes_attr_handler(driver, device, ib, response)
@@ -99,12 +85,11 @@ local function dishwasher_supported_modes_attr_handler(driver, device, ib, respo
   device:set_field(SUPPORTED_DISHWASHER_MODES, supportedDishwasherModes, { persist = true })
   local event = capabilities.mode.supportedModes(supportedDishwasherModes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
+  event = capabilities.mode.supportedArguments(supportedDishwasherModes, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
 local function dishwasher_mode_attr_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("dishwasher_mode_attr_handler mode: %s", ib.data.value))
-
   local supportedDishwasherModes = device:get_field(SUPPORTED_DISHWASHER_MODES)
   local currentMode = ib.data.value
   for i, mode in ipairs(supportedDishwasherModes) do
@@ -116,9 +101,6 @@ local function dishwasher_mode_attr_handler(driver, device, ib, response)
 end
 
 local function dishwasher_alarm_attr_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("dishwasher_alarm_attr_handler state: %s", ib.data.value))
-
   local isWaterFlowRateAlarm = false
   local isContactSensorAlarm = false
   local isTemperatureAlarm = false
@@ -165,14 +147,11 @@ local function dishwasher_alarm_attr_handler(driver, device, ib, response)
 end
 
 local function operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("operational_state_accepted_command_list_attr_handler: %s", ib.data.elements))
-
   local accepted_command_list = {}
   for _, accepted_command in ipairs(ib.data.elements) do
     local accepted_command_id = accepted_command.value
     if OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id] ~= nil then
-      device.log.info_with({ hub_logs = true }, string.format("AcceptedCommand: %s => %s", accepted_command_id, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
+      device.log.info(string.format("AcceptedCommand: %s => %s", accepted_command_id, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id]))
       table.insert(accepted_command_list, OPERATIONAL_STATE_COMMAND_MAP[accepted_command_id])
     end
   end
@@ -181,9 +160,6 @@ local function operational_state_accepted_command_list_attr_handler(driver, devi
 end
 
 local function operational_state_attr_handler(driver, device, ib, response)
-  device.log.info_with({ hub_logs = true },
-    string.format("operational_state_attr_handler operationalState: %s", ib.data.value))
-
   if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.stopped())
   elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
@@ -197,9 +173,6 @@ local function operational_error_attr_handler(driver, device, ib, response)
   if version.api < 10 then
     clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
   end
-  device.log.info_with({ hub_logs = true },
-    string.format("operational_error_attr_handler errorStateID: %s", ib.data.elements.error_state_id.value))
-
   local operationalError = ib.data.elements.error_state_id.value
   if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToStartOrResume())
@@ -212,9 +185,6 @@ end
 
 -- Capability Handlers --
 local function handle_dishwasher_mode(driver, device, cmd)
-  device.log.info_with({ hub_logs = true },
-    string.format("handle_dishwasher_mode mode: %s", cmd.args.mode))
-
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local supportedDishwasherModes =device:get_field(SUPPORTED_DISHWASHER_MODES)
   for i, mode in ipairs(supportedDishwasherModes) do
@@ -225,18 +195,8 @@ local function handle_dishwasher_mode(driver, device, cmd)
   end
 end
 
-local function handle_temperature_level(driver, device, cmd)
-  device.log.info_with({ hub_logs = true },
-    string.format("handle_temperature_level: %s", cmd.args.temperatureLevel))
-
-  local endpoint_id = device:component_to_endpoint(cmd.component)
-  local supportedTemperatureLevels =device:get_field(SUPPORTED_TEMPERATURE_LEVELS)
-  for i, tempLevel in ipairs(supportedTemperatureLevels) do
-    if cmd.args.temperatureLevel == tempLevel then
-      device:send(clusters.TemperatureControl.commands.SetTemperature(device, endpoint_id, nil, i - 1))
-      return
-    end
-  end
+local function handle_temperature_setpoint(driver, device, cmd)
+  common_utils.handle_temperature_setpoint(device, cmd, "dishwasher")
 end
 
 local function handle_operational_state_start(driver, device, cmd)
@@ -270,43 +230,44 @@ end
 local matter_dishwasher_handler = {
   NAME = "matter-dishwasher",
   lifecycle_handlers = {
-    init = device_init,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
       [clusters.TemperatureControl.ID] = {
-        [clusters.TemperatureControl.attributes.SelectedTemperatureLevel.ID] = selected_temperature_level_attr_handler,
-        [clusters.TemperatureControl.attributes.SupportedTemperatureLevels.ID] = supported_temperature_levels_attr_handler,
+        [clusters.TemperatureControl.attributes.TemperatureSetpoint.ID] = temperature_setpoint_attr_handler,
+        [clusters.TemperatureControl.attributes.MinTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MIN_TEMP),
+        [clusters.TemperatureControl.attributes.MaxTemperature.ID] = setpoint_limit_handler(common_utils.setpoint_limit_device_field.MAX_TEMP)
       },
       [clusters.DishwasherMode.ID] = {
         [clusters.DishwasherMode.attributes.SupportedModes.ID] = dishwasher_supported_modes_attr_handler,
-        [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler,
+        [clusters.DishwasherMode.attributes.CurrentMode.ID] = dishwasher_mode_attr_handler
       },
       [clusters.DishwasherAlarm.ID] = {
-        [clusters.DishwasherAlarm.attributes.State.ID] = dishwasher_alarm_attr_handler,
+        [clusters.DishwasherAlarm.attributes.State.ID] = dishwasher_alarm_attr_handler
       },
       [clusters.OperationalState.ID] = {
         [clusters.OperationalState.attributes.AcceptedCommandList.ID] = operational_state_accepted_command_list_attr_handler,
         [clusters.OperationalState.attributes.OperationalState.ID] = operational_state_attr_handler,
-        [clusters.OperationalState.attributes.OperationalError.ID] = operational_error_attr_handler,
-      },
+        [clusters.OperationalState.attributes.OperationalError.ID] = operational_error_attr_handler
+      }
     }
   },
   capability_handlers = {
     [capabilities.mode.ID] = {
-      [capabilities.mode.commands.setMode.NAME] = handle_dishwasher_mode,
+      [capabilities.mode.commands.setMode.NAME] = handle_dishwasher_mode
     },
-    [capabilities.temperatureLevel.ID] = {
-      [capabilities.temperatureLevel.commands.setTemperatureLevel.NAME] = handle_temperature_level,
+    [capabilities.temperatureSetpoint.ID] = {
+      [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint
     },
     [capabilities.operationalState.ID] = {
       [capabilities.operationalState.commands.start.NAME] = handle_operational_state_start,
       [capabilities.operationalState.commands.stop.NAME] = handle_operational_state_stop,
       [capabilities.operationalState.commands.pause.NAME] = handle_operational_state_pause,
-      [capabilities.operationalState.commands.resume.NAME] = handle_operational_state_resume,
-    },
+      [capabilities.operationalState.commands.resume.NAME] = handle_operational_state_resume
+    }
   },
-  can_handle = is_matter_dishwasher,
+  can_handle = is_matter_dishwasher
 }
 
 return matter_dishwasher_handler

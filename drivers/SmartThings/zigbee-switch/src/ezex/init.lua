@@ -12,11 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local zcl_clusters = require "st.zigbee.zcl.clusters"
-local capabilities = require "st.capabilities"
-
-local SimpleMetering = zcl_clusters.SimpleMetering
-local ElectricalMeasurement = zcl_clusters.ElectricalMeasurement
+local zigbee_constants = require "st.zigbee.constants"
+local configurations = require "configurations"
 
 local ZIGBEE_METERING_SWITCH_FINGERPRINTS = {
   { model = "E240-KR116Z-HA" }
@@ -33,30 +30,15 @@ local is_zigbee_ezex_switch = function(opts, driver, device)
   return false
 end
 
-local function energy_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 1000000
-  device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh" }))
-end
-
-local function power_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 1000
-  device:emit_event(capabilities.powerMeter.power({value = raw_value, unit = "W" }))
+local do_init = function(self, device)
+  device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
+  device:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1000, {persist = true})
 end
 
 local ezex_switch_handler = {
   NAME = "ezex switch handler",
-  zigbee_handlers = {
-    attr = {
-      [SimpleMetering.ID] = {
-        [SimpleMetering.attributes.InstantaneousDemand.ID] = power_meter_handler,
-        [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
-      },
-      [ElectricalMeasurement.ID] = {
-        [ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
-      }
-    }
+  lifecycle_handlers = {
+    init = configurations.power_reconfig_wrapper(do_init)
   },
   can_handle = is_zigbee_ezex_switch
 }

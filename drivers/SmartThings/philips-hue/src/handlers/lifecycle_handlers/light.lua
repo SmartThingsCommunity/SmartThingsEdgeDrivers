@@ -1,6 +1,9 @@
 local log = require "log"
-local refresh_handler = require("handlers.commands").refresh_handler
+local capabilities = require "st.capabilities"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Consts = require "consts"
 local Discovery = require "disco"
@@ -10,6 +13,7 @@ local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
+local grouped_utils = require "utils.grouped_utils"
 
 ---@class LightLifecycleHandlers
 local LightLifecycleHandlers = {}
@@ -137,9 +141,43 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
 
   ---@type HueLightInfo
   local light_info = Discovery.device_state_disco_cache[device_light_resource_id]
-  local minimum_dimming = 2
 
-  if light_info.dimming and light_info.dimming.min_dim_level then minimum_dimming = light_info.dimming.min_dim_level end
+  -- Remembering that mirek are reciprocal to kelvin, note the following:
+  --  ** Minimum Mirek -> _Maximum_ Kelvin
+  --  ** Maximum Mirek -> _Minimum_ Kelvin
+  --
+  -- Not necessarily obvious/intuitive, but easy enough to validate with the math:
+  --
+  -- Given that `kelvin = 1000000 / mirek`, and `mirek = 1000000 / kelvin`, pick
+  -- one of our minimum consts: `Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE = 2000`
+  --
+  -- `floor(1000000 / 2000) = 500` and 500 is the max mirek we see on almost all Hue lights.
+  -- Similarly:
+  -- `floor(1000000 / 6500) = 153`, which is the minimum we see from the API for color control lights.
+  if light_info.color_temperature and light_info.color_temperature.mirek_schema then
+    local caps = device.profile.components.main.capabilities
+    if caps.colorTemperature then
+      local min_ct_kelvin, max_ct_kelvin = nil, nil
+      if type(light_info.color_temperature.mirek_schema.mirek_maximum) == "number" then
+        min_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_maximum, Consts.KELVIN_STEP_SIZE))
+      end
+      if type(light_info.color_temperature.mirek_schema.mirek_minimum) == "number" then
+        max_ct_kelvin = math.floor(utils.mirek_to_kelvin(light_info.color_temperature.mirek_schema.mirek_minimum, Consts.KELVIN_STEP_SIZE))
+      end
+      if not min_ct_kelvin then
+        if caps.colorControl then
+          min_ct_kelvin = Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE
+        else
+          min_ct_kelvin = Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
+        end
+      end
+      if not max_ct_kelvin then
+        max_ct_kelvin = Consts.MAX_TEMP_KELVIN
+      end
+      device:set_field(Fields.MIN_KELVIN, min_ct_kelvin, { persist = true })
+      device:set_field(Fields.MAX_KELVIN, max_ct_kelvin, { persist = true })
+    end
+  end
 
   -- persistent fields
   device:set_field(Fields.DEVICE_TYPE, "light", { persist = true })
@@ -147,7 +185,6 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     device:set_field(Fields.GAMUT, light_info.color.gamut, { persist = true })
   end
   device:set_field(Fields.HUE_DEVICE_ID, light_info.hue_device_id, { persist = true })
-  device:set_field(Fields.MIN_DIMMING, minimum_dimming, { persist = true })
   device:set_field(Fields.PARENT_DEVICE_ID, light_info.parent_device_id, { persist = true })
   device:set_field(Fields.RESOURCE_ID, device_light_resource_id, { persist = true })
   device:set_field(Fields._ADDED, true, { persist = true })
@@ -156,7 +193,18 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   driver.hue_identifier_to_device_record[device_light_resource_id] = device
 
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
-  refresh_handler(driver, device)
+  driver:inject_capability_command(device, {
+    capability = capabilities.refresh.ID,
+    command = capabilities.refresh.commands.refresh.NAME,
+    args = {}
+  })
+
+  local bridge_device = utils.get_hue_bridge_for_device(driver, device, parent_device_id)
+  if bridge_device then
+    grouped_utils.queue_group_scan(driver, bridge_device)
+  else
+    log.warn("Unable to queue group scan on device added, missing bridge device")
+  end
 end
 
 ---@param driver HueDriver
@@ -164,14 +212,7 @@ end
 function LightLifecycleHandlers.init(driver, device)
   log.info(
     string.format("Init Light for device %s", (device.label or device.id or "unknown device")))
-  local caps = device.profile.components.main.capabilities
-  if caps.colorTemperature then
-    if caps.colorControl then
-      device:set_field(Fields.MIN_KELVIN, Consts.MIN_TEMP_KELVIN_COLOR_AMBIANCE, { persist = true })
-    else
-      device:set_field(Fields.MIN_KELVIN, Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE, { persist = true })
-    end
-  end
+
   local device_light_resource_id =
       utils.get_hue_rid(device) or
       device.device_network_id
@@ -185,8 +226,14 @@ function LightLifecycleHandlers.init(driver, device)
     svc_rids_for_device[device_light_resource_id] = HueDeviceTypes.LIGHT
   end
   device:set_field(Fields._INIT, true, { persist = false })
+  device:emit_event(capabilities.switchLevel.levelRange({ minimum = 1, maximum = 100 }))
+
   if device:get_field(Fields._REFRESH_AFTER_INIT) then
-    refresh_handler(driver, device)
+    driver:inject_capability_command(device, {
+      capability = capabilities.refresh.ID,
+      command = capabilities.refresh.commands.refresh.NAME,
+      args = {}
+    })
     device:set_field(Fields._REFRESH_AFTER_INIT, false, { persist = true })
   end
   driver:check_waiting_grandchildren_for_device(device)

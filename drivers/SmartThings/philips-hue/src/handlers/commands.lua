@@ -1,6 +1,8 @@
-local capabilities = require "st.capabilities"
 local log = require "log"
 local st_utils = require "st.utils"
+-- trick to fix the VS Code Lua Language Server typechecking
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
+st_utils.stringify_table = st_utils.stringify_table
 
 local Consts = require "consts"
 local Fields = require "fields"
@@ -9,7 +11,7 @@ local HueColorUtils = require "utils.cie_utils"
 local utils = require "utils"
 
 -- trick to fix the VS Code Lua Language Server typechecking
----@type fun(val: table, name: string?, multi_line: boolean?): string
+---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
 
 ---@class CommandHandlers
@@ -92,8 +94,7 @@ local function do_switch_level_action(driver, device, args)
     return
   end
 
-  local is_off = device:get_latest_state(
-    "main", capabilities.switch.ID, capabilities.switch.switch.NAME) == "off"
+  local is_off = device:get_field(Fields.SWITCH_STATE) == "off"
 
   if is_off then
     local resp, err = hue_api:set_light_on_state(light_id, true)
@@ -178,7 +179,7 @@ end
 local function do_setHue_action(driver, device, args)
 
   -- Use existing 'saturation' value for device or set to 0 and pass arg values to function 'do_color_action'
-  local currentSaturation = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME, 0)
+  local currentSaturation = device:get_field(Fields.COLOR_SATURATION) or 0
   args.args.color = {
     hue = args.args.hue,
     saturation = currentSaturation
@@ -193,7 +194,7 @@ end
 local function do_setSaturation_action(driver, device, args)
 
   -- Use existing 'hue' value for device or set to 0 and pass arg values to function 'do_color_action'
-  local currentHue = device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME, 0)
+  local currentHue = device:get_field(Fields.COLOR_HUE) or 0
   args.args.color = {
     hue = currentHue,
     saturation = args.args.saturation
@@ -248,6 +249,7 @@ local function do_color_temp_action(driver, device, args)
       end
     end
   end
+  device:set_field(Fields.COLOR_TEMP_SETPOINT, clamped_kelvin);
 end
 
 ---@param driver HueDriver
@@ -306,7 +308,7 @@ local refresh_handlers = require "handlers.refresh_handlers"
 ---@param cmd table?
 ---@return table? refreshed_device_info
 function CommandHandlers.refresh_handler(driver, device, cmd)
-  return refresh_handlers.handler_for_device_type(device:get_field(Fields.DEVICE_TYPE))(driver, device, cmd)
+  return refresh_handlers.handler_for_device_type(utils.determine_device_type(device))(driver, device, cmd)
 end
 
 return CommandHandlers

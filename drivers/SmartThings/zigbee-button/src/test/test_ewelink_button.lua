@@ -20,6 +20,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
+local TemperatureMeasurement = clusters.TemperatureMeasurement
 
 local button = capabilities.button
 
@@ -31,7 +32,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "eWeLink",
         model = "WB01",
-        server_clusters = { 0x0001 }
+        server_clusters = { 0x0001, 0x0402 }
       }
     }
   }
@@ -64,6 +65,14 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button.button.pushed({ state_change = false }))
     )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MaxMeasuredValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MinMeasuredValue:read(mock_device)
+    })
   end
 )
 

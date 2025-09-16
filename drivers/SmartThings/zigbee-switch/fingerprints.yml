@@ -26,7 +26,7 @@ zigbeeManufacturer:
     model: SLA02
     deviceProfileName: basic-switch
   - id: "SMARTvill/SLA01"
-    deviceLabel: SMARTvill Switch 1
+    deviceLabel: SMARTvill Switch
     manufacturer: SMARTvill
     model: SLA01
     deviceProfileName: basic-switch
@@ -75,7 +75,7 @@ zigbeeManufacturer:
     deviceLabel: Aqara Smart Wall Switch (No Neutral, Single Rocker)
     manufacturer: LUMI
     model: lumi.switch.b1laus01
-    deviceProfileName: basic-switch
+    deviceProfileName: aqara-switch-child
   - id: "LUMI/lumi.switch.b2laus01"
     deviceLabel: Aqara Smart Wall Switch (No Neutral, Double Rocker) 1
     manufacturer: LUMI
@@ -140,7 +140,22 @@ zigbeeManufacturer:
     deviceLabel: Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker) 1
     manufacturer: LUMI
     model: lumi.switch.l2aeu1
-    deviceProfileName: aqara-switch-no-power    
+    deviceProfileName: aqara-switch-no-power
+  - id: "LUMI/lumi.switch.b1nacn01"
+    deviceLabel: Aqara Smart Wall Switch T1 (With Neutral, Single Rocker)
+    manufacturer: LUMI
+    model: lumi.switch.b1nacn01
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.b2nacn01"
+    deviceLabel: Aqara Smart Wall Switch T1 (With Neutral, Double Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.b2nacn01
+    deviceProfileName: aqara-switch-power
+  - id: "LUMI/lumi.switch.b3n01"
+    deviceLabel: Aqara Smart Wall Switch T1 (With Neutral, Triple Rocker) 1
+    manufacturer: LUMI
+    model: lumi.switch.b3n01
+    deviceProfileName: aqara-switch-power
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
@@ -426,30 +441,65 @@ zigbeeManufacturer:
     deviceProfileName: switch-power-energy
   #frient A/S
   - id: "frient A/S/SPLZB-131"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini"
     manufacturer: frient A/S
     model: SPLZB-131
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SPLZB-132"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini"
     manufacturer: frient A/S
     model: SPLZB-132
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SPLZB-134"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini UK"
     manufacturer: frient A/S
     model: SPLZB-134
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SPLZB-137"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Plug Mini"
     manufacturer: frient A/S
     model: SPLZB-137
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-141"
+    deviceLabel: "Smart Plug Mini 2"
+    manufacturer: frient A/S
+    model: SPLZB-141
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-142"
+    deviceLabel: Smart Plug Mini 2
+    manufacturer: frient A/S
+    model: SPLZB-142
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-144"
+    deviceLabel: Smart Plug Mini UK 2
+    manufacturer: frient A/S
+    model: SPLZB-144
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SPLZB-147"
+    deviceLabel: "Smart Plug Mini 2"
+    manufacturer: frient A/S
+    model: SPLZB-147
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "frient A/S/SMRZB-143"
-    deviceLabel: "frient Outlet"
+    deviceLabel: "Smart Cable"
     manufacturer: frient A/S
     model: SMRZB-143
-    deviceProfileName: switch-power-energy
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SMRZB-153"
+    deviceLabel: "Smart Cable 2"
+    manufacturer: frient A/S
+    model: SMRZB-153
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SMRZB-332"
+    deviceLabel: "Smart Din Relay"
+    manufacturer: frient A/S
+    model: SMRZB-332
+    deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient A/S/SMRZB-342"
+    deviceLabel: Smart DIN Relay 2
+    manufacturer: frient A/S
+    model: SMRZB-342
+    deviceProfileName: frient-switch-power-energy-voltage
   - id: "AduroSmart Eria/AD-DimmableLight3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -536,15 +586,20 @@ zigbeeManufacturer:
     model: "TRADFRI bulb E27 WW clear 250lm"
     deviceProfileName: on-off-level
   - id: "ubisys/D1 (5503)"
-    deviceLabel: INGENIUM Light
+    deviceLabel: Dimmer D1
     manufacturer: ubisys
     model: "D1 (5503)"
-    deviceProfileName: on-off-level
+    deviceProfileName: switch-level-power
   - id: "ubisys/S2 (5502)"
     deviceLabel: ubisys S2
     manufacturer: ubisys
     model: "S2 (5502)"
     deviceProfileName: switch-power-firmware-2
+  - id: "ubisys/1151"
+    deviceLabel: Switching Actuator S1-R (Series 2)
+    manufacturer: ubisys
+    model: "1151"
+    deviceProfileName: switch-power
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
@@ -980,6 +1035,21 @@ zigbeeManufacturer:
     manufacturer: SONOFF
     model: ZBMINIL2
     deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-1C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-1C-120W
+    deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-2C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-2C-120W
+    deviceProfileName: basic-switch
+  - id: "SONOFF/ZBM5-3C-120W"
+    deviceLabel: SONOFF Zigbee Smart Wall Switch
+    manufacturer: SONOFF
+    model: ZBM5-3C-120W
+    deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch
     manufacturer:
@@ -1089,6 +1159,31 @@ zigbeeManufacturer:
     deviceLabel: SiHAS Switch 1
     manufacturer: ShinaSystem
     model: SBM300Z6
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z1
+    deviceLabel: SiHAS Switch
+    manufacturer: ShinaSystem
+    model: SQM300Z1
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z2
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z2
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z3
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z3
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z4
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z4
+    deviceProfileName: basic-switch
+  - id: ShinaSystem/SQM300Z6
+    deviceLabel: SiHAS Switch 1
+    manufacturer: ShinaSystem
+    model: SQM300Z6
     deviceProfileName: basic-switch
   - id: Samsung/SAMSUNG-ITM-Z-002
     deviceLabel: Samsung Light
@@ -2223,36 +2318,36 @@ zigbeeManufacturer:
     deviceProfileName: on-off-level
   # Wall Hero
   - id: "WALL HERO/ACL-401S4I"
-    deviceLabel: 四位智能开关面板 1 
+    deviceLabel: WallHero Switch (4 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S4I
     deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S8I"
-    deviceLabel: 八位智能开关/场景面板 1 
+    deviceLabel: WallHero Switch (8 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S8I
     deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401ON"
-    deviceLabel: 智能墙面五孔插座
+    deviceLabel: WallHero Outlet
     manufacturer: WALL HERO
     model: ACL-401ON
-    deviceProfileName: wallhero    
+    deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S1I"
-    deviceLabel: 一位智能开关面板
+    deviceLabel: WallHero Switch (1 Way)
     manufacturer: WALL HERO
     model: ACL-401S1I
-    deviceProfileName: wallhero    
+    deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S3I"
-    deviceLabel: 三位智能开关面板 1
+    deviceLabel: WallHero Switch (3 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S3I
-    deviceProfileName: wallhero    
+    deviceProfileName: wallhero
   - id: "WALL HERO/ACL-401S2I"
-    deviceLabel: 二位智能开关面板 1
+    deviceLabel: WallHero Switch (2 Way) 1
     manufacturer: WALL HERO
     model: ACL-401S2I
     deviceProfileName: wallhero
-  # End Wall Hero
+  # NEXENTRO
   - id: "Insta GmbH/Switching Actuator"
     deviceLabel: NEXENTRO Switching Actuator
     manufacturer: Insta GmbH
@@ -2263,6 +2358,17 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
+  # Inovelli
+  - id: "Inovelli/VZM31-SN"
+    deviceLabel: "Inovelli 2-in-1 Blue Series"
+    manufacturer: Inovelli
+    model: VZM31-SN
+    deviceProfileName: inovelli-vzm31-sn
+  - id: "LAISIAO/BATH"
+    deviceLabel: Laisiao Bathroom Heater
+    manufacturer: LAISIAO
+    model: yuba
+    deviceProfileName: switch-smart-bath-heater-laisiao
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
@@ -2285,6 +2391,26 @@ zigbeeGeneric:
         - 0x0008 #Level
         - 0x0300 #Color Control
     deviceProfileName: rgbw-bulb
+  - id: "genericZLLColorTempBulb"
+    deviceLabel: Zigbee Light
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0300 #Color Control
+    deviceIdentifiers:
+      - 0x0220
+    deviceProfileName: color-temp-bulb-2700K-6500K
+  - id: "genericZHAColorTempBulb"
+    deviceLabel: Zigbee Light
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0008 #Level
+        - 0x0300 #Color Control
+    deviceIdentifiers:
+      - 0x010C
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "genericMeteredSwitch"
     deviceLabel: Zigbee Switch
     clusters:
@@ -2315,3 +2441,11 @@ zigbeeGeneric:
         - 0x0008 #Level
         - 0x0B04 #Electrical Measurment
     deviceProfileName: switch-level-power
+  - id: "genericMeteredSwitch/3"
+    deviceLabel: Zigbee Switch
+    clusters:
+      server:
+        - 0x0006 #OnOff
+        - 0x0702 #Simple Metering
+        - 0x0B04 #Electrical Measurment
+    deviceProfileName: switch-power

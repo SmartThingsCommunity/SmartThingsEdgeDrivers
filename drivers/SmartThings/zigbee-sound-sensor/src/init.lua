@@ -21,7 +21,13 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local PollControl = zcl_clusters.PollControl
 local IASZone = zcl_clusters.IASZone
 local PowerConfiguration = zcl_clusters.PowerConfiguration
+local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+
+local temperature_measurement_defaults = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP"
+}
 
 local CHECK_IN_INTERVAL = 6480
 local LONG_POLL_INTERVAL = 1200
@@ -52,6 +58,29 @@ local ias_zone_status_change_handler = function(driver, device, zb_rx)
   generate_event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
 end
 
+local temperature_measurement_min_max_attr_handler = function(minOrMax)
+  return function(driver, device, value, zb_rx)
+    local raw_temp = value.value
+    local celc_temp = raw_temp / 100.0
+    local temp_scale = "C"
+
+    device:set_field(string.format("%s", minOrMax), celc_temp)
+
+    local min = device:get_field(temperature_measurement_defaults.MIN_TEMP)
+    local max = device:get_field(temperature_measurement_defaults.MAX_TEMP)
+
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = temp_scale }))
+        device:set_field(temperature_measurement_defaults.MIN_TEMP, nil)
+        device:set_field(temperature_measurement_defaults.MAX_TEMP, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
+  end
+end
+
 local do_configure = function(self, device)
   device_management.write_ias_cie_address(device, self.environment_info.hub_zigbee_eui)
   device:send(IASZone.server.commands.ZoneEnrollResponse(device, 0x00, 0x00)) -- ZoneEnroll Response should be called first in case of this device.
@@ -67,6 +96,8 @@ end
 
 local added_handler = function(self, device)
   device:emit_event(capabilities.soundSensor.sound.not_detected())
+  device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+  device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
 end
 
 local zigbee_sound_sensor_driver_template = {
@@ -79,6 +110,10 @@ local zigbee_sound_sensor_driver_template = {
     attr = {
       [IASZone.ID] = {
         [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
+      },
+      [TemperatureMeasurement.ID] = {
+        [TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MIN_TEMP),
+        [TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MAX_TEMP),
       }
     },
     cluster = {
@@ -91,9 +126,11 @@ local zigbee_sound_sensor_driver_template = {
     added = added_handler,
     doConfigure = do_configure,
     init = battery_defaults.build_linear_voltage_init(2.2, 3.0)
-  }
+  },
+  health_check = false,
 }
 
-defaults.register_for_default_handlers(zigbee_sound_sensor_driver_template, zigbee_sound_sensor_driver_template.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_sound_sensor_driver_template,
+  zigbee_sound_sensor_driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
 local zigbee_sound_sensor = ZigbeeDriver("zigbee-sound-sensor", zigbee_sound_sensor_driver_template)
 zigbee_sound_sensor:run()

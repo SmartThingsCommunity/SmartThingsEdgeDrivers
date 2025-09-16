@@ -61,9 +61,14 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     },
-  },
-  {
-    inner_block_ordering = "relaxed"
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -84,6 +89,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     },
   }
 )
@@ -120,6 +133,7 @@ test.register_coroutine_test(
       mock_device.id,
       { capability = "switch", component = "main", command = "on", args = {} }
     })
+    mock_device:expect_native_cmd_handler_registration("switch", "on")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -155,6 +169,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.switch.switch.on())
     )
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
   end
 )
 
@@ -169,6 +184,7 @@ test.register_coroutine_test(
       mock_device.id,
       { capability = "switch", component = "main", command = "off", args = {} }
     })
+    mock_device:expect_native_cmd_handler_registration("switch", "off")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -204,6 +220,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.switch.switch.off())
     )
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
   end
 )
 

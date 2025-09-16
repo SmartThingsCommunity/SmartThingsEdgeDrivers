@@ -35,7 +35,7 @@ local mock_device_record = {
       endpoint_id = 10,
       clusters = {
         {cluster_id = clusters.DoorLock.ID, cluster_type = "SERVER", feature_map = 0x0000},
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 10},
       },
     },
   },
@@ -43,12 +43,21 @@ local mock_device_record = {
 local mock_device = test.mock_device.build_test_matter_device(mock_device_record)
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+  )
+  mock_device:expect_metadata_update({ profile = "lock-without-codes" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = clusters.DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)
@@ -96,7 +105,7 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Handle received Lock State from Matter device.", {
+  "Handle received LockState.LOCKED from Matter device.", {
     {
       channel = "matter",
       direction = "receive",
@@ -111,6 +120,66 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.locked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.UNLOCKED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, clusters.DoorLock.attributes.LockState.UNLOCKED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.NOT_FULLY_LOCKED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, clusters.DoorLock.attributes.LockState.NOT_FULLY_LOCKED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked()),
+    },
+  }
+)
+
+test.register_message_test(
+  "Handle received LockState.UNLATCHED from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, clusters.DoorLock.attributes.LockState.UNLATCHED
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
     },
   }
 )

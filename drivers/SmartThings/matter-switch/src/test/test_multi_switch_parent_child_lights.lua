@@ -15,8 +15,10 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-
 local clusters = require "st.matter.clusters"
+
+test.disable_startup_messages()
+
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
 local OPTIONS_OVERRIDE = 0x01
@@ -76,9 +78,73 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local child1_ep_non_sequential = 50
+local child2_ep_non_sequential = 30
+local child3_ep_non_sequential = 40
+
+local mock_device_parent_child_endpoints_non_sequential = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("light-level-colorTemperature.yml"),
+  manufacturer_info = {
+    vendor_id = 0x1321,
+    product_id = 0x000C,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = parent_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
+      }
+    },
+    {
+      endpoint_id = child1_ep_non_sequential,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 2}, -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 2} -- Dimmable Light
+      }
+    },
+    {
+      endpoint_id = child2_ep_non_sequential,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
+      },
+      device_types = {
+        {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+      }
+    },
+    {
+      endpoint_id = child3_ep_non_sequential,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
+      }
+    },
+  }
+})
+
 local child_profiles = {
   [child1_ep] = t_utils.get_profile_definition("light-level.yml"),
-  [child2_ep] = t_utils.get_profile_definition("light-color-level.yml")
+  [child2_ep] = t_utils.get_profile_definition("light-color-level.yml"),
 }
 
 local mock_children = {}
@@ -95,6 +161,7 @@ for i, endpoint in ipairs(mock_device.endpoints) do
 end
 
 local function test_init()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
@@ -103,6 +170,10 @@ local function test_init()
     clusters.ColorControl.attributes.ColorTemperatureMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -110,9 +181,16 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
-  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
   end
@@ -134,6 +212,86 @@ local function test_init()
   })
 end
 
+local child_profiles_non_sequential = {
+  [child1_ep_non_sequential] = t_utils.get_profile_definition("light-level.yml"),
+  [child2_ep_non_sequential] = t_utils.get_profile_definition("light-color-level.yml"),
+  [child3_ep_non_sequential] = t_utils.get_profile_definition("light-color-level.yml"),
+}
+
+local mock_children_non_sequential = {}
+for i, endpoint in ipairs(mock_device_parent_child_endpoints_non_sequential.endpoints) do
+  if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
+    local child_data = {
+      profile = child_profiles_non_sequential[endpoint.endpoint_id],
+      device_network_id = string.format("%s:%d", mock_device_parent_child_endpoints_non_sequential.id, endpoint.endpoint_id),
+      parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
+    }
+    mock_children_non_sequential[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
+  end
+end
+
+local function test_init_parent_child_endpoints_non_sequential()
+  test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_endpoints_non_sequential)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_parent_child_endpoints_non_sequential))
+    end
+  end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "added" })
+  test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "init" })
+  test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "doConfigure" })
+  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  for _, child in pairs(mock_children_non_sequential) do
+    test.mock_device.add_test_device(child)
+  end
+
+  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 2",
+    profile = "light-color-level",
+    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_assigned_child_key = string.format("%d", child2_ep_non_sequential)
+  })
+
+  -- switch-binary will be selected as an overridden child device profile
+  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 3",
+    profile = "switch-binary",
+    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_assigned_child_key = string.format("%d", child3_ep_non_sequential)
+  })
+
+  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 4",
+    profile = "light-level",
+    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_assigned_child_key = string.format("%d", child1_ep_non_sequential)
+  })
+end
+
 test.set_test_init_function(test_init)
 
 test.register_message_test(
@@ -145,6 +303,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
       }
     },
     {
@@ -167,7 +333,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -180,6 +354,14 @@ test.register_message_test(
       message = {
         mock_children[child1_ep].id,
         { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_children[child1_ep].id, capability_id = "switch", capability_cmd_id = "on" }
       }
     },
     {
@@ -202,7 +384,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child1_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -215,6 +405,14 @@ test.register_message_test(
       message = {
         mock_children[child2_ep].id,
         { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_children[child2_ep].id, capability_id = "switch", capability_cmd_id = "on" }
       }
     },
     {
@@ -237,7 +435,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -256,6 +462,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
     },
   }
 )
@@ -464,6 +678,13 @@ test.register_message_test(
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
     }
   }
+)
+
+test.register_coroutine_test(
+  "Test child devices are created in order of their endpoints",
+  function()
+  end,
+  { test_init = test_init_parent_child_endpoints_non_sequential }
 )
 
 test.run_registered_tests()

@@ -35,6 +35,7 @@ local mock_device = test.mock_device.build_test_zigbee_device({
 })
 
 local function test_init()
+  mock_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -47,6 +48,8 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ActivePower:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_device) })
   end
 )
@@ -58,6 +61,14 @@ test.register_message_test(
       channel = "capability",
       direction = "receive",
       message = { mock_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
     },
     {
       channel = "zigbee",
@@ -74,6 +85,14 @@ test.register_message_test(
       channel = "capability",
       direction = "receive",
       message = { mock_device.id, { capability = "switch", component = "main", command = "off", args = { } } }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+      }
     },
     {
       channel = "zigbee",

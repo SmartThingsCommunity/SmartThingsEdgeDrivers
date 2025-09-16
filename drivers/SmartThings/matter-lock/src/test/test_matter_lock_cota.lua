@@ -12,20 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
--- Mock out globals
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 test.add_package_capability("lockAlarm.yml")
@@ -56,7 +42,7 @@ local mock_device_record = {
           cluster_type = "SERVER",
           feature_map = 0x0181, -- PIN & USR & COTA
         },
-        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 10},
       },
     },
   },
@@ -64,6 +50,9 @@ local mock_device_record = {
 local mock_device = test.mock_device.build_test_matter_device(mock_device_record)
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
@@ -71,12 +60,23 @@ local function test_init()
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, DoorLock.attributes.RequirePINforRemoteOperation:read(mock_device, 10)})
-  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.PowerSource.attributes.AttributeList:read()})
 end
 
 test.set_test_init_function(test_init)
 
 local expect_reload_all_codes_messages = function(dev)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.lockCodes.lockCodes(
+        json.encode({}), {visibility = {displayed = false}}
+      )
+    )
+  )
+  test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+  test.mock_time.advance_time(5)
   local credential = types.DlCredential({credential_type = types.DlCredentialType.PIN, credential_index = 1})
   test.socket.capability:__expect_send(
     dev:generate_test_message(
@@ -332,10 +332,8 @@ test.register_coroutine_test(
           .lockCodes(json.encode({["1"] = "ST Remote Operation Code"}), {visibility = {displayed = false}})
       )
     )
-    mock_device:expect_metadata_update({
-      profile = "base-lock",
-      provisioning_state = "PROVISIONED"
-    })
+    local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+    test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end
 )
 
@@ -429,10 +427,8 @@ test.register_coroutine_test(
           .lockCodes(json.encode({["1"] = "ST Remote Operation Code"}), {visibility = {displayed = false}})
       )
     )
-    mock_device:expect_metadata_update({
-      profile = "base-lock",
-      provisioning_state = "PROVISIONED"
-    })
+    local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+    test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end
 )
 
@@ -519,10 +515,8 @@ test.register_coroutine_test(
           .lockCodes(json.encode({["1"] = "ST Remote Operation Code"}), {visibility = {displayed = false}})
       )
     )
-    mock_device:expect_metadata_update({
-      profile = "base-lock",
-      provisioning_state = "PROVISIONED"
-    })
+    local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
+    test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end
 )
 

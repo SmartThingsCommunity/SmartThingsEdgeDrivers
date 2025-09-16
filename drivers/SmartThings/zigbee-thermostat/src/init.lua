@@ -13,16 +13,17 @@
 -- limitations under the License.
 
 -- Zigbee Driver utilities
-local ZigbeeDriver      = require "st.zigbee"
-local device_management = require "st.zigbee.device_management"
-local defaults          = require "st.zigbee.defaults"
-local utils             = require "st.utils"
+local ZigbeeDriver          = require "st.zigbee"
+local device_management     = require "st.zigbee.device_management"
+local defaults              = require "st.zigbee.defaults"
+local utils                 = require "st.utils"
 
 -- Zigbee Spec Utils
 local clusters                      = require "st.zigbee.zcl.clusters"
 local PowerConfiguration            = clusters.PowerConfiguration
 local Thermostat                    = clusters.Thermostat
 local FanControl                    = clusters.FanControl
+local TemperatureMeasurement        = clusters.TemperatureMeasurement
 
 local FanMode = FanControl.attributes.FanMode
 local FanModeSequence           = FanControl.attributes.FanModeSequence
@@ -31,7 +32,7 @@ local ThermostatControlSequence = Thermostat.attributes.ControlSequenceOfOperati
 
 -- Capabilities
 local capabilities              = require "st.capabilities"
-local TemperatureMeasurement    = capabilities.temperatureMeasurement
+local Temperature               = capabilities.temperatureMeasurement
 local ThermostatCoolingSetpoint = capabilities.thermostatCoolingSetpoint
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local ThermostatMode            = capabilities.thermostatMode
@@ -89,6 +90,12 @@ local SUPPORTED_THERMOSTAT_MODES = {
                                                                         ThermostatMode.thermostatMode.auto.NAME,
                                                                         ThermostatMode.thermostatMode.cool.NAME,
                                                                         ThermostatMode.thermostatMode.emergency_heat.NAME}
+}
+
+-- TemperatureMeasurement cluster defaults
+local temperature_measurement_defaults = {
+  MIN_TEMP = "MIN_TEMP",
+  MAX_TEMP = "MAX_TEMP"
 }
 
 local battery_voltage_handler = function(driver, device, battery_voltage)
@@ -164,6 +171,40 @@ local thermostat_mode_setter = function(mode_name)
   end
 end
 
+local setpoint_limit_handler_factory = function(min_or_max, heat_or_cool)
+
+  local field = 'setpoint_' .. min_or_max .. '_' .. heat_or_cool
+  local paired_field = 'setpoint_min_' .. heat_or_cool
+  if min_or_max == 'min' then
+    paired_field = 'setpoint_max_' .. heat_or_cool
+  end
+
+  return function(driver, device, setpoint)
+    local celsius_value =  setpoint.value / 100.0
+    device:set_field(field, celsius_value)
+    if device:get_field(field) and device:get_field(paired_field) then
+
+      local event_constructor = capabilities.thermostatHeatingSetpoint.heatingSetpointRange
+      if heat_or_cool == 'cool' then
+        event_constructor = capabilities.thermostatCoolingSetpoint.coolingSetpointRange
+      end
+
+      device:emit_event(event_constructor(
+        {
+          unit = 'C',
+          value = {
+            minimum = device:get_field('setpoint_min_' .. heat_or_cool),
+            maximum = device:get_field('setpoint_max_' .. heat_or_cool)
+          }
+        }
+      ))
+
+      device:set_field(field, nil)
+      device:set_field(paired_field, nil)
+    end
+  end
+end
+
 local set_thermostat_fan_mode = function(driver, device, command)
   for zigbee_attr_val, st_cap_val in pairs(FAN_MODE_MAP) do
     if command.args.mode == st_cap_val.NAME then
@@ -197,6 +238,29 @@ local set_setpoint_factory = function(setpoint_attribute)
   end
 end
 
+local temperature_measurement_min_max_attr_handler = function(minOrMax)
+  return function(driver, device, value, zb_rx)
+    local raw_temp = value.value
+    local celc_temp = raw_temp / 100.0
+    local temp_scale = "C"
+
+    device:set_field(string.format("%s", minOrMax), celc_temp)
+
+    local min = device:get_field(temperature_measurement_defaults.MIN_TEMP)
+    local max = device:get_field(temperature_measurement_defaults.MAX_TEMP)
+
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = temp_scale }))
+        device:set_field(temperature_measurement_defaults.MIN_TEMP, nil)
+        device:set_field(temperature_measurement_defaults.MAX_TEMP, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
+      end
+    end
+  end
+end
+
 local do_refresh = function(self, device)
   local attributes = {
     Thermostat.attributes.OccupiedCoolingSetpoint,
@@ -205,6 +269,10 @@ local do_refresh = function(self, device)
     Thermostat.attributes.ControlSequenceOfOperation,
     Thermostat.attributes.ThermostatRunningState,
     Thermostat.attributes.SystemMode,
+    Thermostat.attributes.MinHeatSetpointLimit,
+    Thermostat.attributes.MaxHeatSetpointLimit,
+    Thermostat.attributes.MinCoolSetpointLimit,
+    Thermostat.attributes.MaxCoolSetpointLimit,
     FanControl.attributes.FanModeSequence,
     FanControl.attributes.FanMode,
     PowerConfiguration.attributes.BatteryVoltage,
@@ -223,12 +291,14 @@ local do_configure = function(self, device)
 end
 
 local device_added = function(self, device)
+  device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+  device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
   do_refresh(self, device)
 end
 
 local zigbee_thermostat_driver = {
   supported_capabilities = {
-    TemperatureMeasurement,
+    Temperature,
     ThermostatCoolingSetpoint,
     ThermostatHeatingSetpoint,
     ThermostatMode,
@@ -248,11 +318,19 @@ local zigbee_thermostat_driver = {
         [Thermostat.attributes.ControlSequenceOfOperation.ID] = supported_thermostat_modes_handler,
         [Thermostat.attributes.ThermostatRunningState.ID] = thermostat_operating_state_handler,
         [Thermostat.attributes.ThermostatRunningMode.ID] = thermostat_mode_handler,
-        [Thermostat.attributes.SystemMode.ID] = thermostat_mode_handler
+        [Thermostat.attributes.SystemMode.ID] = thermostat_mode_handler,
+        [Thermostat.attributes.MinHeatSetpointLimit.ID] = setpoint_limit_handler_factory('min', 'heat'),
+        [Thermostat.attributes.MaxHeatSetpointLimit.ID] = setpoint_limit_handler_factory('max', 'heat'),
+        [Thermostat.attributes.MinCoolSetpointLimit.ID] = setpoint_limit_handler_factory('min', 'cool'),
+        [Thermostat.attributes.MaxCoolSetpointLimit.ID] = setpoint_limit_handler_factory('max', 'cool'),
       },
       [FanControl.ID] = {
         [FanControl.attributes.FanModeSequence.ID] = supported_fan_modes_handler,
         [FanControl.attributes.FanMode.ID] = thermostat_fan_mode_handler
+      },
+      [TemperatureMeasurement.ID] = {
+        [TemperatureMeasurement.attributes.MinMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MIN_TEMP),
+        [TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = temperature_measurement_min_max_attr_handler(temperature_measurement_defaults.MAX_TEMP),
       }
     }
   },
@@ -295,8 +373,10 @@ local zigbee_thermostat_driver = {
     require("danfoss"),
     require("popp"),
     require("vimar"),
-    require("resideo_korea")
+    require("resideo_korea"),
+    require("aqara")
   },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_thermostat_driver, zigbee_thermostat_driver.supported_capabilities)

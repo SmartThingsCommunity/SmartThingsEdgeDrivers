@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local PressureMeasurementCluster = require "PressureMeasurement"
@@ -38,6 +37,9 @@ local matter_endpoints = {
     clusters = {
       {cluster_id = PressureMeasurementCluster.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
+    },
+    device_types = {
+      {device_type_id = 0x0305, device_type_revision = 1} -- Pressure Sensor
     }
   }
 }
@@ -47,17 +49,11 @@ local mock_device = test.mock_device.build_test_matter_device({
   endpoints = matter_endpoints
 })
 
-local function subscribe_on_init(dev)
+local function test_init()
+  test.mock_device.add_test_device(mock_device)
   local subscribe_request = PressureMeasurementCluster.attributes.MeasuredValue:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
-  return subscribe_request
-end
-
-local function test_init()
-  test.socket.matter:__expect_send({mock_device.id, subscribe_on_init(mock_device)})
-  test.mock_device.add_test_device(mock_device)
-  -- don't check the battery for this device since we are just testing the "pressure-battery" profile specifically
-  mock_device:set_field("__battery_checked", 1, {persist = true})
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 test.set_test_init_function(test_init)
 

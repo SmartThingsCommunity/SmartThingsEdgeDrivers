@@ -37,9 +37,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -51,6 +49,14 @@ test.register_message_test(
         channel = "capability",
         direction = "receive",
         message = { mock_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+        }
       },
       {
         channel = "zigbee",
@@ -67,6 +73,14 @@ test.register_message_test(
         channel = "capability",
         direction = "receive",
         message = { mock_device.id, { capability = "switch", component = "main", command = "off", args = { } } }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_cmd_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+        }
       },
       {
         channel = "zigbee",
@@ -104,6 +118,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 9.766, unit = "W" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
       }
     }
 )

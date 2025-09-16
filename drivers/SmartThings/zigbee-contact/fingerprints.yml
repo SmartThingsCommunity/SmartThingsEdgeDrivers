@@ -3,7 +3,7 @@ zigbeeManufacturer:
     deviceLabel: Aqara Door and Window Sensor T1
     manufacturer: LUMI
     model: lumi.magnet.agl02
-    deviceProfileName: contact-battery-profile
+    deviceProfileName: contact-batteryLevel
   - id: "NYCE/3010"
     deviceLabel: NYCE Open/Closed Sensor
     manufacturer: NYCE
@@ -140,15 +140,15 @@ zigbeeManufacturer:
     model: SS-B100-ZB
     deviceProfileName: contact-battery-temperature
   - id: "frient A/S/WISZB-120"
-    deviceLabel: frient Open/Closed Sensor
+    deviceLabel: frient Entry Sensor Pro
     manufacturer: frient A/S
     model: WISZB-120
-    deviceProfileName: contact-battery-temperature
+    deviceProfileName: contact-battery-temperature-tamper
   - id: "frient A/S/WISZB-121"
-    deviceLabel: frient Open/Closed Sensor
+    deviceLabel: frient Entry Sensor
     manufacturer: frient A/S
     model: WISZB-121
-    deviceProfileName: contact-battery-temperature
+    deviceProfileName: contact-battery-profile
   - id: "Compacta/ZBWDS"
     deviceLabel: Smartenit Open/Closed Sensor
     manufacturer: Compacta
@@ -194,6 +194,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RVS01031Z
     deviceProfileName: thirdreality-multi-sensor
+  - id: "Aug. Winkhaus SE/FM.V.ZB"
+    deviceLabel: Funkkontakt FM.V.ZB
+    manufacturer: Aug. Winkhaus SE
+    model: FM.V.ZB
+    deviceProfileName: contact-battery-profile
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"
