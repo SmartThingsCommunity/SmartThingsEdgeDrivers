@@ -30,27 +30,6 @@ local WAVE_MOTION_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x0460, prod = 0x0100, productId = 0x0082 }  -- Shelly Wave Motion
 }
 
-local function notification_report_handler(self, device, cmd)
-  local event
-  if cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
-    if cmd.args.event == Notification.event.home_security.STATE_IDLE then
-      device:emit_event(capabilities.motionSensor.motion.inactive())
-    elseif cmd.args.event == Notification.event.home_security.MOTION_DETECTION then
-      event = capabilities.motionSensor.motion.active()
-    end
-  end
-
-  if event ~= nil then
-    device:emit_event(event)
-  end
-end
-
-local function sensor_multilevel_report_handler(self, device, cmd)
-  if cmd.args.sensor_type == SensorMultilevel.sensor_type.LUMINANCE then
-    device:emit_event(capabilities.illuminanceMeasurement.illuminance({value = cmd.args.sensor_value, unit = "lux"}))
-  end
-end
-
 local wave_motion_sensor = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
