@@ -577,14 +577,15 @@ local function build_button_component_map(device, main_endpoint, button_eps)
   --component_map["main"] = main_endpoint
   if device.manufacturer_info.vendor_id == 0xFFF1 and
     device.manufacturer_info.product_id == 0x8004 then
-  else
-    component_map["main"] = main_endpoint
+      do end  
+    else
+      component_map["main"] = main_endpoint
   end
   for component_num, ep in ipairs(button_eps) do
     if device.manufacturer_info.vendor_id == 0xFFF1 and
       device.manufacturer_info.product_id == 0x8004 then
       local button_component = "button" .. component_num
-      component_map[button_component] = ep  
+      component_map[button_component] = ep
     else
       if ep ~= main_endpoint then
         local button_component = "button"
@@ -1354,6 +1355,7 @@ local function max_press_handler(driver, device, ib, response)
 end
 
 local function info_changed(driver, device, event, args)
+  clean_supported_values(device)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
