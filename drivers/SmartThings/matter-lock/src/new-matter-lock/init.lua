@@ -53,6 +53,8 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x135D, 0x00C1}, -- Nuki, Smart Lock
   {0x135D, 0x00A1}, -- Nuki, Smart Lock
   {0x135D, 0x00B0}, -- Nuki, Smart Lock
+  {0x15F2, 0x0001}, -- Viomi, AiSafety Smart Lock E100
+  {0x158B, 0x0001}, -- Deasino, DS-MT01
   {0x10E1, 0x2002}  -- VDA
 }
 
