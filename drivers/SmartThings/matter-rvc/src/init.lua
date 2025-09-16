@@ -476,6 +476,17 @@ local function rvc_service_area_selected_areas_handler(driver, device, ib, respo
     table.insert(selected_areas, areaId.value)
   end
 
+  if next(selected_areas) == nil then
+    local supported_areas = device:get_latest_state(
+      "main",
+      capabilities.serviceArea.ID,
+      capabilities.serviceArea.supportedAreas.NAME
+    )
+    for i, area in ipairs(supported_areas) do
+      table.insert(selected_areas, area.areaId)
+    end
+  end
+
   local event = capabilities.serviceArea.selectedAreas(selected_areas, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
