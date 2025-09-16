@@ -711,22 +711,6 @@ local function detect_bridge(device)
   return false
 end
 
-local function clean_supported_values(device)
-  local supported = capabilities.button.supportedButtonValues({"pushed", "double", "held"}, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(1, supported)
-  device:emit_event_for_endpoint(2, supported)
-  device:emit_event_for_endpoint(3, supported)
-  device:emit_event_for_endpoint(4, supported)
-  device:emit_event_for_endpoint(5, supported)
-  device:emit_event_for_endpoint(6, supported)
-  device:emit_event_for_endpoint(7, supported)
-  device:emit_event_for_endpoint(8, supported)
-  device:emit_event_for_endpoint(9, supported)
-  device:emit_event_for_endpoint(10, supported)
-  device:emit_event_for_endpoint(11, supported)
-  device:emit_event_for_endpoint(12, supported)
-end
-
 local function device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     check_field_name_updates(device)
@@ -1353,7 +1337,6 @@ local function max_press_handler(driver, device, ib, response)
 end
 
 local function info_changed(driver, device, event, args)
-  clean_supported_values(device)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
