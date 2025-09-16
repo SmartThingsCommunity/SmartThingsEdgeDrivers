@@ -575,10 +575,8 @@ local function build_button_component_map(device, main_endpoint, button_eps)
   table.sort(button_eps)
   local component_map = {}
   --component_map["main"] = main_endpoint
-  if device.manufacturer_info.vendor_id == 0xFFF1 and
-    device.manufacturer_info.product_id == 0x8004 then
-      do end  
-    else
+  if device.manufacturer_info.vendor_id ~= 0xFFF1 or
+    device.manufacturer_info.product_id ~= 0x8004 then
       component_map["main"] = main_endpoint
   end
   for component_num, ep in ipairs(button_eps) do
@@ -609,7 +607,7 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
     device:send(clusters.PowerSource.attributes.AttributeList:read(device))
   else
     if device.manufacturer_info.vendor_id == 0xFFF1 and
-    device.manufacturer_info.product_id == 0x8004 then -- for aura smart button
+      device.manufacturer_info.product_id == 0x8004 then -- for aura smart button
       profile_name = "12-buttons-without-main-button"
     end
     device:try_update_metadata({profile = profile_name})
