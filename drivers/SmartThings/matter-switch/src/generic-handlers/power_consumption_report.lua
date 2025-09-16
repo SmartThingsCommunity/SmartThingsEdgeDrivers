@@ -50,7 +50,7 @@ local function send_import_poll_report(device, latest_total_imported_energy_wh)
   end
 end
 
--- Set the poll report schedule on the timer defined by IMPORT_REPORT_TIMEOUT 
+-- Set the poll report schedule on the timer defined by IMPORT_REPORT_TIMEOUT
 local function create_poll_report_schedule(device)
   local import_timer = device.thread:call_on_schedule(
     device:get_field(fields.IMPORT_REPORT_TIMEOUT), function()
