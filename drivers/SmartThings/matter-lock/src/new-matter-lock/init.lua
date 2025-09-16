@@ -40,8 +40,7 @@ local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.OCCUPIED] = "occupied",
   [DoorLock.types.DlStatus.INVALID_FIELD] = "invalidCommand",
   [DoorLock.types.DlStatus.RESOURCE_EXHAUSTED] = "resourceExhausted",
-  [DoorLock.types.DlStatus.NOT_FOUND] = "failure",
-  [DoorLock.types.DlStatus.INVALID_FIELD] = "invalidCommand"
+  [DoorLock.types.DlStatus.NOT_FOUND] = "failure"
 }
 
 local WEEK_DAY_MAP = {
@@ -1954,7 +1953,7 @@ local function set_credential_response_handler(driver, device, ib, response)
     return
   end
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  if cmdName == "addCredential" then
+  if cmdName == "addCredential" or cmdName == "updateCredential" or cmdName == "addCota" then
     set_pin_response_handler(driver, device, ib, response)
   elseif cmdName == "setIssuerKey" then
     set_issuer_key_response_handler(driver, device, ib, response)
@@ -2033,7 +2032,8 @@ end
 -------------------------------
 local function clear_credential_response_handler(driver, device, ib, response)
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  if cmdName ~= "deleteCredential" and cmdName ~= "clearEndpointKey" and cmdName ~= "clearIssuerKey" then
+  if cmdName ~= "deleteCredential" and cmdName ~= "clearEndpointKey" and
+  cmdName ~= "clearIssuerKey" and cmdName ~= "deleteAllCredentials" then
     return
   end
   local status = RESPONSE_STATUS_MAP[ib.status] or "success"
@@ -2041,7 +2041,7 @@ local function clear_credential_response_handler(driver, device, ib, response)
   local userIdx = device:get_field(lock_utils.USER_INDEX)
   local all_user_credentials_removed = false
 
-  if cmdName == "deleteCredential" and status == "success" then
+  if (cmdName == "deleteCredential" or cmdName == "deleteAllCredentials") and status == "success" then
     -- Get result from data saved in relevant, associated fields
     local credIdx = device:get_field(lock_utils.CRED_INDEX)
 
@@ -2087,7 +2087,7 @@ local function clear_credential_response_handler(driver, device, ib, response)
   end
 
   -- Update commandResult
-  if cmdName == "deleteCredential" then
+  if cmdName == "deleteCredential" or cmdName == "deleteAllCredentials" then
     device:emit_event(capabilities.lockCredentials.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
     ))
