@@ -971,7 +971,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockUsers.users({{userIndex = 1, userType = "adminMember"}}, {visibility={displayed=false}})
+        capabilities.lockUsers.users({{userIndex = 1, userName="Guest1", userType = "adminMember"}}, {visibility={displayed=false}})
       )
     )
     test.socket.capability:__expect_send(
@@ -1493,7 +1493,6 @@ test.register_coroutine_test(
         ),
       }
     )
-    -- test.wait_for_events()
   end
 )
 
@@ -1748,8 +1747,26 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
+        capabilities.lockUsers.users({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
         capabilities.lockCredentials.commandResult(
-          {commandName="deleteAllCredentials", credentialIndex=65534, statusCode="success"},
+          {commandName="deleteAllCredentials", userIndex=65534, credentialIndex=65534, statusCode="success"},
           {state_change=true, visibility={displayed=false}}
         )
       )
