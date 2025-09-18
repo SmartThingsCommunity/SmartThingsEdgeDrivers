@@ -1,0 +1,80 @@
+name: 12-buttons-without-main-button
+components:
+  - id: main
+    capabilities:
+      - id: refresh
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button1
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button2
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button3
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button4
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController 
+  - id: button5
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController 
+  - id: button6
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController 
+  - id: button7
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button8
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController  
+  - id: button9
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController  
+  - id: button10
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController  
+  - id: button11
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button12
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
