@@ -156,7 +156,6 @@ end
 local function init_handler(self, device)
   for _,attribute in ipairs(CONFIGURATIONS) do
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
   battery_defaults.enable_battery_voltage_table(device, battery_table)
 end
