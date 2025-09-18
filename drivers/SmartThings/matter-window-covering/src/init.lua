@@ -343,9 +343,6 @@ local matter_driver_template = {
     },
   },
   capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = nil --TODO: define me!
-    },
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = handle_preset,
     },

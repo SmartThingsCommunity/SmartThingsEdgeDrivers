@@ -40,6 +40,7 @@ end
 ---@field private oauth { token: {accessToken: string, expiresAt: number}, endpoint_app_info: { state: "connected"|"disconnected" }, force_oauth: boolean? } cached OAuth info
 ---@field private startup_state_received boolean
 ---@field private devices_waiting_for_startup_state SonosDevice[]
+---@field private have_alerted_unauthorized boolean Used to track if we have requested an oauth token, this will trigger the notification used for account linking
 ---@field package bonded_devices table<string, boolean> map of Device device_network_id to a boolean indicating if the device is currently known as a bonded device.
 ---
 ---@field public ssdp_task SonosPersistentSsdpTask?
@@ -388,6 +389,25 @@ function SonosDriver:oauth_app_connected()
     and self.oauth.endpoint_app_info.state == "connected"
 end
 
+--- Used to trigger the notification that the user must link their sonos account.
+--- Will request a token a single time which will trigger preinstall isa flow.
+function SonosDriver:alert_unauthorized()
+  if api_version < 14 or security == nil then
+    return
+  end
+  if self.have_alerted_unauthorized then
+    return
+  end
+  -- Do the request regardless if we think oauth is connected, because
+  -- there is a possibility that we have stale data.
+  local result, err = security.get_sonos_oauth()
+  if not result then
+    log.warn(string.format("Failed to alert unauthorized: %s", err))
+    return
+  end
+  self.have_alerted_unauthorized = true
+end
+
 ---Create a cosock task that handles events from the persistent SSDP task.
 ---@param driver SonosDriver
 ---@param discovery_event_subscription cosock.Bus.Subscription
@@ -644,6 +664,7 @@ function SonosDriver.new_driver_template()
     oauth_token_bus = oauth_token_bus,
     oauth_info_bus = oauth_info_bus,
     oauth = {},
+    have_alerted_unauthorized = false,
     startup_state_received = false,
     devices_waiting_for_startup_state = {},
     bonded_devices = utils.new_mac_address_keyed_table(),
