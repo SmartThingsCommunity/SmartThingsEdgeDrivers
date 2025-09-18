@@ -22,9 +22,7 @@ if version.api < 11 then
   clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
 end
 
-local SwitchFields = {
-    SWITCH_LEVEL_LIGHTING_MIN = 1
-}
+local SwitchFields = {}
 
 SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
 SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
