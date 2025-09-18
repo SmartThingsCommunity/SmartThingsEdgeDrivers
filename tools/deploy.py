@@ -91,7 +91,8 @@ else:
       headers = {
         "Accept": "application/vnd.smartthings+json;v=20200810",
         "Authorization": "Bearer "+TOKEN,
-        "X-ST-LOG-LEVEL": "DEBUG"
+        "X-ST-LOG-LEVEL": "DEBUG",
+        "X-ST-CORRELATION": "driver-deployment-"+BRANCH+"-"+ENVIRONMENT+"-"+str(time.time())
       },
       json = {
         DRIVERID: driver[DRIVERID],
@@ -196,7 +197,8 @@ else:
       "Accept": "application/vnd.smartthings+json;v=20200810",
       "Authorization": "Bearer "+TOKEN,
       "Content-Type": "application/json",
-      "X-ST-LOG-LEVEL": "DEBUG"
+      "X-ST-LOG-LEVEL": "DEBUG",
+      "X-ST-CORRELATION": "driver-deployment-"+BRANCH+"-"+ENVIRONMENT+"-"+str(time.time())
     },
     data=json.dumps(driver_updates)
   )
