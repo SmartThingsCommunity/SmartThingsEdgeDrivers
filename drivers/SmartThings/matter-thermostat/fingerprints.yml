@@ -38,6 +38,12 @@ matterManufacturer:
     vendorId: 0x1527
     productId: 0x0002
     deviceProfileName: thermostat-heating-only-batteryLevel
+  #Lux
+  - id: "4614/1"
+    deviceLabel: LUX TQ1 Smart Thermostat
+    vendorId: 0x1206
+    productId: 0x0001
+    deviceProfileName: thermostat-nostate-nobattery
   #Siterwell
   - id: "4736/769"
     deviceLabel: Siterwell Radiator Thermostat
@@ -60,7 +66,7 @@ matterManufacturer:
     deviceLabel: xCREAS Smart Air Purifier Cyclone400
     vendorId: 0x156A
     productId: 0x0001
-    deviceProfileName: air-purifier-modular
+    deviceProfileName: air-purifier-hepa-wind-aqs-pm25-meas-pm25-level
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
