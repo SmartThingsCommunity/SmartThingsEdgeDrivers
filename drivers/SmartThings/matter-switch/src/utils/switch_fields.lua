@@ -18,8 +18,8 @@ local version = require "version"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "embedded-clusters.ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "embedded-clusters.ElectricalPowerMeasurement"
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
 end
 
 local SwitchFields = {

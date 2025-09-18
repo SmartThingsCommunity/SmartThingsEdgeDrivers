@@ -15,14 +15,14 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local fields = require "utils.switch_fields"
-local embedded_cluster_utils = require "utils.embedded-cluster-utils"
+local embedded_cluster_utils = require "utils.embedded_cluster_utils"
 local version = require "version"
 
 local PowerConsumptionReporting = {}
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "embedded-clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
 end
 
 -- [[ POWER CONSUMPTION REPORT HELPER FUNCTIONS ]] --

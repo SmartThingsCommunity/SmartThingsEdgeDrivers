@@ -23,7 +23,7 @@ local CapabilityHandlers = {}
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
-  clusters.ValveConfigurationAndControl = require "embedded-clusters.ValveConfigurationAndControl"
+  clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
 end
 
 -- [[ SWITCH CAPABILITY COMMANDS ]] --

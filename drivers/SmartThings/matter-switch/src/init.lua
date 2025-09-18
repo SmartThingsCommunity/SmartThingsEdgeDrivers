@@ -26,16 +26,16 @@ local device_cfg = cfg.DeviceCfg
 local switch_cfg = cfg.SwitchCfg
 local button_cfg = cfg.ButtonCfg
 
-local attribute_handlers = require "generic-handlers.attribute_handlers"
-local event_handlers = require "generic-handlers.event_handlers"
-local capability_handlers = require "generic-handlers.capability_handlers"
-local power_consumption_reporting = require "generic-handlers.power_consumption_report"
+local attribute_handlers = require "generic_handlers.attribute_handlers"
+local event_handlers = require "generic_handlers.event_handlers"
+local capability_handlers = require "generic_handlers.capability_handlers"
+local power_consumption_reporting = require "generic_handlers.power_consumption_report"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "embedded-clusters.ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "embedded-clusters.ElectricalPowerMeasurement"
-  clusters.ValveConfigurationAndControl = require "embedded-clusters.ValveConfigurationAndControl"
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+  clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
 end
 
 local SwitchLifecycleHandlers = {}
@@ -298,9 +298,9 @@ local matter_driver_template = {
   },
   supported_capabilities = fields.supported_capabilities,
   sub_drivers = {
-    require("sub-drivers.aqara-cube"),
-    require("sub-drivers.eve-energy"),
-    require("sub-drivers.third-reality-mk1")
+    require("sub_drivers.aqara_cube"),
+    require("sub_drivers.eve_energy"),
+    require("sub_drivers.third_reality_mk1")
   }
 }
 

@@ -22,7 +22,7 @@ local fields = require "utils.switch_fields"
 local switch_utils = require "utils.switch_utils"
 local color_utils = require "utils.color_utils"
 
-local power_consumption_reporting = require "generic-handlers.power_consumption_report"
+local power_consumption_reporting = require "generic_handlers.power_consumption_report"
 
 local AttributeHandlers = {}
 
