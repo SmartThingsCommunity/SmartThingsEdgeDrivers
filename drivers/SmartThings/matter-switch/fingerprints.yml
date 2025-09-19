@@ -586,6 +586,17 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0006
     deviceProfileName: switch-level
+#Leviton
+  - id: "4251/4097"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Switch
+    vendorId: 0x109B
+    productId: 0x1001
+    deviceProfileName: switch-binary
+  - id: "4251/4096"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) 600W Dimmer
+    vendorId: 0x109B
+    productId: 0x1000
+    deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
