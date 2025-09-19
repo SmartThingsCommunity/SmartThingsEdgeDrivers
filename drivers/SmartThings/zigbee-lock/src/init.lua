@@ -28,6 +28,8 @@ local capabilities              = require "st.capabilities"
 local Battery                   = capabilities.battery
 local Lock                      = capabilities.lock
 local LockCodes                 = capabilities.lockCodes
+local LockCredentials           = capabilities.lockCredentials
+local LockUsers                 = capabilities.lockUsers
 
 -- Enums
 local UserStatusEnum            = LockCluster.types.DrlkUserStatus
@@ -291,6 +293,35 @@ local name_slot = function(driver, device, command)
   end
 end
 
+local migrate = function(driver, device, command)
+  local lock_users = {}
+  local lock_credentails = {}
+  local index = 0
+  for code_slot, code_name in pairs(lock_utils.get_lock_codes(device)) do
+    table.insert(lock_users, {userIndex = index, userType = "guest", userName = code_name})
+    table.insert(lock_credentails, {userIndex = index, credentialIndex = code_slot, crednetialType = "pin"})
+    index = index + 1
+  end
+
+  local code_length  = device:get_field(capabilities.lockCodes.codeLength)
+  local max_code_len = device:get_field(capabilities.lockCodes.maxCodeLength)
+  local min_code_len = device:get_field(capabilities.lockCodes.minCodeLength)
+  local max_codes    = device:get_field(capabilities.lockCodes.maxCodes)
+
+  if (code_length ~= nil) then
+    max_code_len = code_length
+    min_code_len = code_length
+  end
+
+  device:set_field(capabilities.lockCredentials.minPinCodeLen, min_code_len, { persist = true })
+  device:set_field(capabilities.lockCredentials.maxPinCodeLen, max_code_len, { persist = true })
+  device:set_field(capabilities.lockCredentials.pinUsersSupported, max_codes, { persist = true })
+  device:set_field(capabilities.lockCredentials.credentials, lock_credentails, { persist = true })
+  device:set_field(capabilities.lockUsers.users, lock_users, { persist = true })
+  device:set_field(capabilities.lockCredentials.supportedCredentials, {"pin"}, { persist = true })
+  device:set_field(capabilities.lockCodes.migrated, true, { persist = true })
+end
+
 local function device_added(driver, device)
   lock_utils.populate_state_from_data(device)
 
@@ -436,6 +467,7 @@ local zigbee_lock_driver = {
       [LockCodes.commands.requestCode.NAME] = request_code,
       [LockCodes.commands.setCode.NAME] = set_code,
       [LockCodes.commands.nameSlot.NAME] = name_slot,
+      [LockCodes.commands.migrate.NAME] = migrate,
     },
     [Lock.ID] = {
       [Lock.commands.lock.NAME] = lock,
