@@ -334,8 +334,13 @@ function HueDiscovery.handle_discovered_child_device(driver, bridge_network_id, 
   end
 
   for _, svc_info in ipairs(primary_services[primary_service_type]) do
+    if driver:get_device_by_dni(v1_dni) then
+      return
+    end
     local v2_resource_id = svc_info.rid or ""
-    if driver:get_device_by_dni(v1_dni) or driver.hue_identifier_to_device_record[v2_resource_id] then return end
+    if (driver.hue_identifier_to_device_record_by_bridge[bridge_network_id] or {})[v2_resource_id] then
+      return
+    end
   end
 
   local api_instance =

@@ -93,8 +93,9 @@ function LifecycleHandlers.device_added(driver, device, ...)
     if device_type ~= HueDeviceTypes.BRIDGE then
       ---@cast device HueChildDevice
       local resource_id = utils.get_hue_rid(device)
+      local hue_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, device) or {}
       if resource_id then
-        driver.hue_identifier_to_device_record[resource_id] = device
+        hue_id_to_device[resource_id] = device
       end
 
       local resource_state_known = (Discovery.device_state_disco_cache[resource_id] ~= nil)

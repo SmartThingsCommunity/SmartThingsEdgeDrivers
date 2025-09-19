@@ -345,6 +345,7 @@ end
 ---@param driver HueDriver
 ---@param device HueDevice
 ---@param parent_device_id string?
+---@param quiet boolean?
 ---@return HueBridgeDevice? bridge_device
 function utils.get_hue_bridge_for_device(driver, device, parent_device_id, quiet)
   local _ = quiet or
@@ -369,6 +370,27 @@ function utils.get_hue_bridge_for_device(driver, device, parent_device_id, quiet
   end
 
   return utils.get_hue_bridge_for_device(driver, parent_device, nil, quiet)
+end
+
+--- Get the mapping of hue id to device table by associated bridge. The mapping is separated by bridge to account
+--- for devices migrated to a new hue bridge.
+---@param driver HueDriver
+---@param bridge_or_device HueDevice
+---@return table<string,HueChildDevice>? hue_id_to_device
+function utils.get_hue_id_to_device_table_by_bridge(driver, bridge_or_device)
+  -- If bridge_or_device is a bridge this will just return itself
+  local bridge = utils.get_hue_bridge_for_device(driver, bridge_or_device)
+  if not bridge then
+    log.warn(string.format("Failed to lookup bridge for device %s", bridge_or_device.label))
+    return nil
+  end
+  local bridge_id = bridge:get_field(Fields.BRIDGE_ID)
+  if not bridge_id then
+    log.warn(string.format("Failed to get bridge id for %s", bridge.label))
+    return nil
+  end
+  driver.hue_identifier_to_device_record_by_bridge[bridge_id] = driver.hue_identifier_to_device_record_by_bridge[bridge_id] or {}
+  return driver.hue_identifier_to_device_record_by_bridge[bridge_id]
 end
 
 --- build a exponential backoff time value generator
