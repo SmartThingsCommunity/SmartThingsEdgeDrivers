@@ -59,7 +59,6 @@ local function device_init(driver, device)
         battery_defaults.enable_battery_voltage_table(device, config.battery_voltage_table)
       elseif (config.cluster) then
         device:add_configured_attribute(config)
-        device:add_monitored_attribute(config)
       end
     end
   end

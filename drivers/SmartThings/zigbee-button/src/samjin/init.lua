@@ -21,7 +21,6 @@ battery_config.data_type = zcl_clusters.PowerConfiguration.attributes.BatteryVol
 
 local function init_handler(self, device)
   device:add_configured_attribute(battery_config)
-  device:add_monitored_attribute(battery_config)
 end
 
 local samjin_button = {

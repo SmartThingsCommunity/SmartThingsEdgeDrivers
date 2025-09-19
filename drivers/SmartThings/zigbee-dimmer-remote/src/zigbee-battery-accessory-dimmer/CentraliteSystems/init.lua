@@ -98,7 +98,6 @@ local voltage_configuration = {
 
 local function device_init(driver, device)
   device:add_configured_attribute(voltage_configuration)
-  device:add_monitored_attribute(voltage_configuration)
   device:remove_monitored_attribute(zcl_clusters.PowerConfiguration.ID, zcl_clusters.PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
   device:remove_configured_attribute(zcl_clusters.PowerConfiguration.ID, zcl_clusters.PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
   device:set_field(battery_defaults.DEVICE_MIN_VOLTAGE_KEY, 2.3)

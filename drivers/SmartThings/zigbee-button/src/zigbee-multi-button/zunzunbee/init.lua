@@ -38,7 +38,6 @@ local ZUNZUNBEE_BUTTON_FINGERPRINTS = {
 -- Initialize device attributes
 local function init_handler(self, device)
   device:add_configured_attribute(battery_config)
-  device:add_monitored_attribute(battery_config)
 end
 
 -- Check if a given device matches the supported fingerprints

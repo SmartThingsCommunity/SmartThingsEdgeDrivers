@@ -325,7 +325,6 @@ local function device_init(driver, device)
     -- Add the manufacturer-specific attributes to generate their configure reporting and bind requests
     for _, config in pairs(cluster_configurations) do
       device:add_configured_attribute(config)
-      device:add_monitored_attribute(config)
     end
     -- initial set of heating mode
     local stored_heat_mode = device:get_field(STORED_HEAT_MODE) or 'eco'

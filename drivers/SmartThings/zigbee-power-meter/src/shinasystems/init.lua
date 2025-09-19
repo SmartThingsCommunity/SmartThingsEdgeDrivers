@@ -111,7 +111,6 @@ local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
   for _, attribute in ipairs(POWERMETER_CONFIGURATION_V2) do
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
 end
 
