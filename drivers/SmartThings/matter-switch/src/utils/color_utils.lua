@@ -1,3 +1,17 @@
+-- Copyright 2025 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 --TODO remove the usage of these color utils once 0.48.x has been distributed
 -- to all hubs.
 local color_utils = {}
@@ -46,9 +60,9 @@ end
 --- Convert from x/y/Y to Hue/Saturation
 --- If every value is missing then [x, y, Y] = [0, 0, 1]
 ---
---- @param x number red in range [0x0000, 0xFFFF]
---- @param y number green in range [0x0000, 0xFFFF]
---- @param Y number blue in range [0x0000, 0xFFFF]
+--- @param x number|nil red in range [0x0000, 0xFFFF]
+--- @param y number|nil green in range [0x0000, 0xFFFF]
+--- @param Y number|nil blue in range [0x0000, 0xFFFF]
 --- @returns number, number equivalent hue, saturation, level each in range [0,100]%
 color_utils.safe_xy_to_hsv = function(x, y, Y)
   local safe_x = x ~= nil and x / 65536 or 0
