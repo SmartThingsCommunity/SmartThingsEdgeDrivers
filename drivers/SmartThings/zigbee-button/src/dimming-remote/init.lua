@@ -47,6 +47,12 @@ local function button_released_handler(self, device, value, zb_rx)
   button_utils.send_pushed_or_held_button_event_if_applicable(device, 2)
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
   for _, component in pairs(device.profile.components) do
     local number_of_buttons = component.id == "main" and 2 or 1
@@ -54,7 +60,7 @@ local function added_handler(self, device)
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}, {visibility = { displayed = false }}))
   end
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local function do_configure(self, device)

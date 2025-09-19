@@ -121,12 +121,25 @@ local switch_level_set_level_command_handler = function(driver, device, command)
   end)
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
+local function emit_event_if_latest_state_missing_with_set_field(device, component, capability, attribute_name, value, field, state)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+    device:set_field(field, state)
+  end
+end
+
 local device_added = function(self, device)
-  generate_switch_onoff_event(device, "on")
-  generate_switch_level_event(device, 100)
+  emit_event_if_latest_state_missing_with_set_field(device, capabilities.switch, capabilities.switch.switch.NAME, capabilities.switch.switch.on(), CURRENT_STATUS, "on")
+  emit_event_if_latest_state_missing_with_set_field(device, capabilities.switchLevel, capabilities.switchLevel.level.NAME, capabilities.switchLevel.level(100), CURRENT_LEVEL, 100)
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.button.pushed({state_change = true}))
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = true}))
 end
 
 local do_configure = function(self, device)
@@ -142,7 +155,6 @@ local is_zigbee_accessory_dimmer = function(opts, driver, device)
             return true
         end
     end
-
     return false
 end
 

@@ -47,6 +47,7 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    -- The initial button pushed event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
@@ -62,6 +63,20 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button.button.pushed({ state_change = false }))
+    )
+    -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+      )
     )
   end
 )

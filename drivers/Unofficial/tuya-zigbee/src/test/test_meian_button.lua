@@ -136,6 +136,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Configure should configure all necessary attributes",
     function()
+      -- The initial button pushed event should be send during the device's first time onboarding
       test.socket.device_lifecycle:__queue_receive({ mock_device_meian_button.id, "added" })
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(
@@ -157,6 +158,26 @@ test.register_coroutine_test(
           attribute_id = "button", state = { value = "pushed" }
         }
       })
+      test.socket.zigbee:__expect_send({ mock_device_meian_button.id, tuya_utils.build_tuya_magic_spell_message(mock_device_meian_button) })
+      test.socket.zigbee:__expect_send({
+        mock_device_meian_button.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device_meian_button)
+      })
+      -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+      test.socket.device_lifecycle:__queue_receive({ mock_device_meian_button.id, "added" })
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.capability:__expect_send(
+        mock_device_meian_button:generate_test_message(
+          "main",
+          capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })
+        )
+      )
+      test.socket.capability:__expect_send(
+        mock_device_meian_button:generate_test_message(
+          "main",
+          capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+        )
+      )
       test.socket.zigbee:__expect_send({ mock_device_meian_button.id, tuya_utils.build_tuya_magic_spell_message(mock_device_meian_button) })
       test.socket.zigbee:__expect_send({
         mock_device_meian_button.id,

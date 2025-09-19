@@ -81,10 +81,16 @@ local function device_init(driver, device)
     end
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
     device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
     device:emit_event(capabilities.button.numberOfButtons({value = 1}))
-    device:emit_event(capabilities.button.button.pushed({state_change = false}))
+    emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
     device:emit_event(capabilities.battery.battery(100))
 end
 

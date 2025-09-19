@@ -103,6 +103,12 @@ local do_configuration = function(driver, device)
   end
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
   local supported_button_values
   local number_of_buttons
@@ -130,7 +136,7 @@ local function added_handler(self, device)
     device:emit_component_event(comp,
       capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
   end
-  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 

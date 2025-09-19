@@ -106,10 +106,16 @@ local temperature_measurement_min_max_attr_handler = function(minOrMax)
   end
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
   if device:supports_server_cluster(TemperatureMeasurement.ID) then
     device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
     device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))

@@ -335,6 +335,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    -- The initial button pushed event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__set_channel_ordering("relaxed")
 
@@ -384,6 +385,58 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false }))
     )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+    })
+    -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__set_channel_ordering("relaxed")
+
+    for button_name, _ in pairs(mock_device.profile.components) do
+      if button_name ~= "main" and (button_name == "button1" or button_name == "button3" or button_name == "button5" or button_name == "button7") then
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "up_hold" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      elseif button_name ~= "main" and (button_name == "button2" or button_name == "button4" or button_name == "button6" or button_name == "button8") then
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "down_hold" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      else
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            "main",
+            capabilities.button.supportedButtonValues({ "pushed", "up_hold", "down_hold" },
+              { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            "main",
+            capabilities.button.numberOfButtons({ value = 8 }, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+
     test.socket.zigbee:__expect_send({
       mock_device.id,
       PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)

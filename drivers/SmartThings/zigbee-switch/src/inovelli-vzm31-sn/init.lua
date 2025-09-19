@@ -194,6 +194,12 @@ local do_configure = function(self, device)
   end
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local device_init = function(self, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time())
@@ -228,11 +234,11 @@ local device_init = function(self, device)
     end
     device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
   else
-    device:emit_event(capabilities.colorControl.hue(1))
-    device:emit_event(capabilities.colorControl.saturation(1))
-    device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
-    device:emit_event(capabilities.switchLevel.level(100))
-    device:emit_event(capabilities.switch.switch("off"))
+    emit_event_if_latest_state_missing(device, "main", capabilities.colorControl.NAME, capabilities.colorControl.hue.NAME, capabilities.colorControl.hue(1))
+    emit_event_if_latest_state_missing(device, "main", capabilities.colorControl.NAME, capabilities.colorControl.saturation.NAME, capabilities.colorControl.saturation(1))
+    emit_event_if_latest_state_missing(device, "main", capabilities.colorTemperature.NAME, capabilities.colorTemperature.colorTemperature.NAME, capabilities.colorTemperature.colorTemperature(6500))
+    emit_event_if_latest_state_missing(device, "main", capabilities.switchLevel.NAME, capabilities.switchLevel.level.NAME, capabilities.switchLevel.level(100))
+    emit_event_if_latest_state_missing(device, "main", capabilities.switch, capabilities.switch.switch.NAME, capabilities.switch.switch("off"))
   end
 end
 
