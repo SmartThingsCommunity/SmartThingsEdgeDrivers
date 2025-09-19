@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -136,8 +136,8 @@ local is_bituo_power_meter = function(opts, driver, device)
 end
 
 local function energy_handler(driver, device, value, zb_rx)
-  local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
-  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 100
+  local multiplier = 1
+  local divisor = 100
   local raw_value = value.value
   local raw_value_kilowatts = raw_value * multiplier/divisor
 
@@ -176,111 +176,18 @@ local function energy_handler(driver, device, value, zb_rx)
   device:emit_event(capabilities.energyMeter.energy({value = raw_value_kilowatts, unit = "kWh"}))
 end
 
-local function produced_energy_handler(driver, device, value, zb_rx)
-  local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
-  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 100
-  local raw_value = value.value * multiplier/divisor
-  device:emit_component_event(device.profile.components["TotalReverseEnergy"], capabilities.energyMeter.energy({value = raw_value, unit = "kWh"}))
-end
-
-local function power_phaseA_handler(driver, device, value, zb_rx)
-  local multiplier = device:get_field(constants.ELECTRICAL_MEASUREMENT_MULTIPLIER_KEY) or 1
-  local divisor = device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) or 1
-  local raw_value = value.value * multiplier/divisor -- Uint W
-  device:emit_component_event(device.profile.components["PhaseA"], capabilities.powerMeter.power({value = raw_value, unit = "W"}))
-end
-
-local function power_phaseB_handler(driver, device, value, zb_rx)
-  local component = device.profile.components["PhaseB"]
-  if component ~= nil then
-    local multiplier = device:get_field(constants.ELECTRICAL_MEASUREMENT_MULTIPLIER_KEY) or 1
-    local divisor = device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) or 1
-    local raw_value = value.value * multiplier/divisor -- Uint W
-    device:emit_component_event(component, capabilities.powerMeter.power({value = raw_value, unit = "W"}))
-  end
-end
-
-
-local function power_phaseC_handler(driver, device, value, zb_rx)
-  local component = device.profile.components["PhaseC"]
-  if component ~= nil then
-    local multiplier = device:get_field(constants.ELECTRICAL_MEASUREMENT_MULTIPLIER_KEY) or 1
-    local divisor = device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) or 1
-    local raw_value = value.value * multiplier/divisor -- Uint W
-    device:emit_component_event(component, capabilities.powerMeter.power({value = raw_value, unit = "W"}))
-  end
-end
-
-local function voltage_phaseA_handler(driver, device, value, zb_rx)
-  local multiplier = device:get_field("RMSVOLTAGE_MULTIPLIER") or 1
-  local divisor = device:get_field("RMSVOLTAGE_DIVISOR") or 100
-  local raw_value = value.value * multiplier/divisor -- Uint V
-  device:emit_component_event(device.profile.components["PhaseA"], capabilities.voltageMeasurement.voltage({value = raw_value, unit = "V"}))
-end
-
-local function voltage_phaseB_handler(driver, device, value, zb_rx)
-  local component = device.profile.components["PhaseB"]
-  if component ~= nil then
-    local multiplier = device:get_field("RMSVOLTAGE_MULTIPLIER") or 1
-    local divisor = device:get_field("RMSVOLTAGE_DIVISOR") or 100
-    local raw_value = value.value * multiplier/divisor -- Uint V
-    device:emit_component_event(component, capabilities.voltageMeasurement.voltage({value = raw_value, unit = "V"}))
-  end
-end
-
-local function voltage_phaseC_handler(driver, device, value, zb_rx)
-  local component = device.profile.components["PhaseC"]
-  if component ~= nil then
-    local multiplier = device:get_field("RMSVOLTAGE_MULTIPLIER") or 1
-    local divisor = device:get_field("RMSVOLTAGE_DIVISOR") or 100
-    local raw_value = value.value * multiplier/divisor -- Uint V
-    device:emit_component_event(component, capabilities.voltageMeasurement.voltage({value = raw_value, unit = "V"}))
-  end
-end
-
-local function current_phaseA_handler(driver, device, value, zb_rx)
-  local multiplier = device:get_field("RMSCURRENT_MULTIPLIER") or 1
-  local divisor = device:get_field("RMSCURRENT_DIVISOR") or 100
-  local raw_value = value.value * multiplier/divisor -- Uint A
-  device:emit_component_event(device.profile.components["PhaseA"], capabilities.currentMeasurement.current({value = raw_value, unit = "A"}))
-end
-
-local function current_phaseB_handler(driver, device, value, zb_rx)
-  local component = device.profile.components["PhaseB"]
-  if component ~= nil then
-    local multiplier = device:get_field("RMSCURRENT_MULTIPLIER") or 1
-    local divisor = device:get_field("RMSCURRENT_DIVISOR") or 100
-    local raw_value = value.value * multiplier/divisor -- Uint A
-    device:emit_component_event(component, capabilities.currentMeasurement.current({value = raw_value, unit = "A"}))
-  end
-end
-
-local function current_phaseC_handler(driver, device, value, zb_rx)
-  local component = device.profile.components["PhaseC"]
-  if component ~= nil then
-    local multiplier = device:get_field("RMSCURRENT_MULTIPLIER") or 1
-    local divisor = device:get_field("RMSCURRENT_DIVISOR") or 100
-    local raw_value = value.value * multiplier/divisor -- Uint A
-    device:emit_component_event(component, capabilities.currentMeasurement.current({value = raw_value, unit = "A"}))
+local function generic_handler_factory(component_name, capability, multiplier, divisor, unit)
+  return function(driver, device, value, zb_rx)
+    local component = device.profile.components[component_name]
+    if component ~= nil then
+      local raw_value = value.value * multiplier / divisor
+      device:emit_component_event(component, capability({value = raw_value, unit = unit}))
+    end
   end
 end
 
 local refresh = function(driver, device, cmd)
   device:refresh()
-  device:send(SimpleMetering.attributes.CurrentSummationDelivered:read(device))
-  device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
-  device:send(ElectricalMeasurement.attributes.RMSVoltage:read(device))
-  device:send(ElectricalMeasurement.attributes.RMSCurrent:read(device))
-  if string.find(device:get_model(), "SDM02") or string.find(device:get_model(), "SPM02") then
-    device:send(ElectricalMeasurement.attributes.ActivePowerPhB:read(device))
-    device:send(ElectricalMeasurement.attributes.RMSVoltagePhB:read(device))
-    device:send(ElectricalMeasurement.attributes.RMSCurrentPhB:read(device))
-  end
-  if string.find(device:get_model(), "SPM02") then
-    device:send(ElectricalMeasurement.attributes.ActivePowerPhC:read(device))
-    device:send(ElectricalMeasurement.attributes.RMSVoltagePhC:read(device))
-    device:send(ElectricalMeasurement.attributes.RMSCurrentPhC:read(device))
-  end
 end
 
 local function resetEnergyMeter(self, device)
@@ -297,14 +204,6 @@ local function do_configure(driver, device)
 end
 
 local device_init = function(self, device)
-  device:set_field(constants.SIMPLE_METERING_MULTIPLIER_KEY, 1, {persist = true})
-  device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 100, {persist = true})
-  device:set_field(constants.ELECTRICAL_MEASUREMENT_MULTIPLIER_KEY, 1, {persist = true}) -- ACPower
-  device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1, {persist = true}) -- ACPower
-  device:set_field("RMSVOLTAGE_MULTIPLIER", 1, {persist = true})
-  device:set_field("RMSVOLTAGE_DIVISOR", 100, {persist = true})
-  device:set_field("RMSCURRENT_MULTIPLIER", 1, {persist = true})
-  device:set_field("RMSCURRENT_DIVISOR", 100, {persist = true})
   for _, attribute in ipairs(PHASE_A_CONFIGURATION) do
     device:add_configured_attribute(attribute)
     device:add_monitored_attribute(attribute)
@@ -327,14 +226,6 @@ end
 
 local bituo_power_meter_handler = {
   NAME = "bituo power meter handler",
-  supported_capabilities = {
-    capabilities.refresh,
-    capabilities.powerMeter,
-    capabilities.energyMeter,
-    capabilities.powerConsumptionReport,
-    capabilities.currentMeasurement,
-    capabilities.voltageMeasurement,
-  },
   lifecycle_handlers = {
     init = device_init,
     doConfigure = do_configure,
@@ -343,18 +234,18 @@ local bituo_power_meter_handler = {
     attr = {
       [clusters.SimpleMetering.ID] = {
         [clusters.SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_handler,
-        [0x0001] = produced_energy_handler
+        [0x0001] = generic_handler_factory("TotalReverseEnergy", capabilities.energyMeter.energy, 1, 100, "kWh"),
         },
       [clusters.ElectricalMeasurement.ID] = {
-        [ElectricalMeasurement.attributes.ActivePower.ID] = power_phaseA_handler,
-        [ElectricalMeasurement.attributes.ActivePowerPhB.ID] = power_phaseB_handler,
-        [ElectricalMeasurement.attributes.ActivePowerPhC.ID] = power_phaseC_handler,
-        [ElectricalMeasurement.attributes.RMSVoltage.ID] = voltage_phaseA_handler,
-        [ElectricalMeasurement.attributes.RMSVoltagePhB.ID] = voltage_phaseB_handler,
-        [ElectricalMeasurement.attributes.RMSVoltagePhC.ID] = voltage_phaseC_handler,
-        [ElectricalMeasurement.attributes.RMSCurrent.ID] = current_phaseA_handler,
-        [ElectricalMeasurement.attributes.RMSCurrentPhB.ID] = current_phaseB_handler,
-        [ElectricalMeasurement.attributes.RMSCurrentPhC.ID] = current_phaseC_handler
+        [ElectricalMeasurement.attributes.ActivePower.ID] = generic_handler_factory("PhaseA", capabilities.powerMeter.power, 1, 1, "W"),
+        [ElectricalMeasurement.attributes.ActivePowerPhB.ID] = generic_handler_factory("PhaseB", capabilities.powerMeter.power, 1, 1, "W"),
+        [ElectricalMeasurement.attributes.ActivePowerPhC.ID] = generic_handler_factory("PhaseC", capabilities.powerMeter.power, 1, 1, "W"),
+        [ElectricalMeasurement.attributes.RMSVoltage.ID] = generic_handler_factory("PhaseA", capabilities.voltageMeasurement.voltage, 1, 100, "V"),
+        [ElectricalMeasurement.attributes.RMSVoltagePhB.ID] = generic_handler_factory("PhaseB", capabilities.voltageMeasurement.voltage, 1, 100, "V"),
+        [ElectricalMeasurement.attributes.RMSVoltagePhC.ID] = generic_handler_factory("PhaseC", capabilities.voltageMeasurement.voltage, 1, 100, "V"),
+        [ElectricalMeasurement.attributes.RMSCurrent.ID] = generic_handler_factory("PhaseA", capabilities.currentMeasurement.current, 1, 100, "A"),
+        [ElectricalMeasurement.attributes.RMSCurrentPhB.ID] = generic_handler_factory("PhaseB", capabilities.currentMeasurement.current, 1, 100, "A"),
+        [ElectricalMeasurement.attributes.RMSCurrentPhC.ID] = generic_handler_factory("PhaseC", capabilities.currentMeasurement.current, 1, 100, "A")
       }
     }
   },
