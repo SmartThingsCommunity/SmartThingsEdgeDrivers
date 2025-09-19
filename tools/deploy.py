@@ -5,7 +5,7 @@ ENVIRONMENT = os.environ.get('ENVIRONMENT')
 CHANGED_DRIVERS = os.environ.get('CHANGED_DRIVERS')
 # configurable from Jenkins to override and manually set the drivers to be uploaded
 DRIVERS_OVERRIDE = os.environ.get('DRIVERS_OVERRIDE') or "[]"
-DRY_RUN = os.environ.get("DRY_RUN") != None
+DRY_RUN = os.environ.get("DRY_RUN") == True or os.environ.get("DRY_RUN") == "True"
 print(BRANCH)
 print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
