@@ -21,6 +21,7 @@ local data_types = require "st.zigbee.data_types"
 local messages = require "st.zigbee.messages"
 local defaults = require "st.zigbee.defaults"
 local PowerConfiguration = clusters.PowerConfiguration
+local tuya_utils = require "tuya_utils"
 
 local IASACE = clusters.IASACE
 
@@ -63,7 +64,7 @@ end
 local function added_handler(driver, device, event, args)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  tuya_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 
   local magic_spell = {0x0004, 0x0000, 0x0001, 0x0005, 0x0007, 0xfffe}
   device:send(read_attribute_function(device, clusters.Basic.ID, magic_spell))
