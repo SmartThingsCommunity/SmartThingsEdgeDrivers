@@ -166,8 +166,12 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
       return
     end
 
-    _, err =
-      Router.open_socket_for_player(household_id, coordinator_id, coordinator.websocketUrl, api_key)
+    _, err = Router.open_socket_for_player(
+      household_id,
+      coordinator_id,
+      coordinator.player.websocketUrl,
+      api_key
+    )
     if err ~= nil then
       log.error(
         string.format(
@@ -242,11 +246,7 @@ end
 ---@param sonos_conn SonosConnection
 local function _oauth_reconnect_task(sonos_conn)
   log.debug("Spawning reconnect task for ", sonos_conn.device.label)
-  local check_auth = sonos_conn.driver:check_auth(sonos_conn.device)
-  local unauthorized = (check_auth == false)
-  if unauthorized and not sonos_conn.driver:is_waiting_for_oauth_token() then
-    sonos_conn.driver:request_oauth_token()
-  end
+  -- Subscribe first so we get all updates on the bus
   local token_receive_handle, err = sonos_conn.driver:oauth_token_event_subscribe()
   if not token_receive_handle then
     log.warn(string.format("error creating oauth token receive handle for respawn task: %s", err))
@@ -254,7 +254,11 @@ local function _oauth_reconnect_task(sonos_conn)
   cosock.spawn(function()
     local backoff = backoff_builder(60, 1, 0.1)
     while not sonos_conn:is_running() do
-      if sonos_conn.driver:is_waiting_for_oauth_token() and token_receive_handle then
+      local check_auth = sonos_conn.driver:check_auth(sonos_conn.device)
+      local unauthorized = (check_auth == false)
+
+      if unauthorized then
+        sonos_conn.driver:alert_unauthorized()
         local token, channel_error = token_receive_handle:receive()
         if not token then
           log.warn(string.format("Error requesting token: %s", channel_error))
@@ -271,12 +275,6 @@ local function _oauth_reconnect_task(sonos_conn)
         end
       end
 
-      check_auth = sonos_conn.driver:check_auth(sonos_conn.device)
-      unauthorized = (check_auth == false)
-
-      if unauthorized and not sonos_conn.driver:is_waiting_for_oauth_token() then
-        sonos_conn.driver:request_oauth_token()
-      end
       cosock.socket.sleep(backoff())
     end
     sonos_conn._reconnecting = false
@@ -302,10 +300,13 @@ end
 --- @return SonosConnection
 function SonosConnection.new(driver, device)
   log.debug(string.format("Creating new SonosConnection for %s", device.label))
-  local self = setmetatable(
-    { driver = driver, device = device, _listener_uuids = {}, _initialized = false, _reconnecting = false },
-    SonosConnection
-  )
+  local self = setmetatable({
+    driver = driver,
+    device = device,
+    _listener_uuids = {},
+    _initialized = false,
+    _reconnecting = false,
+  }, SonosConnection)
 
   -- capture the label here in case something goes wonky like a callback being fired after a
   -- device is removed
@@ -339,10 +340,6 @@ function SonosConnection.new(driver, device)
             device.log.warn(
               string.format("WebSocket connection no longer authorized, disconnecting")
             )
-            local _, security_err = driver:request_oauth_token()
-            if security_err then
-              log.warn(string.format("Error during request for oauth token: %s", security_err))
-            end
             -- closing the socket directly without calling `:stop()` triggers the reconnect loop,
             -- which is where we wait for the token to come in.
             local unique_key, bad_key_part = utils.sonos_unique_key(household_id, player_id)
@@ -351,6 +348,7 @@ function SonosConnection.new(driver, device)
             else
               Router.close_socket_for_player(unique_key)
             end
+            self.driver:alert_unauthorized()
           end
         end
       elseif header.type == "groups" then
@@ -358,19 +356,28 @@ function SonosConnection.new(driver, device)
         local household_id, current_coordinator =
           self.driver.sonos:get_coordinator_for_device(self.device)
         local _, player_id = self.driver.sonos:get_player_for_device(self.device)
-        self.driver.sonos:update_household_info(header.householdId, body, self.device)
+        self.driver.sonos:update_household_info(header.householdId, body, self.driver)
         self.driver.sonos:update_device_record_from_state(header.householdId, self.device)
         local _, updated_coordinator = self.driver.sonos:get_coordinator_for_device(self.device)
 
-        Router.cleanup_unused_sockets(self.driver)
-
-        if not self:coordinator_running() then
-          --TODO this is not infallible
-          _open_coordinator_socket(self, household_id, player_id)
+        local bonded = self.device:get_field(PlayerFields.BONDED)
+        if bonded then
+          self:stop()
         end
 
-        if current_coordinator ~= updated_coordinator then
-          self:refresh_subscriptions()
+        Router.cleanup_unused_sockets(self.driver)
+
+        if not bonded then
+          if not self:coordinator_running() then
+            --TODO this is not infallible
+            _open_coordinator_socket(self, household_id, player_id)
+          end
+
+          if current_coordinator ~= updated_coordinator then
+            self:refresh_subscriptions()
+          end
+        else
+          self.device:offline()
         end
       elseif header.type == "playerVolume" then
         log.trace(string.format("PlayerVolume type message for %s", device_name))
@@ -477,7 +484,7 @@ function SonosConnection.new(driver, device)
               return
             end
 
-            local url_ip = lb_utils.force_url_table(coordinator_player.websocketUrl).host
+            local url_ip = lb_utils.force_url_table(coordinator_player.player.websocketUrl).host
             local base_url = lb_utils.force_url_table(
               string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
             )
@@ -590,7 +597,7 @@ function SonosConnection:coordinator_running()
       )
     )
   end
-  return type(unique_key) == "string" and Router.is_connected(unique_key) and self._initialized
+  return type(unique_key) == "string" and Router.is_connected(unique_key)
 end
 
 function SonosConnection:refresh_subscriptions(maybe_reply_tx)
