@@ -81,8 +81,12 @@ local switch_level_set_level_command_handler = function(driver, device, command)
 end
 
 local device_added = function(self, device)
-  generate_switch_onoff_event(device, "on")
-  generate_switch_level_event(device, DEFAULT_LEVEL)
+  if device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME) == nil then
+    generate_switch_onoff_event(device, "on")
+  end
+  if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil then
+    generate_switch_level_event(device, DEFAULT_LEVEL)
+  end
 end
 
 local is_zigbee_battery_accessory_dimmer = function(opts, driver, device)

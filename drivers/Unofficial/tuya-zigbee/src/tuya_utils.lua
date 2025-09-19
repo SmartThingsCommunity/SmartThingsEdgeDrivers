@@ -157,6 +157,12 @@ tuya_utils.build_tuya_magic_spell_message = function(device)
   })
 end
 
+tuya_utils.emit_event_if_latest_state_missing = function(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 tuya_utils.TUYA_PRIVATE_CLUSTER = TUYA_PRIVATE_CLUSTER
 tuya_utils.DP_TYPE_BOOL = DP_TYPE_BOOL
 tuya_utils.DP_TYPE_ENUM = DP_TYPE_ENUM
