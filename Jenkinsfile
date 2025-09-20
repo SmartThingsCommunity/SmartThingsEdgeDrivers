@@ -31,10 +31,6 @@ pipeline {
     string(name: "ALPHA_CHANNEL_ID", defaultValue: "")
     string(name: "BETA_CHANNEL_ID", defaultValue: "")
     string(name: "PROD_CHANNEL_ID", defaultValue: "")
-    password(name: "TOKEN", defaultValue: "")
-    password(name: "BOSE_AUDIONOTIFICATION_APPKEY", defaultValue: "")
-    password(name: "SONOS_API_KEY", defaultValue: "")
-    password(name: "SONOS_OAUTH_API_KEY", defaultValue: "")
     string(name: "DRIVERS_OVERRIDE", defaultValue: "")
     booleanParam(name: "DRY_RUN", defaultValue: true)
   }
@@ -50,10 +46,10 @@ pipeline {
     ALPHA_CHANNEL_ID = "${params.ALPHA_CHANNEL_ID}"
     BETA_CHANNEL_ID = "${params.BETA_CHANNEL_ID}"
     PROD_CHANNEL_ID = "${params.PROD_CHANNEL_ID}"
-    TOKEN = credentials("TOKEN")
-    BOSE_AUDIONOTIFICATION_APPKEY = "${params.BOSE_AUDIONOTIFICATION_APPKEY}"
-    SONOS_API_KEY = "${params.SONOS_API_KEY}"
-    SONOS_OAUTH_API_KEY = "${params.SONOS_OAUTH_API_KEY}"
+    TOKEN = credentials("EDGE_DRIVER_DEPLOY_TOKEN_${env.NODE_LABEL.toUpperCase()}")
+    BOSE_AUDIONOTIFICATION_APPKEY = credentials("BOSE_AUDIONOTIFICATION_APPKEY")
+    SONOS_API_KEY = credentials("SONOS_API_KEY")
+    SONOS_OAUTH_API_KEY = credentials("SONOS_OAUTH_API_KEY")
     DRIVERS_OVERRIDE = "${params.DRIVERS_OVERRIDE}"
     DRY_RUN = "${params.DRY_RUN}"
     BRANCH = getEnvName()
