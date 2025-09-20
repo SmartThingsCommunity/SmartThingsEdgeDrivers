@@ -166,11 +166,17 @@ local function do_configure(self, device)
   do_refresh(self, device)
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
   device:emit_event(deviceInitialization.supportedInitializedState({ "notInitialized", "initializing", "initialized" }, {visibility = {displayed = false}}))
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
-  device:emit_event(capabilities.windowShade.windowShade.closed())
+  emit_event_if_latest_state_missing(device, "main", capabilities.windowShadeLevel, capabilities.windowShadeLevel.shadeLevel.NAME, capabilities.windowShadeLevel.shadeLevel(0))
+  emit_event_if_latest_state_missing(device, "main", capabilities.windowShade, capabilities.windowShade.windowShade.NAME, capabilities.windowShade.windowShade.closed())
   device:emit_event(deviceInitialization.initializedState.notInitialized())
 
   device:send(cluster_base.write_manufacturer_specific_attribute(device, aqara_utils.PRIVATE_CLUSTER_ID,

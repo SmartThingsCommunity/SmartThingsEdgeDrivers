@@ -39,10 +39,16 @@ local SHADE_STATE_CLOSE = 0
 local SHADE_STATE_OPEN = 1
 local SHADE_STATE_STOP = 2
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
-  device:emit_event(capabilities.windowShade.windowShade.closed())
+  emit_event_if_latest_state_missing(device, "main", capabilities.windowShadeLevel, capabilities.windowShadeLevel.shadeLevel.NAME, capabilities.windowShadeLevel.shadeLevel(0))
+  emit_event_if_latest_state_missing(device, "main", capabilities.windowShade, capabilities.windowShade.windowShade.NAME, capabilities.windowShade.windowShade.closed())
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
   device:emit_event(hookLockState.hookLockState.unlocked())
   device:emit_event(chargingState.chargingState.stopped())

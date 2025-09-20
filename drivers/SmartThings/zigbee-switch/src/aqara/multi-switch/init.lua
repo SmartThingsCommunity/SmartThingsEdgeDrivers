@@ -53,6 +53,12 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+
+end
 local function device_added(driver, device)
   -- Only create children for the actual Zigbee device and not the children
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
@@ -89,7 +95,7 @@ local function device_added(driver, device)
   end
   device:emit_event(capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local function device_init(self, device)

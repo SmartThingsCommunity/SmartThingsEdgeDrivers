@@ -45,8 +45,14 @@ local function basic_get_handler(self, device, cmd)
   device:send(Basic:Report({value = is_on == "on" and 0xff or 0x00}))
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function device_added(driver, device)
-  device:emit_event(capabilities.switch.switch.off())
+  emit_event_if_latest_state_missing(device, "main", capabilities.switch, capabilities.switch.switch.NAME, capabilities.switch.switch.off())
 end
 
 local function switch_on_handler(driver, device)

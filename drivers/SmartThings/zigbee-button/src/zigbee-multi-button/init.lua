@@ -62,6 +62,12 @@ local function can_handle_zigbee_multi_button(opts, driver, device, ...)
   return false
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
   local config = supported_values.get_device_parameters(device)
   for _, component in pairs(device.profile.components) do
@@ -78,7 +84,7 @@ local function added_handler(self, device)
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } }))
     end
   end
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local zigbee_multi_button = {

@@ -44,6 +44,12 @@ local function build_button_payload_handler(pressed_type)
   end
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
   for comp_name, comp in pairs(device.profile.components) do
     if comp_name == "button5" then
@@ -58,7 +64,7 @@ local function added_handler(self, device)
     end
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local remote_control = {

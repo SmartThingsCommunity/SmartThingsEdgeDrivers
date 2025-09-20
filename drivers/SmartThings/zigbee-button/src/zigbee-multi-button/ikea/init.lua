@@ -68,6 +68,12 @@ local do_configure = function(self, device)
   device:send(binding_table_cmd)
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
   local config = supported_values.get_device_parameters(device)
   for _, component in pairs(device.profile.components) do
@@ -80,8 +86,8 @@ local function added_handler(self, device)
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
-end
+  emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
+  end
 
 local function zdo_binding_table_handler(driver, device, zb_rx)
   for _, binding_table in pairs(zb_rx.body.zdo_body.binding_table_entries) do

@@ -91,8 +91,14 @@ local function device_init(driver, device)
   end
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function device_added(driver, device)
-  device:emit_event(capabilities.switchLevel.level(100))
+  emit_event_if_latest_state_missing(device, "main", capabilities.switchLevel, capabilities.switchLevel.level.NAME, capabilities.switchLevel.level(100))
 end
 
 local zigbee_dimming_light = {
