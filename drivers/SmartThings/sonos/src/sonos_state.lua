@@ -11,7 +11,7 @@ local SonosConnection = require "api.sonos_connection"
 --- Information on an entire Sonos system ("household"), such as its current groups, list of players, etc.
 --- @field public id HouseholdId
 --- @field public groups table<GroupId,SonosGroupObject> All of the current groups in the system
---- @field public players table<PlayerId,{player: SonosPlayerObject, device: SonosDeviceInfoObject}> All of the current players in the system
+--- @field public players table<PlayerId,{player: SonosPlayerObject}> All of the current players in the system
 --- @field public bonded_players table<PlayerId,boolean> PlayerID's in this map that map to true are non-primary bonded players, and not controllable.
 --- @field public player_to_group table<PlayerId,GroupId> quick lookup from Player ID -> Group ID
 --- @field public st_devices table<PlayerId,string> Player ID -> ST Device Record UUID information for the household
@@ -77,7 +77,7 @@ end
 local _STATE = {
   ---@type Households
   households = make_households_table(),
-  ---@type table<string, {sonos_device: SonosDeviceInfoObject, player: SonosPlayerObject, group: SonosGroupObject, household: SonosHousehold}>
+  ---@type table<string, {sonos_device_id: PlayerId, player: SonosPlayerObject, group: SonosGroupObject, household: SonosHousehold}>
   device_record_map = {},
 }
 
@@ -91,6 +91,7 @@ SonosState.__index = SonosState
 function SonosState:associate_device_record(device, info)
   local household_id = info.ssdp_info.household_id
   local group_id = info.ssdp_info.group_id
+  -- This is the device id even if the device is a secondary in a bonded set
   local player_id = info.discovery_info.playerId
 
   local household = _STATE.households[household_id]
@@ -120,9 +121,8 @@ function SonosState:associate_device_record(device, info)
   end
 
   local player = (household.players[player_id] or {}).player
-  local sonos_device = (household.players[player_id] or {}).device
 
-  if not (player and sonos_device) then
+  if not player then
     log.error(
       string.format(
         "No record of Sonos player for device %s",
@@ -132,12 +132,12 @@ function SonosState:associate_device_record(device, info)
     return
   end
 
-  household.st_devices[sonos_device.id] = device.id
+  household.st_devices[player_id] = device.id
 
   _STATE.device_record_map[device.id] =
-    { sonos_device = sonos_device, group = group, player = player, household = household }
+    { sonos_device_id = player_id, group = group, player = player, household = household }
 
-  local bonded = household.bonded_players[sonos_device.id or {}] and true or false
+  local bonded = household.bonded_players[player_id] and true or false
 
   local sw_gen_changed = utils.update_field_if_changed(
     device,
@@ -179,7 +179,7 @@ function SonosState:associate_device_record(device, info)
   local player_id_changed = utils.update_field_if_changed(
     device,
     PlayerFields.PLAYER_ID,
-    sonos_device.id,
+    player_id,
     { persist = true }
   )
 
@@ -306,6 +306,40 @@ function SonosState:update_device_record_from_state(household_id, device)
   self:update_device_record_group_info(household, current_mapping.group, device)
 end
 
+-- Helper function for when updating household info
+local function update_device_info(driver, player, household, known_bonded_players, sonos_device_id)
+  household.players[sonos_device_id] = { player = player }
+  local previously_bonded = known_bonded_players[sonos_device_id] and true or false
+  local currently_bonded
+  local group_id
+
+  -- The primary bonded player will have the same id as the top level player id
+  if sonos_device_id == player.id then
+    currently_bonded = false
+  else
+    currently_bonded = true
+  end
+  group_id = household.player_to_group[player.id]
+  household.player_to_group[sonos_device_id] = group_id
+  household.bonded_players[sonos_device_id] = currently_bonded
+
+  local maybe_device_id = household.st_devices[sonos_device_id]
+  if maybe_device_id then
+    _STATE.device_record_map[maybe_device_id] = _STATE.device_record_map[maybe_device_id] or {}
+    _STATE.device_record_map[maybe_device_id].household = household
+    _STATE.device_record_map[maybe_device_id].group = household.groups[group_id]
+    _STATE.device_record_map[maybe_device_id].player = player
+    _STATE.device_record_map[maybe_device_id].sonos_device_id = sonos_device_id
+    if previously_bonded ~= currently_bonded then
+      local target_device = driver:get_device_info(maybe_device_id)
+      if target_device then
+        target_device:set_field(PlayerFields.BONDED, currently_bonded, { persist = false })
+        driver:update_bonded_device_tracking(target_device)
+      end
+    end
+  end
+end
+
 --- @param id HouseholdId
 --- @param groups_event SonosGroupsResponseBody
 --- @param driver SonosDriver
@@ -323,40 +357,28 @@ function SonosState:update_household_info(id, groups_event, driver)
     end
   end
 
+  -- Iterate through the players and track all the devices associated with them
+  -- for bonded set tracking.
+  local log_devices_error = false
   for _, player in ipairs(players) do
-    for _, device in ipairs(player.devices) do
-      household.players[device.id] = { player = player, device = device }
-      local previously_bonded = known_bonded_players[device.id] and true or false
-      local currently_bonded
-      local group_id
-      -- non-primary bonded players are excluded from a group's list of PlayerID's so we use the group membership
-      -- of the primary device
-      if type(device.primaryDeviceId) == "string" and device.primaryDeviceId ~= "" then
-        currently_bonded = true
-        group_id = household.player_to_group[device.primaryDeviceId]
-      else
-        currently_bonded = false
-        group_id = household.player_to_group[device.id]
+    -- Prefer devices because deviceIds is deprecated but all we care about is
+    -- the ID so either way is fine.
+    if player.devices then
+      for _, device in ipairs(player.devices) do
+        update_device_info(driver, player, household, known_bonded_players, device.id)
       end
-      household.player_to_group[device.id] = group_id
-      household.bonded_players[device.id] = currently_bonded
-
-      local maybe_device_id = household.st_devices[device.id]
-      if maybe_device_id then
-        _STATE.device_record_map[maybe_device_id] = _STATE.device_record_map[maybe_device_id] or {}
-        _STATE.device_record_map[maybe_device_id].household = household
-        _STATE.device_record_map[maybe_device_id].group = household.groups[group_id]
-        _STATE.device_record_map[maybe_device_id].player = player
-        _STATE.device_record_map[maybe_device_id].sonos_device = device
-        if previously_bonded ~= currently_bonded then
-          local target_device = driver:get_device_info(maybe_device_id)
-          if target_device then
-            target_device:set_field(PlayerFields.BONDED, currently_bonded, { persist = false })
-            driver:update_bonded_device_tracking(target_device)
-          end
-        end
+    elseif player.deviceIds then
+      for _, device_id in ipairs(player.deviceIds) do
+        update_device_info(driver, player, household, known_bonded_players, device_id)
       end
+    else
+      log_devices_error = true
+      -- We can still track the primary player in this case
+      update_device_info(driver, player, household, known_bonded_players, player.id)
     end
+  end
+  if log_devices_error then
+    log.warn_with( { hub_logs = true}, "Group event contained neither devices nor deviceIds in player")
   end
 
   household.id = id
@@ -489,7 +511,7 @@ function SonosState:get_sonos_ids_for_device(device)
 
   -- player id *should* be stable
   if not player_id then
-    player_id = sonos_objects.sonos_device.id
+    player_id = sonos_objects.sonos_device_id
     device:set_field(PlayerFields.PLAYER_ID, player_id, { persist = true })
   end
 
