@@ -25,8 +25,6 @@ if not security_load_success then
   security = nil
 end
 
-local ONE_HOUR_IN_SECONDS = 3600
-
 ---@class SonosDriver: Driver
 ---
 ---@field public datastore table<string, any> driver persistent store
@@ -38,8 +36,8 @@ local ONE_HOUR_IN_SECONDS = 3600
 ---@field public sonos SonosState Local state related to the sonos systems
 ---@field public discovery fun(driver: SonosDriver, opts: table, should_continue: fun(): boolean)
 ---@field private oauth_token_bus cosock.Bus.Sender bus for broadcasting new oauth tokens that arrive on the environment channel
+---@field private oauth_info_bus cosock.Bus.Sender bus for broadcasting new endpoint app info that arrives on the environment channel
 ---@field private oauth { token: {accessToken: string, expiresAt: number}, endpoint_app_info: { state: "connected"|"disconnected" }, force_oauth: boolean? } cached OAuth info
----@field private waiting_for_oauth_token boolean
 ---@field private startup_state_received boolean
 ---@field private devices_waiting_for_startup_state SonosDevice[]
 ---
@@ -89,20 +87,15 @@ end
 function SonosDriver:handle_augmented_data_change(update_key, decoded)
   if update_key == "endpointAppInfo" then
     self.oauth.endpoint_app_info = decoded
+    self.oauth_info_bus:send(decoded)
   elseif update_key == "sonosOAuthToken" then
     self.oauth.token = decoded
-    self.waiting_for_oauth_token = false
     self.oauth_token_bus:send(decoded)
   elseif update_key == "force_oauth" then
     self.oauth.force_oauth = decoded
   else
     log.debug(string.format("received upsert of unexpected key: %s", update_key))
   end
-end
-
----@return boolean
-function SonosDriver:is_waiting_for_oauth_token()
-  return (api_version >= 14 and security ~= nil) and self.waiting_for_oauth_token
 end
 
 ---@return (cosock.Bus.Subscription)? receiver the subscription receiver if the bus hasn't been closed, nil if closed
@@ -112,6 +105,15 @@ function SonosDriver:oauth_token_event_subscribe()
     return nil, "not supported"
   end
   return self.oauth_token_bus:subscribe()
+end
+
+---@return (cosock.Bus.Subscription)? receiver the subscription receiver if the bus hasn't been closed, nil if closed
+---@return nil|"not supported"|"closed" err_msg "not supported" on old API versions, "closed" if the bus is closed, nil on success
+function SonosDriver:oauth_info_event_subscribe()
+  if api_version < 14 or security == nil then
+    return nil, "not supported"
+  end
+  return self.oauth_info_bus:subscribe()
 end
 
 function SonosDriver:update_after_startup_state_received()
@@ -129,9 +131,11 @@ function SonosDriver:handle_augmented_store_delete(update_key)
     if update_key == "endpointAppInfo" then
       log.trace "deleting endpoint app info"
       self.oauth.endpoint_app_info = nil
+      self.oauth_info_bus:send(nil)
     elseif update_key == "sonosOAuthToken" then
       log.trace "deleting OAuth Token"
       self.oauth.token = nil
+      self.oauth_token_bus:send(nil)
     elseif update_key == "force_oauth" then
       log.trace "deleting Force OAuth"
       self.oauth.force_oauth = nil
@@ -164,9 +168,7 @@ end
 ---@param update_key "endpointAppInfo"|"sonosOAuthToken"
 ---@param update_value string
 function SonosDriver:notify_augmented_data_changed(update_kind, update_key, update_value)
-  local already_connected = self.oauth
-    and self.oauth.endpoint_app_info
-    and self.oauth.endpoint_app_info.state == "connected"
+  local already_connected = self:oauth_app_connected()
   log.info(string.format("Already connected? %s", already_connected))
   if update_kind == "snapshot" then
     self:update_after_startup_state_received()
@@ -183,22 +185,15 @@ function SonosDriver:notify_augmented_data_changed(update_kind, update_key, upda
       )
     )
   end
-
-  if
-    self.oauth.endpoint_app_info
-    and self.oauth.endpoint_app_info.state == "connected"
-    and not already_connected
-  then
-    local _, err = self:request_oauth_token()
-    if err then
-      log.error(string.format("Request OAuth token error: %s", err))
-    end
-  end
 end
 
 function SonosDriver:handle_startup_state_received()
   self:start_ssdp_event_task()
   self:notify_augmented_data_changed "snapshot"
+  if api_version >= 14 and security ~= nil then
+    local token_refresher = require "token_refresher"
+    token_refresher.spawn_token_refresher(self)
+  end
   self.startup_state_received = true
   for _, device in pairs(self.devices_waiting_for_startup_state) do
     SonosDriverLifecycleHandlers.initialize_device(self, device)
@@ -226,12 +221,7 @@ end
 function SonosDriver:check_auth(info_or_device)
   local maybe_token, _ = self:get_oauth_token()
 
-  local token_valid = (api_version >= 14 and security ~= nil)
-    and self.oauth
-    and self.oauth.endpoint_app_info
-    and self.oauth.endpoint_app_info.state == "connected"
-    and maybe_token ~= nil
-  if token_valid then
+  if maybe_token then
     return true, SonosApi.api_keys.oauth_key
   elseif self.oauth.force_oauth then
     return false
@@ -322,45 +312,15 @@ function SonosDriver:check_auth(info_or_device)
     )
 end
 
----@return any? ret nil on permissions violation
----@return string? error nil on success
-function SonosDriver:request_oauth_token()
-  if api_version < 14 or security == nil then
-    return nil, "not supported"
-  end
-  local maybe_token, maybe_err = self:get_oauth_token()
-  if maybe_err then
-    log.warn(string.format("get oauth token error: %s", maybe_err))
-  end
-  if type(maybe_token) == "table" and type(maybe_token.accessToken) == "string" then
-    self.oauth_token_bus:send(maybe_token)
-  end
-  local result, err = security.get_sonos_oauth()
-  if not result then
-    return nil, string.format("Error requesting OAuth token via Security API: %s", err)
-  end
-  self.waiting_for_oauth_token = true
-  return result, err
-end
-
 ---@return { accessToken: string, expiresAt: number }? the token if a currently valid token is available, nil if not
----@return "token expired"|"no token"|"not supported"|nil reason the reason a token was not provided, nil if there is a valid token available
+---@return "token expired"|"no token"|"not supported"|"not connected"|nil reason the reason a token was not provided, nil if there is a valid token available
 function SonosDriver:get_oauth_token()
   if api_version < 14 or security == nil then
     return nil, "not supported"
   end
-  self.hub_augmented_driver_data = self.hub_augmented_driver_data or {}
-  local decode_success, maybe_token =
-    pcall(json.decode, self.hub_augmented_driver_data.sonosOAuthToken)
-  if
-    decode_success
-    and type(maybe_token) == "table"
-    and type(maybe_token.accessToken) == "string"
-    and type(maybe_token.expiresAt) == "number"
-  then
-    self.oauth.token = maybe_token
-  elseif self.hub_augmented_driver_data.sonosOAuthToken ~= nil then
-    log.warn(string.format("Unable to JSON decode token from hub augmented data: %s", maybe_token))
+
+  if not self:oauth_app_connected() then
+    return nil, "not connected"
   end
 
   if self.oauth.token then
@@ -368,13 +328,6 @@ function SonosDriver:get_oauth_token()
     local now = os.time()
     -- token has not expired yet
     if now < expiration then
-      -- token is expiring soon, so we pre-emptively refresh
-      if math.abs(expiration - now) < ONE_HOUR_IN_SECONDS then
-        local result, err = security.get_sonos_oauth()
-        if not result then
-          log.warn(string.format("Error requesting OAuth token via Security API: %s", err))
-        end
-      end
       return self.oauth.token
     else
       return nil, "token expired"
@@ -382,6 +335,41 @@ function SonosDriver:get_oauth_token()
   end
 
   return nil, "no token"
+end
+
+function SonosDriver:wait_for_oauth_token(timeout)
+  if api_version < 14 or security == nil then
+    return nil, "not supported"
+  end
+
+  if not self:oauth_app_connected() then
+    return nil, "not connected"
+  end
+
+  -- See if a valid token is already available
+  local maybe_token, _ = self:get_oauth_token()
+  if maybe_token then
+    -- return the valid token
+    return maybe_token
+  end
+  -- Subscribe to the token event bus. A new token has been/will be requested
+  -- by the token refresher task.
+  local token_bus, err = self:oauth_token_event_subscribe()
+  if token_bus then
+    token_bus:settimeout(timeout)
+    -- Wait for the new token to come in
+    token_bus:receive()
+    -- Call `SonosDriver:get_oauth_token` again to ensure the token is valid.
+    return self:get_oauth_token()
+  end
+  return nil, err
+end
+
+function SonosDriver:oauth_app_connected()
+  return (api_version >= 14 and security ~= nil)
+    and self.oauth
+    and self.oauth.endpoint_app_info
+    and self.oauth.endpoint_app_info.state == "connected"
 end
 
 ---Create a cosock task that handles events from the persistent SSDP task.
@@ -622,13 +610,14 @@ end
 
 function SonosDriver.new_driver_template()
   local oauth_token_bus = cosock.bus()
+  local oauth_info_bus = cosock.bus()
 
   local template = {
     sonos = SonosState.instance(),
     discovery = SonosDisco.discover,
     oauth_token_bus = oauth_token_bus,
+    oauth_info_bus = oauth_info_bus,
     oauth = {},
-    waiting_for_oauth_token = false,
     startup_state_received = false,
     devices_waiting_for_startup_state = {},
     dni_to_device_id = utils.new_mac_address_keyed_table(),
