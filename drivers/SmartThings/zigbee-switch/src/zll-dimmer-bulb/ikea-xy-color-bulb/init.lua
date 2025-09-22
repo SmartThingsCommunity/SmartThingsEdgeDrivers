@@ -48,7 +48,6 @@ local device_init = function(self, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-      device:add_monitored_attribute(attribute)
     end
   end
 end
