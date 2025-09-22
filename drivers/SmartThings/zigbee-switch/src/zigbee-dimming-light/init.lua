@@ -87,7 +87,6 @@ end
 local function device_init(driver, device)
   for _,attribute in ipairs(DIMMING_LIGHT_CONFIGURATION) do
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
 end
 
