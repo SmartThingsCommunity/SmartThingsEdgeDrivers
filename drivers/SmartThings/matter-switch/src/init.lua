@@ -590,7 +590,7 @@ local function build_button_profile(device, main_endpoint, num_button_eps, num_m
   end
   if num_motion_eps > 0 then
     profile_name = profile_name .. "-motion"
-  end 
+  end
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
   if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
     device:send(clusters.PowerSource.attributes.AttributeList:read(device))
@@ -674,8 +674,8 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   if #motion_eps > 0 then
     -- If there is motion endpoint, add it as additional component in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field, just like buttons.
-    build_motion_component_map(device, motion_eps) 
-  end  
+    build_motion_component_map(device, motion_eps)
+  end
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
   -- while building switch child profiles
   local num_switch_server_eps = build_child_switch_profiles(driver, device, main_endpoint)

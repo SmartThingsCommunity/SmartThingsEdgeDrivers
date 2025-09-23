@@ -68,7 +68,7 @@ local mock_device = test.mock_device.build_test_matter_device(
       device_types = {
         {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
       }
-    },    
+    },
     {
       endpoint_id = 50,
       clusters = {
@@ -105,7 +105,7 @@ local mock_device = test.mock_device.build_test_matter_device(
       device_types = {
         {device_type_id = 0x0107, device_type_revision = 1}  -- OccupancySensor
       }
-    },    
+    },
   },
 }
 )
@@ -130,7 +130,7 @@ local function expect_configure_buttons()
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 
   test.socket.capability:__expect_send(mock_device:generate_test_message("button4", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))  
+  test.socket.capability:__expect_send(mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
 
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, 50)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("button5", button_attr.pushed({state_change = false})))
@@ -160,7 +160,7 @@ local function test_init()
 
   --doConfigure sets the provisioning state to provisioned
   mock_device:expect_metadata_update({ profile = "6-button-motion" })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" }) 
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   expect_configure_buttons()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
 
@@ -352,7 +352,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Occupancy reports should generate correct messages", 
+  "Occupancy reports should generate correct messages",
   function ()
     test.socket.matter:__queue_receive({
       mock_device.id,
