@@ -14,6 +14,8 @@ local lifecycle_handlers = require "handlers.lifecycle_handlers"
 
 local bridge_utils = require "utils.hue_bridge_utils"
 local utils = require "utils"
+local batched_command_utils = require "utils.batched_command_utils"
+local st_utils = require "st.utils"
 
 ---@param driver HueDriver
 ---@param device HueDevice
@@ -68,7 +70,7 @@ local set_color_temp_handler = utils.safe_wrap_handler(command_handlers.set_colo
 --- @class HueDriver:Driver
 --- @field public ignored_bridges table<string,boolean>
 --- @field public joined_bridges table<string,boolean>
---- @field public hue_identifier_to_device_record table<string,HueChildDevice>
+--- @field public hue_identifier_to_device_record_by_bridge table<string, table<string,HueChildDevice>>
 --- @field public services_for_device_rid table<string,table<string,string>> Map the device resource ID to another map that goes from service rid to service rtype
 --- @field public waiting_grandchildren table<string,{ waiting_resource_info: HueResourceInfo, join_callback: fun(driver: HueDriver, waiting_resource_info: HueResourceInfo, parent_device: HueChildDevice)}[]>?
 --- @field public stray_device_tx table cosock channel
@@ -104,9 +106,14 @@ function HueDriver.new_driver_template(dbg_config)
         [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temp_handler,
       },
     },
+
+    -- override the default capability message handler if batched receives are supported
+    capability_message_handler = type(cosock.socket.capability().receive_batch) == "function" and
+                                  HueDriver.batch_capability_message_handler or nil,
+
     ignored_bridges = {},
     joined_bridges = {},
-    hue_identifier_to_device_record = {},
+    hue_identifier_to_device_record_by_bridge = {},
     services_for_device_rid = {},
     -- the only real way we have to know which bridge a bulb wants to use at migration time
     -- is by looking at the stored api key so we will make a map to look up bridge IDs with
@@ -271,6 +278,112 @@ function HueDriver.check_hue_repr_for_capability_support(hue_repr, capability_id
     return handler(hue_repr)
   else
     return false
+  end
+end
+
+---@param cmd_table BatchedCommand
+function HueDriver:handle_single_command(cmd_table)
+  local device = self:get_device_info(cmd_table.device_uuid)
+  if device ~= nil then
+    -- Default handler
+    device.thread:queue_event(
+      Driver.handle_capability_command, self, device, cmd_table.capability_command
+    )
+  end
+end
+
+---@param handler function
+---@param bridge_device HueBridgeDevice
+---@param group HueLightGroup
+---@param cmd BatchedCommand
+function HueDriver:handle_batch_command(handler, bridge_device, group, cmd)
+  local cap_command = cmd.capability_command
+  local capability = cap_command.capability
+  local command = cap_command.command
+  -- This really shouldn't ever fail especially if using unaware capabilities, but it is not the
+  -- end of the world if it does here since it would have failed for ALL the commands
+  local valid =
+    capabilities[capability].commands[command]:validate_and_normalize_command(cap_command)
+  if not valid then
+    log.error(string.format("Invalid batch capability command: %s.%s (%s)",
+        capability, command, st_utils.stringify_table(cap_command.args)
+    ))
+  else
+    log.info_with({hub_logs = true}, string.format(
+      "      Handling command %s.%s (%s) as batch. Sending to %s(%s) with %d devices.",
+        capability, command, st_utils.stringify_table(cap_command.args),
+        group.type, group.metadata.name, #group.devices
+    ))
+
+    bridge_device.thread:queue_event(
+      handler, self, bridge_device, group, cap_command, cmd.auxilary_command_data
+    )
+  end
+end
+
+function HueDriver:batch_capability_message_handler(capability_channel)
+  local batch, err = capability_channel:receive_batch()
+
+  -- nil or empty batch
+  if not batch or #batch == 0 then
+    log.error(string.format("Error receiving batched commands: %s", err or "unknown error"))
+    return
+  end
+
+  -- Handle common case of single command.
+  if #batch == 1 then
+    log.info("Batch not big enough to handle with group commands")
+    self:handle_single_command(batch[1])
+    return
+  end
+
+  -- Sort batch by matching commands, args, and bridge.
+  log.info(string.format("Sorting batch of %d commands", #batch))
+  local sorted_batch, misfits = batched_command_utils.sort_batch(self, batch)
+
+  -- Send off any misfits to be handled as a single command
+  if #misfits ~= 0 then
+    log.info(string.format("Handling %d batch misfits", #misfits))
+    for _, command in ipairs(misfits) do
+      self:handle_single_command(command)
+    end
+  end
+
+  log.info(string.format("Fanning out sorted batch for %d bridges", #sorted_batch))
+  for bridge_device, by_command in pairs(sorted_batch) do
+    log.info(string.format(
+      "  Fanning out %d distinct commands for %s",
+      #by_command, bridge_device.label or "unknown bridge"
+    ))
+    for command_name, by_matching_args in pairs(by_command) do
+      log.info(string.format(
+        "    Fanning out %d distinct args variations for %s command",
+          #by_matching_args, command_name
+      ))
+      for _, matching_commands in ipairs(by_matching_args) do
+        log.info(string.format("      %d commands are exact arg matches", #matching_commands))
+        -- Unique command
+        if #matching_commands == 1 then
+          for _, command in pairs(matching_commands) do
+            self:handle_single_command(command)
+          end
+        else
+          local matching_groups =
+            batched_command_utils.find_matching_groups(bridge_device, matching_commands)
+          -- Handle any matching groups
+          for group, command in pairs(matching_groups) do
+            local handler = batched_command_utils.get_handler(command)
+            if handler then -- Should never be nil at this point but to make the diagnostic happy
+              self:handle_batch_command(handler, bridge_device, group, command)
+            end
+          end
+          -- Handle any potential remaining commands
+          for _, command in pairs(matching_commands) do
+            self:handle_single_command(command)
+          end
+        end
+      end
+    end
   end
 end
 

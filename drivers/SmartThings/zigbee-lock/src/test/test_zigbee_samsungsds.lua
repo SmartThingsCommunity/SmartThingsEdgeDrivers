@@ -143,7 +143,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
     }
@@ -169,7 +169,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
     }
@@ -195,7 +195,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
     }
@@ -221,7 +221,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
     }
@@ -247,7 +247,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
     }
@@ -273,7 +273,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
     }
@@ -299,7 +299,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.locked({data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.locked({data = { method = "keypad"} })
         )
       }
     }
@@ -325,7 +325,7 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main",
-          capabilities.lock.lock.unlocked({ data = { codeId = "0", codeName = "Code 0", method = "keypad"} })
+          capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
     }
@@ -1377,10 +1377,16 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Device added function handler",
     function()
+      -- The initial lock event should be send during the device's first time onboarding
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
+      test.wait_for_events()
+      -- Avoid sending the initial lock event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
       test.wait_for_events()
     end
 )

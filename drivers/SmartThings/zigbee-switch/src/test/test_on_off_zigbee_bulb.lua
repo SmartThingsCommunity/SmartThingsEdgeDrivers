@@ -27,9 +27,7 @@ local mock_simple_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_simple_device)end
 
 test.set_test_init_function(test_init)
 
@@ -49,7 +47,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_simple_device:generate_test_message("main", capabilities.switchLevel.level(83))
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_simple_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -66,7 +72,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_simple_device:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_simple_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -83,7 +97,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_simple_device:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_simple_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -153,23 +175,23 @@ test.register_coroutine_test(
     end
 )
 
-test.register_coroutine_test(
-    "health check coroutine",
-    function()
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "health check coroutine",
+--     function()
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(10000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_simple_device.id, OnOff.attributes.OnOff:read(mock_simple_device) })
-      test.socket.zigbee:__expect_send({ mock_simple_device.id, Level.attributes.CurrentLevel:read(mock_simple_device) })
-      test.wait_for_events()
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_simple_device)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--       test.mock_time.advance_time(10000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_simple_device.id, OnOff.attributes.OnOff:read(mock_simple_device) })
+--       test.socket.zigbee:__expect_send({ mock_simple_device.id, Level.attributes.CurrentLevel:read(mock_simple_device) })
+--       test.wait_for_events()
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_simple_device)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
 test.run_registered_tests()

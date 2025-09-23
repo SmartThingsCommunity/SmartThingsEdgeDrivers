@@ -15,7 +15,7 @@ components:
         config:
           values:
             - key: "colorTemperature.value"
-              range: [ 2200, 6500 ]
+              range: [ 2700, 6500 ]
       - id: colorControl
         version: 1
       - id: fanMode

@@ -15,8 +15,9 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-
 local clusters = require "st.matter.clusters"
+
+test.disable_startup_messages()
 
 local child_profile = t_utils.get_profile_definition("plug-binary.yml")
 local child_profile_override = t_utils.get_profile_definition("switch-binary.yml")
@@ -132,13 +133,21 @@ for i, endpoint in ipairs(mock_device.endpoints) do
 end
 
 local function test_init()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
-  test.mock_device.add_test_device(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
   end
@@ -172,14 +181,23 @@ for i, endpoint in ipairs(mock_device_child_profile_override.endpoints) do
     mock_children_child_profile_override[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
   end
 end
+
 local function test_init_child_profile_override()
+  test.mock_device.add_test_device(mock_device_child_profile_override)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_child_profile_override)
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "added" })
   test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
 
-  test.mock_device.add_test_device(mock_device_child_profile_override)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "init" })
+  test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "doConfigure" })
+  mock_device_child_profile_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
   for _, child in pairs(mock_children_child_profile_override) do
     test.mock_device.add_test_device(child)
   end
@@ -242,7 +260,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -285,7 +311,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child1_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 
@@ -328,7 +362,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 

@@ -39,9 +39,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  mock_device:set_field("_configuration_version", 1, {persist = true})
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -106,6 +105,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 9.0, unit = "W" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
     }
   }
 )

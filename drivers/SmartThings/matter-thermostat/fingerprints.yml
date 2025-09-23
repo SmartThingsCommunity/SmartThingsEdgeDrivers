@@ -22,12 +22,28 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x004F
     deviceProfileName: thermostat-heating-only-nostate
+  - id: "4874/125"
+    deviceLabel: Eve Thermo
+    vendorId: 0x130A
+    productId: 0x007D
+    deviceProfileName: thermostat-heating-only-nostate
   #Habi
   - id: "5415/1"
     deviceLabel: habi Matter Wireless Room Thermostat
     vendorId: 0x1527
     productId: 0x0001
     deviceProfileName: thermostat-heating-only-batteryLevel
+  - id: "5415/2"
+    deviceLabel: habi Smart TRV
+    vendorId: 0x1527
+    productId: 0x0002
+    deviceProfileName: thermostat-heating-only-batteryLevel
+  #Lux
+  - id: "4614/1"
+    deviceLabel: LUX TQ1 Smart Thermostat
+    vendorId: 0x1206
+    productId: 0x0001
+    deviceProfileName: thermostat-nostate-nobattery
   #Siterwell
   - id: "4736/769"
     deviceLabel: Siterwell Radiator Thermostat
@@ -45,6 +61,12 @@ matterManufacturer:
     vendorId: 0x134E
     productId: 0x0002
     deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
+  #720
+  - id: "5482/1"
+    deviceLabel: xCREAS Smart Air Purifier Cyclone400
+    vendorId: 0x156A
+    productId: 0x0001
+    deviceProfileName: air-purifier-hepa-wind-aqs-pm25-meas-pm25-level
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
@@ -122,7 +144,15 @@ matterGeneric:
       - id: 0x002C # Air Quality Sensor
       - id: 0x0301 # Thermostat
       - id: 0x0307 # Humidity Sensor
-    deviceProfileName: air-purifier-thermostat-humidity-aqs
+    deviceProfileName: air-purifier-thermostat-nostate-humidity-aqs
+  - id: "matter/ap/aqs/temperature/humidity"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: air-purifier-temperature-humidity-aqs
   - id: "matter/water-heater"
     deviceLabel: Matter Water Heater
     deviceTypes:

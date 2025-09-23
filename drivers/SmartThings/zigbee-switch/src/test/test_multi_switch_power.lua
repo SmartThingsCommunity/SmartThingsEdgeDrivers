@@ -20,6 +20,12 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local messages = require "st.zigbee.messages"
+local config_reporting_response = require "st.zigbee.zcl.global_commands.configure_reporting_response"
+local zb_const = require "st.zigbee.constants"
+local zcl_messages = require "st.zigbee.zcl"
+local data_types = require "st.zigbee.data_types"
+local Status = require "st.zigbee.generated.types.ZclStatus"
 
 local profile = t_utils.get_profile_definition("switch-power-smartplug.yml")
 
@@ -64,13 +70,89 @@ local mock_child_device = test.mock_device.build_test_child_device({
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
+  mock_base_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_base_device)
+  mock_parent_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_parent_device)
-  test.mock_device.add_test_device(mock_child_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  mock_child_device:set_field("_configuration_version", 1, {persist = true})
+  test.mock_device.add_test_device(mock_child_device)end
 
 test.set_test_init_function(test_init)
+
+local function build_config_response_msg(device, cluster, status)
+  local addr_header = messages.AddressHeader(
+    device:get_short_address(),
+    device.fingerprinted_endpoint_id,
+    zb_const.HUB.ADDR,
+    zb_const.HUB.ENDPOINT,
+    zb_const.HA_PROFILE_ID,
+    cluster
+  )
+  local config_response_body = config_reporting_response.ConfigureReportingResponse({}, status)
+  local zcl_header = zcl_messages.ZclHeader({
+    cmd = data_types.ZCLCommandId(config_response_body.ID)
+  })
+  local message_body = zcl_messages.ZclMessageBody({
+    zcl_header = zcl_header,
+    zcl_body = config_response_body
+  })
+  return messages.ZigbeeMessageRx({
+    address_header = addr_header,
+    body = message_body
+  })
+end
+
+test.register_coroutine_test(
+    "configuration version below 1",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      test.mock_device.add_test_device(mock_parent_device)
+      test.mock_device.add_test_device(mock_child_device)
+      assert(mock_parent_device:get_field("_configuration_version") == nil)
+      test.socket.device_lifecycle:__queue_receive({ mock_parent_device.id, "init" })
+      assert(mock_child_device:get_field("_configuration_version") == nil)
+      test.socket.device_lifecycle:__queue_receive({ mock_child_device.id, "init" })
+      test.wait_for_events()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.zigbee:__expect_send({mock_parent_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_parent_device, 5, 600, 5)})
+      test.socket.zigbee:__expect_send({mock_parent_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_parent_device, 5, 600, 5):to_endpoint(0x02)})
+      test.mock_time.advance_time(50 * 60  + 1)
+      test.wait_for_events()
+      test.socket.zigbee:__queue_receive({mock_parent_device.id, build_config_response_msg(mock_parent_device, ElectricalMeasurement.ID, Status.SUCCESS)})
+      test.socket.zigbee:__queue_receive({mock_parent_device.id, build_config_response_msg(mock_parent_device, ElectricalMeasurement.ID, Status.SUCCESS):from_endpoint(0x02)})
+      test.wait_for_events()
+      assert(mock_child_device:get_field("_configuration_version") == 1, "config version for child should be 1")
+      assert(mock_parent_device:get_field("_configuration_version") == 1, "config version for parent should be 1")
+    end,
+    {
+      test_init = function()
+        -- no op to avoid auto device add and immediate init event on driver startup
+      end
+    }
+)
+
+test.register_coroutine_test(
+    "configuration version at 1 doesn't reconfigure",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      test.mock_device.add_test_device(mock_parent_device)
+      test.mock_device.add_test_device(mock_child_device)
+      mock_child_device:set_field("_configuration_version", 1, {persist = true})
+      mock_parent_device:set_field("_configuration_version", 1, {persist = true})
+      assert(mock_parent_device:get_field("_configuration_version") == 1)
+      assert(mock_child_device:get_field("_configuration_version") == 1)
+      test.socket.device_lifecycle:__queue_receive({ mock_parent_device.id, "init" })
+      test.socket.device_lifecycle:__queue_receive({ mock_child_device.id, "init" })
+      test.wait_for_events()
+      assert(mock_child_device:get_field("_configuration_version") == 1)
+      assert(mock_parent_device:get_field("_configuration_version") == 1)
+    end,
+    {
+      test_init = function()
+        -- no op to avoid auto device add and immediate init event on driver startup
+      end
+    }
+)
 
 test.register_message_test(
     "Refresh on parent device should read all necessary attributes",
@@ -145,7 +227,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_device:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_child_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -162,7 +252,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_parent_device:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -179,7 +277,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_device:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_child_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -196,7 +302,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_parent_device:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -215,6 +329,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_parent_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
       }
     }
 )
@@ -234,6 +356,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
       }
     }
 )

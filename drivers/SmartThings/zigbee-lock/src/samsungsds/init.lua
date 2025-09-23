@@ -57,9 +57,15 @@ local refresh = function(driver, device, cmd)
   -- do nothing in refresh capability handler
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local device_added = function(self, device)
   lock_utils.populate_state_from_data(device)
-  device:emit_event(capabilities.lock.lock.unlocked())
+  emit_event_if_latest_state_missing(device, "main", capabilities.lock, capabilities.lock.lock.NAME, capabilities.lock.lock.unlocked())
   device:emit_event(capabilities.battery.battery(100))
 end
 

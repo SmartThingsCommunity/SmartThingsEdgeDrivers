@@ -28,17 +28,15 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 
 local CAP_CACHE_KEY = "st.capabilities." .. capabilities.colorControl.ID
 
-local EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x001E, productType = 0x0004, productId = 0x0001 }
-}
+local EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS = { manufacturerId = 0x001E, productType = 0x0004, productId = 0x0001 }
 
 local function can_handle_ezmultipli_multipurpose_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
+  if device:id_match(EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS.manufacturerId,
+      EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS.productType,
+      EZMULTIPLI_MULTIPURPOSE_SENSOR_FINGERPRINTS.productId) then
+    local subdriver = require("ezmultipli-multipurpose-sensor")
+    return true, subdriver
+  else return false end
 end
 
 local function basic_report_handler(driver, device, cmd)

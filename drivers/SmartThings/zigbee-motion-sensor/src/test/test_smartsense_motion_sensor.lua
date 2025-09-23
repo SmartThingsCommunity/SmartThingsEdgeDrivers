@@ -33,7 +33,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "SmartThings",
         model = "PGC314",
-        profileId = 0xFC01,
+        profile_id = 0xFC01,
         server_clusters = {}
       }
     }

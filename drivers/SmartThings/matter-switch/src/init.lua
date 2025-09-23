@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -44,19 +44,12 @@ local SWITCH_LEVEL_LIGHTING_MIN = 1
 local CURRENT_HUESAT_ATTR_MIN = 0
 local CURRENT_HUESAT_ATTR_MAX = 254
 
-local SWITCH_INITIALIZED = "__switch_intialized"
--- COMPONENT_TO_ENDPOINT_MAP is here only to preserve the endpoint mapping for
+-- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
 -- devices that were joined to this driver as MCD devices before the transition
--- to join all matter-switch devices as parent-child. This value will only exist
--- in the device table for devices that joined prior to this transition, and it
--- will not be set for new devices.
+-- to join switch devices as parent-child. This value will exist in the device
+-- table for devices that joined prior to this transition, and is also used for
+-- button devices that require component mapping.
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
--- COMPONENT_TO_ENDPOINT_MAP_BUTTON is for devices with button endpoints, to
--- preserve the MCD functionality for button devices from the matter-button
--- driver after it was merged into the matter-switch driver. Note that devices
--- containing both button endpoints and switch endpoints will use this field
--- rather than COMPONENT_TO_ENDPOINT_MAP.
-local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
 local ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 local COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
@@ -67,6 +60,12 @@ local LEVEL_BOUND_RECEIVED = "__level_bound_received"
 local LEVEL_MIN = "__level_min"
 local LEVEL_MAX = "__level_max"
 local COLOR_MODE = "__color_mode"
+
+local updated_fields = {
+  { current_field_name = "__component_to_endpoint_map_button", updated_field_name = COMPONENT_TO_ENDPOINT_MAP },
+  { current_field_name = "__switch_intialized", updated_field_name = nil }
+}
+
 local HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
 local X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
@@ -290,9 +289,7 @@ local START_BUTTON_PRESS = "__start_button_press"
 local TIMEOUT_THRESHOLD = 10 --arbitrary timeout
 local HELD_THRESHOLD = 1
 -- this is the number of buttons for which we have a static profile already made
-local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8}
-
-local BUTTON_DEVICE_PROFILED = "__button_device_profiled"
+local STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 
 -- Some switches will send a MultiPressComplete event as part of a long press sequence. Normally the driver will create a
 -- button capability event on receipt of MultiPressComplete, but in this case that would result in an extra event because
@@ -406,6 +403,7 @@ local function device_type_supports_button_switch_combination(device, endpoint_i
 end
 
 local function get_first_non_zero_endpoint(endpoints)
+  table.sort(endpoints)
   for _,ep in ipairs(endpoints) do
     if ep ~= 0 then -- 0 is the matter RootNode endpoint
       return ep
@@ -425,8 +423,6 @@ local function find_default_endpoint(device)
 
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  table.sort(switch_eps)
-  table.sort(button_eps)
 
   -- Return the first switch endpoint as the default endpoint if no button endpoints are present
   if #button_eps == 0 and #switch_eps > 0 then
@@ -456,7 +452,7 @@ local function find_default_endpoint(device)
 end
 
 local function component_to_endpoint(device, component)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
     return map[component]
   end
@@ -464,13 +460,24 @@ local function component_to_endpoint(device, component)
 end
 
 local function endpoint_to_component(device, ep)
-  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
   for component, endpoint in pairs(map) do
     if endpoint == ep then
       return component
     end
   end
   return "main"
+end
+
+local function check_field_name_updates(device)
+  for _, field in ipairs(updated_fields) do
+    if device:get_field(field.current_field_name) then
+      if field.updated_field_name ~= nil then
+        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
+      end
+      device:set_field(field.current_field_name, nil)
+    end
+  end
 end
 
 local function assign_child_profile(device, child_ep)
@@ -512,45 +519,7 @@ local function assign_child_profile(device, child_ep)
   return profile or "switch-binary"
 end
 
-local function do_configure(driver, device)
-  if device:get_field(BUTTON_DEVICE_PROFILED) then
-    return
-  end
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
-  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
-  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
-  local profile_name = nil
-  local level_support = ""
-  if #level_eps > 0 then
-    level_support = "-level"
-  end
-  if #energy_eps > 0 and #power_eps > 0 then
-    profile_name = "plug" .. level_support .. "-power-energy-powerConsumption"
-  elseif #energy_eps > 0 then
-    profile_name = "plug" .. level_support .. "-energy-powerConsumption"
-  elseif #power_eps > 0 then
-    profile_name = "plug" .. level_support .. "-power"
-  elseif #valve_eps > 0 then
-    profile_name = "water-valve"
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
-      profile_name = profile_name .. "-level"
-    end
-  elseif #fan_eps > 0 then
-    profile_name = "light-color-level-fan"
-  end
-
-  if profile_name then
-    device:try_update_metadata({ profile = profile_name })
-  end
-end
-
 local function configure_buttons(device)
-  if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    return
-  end
   local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
@@ -603,7 +572,7 @@ local function build_button_component_map(device, main_endpoint, button_eps)
       component_map[button_component] = ep
     end
   end
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
 local function build_button_profile(device, main_endpoint, num_button_eps)
@@ -613,13 +582,10 @@ local function build_button_profile(device, main_endpoint, num_button_eps)
   end
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
   if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
-    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-    device:send(attribute_list_read)
+    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
   else
     device:try_update_metadata({profile = profile_name})
   end
-  device:set_field(BUTTON_DEVICE_PROFILED, true)
 end
 
 local function build_child_switch_profiles(driver, device, main_endpoint)
@@ -627,7 +593,7 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
   local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-  for _, ep in ipairs(switch_eps) do
+  for idx, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
@@ -644,7 +610,7 @@ local function build_child_switch_profiles(driver, device, main_endpoint)
           }
         )
         parent_child_device = true
-        if _ == 1 and string.find(child_profile, "energy") then
+        if idx == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
           device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
         end
@@ -683,13 +649,15 @@ local function handle_light_switch_with_onOff_server_clusters(device, main_endpo
 end
 
 local function initialize_buttons_and_switches(driver, device, main_endpoint)
+  local profile_found = false
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     build_button_profile(device, main_endpoint, #button_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
-    -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP_BUTTON field
+    -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
     build_button_component_map(device, main_endpoint, button_eps)
     configure_buttons(device)
+    profile_found = true
   end
 
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
@@ -701,9 +669,9 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
   -- Note: since their device type isn't supported, these devices join as a matter-thing.
   if num_switch_server_eps > 0 and detect_matter_thing(device) then
     handle_light_switch_with_onOff_server_clusters(device, main_endpoint)
+    profile_found = true
   end
-
-  device:set_field(SWITCH_INITIALIZED, true, {persist = true})
+  return profile_found
 end
 
 local function detect_bridge(device)
@@ -718,42 +686,94 @@ local function detect_bridge(device)
 end
 
 local function device_init(driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
-    return
-  end
-
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-
-  local main_endpoint = find_default_endpoint(device)
-  if not device:get_field(COMPONENT_TO_ENDPOINT_MAP) and -- this field is only set for old MCD devices. See comments in the field def.
-     not device:get_field(SWITCH_INITIALIZED) and
-     not detect_bridge(device) then
-    -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-    initialize_buttons_and_switches(driver, device, main_endpoint)
-  end
-  if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
-  end
-  -- ensure subscription to all endpoint attributes- including those mapped to child devices
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id ~= main_endpoint then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      for _, attr in pairs(device_type_attribute_map[id] or {}) do
-        if id == GENERIC_SWITCH_ID and
-          attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-          attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-          device:add_subscribed_event(attr)
-        else
-          device:add_subscribed_attribute(attr)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    check_field_name_updates(device)
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+    if device:get_field(IS_PARENT_CHILD_DEVICE) then
+      device:set_find_child(find_child)
+    end
+    local main_endpoint = find_default_endpoint(device)
+    -- ensure subscription to all endpoint attributes- including those mapped to child devices
+    for idx, ep in ipairs(device.endpoints) do
+      if ep.endpoint_id ~= main_endpoint then
+        if device:supports_server_cluster(clusters.OnOff.ID, ep) then
+          local child_profile = assign_child_profile(device, ep)
+          if idx == 1 and string.find(child_profile, "energy") then
+            -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+            device:set_field(ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
+          end
+        end
+        local id = 0
+        for _, dt in ipairs(ep.device_types) do
+          id = math.max(id, dt.device_type_id)
+        end
+        for _, attr in pairs(device_type_attribute_map[id] or {}) do
+          if id == GENERIC_SWITCH_ID and
+             attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+             attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+            device:add_subscribed_event(attr)
+          else
+            device:add_subscribed_attribute(attr)
+          end
         end
       end
     end
+    device:subscribe()
   end
-  device:subscribe()
+end
+
+local function match_profile(driver, device)
+  local main_endpoint = find_default_endpoint(device)
+  -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
+  local profile_found = initialize_buttons_and_switches(driver, device, main_endpoint)
+  if device:get_field(IS_PARENT_CHILD_DEVICE) then
+    device:set_find_child(find_child)
+  end
+  if profile_found then
+    return
+  end
+
+  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
+  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
+  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
+  local profile_name = nil
+  local level_support = ""
+  if #level_eps > 0 then
+    level_support = "-level"
+  end
+  if #energy_eps > 0 and #power_eps > 0 then
+    profile_name = "plug" .. level_support .. "-power-energy-powerConsumption"
+  elseif #energy_eps > 0 then
+    profile_name = "plug" .. level_support .. "-energy-powerConsumption"
+  elseif #power_eps > 0 then
+    profile_name = "plug" .. level_support .. "-power"
+  elseif #valve_eps > 0 then
+    profile_name = "water-valve"
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      profile_name = profile_name .. "-level"
+    end
+  elseif #fan_eps > 0 then
+    profile_name = "light-color-level-fan"
+  end
+  if profile_name then
+    device:try_update_metadata({ profile = profile_name })
+  end
+end
+
+local function do_configure(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not detect_bridge(device) then
+    match_profile(driver, device)
+  end
+end
+
+local function driver_switched(driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not detect_bridge(device) then
+    match_profile(driver, device)
+  end
 end
 
 local function device_removed(driver, device)
@@ -902,12 +922,6 @@ local function set_fan_speed_percent(driver, device, cmd)
   device:send(clusters.FanControl.attributes.PercentSetting:write(device, fan_ep, speed))
 end
 
-local function handle_refresh(driver, device, cmd)
-  --Note: no endpoint specified indicates a wildcard endpoint
-  local req = clusters.OnOff.attributes.OnOff:read(device)
-  device:send(req)
-end
-
 -- Fallback handler for responses that dont have their own handler
 local function matter_handler(driver, device, response_block)
   log.info(string.format("Fallback handler for %s", response_block))
@@ -919,12 +933,18 @@ local function on_off_attr_handler(driver, device, ib, response)
   else
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switch.switch.off())
   end
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("switch", "switch")
+  end
 end
 
 local function level_attr_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("switchLevel", "level")
+    end
   end
 end
 
@@ -1190,6 +1210,9 @@ local function active_power_handler(driver, device, ib, response)
       -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
       device:emit_event_for_endpoint(device:get_field(ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
     end
+    if type(device.register_native_capability_attr_handler) == "function" then
+      device:register_native_capability_attr_handler("powerMeter","power")
+    end
   end
 end
 
@@ -1291,25 +1314,18 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    if #button_eps > 0 and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
+    if #button_eps > 0 and device.network_type == device_lib.NETWORK_TYPE_MATTER then
       configure_buttons(device)
     end
   end
 end
 
 local function device_added(driver, device)
-  -- refresh child devices to get initial attribute state in case child device
+  -- refresh child devices to get an initial attribute state for OnOff in case child device
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    handle_refresh(driver, device)
-  end
-
-  -- Reset the values
-  if device:supports_capability(capabilities.powerMeter) then
-    device:emit_event(capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
-  end
-  if device:supports_capability(capabilities.energyMeter) then
-    device:emit_event(capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+    local req = clusters.OnOff.attributes.OnOff:read(device)
+    device:send(req)
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -1432,7 +1448,8 @@ local matter_driver_template = {
     added = device_added,
     removed = device_removed,
     infoChanged = info_changed,
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     attr = {
@@ -1582,9 +1599,6 @@ local matter_driver_template = {
     [capabilities.switchLevel.ID] = {
       [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_switch_level
     },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = handle_refresh,
-    },
     [capabilities.colorControl.ID] = {
       [capabilities.colorControl.commands.setColor.NAME] = handle_set_color,
       [capabilities.colorControl.commands.setHue.NAME] = handle_set_hue,
@@ -1629,7 +1643,8 @@ local matter_driver_template = {
   },
   sub_drivers = {
     require("eve-energy"),
-    require("aqara-cube")
+    require("aqara-cube"),
+    require("third-reality-mk1")
   }
 }
 

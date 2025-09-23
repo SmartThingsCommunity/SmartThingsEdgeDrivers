@@ -1,0 +1,50 @@
+id: stse.yoga
+version: 1
+status: proposed
+name: Yoga
+ephemeral: false
+attributes:
+  state:
+    schema:
+      type: object
+      properties:
+        value:
+          title: state
+          type: string
+          enum:
+            - stop
+            - left
+            - right
+            - both
+      additionalProperties: false
+      required:
+        - value
+    setter: stateControl
+    enumCommands: []
+  supportedYogaState:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+            - stop
+            - left
+            - right
+            - both
+commands:
+  stateControl:
+    name: stateControl
+    arguments:
+      - name: stateControl
+        optional: false
+        schema:
+          type: string
+          enum:
+            - stop
+            - left
+            - right
+            - both

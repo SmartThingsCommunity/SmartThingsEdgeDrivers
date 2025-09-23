@@ -169,7 +169,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -195,7 +203,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -221,7 +237,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_2:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -247,7 +271,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -275,10 +307,26 @@ test.register_message_test(
         message = mock_parent:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
         channel = "capability",
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.switchLevel.level(100))
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -304,7 +352,23 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -330,7 +394,23 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_2:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -358,10 +438,26 @@ test.register_message_test(
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switchLevel.level(100))
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -389,10 +485,26 @@ test.register_message_test(
         message = mock_parent:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
         channel = "capability",
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.switchLevel.level(50))
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -418,7 +530,23 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -444,7 +572,23 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_2:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -472,10 +616,26 @@ test.register_message_test(
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switchLevel.level(50))
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -507,7 +667,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -539,7 +707,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -571,7 +747,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -603,7 +787,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.on())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -637,10 +829,26 @@ test.register_message_test(
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switchLevel.level(100))
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -672,7 +880,15 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.off())
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -706,10 +922,26 @@ test.register_message_test(
         message = mock_child_3:generate_test_message("main", capabilities.switch.switch.on())
       },
       {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
         channel = "capability",
         direction = "send",
         message = mock_child_3:generate_test_message("main", capabilities.switchLevel.level(50))
-      }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -928,16 +1160,21 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.dry())
+        message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.inactive())
-      }
-    },
-    {
-      inner_block_ordering = "relaxed"
+        message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.dry())
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
     }
 )
 
@@ -966,16 +1203,29 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.wet())
+        message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.active())
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.active())
-      }
-    },
-    {
-      inner_block_ordering = "relaxed"
+        message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.wet())
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
+        }
+      },
     }
 )
 
@@ -1796,6 +2046,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_child_5:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 20, unit = "C" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_parent.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+        }
       }
     }
 )

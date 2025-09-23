@@ -110,15 +110,18 @@ local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
-  device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
-  device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+  if device:supports_server_cluster(TemperatureMeasurement.ID) then
+    device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
+    device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))
+  end
 end
 
 local zigbee_button_driver_template = {
   supported_capabilities = {
     capabilities.button,
     capabilities.battery,
-    capabilities.temperatureMeasurement
+    capabilities.panicAlarm,
+    capabilities.temperatureMeasurement,
   },
   zigbee_handlers = {
     attr = {
@@ -145,12 +148,14 @@ local zigbee_button_driver_template = {
     require("iris"),
     require("samjin"),
     require("ewelink"),
-    require("thirdreality")
+    require("thirdreality"),
+    require("ezviz")
   },
   lifecycle_handlers = {
     added = added_handler,
   },
-  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
+  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_button_driver_template, zigbee_button_driver_template.supported_capabilities)

@@ -14,12 +14,14 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local t_utils = require "integration_test.utils"
-
 local clusters = require "st.matter.clusters"
+local t_utils = require "integration_test.utils"
+local version = require "version"
 
-clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-level-power-energy-powerConsumption.yml"),
@@ -56,7 +58,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       device_types = {
         { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
       }
-    },
+    }
   },
 })
 
@@ -162,27 +164,6 @@ local function test_init_periodic()
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 end
 
-test.register_coroutine_test(
-  "Check the power and energy meter when the device is added", function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
-    for i, cluster in ipairs(subscribed_attributes) do
-        if i > 1 then
-            subscribe_request:merge(cluster:subscribe(mock_device))
-        end
-    end
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" }))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
-    )
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-    test.wait_for_events()
-  end
-)
-
 test.register_message_test(
 	"On command should send the appropriate commands",
   {
@@ -259,6 +240,14 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({value = 17.0, unit="W"}))
     },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
+    }
   }
 )
 
@@ -725,6 +714,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level(20))
@@ -741,7 +738,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
   }
 )
 

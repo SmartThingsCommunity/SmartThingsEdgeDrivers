@@ -172,7 +172,9 @@ local driver_template = {
   }
 }
 
-defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities,  {native_capability_cmds_enabled = true})
+defaults.register_for_default_handlers(driver_template,
+  driver_template.supported_capabilities,
+  {native_capability_cmds_enabled = true, native_capability_attrs_enabled = true})
 --- @type st.zwave.Driver
 local switch = ZwaveDriver("zwave_switch", driver_template)
 switch:run()

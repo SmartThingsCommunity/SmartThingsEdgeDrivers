@@ -59,10 +59,15 @@ zigbeeManufacturer:
     model: HT-EF-3.0
     deviceProfileName: humidity-temp-battery
   - id: frient/HMSZB-110
-    deviceLabel: frient Multipurpose Sensor
+    deviceLabel: frient Humidity Sensor
     manufacturer: frient A/S
     model: HMSZB-110
-    deviceProfileName: humidity-temp-battery
+    deviceProfileName: frient-humidity-temperature-battery
+  - id: frient/HMSZB-120
+    deviceLabel: frient Humidity Sensor
+    manufacturer: frient A/S
+    model: HMSZB-120
+    deviceProfileName: frient-humidity-temperature-battery
   - id: eWeLink/TH01
     deviceLabel: eWeLink Multipurpose Sensor
     manufacturer: eWeLink
@@ -93,6 +98,16 @@ zigbeeGeneric:
         - 0x0402 # Temperature Measurement Cluster
         - 0x0405 # Relative Humidity Measurement Cluster
     deviceProfileName: humidity-temperature
+  - id: "HumidityTempBatteryGeneric"
+    deviceLabel: Multipurpose Sensor
+    deviceIdentifiers:
+      - 0x0302
+    clusters:
+      server:
+        - 0x0001 # PowerConfiguration
+        - 0x0402 # Temperature Measurement Cluster
+        - 0x0405 # Relative Humidity Measurement Cluster
+    deviceProfileName: humidity-temp-battery
   - id: "PlantLinkClusterSpecific"
     deviceLabel: Plant Link Humidity Sensor
     zigbeeProfiles:

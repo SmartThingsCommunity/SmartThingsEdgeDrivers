@@ -19,6 +19,7 @@ local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
 local IasZoneType = require "st.zigbee.generated.types.IasZoneType"
 local device_management = require "st.zigbee.device_management"
+local PowerConfiguration = clusters.PowerConfiguration
 
 local CONTACT_SWITCH = IasZoneType.CONTACT_SWITCH
 local MOTION_SENSOR = IasZoneType.MOTION_SENSOR
@@ -28,6 +29,7 @@ local ZIGBEE_GENERIC_SENSOR_PROFILE = "generic-sensor"
 local ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE = "generic-contact-sensor"
 local ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE = "generic-motion-sensor"
 local ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE = "generic-waterleak-sensor"
+local ZIGBEE_GENERIC_MOTION_ILLUMINANCE_PROFILE = "generic-motion-illuminance"
 
 local ZONETYPE = "ZoneType"
 local IASZone = clusters.IASZone
@@ -42,6 +44,7 @@ local do_configure = function(self, device)
   device:configure()
   device:send(device_management.build_bind_request(device, IASZone.ID, self.environment_info.hub_zigbee_eui))
   device:send(IASZone.attributes.ZoneStatus:configure_reporting(device, 30, 300, 1))
+  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
 local function info_changed(driver, device, event, args)
@@ -55,12 +58,16 @@ local function update_profile(device, zone_type)
   local profile = ZIGBEE_GENERIC_SENSOR_PROFILE
   if zone_type == CONTACT_SWITCH then
     profile = ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE
-  elseif zone_type == MOTION_SENSOR then
-    profile = ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE
   elseif zone_type == WATER_SENSOR then
     profile = ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE
+  elseif zone_type == MOTION_SENSOR then
+    profile = ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE
+    for _, ep in ipairs(device.zigbee_endpoints) do
+      if device:supports_server_cluster(clusters.IlluminanceMeasurement.ID, ep.id) then
+        profile = ZIGBEE_GENERIC_MOTION_ILLUMINANCE_PROFILE
+      end
+    end
   end
-
   device:try_update_metadata({profile = profile})
 end
 
@@ -68,44 +75,6 @@ end
 local ias_zone_type_attr_handler = function (driver, device, attr_val)
   device:set_field(ZONETYPE, attr_val.value)
   update_profile(device, attr_val.value)
-end
-
--- since we don't have button devices using IASZone, the driver here is remaining to be updated
-local generate_event_from_zone_status = function(driver, device, zone_status, zb_rx)
-  local type = device:get_field(ZONETYPE)
-  local event
-  if type == CONTACT_SWITCH then
-    if zone_status:is_alarm1_set() or zone_status:is_alarm2_set() then
-      event = capabilities.contactSensor.contact.open()
-    else
-      event = capabilities.contactSensor.contact.closed()
-    end
-  elseif type == MOTION_SENSOR then
-    if zone_status:is_alarm1_set() or zone_status:is_alarm2_set() then
-      event = capabilities.motionSensor.motion.active()
-    else
-      event = capabilities.motionSensor.motion.inactive()
-    end
-  elseif type == WATER_SENSOR then
-    if zone_status:is_alarm1_set() then
-      event = capabilities.waterSensor.water.wet()
-    else
-      event = capabilities.waterSensor.water.dry()
-    end
-  end
-  if event ~= nil then
-    device:emit_event_for_endpoint(
-      zb_rx.address_header.src_endpoint.value,
-      event)
-  end
-end
-
-local ias_zone_status_attr_handler = function(driver, device, zone_status, zb_rx)
-  generate_event_from_zone_status(driver, device, zone_status, zb_rx)
-end
-
-local ias_zone_status_change_handler = function(driver, device, zb_rx)
-  generate_event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
 end
 
 local zigbee_generic_sensor_template = {
@@ -117,13 +86,7 @@ local zigbee_generic_sensor_template = {
   zigbee_handlers = {
     attr = {
       [IASZone.ID] = {
-        [IASZone.attributes.ZoneType.ID] = ias_zone_type_attr_handler,
-        [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
-      }
-    },
-    cluster = {
-      [IASZone.ID] = {
-        [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler
+        [IASZone.attributes.ZoneType.ID] = ias_zone_type_attr_handler
       }
     }
   },
@@ -132,7 +95,14 @@ local zigbee_generic_sensor_template = {
     doConfigure = do_configure,
     infoChanged = info_changed
   },
-  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
+  sub_drivers = {
+    require("contact"),
+    require("motion"),
+    require("waterleak"),
+    require("motion-illuminance")
+  },
+  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_generic_sensor_template, zigbee_generic_sensor_template.supported_capabilities)

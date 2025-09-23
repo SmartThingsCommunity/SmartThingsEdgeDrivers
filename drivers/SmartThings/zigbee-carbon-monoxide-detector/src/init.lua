@@ -24,9 +24,11 @@ local zigbee_carbon_monoxide_driver_template = {
         capabilities.battery,
     },
     ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
-    sub_drivers = { require("ClimaxTechnology") }
+    sub_drivers = { require("ClimaxTechnology") },
+    health_check = false,
 }
 
-defaults.register_for_default_handlers(zigbee_carbon_monoxide_driver_template, zigbee_carbon_monoxide_driver_template.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_carbon_monoxide_driver_template,
+    zigbee_carbon_monoxide_driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
 local zigbee_carbon_monoxide_driver = ZigbeeDriver("zigbee-carbon-monoxide-detector", zigbee_carbon_monoxide_driver_template)
 zigbee_carbon_monoxide_driver:run()

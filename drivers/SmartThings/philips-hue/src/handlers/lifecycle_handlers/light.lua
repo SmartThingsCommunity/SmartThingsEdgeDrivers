@@ -13,6 +13,7 @@ local HueDeviceTypes = require "hue_device_types"
 local StrayDeviceHelper = require "stray_device_helper"
 
 local utils = require "utils"
+local grouped_utils = require "utils.grouped_utils"
 
 ---@class LightLifecycleHandlers
 local LightLifecycleHandlers = {}
@@ -189,7 +190,8 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
   device:set_field(Fields._ADDED, true, { persist = true })
   device:set_field(Fields._REFRESH_AFTER_INIT, true, { persist = true })
 
-  driver.hue_identifier_to_device_record[device_light_resource_id] = device
+  local hue_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, device) or {}
+  hue_id_to_device[device_light_resource_id] = device
 
   -- the refresh handler adds lights that don't have a fully initialized bridge to a queue.
   driver:inject_capability_command(device, {
@@ -197,6 +199,13 @@ function LightLifecycleHandlers.added(driver, device, parent_device_id, resource
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
+
+  local bridge_device = utils.get_hue_bridge_for_device(driver, device, parent_device_id)
+  if bridge_device then
+    grouped_utils.queue_group_scan(driver, bridge_device)
+  else
+    log.warn("Unable to queue group scan on device added, missing bridge device")
+  end
 end
 
 ---@param driver HueDriver
@@ -210,8 +219,9 @@ function LightLifecycleHandlers.init(driver, device)
       device.device_network_id
 
   local hue_device_id = device:get_field(Fields.HUE_DEVICE_ID)
-  if not driver.hue_identifier_to_device_record[device_light_resource_id] then
-    driver.hue_identifier_to_device_record[device_light_resource_id] = device
+  local hue_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, device) or {}
+  if not hue_id_to_device[device_light_resource_id] then
+    hue_id_to_device[device_light_resource_id] = device
   end
   local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
   if not svc_rids_for_device[device_light_resource_id] then
