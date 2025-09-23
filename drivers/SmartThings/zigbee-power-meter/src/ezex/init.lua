@@ -17,6 +17,7 @@ local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local SimpleMetering = clusters.SimpleMetering
 local energy_meter_defaults = require "st.zigbee.defaults.energyMeter_defaults"
+local configurations = require "configurations"
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
   { model = "E240-KR080Z0-HA" }
@@ -35,7 +36,7 @@ end
 local instantaneous_demand_configuration = {
   cluster = clusters.SimpleMetering.ID,
   attribute = clusters.SimpleMetering.attributes.InstantaneousDemand.ID,
-  minimum_interval = 1,
+  minimum_interval = 5,
   maximum_interval = 3600,
   data_type = clusters.SimpleMetering.attributes.InstantaneousDemand.base_type,
   reportable_change = 500
@@ -75,7 +76,7 @@ local ezex_power_meter_handler = {
     }
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
   can_handle = is_ezex_power_meter
