@@ -1,6 +1,6 @@
 local cluster_base = require "st.matter.cluster_base"
-local ElectricalEnergyMeasurementServerAttributes = require "ElectricalEnergyMeasurement.server.attributes"
-local ElectricalEnergyMeasurementTypes = require "ElectricalEnergyMeasurement.types"
+local ElectricalEnergyMeasurementServerAttributes = require "embedded_clusters.ElectricalEnergyMeasurement.server.attributes"
+local ElectricalEnergyMeasurementTypes = require "embedded_clusters.ElectricalEnergyMeasurement.types"
 local ElectricalEnergyMeasurement = {}
 
 ElectricalEnergyMeasurement.ID = 0x0091

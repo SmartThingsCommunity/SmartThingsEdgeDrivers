@@ -5,7 +5,7 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local CurrentState = {
   ID = 0x0004,
   NAME = "CurrentState",
-  base_type = require "ValveConfigurationAndControl.types.ValveStateEnum",
+  base_type = require "embedded_clusters.ValveConfigurationAndControl.types.ValveStateEnum",
 }
 
 function CurrentState:new_value(...)

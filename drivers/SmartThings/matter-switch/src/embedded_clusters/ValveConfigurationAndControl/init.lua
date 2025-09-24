@@ -1,7 +1,7 @@
 local cluster_base = require "st.matter.cluster_base"
-local ValveConfigurationAndControlServerAttributes = require "ValveConfigurationAndControl.server.attributes"
-local ValveConfigurationAndControlServerCommands = require "ValveConfigurationAndControl.server.commands"
-local ValveConfigurationAndControlTypes = require "ValveConfigurationAndControl.types"
+local ValveConfigurationAndControlServerAttributes = require "embedded_clusters.ValveConfigurationAndControl.server.attributes"
+local ValveConfigurationAndControlServerCommands = require "embedded_clusters.ValveConfigurationAndControl.server.commands"
+local ValveConfigurationAndControlTypes = require "embedded_clusters.ValveConfigurationAndControl.types"
 local ValveConfigurationAndControl = {}
 
 ValveConfigurationAndControl.ID = 0x0081

@@ -5,7 +5,7 @@ local TLVParser = require "st.matter.TLV.TLVParser"
 local CumulativeEnergyImported = {
   ID = 0x0001,
   NAME = "CumulativeEnergyImported",
-  base_type = require "ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
+  base_type = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
 }
 
 function CumulativeEnergyImported:new_value(...)
