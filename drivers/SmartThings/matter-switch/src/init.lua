@@ -558,8 +558,8 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function build_button_component_map(device, main_endpoint, button_eps)
-  -- create component mapping on the main profile button endpoints
+local function build_button_component_map(device, main_endpoint, button_eps, motion_eps)
+  -- create component mapping on the main profile button endpoints and motion endpoint
   table.sort(button_eps)
   local component_map = {}
   component_map["main"] = main_endpoint
@@ -572,14 +572,9 @@ local function build_button_component_map(device, main_endpoint, button_eps)
       component_map[button_component] = ep
     end
   end
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
-end
-
-local function build_motion_component_map(device, motion_eps)
-  -- create component mapping on the main profile motion endpoint
-  local component_map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
-  local motion_component = "motion"
-  component_map[motion_component] = motion_eps[1]
+  if #motion_eps > 0 then
+    component_map["motion"] = motion_eps[1]
+  end
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
@@ -667,15 +662,11 @@ local function initialize_buttons_and_switches(driver, device, main_endpoint)
     build_button_profile(device, main_endpoint, #button_eps, #motion_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
-    build_button_component_map(device, main_endpoint, button_eps)
+    build_button_component_map(device, main_endpoint, button_eps, motion_eps)
     configure_buttons(device)
     profile_found = true
   end
-  if #motion_eps > 0 then
-    -- If there is motion endpoint, add it as additional component in the profile containing the main_endpoint.
-    -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field, just like buttons.
-    build_motion_component_map(device, motion_eps)
-  end
+
   -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
   -- while building switch child profiles
   local num_switch_server_eps = build_child_switch_profiles(driver, device, main_endpoint)
