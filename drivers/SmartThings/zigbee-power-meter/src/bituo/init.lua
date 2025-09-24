@@ -198,8 +198,8 @@ local function resetEnergyMeter(self, device)
 end
 local function do_configure(driver, device)
   device:configure()
-  device:send(device_management.build_bind_request(device, clusters.SimpleMetering.ID, driver.environment_info.hub_zigbee_eui))
-  device:send(device_management.build_bind_request(device, clusters.ElectricalMeasurement.ID, driver.environment_info.hub_zigbee_eui))
+  --device:send(device_management.build_bind_request(device, clusters.SimpleMetering.ID, driver.environment_info.hub_zigbee_eui))
+  --device:send(device_management.build_bind_request(device, clusters.ElectricalMeasurement.ID, driver.environment_info.hub_zigbee_eui))
   device:refresh()
 end
 
@@ -257,7 +257,6 @@ local bituo_power_meter_handler = {
       [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = resetEnergyMeter,
     },
   },
-  
   can_handle = is_bituo_power_meter
 }
 
