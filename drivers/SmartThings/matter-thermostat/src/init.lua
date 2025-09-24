@@ -1392,7 +1392,11 @@ local function system_mode_handler(driver, device, ib, response)
     return
   end
 
-  local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
+  local supported_modes = device:get_latest_state(
+    device:endpoint_to_component(ib.endpoint_id),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.supportedThermostatModes.NAME
+  ) or {}
   -- check that the given mode was in the supported modes list
   if tbl_contains(supported_modes, THERMOSTAT_MODE_MAP[ib.data.value].NAME) then
     device:emit_event_for_endpoint(ib.endpoint_id, THERMOSTAT_MODE_MAP[ib.data.value]())
@@ -1432,7 +1436,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then
     device:set_field(OPTIONAL_THERMOSTAT_MODES_SEEN, {capabilities.thermostatMode.thermostatMode.off.NAME}, {persist=true})
   end
-  local supported_modes = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN))
+  local supported_modes = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) or {})
   local disallowed_mode_operations = {}
 
   local modes_for_inclusion = {}
@@ -1540,17 +1544,20 @@ end
 local function fan_mode_sequence_handler(driver, device, ib, response)
   local supportedFanModes, supported_fan_modes_attribute
   if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
-    supportedFanModes = { "off", "low", "medium", "high" }
+    supportedFanModes = { "low", "medium", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
-    supportedFanModes = { "off", "low", "high" }
+    supportedFanModes = { "low", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
-    supportedFanModes = { "off", "low", "medium", "high", "auto" }
+    supportedFanModes = { "low", "medium", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
-    supportedFanModes = { "off", "low", "high", "auto" }
+    supportedFanModes = { "low", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
-    supportedFanModes = { "off", "high", "auto" }
+    supportedFanModes = { "high", "auto" }
   else
-    supportedFanModes = { "off", "high" }
+    supportedFanModes = { "high" }
+  end
+  if get_device_type(device) ~= THERMOSTAT_DEVICE_TYPE_ID then
+    table.insert(supportedFanModes, 1, "off")
   end
 
   if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
