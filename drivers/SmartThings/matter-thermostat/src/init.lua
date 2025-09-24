@@ -17,16 +17,15 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local im = require "st.matter.interaction_model"
-
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local version = require "version"
 
 local SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
 -- declare match_profile function for use throughout file
 local match_profile
 
 -- Include driver-side definitions when lua libs api version is < 10
-local version = require "version"
 if version.api < 10 then
   clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
@@ -100,8 +99,6 @@ local HEAT_PUMP_DEVICE_TYPE_ID = 0x0309
 local THERMOSTAT_DEVICE_TYPE_ID = 0x0301
 local ELECTRICAL_SENSOR_DEVICE_TYPE_ID = 0x0510
 
-local MIN_ALLOWED_PERCENT_VALUE = 0
-local MAX_ALLOWED_PERCENT_VALUE = 100
 local DEFAULT_REPORT_TIME_INTERVAL = 15 * 60 -- Report cumulative energy every 15 minutes
 local MAX_REPORT_TIMEOUT = 30 * 60
 local POLL_INTERVAL = 60 -- To read CumulativeEnergyImported every 60 seconds.
@@ -201,7 +198,8 @@ local subscribed_attributes = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.fanSpeedPercent.ID] = {
-    clusters.FanControl.attributes.PercentCurrent
+    clusters.FanControl.attributes.PercentCurrent,
+    clusters.FanControl.attributes.PercentSetting
   },
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
@@ -1012,6 +1010,7 @@ local function match_modular_profile_thermostat(driver, device)
 
   if #fan_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
   end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
@@ -1613,11 +1612,19 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
-  local speed = 0
-  if ib.data.value ~= nil then
-    speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
+  local thermostat_mode = device:get_latest_state(
+    device:endpoint_to_component(ib.endpoint_id),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.thermostatMode.NAME
+  )
+  if thermostat_mode == capabilities.thermostatMode.thermostatMode.auto() then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
   end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
+end
+
+local function fan_speed_setting_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
 end
 
 local function wind_support_handler(driver, device, ib, response)
@@ -2125,6 +2132,7 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
         [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler,
+        [clusters.FanControl.attributes.PercentSetting.ID] = fan_speed_setting_attr_handler,
         [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
         [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler,
         [clusters.FanControl.attributes.RockSupport.ID] = rock_support_handler,
