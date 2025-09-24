@@ -36,6 +36,7 @@ pipeline {
     BRANCH = getEnvName()
     CHANGED_DRIVERS = getChangedDrivers()
     ENVIRONMENT = "${env.NODE_LABEL.toUpperCase()}"
+    FAILURE_FILE = "failures.log"
   }
   stages {
     stage('requirements') {
@@ -56,6 +57,13 @@ pipeline {
         stage('environment_update') {
           steps {
             sh 'python3 tools/deploy.py'
+            script {
+              def failures_file = new File(env.FAILURE_FILE)
+              if failures_file.exists() {
+                currentBuild.description += failures_file.getText()
+                currentBuild.result = 'UNSTABLE'
+              }
+            }
           }
         }
       }
