@@ -751,6 +751,11 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x0077
     deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/191"
+    deviceLabel: LIFX Everyday Smart Light 2-Pack
+    vendorId: 0x1423
+    productId: 0x00BF
+    deviceProfileName: light-color-level
 #LG
   - id: "4142/8784"
     deviceLabel: LG Smart Button (1 Button)
