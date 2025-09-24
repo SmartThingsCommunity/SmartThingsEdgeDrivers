@@ -59,7 +59,7 @@ pipeline {
             sh 'python3 tools/deploy.py'
             script {
               def failures_file = new File(env.FAILURE_FILE)
-              if failures_file.exists() {
+              if (failures_file.exists()) {
                 currentBuild.description += failures_file.getText()
                 currentBuild.result = 'UNSTABLE'
               }
