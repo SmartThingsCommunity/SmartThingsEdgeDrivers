@@ -182,7 +182,6 @@ function utils.create_multi_press_values_list(size, supportsHeld)
   return list
 end
 
-
 function utils.detect_bridge(device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
@@ -201,6 +200,45 @@ function utils.detect_matter_thing(device)
     end
   end
   return device:supports_capability(capabilities.refresh)
+end
+
+function utils.report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
+  local current_time = os.time()
+  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+
+  -- Ensure that the previous report was sent at least 15 minutes ago
+  if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
+    return
+  end
+
+  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+
+  -- Calculate the energy delta between reports
+  local energy_delta_wh = 0.0
+  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME)
+  if previous_imported_report and previous_imported_report.energy then
+    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
+  end
+
+  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
+
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  if not device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT) then
+    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
+      start = epoch_to_iso8601(last_time),
+      ["end"] = epoch_to_iso8601(current_time - 1),
+      deltaEnergy = energy_delta_wh,
+      energy = latest_total_imported_energy_wh
+    }))
+  else
+    device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT),capabilities.powerConsumptionReport.powerConsumption({
+      start = epoch_to_iso8601(last_time),
+      ["end"] = epoch_to_iso8601(current_time - 1),
+      deltaEnergy = energy_delta_wh,
+      energy = latest_total_imported_energy_wh
+    }))
+  end
 end
 
 return utils

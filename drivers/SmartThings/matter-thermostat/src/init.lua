@@ -102,16 +102,12 @@ local ELECTRICAL_SENSOR_DEVICE_TYPE_ID = 0x0510
 
 local MIN_ALLOWED_PERCENT_VALUE = 0
 local MAX_ALLOWED_PERCENT_VALUE = 100
-local DEFAULT_REPORT_TIME_INTERVAL = 15 * 60 -- Report cumulative energy every 15 minutes
-local MAX_REPORT_TIMEOUT = 30 * 60
-local POLL_INTERVAL = 60 -- To read CumulativeEnergyImported every 60 seconds.
 
-local RECURRING_POLL_TIMER = "__recurring_poll_timer"
-local RECURRING_REPORT_TIMER = "__recurring_report_poll_timer"
-local DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL = "__pcr_time_interval"
-local DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED = "__timer_interval_considered"
+local CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
+local LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
+local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
+
 local TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP = "__total_cumulative_energy_imported_map"
-local LAST_REPORTED_TIME = "__last_reported_time"
 local SUPPORTED_WATER_HEATER_MODES_WITH_IDX = "__supported_water_heater_modes_with_idx"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local MGM3_PPM_CONVERSION_FACTOR = 24.45
@@ -308,10 +304,12 @@ local subscribed_attributes = {
     clusters.WaterHeaterMode.attributes.SupportedModes
   },
   [capabilities.powerConsumptionReport.ID] = {
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported
   },
   [capabilities.energyMeter.ID] = {
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported
   },
 }
 
@@ -347,60 +345,36 @@ local get_total_cumulative_energy_imported = function(device)
   return total_energy
 end
 
-local function schedule_energy_report_timer(device)
-  if not device:supports_capability(capabilities.powerConsumptionReport) then
+local function report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
+  local current_time = os.time()
+  local last_time = device:get_field(LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+
+  -- Ensure that the previous report was sent at least 15 minutes ago
+  if MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
     return
   end
 
-  local polling_schedule_timer = device:get_field(RECURRING_REPORT_TIMER)
-  if polling_schedule_timer ~= nil then
-    return
+  device:set_field(LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+
+  -- Calculate the energy delta between reports
+  local energy_delta_wh = 0.0
+  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME)
+  if previous_imported_report and previous_imported_report.energy then
+    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
   end
 
-  -- The powerConsumption report needs to be updated at least every 15 minutes in order to be included in SmartThings Energy
-  local pcr_interval = device:get_field(DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL) or DEFAULT_REPORT_TIME_INTERVAL
-  pcr_interval = utils.clamp_value(pcr_interval, DEFAULT_REPORT_TIME_INTERVAL, MAX_REPORT_TIMEOUT)
-  local timer = device.thread:call_on_schedule(pcr_interval, function()
-    local last_time = device:get_field(LAST_REPORTED_TIME) or 0
-    local current_time = os.time()
-    local total_energy = get_total_cumulative_energy_imported(device)
-    device:set_field(LAST_REPORTED_TIME, current_time, { persist = true })
-
-    -- Calculate the energy consumed between the start and the end time
-    local previousTotalConsumptionWh = device:get_latest_state(
-      "main", capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME
-    ) or { energy = 0 }
-    local deltaEnergyWh = math.max(total_energy - previousTotalConsumptionWh.energy, 0.0)
-    local startTime = epoch_to_iso8601(last_time)
-    local endTime = epoch_to_iso8601(current_time - 1)
-
-    -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-      start = startTime,
-      ["end"] = endTime,
-      deltaEnergy = deltaEnergyWh,
-      energy = total_energy
-    }))
-  end, "polling_report_schedule_timer")
-
-  device:set_field(RECURRING_REPORT_TIMER, timer)
-end
-
-local function delete_reporting_timer(device)
-  local reporting_poll_timer = device:get_field(RECURRING_REPORT_TIMER)
-  if reporting_poll_timer ~= nil then
-    device.thread:cancel_timer(reporting_poll_timer)
-    device:set_field(RECURRING_REPORT_TIMER, nil)
-  end
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  device:emit_component_event(device.profile.components["main"], capabilities.powerConsumptionReport.powerConsumption({
+    start = epoch_to_iso8601(last_time),
+    ["end"] = epoch_to_iso8601(current_time - 1),
+    deltaEnergy = energy_delta_wh,
+    energy = latest_total_imported_energy_wh
+  }))
 end
 
 local function device_removed(driver, device)
-  delete_reporting_timer(device)
-  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
-  if poll_timer ~= nil then
-    device.thread:cancel_timer(poll_timer)
-    device:set_field(RECURRING_POLL_TIMER, nil)
-  end
+  device.log.info("device removed")
 end
 
 local function tbl_contains(array, value)
@@ -456,40 +430,6 @@ local endpoint_to_component = function (device, endpoint_id)
   return "main"
 end
 
-local function create_poll_schedule(device)
-  local poll_timer = device:get_field(RECURRING_POLL_TIMER)
-  if poll_timer ~= nil then
-    return
-  end
-
-  local cumul_imp_eps = embedded_cluster_utils.get_endpoints(
-    device, clusters.ElectricalEnergyMeasurement.ID,
-    {
-      feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY |
-      clusters.ElectricalEnergyMeasurement.types.Feature.IMPORTED_ENERGY
-    }
-  ) or {}
-  if #cumul_imp_eps == 0 then
-    return
-  end
-
-  device:send(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device))
-  -- Setup a timer to read cumulative energy imported attribute every minute.
-  local timer = device.thread:call_on_schedule(POLL_INTERVAL, function()
-    device:send(clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(device))
-  end, "polling_schedule_timer")
-
-  device:set_field(RECURRING_POLL_TIMER, timer)
-end
-
-local function schedule_polls_for_cumulative_energy_imported(device)
-  if not device:supports_capability(capabilities.powerConsumptionReport) then
-    return
-  end
-  create_poll_schedule(device)
-  schedule_energy_report_timer(device)
-end
-
 local function device_init(driver, device)
   if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) then
     if version.api >= 15 and version.rpc >= 9 then
@@ -513,7 +453,18 @@ local function device_init(driver, device)
       device:send(deadband_read)
     end
   end
-  schedule_polls_for_cumulative_energy_imported(device)
+
+  -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
+  -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
+  local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+  if #electrical_energy_measurement_eps > 0 then
+    local cumulative_energy_eps = embedded_cluster_utils.get_endpoints(
+      device,
+      clusters.ElectricalEnergyMeasurement.ID,
+      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}
+    )
+    if #cumulative_energy_eps == 0 then device:set_field(CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = false}) end
+  end
 end
 
 local function info_changed(driver, device, event, args)
@@ -526,7 +477,6 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
   end
-  schedule_polls_for_cumulative_energy_imported(device)
 end
 
 local function get_endpoints_for_dt(device, device_type)
@@ -550,12 +500,12 @@ local function get_device_type(device)
   -- devices with similar device type compositions that may report their device types
   -- listed in different orders
   local device_type_priority = {
-    [RAC_DEVICE_TYPE_ID] = 1,
-    [AP_DEVICE_TYPE_ID] = 2,
-    [THERMOSTAT_DEVICE_TYPE_ID] = 3,
-    [FAN_DEVICE_TYPE_ID] = 4,
-    [WATER_HEATER_DEVICE_TYPE_ID] = 5,
-    [HEAT_PUMP_DEVICE_TYPE_ID] = 6
+    [HEAT_PUMP_DEVICE_TYPE_ID] = 1,
+    [RAC_DEVICE_TYPE_ID] = 2,
+    [AP_DEVICE_TYPE_ID] = 3,
+    [THERMOSTAT_DEVICE_TYPE_ID] = 4,
+    [FAN_DEVICE_TYPE_ID] = 5,
+    [WATER_HEATER_DEVICE_TYPE_ID] = 6,
   }
 
   local main_device_type = false
@@ -1988,42 +1938,19 @@ local function active_power_handler(driver, device, ib, response)
 end
 
 local function periodic_energy_imported_handler(driver, device, ib, response)
-  local endpoint_id = ib.endpoint_id
-  local cumul_eps = embedded_cluster_utils.get_endpoints(device,
-    clusters.ElectricalEnergyMeasurement.ID,
-    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY })
-
   if ib.data then
     if version.api < 11 then
       clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:augment_type(ib.data)
     end
-
-    local start_timestamp = ib.data.elements.start_timestamp.value or 0
-    local end_timestamp = ib.data.elements.end_timestamp.value or 0
-
-    local device_reporting_time_interval = end_timestamp - start_timestamp
-    if not device:get_field(DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED) and device_reporting_time_interval > DEFAULT_REPORT_TIME_INTERVAL then
-      -- This is a one time setup in order to consider a larger time interval if the interval the device chooses to report is greater than 15 minutes.
-      device:set_field(DEVICE_REPORTING_TIME_INTERVAL_CONSIDERED, true, { persist = true })
-      device:set_field(DEVICE_POWER_CONSUMPTION_REPORT_TIME_INTERVAL, device_reporting_time_interval, { persist = true })
-      delete_reporting_timer(device)
-      schedule_energy_report_timer(device)
-    end
-
-    if tbl_contains(cumul_eps, endpoint_id) then
-      -- Since cluster at this endpoint supports both CUME & PERE features, we will prefer
-      -- cumulative_energy_imported_handler to handle the energy report for this endpoint.
-      return
-    end
-
-    endpoint_id = string.format(ib.endpoint_id)
+    local endpoint_id = string.format(ib.endpoint_id)
     local energy_imported_Wh = utils.round(ib.data.elements.energy.value / 1000) --convert mWh to Wh
     local cumulative_energy_imported = device:get_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP) or {}
     cumulative_energy_imported[endpoint_id] = cumulative_energy_imported[endpoint_id] or 0
     cumulative_energy_imported[endpoint_id] = cumulative_energy_imported[endpoint_id] + energy_imported_Wh
     device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP, cumulative_energy_imported, { persist = true })
     local total_cumulative_energy_imported = get_total_cumulative_energy_imported(device)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({value = total_cumulative_energy_imported, unit = "Wh"}))
+    device:emit_component_event(device.profile.components["main"], ib.endpoint_id, capabilities.energyMeter.energy({value = total_cumulative_energy_imported, unit = "Wh"}))
+    report_power_consumption_to_st_energy(device, total_cumulative_energy_imported)
   end
 end
 
@@ -2038,7 +1965,18 @@ local function cumulative_energy_imported_handler(driver, device, ib, response)
     cumulative_energy_imported[endpoint_id] = cumulative_energy_imported_Wh
     device:set_field(TOTAL_CUMULATIVE_ENERGY_IMPORTED_MAP, cumulative_energy_imported, { persist = true })
     local total_cumulative_energy_imported = get_total_cumulative_energy_imported(device)
-    device:emit_event(capabilities.energyMeter.energy({ value = total_cumulative_energy_imported, unit = "Wh" }))
+    device:emit_component_event(device.profile.components["main"], capabilities.energyMeter.energy({ value = total_cumulative_energy_imported, unit = "Wh" }))
+    report_power_consumption_to_st_energy(device, total_cumulative_energy_imported)
+  end
+end
+
+local function energy_report_handler_factory(is_cumulative_report)
+  return function(driver, device, ib, response)
+    if is_cumulative_report then
+      cumulative_energy_imported_handler(driver, device, ib, response)
+    elseif device:get_field(CUMULATIVE_REPORTS_NOT_SUPPORTED) then
+      periodic_energy_imported_handler(driver, device, ib, response)
+    end
   end
 end
 
@@ -2225,8 +2163,8 @@ local matter_driver_template = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = active_power_handler
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = cumulative_energy_imported_handler,
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = periodic_energy_imported_handler
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = energy_report_handler_factory(true),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = energy_report_handler_factory(false),
       },
       [clusters.WaterHeaterMode.ID] = {
         [clusters.WaterHeaterMode.attributes.CurrentMode.ID] = water_heater_mode_handler,

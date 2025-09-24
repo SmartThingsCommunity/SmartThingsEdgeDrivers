@@ -18,6 +18,7 @@ local device_lib = require "st.device"
 local clusters = require "st.matter.clusters"
 local log = require "log"
 local version = require "version"
+local embedded_cluster_utils = require "utils.embedded_cluster_utils"
 
 local fields = require "utils.switch_fields"
 local switch_utils = require "utils.switch_utils"
@@ -29,7 +30,6 @@ local button_cfg = cfg.ButtonCfg
 local attribute_handlers = require "generic_handlers.attribute_handlers"
 local event_handlers = require "generic_handlers.event_handlers"
 local capability_handlers = require "generic_handlers.capability_handlers"
-local power_consumption_reporting = require "generic_handlers.power_consumption_report"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -75,7 +75,6 @@ end
 
 function SwitchLifecycleHandlers.device_removed(driver, device)
   device.log.info("device removed")
-  power_consumption_reporting.delete_import_poll_schedule(device)
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
@@ -112,8 +111,19 @@ function SwitchLifecycleHandlers.device_init(driver, device)
         end
       end
     end
-
     device:subscribe()
+
+    -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
+    -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
+    local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
+    if #electrical_energy_measurement_eps > 0 then
+      local cumulative_energy_eps = embedded_cluster_utils.get_endpoints(
+        device,
+        clusters.ElectricalEnergyMeasurement.ID,
+        {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}
+      )
+      if #cumulative_energy_eps == 0 then device:set_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = false}) end
+    end
   end
 end
 
