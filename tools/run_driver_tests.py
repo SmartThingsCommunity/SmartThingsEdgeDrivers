@@ -29,7 +29,7 @@ def find_affected_tests(working_dir, changed_files):
     affected_tests = set(affected_tests)
     return affected_tests
 
-def run_tests(verbosity_level, filter, junit, coverage_files):
+def run_tests(verbosity_level, filter, junit, coverage_files, generate_heaptrack):
     owd = os.getcwd()
     coverage_files = find_affected_tests(owd, coverage_files)
     failure_files = defaultdict(list)
@@ -37,6 +37,10 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
     total_tests = 0
     total_passes = 0
     for test_file in DRIVER_DIR.glob("*" + os.path.sep + "*" + os.path.sep + "src" + os.path.sep + "test" + os.path.sep + "test_*.lua"):
+        test_file_short_name = str(test_file).replace("/", "_")
+        m = re.match(r".*(test_[^/]+)\.lua", str(test_file))
+        if m is not None:
+            test_file_short_name = m.group(1)
         if filter != None and re.search(filter, str(test_file)) is None:
             continue
         os.chdir(test_file.parents[1])
@@ -45,6 +49,8 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         print(test_line)
         if test_file in coverage_files:
             a = subprocess.run("lua -lluacov {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        elif generate_heaptrack:
+            a = subprocess.run("heaptrack -o ./{}_dat lua {}".format(test_file_short_name, test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         else:
             a = subprocess.run("lua {}".format(test_file), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         lines = a.stdout.decode().split("\n")
@@ -62,6 +68,7 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         test_status = ""
         test_done = False
         for line in lines:
+
             if test_case is not None:
                 if test_case.stdout is not None:
                     test_case.stdout += line + '\n'
@@ -115,10 +122,10 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
                 test_status = ""
                 test_logs = ""
                 test_done = False
-            if re.match("^\s*$", line) is None:
+            if re.match(r"^\s*$", line) is None:
                 last_line = line
 
-        m = re.match("Passed (\d+) of (\d+) tests", last_line)
+        m = re.match(r"Passed (\d+) of (\d+) tests", last_line)
         if m is None:
             failure_files[test_file].append("\n    ".join(a.stderr.decode().split("\n")))
             test_case = junit_xml.TestCase(test_suite.name)
@@ -138,6 +145,16 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         ts.append(test_suite)
         if test_file in coverage_files:
             subprocess.run("luacov -c={}".format(LUACOV_CONFIG), shell=True)
+
+        if generate_heaptrack:
+            ht = subprocess.run(f"heaptrack_print ./{test_file_short_name}_dat.zst", stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+            lines = ht.stdout.decode().split("\n")
+            for line in lines:
+                m = re.match(r"\s*peak heap memory consumption: (.+)", line)
+                if m is not None:
+                    print(f"{test_file_short_name} PEAK HEAP: {m.group(1)}")
+            os.remove(test_file.parents[1] / f"{test_file_short_name}_dat.zst")
+
 
     total_test_info = "Total unit tests passes: {}/{}".format(total_passes, total_tests)
     print("#" * len(total_test_info))
@@ -165,6 +182,7 @@ if __name__ == "__main__":
     parser.add_argument("--filter", "-f",  type=str, nargs="?", help="only run tests containing the filter value in the path")
     parser.add_argument("--junit", "-j", type=str, nargs="?", help="output test results in JUnit XML to the specified file")
     parser.add_argument("--coverage", "-c", nargs="*", help="run code tests with coverage (luacov must be installed) OPTIONAL: restrict files to run coverage tests for")
+    parser.add_argument("--heaptrack", "-ht", action="store_true", help="Track the maximum heap used for the driver test")
     args = parser.parse_args()
     verbosity_level = 0
     if args.verbose:
@@ -173,5 +191,5 @@ if __name__ == "__main__":
         verbosity_level = 2
     elif args.superextraverbose:
         verbosity_level = 3
-    run_tests(verbosity_level, args.filter, args.junit, args.coverage)
+    run_tests(verbosity_level, args.filter, args.junit, args.coverage, args.heaptrack)
 
