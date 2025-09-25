@@ -17,6 +17,7 @@ local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
+local configurations = require "configurations"
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
   { model = "PMM-300Z1" },
@@ -29,7 +30,7 @@ local POWERMETER_CONFIGURATION_V2 = {
     cluster = SimpleMetering.ID,
     attribute = SimpleMetering.attributes.CurrentSummationDelivered.ID,
     minimum_interval = 5,
-    maximum_interval = 300,
+    maximum_interval = 450, -- Since the 15 minute report below depends on this report we make this 7.5 minutes
     data_type = SimpleMetering.attributes.CurrentSummationDelivered.base_type,
     reportable_change = 1
   },
@@ -37,17 +38,17 @@ local POWERMETER_CONFIGURATION_V2 = {
     cluster = SimpleMetering.ID,
     attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
     minimum_interval = 5,
-    maximum_interval = 300,
+    maximum_interval = 3600,
     data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
-    reportable_change = 1
+    reportable_change = 5
   },
   { -- reporting : no
     cluster = ElectricalMeasurement.ID,
     attribute = ElectricalMeasurement.attributes.ActivePower.ID,
-    minimum_interval = 0,
+    minimum_interval = 5,
     maximum_interval = 65535,
     data_type = ElectricalMeasurement.attributes.ActivePower.base_type,
-    reportable_change = 1
+    reportable_change = 5
   }
 }
 
@@ -124,7 +125,7 @@ local shinasystems_power_meter_handler = {
     }
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
   can_handle = is_shinasystems_power_meter

@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local constants = require "st.zigbee.constants"
+local configurations = require "configurations"
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
   { model = "ZHEMI101" },
@@ -42,7 +43,7 @@ end
 local frient_power_meter_handler = {
   NAME = "frient power meter handler",
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
   can_handle = is_frient_power_meter
