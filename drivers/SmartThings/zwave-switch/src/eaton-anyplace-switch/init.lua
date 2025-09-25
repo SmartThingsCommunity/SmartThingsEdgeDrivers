@@ -18,6 +18,8 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 
+local switch_utils = require "switch_utils"
+
 local EATON_ANYPLACE_SWITCH_FINGERPRINTS = {
   { manufacturerId = 0x001A, productType = 0x4243, productId = 0x0000 } -- Eaton Anyplace Switch
 }
@@ -46,7 +48,7 @@ local function basic_get_handler(self, device, cmd)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.switch.switch.off())
+  switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.switch, capabilities.switch.switch.NAME, capabilities.switch.switch.off())
 end
 
 local function switch_on_handler(driver, device)

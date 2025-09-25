@@ -88,6 +88,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    -- The initial window shade event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_simple_device:generate_test_message(
@@ -107,6 +108,15 @@ test.register_coroutine_test(
         capabilities.windowShade.windowShade.closed()
       )
     )
+    -- Avoid sending the initial window shade event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message(
+        "main",
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}})
+      )
+    )
+
   end
 )
 
