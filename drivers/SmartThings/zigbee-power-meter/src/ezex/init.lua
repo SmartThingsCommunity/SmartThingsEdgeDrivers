@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local SimpleMetering = clusters.SimpleMetering
+local ElectricalMeasurement = clusters.ElectricalMeasurement
 local energy_meter_defaults = require "st.zigbee.defaults.energyMeter_defaults"
 local configurations = require "configurations"
 
@@ -34,11 +35,11 @@ local is_ezex_power_meter = function(opts, driver, device)
 end
 
 local instantaneous_demand_configuration = {
-  cluster = clusters.SimpleMetering.ID,
-  attribute = clusters.SimpleMetering.attributes.InstantaneousDemand.ID,
+  cluster = SimpleMetering.ID,
+  attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
   minimum_interval = 5,
   maximum_interval = 3600,
-  data_type = clusters.SimpleMetering.attributes.InstantaneousDemand.base_type,
+  data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
   reportable_change = 500
 }
 
@@ -50,8 +51,13 @@ end
 local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
   device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
+  device:remove_configured_attribute(ElectricalMeasurement.ID, ElectricalMeasurement.attributes.ActivePower.ID)
+  device:remove_configured_attribute(ElectricalMeasurement.ID, ElectricalMeasurement.attributes.ACPowerDivisor.ID)
+  device:remove_configured_attribute(ElectricalMeasurement.ID, ElectricalMeasurement.attributes.ACPowerMultiplier.ID)
   device:add_configured_attribute(instantaneous_demand_configuration)
 end
+
+local function noop_active_power(driver, device, value, zb_rx) end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value_miliwatts = value.value
@@ -72,6 +78,9 @@ local ezex_power_meter_handler = {
     attr = {
       [SimpleMetering.ID] = {
         [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
+      },
+      [ElectricalMeasurement.ID] = {
+        [ElectricalMeasurement.attributes.ActivePower.ID] = noop_active_power
       }
     }
   },

@@ -78,7 +78,7 @@ local function build_config_response_msg(device, cluster, global_status, attribu
 end
 
 test.register_message_test(
-    "ActivePower Report should be handled. Sensor value is in W, capability attribute value is in hectowatts",
+    "ActivePower Report should not generate an event",
     {
       {
         channel = "zigbee",
@@ -90,11 +90,6 @@ test.register_message_test(
         direction = "receive",
         message = { mock_device.id, ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_device,
                                                                                                         27) },
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 2.7, unit = "W" }))
       }
     }
 )
@@ -149,49 +144,19 @@ test.register_coroutine_test(
                                          SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device)
                                        })
       test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         ElectricalMeasurement.attributes.ActivePower:read(mock_device)
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                        ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device)
-                                      })
-      test.socket.zigbee:__expect_send({
                                         mock_device.id,
-                                        ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
+                                        zigbee_test_utils.build_bind_request(mock_device,
+                                                                             zigbee_test_utils.mock_hub_eui,
+                                                                             SimpleMetering.ID)
                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         zigbee_test_utils.build_bind_request(mock_device,
-                                                                              zigbee_test_utils.mock_hub_eui,
-                                                                              SimpleMetering.ID)
-                                       })
-      test.socket.zigbee:__expect_send({
+     test.socket.zigbee:__expect_send({
                                          mock_device.id,
                                          SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 500)
                                        })
-      test.socket.zigbee:__expect_send({
+     test.socket.zigbee:__expect_send({
                                          mock_device.id,
                                          SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1)
                                        })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         zigbee_test_utils.build_bind_request(mock_device,
-                                                                              zigbee_test_utils.mock_hub_eui,
-                                                                              ElectricalMeasurement.ID)
-                                       })
-      test.socket.zigbee:__expect_send({
-                                         mock_device.id,
-                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)
-                                       })
-      test.socket.zigbee:__expect_send({
-                                        mock_device.id,
-                                        ElectricalMeasurement.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1)
-                                      })
-      test.socket.zigbee:__expect_send({
-                                        mock_device.id,
-                                        ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
-                                      })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
