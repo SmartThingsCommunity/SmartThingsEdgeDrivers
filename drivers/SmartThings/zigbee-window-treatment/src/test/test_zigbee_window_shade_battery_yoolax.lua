@@ -67,7 +67,14 @@ end
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)end
+  test.mock_device.add_test_device(mock_device)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
+end
 
 test.set_test_init_function(test_init)
 
@@ -136,9 +143,10 @@ test.register_coroutine_test(
         { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
       }
     )
+    -- newly added devices will ignore the preference
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 70)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
   end
 )
