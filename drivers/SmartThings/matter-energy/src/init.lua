@@ -34,8 +34,8 @@ if version.api < 12 then
 end
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-local SUPPORTED_EVSE_MODES_MAP = "__supported_evse_modes_map"
-local SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP = "__supported_device_energy_management_modes_map"
+local SUPPORTED_EVSE_MODES = "__supported_evse_modes"
+local SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES = "__supported_device_energy_management_modes"
 local RECURRING_REPORT_POLL_TIMER = "__recurring_report_poll_timer"
 local RECURRING_POLL_TIMER = "__recurring_poll_timer"
 local LAST_REPORTED_TIME = "__last_reported_time"
@@ -45,6 +45,11 @@ local DEVICE_REPORTED_TIME_INTERVAL_CONSIDERED = "__timer_interval_considered"
 local TOTAL_CUMULATIVE_ENERGY_IMPORTED = "__total_cumulative_energy_imported"
 local TOTAL_CUMULATIVE_ENERGY_EXPORTED = "__total_cumulative_energy_exported"
 local TOTAL_ACTIVE_POWER = "__total_active_power"
+
+local updated_fields = {
+  { current_field_name = "__supported_evse_modes_map", updated_field_name = nil },
+  { current_field_name = "__supported_device_energy_management_modes_map", updated_field_name = nil }
+}
 
 local TIMER_REPEAT = (1 * 60)        -- 1 minute
 local REPORT_TIMEOUT = (15 * 60)     -- Report the value each 15 minutes
@@ -56,7 +61,6 @@ local SOLAR_POWER_DEVICE_TYPE_ID = 0x0017
 local BATTERY_STORAGE_DEVICE_TYPE_ID = 0x0018
 local ELECTRICAL_SENSOR_DEVICE_TYPE_ID = 0x0510
 local DEVICE_ENERGY_MANAGEMENT_DEVICE_TYPE_ID = 0x050D
-
 
 local function get_endpoints_for_dt(device, device_type)
   local endpoints = {}
@@ -99,6 +103,25 @@ local function component_to_endpoint(device, component)
     return map[component]
   else
     return find_default_endpoint(device)
+  end
+end
+
+local function get_field_for_endpoint(device, field, endpoint)
+  return device:get_field(string.format("%s_%d", field, endpoint))
+end
+
+local function set_field_for_endpoint(device, field, endpoint, value, additional_params)
+  device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+end
+
+local function check_field_name_updates(device)
+  for _, field in ipairs(updated_fields) do
+    if device:get_field(field.current_field_name) then
+      if field.updated_field_name ~= nil then
+        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
+      end
+      device:set_field(field.current_field_name, nil)
+    end
   end
 end
 
@@ -324,6 +347,7 @@ end
 
 -- Lifecycle Handlers --
 local function device_init(driver, device)
+  check_field_name_updates(device)
   device:subscribe()
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
@@ -504,7 +528,6 @@ local function power_mode_handler(driver, device, ib, response)
 end
 
 local function energy_evse_supported_modes_attr_handler(driver, device, ib, response)
-  local supportedEvseModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP) or {}
   local supportedEvseModes = {}
   for _, mode in ipairs(ib.data.elements) do
     if version.api < 11 then
@@ -512,8 +535,7 @@ local function energy_evse_supported_modes_attr_handler(driver, device, ib, resp
     end
     table.insert(supportedEvseModes, mode.elements.label.value)
   end
-  supportedEvseModesMap[ib.endpoint_id] = supportedEvseModes
-  device:set_field(SUPPORTED_EVSE_MODES_MAP, supportedEvseModesMap, { persist = true })
+  set_field_for_endpoint(device, SUPPORTED_EVSE_MODES, ib.endpoint_id, supportedEvseModes, { persist = true })
   local event = capabilities.mode.supportedModes(supportedEvseModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
   event = capabilities.mode.supportedArguments(supportedEvseModes, { visibility = { displayed = false } })
@@ -521,10 +543,7 @@ local function energy_evse_supported_modes_attr_handler(driver, device, ib, resp
 end
 
 local function energy_evse_mode_attr_handler(driver, device, ib, response)
-  device.log.info(string.format("energy_evse_modes_attr_handler currentMode: %s", ib.data.value))
-
-  local supportedEvseModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP) or {}
-  local supportedEvseModes = supportedEvseModesMap[ib.endpoint_id] or {}
+  local supportedEvseModes = get_field_for_endpoint(device, SUPPORTED_EVSE_MODES, ib.endpoint_id) or {}
   local currentMode = ib.data.value
   for i, mode in ipairs(supportedEvseModes) do
     if i - 1 == currentMode then
@@ -535,7 +554,6 @@ local function energy_evse_mode_attr_handler(driver, device, ib, response)
 end
 
 local function device_energy_mgmt_supported_modes_attr_handler(driver, device, ib, response)
-  local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP) or {}
   local supportedDeviceEnergyMgmtModes = {}
   for _, mode in ipairs(ib.data.elements) do
     if version.api < 12 then
@@ -543,8 +561,7 @@ local function device_energy_mgmt_supported_modes_attr_handler(driver, device, i
     end
     table.insert(supportedDeviceEnergyMgmtModes, mode.elements.label.value)
   end
-  supportedDeviceEnergyMgmtModesMap[ib.endpoint_id] = supportedDeviceEnergyMgmtModes
-  device:set_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP, supportedDeviceEnergyMgmtModesMap, { persist = true })
+  set_field_for_endpoint(device, SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES, ib.endpoint_id, supportedDeviceEnergyMgmtModes, { persist = true })
   local event = capabilities.mode.supportedModes(supportedDeviceEnergyMgmtModes, { visibility = { displayed = false } })
   device:emit_event_for_endpoint(ib.endpoint_id, event)
   event = capabilities.mode.supportedArguments(supportedDeviceEnergyMgmtModes, { visibility = { displayed = false } })
@@ -552,10 +569,7 @@ local function device_energy_mgmt_supported_modes_attr_handler(driver, device, i
 end
 
 local function device_energy_mgmt_mode_attr_handler(driver, device, ib, response)
-  device.log.info(string.format("device_energy_mgmt_mode_attr_handler currentMode: %s", ib.data.value))
-
-  local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP) or {}
-  local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[ib.endpoint_id] or {}
+  local supportedDeviceEnergyMgmtModes = get_field_for_endpoint(device, SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES, ib.endpoint_id) or {}
   local currentMode = ib.data.value
   for i, mode in ipairs(supportedDeviceEnergyMgmtModes) do
     if i - 1 == currentMode then
@@ -726,8 +740,7 @@ local function handle_set_mode_command(driver, device, cmd)
   local set_mode_handlers = {
     ["main"] = function( ... )
       local ep = component_to_endpoint(device, cmd.component)
-      local supportedEvseModesMap = device:get_field(SUPPORTED_EVSE_MODES_MAP)
-      local supportedEvseModes = supportedEvseModesMap[ep] or {}
+      local supportedEvseModes = get_field_for_endpoint(device, SUPPORTED_EVSE_MODES, ep)
       for i, mode in ipairs(supportedEvseModes) do
         if cmd.args.mode == mode then
           device:send(clusters.EnergyEvseMode.commands.ChangeToMode(device, ep, i - 1))
@@ -738,8 +751,7 @@ local function handle_set_mode_command(driver, device, cmd)
     end,
     ["deviceEnergyManagement"] = function( ... )
       local ep = component_to_endpoint(device, cmd.component)
-      local supportedDeviceEnergyMgmtModesMap = device:get_field(SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES_MAP)
-      local supportedDeviceEnergyMgmtModes = supportedDeviceEnergyMgmtModesMap[ep] or {}
+      local supportedDeviceEnergyMgmtModes = get_field_for_endpoint(device, SUPPORTED_DEVICE_ENERGY_MANAGEMENT_MODES, ep)
       for i, mode in ipairs(supportedDeviceEnergyMgmtModes) do
         if cmd.args.mode == mode then
           device:send(clusters.DeviceEnergyManagementMode.commands.ChangeToMode(device, ep, i - 1))
