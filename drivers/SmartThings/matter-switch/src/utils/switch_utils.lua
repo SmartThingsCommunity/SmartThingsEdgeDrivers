@@ -95,16 +95,6 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   return false
 end
 
-local function get_first_non_zero_endpoint(endpoints)
-  table.sort(endpoints)
-  for _,ep in ipairs(endpoints) do
-    if ep ~= 0 then -- 0 is the matter RootNode endpoint
-      return ep
-    end
-  end
-  return nil
-end
-
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 function utils.find_default_endpoint(device)
@@ -116,6 +106,16 @@ function utils.find_default_endpoint(device)
 
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+
+  local get_first_non_zero_endpoint = function(endpoints)
+    table.sort(endpoints)
+    for _,ep in ipairs(endpoints) do
+      if ep ~= 0 then -- 0 is the matter RootNode endpoint
+        return ep
+      end
+    end
+    return nil
+  end
 
   -- Return the first switch endpoint as the default endpoint if no button endpoints are present
   if #button_eps == 0 and #switch_eps > 0 then
@@ -202,6 +202,5 @@ function utils.detect_matter_thing(device)
   end
   return device:supports_capability(capabilities.refresh)
 end
-
 
 return utils
