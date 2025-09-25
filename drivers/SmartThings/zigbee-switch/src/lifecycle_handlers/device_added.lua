@@ -27,7 +27,9 @@ end
 
 return function(driver, device, event)
   local clusters = require "st.zigbee.zcl.clusters"
+  local ZLL_PROFILE_ID = 0xC05E
   local device_lib = require "st.device"
+  local version = require "version"
 
   local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
   if is_mcd_device(device) == false and device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
@@ -52,5 +54,8 @@ return function(driver, device, event)
         end
       end
     end
+  end
+  if version.api > 15 and device:get_profile_id() == ZLL_PROFILE_ID then
+    device:refresh()
   end
 end
