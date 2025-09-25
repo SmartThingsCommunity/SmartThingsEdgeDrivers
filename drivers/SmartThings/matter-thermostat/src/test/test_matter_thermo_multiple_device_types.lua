@@ -15,9 +15,7 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local dkjson = require "dkjson"
 local uint32 = require "st.matter.data_types.Uint32"
-local utils = require "st.utils"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
@@ -196,10 +194,10 @@ local function test_thermostat_device_type_update_modular_profile(generic_mock_d
 
   test.wait_for_events()
 
-  local device_info_copy = utils.deep_copy(generic_mock_device.raw_st_data)
-  device_info_copy.profile.id = "thermostat-modular"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ generic_mock_device.id, "infoChanged", device_info_json })
+  local updated_device_profile = t_utils.get_profile_definition("thermostat-modular.yml",
+    {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.socket.device_lifecycle:__queue_receive(generic_mock_device:generate_info_changed({ profile = updated_device_profile }))
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
 end
 
