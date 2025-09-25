@@ -558,8 +558,8 @@ local function find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
-local function build_button_component_map(device, main_endpoint, button_eps)
-  -- create component mapping on the main profile button endpoints
+local function build_button_component_map(device, main_endpoint, button_eps, motion_eps)
+  -- create component mapping on the main profile button endpoints and motion endpoint
   table.sort(button_eps)
   local component_map = {}
   component_map["main"] = main_endpoint
@@ -572,13 +572,19 @@ local function build_button_component_map(device, main_endpoint, button_eps)
       component_map[button_component] = ep
     end
   end
+  if #motion_eps > 0 then
+    component_map["motion"] = motion_eps[1]
+  end
   device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
-local function build_button_profile(device, main_endpoint, num_button_eps)
+local function build_button_profile(device, main_endpoint, num_button_eps, num_motion_eps)
   local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
   if device_type_supports_button_switch_combination(device, main_endpoint) then
     profile_name = "light-level-" .. profile_name
+  end
+  if num_motion_eps > 0 then
+    profile_name = profile_name .. "-motion"
   end
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
   if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
@@ -651,11 +657,12 @@ end
 local function initialize_buttons_and_switches(driver, device, main_endpoint)
   local profile_found = false
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local motion_eps = device:get_endpoints(clusters.OccupancySensing.ID)
   if tbl_contains(STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    build_button_profile(device, main_endpoint, #button_eps)
+    build_button_profile(device, main_endpoint, #button_eps, #motion_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
-    build_button_component_map(device, main_endpoint, button_eps)
+    build_button_component_map(device, main_endpoint, button_eps, motion_eps)
     configure_buttons(device)
     profile_found = true
   end
@@ -1129,7 +1136,7 @@ local function illuminance_attr_handler(driver, device, ib, response)
 end
 
 local function occupancy_attr_handler(driver, device, ib, response)
-  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  device:emit_event_for_endpoint(ib.endpoint_id, ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
 local function cumul_energy_imported_handler(driver, device, ib, response)
