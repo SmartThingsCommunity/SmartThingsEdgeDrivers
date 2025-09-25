@@ -1,4 +1,12 @@
 matterManufacturer:
+#Linxura
+  - id: "Aura Smart Button"
+    deviceLabel: Aura Smart Button
+    vendorId: 0xFFF1
+    productId: 0x8004
+    deviceProfileName: 12-buttons-without-main-button
+    # deviceProfileName: 8-buttons-without-main-button
+    # deviceProfileName: four-buttons-without-main-button
 #Aqara
   - id: "4447/6145"
     deviceLabel: Aqara LED Bulb T2 RGB CCT
