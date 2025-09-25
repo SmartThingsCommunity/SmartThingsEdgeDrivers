@@ -37,6 +37,16 @@ local function can_handle_springs_window_fashion_shade(opts, driver, device, ...
   return false
 end
 
+local function init_handler(self, device)
+  -- This device has a preset position set in hardware, so we need to override the base driver
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+    device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.supportedCommands.NAME) == nil then
+
+    -- setPresetPosition is not supported
+    device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition"}, { visibility = { displayed = false }}))
+  end
+end
+
 local capability_handlers = {}
 
 --- Issue a window shade preset position command to the specified device.
@@ -58,6 +68,9 @@ function capability_handlers.preset_position(driver, device)
 end
 
 local springs_window_fashion_shade = {
+  lifecycle_handlers = {
+    init = init_handler
+  },
   capability_handlers = {
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = capability_handlers.preset_position
