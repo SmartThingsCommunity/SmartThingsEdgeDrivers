@@ -14,6 +14,7 @@
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
+local configurations = require "configurations"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -86,7 +87,6 @@ end
 local function device_init(driver, device)
   for _,attribute in ipairs(DIMMING_LIGHT_CONFIGURATION) do
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
 end
 
@@ -97,7 +97,7 @@ end
 local zigbee_dimming_light = {
   NAME = "Zigbee Dimming Light",
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
   sub_drivers = {

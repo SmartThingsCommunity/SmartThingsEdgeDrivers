@@ -49,8 +49,6 @@ end
 local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
   device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
-
-  device:add_monitored_attribute(instantaneous_demand_configuration)
   device:add_configured_attribute(instantaneous_demand_configuration)
 end
 

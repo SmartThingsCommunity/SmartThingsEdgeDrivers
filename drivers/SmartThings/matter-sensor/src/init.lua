@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -51,8 +51,9 @@ end
 local TEMP_BOUND_RECEIVED = "__temp_bound_received"
 local TEMP_MIN = "__temp_min"
 local TEMP_MAX = "__temp_max"
-
-local HUE_MANUFACTURER_ID = 0x100B
+local FLOW_BOUND_RECEIVED = "__flow_bound_received"
+local FLOW_MIN = "__flow_min"
+local FLOW_MAX = "__flow_max"
 
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
@@ -114,10 +115,6 @@ end
 local function match_profile(driver, device, battery_supported)
   local profile_name = ""
 
-  if device:supports_capability(capabilities.motionSensor) then
-    profile_name = profile_name .. "-motion"
-  end
-
   if device:supports_capability(capabilities.contactSensor) then
     profile_name = profile_name .. "-contact"
   end
@@ -150,6 +147,14 @@ local function match_profile(driver, device, battery_supported)
     profile_name = profile_name .. "-leak"
   end
 
+  if device:supports_capability(capabilities.flowMeasurement) then
+    profile_name = profile_name .. "-flow"
+  end
+
+  if device:supports_capability(capabilities.button) then
+    profile_name = profile_name .. "-button"
+  end
+
   if battery_supported == battery_support.BATTERY_PERCENTAGE then
     profile_name = profile_name .. "-battery"
   elseif battery_supported == battery_support.BATTERY_LEVEL then
@@ -163,6 +168,22 @@ local function match_profile(driver, device, battery_supported)
   local concatenated_preferences = supports_sensitivity_preferences(device)
   profile_name = profile_name .. concatenated_preferences
 
+  if device:supports_capability(capabilities.motionSensor) then
+    local occupancy_support = "-motion"
+    -- If the Occupancy Sensing Cluster’s revision is >= 5 (corresponds to Lua Libs version 13+), and any of the AIR / RAD / RFS / VIS
+    -- features are supported by the device, use the presenceSensor capability. Otherwise, use the motionSensor capability. Currently,
+    -- presenceSensor only used for devices fingerprinting to the motion-illuminance-temperature-humidity-battery profile.
+    if profile_name == "-illuminance-temperature-humidity-battery" and version.api >= 13 then
+      if #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.ACTIVE_INFRARED}) > 0 or
+        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RADAR}) > 0 or
+        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RF_SENSING}) > 0 or
+        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.VISION}) then
+        occupancy_support = "-presence"
+      end
+    end
+    profile_name = occupancy_support .. profile_name
+  end
+
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
 
@@ -172,8 +193,7 @@ end
 
 local function do_configure(driver, device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  -- Hue devices support the PowerSource cluster but don't support reporting battery percentage remaining
-  if #battery_feature_eps > 0 and device.manufacturer_info.vendor_id ~= HUE_MANUFACTURER_ID then
+  if #battery_feature_eps > 0 then
     local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
     attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
     device:send(attribute_list_read)
@@ -347,7 +367,11 @@ local function power_source_attribute_list_handler(driver, device, ib, response)
 end
 
 local function occupancy_attr_handler(driver, device, ib, response)
-  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  if device:supports_capability(capabilities.motionSensor) then
+    device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  else
+    device:emit_event(ib.data.value == 0x01 and capabilities.presenceSensor.presence("present") or capabilities.presenceSensor.presence("not present"))
+  end
 end
 
 local function pressure_attr_handler(driver, device, ib, response)
@@ -356,6 +380,37 @@ local function pressure_attr_handler(driver, device, ib, response)
     local kPa = utils.round(measured_value / 10.0)
     local unit = "kPa"
     device:emit_event(capabilities.atmosphericPressureMeasurement.atmosphericPressure({value = kPa, unit = unit}))
+  end
+end
+
+local function flow_attr_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local flow = measured_value / 10.0
+    local unit = "m^3/h"
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flow({value = flow, unit = unit}))
+  end
+end
+
+local flow_attr_handler_factory = function(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    local flow_bound = ib.data.value / 10.0
+    local unit = "m^3/h"
+    set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..minOrMax, ib.endpoint_id, flow_bound)
+    local min = get_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MIN, ib.endpoint_id)
+    local max = get_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MAX, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flowRange({ value = { minimum = min, maximum = max }, unit = unit }))
+        set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MIN, ib.endpoint_id, nil)
+        set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MAX, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min flow measurement %d that is not lower than the reported max flow measurement %d", min, max))
+      end
+    end
   end
 end
 
@@ -398,6 +453,11 @@ local matter_driver_template = {
       },
       [clusters.Thermostat.ID] = {
         [clusters.Thermostat.attributes.LocalTemperature.ID] = temperature_attr_handler
+      },
+      [clusters.FlowMeasurement.ID] = {
+        [clusters.FlowMeasurement.attributes.MeasuredValue.ID] = flow_attr_handler,
+        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = flow_attr_handler_factory(FLOW_MIN),
+        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = flow_attr_handler_factory(FLOW_MAX)
       }
     }
   },
@@ -417,6 +477,9 @@ local matter_driver_template = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
     },
     [capabilities.motionSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.presenceSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
     },
     [capabilities.contactSensor.ID] = {
@@ -528,6 +591,18 @@ local matter_driver_template = {
     [capabilities.rainSensor.ID] = {
       clusters.BooleanState.attributes.StateValue,
     },
+    [capabilities.flowMeasurement.ID] = {
+      clusters.FlowMeasurement.attributes.MeasuredValue,
+      clusters.FlowMeasurement.attributes.MinMeasuredValue,
+      clusters.FlowMeasurement.attributes.MaxMeasuredValue
+    },
+  },
+  subscribed_events = {
+    [capabilities.button.ID] = {
+      clusters.Switch.events.InitialPress,
+      clusters.Switch.events.LongPress,
+      clusters.Switch.events.MultiPressComplete,
+    }
   },
   capability_handlers = {
   },
@@ -535,6 +610,8 @@ local matter_driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.contactSensor,
     capabilities.motionSensor,
+    capabilities.presenceSensor,
+    capabilities.button,
     capabilities.battery,
     capabilities.batteryLevel,
     capabilities.relativeHumidityMeasurement,
@@ -543,11 +620,13 @@ local matter_driver_template = {
     capabilities.waterSensor,
     capabilities.temperatureAlarm,
     capabilities.rainSensor,
-    capabilities.hardwareFault
+    capabilities.hardwareFault,
+    capabilities.flowMeasurement,
   },
   sub_drivers = {
     require("air-quality-sensor"),
-    require("smoke-co-alarm")
+    require("smoke-co-alarm"),
+    require("bosch-button-contact")
   }
 }
 

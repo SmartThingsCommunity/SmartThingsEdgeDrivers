@@ -111,7 +111,6 @@ end
 local function init_handler(self, device, event, args)
   device:set_field(battery_defaults.DEVICE_VOLTAGE_TABLE_KEY, battery_table)
   device:add_configured_attribute(battery_voltage_attr_configuration)
-  device:add_monitored_attribute(battery_voltage_attr_configuration)
   device:remove_monitored_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
   device:remove_configured_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
 
@@ -139,8 +138,14 @@ local function beep_handler(self, device, command)
   device:send(IdentifyCluster.server.commands.Identify(device, BEEP_IDENTIFY_TIME))
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
-  device:emit_event(PresenceSensor.presence("present"))
+  emit_event_if_latest_state_missing(device, "main", PresenceSensor, PresenceSensor.presence.NAME, PresenceSensor.presence("present"))
   device:set_field(IS_PRESENCE_BASED_ON_BATTERY_REPORTS, false, {persist = true})
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
@@ -202,7 +207,8 @@ local zigbee_presence_driver = {
   sub_drivers = {
     require("aqara"),
     require("arrival-sensor-v1")
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_presence_driver, zigbee_presence_driver.supported_capabilities)

@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
@@ -55,6 +56,8 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
@@ -67,23 +70,25 @@ local function test_init()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
-  test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+  -- add test device, handle initial subscribe
   test.mock_device.add_test_device(mock_device)
+  test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+  -- actual onboarding flow
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+  )
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+  )
+  mock_device:expect_metadata_update({ profile = "lock-user-pin" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)
-
-test.register_coroutine_test(
-  "Assert profile applied over doConfigure",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    mock_device:expect_metadata_update({ profile = "lock-user-pin" })
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-    )
-  end
-)
 
 test.register_coroutine_test(
   "Handle received OperatingMode(Normal, Vacation) from Matter device.",
@@ -966,7 +971,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockUsers.users({{userIndex = 1, userType = "adminMember"}}, {visibility={displayed=false}})
+        capabilities.lockUsers.users({{userIndex = 1, userName="Guest1", userType = "adminMember"}}, {visibility={displayed=false}})
       )
     )
     test.socket.capability:__expect_send(
@@ -1158,6 +1163,18 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
         capabilities.lockUsers.commandResult(
           {commandName="deleteUser", statusCode="success", userIndex=1},
           {state_change=true, visibility={displayed=false}}
@@ -1228,6 +1245,18 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main",
         capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
       )
     )
     test.socket.capability:__expect_send(
@@ -1460,11 +1489,10 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
-    test.wait_for_events()
   end
 )
 
@@ -1719,8 +1747,26 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
+        capabilities.lockUsers.users({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
         capabilities.lockCredentials.commandResult(
-          {commandName="deleteAllCredentials", credentialIndex=65534, statusCode="success"},
+          {commandName="deleteAllCredentials", userIndex=65534, credentialIndex=65534, statusCode="success"},
           {state_change=true, visibility={displayed=false}}
         )
       )
@@ -1799,7 +1845,7 @@ test.register_coroutine_test(
             userIndex=1,
             schedules={{
               scheduleIndex=1,
-              weekdays={"Monday"},
+              weekDays={"Monday"},
               startHour=12,
               startMinute=30,
               endHour=17,

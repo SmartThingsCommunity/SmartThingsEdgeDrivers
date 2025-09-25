@@ -1,0 +1,79 @@
+name: 12-button-keyboard
+components:
+  - id: main
+    label: F1
+    capabilities:
+      - id: button
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: F2
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: F3
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: F4
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: F5
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: F6
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: F7
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: F8
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: F9
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: F10
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: F11
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: F12
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController

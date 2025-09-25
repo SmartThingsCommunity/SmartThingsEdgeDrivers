@@ -345,9 +345,11 @@ end
 ---@param driver HueDriver
 ---@param device HueDevice
 ---@param parent_device_id string?
+---@param quiet boolean?
 ---@return HueBridgeDevice? bridge_device
-function utils.get_hue_bridge_for_device(driver, device, parent_device_id)
-  log.trace(string.format("------------------------ Looking for bridge for %s with parent_device_id %s", device.label, device.parent_device_id))
+function utils.get_hue_bridge_for_device(driver, device, parent_device_id, quiet)
+  local _ = quiet or
+    log.trace(string.format("------------------------ Looking for bridge for %s with parent_device_id %s", device.label, device.parent_device_id))
   if utils.is_bridge(driver, device) then
     log.trace(string.format("------------------------- %s is a bridge", device.label))
     return device --[[ @as HueBridgeDevice ]]
@@ -356,16 +358,39 @@ function utils.get_hue_bridge_for_device(driver, device, parent_device_id)
   local parent_device_id = parent_device_id or device.parent_device_id or device:get_field(Fields.PARENT_DEVICE_ID)
   local parent_device = driver:get_device_info(parent_device_id)
   if not parent_device then
-    log.trace(string.format("------------------------- get_device_info for %s was nil", parent_device_id))
+    local _ = quiet or
+      log.trace(string.format("------------------------- get_device_info for %s was nil", parent_device_id))
     return nil
   end
 
-  log.trace(string.format("------------------------- parent_device label is %s, checking if bridge", parent_device.label))
+  local _ = quiet or
+    log.trace(string.format("------------------------- parent_device label is %s, checking if bridge", parent_device.label))
   if parent_device and utils.is_bridge(driver, parent_device) then
     return parent_device --[[ @as HueBridgeDevice ]]
   end
 
-  return utils.get_hue_bridge_for_device(driver, parent_device)
+  return utils.get_hue_bridge_for_device(driver, parent_device, nil, quiet)
+end
+
+--- Get the mapping of hue id to device table by associated bridge. The mapping is separated by bridge to account
+--- for devices migrated to a new hue bridge.
+---@param driver HueDriver
+---@param bridge_or_device HueDevice
+---@return table<string,HueChildDevice>? hue_id_to_device
+function utils.get_hue_id_to_device_table_by_bridge(driver, bridge_or_device)
+  -- If bridge_or_device is a bridge this will just return itself
+  local bridge = utils.get_hue_bridge_for_device(driver, bridge_or_device)
+  if not bridge then
+    log.warn(string.format("Failed to lookup bridge for device %s", bridge_or_device.label))
+    return nil
+  end
+  local bridge_id = bridge:get_field(Fields.BRIDGE_ID)
+  if not bridge_id then
+    log.warn(string.format("Failed to get bridge id for %s", bridge.label))
+    return nil
+  end
+  driver.hue_identifier_to_device_record_by_bridge[bridge_id] = driver.hue_identifier_to_device_record_by_bridge[bridge_id] or {}
+  return driver.hue_identifier_to_device_record_by_bridge[bridge_id]
 end
 
 --- build a exponential backoff time value generator
@@ -459,6 +484,16 @@ function utils.labeled_socket_builder(label)
           ssl.wrap(sock, { mode = "client", protocol = "any", verify = "none", options = "all" })
       if not sock or err ~= nil then
         return nil, (err and "SSL wrap error: " .. err) or "Unexpected nil socket returned from ssl.wrap"
+      end
+      log.info(
+        string.format(
+          "%sSetting SSL socket timeout for Hue REST Connection", label
+        )
+      )
+      -- Re-set timeout due to cosock not carrying timeout over in some Lua library versions
+      err = select(2, sock:settimeout(60))
+      if err ~= nil then
+        return nil, "settimeout error: " .. err
       end
       log.info(
         string.format(

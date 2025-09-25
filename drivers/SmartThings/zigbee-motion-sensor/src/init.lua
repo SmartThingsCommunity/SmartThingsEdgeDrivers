@@ -90,7 +90,8 @@ local zigbee_motion_driver = {
     capabilities.relativeHumidityMeasurement,
     capabilities.battery,
     capabilities.presenceSensor,
-    capabilities.contactSensor
+    capabilities.contactSensor,
+    capabilities.illuminanceMeasurement
   },
   zigbee_handlers = {
     attr = {
@@ -130,9 +131,10 @@ local zigbee_motion_driver = {
   additional_zcl_profiles = {
     [0xFC01] = true
   },
-  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
+  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
+  health_check = false,
 }
-
-defaults.register_for_default_handlers(zigbee_motion_driver, zigbee_motion_driver.supported_capabilities)
+defaults.register_for_default_handlers(zigbee_motion_driver,
+  zigbee_motion_driver.supported_capabilities, {native_capability_attrs_enabled = true})
 local motion = ZigbeeDriver("zigbee-motion", zigbee_motion_driver)
 motion:run()

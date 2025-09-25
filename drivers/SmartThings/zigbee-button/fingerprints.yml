@@ -23,7 +23,12 @@ zigbeeManufacturer:
     deviceLabel: frient Button
     manufacturer: frient A/S
     model: MBTZB-110
-    deviceProfileName: button-profile
+    deviceProfileName: button-profile-frient
+  - id: "frient A/S/SBTZB-110"
+    deviceLabel: frient Button
+    manufacturer: frient A/S
+    model: SBTZB-110
+    deviceProfileName: button-profile-frient
   - id: "LDS/ZBT-CCTSwitch-D0001"
     deviceLabel: EcoSmart Remote Control
     manufacturer: LDS
@@ -134,6 +139,31 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SBM300ZB3
     deviceProfileName: three-buttons-battery
+  - id: "ShinaSystem/SBM300ZC1"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC1
+    deviceProfileName: one-button-battery
+  - id: "ShinaSystem/SBM300ZC2"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC2
+    deviceProfileName: two-buttons-battery
+  - id: "ShinaSystem/SBM300ZC3"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC3
+    deviceProfileName: three-buttons-battery
+  - id: "ShinaSystem/SBM300ZC4"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC4
+    deviceProfileName: four-buttons-battery
+  - id: "ShinaSystem/SQM300ZC4"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SQM300ZC4
+    deviceProfileName: four-buttons-battery
   - id: OSRAM/LIGHTIFY Dimming Switch
     deviceLabel: OSRAM Button
     manufacturer: OSRAM
@@ -159,6 +189,11 @@ zigbeeManufacturer:
     manufacturer: Samjin
     model: button
     deviceProfileName: one-button-temp-battery
+  - id: SlateSwitch/button
+    deviceLabel: Slate Switch Button
+    manufacturer: zunzunbee
+    model: SSWZ8T
+    deviceProfileName: eight-buttons-temp-battery
   - id: eWeLink/WB01
     deviceLabel: eWeLink Button
     manufacturer: eWeLink
@@ -189,9 +224,30 @@ zigbeeManufacturer:
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-005
     deviceProfileName: SLED-three-buttons  
+  - id: "Linxura Smart Controller"
+    deviceLabel: Linxura Smart Controller
+    manufacturer: Linxura
+    model: Smart Controller
+    deviceProfileName: four-buttons-without-main-button
+    isJoinable: true
+  - id: "Aura Smart button"
+    deviceLabel: Aura Smart Button
+    manufacturer: Linxura
+    model: Aura Smart Button
+    deviceProfileName: four-buttons-without-main-button
+    isJoinable: true
   # Wall Hero
   - id: "WALL HERO/ACL-401SCA4"
     deviceLabel: WallHero Remote Control (4-Inch)
     manufacturer: WALL HERO
     model: ACL-401SCA4
     deviceProfileName: thirty-buttons
+zigbeeGeneric:
+  - id: "generic-button-sensor"
+    deviceLabel: "Zigbee Generic Button"
+    clusters:
+      server:
+        - 0x0500
+        - 0xFE00 # EZVIZ private cluster
+        - 0xFE05 # EZVIZ private cluster
+    deviceProfileName: one-button-battery

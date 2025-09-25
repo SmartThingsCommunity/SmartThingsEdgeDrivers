@@ -26,6 +26,26 @@ matterManufacturer:
     vendorId: 0x1533
     productId: 0x0003
     deviceProfileName: lock-user-pin-battery
+  - id: "5427/15"
+    deviceLabel: eufy FamiLock S3 Max
+    vendorId: 0x1533
+    productId: 0x000F
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/16"
+    deviceLabel: eufy FamiLock S3
+    vendorId: 0x1533
+    productId: 0x0010
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/17"
+    deviceLabel: eufy FamiLock E34
+    vendorId: 0x1533
+    productId: 0x0011
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/18"
+    deviceLabel: eufy FamiLock E35
+    vendorId: 0x1533
+    productId: 0x0012
+    deviceProfileName: lock-user-pin-battery
   #Level
   - id: "4767/1"
     deviceLabel: Level Lock Plus (Matter)
@@ -36,6 +56,16 @@ matterManufacturer:
     deviceLabel: Level Bolt (Matter)
     vendorId: 0x129F
     productId: 0x0003
+    deviceProfileName: lock-nocodes-notamper-batteryLevel
+  - id: "4767/4"
+    deviceLabel: Level Lock Pro
+    vendorId: 0x129F
+    productId: 0x0004
+    deviceProfileName: lock-nocodes-notamper-batteryLevel
+  - id: "4767/5"
+    deviceLabel: Level Lock (Matter)
+    vendorId: 0x129F
+    productId: 0x0005
     deviceProfileName: lock-nocodes-notamper-batteryLevel
   #Nuki
   - id: "4957/161"
@@ -62,7 +92,24 @@ matterManufacturer:
     deviceLabel: Nuki Smart Lock Go
     vendorId: 0x135D
     productId: 0x00C1
-    deviceProfileName: lock-nocodes-notamper   
+    deviceProfileName: lock-nocodes-notamper
+  #U-tec
+  - id: "5247/1"
+    deviceLabel: ULTRALOQ Bolt Fingerprint Smart Matter Deadbolt
+    vendorId: 0x147F
+    productId: 0x0001
+    deviceProfileName: lock-user-pin-battery
+  - id: "5247/8"
+    deviceLabel: ULTRALOQ Bolt Smart Matter Door Lock
+    vendorId: 0x147F
+    productId: 0x0008
+    deviceProfileName: lock-user-pin-battery
+  #Yale
+  - id: "4125/33040"
+    deviceLabel: Yale Lock with Matter
+    vendorId: 0x101D
+    productId: 0x8110
+    deviceProfileName: lock-user-pin-schedule-battery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

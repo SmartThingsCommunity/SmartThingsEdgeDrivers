@@ -11,6 +11,8 @@ st_utils.stringify_table = st_utils.stringify_table
 
 local HueDeviceTypes = require "hue_device_types"
 
+local GROUPED_LIGHT = "grouped_light"
+
 -- trick to fix the VS Code Lua Language Server typechecking
 ---@type fun(val: any?, name: string?, multi_line: boolean?): string
 st_utils.stringify_table = st_utils.stringify_table
@@ -325,6 +327,14 @@ function PhilipsHueApi:get_devices() return self:get_all_reprs_for_rtype("device
 ---@return string? err nil on success
 function PhilipsHueApi:get_connectivity_status() return self:get_all_reprs_for_rtype("zigbee_connectivity") end
 
+---@return HueResourceResponse<HueZoneInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_zones() return self:get_all_reprs_for_rtype("zone") end
+
+---@return HueResourceResponse<HueRoomInfo>?
+---@return string? err nil on success
+function PhilipsHueApi:get_rooms() return self:get_all_reprs_for_rtype("room") end
+
 ---@param light_resource_id string
 ---@return HueResourceResponse<HueLightInfo>?
 ---@return string? err nil on success
@@ -400,7 +410,15 @@ end
 ---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
 ---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_on_state(id, on)
-  local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
+  return self:set_light_on_state_by_device_type(id, on, HueDeviceTypes.LIGHT)
+end
+
+function PhilipsHueApi:set_grouped_light_on_state(id, on)
+  return self:set_light_on_state_by_device_type(id, on, GROUPED_LIGHT)
+end
+
+function PhilipsHueApi:set_light_on_state_by_device_type(id, on, device_type)
+  local url = string.format("/clip/v2/resource/%s/%s", device_type, id)
 
   if type(on) ~= "boolean" then
     if on then
@@ -420,8 +438,16 @@ end
 ---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
 ---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_level(id, level)
+  return self:set_light_level_by_device_type(id, level, HueDeviceTypes.LIGHT)
+end
+
+function PhilipsHueApi:set_grouped_light_level(id, level)
+  return self:set_light_level_by_device_type(id, level, GROUPED_LIGHT)
+end
+
+function PhilipsHueApi:set_light_level_by_device_type(id, level, device_type)
   if type(level) == "number" then
-    local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
+    local url = string.format("/clip/v2/resource/%s/%s", device_type, id)
     local payload_table = { dimming = { brightness = level } }
 
     return do_put(self, url, json.encode(payload_table))
@@ -436,11 +462,19 @@ end
 ---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
 ---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_color_xy(id, xy_table)
+  return self:set_light_color_xy_by_device_type(id, xy_table, HueDeviceTypes.LIGHT)
+end
+
+function PhilipsHueApi:set_grouped_light_color_xy(id, xy_table)
+  return self:set_light_color_xy_by_device_type(id, xy_table, GROUPED_LIGHT)
+end
+
+function PhilipsHueApi:set_light_color_xy_by_device_type(id, xy_table, device_type)
   local x_valid = (xy_table ~= nil) and ((xy_table.x ~= nil) and (type(xy_table.x) == "number"))
   local y_valid = (xy_table ~= nil) and ((xy_table.y ~= nil) and (type(xy_table.y) == "number"))
 
   if x_valid and y_valid then
-    local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
+    local url = string.format("/clip/v2/resource/%s/%s", device_type, id)
     local payload = json.encode { color = { xy = xy_table }, on = { on = true } }
     return do_put(self, url, payload)
   else
@@ -454,8 +488,16 @@ end
 ---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
 ---@return string? err error, nil on successful HTTP request but the response may indicate a problem with the request itself.
 function PhilipsHueApi:set_light_color_temp(id, mirek)
+  return self:set_light_color_temp_by_device_type(id, mirek, HueDeviceTypes.LIGHT)
+end
+
+function PhilipsHueApi:set_grouped_light_color_temp(id, mirek)
+  return self:set_light_color_temp_by_device_type(id, mirek, GROUPED_LIGHT)
+end
+
+function PhilipsHueApi:set_light_color_temp_by_device_type(id, mirek, device_type)
   if type(mirek) == "number" then
-    local url = string.format("/clip/v2/resource/%s/%s", HueDeviceTypes.LIGHT, id)
+    local url = string.format("/clip/v2/resource/%s/%s", device_type, id)
     local payload = json.encode { color_temperature = { mirek = mirek }, on = { on = true } }
 
     return do_put(self, url, payload)

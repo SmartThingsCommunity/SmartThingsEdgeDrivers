@@ -100,8 +100,14 @@ local function beep_handler(self, device, command)
   end
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function added_handler(self, device)
-  device:emit_event(PresenceSensor.presence("present"))
+  emit_event_if_latest_state_missing(device, "main", PresenceSensor, PresenceSensor.presence.NAME, PresenceSensor.presence("present"))
 end
 
 local function init_handler(self, device, event, args)

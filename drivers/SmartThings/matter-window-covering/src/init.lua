@@ -27,6 +27,7 @@ local battery_support = {
   BATTERY_LEVEL = "BATTERY_LEVEL",
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
 }
+local REVERSE_POLARITY = "__reverse_polarity"
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -86,6 +87,12 @@ local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     -- Profile has changed, resubscribe
     device:subscribe()
+  elseif args.old_st_store.preferences.reverse ~= device.preferences.reverse then
+    if device.preferences.reverse then
+      device:set_field(REVERSE_POLARITY, true, { persist = true })
+    else
+      device:set_field(REVERSE_POLARITY, false, { persist = true })
+    end
   else
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
@@ -104,6 +111,7 @@ local function device_added(driver, device)
   device:emit_event(
     capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}})
   )
+  device:set_field(REVERSE_POLARITY, false, { persist = true })
 end
 
 local function device_removed(driver, device) log.info("device removed") end
@@ -134,6 +142,9 @@ end
 local function handle_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
+  if device:get_field(REVERSE_POLARITY) then
+    req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
+  end
   device:send(req)
 end
 
@@ -141,6 +152,9 @@ end
 local function handle_open(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
+  if device:get_field(REVERSE_POLARITY) then
+    req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
+  end
   device:send(req)
 end
 
@@ -180,7 +194,8 @@ local current_pos_handler = function(attribute)
       return
     end
     local windowShade = capabilities.windowShade.windowShade
-    local position = 100 - math.floor((ib.data.value / 100))
+    local position = 100 - math.floor(ib.data.value / 100)
+    local reverse = device:get_field(REVERSE_POLARITY)
     device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
 
     if attribute == capabilities.windowShadeLevel.shadeLevel then
@@ -207,22 +222,22 @@ local current_pos_handler = function(attribute)
 
     if lift_position == nil then
       if tilt_position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+        device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
       elseif tilt_position == 100 then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+        device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closed() or windowShade.open())
       else
         device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
       end
 
     elseif lift_position == 100 then
-      device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
+      device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closed() or windowShade.open())
 
     elseif lift_position > 0 then
       device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
 
     elseif lift_position == 0 then
       if tilt_position == nil or tilt_position == 0 then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
+        device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
       elseif tilt_position > 0 then
         device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
       end
@@ -233,11 +248,12 @@ end
 -- checks the current position of the shade
 local function current_status_handler(driver, device, ib, response)
   local windowShade = capabilities.windowShade.windowShade
+  local reverse = device:get_field(REVERSE_POLARITY)
   local state = ib.data.value & clusters.WindowCovering.types.OperationalStatus.GLOBAL
   if state == 1 then -- opening
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.opening())
+    device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closing() or windowShade.opening())
   elseif state == 2 then -- closing
-    device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closing())
+    device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.opening() or windowShade.closing())
   elseif state ~= 0 then -- unknown
     device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
   end
@@ -286,7 +302,7 @@ local matter_driver_template = {
     removed = device_removed,
     added = device_added,
     infoChanged = info_changed,
-    doConfigure = do_configure,
+    doConfigure = do_configure
   },
   matter_handlers = {
     attr = {
@@ -327,9 +343,6 @@ local matter_driver_template = {
     },
   },
   capability_handlers = {
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = nil --TODO: define me!
-    },
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = handle_preset,
     },

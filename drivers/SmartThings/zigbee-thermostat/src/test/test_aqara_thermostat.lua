@@ -55,9 +55,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-  test.socket.zigbee:__expect_send({
+  test.mock_device.add_test_device(mock_device)  test.socket.zigbee:__expect_send({
       mock_device.id,
       Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device)
     })
@@ -75,46 +73,8 @@ end
 
 test.set_test_init_function(test_init)
 
--- test.register_coroutine_test(
---   "Handle added lifecycle",
---   function()
---     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main",
---       capabilities.thermostatMode.supportedThermostatModes({
---         capabilities.thermostatMode.thermostatMode.manual.NAME,
---         capabilities.thermostatMode.thermostatMode.antifreezing.NAME
---       }, { visibility = { displayed = false } }))
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"}))
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 27.0, unit = "C"}))
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.manual())
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", capabilities.valve.valve.open())
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("ChildLock", capabilities.lock.lock.unlocked())
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", valveCalibration.calibrationState.calibrationPending())
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", invisibleCapabilities.invisibleCapabilities({""}))
---     )
---     test.socket.capability:__expect_send(
---       mock_device:generate_test_message("main", capabilities.battery.battery(100))
---     )
---   end
--- )
+
+
 
 
 test.register_coroutine_test(
@@ -314,4 +274,76 @@ test.register_coroutine_test(
   end
 )
 --]]
+test.register_coroutine_test(
+  "Handle added lifecycle",
+  function()
+    -- The initial valve and lock event should be send during the device's first time onboarding
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+      capabilities.thermostatMode.supportedThermostatModes({
+        capabilities.thermostatMode.thermostatMode.manual.NAME,
+        capabilities.thermostatMode.thermostatMode.antifreezing.NAME
+      }, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 27.0, unit = "C"}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.manual())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", valveCalibration.calibrationState.calibrationPending())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", invisibleCapabilities.invisibleCapabilities({""}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.battery.battery(100))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.valve.valve.open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("ChildLock", capabilities.lock.lock.unlocked())
+    )
+    -- Avoid sending the initial open and lock event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+      capabilities.thermostatMode.supportedThermostatModes({
+        capabilities.thermostatMode.thermostatMode.manual.NAME,
+        capabilities.thermostatMode.thermostatMode.antifreezing.NAME
+      }, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 27.0, unit = "C"}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.manual())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", valveCalibration.calibrationState.calibrationPending())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", invisibleCapabilities.invisibleCapabilities({""}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.battery.battery(100))
+    )
+  end
+)
+
 test.run_registered_tests()

@@ -4,3 +4,13 @@ zigbeeManufacturer:
     manufacturer: Lumi
     model: aqara.lock.akr011
     deviceProfileName: aqara-lock-battery
+  - id: "lumi/aqara.lock.akr001"
+    deviceLabel: "Aqara Doorlock L100"
+    manufacturer: lumi
+    model: aqara.lock.akr001
+    deviceProfileName: aqara-lock-battery
+  - id: "Lumi/aqara.lock.akr001"
+    deviceLabel: "Aqara Doorlock L100"
+    manufacturer: Lumi
+    model: aqara.lock.akr001
+    deviceProfileName: aqara-lock-battery

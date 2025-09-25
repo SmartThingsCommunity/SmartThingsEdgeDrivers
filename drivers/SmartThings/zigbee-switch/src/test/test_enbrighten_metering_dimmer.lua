@@ -34,6 +34,7 @@ local mock_device = test.mock_device.build_test_zigbee_device({
 })
 
 local function test_init()
+  mock_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -129,7 +130,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level(57))
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
+    },
   }
 )
 

@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+test.set_rpc_version(6)
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
@@ -66,6 +67,8 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
   local cluster_subscribe_list = {
     clusters.RefrigeratorAlarm.attributes.State,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
@@ -75,7 +78,6 @@ local function test_init()
     clusters.TemperatureControl.attributes.MinTemperature,
     clusters.TemperatureMeasurement.attributes.MeasuredValue
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -83,9 +85,15 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.set_rpc_version(5)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
+  local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
+  read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
+  test.socket.matter:__expect_send({mock_device.id, read_req})
+  mock_device:expect_metadata_update({ profile = "refrigerator-freezer-tn-tl" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
 
@@ -180,7 +188,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0, step = 0.1}, unit = "C"}))
+      message = mock_device:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
@@ -207,14 +215,14 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for refrigerator endpoint, temp bounds out of range and temp setpoint converted from F to C",
+  "temperatureSetpoint command should send appropriate commands for refrigerator endpoint, temp bounds out of range",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, refrigerator_ep, -1000)
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, refrigerator_ep, -1200)
       }
     },
     {
@@ -222,7 +230,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, refrigerator_ep, 2500)
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, refrigerator_ep, 3500)
       }
     },
     {
@@ -236,29 +244,13 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-6.0,maximum=20.0, step = 0.1}, unit = "C"}))
+      message = mock_device:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-10.0,maximum=30.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "temperatureSetpoint", component = "refrigerator", command = "setTemperatureSetpoint", args = {50.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device, refrigerator_ep, 10 * 100, nil)
-      }
-    },
+    }
   }
 )
 
@@ -292,7 +284,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0, step = 0.1}, unit = "C"}))
+      message = mock_device:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
@@ -319,14 +311,14 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "temperatureSetpoint command should send appropriate commands for freezer endpoint, temp bounds out of range and temp setpoint converted from F to C",
+  "temperatureSetpoint command should send appropriate commands for freezer endpoint, temp bounds out of range",
   {
     {
       channel = "matter",
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, freezer_ep, -2700)
+        clusters.TemperatureControl.attributes.MinTemperature:build_test_report_data(mock_device, freezer_ep, -3300)
       }
     },
     {
@@ -334,7 +326,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, freezer_ep, -500)
+        clusters.TemperatureControl.attributes.MaxTemperature:build_test_report_data(mock_device, freezer_ep, 500)
       }
     },
     {
@@ -348,29 +340,13 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-24.0,maximum=-12.0, step = 0.1}, unit = "C"}))
+      message = mock_device:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-30.0,maximum=0.0, step = 0.1}, unit = "C"}, {visibility = {displayed = false}}))
     },
     {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -15.0, unit = "C"}))
-    },
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "temperatureSetpoint", component = "freezer", command = "setTemperatureSetpoint", args = {-4.0}}
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.TemperatureControl.commands.SetTemperature(mock_device, freezer_ep, -20 * 100, nil)
-      }
-    },
+    }
   }
 )
 

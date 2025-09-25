@@ -78,6 +78,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
@@ -189,6 +197,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )

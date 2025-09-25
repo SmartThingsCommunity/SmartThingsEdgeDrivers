@@ -941,6 +941,12 @@ zwaveManufacturer:
     productId: 0x0084
     productType: 0x0002
     deviceProfileName: metering-switch
+  - id: 1120/2/135
+    deviceLabel: Shelly Wave Plug S
+    manufacturerId: 0x0460
+    productId: 0x0087
+    productType: 0x0002
+    deviceProfileName: smartplug-switch-power-energy
   - id: 1120/2/138
     deviceLabel: Wave Pro 1
     manufacturerId: 0x0460

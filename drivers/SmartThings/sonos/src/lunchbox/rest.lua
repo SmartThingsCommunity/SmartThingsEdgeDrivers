@@ -1,12 +1,18 @@
+---@class ChunkedResponse : Response
+---@field package _received_body boolean
+---@field package _parsed_headers boolean
+---@field public new fun(status_code: number, socket: table?): ChunkedResponse
+---@field public fill_body fun(self: ChunkedResponse): string?
+---@field public append_body fun(self: ChunkedResponse, next_chunk_body: string): ChunkedResponse
+
 local socket = require "cosock.socket"
-local st_utils = require "st.utils"
 
-local lb_utils = require "lunchbox.util"
 local utils = require "utils"
+local lb_utils = require "lunchbox.util"
 local Request = require "luncheon.request"
-local Response = require "luncheon.response"
+local Response = require "luncheon.response" --[[@as ChunkedResponse]]
 
-local api_version = require("version").api
+local api_version = require "version".api
 
 local RestCallStates = {
   SEND = "Send",
@@ -17,15 +23,14 @@ local RestCallStates = {
 }
 
 local function connect(client)
-  local port = 80
+  local port = client.base_url.port or 80
   local use_ssl = false
 
   if client.base_url.scheme == "https" then
-    port = 443
+    port = client.base_url.port or 443
     use_ssl = true
   end
 
-  if client.base_url.port ~= port then port = client.base_url.port end
   local sock, err = client.socket_builder(client.base_url.host, port, use_ssl)
 
   if sock == nil then
@@ -45,34 +50,44 @@ local function reconnect(client)
   return connect(client)
 end
 
+---@param client RestClient
+---@param request HttpMessage
+---@return integer? bytes_sent
+---@return string? err_msg
+---@return integer idx
 local function send_request(client, request)
   if client.socket == nil then
-    return nil, "no socket available"
+    return nil, "no socket available", 0
   end
   local payload = request:serialize()
 
   local bytes, err, idx = nil, nil, 0
-  if client.socket == nil then return nil, "closed", nil end
 
-  repeat bytes, err, idx = client.socket:send(payload, idx + 1, #payload) until (bytes == #payload)
-      or (err ~= nil)
+  repeat
+    bytes, err, idx = client.socket:send(payload, idx + 1, #payload)
+  until (bytes == #payload)
+    or (err ~= nil)
 
   return bytes, err, idx
 end
 
+---@param original_response Response
+---@param sock table
+---@return Response?
+---@return string? err
 local function parse_chunked_response(original_response, sock)
   local ChunkedTransferStates = {
     EXPECTING_CHUNK_LENGTH = "ExpectingChunkLength",
     EXPECTING_BODY_CHUNK = "ExpectingBodyChunk",
   }
 
-  local full_response = Response.new(original_response.status, nil)
+  local full_response = Response.new(original_response.status, nil) --[[@as ChunkedResponse]]
 
   for header in original_response.headers:iter() do full_response.headers:append_chunk(header) end
 
   local original_body, err = original_response:get_body()
-  if type(original_body) ~= "string" or err ~= nil then
-    return original_body, (err or "unexpected nil in error position")
+  if original_body == nil or err ~= nil then
+    return nil, (err or "unexpected nil in error position")
   end
   local next_chunk_bytes = tonumber(original_body, 16)
   local next_chunk_body = ""
@@ -133,6 +148,10 @@ local function parse_chunked_response(original_response, sock)
   return full_response
 end
 
+---@param sock table
+---@return Response|nil
+---@return string? err
+---@return string? partial
 local function handle_response(sock)
   if api_version >= 9 then
     local response, err = Response.tcp_source(sock)
@@ -154,25 +173,6 @@ local function handle_response(sock)
       end
       full_response = response
     else
-      local content_length_header = (headers and headers:get_one("Content-length")) or nil
-      if content_length_header then
-        local content_length = tonumber(content_length_header)
-        if type(content_length) ~= "number" then
-          return nil, string.format("content_length is not a number: %s", st_utils.stringify_table(content_length_header))
-        end
-
-        body, err, partial = sock:receive(content_length)
-        if err ~= nil then
-          return nil, err, partial
-        end
-
-        if body == nil then
-          return nil, string.format("Unexpected nil body response, partial response receive: %s", partial)
-        end
-
-        initial_recv:append_body(body)
-        initial_recv._received_body = true
-      end
       full_response = initial_recv
     end
 
@@ -182,25 +182,32 @@ local function handle_response(sock)
   end
 end
 
+---@param client RestClient
+---@param request HttpMessage
+---@param retry_fn nil|fun(): boolean
+---@return Response? response nil on error
+---@return string? err nil on success
+---@return string? partial
 local function execute_request(client, request, retry_fn)
   if not client._active then
-    return nil, "Called `execute request` on a terminated REST Client"
+    return nil, "Called `execute request` on a terminated REST Client", nil
   end
 
   if client.socket == nil then
     local success, err = connect(client)
-    if not success then return nil, err end
+    if not success then return nil, err, nil end
   end
 
   local should_retry = retry_fn
+
   if type(should_retry) ~= "function" then
     should_retry = function() return false end
   end
 
   -- send output
-  local _bytes_sent, send_err, _idx = nil, nil, 0
+  local bytes_sent, send_err, _idx = nil, nil, 0
   -- recv output
-  local response, recv_err, _partial = nil, nil, nil
+  local response, recv_err, partial = nil, nil, nil
   -- return values
   local ret, err = nil, nil
 
@@ -211,11 +218,11 @@ local function execute_request(client, request, retry_fn)
     local retry = should_retry()
     if current_state == RestCallStates.SEND then
       backoff = utils.backoff_builder(60, 1, 0.1)
-      _bytes_sent, send_err, _idx = send_request(client, request)
+      bytes_sent, send_err, _idx = send_request(client, request)
 
       if not send_err then
         current_state = RestCallStates.RECEIVE
-      elseif should_retry() then
+      elseif retry then
         if string.lower(send_err) == "closed" or string.lower(send_err):match("broken pipe") then
           current_state = RestCallStates.RECONNECT
         else
@@ -227,13 +234,13 @@ local function execute_request(client, request, retry_fn)
         current_state = RestCallStates.COMPLETE
       end
     elseif current_state == RestCallStates.RECEIVE then
-      response, recv_err, _partial = handle_response(client.socket)
+      response, recv_err, partial = handle_response(client.socket)
 
       if not recv_err then
         ret = response
         err = nil
         current_state = RestCallStates.COMPLETE
-      elseif should_retry() then
+      elseif retry then
         if string.lower(recv_err) == "closed" or string.lower(recv_err):match("broken pipe") then
           current_state = RestCallStates.RECONNECT
         else
@@ -263,7 +270,7 @@ local function execute_request(client, request, retry_fn)
     end
   until current_state == RestCallStates.COMPLETE
 
-  return ret, err
+  return ret, err, partial
 end
 
 ---@class RestClient
@@ -275,19 +282,17 @@ RestClient.__index = RestClient
 
 function RestClient.one_shot_get(full_url, additional_headers, socket_builder)
   local url_table = lb_utils.force_url_table(full_url)
-  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host .. ":" .. url_table.port, socket_builder)
+  local client = RestClient.new(url_table, socket_builder)
   local ret, err = client:get(url_table.path, additional_headers)
   client:shutdown()
-  client = nil
   return ret, err
 end
 
 function RestClient.one_shot_post(full_url, body, additional_headers, socket_builder)
   local url_table = lb_utils.force_url_table(full_url)
-  local client = RestClient.new(url_table.scheme .. "://" .. url_table.host .. ":" .. url_table.port, socket_builder)
+  local client = RestClient.new(url_table, socket_builder)
   local ret, err = client:post(url_table.path, body, additional_headers)
   client:shutdown()
-  client = nil
   return ret, err
 end
 
@@ -312,38 +317,54 @@ function RestClient:update_base_url(new_url)
   self.base_url = lb_utils.force_url_table(new_url)
 end
 
-local function _build_request(method, path, host, additional_headers)
-  local request = Request.new(method, path, nil):add_header("user-agent", "smartthings-lua-edge-driver")
-                                                :add_header("host", string.format("%s", host))
+---@param path string
+---@param additional_headers table<string,string>
+---@param retry_fn nil|fun(): boolean
+---@return Response? the response, nil on error
+---@return string? err error, nil on success
+---@return string? partial
+function RestClient:get(path, additional_headers, retry_fn)
+  local request = Request.new("GET", path, nil):add_header(
+    "user-agent", "smartthings-lua-edge-driver"
+  ):add_header("host", string.format("%s", self.base_url.host)):add_header(
+    "connection", "keep-alive"
+  )
 
   if additional_headers ~= nil and type(additional_headers) == "table" then
     for k, v in pairs(additional_headers) do request = request:add_header(k, v) end
   end
 
-  return request
-end
-
-local function _build_request_with_body(method, path, host, additional_headers, body_string)
-  local request = _build_request(method, path, host, additional_headers)
-  request:append_body(body_string)
-  return request
-end
-
-function RestClient:get(path, additional_headers, retry_fn)
-  local request = _build_request("GET", path, self.base_url.host, additional_headers)
   return execute_request(self, request, retry_fn)
 end
 
 function RestClient:post(path, body_string, additional_headers, retry_fn)
-  local request =
-    _build_request_with_body("POST", path, self.base_url.host, additional_headers, body_string)
+  local request = Request.new("POST", path, nil):add_header(
+    "user-agent", "smartthings-lua-edge-driver"
+  ):add_header("host", string.format("%s", self.base_url.host)):add_header(
+    "connection", "keep-alive"
+  )
+
+  if additional_headers ~= nil and type(additional_headers) == "table" then
+    for k, v in pairs(additional_headers) do request = request:add_header(k, v) end
+  end
+
+  request = request:append_body(body_string)
 
   return execute_request(self, request, retry_fn)
 end
 
 function RestClient:put(path, body_string, additional_headers, retry_fn)
-  local request =
-    _build_request_with_body("PUT", path, self.base_url.host, additional_headers, body_string)
+  local request = Request.new("PUT", path, nil):add_header(
+    "user-agent", "smartthings-lua-edge-driver"
+  ):add_header("host", string.format("%s", self.base_url.host)):add_header(
+    "connection", "keep-alive"
+  )
+
+  if additional_headers ~= nil and type(additional_headers) == "table" then
+    for k, v in pairs(additional_headers) do request = request:add_header(k, v) end
+  end
+
+  request = request:append_body(body_string)
 
   return execute_request(self, request, retry_fn)
 end
@@ -351,9 +372,10 @@ end
 function RestClient.new(base_url, sock_builder)
   base_url = lb_utils.force_url_table(base_url)
 
-  if type(sock_builder) ~= "function" then sock_builder = utils.labeled_socket_builder("Sonos REST API") end
+  if type(sock_builder) ~= "function" then sock_builder = utils.labeled_socket_builder() end
 
-  return setmetatable({ base_url = base_url, socket_builder = sock_builder, socket = nil, _active = true }, RestClient)
+  return
+      setmetatable({ base_url = base_url, socket_builder = sock_builder, socket = nil, _active = true }, RestClient)
 end
 
 return RestClient

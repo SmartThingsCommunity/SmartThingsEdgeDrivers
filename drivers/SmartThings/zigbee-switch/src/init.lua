@@ -17,6 +17,7 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local clusters = require "st.zigbee.zcl.clusters"
 local configurationMap = require "configurations"
+local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
@@ -46,9 +47,6 @@ local do_configure = function(self, device)
   -- Additional one time configuration
   if device:supports_capability(capabilities.energyMeter) or device:supports_capability(capabilities.powerMeter) then
     -- Divisor and multipler for EnergyMeter
-    device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
-    device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
-    -- Divisor and multipler for PowerMeter
     device:send(SimpleMetering.attributes.Divisor:read(device))
     device:send(SimpleMetering.attributes.Multiplier:read(device))
   end
@@ -80,13 +78,15 @@ local device_init = function(driver, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-      device:add_monitored_attribute(attribute)
     end
   end
 
   local ias_zone_config_method = configurationMap.get_ias_zone_config_method(device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)
+  end
+  if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    device:set_find_child(find_child)
   end
 end
 
@@ -128,6 +128,7 @@ local function device_added(driver, device, event)
   end
 end
 
+
 local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,
@@ -156,6 +157,7 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("white-color-temp-bulb"),
     lazy_load_if_possible("rgbw-bulb"),
     lazy_load_if_possible("zll-dimmer-bulb"),
+    lazy_load_if_possible("zll-polling"),
     lazy_load_if_possible("zigbee-switch-power"),
     lazy_load_if_possible("ge-link-bulb"),
     lazy_load_if_possible("bad_on_off_data_type"),
@@ -163,16 +165,31 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("wallhero"),
     lazy_load_if_possible("inovelli-vzm31-sn"),
     lazy_load_if_possible("laisiao"),
-    lazy_load_if_possible("tuya-multi")
+    lazy_load_if_possible("tuya-multi"),
+    lazy_load_if_possible("frient")
   },
+  zigbee_handlers = {
+    global = {
+      [SimpleMetering.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
+      },
+     [ElectricalMeasurement.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
+      }
+    }
+  },
+  current_config_version = 1,
   lifecycle_handlers = {
-    init = device_init,
+    init = configurationMap.power_reconfig_wrapper(device_init),
     added = device_added,
     infoChanged = info_changed,
     doConfigure = do_configure
-  }
+  },
+  health_check = false,
 }
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
-  zigbee_switch_driver_template.supported_capabilities,  {native_capability_cmds_enabled = true})
+  zigbee_switch_driver_template.supported_capabilities,
+  {native_capability_cmds_enabled = true, native_capability_attrs_enabled = true}
+)
 local zigbee_switch = ZigbeeDriver("zigbee_switch", zigbee_switch_driver_template)
 zigbee_switch:run()
