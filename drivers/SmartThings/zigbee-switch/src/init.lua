@@ -22,11 +22,9 @@ local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
 local device_lib = require "st.device"
+local version = require "version"
 
 local function lazy_load_if_possible(sub_driver_name)
-  -- gets the current lua libs api version
-  local version = require "version"
-
   -- version 9 will include the lazy loading functions
   if version.api >= 9 then
     return ZigbeeDriver.lazy_load_sub_driver(require(sub_driver_name))
@@ -157,7 +155,7 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("zigbee-dimming-light"),
     lazy_load_if_possible("white-color-temp-bulb"),
     lazy_load_if_possible("rgbw-bulb"),
-    lazy_load_if_possible("zll-dimmer-bulb"),
+    (version.api < 16) and lazy_load_if_possible("zll-dimmer-bulb") or nil,
     lazy_load_if_possible("zll-polling"),
     lazy_load_if_possible("zigbee-switch-power"),
     lazy_load_if_possible("ge-link-bulb"),
