@@ -332,6 +332,22 @@ test.register_coroutine_test(
       mock_device.id,
       ElectricalMeasurement.attributes.RMSCurrentPhC:read(mock_device)
     })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      SimpleMetering.attributes.InstantaneousDemand:read(mock_device)
+    })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )

@@ -15,7 +15,6 @@
 local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
-local device_management = require "st.zigbee.device_management"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local log = require "log"
