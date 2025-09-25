@@ -20,13 +20,12 @@ local log = require "log"
 local cubeAction = capabilities["stse.cubeAction"]
 local cubeFace = capabilities["stse.cubeFace"]
 
-local COMPONENT_TO_ENDPOINT_MAP_BUTTON = "__component_to_endpoint_map_button"
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
-
--- used in unit testing, since device.profile.id and args.old_st_store.profile.id are always the same
--- and this is to avoid the crash of the test case that occurs when try_update_metadata is performed in the device_init stage.
-local TEST_CONFIGURE = "__test_configure"
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
+
+local updated_fields = {
+  { current_field_name = "__component_to_endpoint_map_button", updated_field_name = COMPONENT_TO_ENDPOINT_MAP }
+}
 
 -- after 3 seconds of cubeAction, to automatically change the action status of Plugin UI or Device Card to noAction
 local CUBEACTION_TIMER = "__cubeAction_timer"
@@ -34,8 +33,7 @@ local CUBEACTION_TIME = 3
 
 local function is_aqara_cube(opts, driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    local name = string.format("%s", device.manufacturer_info.product_name)
-    if string.find(name, "Aqara Cube T1 Pro") then
+    if device.manufacturer_info.product_name == "Aqara Cube T1 Pro" then
       return true
     end
   end
@@ -125,16 +123,25 @@ local function endpoint_to_component(device, endpoint)
   return "main"
 end
 
+local function check_field_name_updates(device)
+  for _, field in ipairs(updated_fields) do
+    if device:get_field(field.current_field_name) then
+      if field.updated_field_name ~= nil then
+        device:set_field(field.updated_field_name, device:get_field(field.current_field_name), {persist = true})
+      end
+      device:set_field(field.current_field_name, nil)
+    end
+  end
+end
+
 -- This is called either on add for parent/child devices, or after the device profile changes for components
 local function configure_buttons(device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    device.log.debug(#MS.." momentary switch endpoints")
-    for _, ep in ipairs(MS) do
-      -- device only supports momentary switch, no release events
-      device.log.debug("configuring for press event only")
-      set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, true)
-    end
+  local MS = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  device.log.debug(#MS.." momentary switch endpoints")
+  for _, ep in ipairs(MS) do
+    -- device only supports momentary switch, no release events
+    device.log.debug("configuring for press event only")
+    set_field_for_endpoint(device, INITIAL_PRESS_ONLY, ep, true, true)
   end
 end
 
@@ -160,56 +167,41 @@ local function set_configure(driver, device)
     current_component_number = current_component_number + 1
   end
 
-  device:set_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON, component_map, {persist = true})
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
   device:try_update_metadata({profile = "cube-t1-pro"})
   configure_buttons(device)
 end
 
 local function device_init(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    device:subscribe()
-    device:set_endpoint_to_component_fn(endpoint_to_component)
-
-    -- when unit testing, call set_configure elsewhere
-    if not device:get_field(TEST_CONFIGURE) then
-      set_configure(driver, device)
-    end
-  end
+  check_field_name_updates(device)
+  device:subscribe()
+  device:set_endpoint_to_component_fn(endpoint_to_component)
 end
 
 local function device_added(driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-    device:set_field(DEFERRED_CONFIGURE, true)
-  end
+  device_init(driver, device)
+end
+
+local function do_configure(driver, device)
+  set_configure(driver, device)
+end
+
+local function driver_switched(driver, device)
+  set_configure(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
-  -- for unit testing
-  if device:get_field(TEST_CONFIGURE) then
-    set_configure(driver, device)
-  end
-
-  if (device.profile.id ~= args.old_st_store.profile.id or device:get_field(TEST_CONFIGURE))
-    and device:get_field(DEFERRED_CONFIGURE)
-    and device.network_type ~= device_lib.NETWORK_TYPE_CHILD then
-
+  if device.profile.id ~= args.old_st_store.profile.id then
     reset_thread(device)
     device:emit_event(cubeAction.cubeAction("flipToSide1"))
     device:emit_event(cubeFace.cubeFace("face1Up"))
-
-    device:set_field(DEFERRED_CONFIGURE, nil)
+    configure_buttons(device)
   end
 end
 
--- override do_configure to prevent it running in the main driver
-local function do_configure(driver, device) end
-
--- override driver_switched to prevent it running in the main driver
-local function driver_switched(driver, device) end
-
 local function initial_press_event_handler(driver, device, ib, response)
   if get_field_for_endpoint(device, INITIAL_PRESS_ONLY, ib.endpoint_id) then
-    local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP_BUTTON) or {}
+    local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
     local face = 1
     for component, ep in pairs(map) do
       if map[component] == ib.endpoint_id then
@@ -255,4 +247,3 @@ local aqara_cube_handler = {
 }
 
 return aqara_cube_handler
-
