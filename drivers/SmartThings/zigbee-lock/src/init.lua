@@ -295,31 +295,31 @@ end
 
 local migrate = function(driver, device, command)
   local lock_users = {}
-  local lock_credentails = {}
-  local index = 0
+  local lock_credentials = {}
+  local index = 1
   for code_slot, code_name in pairs(lock_utils.get_lock_codes(device)) do
     table.insert(lock_users, {userIndex = index, userType = "guest", userName = code_name})
-    table.insert(lock_credentails, {userIndex = index, credentialIndex = code_slot, crednetialType = "pin"})
+    table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
     index = index + 1
   end
 
-  local code_length  = device:get_field(capabilities.lockCodes.codeLength)
-  local max_code_len = device:get_field(capabilities.lockCodes.maxCodeLength)
-  local min_code_len = device:get_field(capabilities.lockCodes.minCodeLength)
-  local max_codes    = device:get_field(capabilities.lockCodes.maxCodes)
+  local code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
+  local max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME)
+  local min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME)
+  local max_codes    = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
 
   if (code_length ~= nil) then
     max_code_len = code_length
     min_code_len = code_length
   end
 
-  device:set_field(capabilities.lockCredentials.minPinCodeLen, min_code_len, { persist = true })
-  device:set_field(capabilities.lockCredentials.maxPinCodeLen, max_code_len, { persist = true })
-  device:set_field(capabilities.lockCredentials.pinUsersSupported, max_codes, { persist = true })
-  device:set_field(capabilities.lockCredentials.credentials, lock_credentails, { persist = true })
-  device:set_field(capabilities.lockUsers.users, lock_users, { persist = true })
-  device:set_field(capabilities.lockCredentials.supportedCredentials, {"pin"}, { persist = true })
-  device:set_field(capabilities.lockCodes.migrated, true, { persist = true })
+  device:emit_event(LockCredentials.minPinCodeLen(min_code_len, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.maxPinCodeLen(max_code_len, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
+  device:emit_event(LockUsers.users(lock_users, { visibility = { displayed = false } }))
+  device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
 end
 
 local function device_added(driver, device)
