@@ -68,7 +68,7 @@ test.register_coroutine_test(
         -- Validate migration complete flag
         mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
 
-        -- Set min/max code length attributes and validate `migrate` command functionality. 
+        -- Set min/max code length attributes and validate `migrate` command functionality.
         test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MinPINCodeLength:build_test_attr_report(mock_device, 5) })
         test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:build_test_attr_report(mock_device, 10) })
         test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:build_test_attr_report(mock_device, 4) })
