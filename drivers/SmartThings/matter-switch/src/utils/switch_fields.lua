@@ -123,14 +123,9 @@ SwitchFields.child_device_profile_overrides_per_vendor_id = {
 }
 
 SwitchFields.CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
-SwitchFields.FIRST_IMPORT_REPORT_TIMESTAMP = "__first_import_report_timestamp"
-SwitchFields.IMPORT_POLL_TIMER_SETTING_ATTEMPTED = "__import_poll_timer_setting_attempted"
-SwitchFields.IMPORT_REPORT_TIMEOUT = "__import_report_timeout"
 SwitchFields.TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
 SwitchFields.LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
-SwitchFields.RECURRING_IMPORT_REPORT_POLL_TIMER = "__recurring_import_report_poll_timer"
 SwitchFields.MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
-SwitchFields.SUBSCRIPTION_REPORT_OCCURRED = "__subscription_report_occurred"
 
 SwitchFields.START_BUTTON_PRESS = "__start_button_press"
 SwitchFields.TIMEOUT_THRESHOLD = 10 --arbitrary timeout

@@ -164,9 +164,6 @@ test.register_coroutine_test(
     local poll_timer = mock_device:get_field("RECURRING_POLL_TIMER")
     assert(poll_timer ~= nil, "poll_timer should exist")
 
-    local report_poll_timer = mock_device:get_field("RECURRING_REPORT_POLL_TIMER")
-    assert(report_poll_timer ~= nil, "report_poll_timer should exist")
-
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
     test.wait_for_events()
   end
@@ -291,6 +288,15 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 50000, unit = "Wh" }))
     )
 
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:00:00Z",
+        ["end"] = "1970-01-01T16:39:59Z",
+        deltaEnergy = 0.0,
+        energy = 50000,
+      }))
+    )
+
     test.wait_for_events()
   end
 )
@@ -315,16 +321,6 @@ test.register_coroutine_test(
     local data = data_types.validate_or_build_type(timeDiff, data_types.Uint32)
     test.socket.matter:__expect_send({ mock_device.id,
       cluster_base.write(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT, nil, data) })
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({
-          energy = 0,
-          deltaEnergy = 0,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "2001-01-01T00:00:00Z"
-        }))
-    )
 
     test.wait_for_events()
   end
@@ -368,23 +364,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0, unit = "W" }))
     )
-
-    test.wait_for_events()
-    -- after 15 minutes, the device should still report power consumption even when off
-    test.mock_time.advance_time(60 * 15) -- Ensure that the timer created in create_poll_schedule triggers
-
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({
-          energy = 0,
-          deltaEnergy = 0.0,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T00:14:59Z"
-        }))
-    )
-
-    test.wait_for_events()
   end,
   {
     test_init = function()
