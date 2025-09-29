@@ -165,18 +165,23 @@ test.register_coroutine_test(
             [15] = 0,
             [10] = 0
         }
+        -- The initial button pushed event should be send during the device's first time onboarding
         test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }})))
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", button_attr.pushed({ state_change = false})))
         test.wait_for_events()
 
-
-      for voltage, batt_perc in pairs(battery_table) do
-        test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, voltage) })
-        test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
-
-      end
+        for voltage, batt_perc in pairs(battery_table) do
+            test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, voltage) })
+            test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc)))
+        end
+        test.wait_for_events()
+        -- Avoid sending the button pushed contactSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+        test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
+        test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }})))
+        test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
+        test.wait_for_events()
     end
 )
 

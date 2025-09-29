@@ -67,10 +67,16 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "Handle added lifecycle -- e1",
   function()
+    -- The initial button pushed event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device_e1.id, "added" })
     test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }})))
     test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
     test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
+    test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.battery.battery(100)))
+    -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device_e1.id, "added" })
+    test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }})))
+    test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
     test.socket.capability:__expect_send(mock_device_e1:generate_test_message("main", capabilities.battery.battery(100)))
   end
 )
@@ -78,10 +84,16 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Handle added lifecycle -- t1",
   function()
+    -- The initial button pushed event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device_t1.id, "added" })
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }})))
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
+    test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.battery.battery(100)))
+    -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device_t1.id, "added" })
+    test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }})))
+    test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
     test.socket.capability:__expect_send(mock_device_t1:generate_test_message("main", capabilities.battery.battery(100)))
   end
 )

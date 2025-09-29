@@ -18,6 +18,7 @@ local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 local IASZone = (require "st.zigbee.zcl.clusters").IASZone
 local TemperatureMeasurement = (require "st.zigbee.zcl.clusters").TemperatureMeasurement
+local button_utils = require "button_utils"
 
 local temperature_measurement_defaults = {
   MIN_TEMP = "MIN_TEMP",
@@ -109,7 +110,7 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
   if device:supports_server_cluster(TemperatureMeasurement.ID) then
     device:send(TemperatureMeasurement.attributes.MaxMeasuredValue:read(device))
     device:send(TemperatureMeasurement.attributes.MinMeasuredValue:read(device))

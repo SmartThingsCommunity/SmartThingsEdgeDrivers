@@ -20,6 +20,7 @@ local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
 local configurations = require "configurations"
+local switch_utils = require "switch_utils"
 
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
@@ -228,11 +229,11 @@ local device_init = function(self, device)
     end
     device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
   else
-    device:emit_event(capabilities.colorControl.hue(1))
-    device:emit_event(capabilities.colorControl.saturation(1))
-    device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
-    device:emit_event(capabilities.switchLevel.level(100))
-    device:emit_event(capabilities.switch.switch("off"))
+    switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.colorControl.NAME, capabilities.colorControl.hue.NAME, capabilities.colorControl.hue(1))
+    switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.colorControl.NAME, capabilities.colorControl.saturation.NAME, capabilities.colorControl.saturation(1))
+    switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.colorTemperature.NAME, capabilities.colorTemperature.colorTemperature.NAME, capabilities.colorTemperature.colorTemperature(6500))
+    switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.switchLevel.NAME, capabilities.switchLevel.level.NAME, capabilities.switchLevel.level(100))
+    switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.switch, capabilities.switch.switch.NAME, capabilities.switch.switch("off"))
   end
 end
 
