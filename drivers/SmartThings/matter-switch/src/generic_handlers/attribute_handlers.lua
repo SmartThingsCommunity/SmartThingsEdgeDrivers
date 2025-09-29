@@ -22,8 +22,6 @@ local fields = require "utils.switch_fields"
 local switch_utils = require "utils.switch_utils"
 local color_utils = require "utils.color_utils"
 
-local power_consumption_reporting = require "generic_handlers.power_consumption_report"
-
 local AttributeHandlers = {}
 
 -- [[ ON OFF CLUSTER ATTRIBUTES ]] --
@@ -291,6 +289,7 @@ function AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, res
       -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
       device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT), capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
     end
+    switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
   end
 end
 
@@ -301,14 +300,19 @@ function AttributeHandlers.per_energy_imported_handler(driver, device, ib, respo
     local summed_energy_report = latest_energy_report + watt_hour_value
     device:set_field(fields.TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
     device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
+    switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
   end
 end
 
 function AttributeHandlers.energy_imported_factory(is_cumulative_report)
   return function(driver, device, ib, response)
-    if not device:get_field(fields.IMPORT_POLL_TIMER_SETTING_ATTEMPTED) then
-      power_consumption_reporting.set_poll_report_timer_and_schedule(device, is_cumulative_report)
+    -- workaround: ignore devices supporting Eve's private energy cluster AND the ElectricalEnergyMeasurement cluster
+    local EVE_MANUFACTURER_ID, EVE_PRIVATE_CLUSTER_ID = 0x130A, 0x130AFC01
+    local eve_private_energy_eps = device:get_endpoints(EVE_PRIVATE_CLUSTER_ID)
+    if device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and #eve_private_energy_eps > 0 then
+      return
     end
+
     if is_cumulative_report then
       AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
     elseif device:get_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED) then
