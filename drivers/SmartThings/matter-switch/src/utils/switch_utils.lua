@@ -83,7 +83,7 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
       for _, dt in ipairs(ep.device_types) do
         if dt.device_type_id == fields.DIMMABLE_LIGHT_DEVICE_TYPE_ID then
           for _, fingerprint in ipairs(fields.child_device_profile_overrides_per_vendor_id[0x115F]) do
-            if device.manufacturer_info.product_id == fingerprint.product_id then
+            if device.manufacturer_info and device.manufacturer_info.product_id == fingerprint.product_id then
               return false -- For Aqara Dimmer Switch with Button.
             end
           end
@@ -98,8 +98,9 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 function utils.find_default_endpoint(device)
-  if device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
-     device.manufacturer_info.product_id == fields.AQARA_CLIMATE_SENSOR_W100_ID then
+  if device.manufacturer_info and
+    device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
+    device.manufacturer_info.product_id == fields.AQARA_CLIMATE_SENSOR_W100_ID then
     -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
     return device.MATTER_DEFAULT_ENDPOINT
   end
@@ -224,21 +225,13 @@ function utils.report_power_consumption_to_st_energy(device, latest_total_import
   local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-  if not device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT) then
-    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-      start = epoch_to_iso8601(last_time),
-      ["end"] = epoch_to_iso8601(current_time - 1),
-      deltaEnergy = energy_delta_wh,
-      energy = latest_total_imported_energy_wh
-    }))
-  else
-    device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT),capabilities.powerConsumptionReport.powerConsumption({
-      start = epoch_to_iso8601(last_time),
-      ["end"] = epoch_to_iso8601(current_time - 1),
-      deltaEnergy = energy_delta_wh,
-      energy = latest_total_imported_energy_wh
-    }))
-  end
+  local power_consumption_component = device.profile.components["main"]
+  device:emit_component_event(power_consumption_component, capabilities.powerConsumptionReport.powerConsumption({
+    start = epoch_to_iso8601(last_time),
+    ["end"] = epoch_to_iso8601(current_time - 1),
+    deltaEnergy = energy_delta_wh,
+    energy = latest_total_imported_energy_wh
+  }))
 end
 
 return utils

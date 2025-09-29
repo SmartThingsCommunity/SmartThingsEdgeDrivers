@@ -24,7 +24,6 @@ local fields = require "utils.switch_fields"
 local switch_utils = require "utils.switch_utils"
 local cfg = require "utils.device_configuration"
 local device_cfg = cfg.DeviceCfg
-local switch_cfg = cfg.SwitchCfg
 local button_cfg = cfg.ButtonCfg
 
 local attribute_handlers = require "generic_handlers.attribute_handlers"
@@ -87,15 +86,8 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     end
     local main_endpoint = switch_utils.find_default_endpoint(device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
-    for idx, ep in ipairs(device.endpoints) do
+    for _, ep in ipairs(device.endpoints) do
       if ep.endpoint_id ~= main_endpoint then
-        if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-          local child_profile = switch_cfg.assign_child_profile(device, ep)
-          if idx == 1 and string.find(child_profile, "energy") then
-            -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-            device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
-          end
-        end
         local id = 0
         for _, dt in ipairs(ep.device_types) do
           id = math.max(id, dt.device_type_id)

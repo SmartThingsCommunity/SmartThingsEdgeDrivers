@@ -59,7 +59,7 @@ function SwitchDeviceConfiguration.assign_child_profile(device, child_ep)
   --      child_device_profile_overrides
   for id, vendor in pairs(fields.child_device_profile_overrides_per_vendor_id) do
     for _, fingerprint in ipairs(vendor) do
-      if device.manufacturer_info.product_id == fingerprint.product_id and
+      if device.manufacturer_info and device.manufacturer_info.product_id == fingerprint.product_id and
          ((device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
          return fingerprint.target_profile
       end
@@ -75,7 +75,7 @@ function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, m
   local parent_child_device = false
   local switch_eps = device:get_endpoints(clusters.OnOff.ID)
   table.sort(switch_eps)
-  for idx, ep in ipairs(switch_eps) do
+  for _, ep in ipairs(switch_eps) do
     if device:supports_server_cluster(clusters.OnOff.ID, ep) then
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
@@ -92,10 +92,6 @@ function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, m
           }
         )
         parent_child_device = true
-        if idx == 1 and string.find(child_profile, "energy") then
-          -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-          device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
-        end
       end
     end
   end

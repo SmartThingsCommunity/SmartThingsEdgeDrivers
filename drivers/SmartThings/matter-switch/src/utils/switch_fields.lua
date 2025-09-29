@@ -86,7 +86,6 @@ SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000t
 -- table for devices that joined prior to this transition, and is also used for
 -- button devices that require component mapping.
 SwitchFields.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-SwitchFields.ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 SwitchFields.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
@@ -99,7 +98,8 @@ SwitchFields.COLOR_MODE = "__color_mode"
 
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
-  { current_field_name = "__switch_intialized", updated_field_name = nil }
+  { current_field_name = "__switch_intialized", updated_field_name = nil },
+  { current_field_name = "__energy_management_endpoint", updated_field_name = nil }
 }
 
 SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION

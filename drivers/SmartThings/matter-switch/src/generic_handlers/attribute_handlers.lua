@@ -16,6 +16,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local version = require "version"
 local im = require "st.matter.interaction_model"
+local device_lib = require "st.device"
 
 local st_utils = require "st.utils"
 local fields = require "utils.switch_fields"
@@ -245,17 +246,15 @@ end
 -- [[ ELECTRICAL POWER MEASUREMENT CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.active_power_handler(driver, device, ib, response)
+  local component = device.profile.components["main"]
   if ib.data.value then
     local watt_value = ib.data.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
-    if ib.endpoint_id ~= 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
-    else
-      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-      device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
-    end
-    if type(device.register_native_capability_attr_handler) == "function" then
-      device:register_native_capability_attr_handler("powerMeter","power")
-    end
+    device:emit_component_event(component, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+  else
+    device:emit_component_event(component, capabilities.powerMeter.power({ value = 0, unit = "W"}))
+  end
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("powerMeter","power")
   end
 end
 
@@ -281,25 +280,22 @@ end
 
 function AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
+    local energy_component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
     device:set_field(fields.TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
-    if ib.endpoint_id ~= 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
-    else
-      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-      device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT), capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
-    end
+    device:emit_component_event(energy_component, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
     switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
   end
 end
 
 function AttributeHandlers.per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
+    local energy_component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(fields.TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
     device:set_field(fields.TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
-    device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
+    device:emit_component_event(energy_component, capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
     switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
   end
 end
@@ -309,7 +305,7 @@ function AttributeHandlers.energy_imported_factory(is_cumulative_report)
     -- workaround: ignore devices supporting Eve's private energy cluster AND the ElectricalEnergyMeasurement cluster
     local EVE_MANUFACTURER_ID, EVE_PRIVATE_CLUSTER_ID = 0x130A, 0x130AFC01
     local eve_private_energy_eps = device:get_endpoints(EVE_PRIVATE_CLUSTER_ID)
-    if device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and #eve_private_energy_eps > 0 then
+    if device.network_type == device_lib.NETWORK_TYPE_MATTER and device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and #eve_private_energy_eps > 0 then
       return
     end
 
