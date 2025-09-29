@@ -10,7 +10,7 @@ components:
     config:
       values:
         - key: "level.value"
-          range: [1, 99]
+          range: [1, 100]
   - id: refresh
     version: 1
   categories:

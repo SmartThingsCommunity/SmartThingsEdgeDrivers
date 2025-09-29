@@ -15,8 +15,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -326,10 +324,10 @@ test.register_coroutine_test(
 
     test.wait_for_events()
 
-    local device_info_copy = utils.deep_copy(mock_device_basic.raw_st_data)
-    device_info_copy.profile.id = "air-purifier-modular"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "infoChanged", device_info_json })
+    local updated_device_profile = t_utils.get_profile_definition("air-purifier-modular.yml",
+      {enabled_optional_capabilities = expected_update_metadata.optional_component_capabilities}
+    )
+    test.socket.device_lifecycle:__queue_receive(mock_device_basic:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device_basic.id, subscribe_request})
   end,
   { test_init = test_init_basic }
@@ -400,10 +398,10 @@ test.register_coroutine_test(
 
     test.wait_for_events()
 
-    local device_info_copy = utils.deep_copy(mock_device_ap_thermo_aqs.raw_st_data)
-    device_info_copy.profile.id = "air-purifier-modular"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "infoChanged", device_info_json })
+    local updated_device_profile = t_utils.get_profile_definition("air-purifier-modular.yml",
+      {enabled_optional_capabilities = expected_update_metadata.optional_component_capabilities}
+    )
+    test.socket.device_lifecycle:__queue_receive(mock_device_ap_thermo_aqs:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, subscribe_request})
   end,
   { test_init = test_init_ap_thermo_aqs_preconfigured }

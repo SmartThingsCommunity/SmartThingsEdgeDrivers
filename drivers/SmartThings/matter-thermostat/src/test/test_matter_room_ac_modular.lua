@@ -14,8 +14,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -291,11 +289,10 @@ local function test_room_ac_device_type_update_modular_profile(generic_mock_devi
     clusters.Thermostat.attributes.AttributeList:build_test_report_data(generic_mock_device, 1, {thermostat_attr_list_value})
   })
   generic_mock_device:expect_metadata_update(expected_metadata)
-
-  local device_info_copy = utils.deep_copy(generic_mock_device.raw_st_data)
-  device_info_copy.profile.id = "room-air-conditioner-modular"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ generic_mock_device.id, "infoChanged", device_info_json })
+  local updated_device_profile = t_utils.get_profile_definition("air-purifier-modular.yml",
+    {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.socket.device_lifecycle:__queue_receive(generic_mock_device:generate_info_changed({ profile = updated_device_profile }))
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
 end
 
