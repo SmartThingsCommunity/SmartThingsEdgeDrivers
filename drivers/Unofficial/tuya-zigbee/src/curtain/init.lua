@@ -43,8 +43,8 @@ end
 
 local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
-  device:emit_event(capabilities.windowShade.windowShade.closed())
+  tuya_utils.emit_event_if_latest_state_missing(device, "main", capabilities.windowShadeLevel, capabilities.windowShadeLevel.shadeLevel.NAME, capabilities.windowShadeLevel.shadeLevel(0))
+  tuya_utils.emit_event_if_latest_state_missing(device, "main", capabilities.windowShade, capabilities.windowShade.windowShade.NAME, capabilities.windowShade.windowShade.closed())
 end
 
 local function increase_packet_id(packet_id)

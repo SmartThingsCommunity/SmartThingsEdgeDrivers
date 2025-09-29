@@ -45,6 +45,7 @@ test.set_test_init_function(test_init)
 test.register_message_test(
   "Basic SET 0x00 should be handled as switch off",
   {
+    -- The initial switch event should be send during the device's first time onboarding
     {
       channel = "device_lifecycle",
       direction = "receive",
@@ -64,6 +65,22 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    },
+    -- Avoid sending the initial switch event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = {mock_device.id, "added"}
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({value=0x00})) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
   }
 )
@@ -71,6 +88,7 @@ test.register_message_test(
 test.register_message_test(
   "Basic SET 0xFF should be handled as switch on",
   {
+    -- The initial switch event should be send during the device's first time onboarding
     {
       channel = "device_lifecycle",
       direction = "receive",
@@ -80,6 +98,22 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({value=0xFF})) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    -- Avoid sending the initial switch event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = {mock_device.id, "added"}
     },
     {
       channel = "zwave",

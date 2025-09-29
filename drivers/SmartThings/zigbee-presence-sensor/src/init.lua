@@ -111,7 +111,6 @@ end
 local function init_handler(self, device, event, args)
   device:set_field(battery_defaults.DEVICE_VOLTAGE_TABLE_KEY, battery_table)
   device:add_configured_attribute(battery_voltage_attr_configuration)
-  device:add_monitored_attribute(battery_voltage_attr_configuration)
   device:remove_monitored_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
   device:remove_configured_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
 

@@ -3,6 +3,7 @@ local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local configurations = require "configurations"
+local switch_utils = require "switch_utils"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
@@ -89,7 +90,7 @@ local function device_added(driver, device)
   end
   device:emit_event(capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local function device_init(self, device)

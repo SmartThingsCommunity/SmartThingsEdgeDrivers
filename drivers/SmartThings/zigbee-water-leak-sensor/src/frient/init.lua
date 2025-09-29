@@ -26,7 +26,6 @@ local function device_init(driver, device)
         battery_defaults.build_linear_voltage_init(config.minV, config.maxV)(driver, device)
       elseif (config.cluster) then
         device:add_configured_attribute(config)
-        device:add_monitored_attribute(config)
       end
     end
   end

@@ -67,6 +67,7 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "Handle added lifecycle",
   function()
+    -- The initial window shade event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -77,6 +78,28 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({visibility = { displayed = false }}))
+    )
+
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+        ,
+        data_types.Uint8,
+        1) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+        data_types.CharString,
+        PREF_REVERSE_OFF) })
+    -- Avoid sending the initial window shade event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
