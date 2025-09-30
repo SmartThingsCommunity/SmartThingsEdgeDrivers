@@ -101,13 +101,11 @@ local function device_init(driver, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-      device:add_monitored_attribute(attribute)
     end
   end
 end
 
 local function device_added(driver, device)
-  --device:device_added()
   device:emit_event(capabilities.airQualitySensor.airQuality(voc_to_caqi(0)))
   device:emit_event(capabilities.tvocHealthConcern.tvocHealthConcern(voc_to_healthconcern(0)))
   device:emit_event(capabilities.tvocMeasurement.tvocLevel({ value = 0, unit = "ppb" }))
