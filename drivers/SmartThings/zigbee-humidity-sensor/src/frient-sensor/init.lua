@@ -17,10 +17,12 @@ local configurationMap = require "configurations"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local HumidityMeasurement = zcl_clusters.RelativeHumidity
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
+local capabilities = require "st.capabilities"
 
 local FRIENT_TEMP_HUMUDITY_SENSOR_FINGERPRINTS = {
   { mfr = "frient A/S", model = "HMSZB-110" },
-  { mfr = "frient A/S", model = "HMSZB-120" }
+  { mfr = "frient A/S", model = "HMSZB-120" },
+  { mfr = "frient A/S", model = "AQSZB-110" }
 }
 
 local function can_handle_frient_sensor(opts, driver, device)
@@ -38,6 +40,7 @@ local function device_init(driver, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
+      device:add_monitored_attribute(attribute)
     end
   end
 end
@@ -72,6 +75,9 @@ local frient_sensor = {
     init = device_init,
     doConfigure = do_configure,
     infoChanged = info_changed
+  },
+  sub_drivers = {
+    require("frient-sensor/air-quality")
   },
   can_handle = can_handle_frient_sensor
 }
