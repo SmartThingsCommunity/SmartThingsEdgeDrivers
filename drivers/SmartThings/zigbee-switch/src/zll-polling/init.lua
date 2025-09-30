@@ -16,14 +16,22 @@ local device_lib = require "st.device"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 
-local function zll_profile(opts, driver, device, zb_rx, ...)
-  local endpoint = device.zigbee_endpoints[device.fingerprinted_endpoint_id] or device.zigbee_endpoints[tostring(device.fingerprinted_endpoint_id)]
-  if (endpoint.profile_id == constants.ZLL_PROFILE_ID) then
-    local subdriver = require("zll-polling")
-    return true, subdriver
-  else
-    return false
+local function zll_profile(opts, driver, device, ...)
+  if device ~= nil and device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    local endpoints = device.zigbee_endpoints
+    local fingerprinted_endpoint_id = device.fingerprinted_endpoint_id
+    if endpoints ~= nil and fingerprinted_endpoint_id ~= nil then
+      local endpoint = endpoints[fingerprinted_endpoint_id]
+      if endpoint == nil then
+        endpoint = endpoints[tostring(fingerprinted_endpoint_id)]
+      end
+      if endpoint ~= nil and endpoint.profile_id ~= nil and endpoint.profile_id == constants.ZLL_PROFILE_ID then
+        local subdriver = require("zll-polling")
+        return true, subdriver
+      end
+    end
   end
+  return false
 end
 
 local function set_up_zll_polling(driver, device)
