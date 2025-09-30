@@ -58,6 +58,36 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_colevel = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("co-comeas-colevel-battery.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.SmokeCoAlarm.ID, cluster_type = "SERVER", feature_map = clusters.SmokeCoAlarm.types.Feature.CO_ALARM},
+        {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.NUMERIC_MEASUREMENT | clusters.CarbonMonoxideConcentrationMeasurement.types.Feature.LEVEL_INDICATION},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
+      },
+      device_types = {
+        {device_type_id = 0x0076, device_type_revision = 1} -- Smoke CO Alarm
+      }
+    }
+  }
+})
+
 local cluster_subscribe_list = {
   clusters.SmokeCoAlarm.attributes.SmokeState,
   clusters.SmokeCoAlarm.attributes.TestInProgress,
@@ -88,6 +118,27 @@ local function test_init()
   local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
   test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local cluster_subscribe_list_colevel = {
+  clusters.SmokeCoAlarm.attributes.TestInProgress,
+  clusters.SmokeCoAlarm.attributes.COState,
+  clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
+  clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+  clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
+  clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
+  clusters.PowerSource.attributes.BatPercentRemaining,
+}
+
+local function test_init_colevel()
+  local subscribe_request = cluster_subscribe_list_colevel[1]:subscribe(mock_device_colevel)
+  for i, cluster in ipairs(cluster_subscribe_list_colevel) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_colevel))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_colevel.id, subscribe_request})
+  test.mock_device.add_test_device(mock_device_colevel)
 end
 
 test.set_test_init_function(test_init)
@@ -135,6 +186,58 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
     }
   }
+)
+
+test.register_coroutine_test(
+  "Level value reports should generate events",
+  function()
+    test.socket.matter:__queue_receive({
+      mock_device_colevel.id,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device_colevel, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device_colevel:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.unknown())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device_colevel.id,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device_colevel, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.LOW
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device_colevel:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.good())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device_colevel.id,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+          mock_device_colevel, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.MEDIUM
+      )
+    })
+    test.socket.capability:__expect_send(
+        mock_device_colevel:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.moderate())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device_colevel.id,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device_colevel, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.HIGH
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device_colevel:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.unhealthy())
+    )
+    test.socket.matter:__queue_receive({
+      mock_device_colevel.id,
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue:build_test_report_data(
+        mock_device_colevel, 1, clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.CRITICAL
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device_colevel:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern.hazardous())
+    )
+  end,
+  { test_init = test_init_colevel }
 )
 
 test.register_message_test(
