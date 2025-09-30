@@ -17,7 +17,6 @@ local configurationMap = require "configurations"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local HumidityMeasurement = zcl_clusters.RelativeHumidity
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
-local capabilities = require "st.capabilities"
 
 local FRIENT_TEMP_HUMUDITY_SENSOR_FINGERPRINTS = {
   { mfr = "frient A/S", model = "HMSZB-110" },
