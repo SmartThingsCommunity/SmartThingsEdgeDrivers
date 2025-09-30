@@ -17,7 +17,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local IASZone = clusters.IASZone
-local Basic = clusters.Basic
 local PowerConfiguration = clusters.PowerConfiguration
 
 local function generate_event_from_zone_status(driver, device, zone_status, zigbee_message)
@@ -44,7 +43,6 @@ local function device_init(driver, device)
 end
 
 local function do_refresh(driver, device)
-  device:send(Basic.attributes.ZCLVersion:read(device))
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
   device:send(IASZone.attributes.ZoneStatus:read(device))
 end

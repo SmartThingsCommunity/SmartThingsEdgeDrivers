@@ -19,7 +19,6 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
-local Basic = clusters.Basic
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
@@ -32,7 +31,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
                     id = 0x01,
                     manufacturer = "frient A/S",
                     model = "REXZB-111",
-                    server_clusters = { Basic.ID, IASZone.ID, PowerConfiguration.ID }
+                    server_clusters = {IASZone.ID, PowerConfiguration.ID }
                 }
             }
         }
@@ -50,12 +49,6 @@ test.register_coroutine_test(
     function()
             test.socket.zigbee:__set_channel_ordering("relaxed")
             test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
-            test.socket.zigbee:__expect_send(
-                    {
-                        mock_device.id,
-                        Basic.attributes.ZCLVersion:read(mock_device)
-                    }
-            )
             test.socket.zigbee:__expect_send(
                     {
                         mock_device.id,
@@ -77,12 +70,6 @@ test.register_coroutine_test(
             test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
             test.wait_for_events()
             test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-
-
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                Basic.attributes.ZCLVersion:read( mock_device )
-            })
 
             test.socket.zigbee:__expect_send({
                 mock_device.id,
