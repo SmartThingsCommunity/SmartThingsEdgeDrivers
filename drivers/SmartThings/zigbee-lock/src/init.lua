@@ -28,6 +28,8 @@ local capabilities              = require "st.capabilities"
 local Battery                   = capabilities.battery
 local Lock                      = capabilities.lock
 local LockCodes                 = capabilities.lockCodes
+local LockCredentials           = capabilities.lockCredentials
+local LockUsers                 = capabilities.lockUsers
 
 -- Enums
 local UserStatusEnum            = LockCluster.types.DrlkUserStatus
@@ -291,6 +293,41 @@ local name_slot = function(driver, device, command)
   end
 end
 
+local migrate = function(driver, device, command)
+  local lock_users = {}
+  local lock_credentials = {}
+  local lock_codes = lock_utils.get_lock_codes(device)
+  local ordered_codes = {}
+
+  for code in pairs(lock_codes) do
+    table.insert(ordered_codes, code)
+  end
+
+  table.sort(ordered_codes)
+  for index, code_slot in ipairs(ordered_codes) do
+    table.insert(lock_users, {userIndex = index, userType = "guest", userName = lock_codes[code_slot]})
+    table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
+  end
+
+  local code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
+  local max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME)
+  local min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME)
+  local max_codes    = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
+
+  if (code_length ~= nil) then
+    max_code_len = code_length
+    min_code_len = code_length
+  end
+
+  device:emit_event(LockCredentials.minPinCodeLen(min_code_len, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.maxPinCodeLen(max_code_len, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
+  device:emit_event(LockUsers.users(lock_users, { visibility = { displayed = false } }))
+  device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
+end
+
 local function device_added(driver, device)
   lock_utils.populate_state_from_data(device)
 
@@ -436,6 +473,7 @@ local zigbee_lock_driver = {
       [LockCodes.commands.requestCode.NAME] = request_code,
       [LockCodes.commands.setCode.NAME] = set_code,
       [LockCodes.commands.nameSlot.NAME] = name_slot,
+      [LockCodes.commands.migrate.NAME] = migrate,
     },
     [Lock.ID] = {
       [Lock.commands.lock.NAME] = lock,
