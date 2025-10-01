@@ -160,27 +160,20 @@ local function migrate(driver, device, cmd)
   end
 
   for code in pairs(lock_codes) do
-      table.insert(ordered_codes, code)
+    table.insert(ordered_codes, code)
   end
 
   table.sort(ordered_codes)
   for index = 1, #ordered_codes do
-      local code_slot, code_name = ordered_codes[index], lock_codes[ ordered_codes[index] ]
-      table.insert(lock_users, {userIndex = index, userType = "guest", userName = code_name})
-      table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
+    local code_slot, code_name = ordered_codes[index], lock_codes[ ordered_codes[index] ]
+    table.insert(lock_users, {userIndex = index, userType = "guest", userName = code_name})
+    table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
   end
 
   local code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  local min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME)
-  local max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME)
+  local min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME, 4)
+  local max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME, 10)
   local max_codes    = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
-
-  if (min_code_len == nil) then
-    min_code_len = 4 -- per ZWave spec
-  end
-  if (max_code_len == nil) then
-    max_code_len = 10 -- per ZWave spec
-  end
   if (code_length ~= nil) then
     max_code_len = code_length
     min_code_len = code_length
