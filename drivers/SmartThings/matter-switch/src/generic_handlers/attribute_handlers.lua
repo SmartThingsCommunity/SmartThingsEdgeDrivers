@@ -250,8 +250,6 @@ function AttributeHandlers.active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
     device:emit_component_event(component, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
-  else
-    device:emit_component_event(component, capabilities.powerMeter.power({ value = 0, unit = "W"}))
   end
   if type(device.register_native_capability_attr_handler) == "function" then
     device:register_native_capability_attr_handler("powerMeter","power")
