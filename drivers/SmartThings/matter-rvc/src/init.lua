@@ -117,6 +117,12 @@ local function do_configure(driver, device)
   device:send(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
 end
 
+local function driver_switched(driver, device)
+  match_profile(driver, device)
+  device:set_field(SERVICE_AREA_PROFILED, true, { persist = true })
+  device:send(clusters.RvcOperationalState.attributes.AcceptedCommandList:read())
+end
+
 local function info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
@@ -392,6 +398,9 @@ local function handle_rvc_operational_state_accepted_command_list(driver, device
     table.insert(supportedOperatingStateCommands, OP_COMMAND_MAP[attr.value].NAME)
   end
   device:set_field(OPERATING_STATE_SUPPORTED_COMMANDS, supportedOperatingStateCommands, { persist = true })
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.supportedCommands(
+    supportedOperatingStateCommands, {visibility = {displayed = false}}
+  ))
 
   -- Get current run mode, current tag, current operating state
   local current_run_mode = device:get_field(CURRENT_RUN_MODE)
@@ -600,6 +609,7 @@ local matter_rvc_driver = {
     init = device_init,
     doConfigure = do_configure,
     infoChanged = info_changed,
+    driverSwitched = driver_switched
   },
   matter_handlers = {
     attr = {
