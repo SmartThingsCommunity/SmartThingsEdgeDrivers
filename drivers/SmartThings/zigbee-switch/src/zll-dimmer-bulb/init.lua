@@ -12,8 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local clusters = require "st.zigbee.zcl.clusters"
-
 local ZLL_DIMMER_BULB_FINGERPRINTS = {
   ["AduroSmart Eria"] = {
     ["ZLL-DimmableLight"] = true,
