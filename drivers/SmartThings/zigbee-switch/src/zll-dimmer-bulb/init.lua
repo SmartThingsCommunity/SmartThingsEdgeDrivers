@@ -12,12 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local colorTemperature_defaults = require "st.zigbee.defaults.colorTemperature_defaults"
-
-local OnOff = clusters.OnOff
-local Level = clusters.Level
 
 local ZLL_DIMMER_BULB_FINGERPRINTS = {
   ["AduroSmart Eria"] = {
