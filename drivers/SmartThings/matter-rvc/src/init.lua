@@ -59,6 +59,7 @@ local subscribed_attributes = {
     clusters.RvcCleanMode.attributes.CurrentMode
   },
   [capabilities.robotCleanerOperatingState.ID] = {
+    clusters.RvcOperationalState.attributes.OperationalStateList,
     clusters.RvcOperationalState.attributes.OperationalState,
     clusters.RvcOperationalState.attributes.OperationalError
   },
@@ -367,6 +368,18 @@ local function rvc_operational_error_attr_handler(driver, device, ib, response)
   end
 end
 
+local function rvc_operational_state_list_attr_handler(driver, device, ib, response)
+  local supportedOperatingState = {}
+  for _, state in ipairs(ib.data.elements) do
+    if OPERATING_STATE_MAP[state.elements.operational_state_id.value] ~= nil then
+      table.insert(supportedOperatingState, OPERATING_STATE_MAP[state.elements.operational_state_id.value].NAME)
+    end
+  end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.supportedOperatingStates(
+    supportedOperatingState, {visibility = {displayed = false}}
+  ))
+end
+
 local function handle_rvc_operational_state_accepted_command_list(driver, device, ib, response)
   device.log.info("handle_rvc_operational_state_accepted_command_list")
   local OP_COMMAND_MAP = {
@@ -599,6 +612,7 @@ local matter_rvc_driver = {
         [clusters.RvcCleanMode.attributes.CurrentMode.ID] = clean_mode_current_mode_handler,
       },
       [clusters.RvcOperationalState.ID] = {
+        [clusters.RvcOperationalState.attributes.OperationalStateList.ID] = rvc_operational_state_list_attr_handler,
         [clusters.RvcOperationalState.attributes.OperationalState.ID] = rvc_operational_state_attr_handler,
         [clusters.RvcOperationalState.attributes.OperationalError.ID] = rvc_operational_error_attr_handler,
         [clusters.RvcOperationalState.attributes.AcceptedCommandList.ID] = handle_rvc_operational_state_accepted_command_list,
