@@ -35,7 +35,8 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 2 },
-        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 5 }
+        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 5 },
+        {cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 1 } -- NODE_TOPOLOGY
       },
       device_types = {
         {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode

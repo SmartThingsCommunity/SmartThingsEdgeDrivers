@@ -44,6 +44,8 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device:send(clusters.OnOff.attributes.OnOff:read(device))
+  elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    switch_utils.collect_and_set_electrical_sensor_info(device)
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -90,6 +92,11 @@ function SwitchLifecycleHandlers.device_init(driver, device)
       if ep.endpoint_id ~= main_endpoint then
         local id = 0
         for _, dt in ipairs(ep.device_types) do
+          if dt.device_type_id == fields.ELECTRICAL_SENSOR_ID then
+            for _, attr in pairs(fields.device_type_attribute_map[fields.ELECTRICAL_SENSOR_ID]) do
+              device:add_subscribed_attribute(attr)
+            end
+          end
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
@@ -171,6 +178,9 @@ local matter_driver_template = {
         [clusters.PowerSource.attributes.AttributeList.ID] = attribute_handlers.power_source_attribute_list_handler,
         [clusters.PowerSource.attributes.BatChargeLevel.ID] = attribute_handlers.bat_charge_level_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = attribute_handlers.bat_percent_remaining_handler,
+      },
+      [clusters.PowerTopology.ID] = {
+        [clusters.PowerTopology.attributes.AvailableEndpoints.ID] = attribute_handlers.available_endpoints_handler,
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.relative_humidity_measured_value_handler

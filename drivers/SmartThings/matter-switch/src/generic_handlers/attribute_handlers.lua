@@ -23,6 +23,9 @@ local fields = require "utils.switch_fields"
 local switch_utils = require "utils.switch_utils"
 local color_utils = require "utils.color_utils"
 
+local cfg = require "utils.device_configuration"
+local device_cfg = cfg.DeviceCfg
+
 local AttributeHandlers = {}
 
 -- [[ ON OFF CLUSTER ATTRIBUTES ]] --
@@ -316,8 +319,33 @@ function AttributeHandlers.energy_imported_factory(is_cumulative_report)
 end
 
 
--- [[ POWER SOURCE CLUSTER ATTRIBUTES ]] --
+-- [[ POWER TOPOLOGY CLUSTER ATTRIBUTES ]] --
 
+function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
+  local set_topology_eps = device:get_field(fields.SET_TOPOLOGY_EPS)
+  for i, ep in pairs(set_topology_eps or {}) do
+    if ep.endpoint_id == ib.endpoint_id then
+      set_topology_eps[i] = nil -- seen, remove from list
+      local tags = ""
+      if ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
+      if ep[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
+      table.sort(ib.data.elements) -- for consistency, set tags on first listed EP
+      switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS_FOR_EP, ib.data.elements[1].value, tags)
+      break
+    end
+  end
+
+  if #set_topology_eps ~= 0 then -- we have not handled all eps
+    device:set_field(fields.SET_TOPOLOGY_EPS, set_topology_eps) -- permanently remove deleted ep
+  else
+    device:set_field(fields.SET_TOPOLOGY_EPS, nil)
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY)
+    device_cfg.match_profile(driver, device)
+  end
+end
+
+
+-- [[ POWER SOURCE CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.bat_percent_remaining_handler(driver, device, ib, response)
   if ib.data.value then

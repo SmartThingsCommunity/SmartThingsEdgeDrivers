@@ -106,20 +106,27 @@ SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_
 SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
 
-SwitchFields.child_device_profile_overrides_per_vendor_id = {
+SwitchFields.device_overrides_per_vendor = {
   [0x1321] = {
     { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
     { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
   [0x115F] = {
-    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1003, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1004, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x1005, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    { product_id = 0x1006, combo_switch_button = false }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1008, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1009, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x100A, combo_switch_button = false }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
   }
+
+}
+
+SwitchFields.SET_TOPOLOGY_EPS = "__SET_TOPOLOGY_EPS"
+SwitchFields.ELECTRICAL_TAGS_FOR_EP = "__ELECTRICAL_TAGS_FOR_EP"
+SwitchFields.profiling_data = {
+  POWER_TOPOLOGY = "__POWER_TOPOLOGY",
 }
 
 SwitchFields.CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
