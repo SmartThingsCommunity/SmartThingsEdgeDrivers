@@ -56,6 +56,12 @@ zwaveManufacturer:
     productType: 0x0003
     productId: 0x0001
     deviceProfileName: inovelli-dimmer
+  - id: "Inovelli/VZW32-SN"
+    deviceLabel: Inovelli mmWave Dimmer Red Series
+    manufacturerId: 0x031E
+    productType: 0x0017
+    productId: 0x0001
+    deviceProfileName: inovelli-mmwave-dimmer-vzw32-sn
   - id: "010F/0403"
     deviceLabel: Fibaro Single Switch
     manufacturerId: 0x010F
