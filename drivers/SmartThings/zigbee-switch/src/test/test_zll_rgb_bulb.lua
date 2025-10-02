@@ -149,6 +149,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switch", component = "main", command = "on", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "on")
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.On(mock_device) })
 
@@ -156,9 +157,6 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
   end
 )
 
@@ -168,6 +166,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switch", component = "main", command = "off", args = {} } })
+    mock_device:expect_native_cmd_handler_registration("switch", "off")
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.Off(mock_device) })
 
@@ -175,11 +174,9 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
   end
 )
+
 
 test.register_coroutine_test(
   "Capability 'switchLevel' command 'setLevel' should be handled",
@@ -187,16 +184,14 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = { 57 } } })
+    mock_device:expect_native_cmd_handler_registration("switchLevel", "setLevel")
 
     test.socket.zigbee:__expect_send({ mock_device.id, Level.server.commands.MoveToLevelWithOnOff(mock_device, 144, 0xFFFF) })
 
     test.wait_for_events()
     test.mock_time.advance_time(2)
 
-    test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
-    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
   end
 )
 
