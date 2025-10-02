@@ -86,7 +86,6 @@ SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000t
 -- table for devices that joined prior to this transition, and is also used for
 -- button devices that require component mapping.
 SwitchFields.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-SwitchFields.ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 SwitchFields.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
@@ -99,27 +98,36 @@ SwitchFields.COLOR_MODE = "__color_mode"
 
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
-  { current_field_name = "__switch_intialized", updated_field_name = nil }
+  { current_field_name = "__switch_intialized", updated_field_name = nil },
+  { current_field_name = "__energy_management_endpoint", updated_field_name = nil }
 }
 
 SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
 SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
 
-SwitchFields.child_device_profile_overrides_per_vendor_id = {
+SwitchFields.device_overrides_per_vendor = {
   [0x1321] = {
     { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
     { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
   [0x115F] = {
-    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1003, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1004, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x1005, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    { product_id = 0x1006, combo_switch_button = false }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    { product_id = 0x1008, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    { product_id = 0x1009, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    { product_id = 0x100A, combo_switch_button = false }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
   }
+
+}
+
+SwitchFields.SET_TOPOLOGY_EPS = "__SET_TOPOLOGY_EPS"
+SwitchFields.PRIMARY_CHILD_EP = "__PRIMARY_CHILD_EP"
+SwitchFields.ELECTRICAL_TAGS = "__ELECTRICAL_TAGS"
+SwitchFields.profiling_data = {
+  POWER_TOPOLOGY = "__POWER_TOPOLOGY",
 }
 
 SwitchFields.CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"

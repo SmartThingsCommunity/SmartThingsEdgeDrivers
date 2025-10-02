@@ -24,7 +24,6 @@ local fields = require "utils.switch_fields"
 local switch_utils = require "utils.switch_utils"
 local cfg = require "utils.device_configuration"
 local device_cfg = cfg.DeviceCfg
-local switch_cfg = cfg.SwitchCfg
 local button_cfg = cfg.ButtonCfg
 
 local attribute_handlers = require "generic_handlers.attribute_handlers"
@@ -45,6 +44,8 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device:send(clusters.OnOff.attributes.OnOff:read(device))
+  elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    switch_utils.collect_and_set_electrical_sensor_info(device)
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -87,17 +88,15 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     end
     local main_endpoint = switch_utils.find_default_endpoint(device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
-    for idx, ep in ipairs(device.endpoints) do
+    for _, ep in ipairs(device.endpoints) do
       if ep.endpoint_id ~= main_endpoint then
-        if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-          local child_profile = switch_cfg.assign_child_profile(device, ep)
-          if idx == 1 and string.find(child_profile, "energy") then
-            -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-            device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
-          end
-        end
         local id = 0
         for _, dt in ipairs(ep.device_types) do
+          if dt.device_type_id == fields.ELECTRICAL_SENSOR_ID then
+            for _, attr in pairs(fields.device_type_attribute_map[fields.ELECTRICAL_SENSOR_ID]) do
+              device:add_subscribed_attribute(attr)
+            end
+          end
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
@@ -179,6 +178,9 @@ local matter_driver_template = {
         [clusters.PowerSource.attributes.AttributeList.ID] = attribute_handlers.power_source_attribute_list_handler,
         [clusters.PowerSource.attributes.BatChargeLevel.ID] = attribute_handlers.bat_charge_level_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = attribute_handlers.bat_percent_remaining_handler,
+      },
+      [clusters.PowerTopology.ID] = {
+        [clusters.PowerTopology.attributes.AvailableEndpoints.ID] = attribute_handlers.available_endpoints_handler,
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.relative_humidity_measured_value_handler

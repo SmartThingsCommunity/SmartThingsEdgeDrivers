@@ -35,7 +35,8 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 2 },
-        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 5 }
+        {cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 5 },
+        {cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 1 } -- NODE_TOPOLOGY
       },
       device_types = {
         {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode
@@ -271,10 +272,8 @@ test.register_coroutine_test(
     function()
       test.socket.matter:__queue_receive(
         {
-          -- don't use "aqara_mock_children[aqara_child1_ep].id,"
-          -- because energy management is at the root endpoint.
           aqara_mock_device.id,
-          clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(aqara_mock_device, 1, 17000)
+          clusters.ElectricalPowerMeasurement.attributes.ActivePower:build_test_report_data(aqara_mock_device, 0, 17000)
         }
       )
 
@@ -288,7 +287,7 @@ test.register_coroutine_test(
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
-          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_19)
+          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 0, cumulative_report_val_19)
         }
       )
 
@@ -308,7 +307,7 @@ test.register_coroutine_test(
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
-          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 1, cumulative_report_val_29)
+          clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(aqara_mock_device, 0, cumulative_report_val_29)
         }
       )
 
@@ -325,7 +324,7 @@ test.register_coroutine_test(
         {
           aqara_mock_device.id,
           clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(
-            aqara_mock_device, 1, cumulative_report_val_39
+            aqara_mock_device, 0, cumulative_report_val_39
           )
         }
       )
@@ -338,7 +337,7 @@ test.register_coroutine_test(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
           start = "1970-01-01T00:15:01Z",
           ["end"] = "1970-01-01T00:40:00Z",
-          deltaEnergy = 0.0,
+          deltaEnergy = 20.0,
           energy = 39.0
         }))
       )
