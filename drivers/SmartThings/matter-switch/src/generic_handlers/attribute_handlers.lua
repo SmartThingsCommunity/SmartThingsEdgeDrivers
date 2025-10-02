@@ -16,7 +16,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local version = require "version"
 local im = require "st.matter.interaction_model"
-local device_lib = require "st.device"
 
 local st_utils = require "st.utils"
 local fields = require "utils.switch_fields"
@@ -249,10 +248,9 @@ end
 -- [[ ELECTRICAL POWER MEASUREMENT CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.active_power_handler(driver, device, ib, response)
-  local component = device.profile.components["main"]
   if ib.data.value then
     local watt_value = ib.data.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:emit_component_event(component, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
   end
   if type(device.register_native_capability_attr_handler) == "function" then
     device:register_native_capability_attr_handler("powerMeter","power")
@@ -279,25 +277,48 @@ end
 
 -- [[ ELECTRICAL ENERGY MEASUREMENT CLUSTER ATTRIBUTES ]] --
 
+local function report_power_consumption_to_st_energy(device, endpoint_id, latest_total_imported_energy_wh)
+  local current_time = os.time()
+  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+
+  -- Ensure that the previous report was sent at least 15 minutes ago
+  if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
+    return
+  end
+  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+
+  local state_device = switch_utils.find_child(device, endpoint_id) or device
+  local previous_imported_report = state_device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = latest_total_imported_energy_wh })
+  local energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0) -- Calculate the energy delta between reports
+
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
+  device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
+    start = epoch_to_iso8601(last_time),
+    ["end"] = epoch_to_iso8601(current_time - 1),
+    deltaEnergy = energy_delta_wh,
+    energy = latest_total_imported_energy_wh
+  }))
+end
+
 function AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
-    local energy_component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
     device:set_field(fields.TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
-    device:emit_component_event(energy_component, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
-    switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
+    report_power_consumption_to_st_energy(device, ib.endpoint_id, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
   end
 end
 
 function AttributeHandlers.per_energy_imported_handler(driver, device, ib, response)
   if ib.data.elements.energy then
-    local energy_component = device.profile.components["main"]
     local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
     local latest_energy_report = device:get_field(fields.TOTAL_IMPORTED_ENERGY) or 0
     local summed_energy_report = latest_energy_report + watt_hour_value
     device:set_field(fields.TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
-    device:emit_component_event(energy_component, capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
-    switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
+    report_power_consumption_to_st_energy(device, ib.endpoint_id, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
   end
 end
 
@@ -306,7 +327,7 @@ function AttributeHandlers.energy_imported_factory(is_cumulative_report)
     -- workaround: ignore devices supporting Eve's private energy cluster AND the ElectricalEnergyMeasurement cluster
     local EVE_MANUFACTURER_ID, EVE_PRIVATE_CLUSTER_ID = 0x130A, 0x130AFC01
     local eve_private_energy_eps = device:get_endpoints(EVE_PRIVATE_CLUSTER_ID)
-    if device.network_type == device_lib.NETWORK_TYPE_MATTER and device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and #eve_private_energy_eps > 0 then
+    if device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and #eve_private_energy_eps > 0 then
       return
     end
 
@@ -329,19 +350,21 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
       local tags = ""
       if ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
       if ep[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
-      table.sort(ib.data.elements) -- for consistency, set tags on first listed EP
-      switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS_FOR_EP, ib.data.elements[1].value, tags)
+      table.sort(ib.data.elements)
+      local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
+      switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
+      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, ib.endpoint_id, primary_available_ep, { persist = true })
       break
     end
   end
 
   if #set_topology_eps ~= 0 then -- we have not handled all eps
     device:set_field(fields.SET_TOPOLOGY_EPS, set_topology_eps) -- permanently remove deleted ep
-  else
-    device:set_field(fields.SET_TOPOLOGY_EPS, nil)
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY)
-    device_cfg.match_profile(driver, device)
+    return
   end
+
+  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY)
+  device_cfg.match_profile(driver, device)
 end
 
 

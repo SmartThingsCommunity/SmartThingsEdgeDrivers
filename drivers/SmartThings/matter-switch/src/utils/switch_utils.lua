@@ -156,8 +156,9 @@ function utils.endpoint_to_component(device, ep)
   return "main"
 end
 
-function utils.find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
+function utils.find_child(parent_device, ep_id)
+  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.PRIMARY_CHILD_EP, ep_id) or ep_id
+  return parent_device:get_child_by_parent_assigned_key(string.format("%d", primary_ep_key))
 end
 
 -- Fallback handler for responses that dont have their own handler
@@ -202,37 +203,6 @@ function utils.detect_matter_thing(device)
   return device:supports_capability(capabilities.refresh)
 end
 
-function utils.report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
-  local current_time = os.time()
-  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
-
-  -- Ensure that the previous report was sent at least 15 minutes ago
-  if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
-    return
-  end
-
-  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
-
-  -- Calculate the energy delta between reports
-  local energy_delta_wh = 0.0
-  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
-    capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if previous_imported_report and previous_imported_report.energy then
-    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
-  end
-
-  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
-
-  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-  local power_consumption_component = device.profile.components["main"]
-  device:emit_component_event(power_consumption_component, capabilities.powerConsumptionReport.powerConsumption({
-    start = epoch_to_iso8601(last_time),
-    ["end"] = epoch_to_iso8601(current_time - 1),
-    deltaEnergy = energy_delta_wh,
-    energy = latest_total_imported_energy_wh
-  }))
-end
-
 -- associate this EP with the first OnOff EP. These are not necessarily the same EP.
 function utils.collect_and_set_electrical_sensor_info(device)
   local el_dt_eps = utils.get_endpoints_by_dt(device, fields.ELECTRICAL_SENSOR_ID)
@@ -264,7 +234,8 @@ function utils.collect_and_set_electrical_sensor_info(device)
     local switch_eps = device:get_endpoints(clusters.OnOff.ID)
     table.sort(switch_eps)
     if switch_eps[1] then
-      utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS_FOR_EP, switch_eps[1], tags)
+      utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, electrical_ep.endpoint_id, switch_eps[1], { persist = true })
+      utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, switch_eps[1], tags)
     else
       device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
     end

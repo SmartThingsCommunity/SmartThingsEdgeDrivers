@@ -124,7 +124,8 @@ SwitchFields.device_overrides_per_vendor = {
 }
 
 SwitchFields.SET_TOPOLOGY_EPS = "__SET_TOPOLOGY_EPS"
-SwitchFields.ELECTRICAL_TAGS_FOR_EP = "__ELECTRICAL_TAGS_FOR_EP"
+SwitchFields.PRIMARY_CHILD_EP = "__PRIMARY_CHILD_EP"
+SwitchFields.ELECTRICAL_TAGS = "__ELECTRICAL_TAGS"
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__POWER_TOPOLOGY",
 }

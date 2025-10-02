@@ -31,8 +31,9 @@ local DeviceConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 
-function SwitchDeviceConfiguration.assign_switch_profile(device, switch_ep, is_child_device, electrical_tags)
+function SwitchDeviceConfiguration.assign_switch_profile(device, switch_ep, opts)
   local profile
+
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == switch_ep then
       -- Some devices report multiple device types which are a subset of
@@ -52,17 +53,18 @@ function SwitchDeviceConfiguration.assign_switch_profile(device, switch_ep, is_c
     end
   end
 
+  local electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, switch_ep)
   if electrical_tags ~= nil and (profile == "plug-binary" or profile == "plug-level" or profile == "light-binary") then
     profile = string.gsub(profile, "-binary", "") .. electrical_tags
   end
 
-  if is_child_device then
-      -- Check if child device has an overridden child profile that differs from the child's generic device type profile
-      for _, fingerprint in ipairs(fields.device_overrides_per_vendor[device.manufacturer_info.vendor_id] or {}) do
-        if device.manufacturer_info.product_id == fingerprint.product_id and profile == fingerprint.initial_profile then
-          return fingerprint.target_profile
-        end
+  if opts and opts.is_child_device then
+    -- Check if child device has an overridden child profile that differs from the child's generic device type profile
+    for _, fingerprint in ipairs(fields.device_overrides_per_vendor[device.manufacturer_info.vendor_id] or {}) do
+      if device.manufacturer_info.product_id == fingerprint.product_id and profile == fingerprint.initial_profile then
+        return fingerprint.target_profile
       end
+    end
     -- default to "switch-binary" if no child profile is found
     return profile or "switch-binary"
   end
@@ -79,8 +81,7 @@ function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, m
       num_switch_server_eps = num_switch_server_eps + 1
       if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
         local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS_FOR_EP, ep)
-        local child_profile = SwitchDeviceConfiguration.assign_switch_profile(device, ep, true, electrical_tags)
+        local child_profile = SwitchDeviceConfiguration.assign_switch_profile(device, ep, { is_child_device = true })
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
@@ -238,6 +239,11 @@ function DeviceConfiguration.match_profile(driver, device)
   local profile_found = DeviceConfiguration.initialize_buttons_and_switches(driver, device, main_endpoint)
   if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(switch_utils.find_child)
+  else
+    for _, ep in ipairs(device.endpoints) do
+      -- this may be persist-set during initial device interview. If not PARENT/CHILD, we can drop this data.
+      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, ep.endpoint_id, nil)
+    end
   end
   if profile_found then
     return
@@ -261,8 +267,7 @@ function DeviceConfiguration.match_profile(driver, device)
   end
 
   -- after doing all previous profiling steps, attempt to re-profile main/parent switch/plug device
-  local electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS_FOR_EP, main_endpoint)
-  profile_name = SwitchDeviceConfiguration.assign_switch_profile(device, main_endpoint, false, electrical_tags)
+  profile_name = SwitchDeviceConfiguration.assign_switch_profile(device, main_endpoint)
   -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
   -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
   if profile_name and profile_name ~= "light-level-colorTemperature" and profile_name ~= "light-color-level" then
