@@ -1,0 +1,48 @@
+name: frient-siren-battery-source
+components:
+  - id: main
+    capabilities:
+      - id: alarm
+        version: 1
+      - id: tone
+        version: 1
+      - id: battery
+        version: 1
+      - id: powerSource
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Siren
+  - id: SirenVolume
+    capabilities:
+      - id: mode
+        version: 1
+  - id: SirenVoice
+    capabilities:
+      - id: mode
+        version: 1
+  - id: SquawkVolume
+    capabilities:
+      - id: mode
+        version: 1
+  - id: SquawkVoice
+    capabilities:
+      - id: mode
+        version: 1
+preferences:
+  - title: "Alarm duration (s)"
+    name: warningDuration
+    description: "After how many seconds should the alarm turn off"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65534
+      default: 240
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: e5bc0fa2-422b-31c4-8512-401f1b22c2c7
+
