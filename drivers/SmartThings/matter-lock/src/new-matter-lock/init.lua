@@ -285,9 +285,29 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
+local function compare_components(synced_components, prev_components)
+  if #synced_components ~= #prev_components then
+    return false
+  end
+  for _, component in pairs(synced_components) do
+    if (prev_components[component.id] == nil) or
+       (#component.capabilities ~= #prev_components[component.id].capabilities) then
+        return false
+    end
+    for _, capability in pairs(component.capabilities) do
+      if prev_components[component.id][capability.id] == nil then
+        return false
+      end
+    end
+  end
+  return true
+end
+
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id then
-    return
+  if device.profile.id == args.old_st_store.profile.id and
+     version.api >= 15 and version.rpc >= 9 and -- ignore component check for FW<58
+     compare_components(device.profile.components, args.old_st_store.profile.components) then
+      return
   end
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
