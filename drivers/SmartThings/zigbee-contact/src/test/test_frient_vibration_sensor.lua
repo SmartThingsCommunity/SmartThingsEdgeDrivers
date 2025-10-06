@@ -117,6 +117,16 @@ test.register_coroutine_test(
                  ):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT)
              })
 
+             test.socket.zigbee:__expect_send({
+                mock_device.id,
+                zigbee_test_utils.build_bind_request(
+                    mock_device,
+                    zigbee_test_utils.mock_hub_eui,
+                    IASZone.ID,
+                    POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT
+                ):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT)
+            })
+
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 zigbee_test_utils.build_bind_request(
@@ -125,6 +135,16 @@ test.register_coroutine_test(
                     TemperatureMeasurement.ID,
                     TEMPERATURE_ENDPOINT
                 ):to_endpoint(TEMPERATURE_ENDPOINT)
+            })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASZone.attributes.ZoneStatus:configure_reporting(
+                        mock_device,
+                        0x001E,
+                        0x012C,
+                        1
+                ):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT)
             })
 
             test.socket.zigbee:__expect_send({
@@ -420,6 +440,88 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
     )
+  end
+)
+
+test.register_coroutine_test(
+  "Contact sensor open events should be correctly handled when preference is set",
+  function()
+    local updates = {
+        preferences = {
+            garageSensor = "Yes"
+        }
+    }
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
+    local attr_report_data = {
+      { 0x0000, data_types.Int16.ID, 300},
+      { 0x0001, data_types.Int16.ID, 200},
+      { 0x0002, data_types.Int16.ID, -902},
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Frient_AccelerationMeasurementCluster.ID, attr_report_data, 0x1015)
+    })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
+    )
+
+    --if (mock_device.preferences.garageSensor == "Yes") then
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      )
+    --end
+  end
+)
+
+test.register_coroutine_test(
+  "Contact sensor close events should be correctly handled when preference is set",
+  function()
+    local updates = {
+        preferences = {
+            garageSensor = "Yes"
+        }
+    }
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
+    local attr_report_data = {
+      { 0x0000, data_types.Int16.ID, 300},
+      { 0x0001, data_types.Int16.ID, 200},
+      { 0x0002, data_types.Int16.ID, 100},
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Frient_AccelerationMeasurementCluster.ID, attr_report_data, 0x1015)
+    })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
+    )
+
+    --if (mock_device.preferences.garageSensor == "Yes") then
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+      )
+    --end
   end
 )
 
