@@ -80,6 +80,9 @@ local frient_sensor = {
     doConfigure = do_configure,
     infoChanged = info_changed
   },
+  sub_drivers = {
+    require("frient/frient-vibration"),
+  },
   zigbee_handlers = {
     cluster = {
       [IASZone.ID] = {
@@ -93,7 +96,7 @@ local frient_sensor = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    return (device:get_manufacturer() == "frient A/S" and (device:get_model() == "WISZB-120" or device:get_model() == "WISZB-121" or device:get_model() == "WISZB-131"))
+    return (device:get_manufacturer() == "frient A/S") and (device:get_model() == "WISZB-120" or device:get_model() == "WISZB-121" or device:get_model() == "WISZB-137")
   end
 }
 
