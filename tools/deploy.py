@@ -26,6 +26,8 @@ DRIVERID = "driverId"
 VERSION = "version"
 PACKAGEKEY = "packageKey"
 
+FAILURE_FILE = "failures.log"
+
 BOSE_APPKEY = os.environ.get("BOSE_AUDIONOTIFICATION_APPKEY")
 
 SONOS_API_KEY = os.environ.get("SONOS_API_KEY") or "N/A"
@@ -170,6 +172,11 @@ for partner in partners:
             if response.status_code == 500 or response.status_code == 429:
               retries = retries + 1
               if retries > 3:
+                with open("../../"+FAILURE_FILE, 'a') as f: # go up to the root directory to output, since we've changed dirs to the partner directory
+                  f.write("Failed to upload driver to "+ENVIRONMENT+": "+driver)
+                  f.write("Error code: "+str(response.status_code))
+                  f.write("Error response: "+response.text)
+                  f.write('\n')
                 break # give up
               if response.status_code == 429:
                 time.sleep(10)

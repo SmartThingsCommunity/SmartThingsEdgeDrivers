@@ -101,11 +101,6 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 
-  test.socket.matter:__expect_send({
-    mock_device.id,
-    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-  })
-
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
   capabilities.evseChargingSession.targetEndTime("1970-01-01T00:00:00Z")))
 
@@ -125,92 +120,34 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Ensure timers are created for the device",
+  "Ensure the total accumulated powerConsumption for both endpoints is reported",
   function()
-    local poll_timer = mock_device:get_field("__recurring_poll_timer")
-    assert(poll_timer ~= nil, "poll_timer should exist")
-
-    local report_poll_timer = mock_device:get_field("__recurring_report_poll_timer")
-    assert(report_poll_timer ~= nil, "report_poll_timer should exist")
-  end
-)
-
-test.register_coroutine_test(
-  "Ensure timers are created for the device",
-  function()
-    test.socket.matter:__set_channel_ordering("relaxed")
-
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
-    test.wait_for_events()
-
-    local poll_timer = mock_device:get_field("__recurring_poll_timer")
-    assert(poll_timer == nil, "poll_timer should not exist")
-
-    local report_poll_timer = mock_device:get_field("__recurring_report_poll_timer")
-    assert(report_poll_timer == nil, "report_poll_timer should not exist")
-  end
-)
-
-test.register_coroutine_test(
-  "Ensure that every 60 seconds the driver reads the CumulativeEnergyImported attribute for both endpoints",
-  function()
-    test.mock_time.advance_time(60)
-    test.socket.matter:__set_channel_ordering("relaxed")
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
-    test.wait_for_events()
-  end,
-  {
-    test_init = function()
-      test_init()
-      test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
-    end
-  }
-)
-
-test.register_coroutine_test(
-  "Ensure the total accumulated powerConsumption for both endpoints is reported every 15 minutes",
-  function()
-    test.socket.matter:__set_channel_ordering("relaxed")
-    test.socket.capability:__set_channel_ordering("relaxed")
-
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
-
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
         .CumulativeEnergyImported:build_test_report_data(mock_device,
       ELECTRICAL_SENSOR_EP_ONE,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 100000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --100Wh
+
+    test.wait_for_events()
+    test.mock_time.advance_time(901)
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes
         .CumulativeEnergyImported:build_test_report_data(mock_device,
       ELECTRICAL_SENSOR_EP_TWO,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 150000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) })             --150Wh
 
-    test.wait_for_events()
-    test.mock_time.advance_time(60 * 15)
-
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({
           energy = 250,
-          deltaEnergy = 250,
+          deltaEnergy = 0.0,
           start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T00:14:59Z"
+          ["end"] = "1970-01-01T00:15:00Z"
         }))
     )
-
-    test.wait_for_events()
   end,
   {
     test_init = function()
       test_init()
-      test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
-      test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
   }
 )
