@@ -92,6 +92,7 @@ local devices = {
       { mfr = "Sercomm Corp.", model = "SZ-DWS04" },
       { mfr = "DAWON_DNS", model = "SS-B100-ZB" },
       { mfr = "frient A/S", model = "WISZB-120" },
+      { mfr = "frient A/S", model = "WISZB-131" },
       { mfr = "Compacta", model = "ZBWDS" }
     },
     CONFIGURATION = {

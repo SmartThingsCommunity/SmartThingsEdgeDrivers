@@ -15,7 +15,8 @@
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local SimpleMetering = clusters.SimpleMetering
-local ElectricalMeasurement = clusters.ElectricalMeasurement
+local constants = require "st.zigbee.constants"
+local configurations = require "configurations"
 
 local ZIGBEE_DIMMER_POWER_ENERGY_FINGERPRINTS = {
   { mfr = "Jasco Products", model = "43082" }
@@ -31,6 +32,11 @@ local is_zigbee_dimmer_power_energy = function(opts, driver, device)
   return false
 end
 
+local device_init = function(self, device)
+  local customEnergyDivisor = 10000
+  device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, customEnergyDivisor, {persist = true})
+end
+
 local do_configure = function(self, device)
   device:refresh()
   device:configure()
@@ -41,24 +47,29 @@ local do_configure = function(self, device)
     device:send(SimpleMetering.attributes.Divisor:read(device))
     device:send(SimpleMetering.attributes.Multiplier:read(device))
   end
+end
 
-  if device:supports_capability(capabilities.energyMeter) then
-    -- Divisor and multipler for EnergyMeter
-    device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
-    device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
-  end
+local instantaneous_demand_handler = function(driver, device, value, zb_rx)
+  local raw_value = value.value
+  local divisor = 10
+  raw_value = raw_value / divisor
+  device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.powerMeter.power({value = raw_value, unit = "W" }))
 end
 
 local zigbee_dimmer_power_energy_handler = {
   NAME = "zigbee dimmer power energy handler",
+  zigbee_handlers = {
+    attr = {
+      [SimpleMetering.ID] = {
+        [SimpleMetering.attributes.InstantaneousDemand.ID] = instantaneous_demand_handler
+      }
+    }
+  },
   lifecycle_handlers = {
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
-  sub_drivers = {
-    require("zigbee-dimmer-power-energy/enbrighten-metering-dimmer")
-  },
   can_handle = is_zigbee_dimmer_power_energy
-
 }
 
 return zigbee_dimmer_power_energy_handler

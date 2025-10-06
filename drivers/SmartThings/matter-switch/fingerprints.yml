@@ -603,6 +603,46 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1000
     deviceProfileName: switch-level
+  - id: "4251/4107"
+    deviceLabel: Decora Smart Wi-Fi ELV Dimmer
+    vendorId: 0x109B
+    productId: 0x100B
+    deviceProfileName: switch-level
+  - id: "4251/4110"
+    deviceLabel: Decora Smart Wi-Fi 0-10V Dimmer
+    vendorId: 0x109B
+    productId: 0x100E
+    deviceProfileName: switch-level
+  - id: "4251/4108"
+    deviceLabel: Decora Evolve Smart Dimmer Module
+    vendorId: 0x109B
+    productId: 0x100C
+    deviceProfileName: switch-level
+  - id: "4251/4109"
+    deviceLabel: Decora Evolve Smart Switch Module
+    vendorId: 0x109B
+    productId: 0x100D
+    deviceProfileName: switch-binary
+  - id: "4251/4105"
+    deviceLabel: Decora Smart Wi-Fi Outdoor Plug-In Switch
+    vendorId: 0x109B
+    productId: 0x1009
+    deviceProfileName: switch-binary
+  - id: "4251/4099"
+    deviceLabel: Leviton Decora Smart Wi-Fi Mini Plug-In Outlet
+    vendorId: 0x109B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "4251/4100"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Tamper Resistant Outlet
+    vendorId: 0x109B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "4251/4098"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Mini Plug-In Dimmer
+    vendorId: 0x109B
+    productId: 0x1002
+    deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
