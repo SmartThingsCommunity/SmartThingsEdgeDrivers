@@ -10,6 +10,12 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x043A
     deviceProfileName: air-purifier-hepa
+  #Boldr
+  - id: "5591/1"
+    deviceLabel: Boldr Smart Controller
+    vendorId: 0x15D7
+    productId: 0x0001
+    deviceProfileName: room-air-conditioner-humidity-fan-heating-cooling
   #Bosch
   - id: "4617/12306"
     deviceLabel: Radiator Thermostat II [M]
