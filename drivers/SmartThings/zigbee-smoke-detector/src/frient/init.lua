@@ -73,16 +73,15 @@ end
 
 local function device_added(driver, device)
   device:emit_event(alarm.alarm.off())
-  
+
   if device:supports_capability(capabilities.temperatureAlarm) then
     device:emit_event(temperatureAlarm.temperatureAlarm.cleared())
   end
-  
+
   if device:supports_capability(capabilities.smokeDetector) then
     device:emit_event(smokeDetector.smoke.clear())
   end
-  
-  device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
+    device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
 end
 
 local function device_init(driver, device)
