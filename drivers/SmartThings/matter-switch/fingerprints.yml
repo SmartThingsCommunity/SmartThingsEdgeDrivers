@@ -2856,6 +2856,12 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0x0387
     deviceProfileName: matter-bridge
+#Zimi
+  - id: "5410/3"
+    deviceLabel: Zimi Matter Connect
+    vendorId: 0x1522
+    productId: 0x0003
+    deviceProfileName: matter-bridge
 #TUO
   - id: "5150/1"
     deviceLabel: "TUO Smart Button"
