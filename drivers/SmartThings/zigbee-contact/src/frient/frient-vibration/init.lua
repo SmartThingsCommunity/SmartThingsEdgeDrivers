@@ -192,6 +192,13 @@ local function info_changed(driver, device, event, args)
       log.debug("Configuring temperature sensitivity: "..sensitivity)
       device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 1*60*60, sensitivity):to_endpoint(0x26))
     end
+    if args.old_st_store.preferences.garageSensor ~= device.preferences.garageSensor then
+      if device.preferences.garageSensor == "Yes" then
+        device:try_update_metadata({profile = "acceleration-motion-temperature-contact-battery"})
+      elseif device.preferences.garageSensor == "No" then
+        device:try_update_metadata({profile = "acceleration-motion-temperature-battery"})
+      end
+    end
     device.thread:call_with_delay(5, function()
       device:refresh()
     end)

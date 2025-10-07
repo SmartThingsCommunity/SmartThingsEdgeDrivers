@@ -1,4 +1,4 @@
-name: acceleration-motion-temperature-battery
+name: acceleration-motion-temperature-contact-battery
 components:
 - id: main
   capabilities:
@@ -7,6 +7,8 @@ components:
   - id: motionSensor
     version: 1
   - id: threeAxis
+    version: 1
+  - id: contactSensor
     version: 1
   - id: temperatureMeasurement
     version: 1
