@@ -17,7 +17,6 @@ components:
             - slightlyUnhealthy
             - unhealthy
             - veryUnhealthy
-            - hazardous
   - id: relativeHumidityMeasurement
     version: 1
   - id: temperatureMeasurement

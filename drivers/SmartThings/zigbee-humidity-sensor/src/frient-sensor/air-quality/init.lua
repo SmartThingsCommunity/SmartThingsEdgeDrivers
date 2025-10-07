@@ -44,7 +44,6 @@ local MAX_VOC_REPORTABLE_VALUE = 5500 -- Max VOC reportable value
 
 --- Table to map VOC (ppb) to HealthConcern
 local VOC_TO_HEALTHCONCERN_MAPPING = {
-  [5501] = "hazardous",
   [2201] = "veryUnhealthy",
   [661] = "unhealthy",
   [221] = "slightlyUnhealthy",
