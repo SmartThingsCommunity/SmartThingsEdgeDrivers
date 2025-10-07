@@ -84,7 +84,7 @@ local function acceleration_measure_value_attr_handler(driver, device, attr_val,
     device:emit_event(threeAxis.threeAxis({measured_x, measured_y, measured_z}))
   end
 
-  if device.preferences.garageSensor == "Yes" then
+  if device.supports_capability(capabilities.contactSensor) then
     if measured_z < -900 then
         device:emit_event(capabilities.contactSensor.contact.open())
     elseif measured_z >= -100 then

@@ -50,6 +50,27 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         }
 )
 
+local mock_device_contact = test.mock_device.build_test_zigbee_device(
+        { profile = t_utils.get_profile_definition("acceleration-motion-temperature-contact-battery.yml"),
+          zigbee_endpoints = {
+              [0x01] = {
+                  id = 0x01,
+                  manufacturer = "frient A/S",
+                  model = "WISZB-137",
+                  server_clusters = { 0x0003, 0x0005, 0x0006 }
+              },
+              [0x2D] = {
+                  id = 0x2D,
+                  server_clusters = { 0x0000, 0x0001, 0x0003, 0x0020, 0x0500, 0xFC04 }
+              },
+              [0x26] = {
+                  id = 0x26,
+                  server_clusters = { 0x0402 }
+              }
+          }
+        }
+)
+
 local Frient_AccelerationMeasurementCluster = {
   ID = 0xFC04,
   ManufacturerSpecificCode = 0x1015,
@@ -64,6 +85,7 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
     test.mock_device.add_test_device(mock_device)
+    test.mock_device.add_test_device(mock_device_contact)
 end
 
 test.set_test_init_function(test_init)
@@ -453,34 +475,32 @@ test.register_coroutine_test(
     }
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
+    test.socket.device_lifecycle:__queue_receive(mock_device_contact:generate_info_changed(updates))
     local attr_report_data = {
       { 0x0000, data_types.Int16.ID, 300},
       { 0x0001, data_types.Int16.ID, 200},
       { 0x0002, data_types.Int16.ID, -902},
     }
     test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, Frient_AccelerationMeasurementCluster.ID, attr_report_data, 0x1015)
+      mock_device_contact.id,
+      zigbee_test_utils.build_attribute_report(mock_device_contact, Frient_AccelerationMeasurementCluster.ID, attr_report_data, 0x1015)
     })
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
+      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
     )
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
+      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
     )
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
+      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
     )
 
-    --if (mock_device.preferences.garageSensor == "Yes") then
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
-      )
-    --end
+    test.socket.capability:__expect_send(
+      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.open())
+    )
   end
 )
 
