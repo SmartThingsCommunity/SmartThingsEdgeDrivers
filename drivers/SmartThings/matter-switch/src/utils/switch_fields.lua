@@ -106,21 +106,19 @@ SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_
 SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
 
+SwitchFields.SONOFF_MANUFACTURER_ID = 0x1321
+SwitchFields.AQARA_MANUFACTURER_ID = 0x115F
+SwitchFields.AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
+
 SwitchFields.device_overrides_per_vendor = {
-  [0x1321] = {
+  [SwitchFields.SONOFF_MANUFACTURER_ID] = {
     { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
     { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
-  [0x115F] = {
-    { product_id = 0x1003, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1004, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x1005, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    { product_id = 0x1006, combo_switch_button = false }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    { product_id = 0x1008, combo_switch_button = false }, -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1009, combo_switch_button = false }, -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x100A, combo_switch_button = false }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+  [SwitchFields.AQARA_MANUFACTURER_ID] = {
+    { product_id = 0x1006, combo_switch_button = false }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
+    { product_id = 0x100A, combo_switch_button = false }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
   }
-
 }
 
 SwitchFields.SET_TOPOLOGY_EPS = "__SET_TOPOLOGY_EPS"
@@ -157,9 +155,6 @@ SwitchFields.INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that sup
 SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
-
-SwitchFields.AQARA_MANUFACTURER_ID = 0x115F
-SwitchFields.AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
 SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
 -- When sent with a command, these options mask and override bitmaps cause the command
