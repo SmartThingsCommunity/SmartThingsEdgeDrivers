@@ -14,7 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local dkjson = require "dkjson"
+local json = require "st.json"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local utils = require "st.utils"
@@ -223,7 +223,7 @@ local function test_init()
 
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "12-buttons-keyboard"
-  local device_info_json = dkjson.encode(device_info_copy)
+  local device_info_json = json.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
   configure_buttons()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})

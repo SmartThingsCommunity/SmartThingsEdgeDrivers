@@ -17,7 +17,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local dkjson = require 'dkjson'
+local json = require "st.json"
 local utils = require "st.utils"
 local IasEnrollResponseCode = require "st.zigbee.generated.zcl_clusters.IASZone.types.EnrollResponseCode"
 
@@ -661,7 +661,7 @@ test.register_coroutine_test(
       })
       local device_info_copy = utils.deep_copy(mock_device_contact_sensor.raw_st_data)
       device_info_copy.profile.id = "generic-contact-sensor"
-      local device_info_json = dkjson.encode(device_info_copy)
+      local device_info_json = json.encode(device_info_copy)
       test.wait_for_events()
 
       test.socket.zigbee:__set_channel_ordering("relaxed")

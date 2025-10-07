@@ -22,7 +22,7 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ ve
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
-local dkjson = require 'dkjson'
+local json = require "st.json"
 
 -- supported comand classes: SWITCH_MULTILEVEL
 local fibaro_roller_shutter_endpoints = {
@@ -413,7 +413,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["ledFrameWhenMoving"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -436,7 +436,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["ledFrameWhenNotMoving"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -459,7 +459,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["ledFrameBrightness"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -482,7 +482,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["calibration"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -505,7 +505,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["operatingMode"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -528,7 +528,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["delayAtEndSwitch"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -551,7 +551,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["motorEndMoveDetection"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -574,7 +574,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["buttonsOrientation"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -597,7 +597,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["outputsOrientation"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -620,7 +620,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["powerWithSelfConsumption"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -643,7 +643,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["powerReportsOnChange"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -666,7 +666,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["powerReportsPeriodic"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -689,7 +689,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["energyReportsOnChange"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -712,7 +712,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter.raw_st_data)
       device_data.preferences["energyReportsPeriodic"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -735,7 +735,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_fibaro_roller_shutter_venetian.raw_st_data)
       device_data.preferences["venetianBlindTurnTime"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_fibaro_roller_shutter_venetian.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(

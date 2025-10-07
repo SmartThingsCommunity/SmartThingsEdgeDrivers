@@ -15,7 +15,7 @@
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 local constants = require "st.zwave.constants"
-local json = require "dkjson"
+local json = require "st.json"
 
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local user_id_status = UserCode.user_id_status

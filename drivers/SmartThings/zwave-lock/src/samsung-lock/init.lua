@@ -19,7 +19,7 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local access_control_event = Notification.event.access_control
 
-local json = require "dkjson"
+local json = require "st.json"
 local constants = require "st.zwave.constants"
 
 local LockDefaults = require "st.zwave.defaults.lock"

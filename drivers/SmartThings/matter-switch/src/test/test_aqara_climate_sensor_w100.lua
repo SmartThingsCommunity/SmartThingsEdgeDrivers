@@ -16,7 +16,7 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
-local dkjson = require "dkjson"
+local json = require "st.json"
 local uint32 = require "st.matter.data_types.Uint32"
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
@@ -155,7 +155,7 @@ local function test_init()
 
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
   device_info_copy.profile.id = "3-button-battery-temperature-humidity"
-  local device_info_json = dkjson.encode(device_info_copy)
+  local device_info_json = json.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   configure_buttons()
