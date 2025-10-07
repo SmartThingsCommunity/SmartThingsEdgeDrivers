@@ -112,17 +112,17 @@ test.register_coroutine_test(
             test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
             test.socket.zigbee:__set_channel_ordering("relaxed")
 
-            test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+            test.socket.device_lifecycle:__queue_receive({ mock_device_contact.id, "init" })
 
             test.wait_for_events()
 
             --test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-            test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+            test.socket.device_lifecycle:__queue_receive({ mock_device_contact.id, "doConfigure" })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 zigbee_test_utils.build_bind_request(
-                    mock_device,
+                    mock_device_contact,
                     zigbee_test_utils.mock_hub_eui,
                     PowerConfiguration.ID,
                     POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT
@@ -130,9 +130,9 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                 mock_device.id,
+                 mock_device_contact.id,
                  PowerConfiguration.attributes.BatteryVoltage:configure_reporting(
-                         mock_device,
+                         mock_device_contact,
                          30,
                          21600,
                          1
@@ -140,9 +140,9 @@ test.register_coroutine_test(
              })
 
              test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 zigbee_test_utils.build_bind_request(
-                    mock_device,
+                    mock_device_contact,
                     zigbee_test_utils.mock_hub_eui,
                     IASZone.ID,
                     POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT
@@ -150,9 +150,9 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 zigbee_test_utils.build_bind_request(
-                    mock_device,
+                    mock_device_contact,
                     zigbee_test_utils.mock_hub_eui,
                     TemperatureMeasurement.ID,
                     TEMPERATURE_ENDPOINT
@@ -160,9 +160,9 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 IASZone.attributes.ZoneStatus:configure_reporting(
-                        mock_device,
+                        mock_device_contact,
                         0x001E,
                         0x012C,
                         1
@@ -170,9 +170,9 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(
-                        mock_device,
+                        mock_device_contact,
                         30,
                         600,
                         100
@@ -180,17 +180,17 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 IASZone.attributes.IASCIEAddress:write(
-                        mock_device,
+                        mock_device_contact,
                         zigbee_test_utils.mock_hub_eui
                 ):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT)
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 zigbee_test_utils.build_bind_request(
-                    mock_device,
+                    mock_device_contact,
                     zigbee_test_utils.mock_hub_eui,
                     Frient_AccelerationMeasurementCluster.ID,
                     POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT
@@ -198,9 +198,9 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 custom_configure_reporting(
-                    mock_device,
+                    mock_device_contact,
                     Frient_AccelerationMeasurementCluster.ID,
                     Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID,
                     Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.data_type,
@@ -212,9 +212,9 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 custom_configure_reporting(
-                    mock_device,
+                    mock_device_contact,
                     Frient_AccelerationMeasurementCluster.ID,
                     Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID,
                     Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.data_type,
@@ -226,9 +226,9 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 custom_configure_reporting(
-                    mock_device,
+                    mock_device_contact,
                     Frient_AccelerationMeasurementCluster.ID,
                     Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID,
                     Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.data_type,
@@ -240,18 +240,18 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 IASZone.server.commands.ZoneEnrollResponse(
-                    mock_device,
+                    mock_device_contact,
                     IasEnrollResponseCode.SUCCESS,
                     0x00
                 )
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 zigbee_test_utils.build_bind_request(
-                    mock_device,
+                    mock_device_contact,
                     zigbee_test_utils.mock_hub_eui,
                     IASZone.ID,
                     POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT
@@ -260,17 +260,17 @@ test.register_coroutine_test(
 
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 IASZone.attributes.CurrentZoneSensitivityLevel:write(
-                        mock_device,
+                        mock_device_contact,
                         0x000A
                 ):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT)
             })
 
             test.socket.zigbee:__expect_send({
-                mock_device.id,
+                mock_device_contact.id,
                 TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(
-                        mock_device,
+                        mock_device_contact,
                         0x001E,
                         0x0E10,
                         100
@@ -278,26 +278,26 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send({
-              mock_device.id,
+              mock_device_contact.id,
               IASZone.attributes.ZoneStatus:configure_reporting(
-                      mock_device,
+                      mock_device_contact,
                       0,
                       3600,
                       0
-              )
+              ):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT)
             })
 
             test.socket.zigbee:__expect_send({
-              mock_device.id,
+              mock_device_contact.id,
               zigbee_test_utils.build_bind_request(
-                  mock_device,
+                  mock_device_contact,
                   zigbee_test_utils.mock_hub_eui,
                   Frient_AccelerationMeasurementCluster.ID,
                   POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT
               )
             })
 
-            mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+            mock_device_contact:expect_metadata_update({ provisioning_state = "PROVISIONED" })
         end
 )
 
@@ -468,14 +468,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Contact sensor open events should be correctly handled when preference is set",
   function()
-    local updates = {
-        preferences = {
-            garageSensor = "Yes"
-        }
-    }
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive(mock_device_contact:generate_info_changed(updates))
     local attr_report_data = {
       { 0x0000, data_types.Int16.ID, 300},
       { 0x0001, data_types.Int16.ID, 200},
@@ -491,7 +485,15 @@ test.register_coroutine_test(
     )
 
     test.socket.capability:__expect_send(
+      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.open())
+    )
+
+    test.socket.capability:__expect_send(
       mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.open())
     )
 
     test.socket.capability:__expect_send(
@@ -507,41 +509,41 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Contact sensor close events should be correctly handled when preference is set",
   function()
-    local updates = {
-        preferences = {
-            garageSensor = "Yes"
-        }
-    }
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
     local attr_report_data = {
       { 0x0000, data_types.Int16.ID, 300},
       { 0x0001, data_types.Int16.ID, 200},
       { 0x0002, data_types.Int16.ID, 100},
     }
     test.socket.zigbee:__queue_receive({
-      mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, Frient_AccelerationMeasurementCluster.ID, attr_report_data, 0x1015)
+      mock_device_contact.id,
+      zigbee_test_utils.build_attribute_report(mock_device_contact, Frient_AccelerationMeasurementCluster.ID, attr_report_data, 0x1015)
     })
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
+      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
     )
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
+      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.closed())
     )
 
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
+      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
     )
 
-    --if (mock_device.preferences.garageSensor == "Yes") then
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
-      )
-    --end
+    test.socket.capability:__expect_send(
+      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    )
   end
 )
 

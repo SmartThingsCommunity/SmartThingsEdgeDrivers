@@ -49,4 +49,4 @@ preferences:
       options:
         "Yes": "Yes"
         "No": "No"
-      default: "No"
+      default: "Yes"
