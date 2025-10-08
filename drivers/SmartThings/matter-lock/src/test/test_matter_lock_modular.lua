@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-test.add_package_capability("lockAlarm.yml")
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -645,10 +644,9 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device_modular:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
     )
-    -- test.socket.capability:__expect_send(
-    --   mock_device_modular:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
-    -- )
-
+    test.socket.capability:__expect_send(
+      mock_device_modular:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
+    )
   end,
   { test_init = test_init_modular }
 )
