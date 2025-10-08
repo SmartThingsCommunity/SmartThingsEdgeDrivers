@@ -1,0 +1,55 @@
+name: heat-temp-battery-alarm
+components:
+- id: main
+  capabilities:
+  - id: temperatureAlarm
+    version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - heat
+            - cleared
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  - id: alarm
+    version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - off
+            - siren
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - off
+            - siren
+  categories:
+  - name: TempSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - name: "tempSensitivity"
+    title: "Temperature Sensitivity (°C)"
+    description: "Minimum change in temperature to report"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0.1
+      maximum: 2.0
+      default: 1.0
+  - name: "warningDuration"
+    title: "Alarm duration (s)"
+    description: "After how many seconds should the alarm turn off"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 65534
+      default: 240
