@@ -54,6 +54,18 @@ local mock_window_shade_switch_multilevel = test.mock_device.build_test_zwave_de
 local function test_init()
   test.mock_device.add_test_device(mock_window_shade_basic)
   test.mock_device.add_test_device(mock_window_shade_switch_multilevel)
+  test.socket.capability:__expect_send(
+    mock_window_shade_basic:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_window_shade_basic:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
 end
 test.set_test_init_function(test_init)
 
