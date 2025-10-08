@@ -15,7 +15,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
-local json = require "dkjson"
+local json = require "st.json"
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass.DoorLock

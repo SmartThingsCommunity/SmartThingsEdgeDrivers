@@ -18,7 +18,7 @@ local zw_test_utils = require "integration_test.zwave_test_utils"
 local utils = require "st.utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 local t_utils = require "integration_test.utils"
-local dkjson = require 'dkjson'
+local json = require "st.json"
 
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31_PRODUCT_TYPE = 0x0003
@@ -52,7 +52,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_inovelli_dimmer.raw_st_data)
       device_data.preferences["dimmingSpeed"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_inovelli_dimmer.id, "infoChanged", device_data_json })
 
       test.socket.zwave:__expect_send(
@@ -76,7 +76,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_inovelli_dimmer.raw_st_data)
       device_data.preferences["powerOnState"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_inovelli_dimmer.id, "infoChanged", device_data_json })
 
       test.socket.zwave:__expect_send(
@@ -100,7 +100,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_inovelli_dimmer.raw_st_data)
       device_data.preferences["acPowerType"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_inovelli_dimmer.id, "infoChanged", device_data_json })
 
       test.socket.zwave:__expect_send(
@@ -124,7 +124,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_inovelli_dimmer.raw_st_data)
       device_data.preferences["autoOffTimer"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_inovelli_dimmer.id, "infoChanged", device_data_json })
 
       test.socket.zwave:__expect_send(
@@ -149,7 +149,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_inovelli_dimmer.raw_st_data)
       device_data.preferences["invertSwitch"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_inovelli_dimmer.id, "infoChanged", device_data_json })
 
       test.socket.zwave:__expect_send(

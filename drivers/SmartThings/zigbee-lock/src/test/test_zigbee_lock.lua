@@ -29,7 +29,7 @@ local DoorLockUserStatus = DoorLock.types.DrlkUserStatus
 local DoorLockUserType = DoorLock.types.DrlkUserType
 local ProgrammingEventCode = DoorLock.types.ProgramEventCode
 
-local json = require "dkjson"
+local json = require "st.json"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     { profile = t_utils.get_profile_definition("base-lock.yml") }
