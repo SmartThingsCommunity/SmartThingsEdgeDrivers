@@ -149,11 +149,11 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: WISZB-121
     deviceProfileName: contact-battery-profile
-  - id: "frient A/S/WISZB-131"
-    deviceLabel: frient Entry Sensor 2 Pro
+  - id: "frient A/S/WISZB-137"
+    deviceLabel: frient Vibration Sensor
     manufacturer: frient A/S
-    model: WISZB-131
-    deviceProfileName: frient-contact-battery-temperature
+    model: WISZB-137
+    deviceProfileName: acceleration-motion-temperature-battery
   - id: "Compacta/ZBWDS"
     deviceLabel: Smartenit Open/Closed Sensor
     manufacturer: Compacta
