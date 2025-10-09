@@ -12,16 +12,14 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+-- The only reason we need this is because of supported_capabilities on the driver template
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
-local clusters = require "st.zigbee.zcl.clusters"
 local configurationMap = require "configurations"
-local zcl_global_commands = require "st.zigbee.zcl.global_commands"
-local SimpleMetering = clusters.SimpleMetering
-local ElectricalMeasurement = clusters.ElectricalMeasurement
-local preferences = require "preferences"
-local device_lib = require "st.device"
+local CONFIGURE_REPORTING_RESPONSE_ID = 0x07
+local SIMPLE_METERING_ID = 0x0702
+local ELECTRICAL_MEASUREMENT_ID = 0x0B04
 
 local function lazy_load_if_possible(sub_driver_name)
   -- gets the current lua libs api version
@@ -37,6 +35,7 @@ local function lazy_load_if_possible(sub_driver_name)
 end
 
 local function info_changed(self, device, event, args)
+  local preferences = require "preferences"
   preferences.update_preferences(self, device, args)
 end
 
@@ -46,9 +45,10 @@ local do_configure = function(self, device)
 
   -- Additional one time configuration
   if device:supports_capability(capabilities.energyMeter) or device:supports_capability(capabilities.powerMeter) then
+    local clusters = require "st.zigbee.zcl.clusters"
     -- Divisor and multipler for EnergyMeter
-    device:send(SimpleMetering.attributes.Divisor:read(device))
-    device:send(SimpleMetering.attributes.Multiplier:read(device))
+    device:send(clusters.SimpleMetering.attributes.Divisor:read(device))
+    device:send(clusters.SimpleMetering.attributes.Multiplier:read(device))
   end
 end
 
@@ -85,6 +85,7 @@ local device_init = function(driver, device)
   if ias_zone_config_method ~= nil then
     device:set_ias_zone_config_method(ias_zone_config_method)
   end
+  local device_lib = require "st.device"
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
     device:set_find_child(find_child)
   end
@@ -102,6 +103,9 @@ local function is_mcd_device(device)
 end
 
 local function device_added(driver, device, event)
+  local clusters = require "st.zigbee.zcl.clusters"
+  local device_lib = require "st.device"
+
   local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
   if is_mcd_device(device) == false and device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
     for _, ep in ipairs(device.zigbee_endpoints) do
@@ -171,11 +175,11 @@ local zigbee_switch_driver_template = {
   },
   zigbee_handlers = {
     global = {
-      [SimpleMetering.ID] = {
-        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
+      [SIMPLE_METERING_ID] = {
+        [CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
       },
-     [ElectricalMeasurement.ID] = {
-        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
+     [ELECTRICAL_MEASUREMENT_ID] = {
+        [CONFIGURE_REPORTING_RESPONSE_ID] = configurationMap.handle_reporting_config_response
       }
     }
   },
