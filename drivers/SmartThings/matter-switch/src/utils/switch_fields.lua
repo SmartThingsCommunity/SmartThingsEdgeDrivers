@@ -76,10 +76,6 @@ SwitchFields.device_type_profile_map = {
   [SwitchFields.MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = "switch-level",
 }
 
-
-SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
-
-
 -- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
 -- devices that were joined to this driver as MCD devices before the transition
 -- to join switch devices as parent-child. This value will exist in the device
@@ -102,10 +98,6 @@ SwitchFields.updated_fields = {
   { current_field_name = "__energy_management_endpoint", updated_field_name = nil }
 }
 
-SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
-SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
-
-
 SwitchFields.SONOFF_MANUFACTURER_ID = 0x1321
 SwitchFields.AQARA_MANUFACTURER_ID = 0x115F
 SwitchFields.AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
@@ -121,6 +113,8 @@ SwitchFields.device_overrides_per_vendor = {
   }
 }
 
+SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
+SwitchFields.POWER_CONSUMPTION_REPORT_EP = "__POWER_CONSUMPTION_REPORT_EP"
 SwitchFields.SET_TOPOLOGY_EPS = "__SET_TOPOLOGY_EPS"
 SwitchFields.PRIMARY_CHILD_EP = "__PRIMARY_CHILD_EP"
 SwitchFields.ELECTRICAL_TAGS = "__ELECTRICAL_TAGS"
@@ -128,7 +122,7 @@ SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__POWER_TOPOLOGY",
 }
 
-SwitchFields.CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
+SwitchFields.CUMULATIVE_REPORTS_SUPPORTED = "__cumulative_reports_supported"
 SwitchFields.TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
 SwitchFields.LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
 SwitchFields.MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds

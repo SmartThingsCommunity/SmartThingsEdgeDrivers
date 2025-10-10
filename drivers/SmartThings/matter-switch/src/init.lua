@@ -121,7 +121,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
         clusters.ElectricalEnergyMeasurement.ID,
         {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}
       )
-      if #cumulative_energy_eps == 0 then device:set_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = false}) end
+      if #cumulative_energy_eps > 0 then device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false}) end
     end
   end
 end
@@ -149,8 +149,8 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.CurrentY.ID] = attribute_handlers.current_y_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = attribute_handlers.energy_imported_factory(true),
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = attribute_handlers.energy_imported_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = attribute_handlers.energy_imported_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = attribute_handlers.energy_imported_factory(true),
       },
       [clusters.ElectricalPowerMeasurement.ID] = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = attribute_handlers.active_power_handler,

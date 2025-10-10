@@ -277,7 +277,9 @@ end
 
 -- [[ ELECTRICAL ENERGY MEASUREMENT CLUSTER ATTRIBUTES ]] --
 
-local function report_power_consumption_to_st_energy(device, endpoint_id, latest_total_imported_energy_wh)
+local function report_power_consumption_to_st_energy(device, total_imported_energy_wh)
+  device:set_field(fields.TOTAL_IMPORTED_ENERGY, total_imported_energy_wh, { persist = true })
+
   local current_time = os.time()
   local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
 
@@ -287,42 +289,22 @@ local function report_power_consumption_to_st_energy(device, endpoint_id, latest
   end
   device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
 
-  local state_device = switch_utils.find_child(device, endpoint_id) or device
+  local state_device = switch_utils.find_child(device, device:get_field(fields.POWER_CONSUMPTION_REPORT_EP)) or device
   local previous_imported_report = state_device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
-    capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = latest_total_imported_energy_wh })
-  local energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0) -- Calculate the energy delta between reports
+    capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
+  local energy_delta_wh = total_imported_energy_wh - previous_imported_report.energy -- Calculate the energy delta between reports
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
   local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
-  device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
+  device:emit_event_for_endpoint(device:get_field(fields.POWER_CONSUMPTION_REPORT_EP), capabilities.powerConsumptionReport.powerConsumption({
     start = epoch_to_iso8601(last_time),
     ["end"] = epoch_to_iso8601(current_time - 1),
     deltaEnergy = energy_delta_wh,
-    energy = latest_total_imported_energy_wh
+    energy = total_imported_energy_wh
   }))
 end
 
-function AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
-  if ib.data.elements.energy then
-    local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(fields.TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
-    report_power_consumption_to_st_energy(device, ib.endpoint_id, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
-  end
-end
-
-function AttributeHandlers.per_energy_imported_handler(driver, device, ib, response)
-  if ib.data.elements.energy then
-    local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
-    local latest_energy_report = device:get_field(fields.TOTAL_IMPORTED_ENERGY) or 0
-    local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(fields.TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
-    report_power_consumption_to_st_energy(device, ib.endpoint_id, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
-  end
-end
-
-function AttributeHandlers.energy_imported_factory(is_cumulative_report)
+function AttributeHandlers.energy_imported_factory(is_periodic_report)
   return function(driver, device, ib, response)
     -- workaround: ignore devices supporting Eve's private energy cluster AND the ElectricalEnergyMeasurement cluster
     local EVE_MANUFACTURER_ID, EVE_PRIVATE_CLUSTER_ID = 0x130A, 0x130AFC01
@@ -330,11 +312,22 @@ function AttributeHandlers.energy_imported_factory(is_cumulative_report)
     if device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and #eve_private_energy_eps > 0 then
       return
     end
+    local state_device = switch_utils.find_child(device, ib.endpoint_id) or device
+    local energy_meter_latest_state = state_device:get_latest_state(
+      "main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME, 0 -- 0 as the default if state is nil
+    )
+    if ib.data.elements.energy then
+      local energy_imported_wh = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
+      if is_periodic_report then
+        -- handle this report only if cumulative reports are not supported
+        if device:get_field(fields.CUMULATIVE_REPORTS_SUPPORTED) then return end
+        energy_imported_wh = energy_imported_wh + energy_meter_latest_state
+      end
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
 
-    if is_cumulative_report then
-      AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
-    elseif device:get_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED) then
-      AttributeHandlers.per_energy_imported_handler(driver, device, ib, response)
+      local energy_wh_delta = energy_imported_wh - energy_meter_latest_state
+      local device_total_imported_energy_wh = (device:get_field(fields.TOTAL_IMPORTED_ENERGY) or 0) + energy_wh_delta
+      report_power_consumption_to_st_energy(device, device_total_imported_energy_wh)
     end
   end
 end

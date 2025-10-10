@@ -221,6 +221,7 @@ function utils.collect_and_set_electrical_sensor_info(device)
   end
 
   local electrical_ep = electrical_sensor_eps[1] or {}
+  device:set_field(fields.POWER_CONSUMPTION_REPORT_EP, electrical_ep.endpoint_id, { persist = true })
   if electrical_ep[clusters.PowerTopology.ID] == clusters.PowerTopology.types.Feature.SET_TOPOLOGY then
     device:set_field(fields.SET_TOPOLOGY_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
     device:send(available_eps_req)
