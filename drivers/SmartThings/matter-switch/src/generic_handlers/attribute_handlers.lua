@@ -25,6 +25,14 @@ local color_utils = require "utils.color_utils"
 local cfg = require "utils.device_configuration"
 local device_cfg = cfg.DeviceCfg
 
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement.ID = 0x0091
+  clusters.ElectricalPowerMeasurement.ID = 0x0090
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
+
+
 local AttributeHandlers = {}
 
 -- [[ ON OFF CLUSTER ATTRIBUTES ]] --

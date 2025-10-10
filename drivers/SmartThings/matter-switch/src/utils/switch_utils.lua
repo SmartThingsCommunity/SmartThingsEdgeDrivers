@@ -14,10 +14,18 @@
 
 local fields = require "utils.switch_fields"
 local st_utils = require "st.utils"
+local version = require "version"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local im = require "st.matter.interaction_model"
 local log = require "log"
+
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement.ID = 0x0091
+  clusters.ElectricalPowerMeasurement.ID = 0x0090
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
 
 local utils = {}
 
