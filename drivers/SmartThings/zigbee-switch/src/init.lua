@@ -161,7 +161,7 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("zigbee-dimming-light"),
     lazy_load_if_possible("white-color-temp-bulb"),
     lazy_load_if_possible("rgbw-bulb"),
-    (version.api < 16) and lazy_load_if_possible("zll-dimmer-bulb") or nil,
+    (version.api < 16) and lazy_load_if_possible("zll-dimmer-bulb") or require("zll-dimmer-bulb/ikea-xy-color-bulb"),
     lazy_load_if_possible("zll-polling"),
     lazy_load_if_possible("zigbee-switch-power"),
     lazy_load_if_possible("ge-link-bulb"),
