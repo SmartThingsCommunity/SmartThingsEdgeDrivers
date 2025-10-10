@@ -14,9 +14,18 @@
 
 local fields = require "utils.switch_fields"
 local st_utils = require "st.utils"
+local version = require "version"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
+local im = require "st.matter.interaction_model"
 local log = require "log"
+
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement.ID = 0x0091
+  clusters.ElectricalPowerMeasurement.ID = 0x0090
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
 
 local utils = {}
 
@@ -78,28 +87,21 @@ end
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
 function utils.device_type_supports_button_switch_combination(device, endpoint_id)
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == endpoint_id then
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == fields.DIMMABLE_LIGHT_DEVICE_TYPE_ID then
-          for _, fingerprint in ipairs(fields.child_device_profile_overrides_per_vendor_id[0x115F]) do
-            if device.manufacturer_info.product_id == fingerprint.product_id then
-              return false -- For Aqara Dimmer Switch with Button.
-            end
-          end
-          return true
-        end
-      end
+  for _, fingerprint in ipairs(fields.device_overrides_per_vendor[fields.AQARA_MANUFACTURER_ID] or {}) do
+    if fingerprint.product_id == device.manufacturer_info.product_id and fingerprint.combo_switch_button == false then
+      return false -- For Aqara Dimmer Switch with Button.
     end
   end
-  return false
+  local dimmable_eps = utils.get_endpoints_by_dt(device, fields.DIMMABLE_LIGHT_DEVICE_TYPE_ID)
+  return utils.tbl_contains(dimmable_eps, endpoint_id)
 end
 
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 function utils.find_default_endpoint(device)
-  if device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
-     device.manufacturer_info.product_id == fields.AQARA_CLIMATE_SENSOR_W100_ID then
+  if device.manufacturer_info and
+    device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
+    device.manufacturer_info.product_id == fields.AQARA_CLIMATE_SENSOR_W100_ID then
     -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
     return device.MATTER_DEFAULT_ENDPOINT
   end
@@ -162,8 +164,9 @@ function utils.endpoint_to_component(device, ep)
   return "main"
 end
 
-function utils.find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
+function utils.find_child(parent_device, ep_id)
+  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.PRIMARY_CHILD_EP, ep_id) or ep_id
+  return parent_device:get_child_by_parent_assigned_key(string.format("%d", primary_ep_key))
 end
 
 -- Fallback handler for responses that dont have their own handler
@@ -182,15 +185,21 @@ function utils.create_multi_press_values_list(size, supportsHeld)
   return list
 end
 
-function utils.detect_bridge(device)
+-- get a list of endpoints for a specified device type.
+function utils.get_endpoints_by_dt(device, device_type_id)
+  local dt_eps = {}
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == fields.AGGREGATOR_DEVICE_TYPE_ID then
-        return true
+      if dt.device_type_id == device_type_id then
+        table.insert(dt_eps, ep.endpoint_id)
       end
     end
   end
-  return false
+  return dt_eps
+end
+
+function utils.detect_bridge(device)
+  return #utils.get_endpoints_by_dt(device, fields.AGGREGATOR_DEVICE_TYPE_ID) > 0
 end
 
 function utils.detect_matter_thing(device)
@@ -202,42 +211,45 @@ function utils.detect_matter_thing(device)
   return device:supports_capability(capabilities.refresh)
 end
 
-function utils.report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
-  local current_time = os.time()
-  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
-
-  -- Ensure that the previous report was sent at least 15 minutes ago
-  if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
-    return
+-- associate this EP with the first OnOff EP. These are not necessarily the same EP.
+function utils.collect_and_set_electrical_sensor_info(device)
+  local el_dt_eps = utils.get_endpoints_by_dt(device, fields.ELECTRICAL_SENSOR_ID)
+  local electrical_sensor_eps = {}
+  local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  for _, ep in ipairs(device.endpoints) do
+    if utils.tbl_contains(el_dt_eps, ep.endpoint_id) then
+      local el_ep_info = { endpoint_id = ep.endpoint_id }
+      for _, cluster in ipairs(ep.clusters) do
+        el_ep_info[cluster.cluster_id] = cluster.feature_map -- key the cluster's feature map on each supported cluster id
+      end
+      table.insert(electrical_sensor_eps, el_ep_info)
+      -- this read request will ONLY be sent if the device supports the SET_TOPOLOGY feature map
+      available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
+    end
   end
 
-  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
-
-  -- Calculate the energy delta between reports
-  local energy_delta_wh = 0.0
-  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
-    capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if previous_imported_report and previous_imported_report.energy then
-    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
-  end
-
-  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
-
-  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-  if not device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT) then
-    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-      start = epoch_to_iso8601(last_time),
-      ["end"] = epoch_to_iso8601(current_time - 1),
-      deltaEnergy = energy_delta_wh,
-      energy = latest_total_imported_energy_wh
-    }))
-  else
-    device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT),capabilities.powerConsumptionReport.powerConsumption({
-      start = epoch_to_iso8601(last_time),
-      ["end"] = epoch_to_iso8601(current_time - 1),
-      deltaEnergy = energy_delta_wh,
-      energy = latest_total_imported_energy_wh
-    }))
+  local electrical_ep = electrical_sensor_eps[1] or {}
+  device:set_field(fields.POWER_CONSUMPTION_REPORT_EP, electrical_ep.endpoint_id, { persist = true })
+  if electrical_ep[clusters.PowerTopology.ID] == clusters.PowerTopology.types.Feature.SET_TOPOLOGY then
+    device:set_field(fields.SET_TOPOLOGY_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
+    device:send(available_eps_req)
+  elseif electrical_ep[clusters.PowerTopology.ID] == clusters.PowerTopology.types.Feature.NODE_TOPOLOGY then
+    -- ElectricalSensor EP has a NODE topology, so this is the ONLY Electrical Sensor EP
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY)
+    -- associate this EP's electrical tags with the first OnOff EP. These are not necessarily the same EP.
+    local tags = ""
+    if electrical_ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
+    if electrical_ep[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
+    local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+    table.sort(switch_eps)
+    if switch_eps[1] then
+      utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, electrical_ep.endpoint_id, switch_eps[1], { persist = true })
+      utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, switch_eps[1], tags)
+    else
+      device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
+    end
+  else -- either no Electrical Sensor EPs are supported, or an unsupported topology was found (ex. TREE, SET+DYPF)
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, false)
   end
 end
 
