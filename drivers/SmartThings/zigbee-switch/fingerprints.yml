@@ -2369,6 +2369,11 @@ zigbeeManufacturer:
     manufacturer: LAISIAO
     model: yuba
     deviceProfileName: switch-smart-bath-heater-laisiao
+  - id: "JNL/Y-K003-001"
+    deviceLabel: Yanmi Switch (3 Way) 1
+    manufacturer: JNL
+    model: Y-K003-001
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
