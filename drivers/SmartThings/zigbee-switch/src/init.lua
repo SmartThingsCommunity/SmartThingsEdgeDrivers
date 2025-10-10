@@ -34,24 +34,6 @@ local function lazy_load_if_possible(sub_driver_name)
 
 end
 
-local function info_changed(self, device, event, args)
-  local preferences = require "preferences"
-  preferences.update_preferences(self, device, args)
-end
-
-local do_configure = function(self, device)
-  device:refresh()
-  device:configure()
-
-  -- Additional one time configuration
-  if device:supports_capability(capabilities.energyMeter) or device:supports_capability(capabilities.powerMeter) then
-    local clusters = require "st.zigbee.zcl.clusters"
-    -- Divisor and multipler for EnergyMeter
-    device:send(clusters.SimpleMetering.attributes.Divisor:read(device))
-    device:send(clusters.SimpleMetering.attributes.Multiplier:read(device))
-  end
-end
-
 local function component_to_endpoint(device, component_id)
   local ep_num = component_id:match("switch(%d)")
   return ep_num and tonumber(ep_num) or device.fingerprinted_endpoint_id
@@ -64,10 +46,6 @@ local function endpoint_to_component(device, ep)
   else
     return "main"
   end
-end
-
-local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%02X", ep_id))
 end
 
 local device_init = function(driver, device)
@@ -87,52 +65,12 @@ local device_init = function(driver, device)
   end
   local device_lib = require "st.device"
   if device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
+    local find_child = require "lifecycle_handlers.find_child"
     device:set_find_child(find_child)
   end
 end
 
-local function is_mcd_device(device)
-  local components = device.profile.components
-  if type(components) == "table" then
-    local component_count = 0
-    for _, component in pairs(components) do
-        component_count = component_count + 1
-    end
-    return component_count >= 2
-  end
-end
-
-local function device_added(driver, device, event)
-  local clusters = require "st.zigbee.zcl.clusters"
-  local device_lib = require "st.device"
-
-  local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
-  if is_mcd_device(device) == false and device.network_type == device_lib.NETWORK_TYPE_ZIGBEE then
-    for _, ep in ipairs(device.zigbee_endpoints) do
-      if ep.id ~= main_endpoint then
-        if device:supports_server_cluster(clusters.OnOff.ID, ep.id) then
-          device:set_find_child(find_child)
-          if find_child(device, ep.id) == nil then
-            local name = string.format("%s %d", device.label, ep.id)
-            local child_profile = "basic-switch"
-            driver:try_create_device(
-              {
-                type = "EDGE_CHILD",
-                label = name,
-                profile = child_profile,
-                parent_device_id = device.id,
-                parent_assigned_child_key = string.format("%02X", ep.id),
-                vendor_provided_label = name
-              }
-            )
-          end
-        end
-      end
-    end
-  end
-end
-
-
+local lazy_handler = require "st.utils.lazy_handler"
 local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,
@@ -186,9 +124,9 @@ local zigbee_switch_driver_template = {
   current_config_version = 1,
   lifecycle_handlers = {
     init = configurationMap.power_reconfig_wrapper(device_init),
-    added = device_added,
-    infoChanged = info_changed,
-    doConfigure = do_configure
+    added = lazy_handler("device_added", "lifecycle_handlers"),
+    infoChanged = lazy_handler("info_changed", "lifecycle_handlers"),
+    doConfigure = lazy_handler("do_configure", "lifecycle_handlers"),
   },
   health_check = false,
 }
