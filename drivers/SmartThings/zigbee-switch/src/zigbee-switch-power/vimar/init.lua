@@ -18,19 +18,6 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 
 local ElectricalMeasurement = zcl_clusters.ElectricalMeasurement
 
-local VIMAR_FINGERPRINTS = {
-  { mfr = "Vimar", model = "Mains_Power_Outlet_v1.0" }
-}
-
-local function can_handle_vimar_switch_power(opts, driver, device)
-  for _, fingerprint in ipairs(VIMAR_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function do_configure(driver, device)
   device:configure()
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1, {persist = true})
@@ -45,7 +32,7 @@ local vimar_switch_power = {
   lifecycle_handlers = {
     doConfigure = do_configure
   },
-  can_handle = can_handle_vimar_switch_power
+  can_handle = require("zigbee-switch-power.vimar.can_handle"),
 }
 
 return vimar_switch_power

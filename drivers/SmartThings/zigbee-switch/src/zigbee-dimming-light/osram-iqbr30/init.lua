@@ -20,10 +20,6 @@ local Level = clusters.Level
 
 local SwitchLevel = capabilities.switchLevel
 
-local function can_handle_osram_iqbr30(opts, driver, device, ...)
-  return device:get_manufacturer() == "OSRAM SYLVANIA" and device:get_model() == "iQBR30"
-end
-
 local function set_switch_level_handler(driver, device, cmd)
   local level = math.floor(cmd.args.level / 100.0 * 254)
 
@@ -40,7 +36,7 @@ local osram_iqbr30 = {
       [SwitchLevel.commands.setLevel.NAME] = set_switch_level_handler
     }
   },
-  can_handle = can_handle_osram_iqbr30
+  can_handle = require("zigbee-dimming-light.osram-iqbr30.can_handle"),
 }
 
 return osram_iqbr30

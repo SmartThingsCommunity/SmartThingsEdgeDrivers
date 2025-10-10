@@ -17,22 +17,6 @@ local capabilities = require "st.capabilities"
 local SimpleMetering = clusters.SimpleMetering
 local constants = require "st.zigbee.constants"
 
-local JASCO_SWTICH_FINGERPRINTS = {
-  { mfr = "Jasco Products", model = "43095" },
-  { mfr = "Jasco Products", model = "43132" },
-  { mfr = "Jasco Products", model = "43078" }
-}
-
-local is_jasco_switch = function(opts, driver, device)
-  for _, fingerprint in ipairs(JASCO_SWTICH_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("jasco")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local device_added = function(self, device)
     local customEnergyDivisor = 10000
     device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, customEnergyDivisor, {persist = true})
@@ -63,7 +47,7 @@ local jasco_switch = {
     added = device_added,
     doConfigure = do_configure,
   },
-  can_handle = is_jasco_switch
+  can_handle = require("jasco.can_handle"),
 }
 
 return jasco_switch

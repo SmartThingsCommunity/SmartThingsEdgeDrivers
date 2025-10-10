@@ -24,9 +24,6 @@ local switch_utils = require "switch_utils"
 
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
-local INOVELLI_VZM31_SN_FINGERPRINTS = {
-  { mfr = "Inovelli", model = "VZM31-SN" }
-}
 
 local PRIVATE_CLUSTER_ID = 0xFC31
 local PRIVATE_CMD_NOTIF_ID = 0x01
@@ -72,15 +69,6 @@ local preferences_calculate_parameter = function(new_value, type, number)
   end
 end
 
-local is_inovelli_vzm31_sn = function(opts, driver, device)
-  for _, fingerprint in ipairs(INOVELLI_VZM31_SN_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("inovelli-vzm31-sn")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function to_boolean(value)
   if value == 0 or value =="0" then
@@ -394,7 +382,7 @@ local inovelli_vzm31_sn = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temperature
     }
   },
-  can_handle = is_inovelli_vzm31_sn
+  can_handle = require("inovelli-vzm31-sn.can_handle"),
 }
 
 return inovelli_vzm31_sn
