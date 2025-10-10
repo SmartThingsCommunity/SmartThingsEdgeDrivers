@@ -17,18 +17,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 
 local Level = clusters.Level
 
-local DURAGREEN_BULB_FINGERPRINTS = {
-  ["DURAGREEN"] = {
-    ["DG-CW-02"] = true,
-    ["DG-CW-01"] = true,
-    ["DG-CCT-01"] = true
-  },
-}
-
-local function can_handle_duragreen_bulb(opts, driver, device)
-  return (DURAGREEN_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()] or false
-end
-
 local function handle_set_level(driver, device, cmd)
   local level = math.floor(cmd.args.level/100.0 * 254)
   local transtition_time = cmd.args.rate or 0xFFFF
@@ -46,7 +34,7 @@ local duragreen_color_temp_bulb = {
       [capabilities.switchLevel.commands.setLevel.NAME] = handle_set_level
     }
   },
-  can_handle = can_handle_duragreen_bulb
+  can_handle = require("white-color-temp-bulb.duragreen.can_handle")
 }
 
 return duragreen_color_temp_bulb

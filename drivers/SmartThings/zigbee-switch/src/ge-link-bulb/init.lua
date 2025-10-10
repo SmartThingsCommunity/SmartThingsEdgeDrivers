@@ -17,26 +17,6 @@ local capabilities = require "st.capabilities"
 
 local Level = clusters.Level
 
-local GE_LINK_BULB_FINGERPRINTS = {
-  ["GE_Appliances"] = {
-    ["ZLL Light"] = true,
-  },
-  ["GE"] = {
-    ["Daylight"] = true,
-    ["SoftWhite"] = true
-  }
-}
-
-local function can_handle_ge_link_bulb(opts, driver, device)
-  local can_handle = (GE_LINK_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()]
-  if can_handle then
-    local subdriver = require("ge-link-bulb")
-    return true, subdriver
-  else
-    return false
-  end
-end
-
 local function info_changed(driver, device, event, args)
   local command
   local new_dim_onoff_value = tonumber(device.preferences.dimOnOff)
@@ -81,7 +61,7 @@ local ge_link_bulb = {
       [capabilities.switchLevel.commands.setLevel.NAME] = set_level_handler
     }
   },
-  can_handle = can_handle_ge_link_bulb
+  can_handle = require("ge-link-bulb.can_handle"),
 }
 
 return ge_link_bulb

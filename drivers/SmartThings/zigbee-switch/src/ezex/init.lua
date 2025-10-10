@@ -15,21 +15,6 @@
 local zigbee_constants = require "st.zigbee.constants"
 local configurations = require "configurations"
 
-local ZIGBEE_METERING_SWITCH_FINGERPRINTS = {
-  { model = "E240-KR116Z-HA" }
-}
-
-local is_zigbee_ezex_switch = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_METERING_SWITCH_FINGERPRINTS) do
-    if device:get_model() == fingerprint.model then
-      local subdriver = require("ezex")
-      return true, subdriver
-    end
-  end
-
-  return false
-end
-
 local do_init = function(self, device)
   device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
   device:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1000, {persist = true})
@@ -40,7 +25,7 @@ local ezex_switch_handler = {
   lifecycle_handlers = {
     init = configurations.power_reconfig_wrapper(do_init)
   },
-  can_handle = is_zigbee_ezex_switch
+  can_handle = require("ezex.can_handle"),
 }
 
 return ezex_switch_handler

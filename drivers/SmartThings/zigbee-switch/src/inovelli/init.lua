@@ -25,11 +25,6 @@ local OccupancySensing = clusters.OccupancySensing
 
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
-local INOVELLI_FINGERPRINTS = {
-  { mfr = "Inovelli", model = "VZM31-SN" },
-  { mfr = "Inovelli", model = "VZM32-SN" }
-}
-
 local PRIVATE_CLUSTER_ID = 0xFC31
 local PRIVATE_CLUSTER_MMWAVE_ID = 0xFC32
 local PRIVATE_CMD_NOTIF_ID = 0x01
@@ -110,16 +105,6 @@ local preferences_calculate_parameter = function(new_value, type, number)
   else
     return new_value
   end
-end
-
-local can_handle_inovelli = function(opts, driver, device)
-  for _, fp in ipairs(INOVELLI_FINGERPRINTS) do
-    if device:get_manufacturer() == fp.mfr and device:get_model() == fp.model then
-      local subdriver = require("inovelli")
-      return true, subdriver
-    end
-  end
-  return false
 end
 
 local function to_boolean(value)
@@ -379,9 +364,7 @@ local inovelli = {
       }
     }
   },
-  sub_drivers = {
-    require("inovelli/vzm32-sn"),
-  },
+  sub_drivers = require("inovelli.sub_drivers"),
   capability_handlers = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.on.NAME] = on_handler,
@@ -400,7 +383,7 @@ local inovelli = {
       [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = handle_resetEnergyMeter,
     }
   },
-  can_handle = can_handle_inovelli
+  can_handle = require("inovelli.can_handle"),
 }
 
 return inovelli

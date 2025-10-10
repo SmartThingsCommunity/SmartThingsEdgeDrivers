@@ -14,21 +14,6 @@
 
 local constants = require "st.zigbee.constants"
 
-local AURORA_RELAY_FINGERPRINTS = {
-  { mfr = "Aurora", model = "Smart16ARelay51AU" },
-  { mfr = "Develco Products A/S", model = "Smart16ARelay51AU" },
-  { mfr = "SALUS", model = "SX885ZB" }
-}
-
-local function can_handle_aurora_relay(opts, driver, device)
-  for _, fingerprint in ipairs(AURORA_RELAY_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function do_configure(driver, device)
   device:configure()
 
@@ -43,7 +28,7 @@ local aurora_relay = {
   lifecycle_handlers = {
     doConfigure = do_configure
   },
-  can_handle = can_handle_aurora_relay
+  can_handle = require("zigbee-switch-power.aurora-relay.can_handle"),
 }
 
 return aurora_relay

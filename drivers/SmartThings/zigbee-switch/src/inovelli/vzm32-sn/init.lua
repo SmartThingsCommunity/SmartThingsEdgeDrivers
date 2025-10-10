@@ -20,21 +20,9 @@ local inovelli_common = require "inovelli.common"
 
 local OccupancySensing = clusters.OccupancySensing
 
-local INOVELLI_VZM32_SN_FINGERPRINTS = {
-  { mfr = "Inovelli", model = "VZM32-SN" },
-}
-
 local PRIVATE_CLUSTER_ID = 0xFC31
 local MFG_CODE = 0x122F
 
-local function can_handle_inovelli_vzm32_sn(opts, driver, device)
-  for _, fp in ipairs(INOVELLI_VZM32_SN_FINGERPRINTS) do
-    if device:get_manufacturer() == fp.mfr and device:get_model() == fp.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function configure_illuminance_reporting(device)
   local min_lux_change = 15
@@ -43,7 +31,7 @@ local function configure_illuminance_reporting(device)
 end
 
 local function refresh_handler(driver, device, command)
-  if device.network_type ~= device.NETWORK_TYPE_CHILD then
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:refresh()
     device:send(OccupancySensing.attributes.Occupancy:read(device))
   else
@@ -76,7 +64,7 @@ end
 
 local vzm32_sn = {
   NAME = "inovelli vzm32-sn device-specific",
-  can_handle = can_handle_inovelli_vzm32_sn,
+  can_handle = require("inovelli.vzm32-sn.can_handle"),
   lifecycle_handlers = {
     added = device_added,
     doConfigure = device_configure,

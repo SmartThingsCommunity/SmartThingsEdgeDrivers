@@ -27,23 +27,6 @@ local HUESAT_TIMER = "huesat_timer"
 local TARGET_HUE = "target_hue"
 local TARGET_SAT = "target_sat"
 
-local IKEA_XY_COLOR_BULB_FINGERPRINTS = {
-  ["IKEA of Sweden"] = {
-    ["TRADFRI bulb E27 CWS opal 600lm"] = true,
-    ["TRADFRI bulb E26 CWS opal 600lm"] = true
-  }
-}
-
-local function can_handle_ikea_xy_color_bulb(opts, driver, device)
-  local can_handle = (IKEA_XY_COLOR_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()]
-  if can_handle then
-    local subdriver = require("ikea-xy-color-bulb")
-    return true, subdriver
-  else
-    return false
-  end
-end
-
 local device_init = function(self, device)
   device:remove_configured_attribute(ColorControl.ID, ColorControl.attributes.CurrentHue.ID)
   device:remove_configured_attribute(ColorControl.ID, ColorControl.attributes.CurrentSaturation.ID)
@@ -192,7 +175,7 @@ local ikea_xy_color_bulb = {
       }
     }
   },
-  can_handle = can_handle_ikea_xy_color_bulb
+  can_handle = require("ikea-xy-color-bulb.can_handle")
 }
 
 return ikea_xy_color_bulb

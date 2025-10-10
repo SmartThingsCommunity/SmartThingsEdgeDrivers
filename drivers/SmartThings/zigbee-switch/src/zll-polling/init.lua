@@ -14,17 +14,6 @@
 
 local device_lib = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
-local ZLL_PROFILE_ID = 0xC05E
-
-local function zll_profile(opts, driver, device, zb_rx, ...)
-  local endpoint = device.zigbee_endpoints[device.fingerprinted_endpoint_id] or device.zigbee_endpoints[tostring(device.fingerprinted_endpoint_id)]
-  if (endpoint ~= nil and endpoint.profile_id == ZLL_PROFILE_ID) then
-    local subdriver = require("zll-polling")
-    return true, subdriver
-  else
-    return false
-  end
-end
 
 local function set_up_zll_polling(driver, device)
   local INFREQUENT_POLL_COUNTER = "_infrequent_poll_counter"
@@ -57,7 +46,7 @@ local ZLL_polling = {
   lifecycle_handlers = {
     init = set_up_zll_polling
   },
-  can_handle = zll_profile
+  can_handle = require("zll-polling.can_handle"),
 }
 
 return ZLL_polling

@@ -29,17 +29,6 @@ else
   lazy_handler = require
 end
 
-local function lazy_load_if_possible(sub_driver_name)
-  -- gets the current lua libs api version
-  -- version 9 will include the lazy loading functions
-  if version.api >= 9 then
-    return ZigbeeDriver.lazy_load_sub_driver(require(sub_driver_name))
-  else
-    return require(sub_driver_name)
-  end
-
-end
-
 local function component_to_endpoint(device, component_id)
   local ep_num = component_id:match("switch(%d)")
   return ep_num and tonumber(ep_num) or device.fingerprinted_endpoint_id
@@ -75,6 +64,8 @@ local device_init = function(driver, device)
     device:set_find_child(find_child)
   end
 end
+
+local lazy_load_if_possible = require "lazy_load_subdriver"
 
 local zigbee_switch_driver_template = {
   supported_capabilities = {
