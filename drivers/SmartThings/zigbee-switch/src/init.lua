@@ -21,19 +21,6 @@ local CONFIGURE_REPORTING_RESPONSE_ID = 0x07
 local SIMPLE_METERING_ID = 0x0702
 local ELECTRICAL_MEASUREMENT_ID = 0x0B04
 
-local function lazy_load_if_possible(sub_driver_name)
-  -- gets the current lua libs api version
-  local version = require "version"
-
-  -- version 9 will include the lazy loading functions
-  if version.api >= 9 then
-    return ZigbeeDriver.lazy_load_sub_driver(require(sub_driver_name))
-  else
-    return require(sub_driver_name)
-  end
-
-end
-
 local function component_to_endpoint(device, component_id)
   local ep_num = component_id:match("switch(%d)")
   return ep_num and tonumber(ep_num) or device.fingerprinted_endpoint_id
@@ -82,34 +69,34 @@ local zigbee_switch_driver_template = {
     capabilities.motionSensor
   },
   sub_drivers = {
-    lazy_load_if_possible("non_zigbee_devices"),
-    lazy_load_if_possible("hanssem"),
-    lazy_load_if_possible("aqara"),
-    lazy_load_if_possible("aqara-light"),
-    lazy_load_if_possible("ezex"),
-    lazy_load_if_possible("rexense"),
-    lazy_load_if_possible("sinope"),
-    lazy_load_if_possible("sinope-dimmer"),
-    lazy_load_if_possible("zigbee-dimmer-power-energy"),
-    lazy_load_if_possible("zigbee-metering-plug-power-consumption-report"),
-    lazy_load_if_possible("jasco"),
-    lazy_load_if_possible("multi-switch-no-master"),
-    lazy_load_if_possible("zigbee-dual-metering-switch"),
-    lazy_load_if_possible("rgb-bulb"),
-    lazy_load_if_possible("zigbee-dimming-light"),
-    lazy_load_if_possible("white-color-temp-bulb"),
-    lazy_load_if_possible("rgbw-bulb"),
-    lazy_load_if_possible("zll-dimmer-bulb"),
-    lazy_load_if_possible("zll-polling"),
-    lazy_load_if_possible("zigbee-switch-power"),
-    lazy_load_if_possible("ge-link-bulb"),
-    lazy_load_if_possible("bad_on_off_data_type"),
-    lazy_load_if_possible("robb"),
-    lazy_load_if_possible("wallhero"),
-    lazy_load_if_possible("inovelli-vzm31-sn"),
-    lazy_load_if_possible("laisiao"),
-    lazy_load_if_possible("tuya-multi"),
-    lazy_load_if_possible("frient")
+    ZigbeeDriver.lazy_load_sub_driver("non_zigbee_devices"),
+    ZigbeeDriver.lazy_load_sub_driver("hanssem"),
+    ZigbeeDriver.lazy_load_sub_driver("aqara"),
+    ZigbeeDriver.lazy_load_sub_driver("aqara-light"),
+    ZigbeeDriver.lazy_load_sub_driver("ezex"),
+    ZigbeeDriver.lazy_load_sub_driver("rexense"),
+    ZigbeeDriver.lazy_load_sub_driver("sinope"),
+    ZigbeeDriver.lazy_load_sub_driver("sinope-dimmer"),
+    ZigbeeDriver.lazy_load_sub_driver("zigbee-dimmer-power-energy"),
+    ZigbeeDriver.lazy_load_sub_driver("zigbee-metering-plug-power-consumption-report"),
+    ZigbeeDriver.lazy_load_sub_driver("jasco"),
+    ZigbeeDriver.lazy_load_sub_driver("multi-switch-no-master"),
+    ZigbeeDriver.lazy_load_sub_driver("zigbee-dual-metering-switch"),
+    ZigbeeDriver.lazy_load_sub_driver("rgb-bulb"),
+    ZigbeeDriver.lazy_load_sub_driver("zigbee-dimming-light"),
+    ZigbeeDriver.lazy_load_sub_driver("white-color-temp-bulb"),
+    ZigbeeDriver.lazy_load_sub_driver("rgbw-bulb"),
+    ZigbeeDriver.lazy_load_sub_driver("zll-dimmer-bulb"),
+    ZigbeeDriver.lazy_load_sub_driver("zll-polling"),
+    ZigbeeDriver.lazy_load_sub_driver("zigbee-switch-power"),
+    ZigbeeDriver.lazy_load_sub_driver("ge-link-bulb"),
+    ZigbeeDriver.lazy_load_sub_driver("bad_on_off_data_type"),
+    ZigbeeDriver.lazy_load_sub_driver("robb"),
+    ZigbeeDriver.lazy_load_sub_driver("wallhero"),
+    ZigbeeDriver.lazy_load_sub_driver("inovelli-vzm31-sn"),
+    ZigbeeDriver.lazy_load_sub_driver("laisiao"),
+    ZigbeeDriver.lazy_load_sub_driver("tuya-multi"),
+    ZigbeeDriver.lazy_load_sub_driver("frient")
   },
   zigbee_handlers = {
     global = {

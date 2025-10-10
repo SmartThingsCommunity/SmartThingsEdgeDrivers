@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local lazy_require = require "st.utils.lazy_require"
 
 --- @class st.utils.lazy_loader
 --- @field prefix string the path prefix for loaded modules

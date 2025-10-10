@@ -54,15 +54,7 @@ local zigbee_metering_plug_power_conumption_report = {
     init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure
   },
-  can_handle = function(opts, driver, device, ...)
-    local can_handle = device:get_manufacturer() == "DAWON_DNS"
-    if can_handle then
-      local subdriver = require("zigbee-metering-plug-power-consumption-report")
-      return true, subdriver
-    else
-      return false
-    end
-  end
+  can_handle = require("zigbee-metering-plug-power-consumption-report.can_handle"),
 }
 
 return zigbee_metering_plug_power_conumption_report

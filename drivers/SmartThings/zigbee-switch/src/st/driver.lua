@@ -732,26 +732,19 @@ end
 ---
 --- @param sub_driver Driver the sub driver
 function Driver.lazy_load_sub_driver(sub_driver)
-  local can_handle = sub_driver.can_handle
-  local name = sub_driver.NAME
-  local upvalueidx = 0
-  repeat
-    upvalueidx = upvalueidx + 1
-    local uvname, upvalue = debug.getupvalue(sub_driver.can_handle, upvalueidx)
-    if uvname then
-      debug.setupvalue(can_handle, upvalueidx, upvalue)
-    end
-  until uvname == nil
+  local can_handle = require(sub_driver..".can_handle")
 
+  assert(type(can_handle == "function") and type(sub_driver) == "string")
   local lazy_sub_driver = {
-    NAME = name,
+    NAME = sub_driver,
     can_handle = can_handle,
-    has_secret_data_handlers = sub_driver.secret_data_handlers ~= nil
+    has_secret_data_handlers = false
   }
 
-  if sub_driver.sub_drivers ~= nil then
-    lazy_sub_driver.sub_drivers = utils.deep_copy(sub_driver.sub_drivers)
-  end
+  -- handle sub sub drivers
+  -- if sub_driver.sub_drivers ~= nil then
+  --   lazy_sub_driver.sub_drivers = utils.deep_copy(sub_driver.sub_drivers)
+  -- end
 
   collectgarbage()
 
@@ -787,6 +780,7 @@ function Driver.populate_capability_dispatcher_from_sub_drivers(driver)
   for _, sub_driver in ipairs(driver.sub_drivers) do
     local capability_handlers
     if Driver.should_lazy_load_sub_driver(sub_driver) then
+      log.info("!!!!! lazy loading subdriver")
       capability_handlers = {}
     else
       capability_handlers = sub_driver.capability_handlers or {}
@@ -985,7 +979,7 @@ function Driver.init(cls, name, template)
       "discovery"
     )
   end
-  
+
   out_driver:_register_channel_handler(
     out_driver.environment_channel,
     template.environment_info_handler or Driver.environment_info_handler,

@@ -19,25 +19,6 @@ local OnOff = clusters.OnOff
 local Level = clusters.Level
 local ColorControl = clusters.ColorControl
 
-local RGB_BULB_FINGERPRINTS = {
-  ["OSRAM"] = {
-    ["Gardenspot RGB"] = true,
-    ["LIGHTIFY Gardenspot RGB"] = true
-  },
-  ["LEDVANCE"] = {
-    ["Outdoor Accent RGB"] = true
-  }
-}
-
-local function can_handle_rgb_bulb(opts, driver, device)
-  local can_handle = (RGB_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()]
-  if can_handle then
-    local subdriver = require("rgb-bulb")
-    return true, subdriver
-  else
-    return false
-  end
-end
 
 local function do_refresh(driver, device)
   local attributes = {
@@ -66,7 +47,7 @@ local rgb_bulb = {
   lifecycle_handlers = {
     doConfigure = do_configure
   },
-  can_handle = can_handle_rgb_bulb
+  can_handle = require("rgb-bulb.can_handle"),
 }
 
 return rgb_bulb

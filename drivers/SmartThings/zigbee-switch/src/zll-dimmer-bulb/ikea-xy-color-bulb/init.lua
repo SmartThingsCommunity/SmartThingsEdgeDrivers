@@ -17,6 +17,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local switch_defaults = require "st.zigbee.defaults.switch_defaults"
 local configurationMap = require "configurations"
 local utils = require "st.utils"
+local lazy_require = utils.lazy_require
 
 local ColorControl = clusters.ColorControl
 

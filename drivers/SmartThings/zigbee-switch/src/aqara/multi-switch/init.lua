@@ -106,7 +106,7 @@ local aqara_multi_switch_handler = {
     init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
-  can_handle = is_aqara_products
+  can_handle = is_aqara_products,
 }
 
 return aqara_multi_switch_handler

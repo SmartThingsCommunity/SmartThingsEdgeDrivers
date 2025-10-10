@@ -18,26 +18,11 @@ local capabilities = require "st.capabilities"
 local configurations = require "configurations"
 local SimpleMetering = zcl_clusters.SimpleMetering
 
-local ROBB_DIMMER_FINGERPRINTS = {
-  { mfr = "ROBB smarrt", model = "ROB_200-011-0" },
-  { mfr = "ROBB smarrt", model = "ROB_200-014-0" }
-}
-
-local function is_robb_dimmer(opts, driver, device)
-  for _, fingerprint in ipairs(ROBB_DIMMER_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("robb")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local do_init = function(driver, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
   device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
 end
-
 
 local function power_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
@@ -60,7 +45,7 @@ local robb_dimmer_handler = {
   lifecycle_handlers = {
     init = configurations.power_reconfig_wrapper(do_init)
   },
-  can_handle = is_robb_dimmer
+  can_handle = require("robb.can_handle"),
 }
 
 return robb_dimmer_handler

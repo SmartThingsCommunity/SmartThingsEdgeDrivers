@@ -40,7 +40,7 @@ local osram_iqbr30 = {
       [SwitchLevel.commands.setLevel.NAME] = set_switch_level_handler
     }
   },
-  can_handle = can_handle_osram_iqbr30
+  can_handle = can_handle_osram_iqbr30,
 }
 
 return osram_iqbr30

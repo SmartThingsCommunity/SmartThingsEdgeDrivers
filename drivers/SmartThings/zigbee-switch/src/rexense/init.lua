@@ -17,10 +17,6 @@ local capabilities = require "st.capabilities"
 
 local OnOff = zcl_clusters.OnOff
 
-local ZIGBEE_METERING_PLUG_FINGERPRINTS = {
-  { mfr = "REXENSE", model = "HY0105" }          -- HONYAR Outlet"
-}
-
 local function switch_on_handler(driver, device, command)
   device:send_to_component(command.component, OnOff.server.commands.On(device))
   device:send(OnOff.server.commands.On(device):to_endpoint(0x02))
@@ -31,16 +27,6 @@ local function switch_off_handler(driver, device, command)
   device:send(OnOff.server.commands.Off(device):to_endpoint(0x02))
 end
 
-local function is_zigbee_metering_plug(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_METERING_PLUG_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("rexense")
-      return true, subdriver
-    end
-  end
-
-  return false
-end
 
 local zigbee_metering_plug = {
   NAME = "zigbee metering plug",
@@ -50,7 +36,7 @@ local zigbee_metering_plug = {
       [capabilities.switch.commands.off.NAME] = switch_off_handler
     }
   },
-  can_handle = is_zigbee_metering_plug
+  can_handle = require("rexense.can_handle"),
 }
 
 return zigbee_metering_plug

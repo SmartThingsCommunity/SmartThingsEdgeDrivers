@@ -17,15 +17,8 @@
 -- This patch works around it until hubcore 0.59 is released with
 -- https://smartthings.atlassian.net/browse/CHAD-16552
 
-local st_device = require "st.device"
 local log = require "log"
 
-local function can_handle(opts, driver, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_ZIGBEE and device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    return true, require("non_zigbee_devices")
-  end
-  return false
-end
 
 local function device_added(driver, device, event)
     log.info(string.format("Non zigbee device added: %s", device))
@@ -51,7 +44,7 @@ local non_zigbee_devices = {
     doConfigure = do_configure,
     infoChanged = info_changed
   },
-  can_handle = can_handle
+  can_handle = require("non_zigbee_devices.can_handle"),
 }
 
 return non_zigbee_devices
