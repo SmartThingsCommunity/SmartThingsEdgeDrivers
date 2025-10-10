@@ -32,7 +32,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         id = 1,
         manufacturer = "sengled",
         model = "E13-N11",
-        server_clusters = { 0x0006, 0x0008, 0x0500 }
+        server_clusters = { 0x0006, 0x0008, 0x0500 },
+        profile_id = 0xC05E
       }
     }
   }

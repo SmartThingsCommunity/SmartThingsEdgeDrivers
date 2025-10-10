@@ -23,6 +23,7 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 local preferences = require "preferences"
 local device_lib = require "st.device"
 local version = require "version"
+local constants = require "st.zigbee.constants"
 
 local function lazy_load_if_possible(sub_driver_name)
   -- version 9 will include the lazy loading functions
@@ -39,7 +40,9 @@ local function info_changed(self, device, event, args)
 end
 
 local do_configure = function(self, device)
-  device:refresh()
+  if version.api > 15 and device:get_profile_id() ~= constants.ZLL_PROFILE_ID then
+    device:refresh()
+  end
   device:configure()
 
   -- Additional one time configuration
@@ -123,6 +126,9 @@ local function device_added(driver, device, event)
         end
       end
     end
+  end
+  if version.api > 15 and device:get_profile_id() == constants.ZLL_PROFILE_ID then
+    device:refresh()
   end
 end
 
