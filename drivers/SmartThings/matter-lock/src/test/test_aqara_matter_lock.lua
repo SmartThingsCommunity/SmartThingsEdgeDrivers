@@ -15,7 +15,6 @@
 local test = require "integration_test"
 test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
-test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
