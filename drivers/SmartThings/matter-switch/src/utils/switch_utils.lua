@@ -87,14 +87,20 @@ function utils.check_field_name_updates(device)
   end
 end
 
+function utils.check_vendor_overrides(manufacturer_info, override_key, device_key, return_value)
+  for product_id, overrides in pairs(fields.vendor_overrides[manufacturer_info.vendor_id] or {}) do
+    if product_id == manufacturer_info.product_id and (device_key or true) == overrides[override_key] then
+      return overrides[return_value] or true
+    end
+  end
+end
+
 --- device_type_supports_button_switch_combination helper function used to check
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
 function utils.device_type_supports_button_switch_combination(device, endpoint_id)
-  for _, fingerprint in ipairs(fields.device_overrides_per_vendor[fields.AQARA_MANUFACTURER_ID] or {}) do
-    if fingerprint.product_id == device.manufacturer_info.product_id and fingerprint.combo_switch_button == false then
-      return false -- For Aqara Dimmer Switch with Button.
-    end
+  if utils.check_vendor_overrides(device.manufacturer_info, "ignore_combo_switch_button") then
+    return false
   end
   local dimmable_eps = utils.get_endpoints_by_dt(device, fields.DIMMABLE_LIGHT_DEVICE_TYPE_ID)
   return utils.tbl_contains(dimmable_eps, endpoint_id)
@@ -103,9 +109,8 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 function utils.find_default_endpoint(device)
-  if device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
-    device.manufacturer_info.product_id == fields.AQARA_CLIMATE_SENSOR_W100_ID then
-    -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
+  -- Buttons should not be set on the main component for the Aqara Climate Sensor W100,
+  if utils.check_vendor_overrides(device.manufacturer_info, "is_climate_sensor_w100") then
     return device.MATTER_DEFAULT_ENDPOINT
   end
 

@@ -383,9 +383,7 @@ function AttributeHandlers.power_source_attribute_list_handler(driver, device, i
     if #button_eps > 1 then
       profile_name = string.format("%d-", #button_eps) .. profile_name
     end
-
-    if device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
-       device.manufacturer_info.product_id == fields.AQARA_CLIMATE_SENSOR_W100_ID then
+    if switch_utils.check_vendor_overrides(device.manufacturer_info, "is_climate_sensor_w100") then
       profile_name = profile_name .. "-temperature-humidity"
     end
     device:try_update_metadata({ profile = profile_name })

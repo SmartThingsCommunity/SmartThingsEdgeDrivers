@@ -83,6 +83,7 @@ SwitchFields.device_type_profile_map = {
 -- button devices that require component mapping.
 SwitchFields.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 SwitchFields.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
+SwitchFields.PRIMARY_CHILD_EP = "__PRIMARY_CHILD_EP"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
 SwitchFields.COLOR_TEMP_MIN = "__color_temp_min"
@@ -98,25 +99,21 @@ SwitchFields.updated_fields = {
   { current_field_name = "__energy_management_endpoint", updated_field_name = nil }
 }
 
-SwitchFields.SONOFF_MANUFACTURER_ID = 0x1321
-SwitchFields.AQARA_MANUFACTURER_ID = 0x115F
-SwitchFields.AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
-
-SwitchFields.device_overrides_per_vendor = {
-  [SwitchFields.SONOFF_MANUFACTURER_ID] = {
-    { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
-    { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
+SwitchFields.vendor_overrides = {
+  [0x1321] = { -- SONOFF_MANUFACTURER_ID
+    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
-  [SwitchFields.AQARA_MANUFACTURER_ID] = {
-    { product_id = 0x1006, combo_switch_button = false }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
-    { product_id = 0x100A, combo_switch_button = false }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
+  [0x115F] = { -- AQARA_MANUFACTURER_ID
+    [0x1006] = { ignore_combo_switch_button = true }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
+    [0x100A] = { ignore_combo_switch_button = true }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
+    [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
   }
 }
 
 SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
 SwitchFields.POWER_CONSUMPTION_REPORT_EP = "__POWER_CONSUMPTION_REPORT_EP"
 SwitchFields.SET_TOPOLOGY_EPS = "__SET_TOPOLOGY_EPS"
-SwitchFields.PRIMARY_CHILD_EP = "__PRIMARY_CHILD_EP"
 SwitchFields.ELECTRICAL_TAGS = "__ELECTRICAL_TAGS"
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__POWER_TOPOLOGY",

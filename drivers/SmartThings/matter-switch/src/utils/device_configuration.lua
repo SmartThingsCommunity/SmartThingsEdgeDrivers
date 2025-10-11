@@ -59,14 +59,10 @@ function SwitchDeviceConfiguration.assign_switch_profile(device, switch_ep, opts
   end
 
   if opts and opts.is_child_device then
-    -- Check if child device has an overridden child profile that differs from the child's generic device type profile
-    for _, fingerprint in ipairs(fields.device_overrides_per_vendor[device.manufacturer_info.vendor_id] or {}) do
-      if device.manufacturer_info.product_id == fingerprint.product_id and profile == fingerprint.initial_profile then
-        return fingerprint.target_profile
-      end
-    end
-    -- default to "switch-binary" if no child profile is found
-    return profile or "switch-binary"
+    -- Check if device has a profile override that differs from its generically chosen profile
+    return switch_utils.check_vendor_overrides(device.manufacturer_info, "initial_profile", profile, "target_profile")
+       or profile
+       or "switch-binary" -- default to "switch-binary" if no child profile is found
   end
   return profile
 end
