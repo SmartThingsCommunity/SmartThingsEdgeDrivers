@@ -50,6 +50,10 @@ function utils.set_field_for_endpoint(device, field, endpoint, value, additional
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
 end
 
+function utils.increment_field(device, field, increment, persist)
+  device:set_field(field, (device:get_field(field) or 0) + increment, { persist = persist })
+end
+
 function utils.mired_to_kelvin(value, minOrMax)
   if value == 0 then -- shouldn't happen, but has
     value = 1
@@ -99,8 +103,7 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 function utils.find_default_endpoint(device)
-  if device.manufacturer_info and
-    device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
+  if device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and
     device.manufacturer_info.product_id == fields.AQARA_CLIMATE_SENSOR_W100_ID then
     -- In case of Aqara Climate Sensor W100, in order to sequentially set the button name to button 1, 2, 3
     return device.MATTER_DEFAULT_ENDPOINT
@@ -209,6 +212,32 @@ function utils.detect_matter_thing(device)
     end
   end
   return device:supports_capability(capabilities.refresh)
+end
+
+function utils.report_power_consumption_to_st_energy(device)
+  local current_time = os.time()
+  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+
+  -- Ensure that the previous report was sent at least 15 minutes ago
+  if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
+    return
+  end
+  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+
+  local total_imported_energy_wh = device:get_field(fields.TOTAL_IMPORTED_ENERGY)
+  local state_device = utils.find_child(device, device:get_field(fields.POWER_CONSUMPTION_REPORT_EP)) or device
+  local previous_imported_report = state_device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
+  local energy_delta_wh = total_imported_energy_wh - previous_imported_report.energy -- Calculate the energy delta between reports
+
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
+  device:emit_event_for_endpoint(device:get_field(fields.POWER_CONSUMPTION_REPORT_EP), capabilities.powerConsumptionReport.powerConsumption({
+    start = epoch_to_iso8601(last_time),
+    ["end"] = epoch_to_iso8601(current_time - 1),
+    deltaEnergy = energy_delta_wh,
+    energy = total_imported_energy_wh
+  }))
 end
 
 -- associate this EP with the first OnOff EP. These are not necessarily the same EP.

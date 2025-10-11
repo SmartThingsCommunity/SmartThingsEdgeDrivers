@@ -285,33 +285,6 @@ end
 
 -- [[ ELECTRICAL ENERGY MEASUREMENT CLUSTER ATTRIBUTES ]] --
 
-local function report_power_consumption_to_st_energy(device, total_imported_energy_wh)
-  device:set_field(fields.TOTAL_IMPORTED_ENERGY, total_imported_energy_wh, { persist = true })
-
-  local current_time = os.time()
-  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
-
-  -- Ensure that the previous report was sent at least 15 minutes ago
-  if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
-    return
-  end
-  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
-
-  local state_device = switch_utils.find_child(device, device:get_field(fields.POWER_CONSUMPTION_REPORT_EP)) or device
-  local previous_imported_report = state_device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
-    capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
-  local energy_delta_wh = total_imported_energy_wh - previous_imported_report.energy -- Calculate the energy delta between reports
-
-  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
-  device:emit_event_for_endpoint(device:get_field(fields.POWER_CONSUMPTION_REPORT_EP), capabilities.powerConsumptionReport.powerConsumption({
-    start = epoch_to_iso8601(last_time),
-    ["end"] = epoch_to_iso8601(current_time - 1),
-    deltaEnergy = energy_delta_wh,
-    energy = total_imported_energy_wh
-  }))
-end
-
 function AttributeHandlers.energy_imported_factory(is_periodic_report)
   return function(driver, device, ib, response)
     -- workaround: ignore devices supporting Eve's private energy cluster AND the ElectricalEnergyMeasurement cluster
@@ -335,9 +308,9 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
         energy_imported_wh = energy_imported_wh + energy_meter_latest_state
       end
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
-      local energy_wh_delta = energy_imported_wh - energy_meter_latest_state
-      local device_total_imported_energy_wh = (device:get_field(fields.TOTAL_IMPORTED_ENERGY) or 0) + energy_wh_delta
-      report_power_consumption_to_st_energy(device, device_total_imported_energy_wh)
+      local energy_delta_wh = energy_imported_wh - energy_meter_latest_state
+      switch_utils.increment_field(device, fields.TOTAL_IMPORTED_ENERGY, energy_delta_wh, true)
+      switch_utils.report_power_consumption_to_st_energy(device)
     else
       device.log.warn("Received data from the energy imported attribute does not include a numerical energy value")
     end
