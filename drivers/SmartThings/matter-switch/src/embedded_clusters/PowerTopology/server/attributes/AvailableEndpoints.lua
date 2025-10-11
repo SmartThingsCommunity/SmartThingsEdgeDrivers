@@ -9,18 +9,6 @@ local AvailableEndpoints = {
   element_type = require "st.matter.data_types.Uint16",
 }
 
-function AvailableEndpoints:augment_type(data_type_obj)
-  for i, v in ipairs(data_type_obj.elements) do
-    data_type_obj.elements[i] = data_types.validate_or_build_type(v, AvailableEndpoints.element_type)
-  end
-end
-
-function AvailableEndpoints:new_value(...)
-  local o = self.base_type(table.unpack({...}))
-
-  return o
-end
-
 function AvailableEndpoints:read(device, endpoint_id)
   return cluster_base.read(
     device,

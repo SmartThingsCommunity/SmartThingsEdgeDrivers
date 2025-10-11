@@ -14,10 +14,6 @@ PowerTopology.types = PowerTopologyTypes
 function PowerTopology:get_attribute_by_id(attr_id)
   local attr_id_map = {
     [0x0000] = "AvailableEndpoints",
-    [0x0001] = "ActiveEndpoints",
-    [0xFFF9] = "AcceptedCommandList",
-    [0xFFFA] = "EventList",
-    [0xFFFB] = "AttributeList",
   }
   local attr_name = attr_id_map[attr_id]
   if attr_name ~= nil then
@@ -26,25 +22,8 @@ function PowerTopology:get_attribute_by_id(attr_id)
   return nil
 end
 
-function PowerTopology:get_server_command_by_id(command_id)
-  local server_id_map = {
-  }
-  if server_id_map[command_id] ~= nil then
-    return self.server.commands[server_id_map[command_id]]
-  end
-  return nil
-end
-
-
 PowerTopology.attribute_direction_map = {
   ["AvailableEndpoints"] = "server",
-  ["ActiveEndpoints"] = "server",
-  ["AcceptedCommandList"] = "server",
-  ["EventList"] = "server",
-  ["AttributeList"] = "server",
-}
-
-PowerTopology.command_direction_map = {
 }
 
 PowerTopology.FeatureMap = PowerTopology.types.Feature

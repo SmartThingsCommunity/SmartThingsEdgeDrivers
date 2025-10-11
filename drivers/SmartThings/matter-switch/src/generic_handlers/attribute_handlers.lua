@@ -324,6 +324,9 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
     local energy_meter_latest_state = state_device:get_latest_state(
       "main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME, 0 -- 0 as the default if state is nil
     )
+    if version.api < 11 then
+      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
+    end
     if ib.data.elements.energy then
       local energy_imported_wh = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
       if is_periodic_report then
@@ -332,10 +335,11 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
         energy_imported_wh = energy_imported_wh + energy_meter_latest_state
       end
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
-
       local energy_wh_delta = energy_imported_wh - energy_meter_latest_state
       local device_total_imported_energy_wh = (device:get_field(fields.TOTAL_IMPORTED_ENERGY) or 0) + energy_wh_delta
       report_power_consumption_to_st_energy(device, device_total_imported_energy_wh)
+    else
+      device.log.warn("Received data from the energy imported attribute does not include a numerical energy value")
     end
   end
 end

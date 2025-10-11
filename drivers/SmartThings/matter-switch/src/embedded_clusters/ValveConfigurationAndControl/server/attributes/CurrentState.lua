@@ -8,12 +8,6 @@ local CurrentState = {
   base_type = require "embedded_clusters.ValveConfigurationAndControl.types.ValveStateEnum",
 }
 
-function CurrentState:new_value(...)
-  local o = self.base_type(table.unpack({...}))
-  self:augment_type(o)
-  return o
-end
-
 function CurrentState:read(device, endpoint_id)
   return cluster_base.read(
     device,
