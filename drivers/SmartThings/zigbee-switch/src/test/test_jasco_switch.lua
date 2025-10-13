@@ -26,7 +26,7 @@ local mock_device = test.mock_device.build_test_zigbee_device({
       id = 1,
       manufacturer = "Jasco Products",
       model = "43078",
-      server_clusters = { 0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0702, 0x0B05 },
+      server_clusters = { 0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0702, 0x0B04 },
       client_clusters = { 0x000A, 0x0019 }
     }
   }
