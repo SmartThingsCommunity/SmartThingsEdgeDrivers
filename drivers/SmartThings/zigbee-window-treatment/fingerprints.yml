@@ -99,7 +99,7 @@ zigbeeManufacturer:
     model: Gear
     deviceProfileName: window-treatment-battery
   - id: "_TZE204_fzbskaga/TS0601"
-    deviceLabel: Hanssem Window Treatment
+    deviceLabel: Window Treatment
     manufacturer: _TZE204_fzbskaga
     model: TS0601
     deviceProfileName: window-treatment-hanssem

@@ -78,7 +78,6 @@ local device_init = function(driver, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-      device:add_monitored_attribute(attribute)
     end
   end
 
@@ -141,6 +140,7 @@ local zigbee_switch_driver_template = {
     capabilities.motionSensor
   },
   sub_drivers = {
+    lazy_load_if_possible("non_zigbee_devices"),
     lazy_load_if_possible("hanssem"),
     lazy_load_if_possible("aqara"),
     lazy_load_if_possible("aqara-light"),

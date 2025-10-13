@@ -131,6 +131,12 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1001
     deviceProfileName: light-color-level-fan
+#Bosch Smart Home
+  - id: "4617/12310"
+    deviceLabel: Plug Compact [M]
+    vendorId: 0x1209
+    productId: 0x3016
+    deviceProfileName: plug-power-energy-powerConsumption
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
@@ -586,6 +592,57 @@ matterManufacturer:
     vendorId: 0x1021
     productId: 0x0006
     deviceProfileName: switch-level
+#Leviton
+  - id: "4251/4097"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Switch
+    vendorId: 0x109B
+    productId: 0x1001
+    deviceProfileName: switch-binary
+  - id: "4251/4096"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) 600W Dimmer
+    vendorId: 0x109B
+    productId: 0x1000
+    deviceProfileName: switch-level
+  - id: "4251/4107"
+    deviceLabel: Decora Smart Wi-Fi ELV Dimmer
+    vendorId: 0x109B
+    productId: 0x100B
+    deviceProfileName: switch-level
+  - id: "4251/4110"
+    deviceLabel: Decora Smart Wi-Fi 0-10V Dimmer
+    vendorId: 0x109B
+    productId: 0x100E
+    deviceProfileName: switch-level
+  - id: "4251/4108"
+    deviceLabel: Decora Evolve Smart Dimmer Module
+    vendorId: 0x109B
+    productId: 0x100C
+    deviceProfileName: switch-level
+  - id: "4251/4109"
+    deviceLabel: Decora Evolve Smart Switch Module
+    vendorId: 0x109B
+    productId: 0x100D
+    deviceProfileName: switch-binary
+  - id: "4251/4105"
+    deviceLabel: Decora Smart Wi-Fi Outdoor Plug-In Switch
+    vendorId: 0x109B
+    productId: 0x1009
+    deviceProfileName: switch-binary
+  - id: "4251/4099"
+    deviceLabel: Leviton Decora Smart Wi-Fi Mini Plug-In Outlet
+    vendorId: 0x109B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "4251/4100"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Tamper Resistant Outlet
+    vendorId: 0x109B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "4251/4098"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Mini Plug-In Dimmer
+    vendorId: 0x109B
+    productId: 0x1002
+    deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
@@ -734,6 +791,11 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x0077
     deviceProfileName: light-level-colorTemperature-1500k-9000k
+  - id: "5155/191"
+    deviceLabel: LIFX Everyday Smart Light 2-Pack
+    vendorId: 0x1423
+    productId: 0x00BF
+    deviceProfileName: light-color-level
 #LG
   - id: "4142/8784"
     deviceLabel: LG Smart Button (1 Button)
@@ -2793,6 +2855,12 @@ matterManufacturer:
     deviceLabel: Zemismart M1 Hub
     vendorId: 0x139C
     productId: 0x0387
+    deviceProfileName: matter-bridge
+#Zimi
+  - id: "5410/3"
+    deviceLabel: Zimi Matter Connect
+    vendorId: 0x1522
+    productId: 0x0003
     deviceProfileName: matter-bridge
 #TUO
   - id: "5150/1"
