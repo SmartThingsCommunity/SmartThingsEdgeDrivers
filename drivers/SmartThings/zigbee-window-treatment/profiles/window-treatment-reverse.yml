@@ -18,5 +18,3 @@ components:
 preferences:
   - preferenceId: reverse
     explicit: true
-  - preferenceId: presetPosition
-    explicit: true

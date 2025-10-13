@@ -169,7 +169,7 @@ local function _open_coordinator_socket(sonos_conn, household_id, self_player_id
     _, err = Router.open_socket_for_player(
       household_id,
       coordinator_id,
-      coordinator.player.websocketUrl,
+      coordinator.player.websocket_url,
       api_key
     )
     if err ~= nil then
@@ -406,7 +406,7 @@ function SonosConnection.new(driver, device)
             return
           end
           local group = household.groups[header.groupId] or { playerIds = {} }
-          for _, player_id in ipairs(group.playerIds) do
+          for _, player_id in ipairs(group.player_ids) do
             local device_for_player = self.driver:device_for_player(header.householdId, player_id)
             --- we've seen situations where these messages can be processed while a device
             --- is being deleted so we check for the presence of emit event as a proxy for
@@ -430,7 +430,7 @@ function SonosConnection.new(driver, device)
           return
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
-        for _, player_id in ipairs(group.playerIds) do
+        for _, player_id in ipairs(group.player_ids) do
           local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
           --- is being deleted so we check for the presence of emit event as a proxy for
@@ -453,7 +453,7 @@ function SonosConnection.new(driver, device)
           return
         end
         local group = household.groups[header.groupId] or { playerIds = {} }
-        for _, player_id in ipairs(group.playerIds) do
+        for _, player_id in ipairs(group.player_ids) do
           local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
           --- is being deleted so we check for the presence of emit event as a proxy for
@@ -484,7 +484,7 @@ function SonosConnection.new(driver, device)
               return
             end
 
-            local url_ip = lb_utils.force_url_table(coordinator_player.player.websocketUrl).host
+            local url_ip = lb_utils.force_url_table(coordinator_player.player.websocket_url).host
             local base_url = lb_utils.force_url_table(
               string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
             )
@@ -510,7 +510,7 @@ function SonosConnection.new(driver, device)
               end
               self.driver.sonos:update_household_favorites(header.householdId, new_favorites)
 
-              for _, player_id in ipairs(group.playerIds) do
+              for _, player_id in ipairs(group.player_ids) do
                 local device_for_player =
                   self.driver:device_for_player(header.householdId, player_id)
                 --- we've seen situations where these messages can be processed while a device

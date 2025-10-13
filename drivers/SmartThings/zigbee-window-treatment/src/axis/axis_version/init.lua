@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
 
@@ -52,7 +52,7 @@ local function window_shade_level_cmd_handler(driver, device, command)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
-  local level = device.preferences and device.preferences.presetPosition or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, command.component)
   window_shade_set_level(device, command, level)
 end
 

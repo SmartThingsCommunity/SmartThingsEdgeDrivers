@@ -5,6 +5,9 @@
 --- @alias HouseholdId string
 --- @alias GroupId string
 
+--------- #region Sonos API Types; the following defintions are from the Sonos API
+---------         In particular, anything ending in `Object` is an API object.
+
 --- @alias SonosCapabilities
 ---| "PLAYBACK" # The player can produce audio. You can target it for playback.
 ---| "CLOUD" # The player can send commands and receive events over the internet.
@@ -17,11 +20,11 @@
 ---| "SPEAKER_DETECTION" # The component device is capable of detecting connected speaker drivers.
 ---| "FIXED_VOLUME" # The device supports fixed volume.
 
---- @class SonosFeatureInfo
+--- @class SonosFeatureInfoObject
 --- @field public _objectType "feature"
 --- @field public name string
 
----@class SonosVersionsInfo
+---@class SonosVersionsInfoObject
 ---@field public _objectType "sdkVersions"
 ---@field public audioTxProtocol { [1]: integer }
 ---@field public trueplaySdk { [1]: string }
@@ -43,11 +46,11 @@
 --- @field public softwareVersion string Stores the software version the player is running.
 --- @field public hwVersion string Stores the hardware version the player is running. The format is: `{vendor}.{model}.{submodel}.{revision}-{region}.`
 --- @field public swGen integer Stores the software generation that the player is running.
---- @field public versions SonosVersionsInfo
---- @field public features SonosFeatureInfo[]
+--- @field public versions SonosVersionsInfoObject
+--- @field public features SonosFeatureInfoObject[]
 
 --- Lua representation of the Sonos `discoveryInfo` JSON object: https://developer.sonos.com/build/control-sonos-players-lan/discover-lan/#discoveryInfo-object
---- @class SonosDiscoveryInfo
+--- @class SonosDiscoveryInfoObject
 --- @field public _objectType "discoveryInfo"
 --- @field public device SonosDeviceInfoObject The device object. This object presents immutable data that describes a Sonos device. Use this object to uniquely identify any Sonos device. See below for details.
 --- @field public householdId HouseholdId An opaque identifier assigned to the device during registration. This field may be missing prior to registration.
@@ -143,11 +146,7 @@
 --- @field public capabilities SonosCapabilities[]
 --- @field public devices SonosDeviceInfoObject[]
 
---- Sonos player local state
---- @class PlayerDiscoveryState
---- @field public info_cache SonosDiscoveryInfo Table representation of the JSON returned by the player REST API info endpoint
---- @field public ipv4 string the ipv4 address of the player on the local network
---- @field public is_coordinator boolean whether or not the player was a coordinator (at time of discovery)
+--------- #endregion Sonos API Types
 
 --- @class SonosSSDPInfo
 --- Information parsed from Sonos SSDP reply. Contains most of what is needed to uniquely
@@ -165,13 +164,7 @@
 --- @field public expires_at integer
 
 --- @alias SonosFavorites { id: string, name: string }[]
---- @alias DiscoCallback fun(dni: string, ssdp_group_info: SonosSSDPInfo, player_info: SonosDiscoveryInfo, group_info: SonosGroupsResponseBody): boolean?
-
----@class SonosFieldCacheTable
----@field public swGen number
----@field public household_id string
----@field public player_id string
----@field public wss_url string
+--- @alias DiscoCallback fun(dni: string, ssdp_group_info: SonosSSDPInfo, player_info: SonosDiscoveryInfoObject, group_info: SonosGroupsResponseBody): boolean?
 
 --- Sonos Player device
 --- @class SonosDevice : st.Device
@@ -188,6 +181,19 @@
 --- @field public set_field fun(self: SonosDevice, key: string, value: any, args?: table)
 --- @field public emit_event fun(self: SonosDevice, event: any)
 --- @field public driver SonosDriver
+
+--- @class SonosGroupInfo
+--- @field public id GroupId
+--- @field public coordinator_id PlayerId
+--- @field public player_ids PlayerId[]
+
+--- @class SonosDeviceInfo
+--- @field public id PlayerId
+--- @field public primary_device_id PlayerId?
+
+--- @class SonosPlayerInfo
+--- @field public id PlayerId
+--- @field public websocket_url string
 
 --- Sonos JSON commands
 --- @class SonosCommand
