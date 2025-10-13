@@ -1,0 +1,29 @@
+name: shelly-wave-door-window-sensor
+components:
+- id: main
+  capabilities:
+  - id: contactSensor
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+    config:
+      values:
+        - key: "illuminance.value"
+          range: [0, 10000]
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: ContactSensor
+preferences:
+  - name: "ledOpnClsChangeStat"
+    title: "P157: open/close change status"
+    description: "This parameter enables open/close status change by LED indicator."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0 : "LED ind.disabled"
+        1 : "LED ind.enabled"
+      default: 0
