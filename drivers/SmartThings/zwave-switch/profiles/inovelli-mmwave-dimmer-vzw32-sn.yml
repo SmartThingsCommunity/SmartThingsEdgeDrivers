@@ -377,8 +377,7 @@ preferences:
       options:
         "1": "Set Interference Area"
         "3": "Clear Interference Area"
-        "254": "Get mmWave FW Version (see history)"
-        "255": "Factory Reset Module"
+        "0": "Factory Reset Module"
       default: 3
   - name: "parameter112"
     title: "112. mmWave Sensitivity"
