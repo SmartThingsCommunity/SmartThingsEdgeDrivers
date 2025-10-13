@@ -9,7 +9,7 @@ components:
       - id: refresh
         version: 1
     categories:
-      - name: Button
+      - name: RemoteController
   - id: button1
     capabilities:
       - id: button
