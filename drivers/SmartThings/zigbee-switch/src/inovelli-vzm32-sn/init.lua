@@ -416,6 +416,7 @@ end
 local function set_color_temperature(driver, device, command)
   device:emit_event(capabilities.colorControl.hue(100))
   device:emit_event(capabilities.colorTemperature.colorTemperature(command.args.temperature))
+  device:emit_event(capabilities.switch.switch("on"))
   local dev = device:get_parent_device()
   local send_configuration = function()
     dev:send(cluster_base.build_manufacturer_specific_command(
@@ -431,6 +432,7 @@ end
 local function set_color(driver, device, command)
   device:emit_event(capabilities.colorControl.hue(command.args.color.hue))
   device:emit_event(capabilities.colorControl.saturation(command.args.color.saturation))
+  device:emit_event(capabilities.switch.switch("on"))
   local dev = device:get_parent_device()
   local send_configuration = function()
     dev:send(cluster_base.build_manufacturer_specific_command(
