@@ -46,7 +46,6 @@ end
 local function notification_report_handler(self, device, cmd)
   local notificationType = cmd.args.notification_type
   local event = cmd.args.event
-   
   if cmd.args.notification_type == Notification.notification_type.ACCESS_CONTROL then
     if cmd.args.event == Notification.event.home_security.ACCESS_CONTROL then
       event = cmd.args.notification_status == 0 and capabilities.contactSensor.contact.closed() or capabilities.contactSensor.contact.open()
@@ -84,7 +83,6 @@ local wave_door_window_sensor = {
       [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
     }
   },
-  
   NAME = "shelly wave door window sensor",
   can_handle = can_handle_wave_door_window_sensor
 }
