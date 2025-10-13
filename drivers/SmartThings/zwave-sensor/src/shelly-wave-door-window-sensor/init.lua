@@ -13,13 +13,13 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
--- @type st.zwave.CommandClass
+--- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
--- @type st.zwave.CommandClass.Notification
+--- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
--- @type st.zwave.CommandClass.SensorMultilevel
+--- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
--- @type st.utils
+--- @type st.utils
 local utils = require "st.utils"
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
@@ -27,9 +27,11 @@ local WAVE_DOOR_WINDOW_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x0460, prod = 0x0100, productId = 0x0081 }  -- Wave Door/Window sensor
 }
 
--- @param driver Driver driver instance
--- @param device Device device isntance
--- @return boolean true if the device proper, else false
+--- Determine whether the passed device is Wave Door/Window sensor
+---
+--- @param driver Driver driver instance
+--- @param device Device device isntance
+--- @return boolean true if the device proper, else false
 local function can_handle_wave_door_window_sensor(opts, driver, device, ...)
   for _, fingerprint in ipairs(WAVE_DOOR_WINDOW_SENSOR_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
@@ -41,10 +43,9 @@ end
 
 --- Handler for notification report command class
 ---
--- @param self st.zwave.Driver
--- @param device st.zwave.Device
--- @param cmd st.zwave.CommandClass.Notification.Report
-
+--- @param self st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param cmd st.zwave.CommandClass.Notification.Report
 local function notification_report_handler(self, device, cmd)
   local notificationType = cmd.args.notification_type
   local event = cmd.args.event
@@ -65,21 +66,15 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
--- @param self st.zwave.Driver
--- @param device st.zwave.Device
--- @param cmd st.zwave.CommandClass.SensorMultilevel.Report
-
-
-
-
-
+--- Handler for multilevel sensor report command class
+--- @param self st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param cmd st.zwave.CommandClass.SensorMultilevel.Report
 local function sensor_multilevel_report_handler(self, device, cmd)
   if cmd.args.sensor_type == SensorMultilevel.sensor_type.LUMINANCE then
     device:emit_event(capabilities.illuminanceMeasurement.illuminance({value = cmd.args.sensor_value, unit = "lux"}))
   elseif cmd.args.sensor_type == SensorMultilevel.sensor_type.DIRECTION then
-      --device:emit_event(capabilities.switchLevel.levelRange({value = cmd.args.sensor_value, unit = "%"}))
       device:emit_event(capabilities.relativeHumidityMeasurement.humidity({value = cmd.args.sensor_value, unit = "%"}))
-      --device:emit_event(capabilities.infraredLevel.infraredLevel({value = cmd.args.sensor_value, unit = ""}))
   end
 end
 
