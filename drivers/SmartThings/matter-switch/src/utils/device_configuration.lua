@@ -138,7 +138,7 @@ function ButtonDeviceConfiguration.update_button_profile(device, main_endpoint, 
   local motion_eps = device:get_endpoints(clusters.OccupancySensing.ID)
   if #motion_eps > 0 then
     profile_name = profile_name .. "-motion"
-  end  
+  end
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
   if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
     device:send(clusters.PowerSource.attributes.AttributeList:read(device))
