@@ -70,17 +70,23 @@ function SwitchDeviceConfiguration.assign_child_profile(device, child_ep)
   return profile or "switch-binary"
 end
 
-function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, main_endpoint)
-  local num_switch_server_eps = 0
+function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, switch_eps, main_endpoint)
+  local switch_server_ep = 0
   local parent_child_device = false
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
+
   table.sort(switch_eps)
   for idx, ep in ipairs(switch_eps) do
-    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-      num_switch_server_eps = num_switch_server_eps + 1
-      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local child_profile = SwitchDeviceConfiguration.assign_child_profile(device, ep)
+    switch_server_ep = switch_server_ep + 1
+    if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
+      local name = string.format("%s %d", device.label, switch_server_ep)
+      local child_profile = SwitchDeviceConfiguration.assign_child_profile(device, ep)
+      local child_device = nil
+      if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
+        child_device = switch_utils.find_child(device, ep)
+      end
+      if child_device then
+        child_device:try_update_metadata({profile = child_profile })
+      else
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
@@ -91,11 +97,11 @@ function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, m
             vendor_provided_label = name
           }
         )
-        parent_child_device = true
-        if idx == 1 and string.find(child_profile, "energy") then
-          -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-          device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
-        end
+      end
+      parent_child_device = true
+      if idx == 1 and string.find(child_profile, "energy") then
+        -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+        device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
       end
     end
   end
@@ -105,28 +111,21 @@ function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, m
     device:set_field(fields.IS_PARENT_CHILD_DEVICE, true, {persist = true})
     device:set_find_child(switch_utils.find_child)
   end
-
-  -- this is needed in initialize_buttons_and_switches
-  return num_switch_server_eps
 end
 
-function SwitchDeviceConfiguration.update_devices_with_onOff_server_clusters(device, main_endpoint)
+function SwitchDeviceConfiguration.match_light_switch_device_profile(device, main_endpoint)
   local cluster_id = 0
   for _, ep in ipairs(device.endpoints) do
     -- main_endpoint only supports server cluster by definition of get_endpoints()
     if main_endpoint == ep.endpoint_id then
       for _, dt in ipairs(ep.device_types) do
         -- no device type that is not in the switch subset should be considered.
-        if (fields.ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= fields.ON_OFF_COLOR_DIMMER_SWITCH_ID) then
+        if (fields.ON_OFF_LIGHT_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= fields.COLOR_DIMMER_SWITCH_ID) then
           cluster_id = math.max(cluster_id, dt.device_type_id)
         end
       end
-      break
+      return fields.device_type_profile_map[cluster_id]
     end
-  end
-
-  if fields.device_type_profile_map[cluster_id] then
-    device:try_update_metadata({profile = fields.device_type_profile_map[cluster_id]})
   end
 end
 
@@ -201,32 +200,25 @@ end
 
 function DeviceConfiguration.match_profile(driver, device)
   local main_endpoint = switch_utils.find_default_endpoint(device)
+  local profile_name = nil
+
+  local server_onoff_eps = device:get_endpoints(clusters.OnOff.ID, { cluster_type = "SERVER" })
+  if #server_onoff_eps > 0 then
+    SwitchDeviceConfiguration.create_child_switch_devices(driver, device, server_onoff_eps, main_endpoint)
+    -- workaround: finds a profile for devices of the Light Switch device type set that break spec and implement OnOff as 'server' instead of 'client'.
+    -- note: since the Light Switch device set isn't supported, these devices join as a matter-thing.
+    if switch_utils.detect_matter_thing(device) then
+      profile_name = SwitchDeviceConfiguration.match_light_switch_device_profile(device, main_endpoint)
+    end
+  end
 
   -- initialize the main device card with buttons if applicable
-  local profile_found = false
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
     ButtonDeviceConfiguration.update_button_profile(device, main_endpoint, #button_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
-    -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
     ButtonDeviceConfiguration.update_button_component_map(device, main_endpoint, button_eps)
     ButtonDeviceConfiguration.configure_buttons(device)
-    profile_found = true
-  end
-
-  -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
-  -- while building switch child profiles
-  local num_switch_server_eps = SwitchDeviceConfiguration.create_child_switch_devices(driver, device, main_endpoint)
-
-  -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
-  -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
-  -- Note: since their device type isn't supported, these devices join as a matter-thing.
-  if num_switch_server_eps > 0 and switch_utils.detect_matter_thing(device) then
-    SwitchDeviceConfiguration.update_devices_with_onOff_server_clusters(device, main_endpoint)
-    profile_found = true
-  end
-
-  if profile_found then
     return
   end
 
@@ -235,7 +227,6 @@ function DeviceConfiguration.match_profile(driver, device)
   local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
   local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
   local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
-  local profile_name = nil
   local level_support = ""
   if #level_eps > 0 then
     level_support = "-level"

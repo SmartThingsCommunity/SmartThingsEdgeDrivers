@@ -47,31 +47,31 @@ SwitchFields.CURRENT_HUESAT_ATTR_MAX = 254
 
 
 -- DEVICE TYPES
-SwitchFields.AGGREGATOR_DEVICE_TYPE_ID = 0x000E
-SwitchFields.ON_OFF_LIGHT_DEVICE_TYPE_ID = 0x0100
-SwitchFields.DIMMABLE_LIGHT_DEVICE_TYPE_ID = 0x0101
-SwitchFields.COLOR_TEMP_LIGHT_DEVICE_TYPE_ID = 0x010C
-SwitchFields.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID = 0x010D
-SwitchFields.ON_OFF_PLUG_DEVICE_TYPE_ID = 0x010A
-SwitchFields.DIMMABLE_PLUG_DEVICE_TYPE_ID = 0x010B
-SwitchFields.ON_OFF_SWITCH_ID = 0x0103
-SwitchFields.ON_OFF_DIMMER_SWITCH_ID = 0x0104
-SwitchFields.ON_OFF_COLOR_DIMMER_SWITCH_ID = 0x0105
+SwitchFields.AGGREGATOR_ID = 0x000E
+SwitchFields.ON_OFF_LIGHT_ID = 0x0100
+SwitchFields.DIMMABLE_LIGHT_ID = 0x0101
+SwitchFields.COLOR_TEMPERATURE_LIGHT_ID = 0x010C
+SwitchFields.EXTENDED_COLOR_LIGHT_ID = 0x010D
+SwitchFields.ON_OFF_PLUG_IN_UNIT_ID = 0x010A
+SwitchFields.DIMMABLE_PLUG_IN_UNIT_ID = 0x010B
 SwitchFields.MOUNTED_ON_OFF_CONTROL_ID = 0x010F
 SwitchFields.MOUNTED_DIMMABLE_LOAD_CONTROL_ID = 0x0110
+SwitchFields.ON_OFF_LIGHT_SWITCH_ID = 0x0103
+SwitchFields.DIMMER_SWITCH_ID = 0x0104
+SwitchFields.COLOR_DIMMER_SWITCH_ID = 0x0105
 SwitchFields.GENERIC_SWITCH_ID = 0x000F
 SwitchFields.ELECTRICAL_SENSOR_ID = 0x0510
 
 SwitchFields.device_type_profile_map = {
-  [SwitchFields.ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
-  [SwitchFields.DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
-  [SwitchFields.COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = "light-level-colorTemperature",
-  [SwitchFields.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = "light-color-level",
-  [SwitchFields.ON_OFF_PLUG_DEVICE_TYPE_ID] = "plug-binary",
-  [SwitchFields.DIMMABLE_PLUG_DEVICE_TYPE_ID] = "plug-level",
-  [SwitchFields.ON_OFF_SWITCH_ID] = "switch-binary",
-  [SwitchFields.ON_OFF_DIMMER_SWITCH_ID] = "switch-level",
-  [SwitchFields.ON_OFF_COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
+  [SwitchFields.ON_OFF_LIGHT_ID] = "light-binary",
+  [SwitchFields.DIMMABLE_LIGHT_ID] = "light-level",
+  [SwitchFields.COLOR_TEMPERATURE_LIGHT_ID] = "light-level-colorTemperature",
+  [SwitchFields.EXTENDED_COLOR_LIGHT_ID] = "light-color-level",
+  [SwitchFields.ON_OFF_PLUG_IN_UNIT_ID] = "plug-binary",
+  [SwitchFields.DIMMABLE_PLUG_IN_UNIT_ID] = "plug-level",
+  [SwitchFields.ON_OFF_LIGHT_SWITCH_ID] = "switch-binary",
+  [SwitchFields.DIMMER_SWITCH_ID] = "switch-level",
+  [SwitchFields.COLOR_DIMMER_SWITCH_ID] = "switch-color-level",
   [SwitchFields.MOUNTED_ON_OFF_CONTROL_ID] = "switch-binary",
   [SwitchFields.MOUNTED_DIMMABLE_LOAD_CONTROL_ID] = "switch-level",
 }
@@ -182,16 +182,16 @@ SwitchFields.supported_capabilities = {
 }
 
 SwitchFields.device_type_attribute_map = {
-  [SwitchFields.ON_OFF_LIGHT_DEVICE_TYPE_ID] = {
+  [SwitchFields.ON_OFF_LIGHT_ID] = {
     clusters.OnOff.attributes.OnOff
   },
-  [SwitchFields.DIMMABLE_LIGHT_DEVICE_TYPE_ID] = {
+  [SwitchFields.DIMMABLE_LIGHT_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel
   },
-  [SwitchFields.COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = {
+  [SwitchFields.COLOR_TEMPERATURE_LIGHT_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
@@ -200,7 +200,7 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
   },
-  [SwitchFields.EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = {
+  [SwitchFields.EXTENDED_COLOR_LIGHT_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
@@ -213,25 +213,25 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY
   },
-  [SwitchFields.ON_OFF_PLUG_DEVICE_TYPE_ID] = {
+  [SwitchFields.ON_OFF_PLUG_IN_UNIT_ID] = {
     clusters.OnOff.attributes.OnOff
   },
-  [SwitchFields.DIMMABLE_PLUG_DEVICE_TYPE_ID] = {
+  [SwitchFields.DIMMABLE_PLUG_IN_UNIT_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel
   },
-  [SwitchFields.ON_OFF_SWITCH_ID] = {
+  [SwitchFields.ON_OFF_LIGHT_SWITCH_ID] = {
     clusters.OnOff.attributes.OnOff
   },
-  [SwitchFields.ON_OFF_DIMMER_SWITCH_ID] = {
+  [SwitchFields.DIMMER_SWITCH_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel
   },
-  [SwitchFields.ON_OFF_COLOR_DIMMER_SWITCH_ID] = {
+  [SwitchFields.COLOR_DIMMER_SWITCH_ID] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
