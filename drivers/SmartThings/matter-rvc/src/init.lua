@@ -35,7 +35,6 @@ end
 local RUN_MODE_SUPPORTED_MODES = "__run_mode_supported_modes"
 local CURRENT_RUN_MODE = "__current_run_mode"
 local CLEAN_MODE_SUPPORTED_MODES = "__clean_mode_supported_modes"
-local OPERATING_STATE_SUPPORTED_COMMANDS = "__operating_state_supported_commands"
 local SERVICE_AREA_PROFILED = "__SERVICE_AREA_PROFILED"
 
 local clus_op_enum = clusters.OperationalState.types.OperationalStateEnum
@@ -131,7 +130,11 @@ end
 
 -- Helper functions --
 local function supports_rvc_operational_state(device, command_name)
-  local supported_op_commands = device:get_field(OPERATING_STATE_SUPPORTED_COMMANDS) or {}
+  local supported_op_commands = device:get_latest_state(
+    "main",
+    capabilities.robotCleanerOperatingState.ID,
+    capabilities.robotCleanerOperatingState.supportedCommands.NAME
+  ) or {}
   for _, cmd in ipairs(supported_op_commands) do
     if cmd == command_name then
       return true
@@ -377,6 +380,7 @@ end
 local function rvc_operational_state_list_attr_handler(driver, device, ib, response)
   local supportedOperatingState = {}
   for _, state in ipairs(ib.data.elements) do
+    clusters.RvcOperationalState.types.OperationalStateStruct:augment_type(state)
     if OPERATING_STATE_MAP[state.elements.operational_state_id.value] ~= nil then
       table.insert(supportedOperatingState, OPERATING_STATE_MAP[state.elements.operational_state_id.value].NAME)
     end
@@ -397,7 +401,6 @@ local function handle_rvc_operational_state_accepted_command_list(driver, device
   for _, attr in ipairs(ib.data.elements) do
     table.insert(supportedOperatingStateCommands, OP_COMMAND_MAP[attr.value].NAME)
   end
-  device:set_field(OPERATING_STATE_SUPPORTED_COMMANDS, supportedOperatingStateCommands, { persist = true })
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.robotCleanerOperatingState.supportedCommands(
     supportedOperatingStateCommands, {visibility = {displayed = false}}
   ))
@@ -499,8 +502,10 @@ local function rvc_service_area_selected_areas_handler(driver, device, ib, respo
       capabilities.serviceArea.ID,
       capabilities.serviceArea.supportedAreas.NAME
     )
-    for i, area in ipairs(supported_areas) do
-      table.insert(selected_areas, area.areaId)
+    if supported_areas ~= nil then
+      for i, area in ipairs(supported_areas) do
+        table.insert(selected_areas, area.areaId)
+      end
     end
   end
 
