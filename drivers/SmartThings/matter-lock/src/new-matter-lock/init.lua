@@ -33,6 +33,8 @@ local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
+local MODULAR_PROFILE_UPDATED = "__MODULAR_PROFILE_UPDATED"
+
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
   [DoorLock.types.DlStatus.FAILURE] = "failure",
@@ -248,6 +250,7 @@ local function match_profile_modular(driver, device)
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
+  device:set_field(MODULAR_PROFILE_UPDATED, true)
 end
 
 local function match_profile_switch(driver, device)
@@ -285,30 +288,11 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
-local function compare_components(synced_components, prev_components)
-  if #synced_components ~= #prev_components then
-    return false
-  end
-  for _, component in pairs(synced_components) do
-    if (prev_components[component.id] == nil) or
-       (#component.capabilities ~= #prev_components[component.id].capabilities) then
-        return false
-    end
-    for _, capability in pairs(component.capabilities) do
-      if prev_components[component.id][capability.id] == nil then
-        return false
-      end
-    end
-  end
-  return true
-end
-
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id and
-     version.api >= 15 and version.rpc >= 9 and -- ignore component check for FW<58
-     compare_components(device.profile.components, args.old_st_store.profile.components) then
-      return
+  if device.profile.id == args.old_st_store.profile.id and not device:get_field(MODULAR_PROFILE_UPDATED) then
+    return
   end
+  device:set_field(MODULAR_PROFILE_UPDATED, nil)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
