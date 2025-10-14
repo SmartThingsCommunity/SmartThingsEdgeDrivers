@@ -439,15 +439,10 @@ local function driver_switched(driver, device)
 end
 
 local function device_init(driver, device)
-  if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) then
-    if version.api >= 15 and version.rpc >= 9 then
-      -- the device used this modular profile workaround on 0.57 FW but no longer requires this table with >=0.58 FW
-      device:set_field(SUPPORTED_COMPONENT_CAPABILITIES, nil)
-    else
-      -- assume that device is using a modular profile on 0.57 FW, override supports_capability_by_id
-      -- library function to utilize optional capabilities
-      device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
-    end
+  if device:get_field(SUPPORTED_COMPONENT_CAPABILITIES) and (version.api < 15 or version.rpc < 9) then
+    -- assume that device is using a modular profile on 0.57 FW, override supports_capability_by_id
+    -- library function to utilize optional capabilities
+    device:extend_device("supports_capability_by_id", supports_capability_by_id_modular)
   end
   device:subscribe()
 end

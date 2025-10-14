@@ -15,6 +15,7 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=3 })
+local window_preset_defaults = require "window_preset_defaults"
 
 local IBLINDS_WINDOW_TREATMENT_FINGERPRINTS = {
   {mfr = 0x0287, prod = 0x0003, model = 0x000D}, -- iBlinds Window Treatment v1 / v2
@@ -70,8 +71,11 @@ function capability_handlers.set_shade_level(driver, device, command)
   set_shade_level_helper(driver, device, command.args.shadeLevel)
 end
 
-function capability_handlers.preset_position(driver, device)
-  set_shade_level_helper(driver, device, device.preferences.presetPosition or 50)
+function capability_handlers.preset_position(driver, device, command)
+  local level = device:get_latest_state(command.component, "windowShadePreset", "position") or
+    device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or
+    (device.preferences ~= nil and device.preferences.presetPosition) or 50
+  set_shade_level_helper(driver, device, level)
 end
 
 local iblinds_window_treatment = {

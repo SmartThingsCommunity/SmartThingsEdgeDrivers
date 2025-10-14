@@ -35,6 +35,15 @@ local function can_handle_iblinds_window_treatment_v3(opts, driver, device, ...)
   return false
 end
 
+local function init_handler(self, device)
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+    device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.supportedCommands.NAME) == nil then
+
+    -- setPresetPosition is not supported (device uses a separate preference)
+    device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition"}, { visibility = { displayed = false }}))
+  end
+end
+
 local capability_handlers = {}
 
 function capability_handlers.close(driver, device)
@@ -65,6 +74,9 @@ function capability_handlers.preset_position(driver, device)
 end
 
 local iblinds_window_treatment_v3 = {
+  lifecycle_handlers = {
+    init = init_handler
+  },
   capability_handlers = {
     [capabilities.windowShade.ID] = {
       [capabilities.windowShade.commands.close.NAME] = capability_handlers.close

@@ -17,6 +17,7 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local Status = require "st.zigbee.generated.types.ZclStatus"
 local WindowCovering = zcl_clusters.WindowCovering
+local window_shade_utils = require "window_shade_utils"
 
 local device_management = require "st.zigbee.device_management"
 
@@ -79,7 +80,8 @@ local function window_shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
-  set_shade_level(driver, device, device.preferences.presetPosition, command)
+  local level = window_shade_utils.get_preset_level(device, command.component)
+  set_shade_level(driver, device, level, command)
 end
 
 local function set_window_shade_level(level)
