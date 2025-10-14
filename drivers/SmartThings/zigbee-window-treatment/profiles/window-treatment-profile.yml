@@ -14,7 +14,3 @@ components:
     version: 1
   categories:
   - name: Blind
-preferences:
-  - preferenceId: presetPosition
-    explicit: true
-
