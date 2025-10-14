@@ -123,6 +123,11 @@ zigbeeManufacturer:
     manufacturer: Shade Revolution
     model: Indoor Shade Motors
     deviceProfileName: window-treatment-powerSource
+  - id: "HOPOsmart/A2230011"
+    deviceLabel: HOPOsmart Window Opener A2230011
+    manufacturer: HOPOsmart
+    model: A2230011
+    deviceProfileName: window-treatment-profile-window_opener-HOPOsmart
 
 zigbeeGeneric:
   - id: "genericShade"
