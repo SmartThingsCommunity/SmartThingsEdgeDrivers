@@ -100,10 +100,10 @@ function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, m
     end
   end
 
-  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_buttons_and_switches
-  -- is only run once, but find_child function should be set on each driver init.
+  -- Persist so that the find_child function is always set on each driver init.
   if parent_child_device then
     device:set_field(fields.IS_PARENT_CHILD_DEVICE, true, {persist = true})
+    device:set_find_child(switch_utils.find_child)
   end
 
   -- this is needed in initialize_buttons_and_switches
@@ -199,7 +199,10 @@ end
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
-function DeviceConfiguration.initialize_buttons_and_switches(driver, device, main_endpoint)
+function DeviceConfiguration.match_profile(driver, device)
+  local main_endpoint = switch_utils.find_default_endpoint(device)
+
+  -- initialize the main device card with buttons if applicable
   local profile_found = false
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
@@ -222,16 +225,7 @@ function DeviceConfiguration.initialize_buttons_and_switches(driver, device, mai
     SwitchDeviceConfiguration.update_devices_with_onOff_server_clusters(device, main_endpoint)
     profile_found = true
   end
-  return profile_found
-end
 
-function DeviceConfiguration.match_profile(driver, device)
-  local main_endpoint = switch_utils.find_default_endpoint(device)
-  -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-  local profile_found = DeviceConfiguration.initialize_buttons_and_switches(driver, device, main_endpoint)
-  if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(switch_utils.find_child)
-  end
   if profile_found then
     return
   end

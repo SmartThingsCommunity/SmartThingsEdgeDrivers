@@ -71,6 +71,10 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       button_cfg.configure_buttons(device)
     end
   end
+
+  if device.matter_version.software ~= args.old_st_store.matter_version.software then
+    device_cfg.match_profile(driver, device)
+  end
 end
 
 function SwitchLifecycleHandlers.device_removed(driver, device)
