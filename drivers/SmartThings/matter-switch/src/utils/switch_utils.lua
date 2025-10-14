@@ -195,7 +195,10 @@ end
 
 function utils.detect_matter_thing(device)
   -- every profile except for matter-thing supports at least 2 capabilities (refresh, firmwareUpdate)
-  return #device.profile.components.main.capabilities == 1
+  for i, _ in pairs(device.profile.components.main.capabilities) do
+    if i > 1 then return false end
+  end
+  return true
 end
 
 function utils.report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
