@@ -85,10 +85,30 @@ local function acceleration_measure_value_attr_handler(driver, device, attr_val,
   end
 
   if device.preferences.garageSensor == "Yes" then
-    if measured_z < -900 then
+    if device.preferences.contactSensorAxis == "X" then
+      local initial_position = device.preferences.sensorInitialPosition or 0
+      log.debug("Difference X: " .. math.abs(initial_position - measured_x) .. " Threshold: " .. device.preferences.contactSensorValue)
+      if math.abs(initial_position - measured_x) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
         device:emit_event(capabilities.contactSensor.contact.open())
-    elseif measured_z >= -100 then
+      else
         device:emit_event(capabilities.contactSensor.contact.closed())
+      end
+    elseif device.preferences.contactSensorAxis == "Y" then
+      local initial_position = device.preferences.sensorInitialPosition or 0
+      log.debug("Difference Y: " .. math.abs(initial_position - measured_y) .. " Threshold: " .. device.preferences.contactSensorValue)
+      if math.abs(initial_position - measured_y) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
+        device:emit_event(capabilities.contactSensor.contact.open())
+      else
+        device:emit_event(capabilities.contactSensor.contact.closed())
+      end
+    elseif device.preferences.contactSensorAxis == "Z" then
+      local initial_position = device.preferences.sensorInitialPosition or 0
+      log.debug("Difference Z: " .. math.abs(initial_position - measured_z) .. " Threshold: " .. device.preferences.contactSensorValue)
+      if math.abs(initial_position - measured_z) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
+        device:emit_event(capabilities.contactSensor.contact.open())
+      else
+        device:emit_event(capabilities.contactSensor.contact.closed())
+      end
     end
   end
 end
