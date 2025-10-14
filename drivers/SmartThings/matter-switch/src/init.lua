@@ -71,6 +71,12 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       button_cfg.configure_buttons(device)
     end
   end
+
+  if device.matter_version.software ~= args.old_st_store.matter_version.software then
+    if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+      device_cfg.match_profile(driver, device)
+    end
+  end
 end
 
 function SwitchLifecycleHandlers.device_removed(driver, device)
