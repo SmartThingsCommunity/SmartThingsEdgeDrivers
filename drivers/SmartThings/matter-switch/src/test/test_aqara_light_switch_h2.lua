@@ -123,6 +123,8 @@ local cumulative_report_val_19 = {
   end_timestamp = 0,
   start_systime = 0,
   end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
 }
 
 local cumulative_report_val_29 = {
@@ -131,6 +133,8 @@ local cumulative_report_val_29 = {
   end_timestamp = 0,
   start_systime = 0,
   end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
 }
 
 local cumulative_report_val_39 = {
@@ -139,6 +143,8 @@ local cumulative_report_val_39 = {
   end_timestamp = 0,
   start_systime = 0,
   end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
 }
 
 local function configure_buttons()
