@@ -120,7 +120,7 @@ zigbeeManufacturer:
     deviceLabel: Aqara Smart Dimmer Controller T1 (0~10v)
     manufacturer: LUMI
     model: lumi.light.cwacn1
-    deviceProfileName: aqara-light-2700K-6500K
+    deviceProfileName: aqara-light
   - id: "Aqara/lumi.light.acn014"
     deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
     manufacturer: Aqara

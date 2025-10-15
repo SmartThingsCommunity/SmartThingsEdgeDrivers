@@ -58,9 +58,20 @@ local function set_level_handler(driver, device, cmd)
   device:send(Level.commands.MoveToLevelWithOnOff(device, level, dimming_rate))
 end
 
+local function init(self, device)
+  local min = 2700
+  local max = 6000
+
+  if device:get_model() == "lumi.light.cwacn1" then
+    max = 6500
+  end
+  device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min, maximum = max }))
+end
+
 local aqara_light_handler = {
   NAME = "Aqara Light Handler",
   lifecycle_handlers = {
+    init = init,
     added = device_added,
     doConfigure = do_configure
   },
