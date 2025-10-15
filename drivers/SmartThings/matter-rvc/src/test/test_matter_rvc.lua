@@ -17,7 +17,6 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local version = require "version"
-test.add_package_capability("robotCleanerOperatingState.yml")
 
 if version.api < 10 then
   clusters.RvcCleanMode = require "RvcCleanMode"

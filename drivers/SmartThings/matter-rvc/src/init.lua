@@ -502,10 +502,8 @@ local function rvc_service_area_selected_areas_handler(driver, device, ib, respo
       capabilities.serviceArea.ID,
       capabilities.serviceArea.supportedAreas.NAME
     )
-    if supported_areas ~= nil then
-      for i, area in ipairs(supported_areas) do
-        table.insert(selected_areas, area.areaId)
-      end
+    for i, area in ipairs(supported_areas or {}) do
+      table.insert(selected_areas, area.areaId)
     end
   end
 
