@@ -50,6 +50,7 @@ local preference_map = {
       parameter11 = {parameter_number = 11, size = data_types.Boolean},
       parameter15 = {parameter_number = 15, size = data_types.Uint8},
       parameter17 = {parameter_number = 17, size = data_types.Uint8},
+      parameter34 = {parameter_number = 34, size = data_types.Uint8},
       parameter95 = {parameter_number = 95, size = data_types.Uint8},
       parameter96 = {parameter_number = 96, size = data_types.Uint8},
       parameter97 = {parameter_number = 97, size = data_types.Uint8},

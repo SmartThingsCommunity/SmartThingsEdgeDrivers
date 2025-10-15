@@ -396,3 +396,14 @@ preferences:
         "4": "Large"
         "5": "X-Large"
       default: 0
+  - name: "parameter34"
+    title: "34. OTA Image Type"
+    description: "Which endpoint should the switch advertise for OTA update (Zigbee, mmWave, or both)."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Zigbee (default)"
+        "1": "mmWave"
+        "2": "Alternating"
+      default: 0
