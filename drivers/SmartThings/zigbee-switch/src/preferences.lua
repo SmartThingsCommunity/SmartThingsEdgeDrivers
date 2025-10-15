@@ -27,6 +27,27 @@ local devices = {
       end
     }
   },
+  AQARA_DIMMER = {
+    MATCHING_MATRIX = { mfr = "LUMI", model = "lumi.light.cwacn1" },
+    PARAMETERS = {
+      ["stse.restorePowerState"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFCC0,
+          0x0201, 0x115F, data_types.Boolean, value)
+      end,
+      ["stse.turnOffIndicatorLight"] = function(device, value)
+        return cluster_base.write_manufacturer_specific_attribute(device, 0xFCC0,
+          0x0203, 0x115F, data_types.Boolean, value)
+      end,
+      ["stse.lightFadeInTimeInSec"] = function(device, value)
+        local raw_value = value * 10 -- value unit: 1sec, transition time unit: 100ms
+        return clusters.Level.attributes.OnTransitionTime:write(device, raw_value)
+      end,
+      ["stse.lightFadeOutTimeInSec"] = function(device, value)
+        local raw_value = value * 10 -- value unit: 1sec, transition time unit: 100ms
+        return clusters.Level.attributes.OffTransitionTime:write(device, raw_value)
+      end
+    }
+  },
   AQARA_LIGHT_BULB = {
     MATCHING_MATRIX = { mfr = "Aqara", model = "lumi.light.acn014" },
     PARAMETERS = {
