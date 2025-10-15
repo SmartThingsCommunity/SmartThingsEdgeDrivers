@@ -272,13 +272,18 @@ end
 -- handle heating setpoint
 local thermostat_heating_set_point_attr_handler = function(driver, device, value, zb_rx)
   local point_value = value.value
+  local new_heating_setpoint = point_value / 100
+  local last_heating_setpoint = device:get_latest_state("main", ThermostatHeatingSetpoint.ID, ThermostatHeatingSetpoint.heatingSetpoint.NAME)
+
   device:emit_event(ThermostatHeatingSetpoint.heatingSetpoint({
-    value = point_value / 100,
+    value = new_heating_setpoint,
     unit = "C"
   }))
 
   -- turn thermostat ventile on
-  turn_switch_on(driver, device)
+  if last_heating_setpoint ~= new_heating_setpoint then
+    turn_switch_on(driver, device)
+  end
 end
 
 -- handle external window open detection
