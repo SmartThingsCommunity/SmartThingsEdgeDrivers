@@ -32,6 +32,9 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
 
 local AttributeHandlers = {}
 
@@ -321,7 +324,7 @@ end
 -- [[ POWER TOPOLOGY CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
-  local set_topology_eps = device:get_field(fields.SET_TOPOLOGY_EPS)
+  local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, ep in pairs(set_topology_eps or {}) do
     if ep.endpoint_id == ib.endpoint_id then
       set_topology_eps[i] = nil -- seen, remove from list
@@ -337,11 +340,39 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
   end
 
   if #set_topology_eps ~= 0 then -- we have not handled all eps
-    device:set_field(fields.SET_TOPOLOGY_EPS, set_topology_eps) -- permanently remove deleted ep
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, set_topology_eps) -- permanently remove deleted ep
     return
   end
 
   device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY)
+  device_cfg.match_profile(driver, device)
+end
+
+
+-- [[ DESCRIPTOR CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.parts_list_handler(driver, device, ib, response)
+  local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
+  for i, ep in pairs(tree_topology_eps or {}) do
+    if ep.endpoint_id == ib.endpoint_id then
+      tree_topology_eps[i] = nil -- seen, remove from list
+      local tags = ""
+      if ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
+      if ep[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
+      table.sort(ib.data.elements)
+      local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
+      switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
+      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, ib.endpoint_id, primary_available_ep, { persist = true })
+      break
+    end
+  end
+
+  if #tree_topology_eps ~= 0 then -- we have not handled all eps
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, tree_topology_eps) -- permanently remove deleted ep
+    return
+  end
+
+  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY)
   device_cfg.match_profile(driver, device)
 end
 

@@ -370,6 +370,7 @@ test.register_message_test(
       }
     },
   }
+  -- { test_init = test_init_periodic }
 )
 
 test.register_coroutine_test(

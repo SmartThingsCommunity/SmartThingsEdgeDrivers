@@ -27,6 +27,9 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
 
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1

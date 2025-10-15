@@ -27,6 +27,10 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
+
 local utils = {}
 
 function utils.tbl_contains(array, value)
@@ -245,11 +249,11 @@ function utils.report_power_consumption_to_st_energy(device)
   }))
 end
 
--- associate this EP with the first OnOff EP. These are not necessarily the same EP.
-function utils.collect_and_set_electrical_sensor_info(device)
+function utils.handle_electrical_sensor_info(device)
   local el_dt_eps = utils.get_endpoints_by_dt(device, fields.ELECTRICAL_SENSOR_ID)
   local electrical_sensor_eps = {}
   local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   for _, ep in ipairs(device.endpoints) do
     if utils.tbl_contains(el_dt_eps, ep.endpoint_id) then
       local el_ep_info = { endpoint_id = ep.endpoint_id }
@@ -257,17 +261,33 @@ function utils.collect_and_set_electrical_sensor_info(device)
         el_ep_info[cluster.cluster_id] = cluster.feature_map -- key the cluster's feature map on each supported cluster id
       end
       table.insert(electrical_sensor_eps, el_ep_info)
-      -- this read request will ONLY be sent if the device supports the SET_TOPOLOGY feature map
-      available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
+      -- these read requests will ONLY be sent if the device supports the TREE_TOPOLOGY or SET_TOPOLOGY features, respectively
+      parts_list_req:merge(clusters.Descriptor.attributes.PartsList:read(device, ep.endpoint_id)) -- TREE read
+      available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id)) -- SET read
     end
   end
 
   local electrical_ep = electrical_sensor_eps[1] or {}
   device:set_field(fields.POWER_CONSUMPTION_REPORT_EP, electrical_ep.endpoint_id, { persist = true })
-  if electrical_ep[clusters.PowerTopology.ID] == clusters.PowerTopology.types.Feature.SET_TOPOLOGY then
-    device:set_field(fields.SET_TOPOLOGY_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
+
+  local electrical_ep_has_feature = function(feature_name)
+      local feature = clusters.PowerTopology.types.Feature[feature_name]
+      return clusters.PowerTopology.are_features_supported(feature, electrical_ep[clusters.PowerTopology.ID] or 0)
+  end
+
+  if electrical_ep_has_feature("SET_TOPOLOGY") then
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
     device:send(available_eps_req)
-  elseif electrical_ep[clusters.PowerTopology.ID] == clusters.PowerTopology.types.Feature.NODE_TOPOLOGY then
+    return
+  end
+
+  if electrical_ep_has_feature("TREE_TOPOLOGY") then
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a TREE topology
+    device:send(parts_list_req)
+    return
+  end
+
+  if electrical_ep_has_feature("NODE_TOPOLOGY") then
     -- ElectricalSensor EP has a NODE topology, so this is the ONLY Electrical Sensor EP
     device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY)
     -- associate this EP's electrical tags with the first OnOff EP. These are not necessarily the same EP.
@@ -282,9 +302,11 @@ function utils.collect_and_set_electrical_sensor_info(device)
     else
       device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
     end
-  else -- either no Electrical Sensor EPs are supported, or an unsupported topology was found (ex. TREE, SET+DYPF)
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, false)
+    return
   end
+
+  -- no Electrical Sensor EPs are supported
+  device:set_field(fields.profiling_data.POWER_TOPOLOGY, false)
 end
 
 return utils

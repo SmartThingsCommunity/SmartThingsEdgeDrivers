@@ -113,7 +113,7 @@ SwitchFields.vendor_overrides = {
 
 SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
 SwitchFields.POWER_CONSUMPTION_REPORT_EP = "__POWER_CONSUMPTION_REPORT_EP"
-SwitchFields.SET_TOPOLOGY_EPS = "__SET_TOPOLOGY_EPS"
+SwitchFields.ELECTRICAL_SENSOR_EPS = "__ELECTRICAL_SENSOR_EPS"
 SwitchFields.ELECTRICAL_TAGS = "__ELECTRICAL_TAGS"
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__POWER_TOPOLOGY",

@@ -38,6 +38,10 @@ if version.api < 11 then
   clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
 end
 
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
+
 local SwitchLifecycleHandlers = {}
 
 function SwitchLifecycleHandlers.device_added(driver, device)
@@ -46,7 +50,7 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device:send(clusters.OnOff.attributes.OnOff:read(device))
   elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    switch_utils.collect_and_set_electrical_sensor_info(device)
+    switch_utils.handle_electrical_sensor_info(device)
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -148,6 +152,9 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.CurrentSaturation.ID] = attribute_handlers.current_saturation_handler,
         [clusters.ColorControl.attributes.CurrentX.ID] = attribute_handlers.current_x_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = attribute_handlers.current_y_handler,
+      },
+      [clusters.Descriptor.ID] = {
+        [clusters.Descriptor.attributes.PartsList.ID] = attribute_handlers.parts_list_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = attribute_handlers.energy_imported_factory(false),
