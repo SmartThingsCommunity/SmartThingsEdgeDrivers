@@ -8,6 +8,12 @@ local ActivePower = {
   base_type = require "st.matter.data_types.Int64",
 }
 
+function ActivePower:new_value(...)
+  local o = self.base_type(table.unpack({...}))
+
+  return o
+end
+
 function ActivePower:read(device, endpoint_id)
   return cluster_base.read(
     device,

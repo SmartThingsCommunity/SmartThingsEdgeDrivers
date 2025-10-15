@@ -9,6 +9,12 @@ local AvailableEndpoints = {
   element_type = require "st.matter.data_types.Uint16",
 }
 
+function AvailableEndpoints:new_value(...)
+  local o = self.base_type(table.unpack({...}))
+
+  return o
+end
+
 function AvailableEndpoints:read(device, endpoint_id)
   return cluster_base.read(
     device,

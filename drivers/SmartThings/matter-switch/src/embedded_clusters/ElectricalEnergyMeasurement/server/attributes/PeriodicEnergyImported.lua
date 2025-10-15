@@ -8,6 +8,12 @@ local PeriodicEnergyImported = {
   base_type = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct",
 }
 
+function PeriodicEnergyImported:new_value(...)
+  local o = self.base_type(table.unpack({...}))
+  self:augment_type(o)
+  return o
+end
+
 function PeriodicEnergyImported:read(device, endpoint_id)
   return cluster_base.read(
     device,
