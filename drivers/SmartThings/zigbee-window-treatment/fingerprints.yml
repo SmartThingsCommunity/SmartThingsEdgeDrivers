@@ -123,6 +123,11 @@ zigbeeManufacturer:
     manufacturer: Shade Revolution
     model: Indoor Shade Motors
     deviceProfileName: window-treatment-powerSource
+  - id: "VIVIDSTORM/VWSDSTUST120H"
+    deviceLabel: VIVIDSTORM Smart Screen VWSDSTUST120H
+    manufacturer: VIVIDSTORM
+    model: VWSDSTUST120H
+    deviceProfileName: projector-screen-VWSDSTUST120H
 
 zigbeeGeneric:
   - id: "genericShade"
