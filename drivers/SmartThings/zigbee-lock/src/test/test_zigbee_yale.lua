@@ -19,7 +19,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-local json = require "dkjson"
+local json = require "st.json"
 
 local PowerConfiguration = clusters.PowerConfiguration
 local Alarm = clusters.Alarms

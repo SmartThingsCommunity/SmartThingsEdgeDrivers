@@ -28,7 +28,7 @@ local utils = require "st.utils"
 
 local mock_datastore = require "integration_test.mock_env_datastore"
 
-local json = require "dkjson"
+local json = require "st.json"
 
 local zwave_lock_endpoints = {
   {

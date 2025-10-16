@@ -14,7 +14,7 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local json = require "dkjson"
+local json = require "st.json"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
