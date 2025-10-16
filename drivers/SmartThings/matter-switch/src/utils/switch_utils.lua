@@ -272,7 +272,9 @@ function utils.handle_electrical_sensor_info(device)
 
   local electrical_ep_has_feature = function(feature_name)
       local feature = clusters.PowerTopology.types.Feature[feature_name]
-      return clusters.PowerTopology.are_features_supported(feature, electrical_ep[clusters.PowerTopology.ID] or 0)
+      if feature then
+        return clusters.PowerTopology.are_features_supported(feature, electrical_ep[clusters.PowerTopology.ID] or 0)
+      end
   end
 
   if electrical_ep_has_feature("SET_TOPOLOGY") then
@@ -289,7 +291,7 @@ function utils.handle_electrical_sensor_info(device)
 
   if electrical_ep_has_feature("NODE_TOPOLOGY") then
     -- ElectricalSensor EP has a NODE topology, so this is the ONLY Electrical Sensor EP
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY)
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
     -- associate this EP's electrical tags with the first OnOff EP. These are not necessarily the same EP.
     local tags = ""
     if electrical_ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
@@ -306,7 +308,7 @@ function utils.handle_electrical_sensor_info(device)
   end
 
   -- no Electrical Sensor EPs are supported
-  device:set_field(fields.profiling_data.POWER_TOPOLOGY, false)
+  device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, {persist=true})
 end
 
 return utils

@@ -344,7 +344,7 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
     return
   end
 
-  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY)
+  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
   device_cfg.match_profile(driver, device)
 end
 
@@ -372,7 +372,7 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
     return
   end
 
-  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY)
+  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, {persist=true})
   device_cfg.match_profile(driver, device)
 end
 
