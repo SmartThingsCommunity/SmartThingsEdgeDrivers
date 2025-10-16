@@ -41,10 +41,12 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
 
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
-  if is_child_device and (
-    server_onoff_ep_id == switch_utils.get_product_override_field(device, "ep_id") or
-    generic_profile == switch_utils.get_product_override_field(device, "initial_profile")
-  ) then
+  local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
+  if static_electrical_tags ~= nil then
+    generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
+  end
+
+  if is_child_device and generic_profile == switch_utils.get_product_override_field(device, "initial_profile") then
     generic_profile = switch_utils.get_product_override_field(device, "target_profile") or generic_profile
   end
 
@@ -52,30 +54,27 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   return generic_profile or "switch-binary"
 end
 
-function SwitchDeviceConfiguration.create_child_devices(driver, device, onoff_ep_ids, main_endpoint_id)
-  if #onoff_ep_ids == 1 and onoff_ep_ids[1] == main_endpoint_id then -- no children will be created
-   return
+function SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, primary_ep_id)
+  if #server_onoff_ep_ids == 1 and server_onoff_ep_ids[1] == primary_ep_id then -- no children will be created
+    return
   end
 
   local device_num = 0
-  table.sort(onoff_ep_ids)
-  for idx, ep_id in ipairs(onoff_ep_ids) do
+  table.sort(server_onoff_ep_ids)
+  for _, ep_id in ipairs(server_onoff_ep_ids) do
     device_num = device_num + 1
-    if ep_id ~= main_endpoint_id then -- don't create a child device that maps to the main endpoint
-      local name = string.format("%s %d", device.label, device_num)
-      local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
-      driver:try_create_device({
-        type = "EDGE_CHILD",
-        label = name,
-        profile = child_profile,
-        parent_device_id = device.id,
-        parent_assigned_child_key = string.format("%d", ep_id),
-        vendor_provided_label = name
-      })
-      if idx == 1 and string.find(child_profile, "energy") then
-        -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-        device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep_id, {persist = true})
-      end
+    if ep_id ~= primary_ep_id then -- don't create a child device that maps to the main endpoint
+      local label_and_name = string.format("%s %d", device.label, device_num)
+      driver:try_create_device(
+        {
+          type = "EDGE_CHILD",
+          label = label_and_name,
+          profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true),
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%d", ep_id),
+          vendor_provided_label = label_and_name
+        }
+      )
     end
   end
 
@@ -157,9 +156,20 @@ end
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
+local function profiling_data_still_required(device)
+  for _, field in pairs(fields.profiling_data) do
+    if device:get_field(field) == nil then
+      return true -- data still required if a field is nil
+    end
+  end
+  return false
+end
+
 function DeviceConfiguration.match_profile(driver, device)
+  if profiling_data_still_required(device) then return end
+
   local main_endpoint_id = switch_utils.find_default_endpoint(device)
-  local updated_profile = nil
+  local updated_profile
 
   if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID) > 0 then
     updated_profile = "water-valve"
@@ -177,16 +187,7 @@ function DeviceConfiguration.match_profile(driver, device)
   if switch_utils.tbl_contains(server_onoff_ep_ids, main_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, main_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
-    if generic_profile("plug-binary") or generic_profile("plug-level") then
-      if switch_utils.check_switch_category_vendor_overrides(device) then
-        updated_profile = string.gsub(updated_profile, "plug", "switch")
-      else
-        local electrical_tags = ""
-        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-power" end
-        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
-        if electrical_tags ~= "" then updated_profile = string.gsub(updated_profile, "-binary", "") .. electrical_tags end
-      end
-    elseif generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+    if generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
     elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
@@ -207,11 +208,10 @@ function DeviceConfiguration.match_profile(driver, device)
     return
   end
 
-  device:try_update_metadata({ profile = updated_profile })
+  device:try_update_metadata({profile = updated_profile})
 end
 
 return {
   DeviceCfg = DeviceConfiguration,
-  SwitchCfg = SwitchDeviceConfiguration,
   ButtonCfg = ButtonDeviceConfiguration
 }
