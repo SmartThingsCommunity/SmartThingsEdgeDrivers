@@ -1,0 +1,72 @@
+{
+  "id": "c8a276eb-abd9-40d8-944a-082f67e18715",
+  "name": "XY200SERIES.v5",
+  "metadata": {
+    "vid": "147dcac7-87f4-3fec-b6ca-68864d32dff0",
+    "mnmn": "Nexmosphere"
+  },
+  "migrationStatus": "NOT_MIGRATED",
+  "status": "DEVELOPMENT",
+  "preferences": [],
+  "components": [
+    {
+      "label": "main",
+      "id": "main",
+      "capabilities": [
+        {
+          "id": "nexmosphere.summary",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "mode",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.distanceZone",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.absoluteDistance",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.changeForTrigger",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.rangeOfInterest",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "refresh",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        }
+      ],
+      "categories": [
+        {
+          "name": "PresenceSensor",
+          "categoryType": "manufacturer"
+        }
+      ],
+      "optional": false
+    }
+  ],
+  "owner": {
+    "ownerType": "USER",
+    "ownerId": "f15ba00b-eb6e-6aec-8074-2c7a20433f5e"
+  }
+}
