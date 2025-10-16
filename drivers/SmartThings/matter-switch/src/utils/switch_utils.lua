@@ -81,7 +81,7 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == endpoint_id then
       for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == fields.DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+        if dt.device_type_id == fields.DEVICE_TYPE_ID.DIMMABLE_LIGHT then
           for _, fingerprint in ipairs(fields.child_device_profile_overrides_per_vendor_id[0x115F]) do
             if device.manufacturer_info.product_id == fingerprint.product_id then
               return false -- For Aqara Dimmer Switch with Button.
@@ -185,7 +185,7 @@ end
 function utils.detect_bridge(device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == fields.AGGREGATOR_DEVICE_TYPE_ID then
+      if dt.device_type_id == fields.DEVICE_TYPE_ID.AGGREGATOR then
         return true
       end
     end
@@ -194,12 +194,11 @@ function utils.detect_bridge(device)
 end
 
 function utils.detect_matter_thing(device)
-  for _, capability in ipairs(fields.supported_capabilities) do
-    if device:supports_capability(capability) then
-      return false
-    end
+  -- every profile except for matter-thing supports at least 2 capabilities (refresh, firmwareUpdate)
+  for i, _ in pairs(device.profile.components.main.capabilities) do
+    if i > 1 then return false end
   end
-  return device:supports_capability(capabilities.refresh)
+  return true
 end
 
 function utils.report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
