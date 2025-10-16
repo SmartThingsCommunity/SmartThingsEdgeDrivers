@@ -56,7 +56,8 @@ local zigbee_window_treatment_driver_template = {
     require("axis"),
     require("yoolax"),
     require("hanssem"),
-    require("screen-innovations")},
+    require("screen-innovations"),
+	require("VIVIDSTORM")},
   lifecycle_handlers = {
     init = init_handler,
     added = added_handler
