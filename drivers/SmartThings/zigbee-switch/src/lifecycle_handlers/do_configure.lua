@@ -14,7 +14,11 @@
 
 local capabilities = require "st.capabilities"
 return function(self, device)
-  device:refresh()
+  local ZLL_PROFILE_ID = 0xC05E
+  local version = require "version"
+  if version.api < 16 or (version.api > 15 and device:get_profile_id() ~= ZLL_PROFILE_ID) then
+    device:refresh()
+  end
   device:configure()
 
   -- Additional one time configuration
