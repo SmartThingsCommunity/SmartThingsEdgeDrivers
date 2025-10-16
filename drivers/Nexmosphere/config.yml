@@ -1,0 +1,5 @@
+name: "NexmosphereEdgeDriver_A"
+packageKey: "NexmosphereEdgeDriver_A"
+permissions:
+  lan: {}
+  discovery: {}

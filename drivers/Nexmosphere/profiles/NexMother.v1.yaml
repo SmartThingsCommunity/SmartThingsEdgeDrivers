@@ -1,0 +1,166 @@
+{
+  "id": "82cbade3-4b14-4ee9-b196-726a7198e535",
+  "name": "NexMother.v1",
+  "metadata": {
+    "vid": "a4e1cdb5-a7c5-3e5b-b4c8-187c9989173e",
+    "mnmn": "Nexmosphere"
+  },
+  "migrationStatus": "NOT_MIGRATED",
+  "status": "DEVELOPMENT",
+  "preferences": [
+
+    {
+    "preferenceId": "controllerIP",
+    "name": "controllerIP",
+    "title": "Controller IP",
+    "description": "Check when installed.",
+    "required": false,
+    "explicit": false,
+    "preferenceType": "string",
+    "definition": {
+      "stringType": "text",
+      "default": "0.0.0.0"
+      }
+    },
+
+    {
+    "preferenceId": "controllerPort",
+    "name": "controllerPort",
+    "title": "Controller Port",
+    "description": "Check when installed.",
+    "required": false,
+    "explicit": false,
+    "preferenceType": "string",
+    "definition": {
+      "stringType": "text",
+      "default": "5000"
+      }
+    },
+
+    {
+    "preferenceId": "setupCom",
+    "name": "setupCom",
+    "title": "Setup Communication",
+    "description": "Only when you install",
+    "required": false,
+    "explicit": false,
+    "preferenceType": "enumeration",
+    "definition": {
+      "options":{
+        "START": "Start",
+        "STOP": "Stop"
+      },
+      "default": "STOP"
+    }
+  },
+
+      {
+    "preferenceId": "setDebug",
+    "name": "setDebug",
+    "title": "Setup Debug Mode",
+    "description": "Only when you debug",
+    "required": false,
+    "explicit": false,
+    "preferenceType": "enumeration",
+    "definition": {
+      "options":{
+        "START": "Debug mode ON",
+        "STOP": "Debug mode OFF"
+      },
+      "default": "STOP"
+    }
+  }
+  ],
+
+  "components": [
+    {
+      "label": "main",
+      "id": "main",
+      "capabilities": [
+        {
+          "id": "nexmosphere.connectionStatus",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.hubIp",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.hubPort",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk001",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk002",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk003",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk004",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk005",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk006",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk007",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.xtalk008",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "refresh",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        }
+      ],
+      "categories": [
+        {
+          "name": "Switch",
+          "categoryType": "manufacturer"
+        }
+      ],
+      "optional": false
+    }
+  ],
+  "owner": {
+    "ownerType": "USER",
+    "ownerId": "f15ba00b-eb6e-6aec-8074-2c7a20433f5e"
+  }
+}
