@@ -18,20 +18,6 @@ local SimpleMetering = clusters.SimpleMetering
 local constants = require "st.zigbee.constants"
 local configurations = require "configurations"
 
-local ZIGBEE_DIMMER_POWER_ENERGY_FINGERPRINTS = {
-  { mfr = "Jasco Products", model = "43082" }
-}
-
-local is_zigbee_dimmer_power_energy = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_DIMMER_POWER_ENERGY_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("zigbee-dimmer-power-energy")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local device_init = function(self, device)
   local customEnergyDivisor = 10000
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, customEnergyDivisor, {persist = true})
@@ -69,7 +55,7 @@ local zigbee_dimmer_power_energy_handler = {
     init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
-  can_handle = is_zigbee_dimmer_power_energy
+  can_handle = require("zigbee-dimmer-power-energy.can_handle"),
 }
 
 return zigbee_dimmer_power_energy_handler

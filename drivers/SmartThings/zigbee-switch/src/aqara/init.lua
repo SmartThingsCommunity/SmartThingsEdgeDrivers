@@ -24,26 +24,6 @@ local ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID = 0x000A
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local PRIVATE_MODE = "PRIVATE_MODE"
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.plug.maeu01" },
-  { mfr = "LUMI", model = "lumi.plug.macn01" },
-  { mfr = "LUMI", model = "lumi.switch.n0agl1" },
-  { mfr = "LUMI", model = "lumi.switch.l0agl1" },
-  { mfr = "LUMI", model = "lumi.switch.n0acn2" },
-  { mfr = "LUMI", model = "lumi.switch.n1acn1" },
-  { mfr = "LUMI", model = "lumi.switch.n2acn1" },
-  { mfr = "LUMI", model = "lumi.switch.n3acn1" },
-  { mfr = "LUMI", model = "lumi.switch.b1laus01" },
-  { mfr = "LUMI", model = "lumi.switch.b2laus01" },
-  { mfr = "LUMI", model = "lumi.switch.n1aeu1" },
-  { mfr = "LUMI", model = "lumi.switch.n2aeu1" },
-  { mfr = "LUMI", model = "lumi.switch.l1aeu1" },
-  { mfr = "LUMI", model = "lumi.switch.l2aeu1" },
-  { mfr = "LUMI", model = "lumi.switch.b1nacn01" },
-  { mfr = "LUMI", model = "lumi.switch.b2nacn01" },
-  { mfr = "LUMI", model = "lumi.switch.b3n01" }
-}
-
 local preference_map = {
   ["stse.restorePowerState"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
@@ -137,15 +117,6 @@ local preference_map = {
   },
 }
 
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("aqara")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function private_mode_handler(driver, device, value, zb_rx)
   device:set_field(PRIVATE_MODE, value.value, { persist = true })
@@ -286,7 +257,7 @@ local aqara_switch_handler = {
     require("aqara.version"),
     require("aqara.multi-switch")
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_switch_handler

@@ -19,32 +19,6 @@ local constants = require "st.zigbee.constants"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 
-local SWITCH_POWER_FINGERPRINTS = {
-  { mfr = "Vimar", model = "Mains_Power_Outlet_v1.0" },
-  { model = "PAN18-v1.0.7" },
-  { model = "E210-KR210Z1-HA" },
-  { mfr = "Aurora", model = "Smart16ARelay51AU" },
-  { mfr = "Develco Products A/S", model = "Smart16ARelay51AU" },
-  { mfr = "Jasco Products", model = "45853" },
-  { mfr = "Jasco Products", model = "45856" },
-  { mfr = "MEGAMAN", model = "SH-PSUKC44B-E" },
-  { mfr = "ClimaxTechnology", model = "PSM_00.00.00.35TC" },
-  { mfr = "SALUS", model = "SX885ZB" },
-  { mfr = "AduroSmart Eria", model = "AD-SmartPlug3001" },
-  { mfr = "AduroSmart Eria", model = "BPU3" },
-  { mfr = "AduroSmart Eria", model = "BDP3001" }
-}
-
-local function can_handle_zigbee_switch_power(opts, driver, device)
-  for _, fingerprint in ipairs(SWITCH_POWER_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("zigbee-switch-power")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function active_power_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
   local divisor = device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) or 10
@@ -75,11 +49,8 @@ local zigbee_switch_power = {
       }
     }
   },
-  sub_drivers = {
-    require("zigbee-switch-power/aurora-relay"),
-    require("zigbee-switch-power/vimar")
-  },
-  can_handle = can_handle_zigbee_switch_power
+  sub_drivers = require("zigbee-switch-power.sub_drivers"),
+  can_handle = require("zigbee-switch-power.can_handle"),
 }
 
 return zigbee_switch_power

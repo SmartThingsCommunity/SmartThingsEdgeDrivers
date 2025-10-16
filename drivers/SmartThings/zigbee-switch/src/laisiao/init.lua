@@ -16,19 +16,7 @@ local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local configurations = require "configurations"
 
-local FINGERPRINTS = {
-  { mfr = "LAISIAO", model = "yuba" },
-}
 
-local function can_handle_laisiao(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("laisiao")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function component_to_endpoint(device, component_id)
   if component_id == "main" then
@@ -78,7 +66,7 @@ local laisiao_bath_heater = {
       [capabilities.switch.commands.on.NAME] = on_handler
     }
   },
-  can_handle = can_handle_laisiao
+  can_handle = require("laisiao.can_handle"),
 }
 
 return laisiao_bath_heater

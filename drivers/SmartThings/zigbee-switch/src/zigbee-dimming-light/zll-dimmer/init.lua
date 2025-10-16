@@ -19,24 +19,6 @@ local Level = clusters.Level
 
 local SwitchLevel = capabilities.switchLevel
 
-local ZLL_DIMMER_FINGERPRINTS = {
-  {mfr = "Leviton", model = "DL6HD"},   -- Leviton Dimmer Switch
-  {mfr = "Leviton", model = "DL3HL"},   -- Leviton Lumina RF Plug-In Dimmer
-  {mfr = "Leviton", model = "DL1KD"},   -- Leviton Lumina RF Dimmer Switch
-  {mfr = "Leviton", model = "ZSD07"},   -- Leviton Lumina RF 0-10V Dimming Wall Switch
-  {mfr = "MRVL", model = "MZ100"},
-  {mfr = "CREE", model = "Connected A-19 60W Equivalent"}
-}
-
-local function can_handle_zll_dimmer(opts, driver, device)
-  for _, fingerprint in ipairs(ZLL_DIMMER_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function set_switch_level_handler(driver, device, cmd)
   local level = math.floor(cmd.args.level / 100.0 * 254)
 
@@ -51,7 +33,7 @@ local zll_dimmer = {
       [SwitchLevel.commands.setLevel.NAME] = set_switch_level_handler
     }
   },
-  can_handle = can_handle_zll_dimmer
+  can_handle = require("zigbee-dimming-light.zll-dimmer.can_handle")
 }
 
 return zll_dimmer

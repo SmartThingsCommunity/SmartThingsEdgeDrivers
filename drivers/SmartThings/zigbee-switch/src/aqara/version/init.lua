@@ -102,10 +102,7 @@ local aqara_switch_version_handler = {
       }
     }
   },
-  can_handle = function (opts, driver, device)
-    local private_mode = device:get_field(PRIVATE_MODE) or 0
-    return private_mode == 1
-  end
+  can_handle = require("aqara.version.can_handle")
 }
 
 return aqara_switch_version_handler
