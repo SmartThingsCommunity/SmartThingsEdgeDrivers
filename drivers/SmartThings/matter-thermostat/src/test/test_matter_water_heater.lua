@@ -249,7 +249,7 @@ test.register_message_test(
         clusters.ElectricalEnergyMeasurement.attributes
             .CumulativeEnergyImported:build_test_report_data(mock_device,
           ELECTRICAL_SENSOR_EP,
-          clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 15000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 }))
+          clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 15000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 }))
       }
     },
     {
@@ -267,7 +267,7 @@ test.register_coroutine_test(
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     ELECTRICAL_SENSOR_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 20Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 20Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -288,7 +288,7 @@ test.register_coroutine_test(
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     ELECTRICAL_SENSOR_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 30000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 30Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 30000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 30Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -303,7 +303,7 @@ test.register_coroutine_test(
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     ELECTRICAL_SENSOR_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 50000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 30Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 50000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 30Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
