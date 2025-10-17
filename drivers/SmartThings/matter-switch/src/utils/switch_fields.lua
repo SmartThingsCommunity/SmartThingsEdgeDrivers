@@ -259,15 +259,6 @@ SwitchFields.device_type_attribute_map = {
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
-  -- [SwitchFields.DEVICE_TYPE_ID.GENERIC_SWITCH] = {
-  --   EVENTS = {
-  --     clusters.Switch.events.InitialPress,
-  --     clusters.Switch.events.LongPress,
-  --     clusters.Switch.events.ShortRelease,
-  --     clusters.Switch.events.MultiPressComplete
-  --   },
-  --   clusters.PowerSource.attributes.BatPercentRemaining,
-  -- },
   [SwitchFields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR] = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
