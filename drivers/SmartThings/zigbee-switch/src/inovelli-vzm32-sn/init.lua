@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ local is_inovelli_vzm32_sn = function(opts, driver, device)
 end
 
 local function to_boolean(value)
-  if value == 0 or value =="0" then
+  if value == 0 or value == "0" then
     return false
   else
     return true
@@ -218,7 +218,6 @@ local function info_changed(driver, device, event, args)
         if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
           local new_parameter_value = preferences_calculate_parameter(preferences_to_numeric_value(device.preferences[id]), preferences[id].size, id)
           if id == "parameter111" then
-            print("mmwave control command: " .. id .. " " .. value)
             device:send(cluster_base.build_manufacturer_specific_command(
               device,
               PRIVATE_CLUSTER_MMWAVE_ID,
@@ -226,14 +225,12 @@ local function info_changed(driver, device, event, args)
               MFG_CODE,
               utils.serialize_int(new_parameter_value,1,false,false)))
           elseif contains(key_mmwave_preferences, id) then
-            print("mmwave preference: " .. id .. " " .. value)
             if(preferences[id].size == data_types.Boolean) then
               device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_MMWAVE_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, to_boolean(new_parameter_value)))
             else
               device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_MMWAVE_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, new_parameter_value))
             end
           else 
-            print("preference: " .. id .. " " .. value)
             if(preferences[id].size == data_types.Boolean) then
               device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, to_boolean(new_parameter_value)))
             else
