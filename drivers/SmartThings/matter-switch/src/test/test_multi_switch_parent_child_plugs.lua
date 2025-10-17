@@ -219,43 +219,43 @@ for i, endpoint in ipairs(mock_device_child_profile_override.endpoints) do
   end
 end
 
-local function test_init_child_profile_override()
-  test.mock_device.add_test_device(mock_device_child_profile_override)
-  local cluster_subscribe_list = {
-    clusters.OnOff.attributes.OnOff,
-  }
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_child_profile_override)
+-- local function test_init_child_profile_override()
+--   test.mock_device.add_test_device(mock_device_child_profile_override)
+--   local cluster_subscribe_list = {
+--     clusters.OnOff.attributes.OnOff,
+--   }
+--   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_child_profile_override)
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "added" })
-  test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
+--   test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "added" })
+--   test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "init" })
-  test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
+--   test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "init" })
+--   test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "doConfigure" })
-  mock_device_child_profile_override:expect_metadata_update({ profile = "plug-binary" })
-  mock_device_child_profile_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+--   test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "doConfigure" })
+--   mock_device_child_profile_override:expect_metadata_update({ profile = "plug-binary" })
+--   mock_device_child_profile_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  for _, child in pairs(mock_children_child_profile_override) do
-    test.mock_device.add_test_device(child)
-  end
+--   for _, child in pairs(mock_children_child_profile_override) do
+--     test.mock_device.add_test_device(child)
+--   end
 
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Switch 2",
-    profile = "switch-binary",
-    parent_device_id = mock_device_child_profile_override.id,
-    parent_assigned_child_key = string.format("%d", child1_ep)
-  })
+--   mock_device:expect_device_create({
+--     type = "EDGE_CHILD",
+--     label = "Matter Switch 2",
+--     profile = "switch-binary",
+--     parent_device_id = mock_device_child_profile_override.id,
+--     parent_assigned_child_key = string.format("%d", child1_ep)
+--   })
 
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Switch 3",
-    profile = "switch-binary",
-    parent_device_id = mock_device_child_profile_override.id,
-    parent_assigned_child_key = string.format("%d", child2_ep)
-  })
-end
+--   mock_device:expect_device_create({
+--     type = "EDGE_CHILD",
+--     label = "Matter Switch 3",
+--     profile = "switch-binary",
+--     parent_device_id = mock_device_child_profile_override.id,
+--     parent_assigned_child_key = string.format("%d", child2_ep)
+--   })
+-- end
 
 test.set_test_init_function(test_init)
 

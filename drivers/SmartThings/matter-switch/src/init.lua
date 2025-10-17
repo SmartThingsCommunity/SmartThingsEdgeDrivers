@@ -95,23 +95,16 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
     for _, ep in ipairs(device.endpoints) do
       if ep.endpoint_id ~= main_endpoint then
-        local id = 0
-        for _, dt in ipairs(ep.device_types) do
-          if dt.device_type_id == fields.ELECTRICAL_SENSOR_ID then
-            for _, attr in pairs(fields.device_type_attribute_map[fields.ELECTRICAL_SENSOR_ID]) do
-              device:add_subscribed_attribute(attr)
-            end
-          end
-          id = math.max(id, dt.device_type_id)
-        end
-        for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-          if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
-             attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-             attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-            device:add_subscribed_event(attr)
-          else
+        local primary_dt_id = switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.LIGHT) or ep.device_types[1].device_type_id
+        for _, attr in pairs(fields.device_type_attribute_map[primary_dt_id] or {}) do
+          -- if key == "EVENTS" then
+          -- if primary_dt_id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
+            --  attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+            --  attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+            -- device:add_subscribed_event(attr)
+          -- else
             device:add_subscribed_attribute(attr)
-          end
+          -- end
         end
       end
     end

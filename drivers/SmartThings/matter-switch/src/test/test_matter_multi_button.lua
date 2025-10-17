@@ -16,7 +16,9 @@ local mock_device = test.mock_device.build_test_matter_device(
     {
       endpoint_id = 0,
       clusters = {},
-      device_types = {}
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode
+      }
     },
     {
       endpoint_id = 10,

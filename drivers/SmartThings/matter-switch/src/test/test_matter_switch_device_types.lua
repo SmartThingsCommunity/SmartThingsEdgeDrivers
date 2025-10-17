@@ -454,6 +454,10 @@ end
 
 local function test_init_onoff_client()
   test.mock_device.add_test_device(mock_device_onoff_client)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "init" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "doConfigure" })
+  mock_device_onoff_client:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_parent_client_child_server()
