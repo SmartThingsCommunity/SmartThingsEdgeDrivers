@@ -34,7 +34,8 @@ end
 local utils = {}
 
 function utils.tbl_contains(array, value)
-  for _, element in ipairs(array) do
+  if value == nil then return false end
+  for _, element in pairs(array) do
     if element == value then
       return true
     end
@@ -106,8 +107,27 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   if utils.check_vendor_overrides(device.manufacturer_info, "ignore_combo_switch_button") then
     return false
   end
-  local dimmable_eps = utils.get_endpoints_by_dt(device, fields.DEVICE_TYPE_ID.DIMMABLE_LIGHT)
+  local dimmable_eps = utils.get_endpoints_by_dt(device, fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE)
   return utils.tbl_contains(dimmable_eps, endpoint_id)
+end
+
+-- Some devices report multiple device types which are a subset of
+-- a superset device type (Ex. Dimmable Light is a superset of On/Off Light).
+-- We should map to the largest superset device type supported.
+-- This can be done by matching to the device type with the highest ID
+function utils.find_max_subset_device_type(ep, device_type_set)
+  if ep.endpoint_id == 0 then return end -- EP-scoped device types not permitted on Root Node
+  local primary_dt_id = ep.device_types[1] and ep.device_types[1].device_type_id
+  if utils.tbl_contains(device_type_set, primary_dt_id) then
+    for _, dt in ipairs(ep.device_types) do
+      -- only device types in the subset should be considered.
+      if utils.tbl_contains(device_type_set, dt.device_type_id) then
+        primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
+      end
+    end
+    return primary_dt_id
+  end
+  return nil
 end
 
 --- find_default_endpoint is a helper function to handle situations where
@@ -177,7 +197,7 @@ function utils.endpoint_to_component(device, ep)
 end
 
 function utils.find_child(parent_device, ep_id)
-  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.PRIMARY_CHILD_EP, ep_id) or ep_id
+  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.PRIMARY_ASSOCIATED_EP, ep_id) or ep_id
   return parent_device:get_child_by_parent_assigned_key(string.format("%d", primary_ep_key))
 end
 
@@ -195,6 +215,13 @@ function utils.create_multi_press_values_list(size, supportsHeld)
     table.insert(list, string.format("pushed_%dx", i))
   end
   return list
+end
+
+function utils.get_endpoint_info(device, endpoint_id)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == endpoint_id then return ep end
+  end
+  return {}
 end
 
 -- get a list of endpoints for a specified device type.
@@ -249,7 +276,7 @@ function utils.report_power_consumption_to_st_energy(device)
 end
 
 function utils.handle_electrical_sensor_info(device)
-  local el_dt_eps = utils.get_endpoints_by_dt(device, fields.ELECTRICAL_SENSOR_ID)
+  local el_dt_eps = utils.get_endpoints_by_dt(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR)
   local electrical_sensor_eps = {}
   local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
@@ -298,7 +325,7 @@ function utils.handle_electrical_sensor_info(device)
     local switch_eps = device:get_endpoints(clusters.OnOff.ID)
     table.sort(switch_eps)
     if switch_eps[1] then
-      utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, electrical_ep.endpoint_id, switch_eps[1], { persist = true })
+      utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, electrical_ep.endpoint_id, switch_eps[1], { persist = true })
       utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, switch_eps[1], tags)
     else
       device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")

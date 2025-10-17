@@ -46,32 +46,36 @@ SwitchFields.CURRENT_HUESAT_ATTR_MIN = 0
 SwitchFields.CURRENT_HUESAT_ATTR_MAX = 254
 
 SwitchFields.DEVICE_TYPE_ID = {
+  LIGHT = {
+    ON_OFF = 0x0100,
+    DIMMABLE = 0x0101,
+    COLOR_TEMPERATURE = 0x010C,
+    EXTENDED_COLOR = 0x010D,
+  },
+  SWITCH = {
+    ON_OFF_LIGHT = 0x0103,
+    DIMMER = 0x0104,
+    COLOR_DIMMER = 0x0105,
+  },
   AGGREGATOR = 0x000E,
-  ON_OFF_LIGHT = 0x0100,
-  DIMMABLE_LIGHT = 0x0101,
-  COLOR_TEMPERATURE_LIGHT = 0x010C,
-  EXTENDED_COLOR_LIGHT = 0x010D,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
   DIMMABLE_PLUG_IN_UNIT = 0x010B,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
-  ON_OFF_LIGHT_SWITCH = 0x0103,
-  DIMMER_SWITCH = 0x0104,
-  COLOR_DIMMER_SWITCH = 0x0105,
   GENERIC_SWITCH = 0x000F,
   ELECTRICAL_SENSOR = 0x0510
 }
 
 SwitchFields.device_type_profile_map = {
-  [SwitchFields.DEVICE_TYPE_ID.ON_OFF_LIGHT] = "light-binary",
-  [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_LIGHT] = "light-level",
-  [SwitchFields.DEVICE_TYPE_ID.COLOR_TEMPERATURE_LIGHT] = "light-level-colorTemperature",
-  [SwitchFields.DEVICE_TYPE_ID.EXTENDED_COLOR_LIGHT] = "light-color-level",
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.ON_OFF] = "light-binary",
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.DIMMABLE] = "light-level",
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE] = "light-level-colorTemperature",
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR] = "light-color-level",
+  [SwitchFields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT] = "switch-binary",
+  [SwitchFields.DEVICE_TYPE_ID.SWITCH.DIMMER] = "switch-level",
+  [SwitchFields.DEVICE_TYPE_ID.SWITCH.COLOR_DIMMER] = "switch-color-level",
   [SwitchFields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT] = "plug-binary",
   [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT] = "plug-level",
-  [SwitchFields.DEVICE_TYPE_ID.ON_OFF_LIGHT_SWITCH] = "switch-binary",
-  [SwitchFields.DEVICE_TYPE_ID.DIMMER_SWITCH] = "switch-level",
-  [SwitchFields.DEVICE_TYPE_ID.COLOR_DIMMER_SWITCH] = "switch-color-level",
   [SwitchFields.DEVICE_TYPE_ID.MOUNTED_ON_OFF_CONTROL] = "switch-binary",
   [SwitchFields.DEVICE_TYPE_ID.MOUNTED_DIMMABLE_LOAD_CONTROL] = "switch-level",
 }
@@ -83,7 +87,7 @@ SwitchFields.device_type_profile_map = {
 -- button devices that require component mapping.
 SwitchFields.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 SwitchFields.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
-SwitchFields.PRIMARY_CHILD_EP = "__PRIMARY_CHILD_EP"
+SwitchFields.PRIMARY_ASSOCIATED_EP = "__PRIMARY_ASSOCIATED_EP"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
 SwitchFields.COLOR_TEMP_MIN = "__color_temp_min"
@@ -100,10 +104,6 @@ SwitchFields.updated_fields = {
 }
 
 SwitchFields.vendor_overrides = {
-  [0x1321] = { -- SONOFF_MANUFACTURER_ID
-    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
-    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
-  },
   [0x115F] = { -- AQARA_MANUFACTURER_ID
     [0x1006] = { ignore_combo_switch_button = true }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
     [0x100A] = { ignore_combo_switch_button = true }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
@@ -176,25 +176,31 @@ SwitchFields.supported_capabilities = {
 }
 
 SwitchFields.device_type_attribute_map = {
-  [SwitchFields.DEVICE_TYPE_ID.ON_OFF_LIGHT] = {
-    clusters.OnOff.attributes.OnOff
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.ON_OFF] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
-  [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_LIGHT] = {
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.DIMMABLE] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
-  [SwitchFields.DEVICE_TYPE_ID.COLOR_TEMPERATURE_LIGHT] = {
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
     clusters.LevelControl.attributes.MinLevel,
     clusters.ColorControl.attributes.ColorTemperatureMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
   },
-  [SwitchFields.DEVICE_TYPE_ID.EXTENDED_COLOR_LIGHT] = {
+  [SwitchFields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
@@ -208,24 +214,36 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentY
   },
   [SwitchFields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT] = {
-    clusters.OnOff.attributes.OnOff
+    clusters.OnOff.attributes.OnOff,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
   [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
-  [SwitchFields.DEVICE_TYPE_ID.ON_OFF_LIGHT_SWITCH] = {
-    clusters.OnOff.attributes.OnOff
+  [SwitchFields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT] = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
-  [SwitchFields.DEVICE_TYPE_ID.DIMMER_SWITCH] = {
+  [SwitchFields.DEVICE_TYPE_ID.SWITCH.DIMMER] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
-  [SwitchFields.DEVICE_TYPE_ID.COLOR_DIMMER_SWITCH] = {
+  [SwitchFields.DEVICE_TYPE_ID.SWITCH.COLOR_DIMMER] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
@@ -236,14 +254,10 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
-  },
-  [SwitchFields.DEVICE_TYPE_ID.GENERIC_SWITCH] = {
-    clusters.PowerSource.attributes.BatPercentRemaining,
-    clusters.Switch.events.InitialPress,
-    clusters.Switch.events.LongPress,
-    clusters.Switch.events.ShortRelease,
-    clusters.Switch.events.MultiPressComplete
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported    
   },
   [SwitchFields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR] = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,

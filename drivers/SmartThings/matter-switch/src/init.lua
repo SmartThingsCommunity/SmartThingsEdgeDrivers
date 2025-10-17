@@ -86,32 +86,20 @@ end
 function SwitchLifecycleHandlers.device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.check_field_name_updates(device)
+
     device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
     device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
-    if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
-      device:set_find_child(switch_utils.find_child)
-    end
-    local main_endpoint = switch_utils.find_default_endpoint(device)
-    -- ensure subscription to all endpoint attributes- including those mapped to child devices
+    _ = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and device:set_find_child(switch_utils.find_child)
+
+    -- ensure subscription to eps mapped to child devices
+    local primary_ep_id = switch_utils.find_default_endpoint(device)
     for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint then
-        local id = 0
-        for _, dt in ipairs(ep.device_types) do
-          if dt.device_type_id == fields.ELECTRICAL_SENSOR_ID then
-            for _, attr in pairs(fields.device_type_attribute_map[fields.ELECTRICAL_SENSOR_ID]) do
-              device:add_subscribed_attribute(attr)
-            end
-          end
-          id = math.max(id, dt.device_type_id)
-        end
-        for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-          if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
-             attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-             attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-            device:add_subscribed_event(attr)
-          else
-            device:add_subscribed_attribute(attr)
-          end
+      if ep.endpoint_id ~= primary_ep_id then
+        local primary_dt_id = switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.LIGHT)
+          or switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.SWITCH)
+          or ep.device_types[1].device_type_id
+        for _, attr in pairs(fields.device_type_attribute_map[primary_dt_id] or {}) do
+          device:add_subscribed_attribute(attr)
         end
       end
     end
@@ -119,14 +107,9 @@ function SwitchLifecycleHandlers.device_init(driver, device)
 
     -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
-    local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-    if #electrical_energy_measurement_eps > 0 then
-      local cumulative_energy_eps = embedded_cluster_utils.get_endpoints(
-        device,
-        clusters.ElectricalEnergyMeasurement.ID,
-        {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}
-      )
-      if #cumulative_energy_eps > 0 then device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false}) end
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
+      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then
+        device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false})
     end
   end
 end
