@@ -438,13 +438,6 @@ matterManufacturer:
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
 
-# Govee
-  - id: "4999/24584"
-    deviceLabel: Govee Smart Bulb
-    vendorId: 0x1387
-    productId: 0x6008
-    deviceProfileName: light-color-level-2700K-6500K
-
 # Hue
   - id: "4107/2049"
     deviceLabel: Hue W 1600 A21 E26 1P NAM
