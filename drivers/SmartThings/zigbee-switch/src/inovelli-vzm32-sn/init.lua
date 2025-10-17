@@ -447,11 +447,6 @@ local function occupancy_attr_handler(driver, device, occupancy, zb_rx)
   device:emit_event(occupancy.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
-local function illuminance_attr_handler(driver, device, illuminance, zb_rx)
-  local lux = math.floor(10 ^ ((illuminance.value - 1) / 10000))
-  device:emit_event(capabilities.illuminanceMeasurement.illuminance({value = lux, unit = "lux" }))
-end
-
 local function handle_resetEnergyMeter(self, device)
   device:send(cluster_base.build_manufacturer_specific_command(
     device,
@@ -482,9 +477,6 @@ local inovelli_vzm32_sn = {
       },
       [OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler
-      },
-      [clusters.IlluminanceMeasurement.ID] = {
-        [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = illuminance_attr_handler
       },
     },
     cluster = {
