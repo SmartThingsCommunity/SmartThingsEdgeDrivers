@@ -35,7 +35,6 @@ local utils = {}
 
 function utils.tbl_contains(array, value)
   for _, element in pairs(array) do
-    print(element, value)
     if element == value then
       return true
     end
@@ -117,22 +116,14 @@ end
 -- This can be done by matching to the device type with the highest ID
 function utils.find_max_subset_device_type(ep, device_type_set)
   if ep.endpoint_id == 0 then return end -- EP-scoped device types not permitted on Root Node
-  print("are we here")
-  print(ep.endpoint_id, ep.device_types[1])
   local primary_dt_id = ep.device_types[1].device_type_id
-  print("are we here", primary_dt_id)
   if utils.tbl_contains(device_type_set, primary_dt_id) then
-    print("are we here")
     for _, dt in ipairs(ep.device_types) do
-      print("are we here", dt.device_type_id)
       -- only device types in the subset should be considered.
       if utils.tbl_contains(device_type_set, dt.device_type_id) then
         primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
-        print(primary_dt_id, "in loop @@")
       end
     end
-    print(primary_dt_id, "complete loop @@")
-
     return primary_dt_id
   end
   return nil

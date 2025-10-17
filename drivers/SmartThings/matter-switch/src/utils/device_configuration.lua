@@ -31,10 +31,9 @@ local DeviceConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 
-local function assign_profile_for_onoff_ep(device, onoff_ep_id)
+function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, onoff_ep_id)
   local updated_profile = nil
   local ep = switch_utils.get_endpoint_info(device, onoff_ep_id)
-  print("are we even here")
   local primary_dt_id = switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.LIGHT)
     or (switch_utils.detect_matter_thing(device) and switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.SWITCH))
     or ep.device_types[1].device_type_id
@@ -49,23 +48,24 @@ local function assign_profile_for_onoff_ep(device, onoff_ep_id)
 end
 
 function SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, primary_ep_id)
-  if #server_onoff_ep_ids == 1 then -- no children will be created
+  if #server_onoff_ep_ids == 1 and server_onoff_ep_ids[1] == primary_ep_id then -- no children will be created
     return
   end
 
-  local device_num = 1
+  local device_num = 0
   table.sort(server_onoff_ep_ids)
   for _, ep_id in ipairs(server_onoff_ep_ids) do
+    device_num = device_num + 1
     if ep_id ~= primary_ep_id then -- don't create a child device that maps to the main endpoint
-      device_num = device_num + 1
+      local label_and_name = string.format("%s %d", device.label, device_num)
       driver:try_create_device(
         {
           type = "EDGE_CHILD",
-          label = string.format("%s %d", device.label, device_num),
-          profile = assign_profile_for_onoff_ep(device, ep_id) or "switch-binary",
+          label = label_and_name,
+          profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id) or "switch-binary",
           parent_device_id = device.id,
           parent_assigned_child_key = string.format("%d", ep_id),
-          vendor_provided_label = string.format("%s %d", device.label, device_num)
+          vendor_provided_label = label_and_name
         }
       )
     end
@@ -172,12 +172,13 @@ function DeviceConfiguration.match_profile(driver, device)
   local server_onoff_eps = device:get_endpoints(clusters.OnOff.ID, { cluster_type = "SERVER" })
   if #server_onoff_eps > 0 then
     SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_eps, main_endpoint)
-    updated_profile = assign_profile_for_onoff_ep(device, main_endpoint)
-    if string.find(updated_profile, "light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+    updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, main_endpoint)
+    local find_substr = function(s, p) return string.find(s or "", p, 1, true) end
+    if find_substr(updated_profile, "light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
-    elseif string.find(updated_profile, "light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
+    elseif find_substr(updated_profile, "light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
-    elseif string.find(updated_profile, "light-level-colorTemperature") or string.find(updated_profile, "light-color-level") then
+    elseif find_substr(updated_profile, "light-level-colorTemperature") or find_substr(updated_profile, "light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
       return

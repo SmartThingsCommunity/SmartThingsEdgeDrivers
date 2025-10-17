@@ -396,12 +396,7 @@ local mock_device_light_level_motion = test.mock_device.build_test_matter_device
     {
       endpoint_id = 1,
       clusters = {
-        {
-          cluster_id = clusters.OnOff.ID,
-          cluster_type = "SERVER",
-          cluster_revision = 1,
-          feature_map = 0, --u32 bitmap
-        },
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
       },
       device_types = {
