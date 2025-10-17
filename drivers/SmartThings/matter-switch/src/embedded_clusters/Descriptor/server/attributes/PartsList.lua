@@ -2,19 +2,26 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
-local ActivePower = {
-  ID = 0x0008,
-  NAME = "ActivePower",
-  base_type = require "st.matter.data_types.Int64",
+local PartsList = {
+  ID = 0x0003,
+  NAME = "PartsList",
+  base_type = require "st.matter.data_types.Array",
+  element_type = require "st.matter.data_types.Uint16",
 }
 
-function ActivePower:new_value(...)
+function PartsList:augment_type(data_type_obj)
+  for i, v in ipairs(data_type_obj.elements) do
+    data_type_obj.elements[i] = data_types.validate_or_build_type(v, PartsList.element_type)
+  end
+end
+
+function PartsList:new_value(...)
   local o = self.base_type(table.unpack({...}))
 
   return o
 end
 
-function ActivePower:read(device, endpoint_id)
+function PartsList:read(device, endpoint_id)
   return cluster_base.read(
     device,
     endpoint_id,
@@ -24,7 +31,7 @@ function ActivePower:read(device, endpoint_id)
   )
 end
 
-function ActivePower:subscribe(device, endpoint_id)
+function PartsList:subscribe(device, endpoint_id)
   return cluster_base.subscribe(
     device,
     endpoint_id,
@@ -34,12 +41,12 @@ function ActivePower:subscribe(device, endpoint_id)
   )
 end
 
-function ActivePower:set_parent_cluster(cluster)
+function PartsList:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
-function ActivePower:build_test_report_data(
+function PartsList:build_test_report_data(
   device,
   endpoint_id,
   value,
@@ -57,11 +64,12 @@ function ActivePower:build_test_report_data(
   )
 end
 
-function ActivePower:deserialize(tlv_buf)
+function PartsList:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
 
   return data
 end
 
-setmetatable(ActivePower, {__call = ActivePower.new_value, __index = ActivePower.base_type})
-return ActivePower
+setmetatable(PartsList, {__call = PartsList.new_value, __index = PartsList.base_type})
+return PartsList
+

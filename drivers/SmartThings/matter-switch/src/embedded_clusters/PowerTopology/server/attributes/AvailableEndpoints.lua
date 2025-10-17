@@ -2,19 +2,20 @@ local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
-local ActivePower = {
-  ID = 0x0008,
-  NAME = "ActivePower",
-  base_type = require "st.matter.data_types.Int64",
+local AvailableEndpoints = {
+  ID = 0x0000,
+  NAME = "AvailableEndpoints",
+  base_type = require "st.matter.data_types.Array",
+  element_type = require "st.matter.data_types.Uint16",
 }
 
-function ActivePower:new_value(...)
+function AvailableEndpoints:new_value(...)
   local o = self.base_type(table.unpack({...}))
 
   return o
 end
 
-function ActivePower:read(device, endpoint_id)
+function AvailableEndpoints:read(device, endpoint_id)
   return cluster_base.read(
     device,
     endpoint_id,
@@ -24,7 +25,7 @@ function ActivePower:read(device, endpoint_id)
   )
 end
 
-function ActivePower:subscribe(device, endpoint_id)
+function AvailableEndpoints:subscribe(device, endpoint_id)
   return cluster_base.subscribe(
     device,
     endpoint_id,
@@ -34,12 +35,12 @@ function ActivePower:subscribe(device, endpoint_id)
   )
 end
 
-function ActivePower:set_parent_cluster(cluster)
+function AvailableEndpoints:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
-function ActivePower:build_test_report_data(
+function AvailableEndpoints:build_test_report_data(
   device,
   endpoint_id,
   value,
@@ -57,11 +58,12 @@ function ActivePower:build_test_report_data(
   )
 end
 
-function ActivePower:deserialize(tlv_buf)
+function AvailableEndpoints:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
 
   return data
 end
 
-setmetatable(ActivePower, {__call = ActivePower.new_value, __index = ActivePower.base_type})
-return ActivePower
+setmetatable(AvailableEndpoints, {__call = AvailableEndpoints.new_value, __index = AvailableEndpoints.base_type})
+return AvailableEndpoints
+
