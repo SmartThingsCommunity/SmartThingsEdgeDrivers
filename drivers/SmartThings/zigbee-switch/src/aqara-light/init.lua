@@ -14,7 +14,8 @@ local MFG_CODE = 0x115F
 
 local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.light.acn004" },
-  { mfr = "Aqara", model = "lumi.light.acn014" }
+  { mfr = "Aqara", model = "lumi.light.acn014" },
+  { mfr = "LUMI", model = "lumi.light.cwacn1" }
 }
 
 local function is_aqara_products(opts, driver, device)
@@ -54,9 +55,20 @@ local function set_level_handler(driver, device, cmd)
   device:send(Level.commands.MoveToLevelWithOnOff(device, level, dimming_rate))
 end
 
+local function init(self, device)
+  local min = 2700
+  local max = 6000
+
+  if device:get_model() == "lumi.light.cwacn1" then
+    max = 6500
+  end
+  device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min, maximum = max }))
+end
+
 local aqara_light_handler = {
   NAME = "Aqara Light Handler",
   lifecycle_handlers = {
+    init = init,
     added = device_added,
     doConfigure = do_configure
   },
