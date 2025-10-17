@@ -70,14 +70,15 @@ local function test_init()
   test.mock_device.add_test_device(mock_device)
   local subscribed_attributes = {
     [capabilities.mode.ID] = {
-        clusters.RvcRunMode.attributes.SupportedModes,
-        clusters.RvcRunMode.attributes.CurrentMode,
-        clusters.RvcCleanMode.attributes.SupportedModes,
-        clusters.RvcCleanMode.attributes.CurrentMode,
+      clusters.RvcRunMode.attributes.SupportedModes,
+      clusters.RvcRunMode.attributes.CurrentMode,
+      clusters.RvcCleanMode.attributes.SupportedModes,
+      clusters.RvcCleanMode.attributes.CurrentMode,
     },
     [capabilities.robotCleanerOperatingState.ID] = {
-        clusters.RvcOperationalState.attributes.OperationalState,
-        clusters.RvcOperationalState.attributes.OperationalError
+      clusters.RvcOperationalState.attributes.OperationalStateList,
+      clusters.RvcOperationalState.attributes.OperationalState,
+      clusters.RvcOperationalState.attributes.OperationalError
     },
     [capabilities.serviceArea.ID] = {
       clusters.ServiceArea.attributes.SupportedAreas,
@@ -192,6 +193,19 @@ local function operating_state_init()
       SUPPORTED_OPERATIONAL_STATE_COMMAND
     )
   })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.robotCleanerOperatingState.supportedCommands(
+        {
+          capabilities.robotCleanerOperatingState.commands.pause.NAME,
+          capabilities.robotCleanerOperatingState.commands.start.NAME,
+          capabilities.robotCleanerOperatingState.commands.goHome.NAME
+        },
+        {visibility = {displayed = false}}
+      )
+    )
+  )
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
       "main",
