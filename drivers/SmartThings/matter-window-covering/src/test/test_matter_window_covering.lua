@@ -26,7 +26,6 @@ local mock_device = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("window-covering-tilt-battery.yml"),
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
-    preferences = { presetPosition = 30 },
     endpoints = {
       {
         endpoint_id = 2,
@@ -58,7 +57,6 @@ local mock_device_mains_powered = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("window-covering.yml"),
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
-    preferences = { presetPosition = 30 },
     endpoints = {
       {
         endpoint_id = 2,
@@ -100,6 +98,19 @@ local CLUSTER_SUBSCRIBE_LIST_NO_BATTERY = {
   WindowCovering.server.attributes.OperationalStatus,
 }
 
+local function set_preset(device)
+  test.socket.capability:__expect_send(
+    device:generate_test_message(
+      "main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed = false}})
+    )
+  )
+  test.socket.capability:__expect_send(
+    device:generate_test_message(
+      "main", capabilities.windowShadePreset.position(50, {visibility = {displayed = false}})
+    )
+  )
+end
+
 local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
@@ -111,6 +122,7 @@ local function test_init()
   )
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  set_preset(mock_device)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
@@ -134,6 +146,7 @@ local function test_init_mains_powered()
   )
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mains_powered.id, "init" })
+  set_preset(mock_device_mains_powered)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST_NO_BATTERY[1]:subscribe(mock_device_mains_powered)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_BATTERY) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_mains_powered)) end
@@ -756,20 +769,31 @@ test.register_coroutine_test("OperationalStatus report contains current position
   )
 end)
 
-test.register_coroutine_test("Handle windowcoveringPreset", function()
-  test.socket.capability:__queue_receive(
-    {
+test.register_coroutine_test(
+  "Handle preset commands",
+  function()
+    local PRESET_LEVEL = 30
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {capability = "windowShadePreset", component = "main", command = "setPresetPosition", args = { PRESET_LEVEL }},
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadePreset.position(PRESET_LEVEL)
+      )
+    )
+    test.socket.capability:__queue_receive({
       mock_device.id,
       {capability = "windowShadePreset", component = "main", command = "presetPosition", args = {}},
-    }
-  )
-  test.socket.matter:__expect_send(
-    {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 7000)}
-  )
-  test.socket.matter:__expect_send(
-    {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 5000)}
-  )
-end)
+    })
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, (100 - PRESET_LEVEL) * 100)}
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 5000)}
+    )
+  end
+)
 
 test.register_coroutine_test(
   "Test profile change to window-covering-battery when battery percent remaining attribute (attribute ID 12) is available",

@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-test.add_package_capability("lockAlarm.yml")
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -173,6 +172,45 @@ local mock_device_user_pin_schedule_unlatch = test.mock_device.build_test_matter
   }
 })
 
+local mock_device_modular = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("lock-modular-embedded-unlatch.yml"),
+  manufacturer_info = {
+    vendor_id = 0x147F,
+    product_id = 0x0001,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {
+          cluster_id = DoorLock.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0x1591, -- PIN & USR & COTA & WDSCH & YDSCH & UNLATCH
+        },
+        {
+          cluster_id = clusters.PowerSource.ID,
+          cluster_type = "SERVER",
+          feature_map = 10
+        },
+      },
+      device_types = {
+        { device_type_id = 0x000A, device_type_revision = 1 } -- Door Lock
+      }
+    }
+  }
+})
+
+
 local function test_init()
   test.disable_startup_messages()
   -- subscribe request
@@ -269,6 +307,27 @@ local function test_init_user_pin_schedule_unlatch()
   test.socket.matter:__expect_send({mock_device_user_pin_schedule_unlatch.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin_schedule_unlatch.id, "doConfigure" })
   mock_device_user_pin_schedule_unlatch:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_modular()
+  test.disable_startup_messages()
+  -- subscribe request
+  local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_modular)
+  subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_modular))
+  subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
+  subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
+  -- add test device
+  test.mock_device.add_test_device(mock_device_modular)
+  -- actual onboarding flow
+  test.socket.device_lifecycle:__queue_receive({ mock_device_modular.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device_modular:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+  )
+  test.socket.matter:__expect_send({mock_device_modular.id, clusters.PowerSource.attributes.AttributeList:read()})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_modular.id, "init" })
+  test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_modular.id, "doConfigure" })
+  mock_device_modular:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)
@@ -517,7 +576,7 @@ test.register_coroutine_test(
           })
       }
     )
-     test.socket.capability:__expect_send(
+    test.socket.capability:__expect_send(
       mock_device_user_pin_schedule_unlatch:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
@@ -527,6 +586,69 @@ test.register_coroutine_test(
 
   end,
   { test_init = test_init_user_pin_schedule_unlatch }
+)
+
+test.register_coroutine_test(
+  "Test modular lock profile update (modular to modular) with user, pin. schedule, and unlatch supported. Ensure infoChanged updates subscription",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_modular.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_modular, 1,
+          {
+            uint32(0),
+            uint32(1),
+            uint32(2),
+            uint32(12), -- BatPercentRemaining
+            uint32(14), -- BatChargeLevel
+            uint32(31),
+            uint32(65528),
+            uint32(65529),
+            uint32(65531),
+            uint32(65532),
+            uint32(65533),
+          })
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_modular:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_modular:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+    )
+    mock_device_modular:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}}} })
+
+    local updated_device_profile = t_utils.get_profile_definition("lock-modular-embedded-unlatch.yml",
+      {enabled_optional_capabilities = {{ "main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}},
+  },}
+    )
+    updated_device_profile.id = "00000000-1111-2222-3333-000000000010"
+
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({ profile = updated_device_profile }))
+
+    local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_modular)
+    subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.attributes.NumberOfPINUsersSupported:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.attributes.MinPINCodeLength:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
+    subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_modular))
+    subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device_modular))
+    test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
+    test.socket.capability:__expect_send(
+      mock_device_modular:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_modular:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
+    )
+  end,
+  { test_init = test_init_modular }
 )
 
 test.run_registered_tests()

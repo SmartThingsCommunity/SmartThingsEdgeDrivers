@@ -93,7 +93,7 @@ local frient_sensor = {
     }
   },
   can_handle = function(opts, driver, device, ...)
-    return (device:get_manufacturer() == "frient A/S" and (device:get_model() == "WISZB-120" or device:get_model() == "WISZB-121"))
+    return (device:get_manufacturer() == "frient A/S" and (device:get_model() == "WISZB-120" or device:get_model() == "WISZB-121" or device:get_model() == "WISZB-131"))
   end
 }
 

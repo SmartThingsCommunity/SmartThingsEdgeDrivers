@@ -44,6 +44,12 @@ matterManufacturer:
     vendorId: 0x1206
     productId: 0x0001
     deviceProfileName: thermostat-nostate-nobattery
+  #Meross
+  - id: "4933/57345"
+    deviceLabel: Smart Wi-Fi Thermostat
+    vendorId: 0x1345
+    productId: 0xE001
+    deviceProfileName: thermostat-fan-nostate-nobattery
   #Siterwell
   - id: "4736/769"
     deviceLabel: Siterwell Radiator Thermostat
@@ -72,55 +78,55 @@ matterGeneric:
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0300 # HVAC Heating/Cooling Unit
-    deviceProfileName: thermostat
+    deviceProfileName: thermostat-nostate-nobattery
   - id: "matter/hvac/thermostat"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat
-    deviceProfileName: thermostat
+    deviceProfileName: thermostat-nostate-nobattery
   - id: "matter/hvac/heatcool/humidity"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0300 # HVAC Heating/Cooling Unit
       - id: 0x0307 # Humidity Sensor
-    deviceProfileName: thermostat-humidity
+    deviceProfileName: thermostat-humidity-nostate-nobattery
   - id: "matter/hvac/thermostat/humidity"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat
       - id: 0x0307 # Humidity Sensor
-    deviceProfileName: thermostat-humidity
+    deviceProfileName: thermostat-humidity-nostate-nobattery
   - id: "matter/hvac/heatcool/fan"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0300 # HVAC Heating/Cooling Unit
       - id: 0x002B # Fan
-    deviceProfileName: thermostat-fan
+    deviceProfileName: thermostat-fan-nostate-nobattery
   - id: "matter/hvac/thermostat/fan"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat
       - id: 0x002B # Fan
-    deviceProfileName: thermostat-fan
+    deviceProfileName: thermostat-fan-nostate-nobattery
   - id: "matter/hvac/heatcool/humidity/fan"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0300 # HVAC Heating/Cooling Unit
       - id: 0x0307 # Humidity Sensor
       - id: 0x002B # Fan
-    deviceProfileName: thermostat-humidity-fan
+    deviceProfileName: thermostat-humidity-fan-nostate-nobattery
   - id: "matter/hvac/thermostat/humidity/fan"
     deviceLabel: Matter Thermostat
     deviceTypes:
       - id: 0x0301 # Thermostat
       - id: 0x0307 # Humidity Sensor
       - id: 0x002B # Fan
-    deviceProfileName: thermostat-humidity-fan
+    deviceProfileName: thermostat-humidity-fan-nostate-nobattery
   - id: "matter/room-air-conditioner"
     deviceLabel: Matter Room Air Conditioner
     deviceTypes:
       - id: 0x0072
-    deviceProfileName: room-air-conditioner
+    deviceProfileName: room-air-conditioner-fan-heating-cooling-nostate
   - id: "matter/fan"
     deviceLabel: Matter Fan
     deviceTypes:
@@ -130,7 +136,7 @@ matterGeneric:
     deviceLabel: Matter Air Purifier
     deviceTypes:
       - id: 0x002D # Air Purifier
-    deviceProfileName: air-purifier-hepa-ac-wind
+    deviceProfileName: air-purifier
   - id: "matter/air-purifier/quality-sensor"
     deviceLabel: Matter Air Purifier & Quality Sensor
     deviceTypes:

@@ -438,13 +438,6 @@ matterManufacturer:
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
 
-# Govee
-  - id: "4999/24584"
-    deviceLabel: Govee Smart Bulb
-    vendorId: 0x1387
-    productId: 0x6008
-    deviceProfileName: light-color-level-2700K-6500K
-
 # Hue
   - id: "4107/2049"
     deviceLabel: Hue W 1600 A21 E26 1P NAM
@@ -602,6 +595,46 @@ matterManufacturer:
     deviceLabel: Decora Smart Wi-Fi (2nd Gen) 600W Dimmer
     vendorId: 0x109B
     productId: 0x1000
+    deviceProfileName: switch-level
+  - id: "4251/4107"
+    deviceLabel: Decora Smart Wi-Fi ELV Dimmer
+    vendorId: 0x109B
+    productId: 0x100B
+    deviceProfileName: switch-level
+  - id: "4251/4110"
+    deviceLabel: Decora Smart Wi-Fi 0-10V Dimmer
+    vendorId: 0x109B
+    productId: 0x100E
+    deviceProfileName: switch-level
+  - id: "4251/4108"
+    deviceLabel: Decora Evolve Smart Dimmer Module
+    vendorId: 0x109B
+    productId: 0x100C
+    deviceProfileName: switch-level
+  - id: "4251/4109"
+    deviceLabel: Decora Evolve Smart Switch Module
+    vendorId: 0x109B
+    productId: 0x100D
+    deviceProfileName: switch-binary
+  - id: "4251/4105"
+    deviceLabel: Decora Smart Wi-Fi Outdoor Plug-In Switch
+    vendorId: 0x109B
+    productId: 0x1009
+    deviceProfileName: switch-binary
+  - id: "4251/4099"
+    deviceLabel: Leviton Decora Smart Wi-Fi Mini Plug-In Outlet
+    vendorId: 0x109B
+    productId: 0x1003
+    deviceProfileName: switch-binary
+  - id: "4251/4100"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Tamper Resistant Outlet
+    vendorId: 0x109B
+    productId: 0x1004
+    deviceProfileName: switch-binary
+  - id: "4251/4098"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Mini Plug-In Dimmer
+    vendorId: 0x109B
+    productId: 0x1002
     deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
@@ -2815,6 +2848,12 @@ matterManufacturer:
     deviceLabel: Zemismart M1 Hub
     vendorId: 0x139C
     productId: 0x0387
+    deviceProfileName: matter-bridge
+#Zimi
+  - id: "5410/3"
+    deviceLabel: Zimi Matter Connect
+    vendorId: 0x1522
+    productId: 0x0003
     deviceProfileName: matter-bridge
 #TUO
   - id: "5150/1"
