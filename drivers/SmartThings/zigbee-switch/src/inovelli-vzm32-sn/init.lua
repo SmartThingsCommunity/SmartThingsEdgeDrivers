@@ -39,7 +39,6 @@ local MFG_CODE = 0x122F
 
 local preference_map = {
       parameter258 = {parameter_number = 258, size = data_types.Boolean},
-      parameter22 = {parameter_number = 22, size = data_types.Uint8},
       parameter52 = {parameter_number = 52, size = data_types.Boolean},
       parameter1 = {parameter_number = 1, size = data_types.Uint8},
       parameter2 = {parameter_number = 2, size = data_types.Uint8},
@@ -47,9 +46,7 @@ local preference_map = {
       parameter4 = {parameter_number = 4, size = data_types.Uint8},
       parameter9 = {parameter_number = 9, size = data_types.Uint8},
       parameter10 = {parameter_number = 10, size = data_types.Uint8},
-      parameter11 = {parameter_number = 11, size = data_types.Boolean},
       parameter15 = {parameter_number = 15, size = data_types.Uint8},
-      parameter17 = {parameter_number = 17, size = data_types.Uint8},
       parameter34 = {parameter_number = 34, size = data_types.Uint8},
       parameter95 = {parameter_number = 95, size = data_types.Uint8},
       parameter96 = {parameter_number = 96, size = data_types.Uint8},
@@ -67,7 +64,6 @@ local preference_map = {
       parameter113 = {parameter_number = 113, size = data_types.Uint8},
       parameter114 = {parameter_number = 114, size = data_types.Uint32},
       parameter115 = {parameter_number = 115, size = data_types.Uint32},
-      parameter117 = {parameter_number = 117, size = data_types.Uint8},
 }
 
 local preferences_to_numeric_value = function(new_value)
@@ -179,7 +175,7 @@ end
 
 local function configure_illuminance_reporting(device)
   local min_lux_change = 15
-  local value = math.floor(10000 * math.log10(min_lux_change) + 1)
+  local value = math.floor(10000 * math.log(min_lux_change, 10) + 1)
   device:send(clusters.IlluminanceMeasurement.attributes.MeasuredValue:configure_reporting(
       device,
       10,   -- Minimum reporting interval (seconds)
