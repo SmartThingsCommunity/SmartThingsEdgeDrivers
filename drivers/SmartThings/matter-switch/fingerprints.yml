@@ -817,7 +817,7 @@ matterManufacturer:
     deviceLabel: Smart Wi-Fi Power Strip
     vendorId: 0x1345
     productId: 0xB001
-    deviceProfileName: switch-6
+    deviceProfileName: switch-binary
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
