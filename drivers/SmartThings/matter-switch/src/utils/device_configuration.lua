@@ -136,7 +136,7 @@ function ButtonDeviceConfiguration.update_button_profile(device, main_endpoint, 
     profile_name = "light-level-" .. profile_name
   end
   local motion_eps = device:get_endpoints(clusters.OccupancySensing.ID)
-  if #motion_eps > 0 then
+  if #motion_eps > 0 and (num_button_eps == 3 or num_button_eps == 6) then -- only these two devices are handled
     profile_name = profile_name .. "-motion"
   end
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
