@@ -88,6 +88,18 @@ end
 test.register_coroutine_test(
   "Profile should not change for devices with aggregator device type (bridges)",
   function()
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_bridge)
+    for i, cluster in ipairs(cluster_subscribe_list) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(mock_bridge))
+      end
+    end
+    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "added" })
+    test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
+    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "init" })
+    test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
+    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "doConfigure" })
+    mock_bridge:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_mock_bridge }
 )
