@@ -32,12 +32,11 @@ local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 
 function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, onoff_ep_id)
-  local updated_profile = nil
   local ep = switch_utils.get_endpoint_info(device, onoff_ep_id)
   local primary_dt_id = switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.LIGHT)
     or (switch_utils.detect_matter_thing(device) and switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.SWITCH))
     or ep.device_types[1] and ep.device_types[1].device_type_id
-  updated_profile = fields.device_type_profile_map[primary_dt_id]
+  local updated_profile = fields.device_type_profile_map[primary_dt_id]
 
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, onoff_ep_id)
   if static_electrical_tags ~= nil then

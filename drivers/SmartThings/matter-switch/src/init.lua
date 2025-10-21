@@ -89,7 +89,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
 
     device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
     device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
-    _ = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and device:set_find_child(switch_utils.find_child)
+    local _ = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and device:set_find_child(switch_utils.find_child)
 
     -- ensure subscription to eps mapped to child devices
     local primary_ep_id = switch_utils.find_default_endpoint(device)

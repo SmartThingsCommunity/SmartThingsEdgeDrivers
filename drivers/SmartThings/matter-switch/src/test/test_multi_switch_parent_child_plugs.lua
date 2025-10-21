@@ -20,7 +20,6 @@ local clusters = require "st.matter.clusters"
 test.disable_startup_messages()
 
 local child_profile = t_utils.get_profile_definition("plug-binary.yml")
-local child_profile_override = t_utils.get_profile_definition("switch-binary.yml")
 local parent_ep = 10
 local child1_ep = 20
 local child2_ep = 30
