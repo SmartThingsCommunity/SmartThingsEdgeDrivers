@@ -36,8 +36,10 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- refresh child devices to get an initial attribute state for OnOff in case child device
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    print("???1")
     device:send(clusters.OnOff.attributes.OnOff:read(device))
   elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    print("???2")
     switch_utils.handle_electrical_sensor_info(device)
   end
 
@@ -60,16 +62,21 @@ end
 
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    device:subscribe()
-    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    if #button_eps > 0 and device.network_type == device_lib.NETWORK_TYPE_MATTER then
-      button_cfg.configure_buttons(device)
+    if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+      device:subscribe()
+      button_cfg.configure_buttons(device,
+        device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+      )
+    elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
+      switch_utils.update_subscriptions(device:get_parent_device()) -- parent device required to scan through EPs and update subscriptions
     end
   end
-end
 
-function SwitchLifecycleHandlers.device_removed(driver, device)
-  device.log.info("device removed")
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+    if device.matter_version.software ~= args.old_st_store.matter_version.software then
+      device_cfg.match_profile(driver, device)
+    end
+  end
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
@@ -80,26 +87,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
-    local default_endpoint_id = switch_utils.find_default_endpoint(device)
-    -- ensure subscription to all endpoint attributes- including those mapped to child devices
-    for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= default_endpoint_id then
-        local id = 0
-        for _, dt in ipairs(ep.device_types) do
-          id = math.max(id, dt.device_type_id)
-        end
-        for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-          if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
-             attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-             attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-            device:add_subscribed_event(attr)
-          else
-            device:add_subscribed_attribute(attr)
-          end
-        end
-      end
-    end
-    device:subscribe()
+    switch_utils.update_subscriptions(device)
 
     -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
@@ -108,6 +96,10 @@ function SwitchLifecycleHandlers.device_init(driver, device)
         device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false})
     end
   end
+end
+
+function SwitchLifecycleHandlers.device_removed(driver, device)
+  device.log.info("device removed")
 end
 
 local matter_driver_template = {

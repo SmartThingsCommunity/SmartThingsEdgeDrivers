@@ -76,7 +76,8 @@ function utils.mired_to_kelvin(value, minOrMax)
 end
 
 function utils.get_product_override_field(device, override_key)
-  if fields.vendor_overrides[device.manufacturer_info.vendor_id]
+  if device.manufacturer_info
+  and fields.vendor_overrides[device.manufacturer_info.vendor_id]
   and fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id]
   then
     return fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id][override_key]
@@ -424,6 +425,29 @@ function utils.lazy_load_if_possible(sub_driver_name)
   else
     return require(sub_driver_name)
   end
+end
+
+function utils.update_subscriptions(device)
+  local default_endpoint_id = utils.find_default_endpoint(device)
+  -- ensure subscription to all endpoint attributes- including those mapped to child devices
+  for idx, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id ~= default_endpoint_id then
+      local id = 0
+      for _, dt in ipairs(ep.device_types) do
+        id = math.max(id, dt.device_type_id)
+      end
+      for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
+        if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
+           attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+           attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+          device:add_subscribed_event(attr)
+        else
+          device:add_subscribed_attribute(attr)
+        end
+      end
+    end
+  end
+  device:subscribe()
 end
 
 return utils

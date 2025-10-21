@@ -120,7 +120,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   if #doorbell_endpoints > 0 then
     table.insert(doorbell_component_capabilities, capabilities.button.ID)
     CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
-    button_cfg.configure_buttons(device)
+    button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
   end
   if status_light_enabled_present then
     table.insert(status_led_component_capabilities, capabilities.switch.ID)
