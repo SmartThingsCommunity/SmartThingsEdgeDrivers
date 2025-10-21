@@ -21,7 +21,8 @@ local log = require "log"
 local utils = {}
 
 function utils.tbl_contains(array, value)
-  for _, element in ipairs(array) do
+  if value == nil then return false end
+  for _, element in pairs(array or {}) do
     if element == value then
       return true
     end
@@ -82,6 +83,14 @@ function utils.check_field_name_updates(device)
   end
 end
 
+function utils.check_switch_category_vendor_overrides(device)
+  for _, product_id in ipairs(fields.switch_category_vendor_overrides[device.manufacturer_info.vendor_id] or {}) do
+    if device.manufacturer_info.product_id == product_id then
+      return true
+    end
+  end
+end
+
 --- device_type_supports_button_switch_combination helper function used to check
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
@@ -89,8 +98,27 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   if utils.get_product_override_field(device, "ignore_combo_switch_button") then
     return false
   end
-  local dimmable_eps = utils.get_endpoints_by_device_type(device, fields.DIMMABLE_LIGHT_DEVICE_TYPE_ID)
+  local dimmable_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE)
   return utils.tbl_contains(dimmable_eps, endpoint_id)
+end
+
+-- Some devices report multiple device types which are a subset of
+-- a superset device type (Ex. Dimmable Light is a superset of On/Off Light).
+-- We should map to the largest superset device type supported.
+-- This can be done by matching to the device type with the highest ID
+function utils.find_max_subset_device_type(ep, device_type_set)
+  if ep.endpoint_id == 0 then return end -- EP-scoped device types not permitted on Root Node
+  local primary_dt_id = ep.device_types[1] and ep.device_types[1].device_type_id
+  if utils.tbl_contains(device_type_set, primary_dt_id) then
+    for _, dt in ipairs(ep.device_types) do
+      -- only device types in the subset should be considered.
+      if utils.tbl_contains(device_type_set, dt.device_type_id) then
+        primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
+      end
+    end
+    return primary_dt_id
+  end
+  return nil
 end
 
 --- find_default_endpoint is a helper function to handle situations where
@@ -163,6 +191,13 @@ function utils.find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
+function utils.get_endpoint_info(device, endpoint_id)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == endpoint_id then return ep end
+  end
+  return {}
+end
+
 -- Fallback handler for responses that dont have their own handler
 function utils.matter_handler(driver, device, response_block)
   device.log.info(string.format("Fallback handler for %s", response_block))
@@ -193,7 +228,7 @@ function utils.create_multi_press_values_list(size, supportsHeld)
 end
 
 function utils.detect_bridge(device)
-  return #utils.get_endpoints_by_device_type(device, fields.AGGREGATOR_DEVICE_TYPE_ID) > 0
+  return #utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.AGGREGATOR) > 0
 end
 
 function utils.detect_matter_thing(device)
