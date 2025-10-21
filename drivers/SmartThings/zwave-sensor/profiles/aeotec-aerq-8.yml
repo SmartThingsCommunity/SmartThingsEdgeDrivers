@@ -22,6 +22,8 @@ components:
     version: 1
   - id: refresh
     version: 1
+  categories:
+  - name: TempHumiditySensor
 preferences:
   - name: "parameter1"
     title: "1 Set threshold Check Time"
