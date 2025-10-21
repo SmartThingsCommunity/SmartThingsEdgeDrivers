@@ -230,11 +230,21 @@ local device_init = function(self, device)
     device:send(Version:Get({}))
     initialize(device)
   else
-    device:emit_event(capabilities.colorControl.hue(1))
-    device:emit_event(capabilities.colorControl.saturation(1))
-    device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
-    device:emit_event(capabilities.switchLevel.level(100))
-    device:emit_event(capabilities.switch.switch("off"))
+    if device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) == nil then
+      device:emit_event(capabilities.colorControl.hue(1))
+    end
+    if device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME) == nil then
+      device:emit_event(capabilities.colorControl.saturation(1))
+    end
+    if device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME) == nil then
+      device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
+    end
+    if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil then
+      device:emit_event(capabilities.switchLevel.level(100))
+    end
+    if device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME) == nil then
+      device:emit_event(capabilities.switch.switch("off"))
+    end
   end
 end
 

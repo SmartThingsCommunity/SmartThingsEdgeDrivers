@@ -78,7 +78,6 @@ local devices = {
     },
     PARAMETERS = {
       parameter158 = {parameter_number = 158, size = 1},
-      parameter22 = {parameter_number = 22, size = 1},
       parameter52 = {parameter_number = 52, size = 1},
       parameter1 = {parameter_number = 1, size = 1},
       parameter2 = {parameter_number = 2, size = 1},
@@ -106,10 +105,7 @@ local devices = {
       parameter111 = {parameter_number = 111, size = 1},
       parameter112 = {parameter_number = 112, size = 1},
       parameter113 = {parameter_number = 113, size = 1},
-      parameter114 = {parameter_number = 114, size = 4},
-      parameter117 = {parameter_number = 117, size = 1},
-      parameter118 = {parameter_number = 118, size = 2},
-      parameter119 = {parameter_number = 119, size = 2}
+      parameter114 = {parameter_number = 114, size = 4}
     }
   },
   QUBINO_FLUSH_DIMMER = {
