@@ -334,7 +334,7 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
       table.sort(ib.data.elements)
       local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
       switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
-      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, ib.endpoint_id, primary_available_ep, { persist = true })
+      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
       break
     end
   end
@@ -362,7 +362,7 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
       table.sort(ib.data.elements)
       local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
       switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
-      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, ib.endpoint_id, primary_available_ep, { persist = true })
+      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
       break
     end
   end

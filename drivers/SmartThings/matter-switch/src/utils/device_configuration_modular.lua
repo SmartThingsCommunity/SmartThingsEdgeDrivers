@@ -219,13 +219,12 @@ function DeviceConfiguration.match_profile_modular(driver, device)
     elseif primary_dt_id == fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR then
       -- have this info ready
       updated_profile[ep_info.endpoint_id] = {}
-      local associated_ep_id = switch_utils.get_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, ep_info.endpoint_id)
+      local associated_ep_id = switch_utils.get_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ep_info.endpoint_id)
       local electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, associated_ep_id)
-      local find_substr = function(s, p) return string.find(s or "", p, 1, true) end
-      if find_substr(electrical_tags, "power") then
+      if switch_utils.find_substr(electrical_tags, "power") then
         table.insert(updated_profile[associated_ep_id].capabilities, capabilities.powerMeter.ID)
       end
-      if find_substr(electrical_tags, "energy") then
+      if switch_utils.find_substr(electrical_tags, "energy") then
         table.insert(updated_profile[associated_ep_id].capabilities, capabilities.energyMeter.ID)
         table.insert(updated_profile[associated_ep_id].capabilities, capabilities.powerConsumptionReport.ID)
       end
@@ -277,12 +276,11 @@ function DeviceConfiguration.match_profile(driver, device)
   if #server_onoff_eps > 0 then
     SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_eps, main_endpoint)
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, main_endpoint)
-    local find_substr = function(s, p) return string.find(s or "", p, 1, true) end
-    if find_substr(updated_profile, "light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+    if switch_utils.find_substr(updated_profile, "light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
-    elseif find_substr(updated_profile, "light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
+    elseif switch_utils.find_substr(updated_profile, "light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
-    elseif find_substr(updated_profile, "light-level-colorTemperature") or find_substr(updated_profile, "light-color-level") then
+    elseif switch_utils.find_substr(updated_profile, "light-level-colorTemperature") or switch_utils.find_substr(updated_profile, "light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
       return

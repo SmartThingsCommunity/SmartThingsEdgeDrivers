@@ -92,7 +92,7 @@ SwitchFields.device_type_profile_map = {
 -- button devices that require component mapping.
 SwitchFields.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 SwitchFields.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
-SwitchFields.PRIMARY_CHILD_EP = "__PRIMARY_CHILD_EP"
+SwitchFields.PRIMARY_ASSOCIATED_EP = "__PRIMARY_ASSOCIATED_EP"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
 SwitchFields.COLOR_TEMP_MIN = "__color_temp_min"

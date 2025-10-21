@@ -196,7 +196,7 @@ function utils.endpoint_to_component(device, ep)
 end
 
 function utils.find_child(parent_device, ep_id)
-  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.PRIMARY_CHILD_EP, ep_id) or ep_id
+  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.PRIMARY_ASSOCIATED_EP, ep_id) or ep_id
   return parent_device:get_child_by_parent_assigned_key(string.format("%d", primary_ep_key))
 end
 
@@ -239,6 +239,8 @@ end
 function utils.detect_bridge(device)
   return #utils.get_endpoints_by_dt(device, fields.DEVICE_TYPE_ID.AGGREGATOR) > 0
 end
+
+function utils.find_substr(s, p) return string.find(s or "", p, 1, true) end
 
 function utils.detect_matter_thing(device)
   -- every profile except for matter-thing supports at least 2 capabilities (refresh, firmwareUpdate)
@@ -324,7 +326,7 @@ function utils.handle_electrical_sensor_info(device)
     local switch_eps = device:get_endpoints(clusters.OnOff.ID)
     table.sort(switch_eps)
     if switch_eps[1] then
-      utils.set_field_for_endpoint(device, fields.PRIMARY_CHILD_EP, electrical_ep.endpoint_id, switch_eps[1], { persist = true })
+      utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, electrical_ep.endpoint_id, switch_eps[1], { persist = true })
       utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, switch_eps[1], tags)
     else
       device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
