@@ -1,0 +1,115 @@
+name: aeotec-aerq-8
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    config:
+        values:
+          - key: "temperature.value"
+            range: [-10, 60]
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: dewPoint
+    version: 1
+  - id: moldHealthConcern
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: powerSource
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+preferences:
+  - name: "parameter1"
+    title: "1 Set threshold Check Time"
+    description: "When using battery power, follow this configuration, the minimum time is 30 seconds. When using USB power supply, for real-time detection."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum : 2678400
+      default: 900
+  - name: "parameter2"
+    title: "2 Min. temperature change to report"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum : 255
+      default: 20
+  - name: "parameter3"
+    title: "3 Min. humidity change to report"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum : 255
+      default: 50
+  - name: "parameter4"
+    title: "4 Enable led indication"
+    description: "This parameter defines when the green or red LED will indicate events. Disabling all indications may extend battery life. Off means no indications."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Off"
+        1: "On"
+      default: 0
+  - name: "parameter13"
+    title: "13 Mold alarm offset"
+    desccription: "Increase the humidity threshold."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -10
+      maximum : 10
+      default: 0
+  - name: "parameter23"
+    title: "23 Low battery threshold"
+    description: "Report low battery report when level goes under threshold setting."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 10
+      maximum : 50
+      default: 20
+  - name: "parameter24"
+    title: "24 Periodic Reports"
+    description: "The period of battery, temperature and humidity report, the minimum time is 30 seconds."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum : 2678400
+      default: 43200
+  - name: "parameter25"
+    title: "25 Offset value for temperature"
+    description: "Calibrate temperature. Scale is defined by Param 64 .eg: Value 15 means 1.5°C or 1.5F"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -200
+      maximum : 200
+      default: 0
+  - name: "parameter26"
+    title: "26 Offset value for Humidity"
+    description: "Calibrate humidity."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: -200
+      maximum : 200
+      default: 0
+  - name: "parameter64"
+    title: "64 Temperature Scale"
+    description: "Scale for auto reports and settings."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Celsius"
+        1: "Fahrenheit"
+      default: 0

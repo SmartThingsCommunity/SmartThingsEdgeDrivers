@@ -153,6 +153,7 @@ local driver_template = {
     lazy_load_if_possible("timed-tamper-clear"),
     lazy_load_if_possible("wakeup-no-poll"),
     lazy_load_if_possible("apiv6_bugfix"),
+    lazy_load_if_possible("aeotec-aerq")
   },
   lifecycle_handlers = {
     added = added_handler,
