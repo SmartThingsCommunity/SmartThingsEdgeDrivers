@@ -20,7 +20,6 @@ local clusters = require "st.matter.clusters"
 test.disable_startup_messages()
 
 local child_profile = t_utils.get_profile_definition("plug-binary.yml")
-local child_profile_override = t_utils.get_profile_definition("switch-binary.yml")
 local parent_ep = 10
 local child1_ep = 20
 local child2_ep = 30
@@ -31,53 +30,6 @@ local mock_device = test.mock_device.build_test_matter_device({
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
-  },
-  endpoints = {
-    {
-      endpoint_id = 0,
-      clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
-      },
-      device_types = {
-        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
-      }
-    },
-    {
-      endpoint_id = parent_ep,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-      },
-      device_types = {
-        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
-      }
-    },
-    {
-      endpoint_id = child1_ep,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-      },
-      device_types = {
-        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
-      }
-    },
-    {
-      endpoint_id = child2_ep,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-      },
-      device_types = {
-        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
-      }
-    },
-  }
-})
-
-local mock_device_child_profile_override = test.mock_device.build_test_matter_device({
-  label = "Matter Switch",
-  profile = t_utils.get_profile_definition("switch-binary.yml"),
-  manufacturer_info = {
-    vendor_id = 0x1321,
-    product_id = 0x000D,
   },
   endpoints = {
     {
@@ -165,56 +117,6 @@ local function test_init()
     label = "Matter Switch 3",
     profile = "plug-binary",
     parent_device_id = mock_device.id,
-    parent_assigned_child_key = string.format("%d", child2_ep)
-  })
-end
-
-local mock_children_child_profile_override = {}
-for i, endpoint in ipairs(mock_device_child_profile_override.endpoints) do
-  if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
-    local child_data = {
-      profile = child_profile_override,
-      device_network_id = string.format("%s:%d", mock_device_child_profile_override.id, endpoint.endpoint_id),
-      parent_device_id = mock_device_child_profile_override.id,
-      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
-    }
-    mock_children_child_profile_override[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
-  end
-end
-
-local function test_init_child_profile_override()
-  test.mock_device.add_test_device(mock_device_child_profile_override)
-  local cluster_subscribe_list = {
-    clusters.OnOff.attributes.OnOff,
-  }
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_child_profile_override)
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "added" })
-  test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "init" })
-  test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "doConfigure" })
-  mock_device_child_profile_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-
-  for _, child in pairs(mock_children_child_profile_override) do
-    test.mock_device.add_test_device(child)
-  end
-
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Switch 2",
-    profile = "switch-binary",
-    parent_device_id = mock_device_child_profile_override.id,
-    parent_assigned_child_key = string.format("%d", child1_ep)
-  })
-
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Switch 3",
-    profile = "switch-binary",
-    parent_device_id = mock_device_child_profile_override.id,
     parent_assigned_child_key = string.format("%d", child2_ep)
   })
 end
@@ -381,12 +283,6 @@ test.register_coroutine_test(
     local req = clusters.OnOff.attributes.OnOff:read(mock_children[child1_ep])
     test.socket.matter:__expect_send({mock_device.id, req})
   end
-)
-
-test.register_coroutine_test(
-  "Child device profiles should be overriden for specific devices", function()
-    end,
-    { test_init = test_init_child_profile_override }
 )
 
 test.run_registered_tests()

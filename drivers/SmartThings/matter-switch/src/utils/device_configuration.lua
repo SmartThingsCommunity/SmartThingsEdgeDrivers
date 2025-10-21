@@ -50,20 +50,9 @@ function SwitchDeviceConfiguration.assign_child_profile(device, child_ep)
     end
   end
 
-  -- Check if device has an overridden child profile that differs from the profile that would match
-  -- the child's device type for the following two cases:
-  --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
-  --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
-  --      determined in the "for" loop above (e.g., light-binary)
-  --   2. The selected profile for the child device matches the initial profile defined in
-  --      child_device_profile_overrides
-  for id, vendor in pairs(fields.child_device_profile_overrides_per_vendor_id) do
-    for _, fingerprint in ipairs(vendor) do
-      if device.manufacturer_info.product_id == fingerprint.product_id and
-         ((device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-         return fingerprint.target_profile
-      end
-    end
+  -- workaround: Aqara Light Switch H2: add Electrical Sensor profile only to the first EDGE_CHILD
+  if child_ep == 1 then
+    profile = switch_utils.get_product_override_field(device, "target_profile") or profile
   end
 
   -- default to "switch-binary" if no profile is found
