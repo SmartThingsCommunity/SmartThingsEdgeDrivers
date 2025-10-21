@@ -26,8 +26,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
 local preferencesMap = require "preferences"
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
 --- @type st.utils
 local utils = require "st.utils"
@@ -376,9 +374,6 @@ local inovelli_vzw32_sn = {
     infoChanged = info_changed,
   },
   zwave_handlers = {
-    [cc.CONFIGURATION] = {
-      [Configuration.REPORT] = function() end -- Empty function since configuration_report was unused
-    },
     [cc.CENTRAL_SCENE] = {
       [CentralScene.NOTIFICATION] = central_scene_notification_handler
     },
