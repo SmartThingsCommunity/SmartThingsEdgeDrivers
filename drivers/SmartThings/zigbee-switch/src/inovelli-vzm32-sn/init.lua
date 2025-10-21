@@ -226,7 +226,7 @@ local function info_changed(driver, device, event, args)
             else
               device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_MMWAVE_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, new_parameter_value))
             end
-          else 
+          else
             if(preferences[id].size == data_types.Boolean) then
               device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, preferences[id].parameter_number, MFG_CODE, preferences[id].size, to_boolean(new_parameter_value)))
             else
@@ -450,7 +450,6 @@ local function handle_resetEnergyMeter(self, device)
     PRIVATE_CMD_ENERGY_RESET_ID,
     MFG_CODE,
     utils.serialize_int(0,1,false,false)))
- 
   device:send(clusters.SimpleMetering.attributes.CurrentSummationDelivered:read(device))
   device:send(clusters.ElectricalMeasurement.attributes.ActivePower:read(device))
 end
