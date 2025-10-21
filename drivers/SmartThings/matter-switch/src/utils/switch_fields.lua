@@ -119,22 +119,6 @@ SwitchFields.vendor_overrides = {
   }
 }
 
-SwitchFields.child_device_profile_overrides_per_vendor_id = {
-  [0x1321] = {
-    { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
-    { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
-  },
-  [0x115F] = {
-    [0x1003] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    [0x1004] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    [0x1005] = { target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    [0x1006] = { target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    [0x1008] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    [0x1009] = { target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    [0x100A] = { target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-  }
-}
-
 SwitchFields.CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
 SwitchFields.TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
 SwitchFields.LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
