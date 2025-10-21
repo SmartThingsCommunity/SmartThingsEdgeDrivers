@@ -14,7 +14,8 @@ local mock_device = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("6-button-motion.yml"), -- on a real device we would switch to this, rather than fingerprint to it
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
-    endpoints = {
+    matter_version = {hardware = 1, software = 1},
+      endpoints = {
     {
       endpoint_id = 0,
       clusters = {},

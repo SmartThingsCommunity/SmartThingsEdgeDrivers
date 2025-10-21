@@ -13,6 +13,10 @@ local mock_device_onoff = test.mock_device.build_test_matter_device({
     vendor_id = 0x0000,
     product_id = 0x0000,
   },
+  matter_version = {
+    hardware = 1,
+    software = 1,
+  },
   endpoints = {
     {
       endpoint_id = 0,
