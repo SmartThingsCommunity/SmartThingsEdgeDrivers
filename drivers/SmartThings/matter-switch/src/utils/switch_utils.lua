@@ -21,7 +21,8 @@ local log = require "log"
 local utils = {}
 
 function utils.tbl_contains(array, value)
-  for _, element in ipairs(array) do
+  if value == nil then return false end
+  for _, element in pairs(array or {}) do
     if element == value then
       return true
     end
@@ -81,7 +82,7 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   for _, ep in ipairs(device.endpoints) do
     if ep.endpoint_id == endpoint_id then
       for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == fields.DIMMABLE_LIGHT_DEVICE_TYPE_ID then
+        if dt.device_type_id == fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE then
           for _, fingerprint in ipairs(fields.child_device_profile_overrides_per_vendor_id[0x115F]) do
             if device.manufacturer_info.product_id == fingerprint.product_id then
               return false -- For Aqara Dimmer Switch with Button.
@@ -93,6 +94,25 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
     end
   end
   return false
+end
+
+-- Some devices report multiple device types which are a subset of
+-- a superset device type (Ex. Dimmable Light is a superset of On/Off Light).
+-- We should map to the largest superset device type supported.
+-- This can be done by matching to the device type with the highest ID
+function utils.find_max_subset_device_type(ep, device_type_set)
+  if ep.endpoint_id == 0 then return end -- EP-scoped device types not permitted on Root Node
+  local primary_dt_id = ep.device_types[1] and ep.device_types[1].device_type_id
+  if utils.tbl_contains(device_type_set, primary_dt_id) then
+    for _, dt in ipairs(ep.device_types) do
+      -- only device types in the subset should be considered.
+      if utils.tbl_contains(device_type_set, dt.device_type_id) then
+        primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
+      end
+    end
+    return primary_dt_id
+  end
+  return nil
 end
 
 --- find_default_endpoint is a helper function to handle situations where
@@ -166,6 +186,13 @@ function utils.find_child(parent, ep_id)
   return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
 end
 
+function utils.get_endpoint_info(device, endpoint_id)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == endpoint_id then return ep end
+  end
+  return {}
+end
+
 -- Fallback handler for responses that dont have their own handler
 function utils.matter_handler(driver, device, response_block)
   device.log.info(string.format("Fallback handler for %s", response_block))
@@ -185,7 +212,7 @@ end
 function utils.detect_bridge(device)
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == fields.AGGREGATOR_DEVICE_TYPE_ID then
+      if dt.device_type_id == fields.DEVICE_TYPE_ID.AGGREGATOR then
         return true
       end
     end
