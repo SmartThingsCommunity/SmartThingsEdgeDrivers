@@ -117,7 +117,7 @@ zigbeeManufacturer:
     model: lumi.light.acn004
     deviceProfileName: aqara-light
   - id: "LUMI/lumi.light.cwacn1"
-    deviceLabel: Aqara Smart Dimmer Controller T1 (0~10v)
+    deviceLabel: Aqara Smart Dimmer Controller T1 (0-10v)
     manufacturer: LUMI
     model: lumi.light.cwacn1
     deviceProfileName: aqara-light
