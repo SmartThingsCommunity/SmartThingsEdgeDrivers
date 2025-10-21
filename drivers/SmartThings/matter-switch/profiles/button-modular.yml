@@ -1,0 +1,160 @@
+name: button-modular
+components:
+- id: main
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+    - id: motionSensor
+      version: 1
+      optional: true
+    - id: illuminanceMeasurement
+      version: 1
+      optional: true
+    - id: temperatureMeasurement
+      version: 1
+      optional: true
+    - id: relativeHumidityMeasurement
+      version: 1
+      optional: true
+    - id: fanMode
+      version: 1
+      optional: true
+    - id: fanSpeedPercent
+      version: 1
+      optional: true
+    - id: battery
+      version: 1
+      optional: true
+    - id: batteryLevel
+      version: 1
+      optional: true      
+    - id: firmwareUpdate
+      version: 1
+    - id: refresh
+      version: 1
+  categories:
+    - name: RemoteController
+- id: main
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+    - id: motionSensor
+      version: 1
+      optional: true
+    - id: illuminanceMeasurement
+      version: 1
+      optional: true
+    - id: temperatureMeasurement
+      version: 1
+      optional: true
+    - id: relativeHumidityMeasurement
+      version: 1
+      optional: true
+    - id: fanMode
+      version: 1
+      optional: true
+    - id: fanSpeedPercent
+      version: 1
+      optional: true
+    - id: battery
+      version: 1
+      optional: true
+    - id: batteryLevel
+      version: 1
+      optional: true      
+    - id: firmwareUpdate
+      version: 1
+    - id: refresh
+      version: 1
+  categories:
+    - name: Light
+- id: button2
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button3
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button4
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button5
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button6
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button7
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button8
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button9
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button10
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button11
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController
+- id: button12
+  optional: true
+  capabilities:
+    - id: button
+      version: 1
+      optional: true
+  categories:
+    - name: RemoteController

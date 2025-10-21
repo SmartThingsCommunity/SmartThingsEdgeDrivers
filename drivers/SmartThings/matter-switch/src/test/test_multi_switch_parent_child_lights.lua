@@ -162,6 +162,9 @@ end
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+  for _, child in pairs(mock_children) do
+    test.mock_device.add_test_device(child)
+  end  
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
@@ -170,10 +173,10 @@ local function test_init()
     clusters.ColorControl.attributes.ColorTemperatureMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    -- clusters.ColorControl.attributes.CurrentHue,
+    -- clusters.ColorControl.attributes.CurrentSaturation,
+    -- clusters.ColorControl.attributes.CurrentX,
+    -- clusters.ColorControl.attributes.CurrentY
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -189,12 +192,12 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "light-binary" })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  -- mock_device:expect_metadata_update({ profile = "light-binary" })
+  -- mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  for _, child in pairs(mock_children) do
-    test.mock_device.add_test_device(child)
-  end
+  -- for _, child in pairs(mock_children) do
+  --   test.mock_device.add_test_device(child)
+  -- end
 
   mock_device:expect_device_create({
     type = "EDGE_CHILD",
@@ -211,6 +214,17 @@ local function test_init()
     parent_device_id = mock_device.id,
     parent_assigned_child_key = string.format("%d", child2_ep)
   })
+
+  mock_device:expect_metadata_update({ profile = "light-binary" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  -- test.wait_for_events()
+
+  -- test.socket.device_lifecycle:__queue_receive({ mock_children[child1_ep].id, "added" })
+  -- test.socket.device_lifecycle:__queue_receive({ mock_children[child2_ep].id, "added" })
+  -- local on_off_read = cluster_subscribe_list[1]:read(mock_device)
+  -- test.socket.matter:__expect_send({mock_device.id, on_off_read})
+
 end
 
 local child_profiles_non_sequential = {
@@ -294,6 +308,18 @@ local function test_init_parent_child_endpoints_non_sequential()
 end
 
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Ensure subscribe works",
+  function ()
+      test.wait_for_events()
+
+  -- test.socket.device_lifecycle:__queue_receive({ mock_children[child1_ep].id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  local on_off_read = clusters.OnOff.attributes.OnOff:read(mock_device)
+  test.socket.matter:__expect_send({mock_device.id, on_off_read})
+  end
+)
 
 test.register_message_test(
   "Parent device: switch capability should send the appropriate commands",

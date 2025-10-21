@@ -42,6 +42,8 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+local matter_driver_template
+
 local SwitchLifecycleHandlers = {}
 
 function SwitchLifecycleHandlers.device_added(driver, device)
@@ -49,6 +51,7 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device:send(clusters.OnOff.attributes.OnOff:read(device))
+    device:subscribe()
   elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.handle_electrical_sensor_info(device)
   end
@@ -89,17 +92,17 @@ function SwitchLifecycleHandlers.device_init(driver, device)
 
     device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
     device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
-    _ = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and device:set_find_child(switch_utils.find_child)
-
-    -- ensure subscription to eps mapped to child devices
-    local primary_ep_id = switch_utils.find_default_endpoint(device)
-    for _, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= primary_ep_id then
-        local primary_dt_id = switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.LIGHT)
-          or switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.SWITCH)
-          or ep.device_types[1].device_type_id
-        for _, attr in pairs(fields.device_type_attribute_map[primary_dt_id] or {}) do
-          device:add_subscribed_attribute(attr)
+    if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
+      device:set_find_child(switch_utils.find_child)
+      local child_devices = device:get_child_list()
+      for _, child_device in ipairs(child_devices) do
+        print(child_device)
+        for cap_id, attributes in pairs(matter_driver_template.subscribed_attributes) do
+          if child_device:supports_capability_by_id(cap_id) then
+            for _, attr in ipairs(attributes) do
+              device:add_subscribed_attribute(attr)
+            end
+          end
         end
       end
     end
@@ -111,10 +114,19 @@ function SwitchLifecycleHandlers.device_init(driver, device)
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then
         device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false})
     end
+  elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    for cap_id, attributes in pairs(matter_driver_template.subscribed_attributes) do
+      if device:supports_capability_by_id(cap_id) then
+        for _, attr in ipairs(attributes) do
+          device:add_subscribed_attribute(attr)
+        end
+      end
+    end
+    device:subscribe()
   end
 end
 
-local matter_driver_template = {
+matter_driver_template = {
   lifecycle_handlers = {
     added = SwitchLifecycleHandlers.device_added,
     doConfigure = SwitchLifecycleHandlers.do_configure,
