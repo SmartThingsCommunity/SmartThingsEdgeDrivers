@@ -15,8 +15,6 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
---- @type st.zwave.CommandClass.Version
-local Version = (require "st.zwave.CommandClass.Version")({ version=1 })
 --- @type st.zwave.CommandClass.Association
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchBinary
@@ -313,10 +311,6 @@ local function switch_set_on_off_handler(value)
   end
 end
 
-local function version_report(driver, device, cmd)
-  log.info("Firmware Version: "..cmd.args.firmware_0_version.."."..cmd.args.firmware_0_sub_version)
-end
-
 local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_1_TIME] = capabilities.button.button.pushed,
   [CentralScene.key_attributes.KEY_RELEASED] = capabilities.button.button.held,
@@ -362,9 +356,6 @@ local inovelli_vzw32_sn = {
   zwave_handlers = {
     [cc.CENTRAL_SCENE] = {
       [CentralScene.NOTIFICATION] = central_scene_notification_handler
-    },
-    [cc.VERSION] = {
-      [Version.REPORT] = version_report
     },
   },
   capability_handlers = {
