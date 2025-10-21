@@ -350,20 +350,6 @@ local function central_scene_notification_handler(self, device, cmd)
   end
 end
 
-local function basic_and_switch_binary_report_handler(driver, device, cmd)
-  local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
-  local event = value == SwitchBinary.value.OFF_DISABLE and capabilities.switch.switch.off() or capabilities.switch.switch.on()
-  device:emit_event_for_endpoint(cmd.src_channel, event)
-end
-
-local function onoff_level_report_handler(self, device, cmd)
-  local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
-  device:emit_event(value == SwitchMultilevel.value.OFF_DISABLE and capabilities.switch.switch.off() or capabilities.switch.switch.on())
-  if value >= 0 then
-    device:emit_event(capabilities.switchLevel.level(value >= 99 and 100 or value))
-  end
-end
-
 -------------------------------------------------------------------------------------------
 -- Register message handlers and run driver
 -------------------------------------------------------------------------------------------
@@ -380,12 +366,6 @@ local inovelli_vzw32_sn = {
     [cc.VERSION] = {
       [Version.REPORT] = version_report
     },
-    [cc.BASIC] = {
-      [Basic.REPORT] = basic_and_switch_binary_report_handler
-    },
-    [cc.SWITCH_MULTILEVEL] = {
-      [SwitchMultilevel.REPORT] = onoff_level_report_handler
-    }
   },
   capability_handlers = {
     [capabilities.switch.ID] = {
