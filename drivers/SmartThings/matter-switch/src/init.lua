@@ -66,9 +66,14 @@ end
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
-    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    if #button_eps > 0 and device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    if device.network_type == device_lib.NETWORK_TYPE_MATTER then
       button_cfg.configure_buttons(device)
+    end
+  end
+
+  if device.matter_version.software ~= args.old_st_store.matter_version.software then
+    if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+      device_cfg.match_profile(driver, device)
     end
   end
 end
