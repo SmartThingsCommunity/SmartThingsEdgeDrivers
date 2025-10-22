@@ -247,6 +247,7 @@ local device_init = function(self, device)
       device:emit_event(capabilities.colorControl.saturation(1))
     end
     if device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME) == nil then
+      device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
       device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
     end
     if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil then
@@ -270,7 +271,7 @@ local function info_changed(driver, device, event, args)
       local preferences = preferencesMap.get_device_parameters(device)
       if args.old_st_store.preferences["notificationChild"] ~= device.preferences.notificationChild and args.old_st_store.preferences["notificationChild"] == false and device.preferences.notificationChild == true then
         if not device:get_child_by_parent_assigned_key('notification') then
-          add_child(driver,device,'rgbw-bulb-2700K-6500K','notificaiton')
+          add_child(driver,device,'rgbw-bulb','notificaiton')
         end
       end
 

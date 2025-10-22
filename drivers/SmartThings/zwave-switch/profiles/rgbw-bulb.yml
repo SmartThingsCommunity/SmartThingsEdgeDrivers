@@ -1,4 +1,4 @@
-name: rgbw-bulb-2700K-6500K
+name: rgbw-bulb
 components:
 - id: main
   capabilities:
@@ -8,10 +8,6 @@ components:
     version: 1
   - id: colorTemperature
     version: 1
-    config:
-      values:
-        - key: "colorTemperature.value"
-          range: [ 2700, 6500 ]
   - id: colorControl
     version: 1
   - id: firmwareUpdate
