@@ -237,7 +237,6 @@ local device_init = function(self, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
-    device:send(Version:Get({}))
     initialize(device)
   else
     if device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) == nil then
