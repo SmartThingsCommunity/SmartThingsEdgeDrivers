@@ -212,10 +212,10 @@ end
 -- Run all tests
 local function run_tests()
   print("Running Inovelli VZW32-SN utility function tests...")
-  
+
   test_hue_percent_to_value()
   print("✓ huePercentToValue tests passed")
-  
+
   test_preferences_to_numeric_value()
   print("✓ preferences_to_numeric_value tests passed")
 

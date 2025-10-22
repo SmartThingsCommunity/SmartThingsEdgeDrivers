@@ -49,7 +49,7 @@ local mock_parent_device = test.mock_device.build_test_zwave_device({
 })
 
 -- Create mock child device (notification device)
-local mock_child_device = test.mock_device.build_test_device({
+local mock_child_device = test.mock_device.build_test_child_device({
   profile = t_utils.get_profile_definition("rgbw-bulb.yml"),
   parent_device_id = mock_parent_device.id,
   parent_assigned_child_key = "notification"

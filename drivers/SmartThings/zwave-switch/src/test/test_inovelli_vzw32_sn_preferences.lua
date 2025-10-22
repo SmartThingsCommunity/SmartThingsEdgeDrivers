@@ -19,6 +19,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({version=4
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
+local json = require "st.json"
 
 -- Inovelli VZW32-SN device identifiers
 local INOVELLI_MANUFACTURER_ID = 0x031E
@@ -68,7 +69,7 @@ test.register_message_test(
       message = {
         mock_inovelli_vzw32_sn.id,
         "infoChanged",
-        utils.json_encode({
+        json.encode({
           old_st_store = {
             preferences = {
               notificationChild = false
@@ -106,7 +107,7 @@ test.register_message_test(
       message = {
         mock_inovelli_vzw32_sn.id,
         "infoChanged",
-        utils.json_encode({
+        json.encode({
           old_st_store = {
             preferences = {
               ledIntensity = 50
@@ -162,7 +163,7 @@ test.register_message_test(
       message = {
         mock_inovelli_vzw32_sn.id,
         "infoChanged",
-        utils.json_encode({
+        json.encode({
           old_st_store = {
             preferences = {
               ledIntensity = 50,
@@ -246,7 +247,7 @@ test.register_message_test(
       message = {
         mock_inovelli_vzw32_sn.id,
         "infoChanged",
-        utils.json_encode({
+        json.encode({
           old_st_store = {
             preferences = {
               ledEnabled = false
@@ -302,7 +303,7 @@ test.register_message_test(
       message = {
         mock_inovelli_vzw32_sn.id,
         "infoChanged",
-        utils.json_encode({
+        json.encode({
           old_st_store = {
             preferences = {
               largeValue = 100
