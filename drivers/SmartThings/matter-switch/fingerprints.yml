@@ -636,6 +636,11 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1002
     deviceProfileName: switch-level
+  - id: "4251/4102"
+    deviceLabel: Decora Smart Motion Sensing Dimmer Switch
+    vendorId: 0x109B
+    productId: 0x1006
+    deviceProfileName: light-level-motion
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
