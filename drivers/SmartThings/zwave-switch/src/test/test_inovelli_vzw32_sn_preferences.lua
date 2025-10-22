@@ -18,7 +18,6 @@ local zw_test_utils = require "integration_test.zwave_test_utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=4})
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
 local json = require "st.json"
 
 -- Inovelli VZW32-SN device identifiers
