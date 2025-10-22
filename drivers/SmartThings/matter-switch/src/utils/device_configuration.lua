@@ -182,18 +182,22 @@ function DeviceConfiguration.match_profile(driver, device)
   if #server_onoff_ep_ids > 0 then
     SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, main_endpoint_id)
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, main_endpoint_id)
-    local find_substr = function(s, p) return string.find(s or "", p, 1, true) end
+    local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
 
-    if find_substr(updated_profile, "plug-binary") or find_substr(updated_profile, "plug-level") then
-      local electrical_tags = ""
-      if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-power" end
-      if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
-      if electrical_tags ~= "" then updated_profile = string.gsub(updated_profile, "-binary", "") .. electrical_tags end
-    elseif find_substr(updated_profile, "light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+    if generic_profile("plug-binary") or generic_profile("plug-level") then
+      if switch_utils.check_switch_category_vendor_overrides(device) then
+        updated_profile = string.gsub(updated_profile, "plug", "switch")
+      else
+        local electrical_tags = ""
+        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-power" end
+        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
+        if electrical_tags ~= "" then updated_profile = string.gsub(updated_profile, "-binary", "") .. electrical_tags end
+      end
+    elseif generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
-    elseif find_substr(updated_profile, "light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
+    elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
-    elseif find_substr(updated_profile, "light-level-colorTemperature") or find_substr(updated_profile, "light-color-level") then
+    elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
       return

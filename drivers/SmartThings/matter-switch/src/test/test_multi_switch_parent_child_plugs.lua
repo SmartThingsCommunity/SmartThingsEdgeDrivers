@@ -197,7 +197,7 @@ local function test_init_child_profile_override()
   test.socket.matter:__expect_send({mock_device_child_profile_override.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_child_profile_override.id, "doConfigure" })
-  mock_device_child_profile_override:expect_metadata_update({ profile = "plug-binary" })
+  mock_device_child_profile_override:expect_metadata_update({ profile = "switch-binary" })
   mock_device_child_profile_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children_child_profile_override) do

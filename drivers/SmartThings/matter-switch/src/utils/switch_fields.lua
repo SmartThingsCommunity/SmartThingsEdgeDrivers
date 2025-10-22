@@ -123,7 +123,32 @@ SwitchFields.child_device_profile_overrides_per_vendor_id = {
     { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
     { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
     { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-  }
+  },
+}
+
+SwitchFields.switch_category_vendor_overrides = {
+  [0x1432] = -- Elko
+    {0x1000},
+  [0x130A] = -- Eve
+    {0x005D, 0x0043},
+  [0x1339] = -- GE
+    {0x007D, 0x0074, 0x0075},
+  [0x1372] = -- Innovation Matters
+    {0x0002},
+  [0x1021] = -- Legrand
+    {0x0005},
+  [0x109B] = -- Leviton
+    {0x1001, 0x1000, 0x100B, 0x100E, 0x100C, 0x100D, 0x1009, 0x1003, 0x1004, 0x1002},
+  [0x142B] = -- LeTianPai
+    {0x1004, 0x1003, 0x1002},
+  [0x1509] = -- SmartSetup
+    {0x0004, 0x0001},
+  [0x1321] = -- SONOFF
+    {0x000B, 0x000C, 0x000D},
+  [0x147F] = -- U-Tec
+    {0x0004},
+  [0x139C] = -- Zemismart
+    {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
 }
 
 SwitchFields.CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
