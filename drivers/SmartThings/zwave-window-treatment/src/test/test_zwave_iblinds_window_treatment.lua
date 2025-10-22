@@ -49,6 +49,15 @@ local mock_blind_v3 = test.mock_device.build_test_zwave_device({
 local function test_init()
   test.mock_device.add_test_device(mock_blind)
   test.mock_device.add_test_device(mock_blind_v3)
+  test.socket.capability:__expect_send(
+    mock_blind:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_blind:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_blind_v3:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition"}, {visibility = {displayed=false}}))
+  )
 end
 test.set_test_init_function(test_init)
 
@@ -240,13 +249,15 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle():__queue_receive({mock_blind.id, "init"})
-      test.socket.device_lifecycle():__queue_receive(mock_blind:generate_info_changed(
-          {
-              preferences = {
-                presetPosition = 35
-              }
-          }
-      ))
+      test.socket.capability:__queue_receive(
+        {
+          mock_blind.id,
+          { capability = "windowShadePreset", component = "main", command = "setPresetPosition", args = {35} }
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_blind:generate_test_message("main", capabilities.windowShadePreset.position(35))
+      )
       test.wait_for_events()
       test.socket.capability:__queue_receive(
         {

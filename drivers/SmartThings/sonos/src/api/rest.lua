@@ -74,7 +74,7 @@ local SonosRestApi = {}
 --- Query a Sonos Group IP address for individual player info
 ---@param url table a URL table created by `net_url`
 ---@param headers table<string,string>?
----@return SonosDiscoveryInfo|SonosErrorResponse|nil
+---@return SonosDiscoveryInfoObject|SonosErrorResponse|nil
 ---@return string|nil error
 function SonosRestApi.get_player_info(url, headers)
   url.path = "/api/v1/players/local/info"
