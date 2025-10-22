@@ -65,8 +65,8 @@ end
 
 function utils.check_vendor_overrides(device, override_key)
   for product_id, overrides in pairs(fields.vendor_overrides[device.manufacturer_info.vendor_id] or {}) do
-    if product_id == device.manufacturer_info.product_id and overrides[override_key] ~= nil then
-      return true
+    if product_id == device.manufacturer_info.product_id then
+      return overrides[override_key]
     end
   end
 end
