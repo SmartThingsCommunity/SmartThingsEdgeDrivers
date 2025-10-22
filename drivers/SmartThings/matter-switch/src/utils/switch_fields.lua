@@ -45,9 +45,14 @@ SwitchFields.SWITCH_LEVEL_LIGHTING_MIN = 1
 SwitchFields.CURRENT_HUESAT_ATTR_MIN = 0
 SwitchFields.CURRENT_HUESAT_ATTR_MAX = 254
 
-
--- DEVICE TYPES
 SwitchFields.DEVICE_TYPE_ID = {
+  AGGREGATOR = 0x000E,
+  DIMMABLE_PLUG_IN_UNIT = 0x010B,
+  ELECTRICAL_SENSOR = 0x0510,
+  GENERIC_SWITCH = 0x000F,
+  MOUNTED_ON_OFF_CONTROL = 0x010F,
+  MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
+  ON_OFF_PLUG_IN_UNIT = 0x010A,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -59,13 +64,6 @@ SwitchFields.DEVICE_TYPE_ID = {
     DIMMER = 0x0104,
     COLOR_DIMMER = 0x0105,
   },
-  AGGREGATOR = 0x000E,
-  ON_OFF_PLUG_IN_UNIT = 0x010A,
-  DIMMABLE_PLUG_IN_UNIT = 0x010B,
-  MOUNTED_ON_OFF_CONTROL = 0x010F,
-  MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
-  GENERIC_SWITCH = 0x000F,
-  ELECTRICAL_SENSOR = 0x0510,
 }
 
 SwitchFields.device_type_profile_map = {
@@ -73,11 +71,11 @@ SwitchFields.device_type_profile_map = {
   [SwitchFields.DEVICE_TYPE_ID.LIGHT.DIMMABLE] = "light-level",
   [SwitchFields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE] = "light-level-colorTemperature",
   [SwitchFields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR] = "light-color-level",
-  [SwitchFields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT] = "plug-binary",
-  [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT] = "plug-level",
   [SwitchFields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT] = "switch-binary",
   [SwitchFields.DEVICE_TYPE_ID.SWITCH.DIMMER] = "switch-level",
   [SwitchFields.DEVICE_TYPE_ID.SWITCH.COLOR_DIMMER] = "switch-color-level",
+  [SwitchFields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT] = "plug-binary",
+  [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT] = "plug-level",
   [SwitchFields.DEVICE_TYPE_ID.MOUNTED_ON_OFF_CONTROL] = "switch-binary",
   [SwitchFields.DEVICE_TYPE_ID.MOUNTED_DIMMABLE_LOAD_CONTROL] = "switch-level",
 }

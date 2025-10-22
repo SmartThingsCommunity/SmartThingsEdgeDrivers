@@ -96,26 +96,6 @@ function SwitchDeviceConfiguration.create_child_devices(driver, device, server_o
   device:set_find_child(switch_utils.find_child)
 end
 
-function SwitchDeviceConfiguration.update_devices_with_onOff_server_clusters(device, main_endpoint)
-  local cluster_id = 0
-  for _, ep in ipairs(device.endpoints) do
-    -- main_endpoint only supports server cluster by definition of get_endpoints()
-    if main_endpoint == ep.endpoint_id then
-      for _, dt in ipairs(ep.device_types) do
-        -- no device type that is not in the switch subset should be considered.
-        if (fields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT <= dt.device_type_id and dt.device_type_id <= fields.DEVICE_TYPE_ID.SWITCH.COLOR_DIMMER) then
-          cluster_id = math.max(cluster_id, dt.device_type_id)
-        end
-      end
-      break
-    end
-  end
-
-  if fields.device_type_profile_map[cluster_id] then
-    device:try_update_metadata({profile = fields.device_type_profile_map[cluster_id]})
-  end
-end
-
 function ButtonDeviceConfiguration.update_button_profile(device, main_endpoint, num_button_eps)
   local profile_name = string.gsub(num_button_eps .. "-button", "1%-", "") -- remove the "1-" in a device with 1 button ep
   if switch_utils.device_type_supports_button_switch_combination(device, main_endpoint) then
