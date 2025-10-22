@@ -64,10 +64,10 @@ function utils.mired_to_kelvin(value, minOrMax)
 end
 
 function utils.check_vendor_overrides(device, override_key)
-  for product_id, overrides in pairs(fields.vendor_overrides[device.manufacturer_info.vendor_id] or {}) do
-    if product_id == device.manufacturer_info.product_id then
-      return overrides[override_key]
-    end
+  if fields.vendor_overrides[device.manufacturer_info.vendor_id]
+  and fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id]
+  then
+    return fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id][override_key]
   end
 end
 
