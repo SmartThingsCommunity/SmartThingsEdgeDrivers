@@ -15,16 +15,8 @@
 -- Unit tests for Inovelli VZW32-SN utility functions
 -- This file tests the helper functions used in the driver
 
-local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local zw = require "st.zwave"
-local zw_test_utils = require "integration_test.zwave_test_utils"
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
-local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
-
--- Import the driver module to test its functions
-local inovelli_driver = require "inovelli-vzw32-sn"
 
 -- Test huePercentToValue function
 local function test_hue_percent_to_value()
@@ -226,22 +218,22 @@ local function run_tests()
   
   test_preferences_to_numeric_value()
   print("✓ preferences_to_numeric_value tests passed")
-  
+
   test_preferences_calculate_parameter()
   print("✓ preferences_calculate_parameter tests passed")
-  
+
   test_component_to_endpoint()
   print("✓ component_to_endpoint tests passed")
-  
+
   test_endpoint_to_component()
   print("✓ endpoint_to_component tests passed")
-  
+
   test_button_to_component()
   print("✓ button_to_component tests passed")
-  
+
   test_get_notification_value()
   print("✓ getNotificationValue tests passed")
-  
+
   print("All utility function tests passed!")
 end
 

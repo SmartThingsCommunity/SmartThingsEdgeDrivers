@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=4})
@@ -66,9 +65,9 @@ test.register_message_test(
     {
       channel = "device_lifecycle",
       direction = "receive",
-      message = { 
-        mock_inovelli_vzw32_sn.id, 
-        "infoChanged", 
+      message = {
+        mock_inovelli_vzw32_sn.id,
+        "infoChanged",
         utils.json_encode({
           old_st_store = {
             preferences = {
@@ -104,9 +103,9 @@ test.register_message_test(
     {
       channel = "device_lifecycle",
       direction = "receive",
-      message = { 
-        mock_inovelli_vzw32_sn.id, 
-        "infoChanged", 
+      message = {
+        mock_inovelli_vzw32_sn.id,
+        "infoChanged",
         utils.json_encode({
           old_st_store = {
             preferences = {
@@ -160,9 +159,9 @@ test.register_message_test(
     {
       channel = "device_lifecycle",
       direction = "receive",
-      message = { 
-        mock_inovelli_vzw32_sn.id, 
-        "infoChanged", 
+      message = {
+        mock_inovelli_vzw32_sn.id,
+        "infoChanged",
         utils.json_encode({
           old_st_store = {
             preferences = {
@@ -244,9 +243,9 @@ test.register_message_test(
     {
       channel = "device_lifecycle",
       direction = "receive",
-      message = { 
-        mock_inovelli_vzw32_sn.id, 
-        "infoChanged", 
+      message = {
+        mock_inovelli_vzw32_sn.id,
+        "infoChanged",
         utils.json_encode({
           old_st_store = {
             preferences = {
@@ -300,9 +299,9 @@ test.register_message_test(
     {
       channel = "device_lifecycle",
       direction = "receive",
-      message = { 
-        mock_inovelli_vzw32_sn.id, 
-        "infoChanged", 
+      message = {
+        mock_inovelli_vzw32_sn.id,
+        "infoChanged",
         utils.json_encode({
           old_st_store = {
             preferences = {
