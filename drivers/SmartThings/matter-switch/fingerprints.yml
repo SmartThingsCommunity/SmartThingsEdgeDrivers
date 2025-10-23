@@ -552,7 +552,7 @@ matterManufacturer:
     deviceLabel: IM Pushbutton Module
     vendorId: 0x1372
     productId: 0x0002
-    deviceProfileName: switch-binary
+    deviceProfileName: 4-button
 #JUNG
   - id: "5161/1"
     deviceLabel: Matter Push button 2-gang
