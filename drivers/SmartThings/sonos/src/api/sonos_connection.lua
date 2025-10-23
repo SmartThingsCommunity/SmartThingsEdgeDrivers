@@ -55,7 +55,7 @@ local _update_subscriptions_helper = function(
   command,
   reply_tx
 )
-  for _, namespace in ipairs(namespaces) do
+  for _, namespace in ipairs(namespaces or {}) do
     local wss_msg_header = {
       namespace = namespace,
       command = command,
@@ -467,9 +467,10 @@ function SonosConnection.new(driver, device)
         if body.version ~= favorites_version then
           favorites_version = body.version
 
-          local household = self.driver.sonos:get_household(header.householdId) or { groups = {} }
+          local household = self.driver.sonos:get_household(header.householdId)
+            or self.driver.sonos.EMPTY_HOUSEHOLD
 
-          for group_id, group in pairs(household.groups) do
+          for group_id, group in pairs(household.groups or {}) do
             local coordinator_id =
               self.driver.sonos:get_coordinator_for_group(header.householdId, group_id)
             local coordinator_player = household.players[coordinator_id]
