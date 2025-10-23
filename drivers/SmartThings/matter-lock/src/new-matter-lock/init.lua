@@ -24,6 +24,10 @@ if version.api < 10 then
   clusters.DoorLock = require "DoorLock"
 end
 
+local DEVICE_TYPE_ID = {
+  DOOR_LOCK = 0x000A
+}
+
 local DoorLock = clusters.DoorLock
 local PowerSource = clusters.PowerSource
 
@@ -209,35 +213,39 @@ local function match_profile_modular(driver, device)
   local enabled_optional_component_capability_pairs = {}
   local main_component_capabilities = {}
   local modular_profile_name = "lock-modular"
-  for _, device_ep in pairs(device.endpoints) do
-    for _, ep_cluster in pairs(device_ep.clusters) do
-      if ep_cluster.cluster_id == DoorLock.ID then
-        local clus_has_feature = function(feature_bitmap)
-          return DoorLock.are_features_supported(feature_bitmap, ep_cluster.feature_map)
-        end
-        if clus_has_feature(DoorLock.types.Feature.USER) then
-          table.insert(main_component_capabilities, capabilities.lockUsers.ID)
-        end
-        if clus_has_feature(DoorLock.types.Feature.PIN_CREDENTIAL) then
-          table.insert(main_component_capabilities, capabilities.lockCredentials.ID)
-        end
-        if clus_has_feature(DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES) or
-          clus_has_feature(DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES) then
-          table.insert(main_component_capabilities, capabilities.lockSchedules.ID)
-        end
-        if clus_has_feature(DoorLock.types.Feature.UNBOLT) then
-          device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
-          device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
-          modular_profile_name = "lock-modular-embedded-unlatch" -- use the embedded config specified in this profile for devices supporting "unlatch"
-        else
-          device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
-          device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-        end
-        if clus_has_feature(DoorLock.types.Feature.ALIRO_PROVISIONING) then
-          table.insert(main_component_capabilities, capabilities.lockAliro.ID)
-        end
-        break
+  local door_lock_ep_data
+  for _, ep_data in ipairs(device.endpoints) do
+    if ep_data.device_types[1].device_type_id == DEVICE_TYPE_ID.DOOR_LOCK then
+      door_lock_ep_data = ep_data
+    end
+  end
+  for _, cluster in pairs(door_lock_ep_data.clusters) do
+    if cluster.cluster_id == DoorLock.ID then
+      local clus_has_feature = function(feature_bitmap)
+        return DoorLock.are_features_supported(feature_bitmap, cluster.feature_map)
       end
+      if clus_has_feature(DoorLock.types.Feature.USER) then
+        table.insert(main_component_capabilities, capabilities.lockUsers.ID)
+      end
+      if clus_has_feature(DoorLock.types.Feature.PIN_CREDENTIAL) then
+        table.insert(main_component_capabilities, capabilities.lockCredentials.ID)
+      end
+      if clus_has_feature(DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES) or
+        clus_has_feature(DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES) then
+        table.insert(main_component_capabilities, capabilities.lockSchedules.ID)
+      end
+      if clus_has_feature(DoorLock.types.Feature.UNBOLT) then
+        device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+        device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+        modular_profile_name = "lock-modular-embedded-unlatch" -- use the embedded config specified in this profile for devices supporting "unlatch"
+      else
+        device:emit_event(capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+        device:emit_event(capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+      end
+      if clus_has_feature(DoorLock.types.Feature.ALIRO_PROVISIONING) then
+        table.insert(main_component_capabilities, capabilities.lockAliro.ID)
+      end
+      break
     end
   end
 
