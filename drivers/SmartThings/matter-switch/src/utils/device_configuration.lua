@@ -62,8 +62,8 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, onoff_ep_
   return profile
 end
 
-function SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, main_endpoint_id)
-  if #server_onoff_ep_ids == 1 and server_onoff_ep_ids[1] == main_endpoint_id then -- no children will be created
+function SwitchDeviceConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, main_endpoint_id)
+  if #server_onoff_ep_ids == 1 and server_onoff_ep_ids[1] == main_endpoint_id then -- no children will exist
    return
   end
 
@@ -72,18 +72,23 @@ function SwitchDeviceConfiguration.create_child_devices(driver, device, server_o
   for idx, ep_id in ipairs(server_onoff_ep_ids) do
     device_num = device_num + 1
     if ep_id ~= main_endpoint_id then -- don't create a child device that maps to the main endpoint
-      local name = string.format("%s %d", device.label, device_num)
+      local child_device_name = string.format("%s %d", device.label, device_num)
       local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
-      driver:try_create_device(
-        {
+      local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
+      if not existing_child_device then
+        driver:try_create_device({
           type = "EDGE_CHILD",
-          label = name,
+          label = child_device_name,
           profile = child_profile,
           parent_device_id = device.id,
           parent_assigned_child_key = string.format("%d", ep_id),
-          vendor_provided_label = name
-        }
-      )
+          vendor_provided_label = child_device_name
+        })
+      else
+        existing_child_device:try_update_metadata({
+          profile = child_profile
+        })
+      end
       if idx == 1 and string.find(child_profile, "energy") then
         -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
         device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep_id, {persist = true})
@@ -133,7 +138,7 @@ function ButtonDeviceConfiguration.configure_buttons(device)
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
 
-  for _, ep in ipairs(ms_eps) do
+  for _, ep in ipairs(ms_eps or {}) do
     if device.profile.components[switch_utils.endpoint_to_component(device, ep)] then
       device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event
@@ -180,7 +185,7 @@ function DeviceConfiguration.match_profile(driver, device)
 
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID, { cluster_type = "SERVER" })
   if #server_onoff_ep_ids > 0 then
-    SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, main_endpoint_id)
+    SwitchDeviceConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, main_endpoint_id)
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, main_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
 

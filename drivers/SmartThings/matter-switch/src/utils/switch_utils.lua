@@ -229,12 +229,11 @@ function utils.detect_bridge(device)
 end
 
 function utils.detect_matter_thing(device)
-  for _, capability in ipairs(fields.supported_capabilities) do
-    if device:supports_capability(capability) then
-      return false
-    end
+  -- every profile except for matter-thing supports at least 2 capabilities (refresh, firmwareUpdate)
+  for i, _ in pairs(device.profile.components.main.capabilities) do
+    if i > 1 then return false end
   end
-  return device:supports_capability(capabilities.refresh)
+  return true
 end
 
 function utils.report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
