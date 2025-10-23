@@ -34,6 +34,11 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: SMSZB-120
     deviceProfileName: smoke-temp-battery-alarm
+  - id: "frient/HESZB-120"
+    deviceLabel: frient Heat Detector
+    manufacturer: frient A/S
+    model: HESZB-120
+    deviceProfileName: heat-temp-battery-alarm
   - id: "Heiman/Orvibo/Gas3"
     deviceLabel: Orvibo Gas Detector
     manufacturer: Heiman
