@@ -405,7 +405,7 @@ function SonosConnection.new(driver, device)
             )
             return
           end
-          local group = household.groups[header.groupId] or { playerIds = {} }
+          local group = household.groups[header.groupId] or { player_ids = {} }
           for _, player_id in ipairs(group.player_ids) do
             local device_for_player = self.driver:device_for_player(header.householdId, player_id)
             --- we've seen situations where these messages can be processed while a device
@@ -429,7 +429,7 @@ function SonosConnection.new(driver, device)
           )
           return
         end
-        local group = household.groups[header.groupId] or { playerIds = {} }
+        local group = household.groups[header.groupId] or { player_ids = {} }
         for _, player_id in ipairs(group.player_ids) do
           local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
@@ -452,7 +452,7 @@ function SonosConnection.new(driver, device)
           )
           return
         end
-        local group = household.groups[header.groupId] or { playerIds = {} }
+        local group = household.groups[header.groupId] or { player_ids = {} }
         for _, player_id in ipairs(group.player_ids) do
           local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
