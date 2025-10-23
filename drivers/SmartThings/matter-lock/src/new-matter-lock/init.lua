@@ -217,6 +217,7 @@ local function match_profile_modular(driver, device)
   for _, ep_data in ipairs(device.endpoints) do
     if ep_data.device_types[1].device_type_id == DEVICE_TYPE_ID.DOOR_LOCK then
       door_lock_ep_data = ep_data
+      break
     end
   end
   for _, cluster in pairs(door_lock_ep_data.clusters) do
