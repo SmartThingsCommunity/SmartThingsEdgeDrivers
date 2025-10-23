@@ -78,6 +78,9 @@ function SwitchLifecycleHandlers.device_removed(driver, device)
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
+  device:send(clusters.Descriptor.attributes.PartsList:read(device))
+  device:send(clusters.Descriptor.attributes.TagList:read(device))
+
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.check_field_name_updates(device)
     device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
