@@ -259,7 +259,9 @@ local function _oauth_reconnect_task(sonos_conn)
 
       if unauthorized then
         sonos_conn.driver:alert_unauthorized()
-        local token, channel_error = token_receive_handle:receive()
+        local token, channel_error =
+          (token_receive_handle and token_receive_handle:receive()) or nil,
+          "no token receive handle"
         if not token then
           log.warn(string.format("Error requesting token: %s", channel_error))
           local _, get_token_err = sonos_conn.driver:get_oauth_token()
