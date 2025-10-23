@@ -156,6 +156,21 @@ matterManufacturer:
     vendorId: 0x1457
     productId: 0x0002
     deviceProfileName: window-covering-battery
+  - id: "5207/22"
+    deviceLabel: WISTAR WSCMXH Smart Vertical Blind Motor
+    vendorId: 0x1457
+    productId: 0x0016
+    deviceProfileName: window-covering-tilt
+  - id: "5207/23"
+    deviceLabel: WISTAR WSCMXF Smart Vertical Blind Motor
+    vendorId: 0x1457
+    productId: 0x0017
+    deviceProfileName: window-covering-tilt
+  - id: "5207/24"
+    deviceLabel: WISTAR WSCMXF-LED Smart Vertical Blind Motor
+    vendorId: 0x1457
+    productId: 0x0018
+    deviceProfileName: window-covering-tilt  
 #Yooksmart
   - id: "5411/1052"
     deviceLabel: Smart WindowCovering Series
