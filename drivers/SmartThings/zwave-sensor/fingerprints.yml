@@ -548,6 +548,11 @@ zwaveManufacturer:
     productType: 0x0100
     productId: 0x0082
     deviceProfileName: shelly-wave-motion
+  - id: "aeotec/water/8"
+    deviceLabel: Aeotec Water Sensor 8
+    manufacturerId: 0x0371
+    productId: 0x0038
+    deviceProfileName: aeotec-water-sensor-8
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor

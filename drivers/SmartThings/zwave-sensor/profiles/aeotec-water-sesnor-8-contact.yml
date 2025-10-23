@@ -1,8 +1,8 @@
-name: aeotec-water-sensor-8
+name: aeotec-water-sensor-8-contact
 components:
 - id: main
   capabilities:
-  - id: waterSensor
+  - id: contactSensor
     version: 1
   - id: temperatureMeasurement
     config:
@@ -25,7 +25,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: LeakSensor
+  - name: ContactSensor
 preferences:
   - name: "parameter1"
     title: "1 Set threshold Check Time"
