@@ -31,11 +31,30 @@ local DeviceConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 
+local function server_onoff_supported(ep_info)
+  for _, cluster in pairs(ep_info.clusters) do
+    if cluster.cluster_id == clusters.OnOff.ID then
+      if cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH" then
+        return true
+      else
+        return false
+      end
+    end
+  end
+end
+
 function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, onoff_ep_id, is_child_device)
-  local ep = switch_utils.get_endpoint_info(device, onoff_ep_id)
-  local primary_dt_id = switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.LIGHT)
-    or (switch_utils.detect_matter_thing(device) and switch_utils.find_max_subset_device_type(ep, fields.DEVICE_TYPE_ID.SWITCH))
-    or ep.device_types[1] and ep.device_types[1].device_type_id
+  local ep_info = switch_utils.get_endpoint_info(device, onoff_ep_id)
+
+  local primary_dt_id = switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.LIGHT)
+    or ep_info.device_types[1] and ep_info.device_types[1].device_type_id
+
+  -- workaround: for 'Light Switch' Device Type EPs that break spec and implement their OnOff cluster as 'server'.
+  -- For this, check server is supported before attempting to profile a device according to a Switch device type
+  if switch_utils.tbl_contains(fields.DEVICE_TYPE_ID.SWITCH, primary_dt_id) and server_onoff_supported(ep_info) then
+    primary_dt_id = switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.SWITCH)
+  end
+
   local profile = fields.device_type_profile_map[primary_dt_id]
 
   if is_child_device then
@@ -54,39 +73,38 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, onoff_ep_
         end
       end
     end
-
-    -- default to "switch-binary" if no profile is found
-    return profile or "switch-binary"
   end
 
   return profile
 end
 
-function SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, main_endpoint_id)
-  if #server_onoff_ep_ids == 1 and server_onoff_ep_ids[1] == main_endpoint_id then -- no children will be created
+function SwitchDeviceConfiguration.create_child_devices(driver, device, onoff_ep_ids, main_endpoint_id)
+  if #onoff_ep_ids == 1 and onoff_ep_ids[1] == main_endpoint_id then -- no children will be created
    return
   end
 
   local device_num = 0
-  table.sort(server_onoff_ep_ids)
-  for idx, ep_id in ipairs(server_onoff_ep_ids) do
+  table.sort(onoff_ep_ids)
+  for idx, ep_id in ipairs(onoff_ep_ids) do
     device_num = device_num + 1
     if ep_id ~= main_endpoint_id then -- don't create a child device that maps to the main endpoint
       local name = string.format("%s %d", device.label, device_num)
       local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
-      driver:try_create_device(
-        {
-          type = "EDGE_CHILD",
-          label = name,
-          profile = child_profile,
-          parent_device_id = device.id,
-          parent_assigned_child_key = string.format("%d", ep_id),
-          vendor_provided_label = name
-        }
-      )
-      if idx == 1 and string.find(child_profile, "energy") then
-        -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-        device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep_id, {persist = true})
+      if child_profile then -- a supported child profile was found
+        driver:try_create_device(
+          {
+            type = "EDGE_CHILD",
+            label = name,
+            profile = child_profile,
+            parent_device_id = device.id,
+            parent_assigned_child_key = string.format("%d", ep_id),
+            vendor_provided_label = name
+          }
+        )
+        if idx == 1 and string.find(child_profile, "energy") then
+          -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+          device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep_id, {persist = true})
+        end
       end
     end
   end
@@ -178,9 +196,9 @@ function DeviceConfiguration.match_profile(driver, device)
     end
   end
 
-  local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID, { cluster_type = "SERVER" })
-  if #server_onoff_ep_ids > 0 then
-    SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, main_endpoint_id)
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
+  if #onoff_ep_ids > 0 then
+    SwitchDeviceConfiguration.create_child_devices(driver, device, onoff_ep_ids, main_endpoint_id)
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, main_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
 
