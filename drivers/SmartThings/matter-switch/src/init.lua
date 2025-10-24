@@ -67,7 +67,8 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     device:subscribe()
     if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-      button_cfg.configure_buttons(device)
+      local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+      button_cfg.configure_buttons(device, momentary_switch_ep_ids)
     end
   end
 

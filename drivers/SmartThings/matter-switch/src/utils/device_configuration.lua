@@ -132,13 +132,13 @@ function ButtonDeviceConfiguration.update_button_component_map(device, main_endp
 end
 
 
-function ButtonDeviceConfiguration.configure_buttons(device)
-  local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
+  -- local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
 
-  for _, ep in ipairs(ms_eps or {}) do
+  for _, ep in ipairs(momentary_switch_ep_ids or {}) do
     if device.profile.components[switch_utils.endpoint_to_component(device, ep)] then
       device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event
@@ -211,7 +211,7 @@ function DeviceConfiguration.match_profile(driver, device)
     ButtonDeviceConfiguration.update_button_profile(device, main_endpoint_id, #button_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
     ButtonDeviceConfiguration.update_button_component_map(device, main_endpoint_id, button_eps)
-    ButtonDeviceConfiguration.configure_buttons(device)
+    ButtonDeviceConfiguration.configure_buttons(device, button_eps)
     return
   end
 
