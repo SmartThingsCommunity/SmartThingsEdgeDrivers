@@ -39,7 +39,7 @@ local pending_close = {}
 
 cosock.spawn(function()
   while true do
-    for _, unique_key in ipairs(pending_close) do -- close any sockets pending close before selecting/receiving on them
+    for _, unique_key in ipairs(pending_close or {}) do -- close any sockets pending close before selecting/receiving on them
       local wss = websockets[unique_key]
       if wss ~= nil then
         log.trace(string.format("Closing websocket for player %s", unique_key))
@@ -60,7 +60,7 @@ cosock.spawn(function()
     pending_close = {}
 
     local socks = { control_rx }
-    for _, wss in pairs(websockets) do
+    for _, wss in pairs(websockets or {}) do
       table.insert(socks, wss)
     end
     local receivers, _, err = socket.select(socks, nil, 10)
@@ -71,7 +71,7 @@ cosock.spawn(function()
         log.error("Error in Websocket Router event loop: " .. err)
       end
     else
-      for _, recv in ipairs(receivers) do
+      for _, recv in ipairs(receivers or {}) do
         if recv.link and recv.link.queue and #recv.link.queue == 0 then -- workaround a bug in receiving
           log.warn("attempting to receive on empty channel")
           goto continue
@@ -93,7 +93,7 @@ cosock.spawn(function()
         elseif err == "closed" and recv.id then -- closed websocket
           log.trace(string.format("Websocket %s closed", tostring(recv.id)))
           local still_open_sockets = {}
-          for unique_key, wss in pairs(websockets) do
+          for unique_key, wss in pairs(websockets or {}) do
             if wss.id ~= recv.id then
               still_open_sockets[unique_key] = wss
             end
@@ -207,7 +207,7 @@ local function _make_websocket(url_table, api_key)
 
   local headers = SonosApi.make_headers(api_key)
   local config = LustreConfig.default():protocol("v1.api.smartspeaker.audio")
-  for k, v in pairs(headers) do
+  for k, v in pairs(headers or {}) do
     config = config:header(k, v)
   end
 
@@ -313,7 +313,7 @@ end
 function SonosWebSocketRouter.cleanup_unused_sockets(driver)
   log.trace("Begin cleanup of unused websockets")
   local should_keep = {}
-  for unique_key, _ in pairs(websockets) do
+  for unique_key, _ in pairs(websockets or {}) do
     local household_id, player_id = unique_key:match("(.*)/(.*)")
     local is_joined = driver.sonos:get_device_id_for_player(household_id, player_id) ~= nil
     log.debug(string.format("Is Player %s joined? %s", player_id, is_joined))
@@ -322,7 +322,7 @@ function SonosWebSocketRouter.cleanup_unused_sockets(driver)
 
   local known_devices = driver:get_devices()
 
-  for _, device in ipairs(known_devices) do
+  for _, device in ipairs(known_devices or {}) do
     local household_id, coordinator_id = driver.sonos:get_coordinator_for_device(device)
     local coordinator_unique_key, bad_key_part =
       utils.sonos_unique_key(household_id, coordinator_id)
@@ -340,7 +340,7 @@ function SonosWebSocketRouter.cleanup_unused_sockets(driver)
     end
   end
 
-  for unique_key, keep in pairs(should_keep) do
+  for unique_key, keep in pairs(should_keep or {}) do
     if not keep then
       SonosWebSocketRouter.close_socket_for_player(unique_key)
     end

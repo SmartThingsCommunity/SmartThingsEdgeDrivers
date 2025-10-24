@@ -55,7 +55,7 @@ local _update_subscriptions_helper = function(
   command,
   reply_tx
 )
-  for _, namespace in ipairs(namespaces) do
+  for _, namespace in ipairs(namespaces or {}) do
     local wss_msg_header = {
       namespace = namespace,
       command = command,
@@ -259,7 +259,9 @@ local function _oauth_reconnect_task(sonos_conn)
 
       if unauthorized then
         sonos_conn.driver:alert_unauthorized()
-        local token, channel_error = token_receive_handle:receive()
+        local token, channel_error =
+          (token_receive_handle and token_receive_handle:receive()) or nil,
+          "no token receive handle"
         if not token then
           log.warn(string.format("Error requesting token: %s", channel_error))
           local _, get_token_err = sonos_conn.driver:get_oauth_token()
@@ -405,7 +407,7 @@ function SonosConnection.new(driver, device)
             )
             return
           end
-          local group = household.groups[header.groupId] or { playerIds = {} }
+          local group = household.groups[header.groupId] or { player_ids = {} }
           for _, player_id in ipairs(group.player_ids) do
             local device_for_player = self.driver:device_for_player(header.householdId, player_id)
             --- we've seen situations where these messages can be processed while a device
@@ -429,7 +431,7 @@ function SonosConnection.new(driver, device)
           )
           return
         end
-        local group = household.groups[header.groupId] or { playerIds = {} }
+        local group = household.groups[header.groupId] or { player_ids = {} }
         for _, player_id in ipairs(group.player_ids) do
           local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
@@ -452,7 +454,7 @@ function SonosConnection.new(driver, device)
           )
           return
         end
-        local group = household.groups[header.groupId] or { playerIds = {} }
+        local group = household.groups[header.groupId] or { player_ids = {} }
         for _, player_id in ipairs(group.player_ids) do
           local device_for_player = self.driver:device_for_player(header.householdId, player_id)
           --- we've seen situations where these messages can be processed while a device
@@ -467,9 +469,10 @@ function SonosConnection.new(driver, device)
         if body.version ~= favorites_version then
           favorites_version = body.version
 
-          local household = self.driver.sonos:get_household(header.householdId) or { groups = {} }
+          local household = self.driver.sonos:get_household(header.householdId)
+            or self.driver.sonos.EMPTY_HOUSEHOLD
 
-          for group_id, group in pairs(household.groups) do
+          for group_id, group in pairs(household.groups or {}) do
             local coordinator_id =
               self.driver.sonos:get_coordinator_for_group(header.householdId, group_id)
             local coordinator_player = household.players[coordinator_id]

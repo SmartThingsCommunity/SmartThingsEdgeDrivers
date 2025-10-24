@@ -85,6 +85,7 @@ local _STATE = {
 --- @class SonosState
 local SonosState = {}
 SonosState.__index = SonosState
+SonosState.EMPTY_HOUSEHOLD = _STATE.households:get_or_init("__EMPTY")
 
 ---@param device SonosDevice
 ---@param info SpeakerDiscoveryInfo
@@ -361,10 +362,10 @@ function SonosState:update_household_info(id, groups_event, driver)
 
   local groups, players = groups_event.groups, groups_event.players
 
-  for _, group in ipairs(groups) do
+  for _, group in ipairs(groups or {}) do
     household.groups[group.id] =
       { id = group.id, coordinator_id = group.coordinatorId, player_ids = group.playerIds }
-    for _, playerId in ipairs(group.playerIds) do
+    for _, playerId in ipairs(group.playerIds or {}) do
       household.player_to_group[playerId] = group.id
     end
   end
@@ -372,15 +373,15 @@ function SonosState:update_household_info(id, groups_event, driver)
   -- Iterate through the players and track all the devices associated with them
   -- for bonded set tracking.
   local log_devices_error = false
-  for _, player in ipairs(players) do
+  for _, player in ipairs(players or {}) do
     -- Prefer devices because deviceIds is deprecated but all we care about is
     -- the ID so either way is fine.
     if type(player.devices) == "table" then
-      for _, device in ipairs(player.devices) do
+      for _, device in ipairs(player.devices or {}) do
         update_device_info(driver, player, household, known_bonded_players, device.id)
       end
     elseif type(player.deviceIds) == "table" then
-      for _, device_id in ipairs(player.deviceIds) do
+      for _, device_id in ipairs(player.deviceIds or {}) do
         update_device_info(driver, player, household, known_bonded_players, device_id)
       end
     else

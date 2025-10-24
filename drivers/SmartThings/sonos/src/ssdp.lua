@@ -64,7 +64,7 @@ end
 ---@diagnostic disable-next-line: inject-field
 function Ssdp.check_headers_contain(headers, keys_to_check)
   local missing = {}
-  for _, header_key in ipairs(keys_to_check) do
+  for _, header_key in ipairs(keys_to_check or {}) do
     if headers:get_one(header_key) == nil then
       table.insert(missing, header_key)
     end
@@ -197,7 +197,7 @@ end
 --- the search end time will be pushed out based on the `mx` parameter, extending the amount of
 --- time that `receive_m_search_response` will return results with a timeout.
 function _ssdp_mt:multicast_m_search()
-  for term, _ in pairs(self.search_terms) do
+  for term, _ in pairs(self.search_terms or {}) do
     local multicast_msg = table.concat({
       "M-SEARCH * HTTP/1.1",
       "HOST: 239.255.255.250:1900",
@@ -284,7 +284,7 @@ function _ssdp_mt:next_msearch_response()
     )
   end
 
-  for _, location in ipairs(location_candidates) do
+  for _, location in ipairs(location_candidates or {}) do
     local location_host_match = location:match("http://([^,/]+):[^/]+/.+%.xml")
     if location_host_match ~= nil then
       possible_locations[location_host_match] = location

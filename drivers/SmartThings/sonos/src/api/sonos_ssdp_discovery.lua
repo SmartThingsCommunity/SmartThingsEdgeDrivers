@@ -115,7 +115,7 @@ function SpeakerDiscoveryInfo.new(ssdp_info, discovery_info)
     ret.rest_path = rest_path
   end
 
-  for k, v in pairs(SpeakerDiscoveryInfo) do
+  for k, v in pairs(SpeakerDiscoveryInfo or {}) do
     rawset(ret, k, v)
   end
 
@@ -227,7 +227,7 @@ local function make_persistent_task_impl(
         log.warn(string.format("Select error: %s", select_err))
       end
 
-      for _, receiver in ipairs(recv_ready) do
+      for _, receiver in ipairs(recv_ready or {}) do
         if receiver == interval_timer then
           interval_timer:handled()
           ssdp_search_handle:multicast_m_search()
@@ -331,7 +331,7 @@ function SonosPersistentSsdpTask:get_all_known()
   -- make a shallow copy of the table so it doesn't get clobbered
   -- the player info itself is a read-only proxy table as well
   local known = {}
-  for id, info in pairs(self.player_info_by_sonos_ids) do
+  for id, info in pairs(self.player_info_by_sonos_ids or {}) do
     known[id] = info
   end
   return known
@@ -454,7 +454,7 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
       log.debug(
         st_utils.stringify_table(waiting_handles, "waiting for unique keys and mac addresses", true)
       )
-      for _, reply_tx in ipairs(waiting_handles) do
+      for _, reply_tx in ipairs(waiting_handles or {}) do
         reply_tx:send(speaker_info)
       end
 
