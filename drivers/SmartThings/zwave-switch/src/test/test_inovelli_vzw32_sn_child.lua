@@ -114,7 +114,7 @@ test.register_coroutine_test(
   "Child device switch on should emit events and send configuration to parent",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    
+
     -- Calculate expected configuration value using the same logic as getNotificationValue
     local function huePercentToValue(value)
       if value <= 2 then
@@ -125,17 +125,17 @@ test.register_coroutine_test(
         return math.floor(value / 100 * 255 + 0.5) -- utils.round equivalent
       end
     end
-    
+
     local notificationValue = 0
     local level = 100 -- Default level for child devices
     local color = 100 -- Default color for child devices (since device starts with no hue state)
     local effect = 1 -- Default notificationType
-    
+
     notificationValue = notificationValue + (effect * 16777216)
     notificationValue = notificationValue + (huePercentToValue(color) * 65536)
     notificationValue = notificationValue + (level * 256)
     notificationValue = notificationValue + (255 * 1)
-    
+
     test.socket.capability:__queue_receive({
       mock_child_device.id,
       { capability = "switch", command = "on", args = {} }
@@ -166,7 +166,7 @@ test.register_coroutine_test(
   "Child device switch off should emit events and send configuration to parent",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    
+
     test.socket.capability:__queue_receive({
       mock_child_device.id,
       { capability = "switch", command = "off", args = {} }
@@ -198,7 +198,7 @@ test.register_coroutine_test(
   function()
     local level = math.random(1, 99)
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    
+
     -- Calculate expected configuration value using the same logic as getNotificationValue
     local function huePercentToValue(value)
       if value <= 2 then
@@ -209,16 +209,16 @@ test.register_coroutine_test(
         return math.floor(value / 100 * 255 + 0.5) -- utils.round equivalent
       end
     end
-    
+
     local notificationValue = 0
     local effect = 1 -- Default notificationType
     local color = 100 -- Default color for child devices (since device starts with no hue state)
-    
+
     notificationValue = notificationValue + (effect * 16777216)
     notificationValue = notificationValue + (huePercentToValue(color) * 65536)
     notificationValue = notificationValue + (level * 256) -- Use the actual level from command
     notificationValue = notificationValue + (255 * 1)
-    
+
     test.socket.capability:__queue_receive({
       mock_child_device.id,
       { capability = "switchLevel", command = "setLevel", args = { level } }
@@ -252,9 +252,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Child device color command should emit events and send configuration to parent",
   function()
-    local hue = math.random(0, 100)
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    
+
     -- Calculate expected configuration value using the same logic as getNotificationValue
     local function huePercentToValue(value)
       if value <= 2 then
@@ -265,17 +264,17 @@ test.register_coroutine_test(
         return math.floor(value / 100 * 255 + 0.5) -- utils.round equivalent
       end
     end
-    
+
     local notificationValue = 0
     local level = 100 -- Default level for child devices
     local color = math.random(0, 100) -- Default color for child devices (since device starts with no hue state)
     local effect = 1 -- Default notificationType
-    
+
     notificationValue = notificationValue + (effect * 16777216)
     notificationValue = notificationValue + (huePercentToValue(color) * 65536)
     notificationValue = notificationValue + (level * 256)
     notificationValue = notificationValue + (255 * 1)
-    
+
     test.socket.capability:__queue_receive({
       mock_child_device.id,
       { capability = "colorControl", command = "setColor", args = {{ hue = color, saturation = 100 }} }
@@ -315,7 +314,7 @@ test.register_coroutine_test(
   function()
     local temp = math.random(2700, 6500)
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    
+
     test.socket.capability:__queue_receive({
       mock_child_device.id,
       { capability = "colorTemperature", command = "setColorTemperature", args = { temp } }

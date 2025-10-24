@@ -19,7 +19,6 @@ local zw_test_utils = require "integration_test.zwave_test_utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=4})
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
 local t_utils = require "integration_test.utils"
@@ -149,12 +148,12 @@ test.register_coroutine_test(
   "Switch level command should send SwitchMultilevel Set",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
-    
+
     test.socket.capability:__queue_receive({
       mock_inovelli_vzw32_sn.id,
       { capability = "switchLevel", command = "setLevel", args = { 50 } }
     })
-    
+
     local expected_command = SwitchMultilevel:Set({ value = 50, duration = "default" })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -162,10 +161,10 @@ test.register_coroutine_test(
         expected_command
       )
     )
-    
+
     test.wait_for_events()
     test.mock_time.advance_time(3)
-    
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
