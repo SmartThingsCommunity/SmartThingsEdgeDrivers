@@ -68,6 +68,11 @@ zigbeeManufacturer:
     manufacturer: BITUO TECHNIK
     model: "SDM01B"
     deviceProfileName: power-meter-1p
+  - id: Chameleon/CT101xxxx
+    deviceLabel: Chameleon CT Clamp
+    manufacturer: Chameleon Technology
+    model: CT101xxxx
+    deviceProfileName: ct-clamp
 zigbeeGeneric:
   - id: "genericMeter"
     deviceLabel: Zigbee Meter
@@ -75,3 +80,5 @@ zigbeeGeneric:
       server:
         - 0x0702 #Simple Metering
     deviceProfileName: power-meter
+
+    
