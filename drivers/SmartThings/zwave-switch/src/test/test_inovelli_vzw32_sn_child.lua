@@ -74,28 +74,33 @@ test.register_message_test(
       message = { mock_child_device.id, "added" },
     },
     {
-      channel = "device_lifecycle",
-      direction = "receive",
+      channel = "capability",
+      direction = "send",
       message = mock_child_device:generate_test_message("main", capabilities.colorControl.hue(1))
     },
     {
-      channel = "device_lifecycle",
-      direction = "receive",
+      channel = "capability",
+      direction = "send",
       message = mock_child_device:generate_test_message("main", capabilities.colorControl.saturation(1))
     },
     {
-      channel = "device_lifecycle",
-      direction = "receive",
+      channel = "capability",
+      direction = "send",
+      message = mock_child_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_child_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(6500))
     },
     {
-      channel = "device_lifecycle",
-      direction = "receive",
+      channel = "capability",
+      direction = "send",
       message = mock_child_device:generate_test_message("main", capabilities.switchLevel.level(100))
     },
     {
-      channel = "device_lifecycle",
-      direction = "receive",
+      channel = "capability",
+      direction = "send",
       message = mock_child_device:generate_test_message("main", capabilities.switch.switch("off"))
     },
   },
@@ -105,203 +110,243 @@ test.register_message_test(
 )
 
 -- Test child device switch on command
-test.register_message_test(
+test.register_coroutine_test(
   "Child device switch on should emit events and send configuration to parent",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_child_device.id,
-        { capability = "switch", command = "on", args = {} }
-      }
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    
+    -- Calculate expected configuration value using the same logic as getNotificationValue
+    local function huePercentToValue(value)
+      if value <= 2 then
+        return 0
+      elseif value >= 98 then
+        return 255
+      else
+        return math.floor(value / 100 * 255 + 0.5) -- utils.round equivalent
+      end
+    end
+    
+    local notificationValue = 0
+    local level = 100 -- Default level for child devices
+    local color = 100 -- Default color for child devices (since device starts with no hue state)
+    local effect = 1 -- Default notificationType
+    
+    notificationValue = notificationValue + (effect * 16777216)
+    notificationValue = notificationValue + (huePercentToValue(color) * 65536)
+    notificationValue = notificationValue + (level * 256)
+    notificationValue = notificationValue + (255 * 1)
+    
+    test.socket.capability:__queue_receive({
+      mock_child_device.id,
+      { capability = "switch", command = "on", args = {} }
+    })
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,
         Configuration:Set({
           parameter_number = 99,
-          configuration_value = 0, -- This would be calculated based on notification value
+          configuration_value = notificationValue,
           size = 4
         })
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test child device switch off command
-test.register_message_test(
+test.register_coroutine_test(
   "Child device switch off should emit events and send configuration to parent",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_child_device.id,
-        { capability = "switch", command = "off", args = {} }
-      }
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.switch.switch("off"))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    
+    test.socket.capability:__queue_receive({
+      mock_child_device.id,
+      { capability = "switch", command = "off", args = {} }
+    })
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.switch.switch("off"))
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,
         Configuration:Set({
           parameter_number = 99,
-          configuration_value = 0,
+          configuration_value = 0, -- Switch off sends 0
           size = 4
         })
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test child device level command
-test.register_message_test(
+test.register_coroutine_test(
   "Child device level command should emit events and send configuration to parent",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_child_device.id,
-        { capability = "switchLevel", command = "setLevel", args = { level = 75 } }
-      }
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.switchLevel.level(75))
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    local level = math.random(1, 99)
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    
+    -- Calculate expected configuration value using the same logic as getNotificationValue
+    local function huePercentToValue(value)
+      if value <= 2 then
+        return 0
+      elseif value >= 98 then
+        return 255
+      else
+        return math.floor(value / 100 * 255 + 0.5) -- utils.round equivalent
+      end
+    end
+    
+    local notificationValue = 0
+    local effect = 1 -- Default notificationType
+    local color = 100 -- Default color for child devices (since device starts with no hue state)
+    
+    notificationValue = notificationValue + (effect * 16777216)
+    notificationValue = notificationValue + (huePercentToValue(color) * 65536)
+    notificationValue = notificationValue + (level * 256) -- Use the actual level from command
+    notificationValue = notificationValue + (255 * 1)
+    
+    test.socket.capability:__queue_receive({
+      mock_child_device.id,
+      { capability = "switchLevel", command = "setLevel", args = { level } }
+    })
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.switchLevel.level(level))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,
         Configuration:Set({
           parameter_number = 99,
-          configuration_value = 0, -- This would be calculated based on notification value
+          configuration_value = notificationValue,
           size = 4
         })
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test child device color command
-test.register_message_test(
+test.register_coroutine_test(
   "Child device color command should emit events and send configuration to parent",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_child_device.id,
-        { capability = "colorControl", command = "setColor", args = { color = { hue = 200, saturation = 80 } } }
-      }
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.colorControl.hue(200))
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.colorControl.saturation(80))
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    local hue = math.random(0, 100)
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    
+    -- Calculate expected configuration value using the same logic as getNotificationValue
+    local function huePercentToValue(value)
+      if value <= 2 then
+        return 0
+      elseif value >= 98 then
+        return 255
+      else
+        return math.floor(value / 100 * 255 + 0.5) -- utils.round equivalent
+      end
+    end
+    
+    local notificationValue = 0
+    local level = 100 -- Default level for child devices
+    local color = math.random(0, 100) -- Default color for child devices (since device starts with no hue state)
+    local effect = 1 -- Default notificationType
+    
+    notificationValue = notificationValue + (effect * 16777216)
+    notificationValue = notificationValue + (huePercentToValue(color) * 65536)
+    notificationValue = notificationValue + (level * 256)
+    notificationValue = notificationValue + (255 * 1)
+    
+    test.socket.capability:__queue_receive({
+      mock_child_device.id,
+      { capability = "colorControl", command = "setColor", args = {{ hue = color, saturation = 100 }} }
+    })
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.colorControl.hue(color))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.colorControl.saturation(100))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,
         Configuration:Set({
           parameter_number = 99,
-          configuration_value = 0, -- This would be calculated based on notification value
+          configuration_value = notificationValue,
           size = 4
         })
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test child device color temperature command
-test.register_message_test(
+test.register_coroutine_test(
   "Child device color temperature command should emit events and send configuration to parent",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_child_device.id,
-        { capability = "colorTemperature", command = "setColorTemperature", args = { temperature = 3000 } }
-      }
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.colorControl.hue(100))
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(3000))
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    local temp = math.random(2700, 6500)
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    
+    test.socket.capability:__queue_receive({
+      mock_child_device.id,
+      { capability = "colorTemperature", command = "setColorTemperature", args = { temp } }
+    })
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.colorControl.hue(100))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(temp))
+    )
+
+    test.socket.capability:__expect_send(
+      mock_child_device:generate_test_message("main", capabilities.switch.switch("on"))
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_parent_device,
         Configuration:Set({
           parameter_number = 99,
-          configuration_value = 0, -- This would be calculated based on notification value
+          configuration_value = 33514751, -- Calculated: effect(1)*16777216 + hue(255)*65536 + level(100)*256 + 255
           size = 4
         })
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 test.run_registered_tests()

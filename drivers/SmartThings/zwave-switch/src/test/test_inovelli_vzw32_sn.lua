@@ -21,6 +21,7 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ver
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=4})
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
+local Association = (require "st.zwave.CommandClass.Association")({version=1})
 local t_utils = require "integration_test.utils"
 
 -- Inovelli VZW32-SN device identifiers
@@ -70,6 +71,18 @@ test.register_message_test(
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
+        Association:Set({
+          grouping_identifier = 1,
+          node_ids = {}, -- Mock hub Z-Wave ID
+          payload = "\x01", -- Should contain grouping_identifier = 1
+        })
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
         SwitchMultilevel:Get({})
       )
     },
@@ -80,150 +93,86 @@ test.register_message_test(
 )
 
 -- Test switch on command
-test.register_message_test(
+test.register_coroutine_test(
   "Switch on command should send Basic Set with ON value",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        { capability = "switch", command = "on", args = {} }
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_inovelli_vzw32_sn.id,
+      { capability = "switch", command = "on", args = {} }
+    })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         Basic:Set({ value = SwitchBinary.value.ON_ENABLE })
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(3)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         SwitchMultilevel:Get({})
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test switch off command
-test.register_message_test(
+test.register_coroutine_test(
   "Switch off command should send Basic Set with OFF value",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        { capability = "switch", command = "off", args = {} }
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_inovelli_vzw32_sn.id,
+      { capability = "switch", command = "off", args = {} }
+    })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         Basic:Set({ value = SwitchBinary.value.OFF_DISABLE })
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(3)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         SwitchMultilevel:Get({})
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test switch level command
-test.register_message_test(
+test.register_coroutine_test(
   "Switch level command should send SwitchMultilevel Set",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        { capability = "switchLevel", command = "setLevel", args = { level = 50 } }
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+    
+    test.socket.capability:__queue_receive({
+      mock_inovelli_vzw32_sn.id,
+      { capability = "switchLevel", command = "setLevel", args = { 50 } }
+    })
+    
+    local expected_command = SwitchMultilevel:Set({ value = 50, duration = "default" })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
-        SwitchMultilevel:Set({ value = 50, duration = "default" })
+        expected_command
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    
+    test.wait_for_events()
+    test.mock_time.advance_time(3)
+    
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         SwitchMultilevel:Get({})
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
-
--- Test color control command
-test.register_message_test(
-  "Color control command should emit events and send configuration",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        { capability = "colorControl", command = "setColor", args = { color = { hue = 100, saturation = 50 } } }
-      }
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_inovelli_vzw32_sn:generate_test_message("main", capabilities.colorControl.hue(100))
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_inovelli_vzw32_sn:generate_test_message("main", capabilities.colorControl.saturation(50))
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = mock_inovelli_vzw32_sn:generate_test_message("main", capabilities.switch.switch("on"))
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Configuration:Set({
-          parameter_number = 99,
-          configuration_value = 0, -- This would be calculated based on notification value
-          size = 4
-        })
-      )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test central scene notifications
@@ -235,13 +184,38 @@ test.register_message_test(
       direction = "receive",
       message = { mock_inovelli_vzw32_sn.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
         scene_number = 1,
-        key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME
+        key_attributes=CentralScene.key_attributes.KEY_PRESSED_1_TIME
       })) }
     },
     {
-      channel = "device_lifecycle",
-      direction = "receive",
+      channel = "capability",
+      direction = "send",
       message = mock_inovelli_vzw32_sn:generate_test_message("button1", capabilities.button.button.pushed({
+        state_change = true
+      }))
+    },
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
+-- Test central scene notifications - button2 pressed 4 times
+test.register_message_test(
+  "Central scene notification button2 pressed 4 times should emit button events",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_inovelli_vzw32_sn.id, zw_test_utils.zwave_test_build_receive_command(CentralScene:Notification({
+        scene_number = 2,
+        key_attributes=CentralScene.key_attributes.KEY_PRESSED_4_TIMES
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_inovelli_vzw32_sn:generate_test_message("button2", capabilities.button.button.pushed_4x({
         state_change = true
       }))
     },

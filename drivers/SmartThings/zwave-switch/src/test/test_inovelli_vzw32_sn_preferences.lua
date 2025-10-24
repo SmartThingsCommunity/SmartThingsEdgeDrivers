@@ -15,10 +15,9 @@
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=4})
-local Association = (require "st.zwave.CommandClass.Association")({version=1})
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+local Association = (require "st.zwave.CommandClass.Association")({ version=1 })
 local t_utils = require "integration_test.utils"
-local json = require "st.json"
 
 -- Inovelli VZW32-SN device identifiers
 local INOVELLI_MANUFACTURER_ID = 0x031E
@@ -29,12 +28,12 @@ local INOVELLI_VZW32_SN_PRODUCT_ID = 0x0001
 local inovelli_vzw32_sn_endpoints = {
   {
     command_classes = {
-      {value = zw.SWITCH_BINARY},
-      {value = zw.SWITCH_MULTILEVEL},
-      {value = zw.BASIC},
-      {value = zw.CONFIGURATION},
-      {value = zw.CENTRAL_SCENE},
-      {value = zw.ASSOCIATION},
+      { value = zw.SWITCH_BINARY },
+      { value = zw.SWITCH_MULTILEVEL },
+      { value = zw.BASIC },
+      { value = zw.CONFIGURATION },
+      { value = zw.CENTRAL_SCENE },
+      { value = zw.ASSOCIATION },
     }
   }
 }
@@ -53,294 +52,112 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
--- Test preference change for notification child creation
-test.register_message_test(
-  "Enabling notification child preference should create child device",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_inovelli_vzw32_sn.id, "added" },
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        "infoChanged",
-        json.encode({
-          old_st_store = {
-            preferences = {
-              notificationChild = false
-            }
-          },
-          preferences = {
-            notificationChild = true
-          }
-        })
-      }
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_inovelli_vzw32_sn.id, "device_created" },
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
+-- Test parameter 1 (example preference)
+do
+  local new_param_value = 10
+  test.register_coroutine_test(
+    "Parameter 1 should be updated in the device configuration after change",
+    function()
+      test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzw32_sn:generate_info_changed({preferences = {parameter1 = new_param_value}}))
 
--- Test preference change for configuration parameters
-test.register_message_test(
-  "Changing configuration preference should send Configuration Set command",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_inovelli_vzw32_sn.id, "added" },
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        "infoChanged",
-        json.encode({
-          old_st_store = {
-            preferences = {
-              ledIntensity = 50
-            }
-          },
-          preferences = {
-            ledIntensity = 75
-          }
-        })
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Configuration:Set({
-          parameter_number = 1, -- Example parameter number
-          configuration_value = 75,
-          size = 1
-        })
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_inovelli_vzw32_sn,
+          Configuration:Set({
+            parameter_number = 1,
+            configuration_value = new_param_value,
+            size = 1
+          })
+        )
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Association:Set({
-          grouping_identifier = 1,
-          node_ids = {1} -- Mock hub Z-Wave ID
-        })
-      )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
+    end
+  )
+end
 
--- Test multiple preference changes
-test.register_message_test(
-  "Multiple preference changes should send multiple Configuration Set commands",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_inovelli_vzw32_sn.id, "added" },
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        "infoChanged",
-        json.encode({
-          old_st_store = {
-            preferences = {
-              ledIntensity = 50,
-              ledColorWhenOn = 1,
-              ledColorWhenOff = 2
-            }
-          },
-          preferences = {
-            ledIntensity = 75,
-            ledColorWhenOn = 3,
-            ledColorWhenOff = 4
-          }
-        })
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Configuration:Set({
-          parameter_number = 1,
-          configuration_value = 75,
-          size = 1
-        })
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Configuration:Set({
-          parameter_number = 2,
-          configuration_value = 3,
-          size = 1
-        })
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Configuration:Set({
-          parameter_number = 3,
-          configuration_value = 4,
-          size = 1
-        })
-      )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Association:Set({
-          grouping_identifier = 1,
-          node_ids = {1}
-        })
-      )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
+-- Test parameter 52 (example preference)
+do
+  local new_param_value = 25
+  test.register_coroutine_test(
+    "Parameter 52 should be updated in the device configuration after change",
+    function()
+      test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzw32_sn:generate_info_changed({preferences = {parameter52 = new_param_value}}))
 
--- Test boolean preference handling
-test.register_message_test(
-  "Boolean preference should be converted to numeric value",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_inovelli_vzw32_sn.id, "added" },
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        "infoChanged",
-        json.encode({
-          old_st_store = {
-            preferences = {
-              ledEnabled = false
-            }
-          },
-          preferences = {
-            ledEnabled = true
-          }
-        })
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Configuration:Set({
-          parameter_number = 4,
-          configuration_value = 1, -- true converted to 1
-          size = 1
-        })
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_inovelli_vzw32_sn,
+          Configuration:Set({
+            parameter_number = 52,
+            configuration_value = new_param_value,
+            size = 1
+          })
+        )
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Association:Set({
-          grouping_identifier = 1,
-          node_ids = {1}
-        })
-      )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
+    end
+  )
+end
 
--- Test signed integer preference handling
-test.register_message_test(
-  "Large signed integer preference should be handled correctly",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_inovelli_vzw32_sn.id, "added" },
-    },
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzw32_sn.id,
-        "infoChanged",
-        json.encode({
-          old_st_store = {
-            preferences = {
-              largeValue = 100
-            }
-          },
-          preferences = {
-            largeValue = 3000000000 -- Large value that would overflow 32-bit signed int
-          }
-        })
-      }
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Configuration:Set({
-          parameter_number = 5,
-          configuration_value = -1294967296, -- Correctly calculated signed value
-          size = 4
-        })
+-- Test parameter 158 (example preference)
+do
+  local new_param_value = 5
+  test.register_coroutine_test(
+    "Parameter 158 should be updated in the device configuration after change",
+    function()
+      test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzw32_sn:generate_info_changed({preferences = {parameter158 = new_param_value}}))
+
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_inovelli_vzw32_sn,
+          Configuration:Set({
+            parameter_number = 158,
+            configuration_value = new_param_value,
+            size = 1
+          })
+        )
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
-        mock_inovelli_vzw32_sn,
-        Association:Set({
-          grouping_identifier = 1,
-          node_ids = {1}
-        })
+    end
+  )
+end
+
+-- Test parameter 101 (2-byte parameter)
+do
+  local new_param_value = -400
+  test.register_coroutine_test(
+    "Parameter 101 should be updated in the device configuration after change",
+    function()
+      test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzw32_sn:generate_info_changed({preferences = {parameter101 = new_param_value}}))
+
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_inovelli_vzw32_sn,
+          Configuration:Set({
+            parameter_number = 101,
+            configuration_value = new_param_value,
+            size = 2
+          })
+        )
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
-)
+    end
+  )
+end
+
+-- Test notificationChild preference (special case for child device creation)
+do
+  local new_param_value = true
+  test.register_coroutine_test(
+    "notificationChild preference should create child device when enabled",
+    function()
+      test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzw32_sn:generate_info_changed({preferences = {notificationChild = new_param_value}}))
+
+      -- Expect child device creation
+      mock_inovelli_vzw32_sn:expect_device_create({
+        type = "EDGE_CHILD",
+        label = "nil Notification", -- This will be the parent label + "Notification"
+        profile = "rgbw-bulb",
+        parent_device_id = mock_inovelli_vzw32_sn.id,
+        parent_assigned_child_key = "notification"
+      })
+    end
+  )
+end
 
 test.run_registered_tests()

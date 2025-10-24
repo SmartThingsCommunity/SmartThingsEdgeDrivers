@@ -200,7 +200,7 @@ local function switch_level_set(driver, device, command)
     local level = utils.round(command.args.level)
     level = utils.clamp_value(level, 0, 99)
 
-    device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
+    --device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
 
     device:send(SwitchMultilevel:Set({ value=level, duration=command.args.rate or "default" }))
 
@@ -237,7 +237,14 @@ local device_init = function(self, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:set_component_to_endpoint_fn(component_to_endpoint)
     device:set_endpoint_to_component_fn(endpoint_to_component)
-    initialize(device)
+    --initialize(device)
+  end
+end
+
+local function device_added(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
+    device:refresh()
   else
     if device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) == nil then
       device:emit_event(capabilities.colorControl.hue(1))
@@ -270,7 +277,7 @@ local function info_changed(driver, device, event, args)
       local preferences = preferencesMap.get_device_parameters(device)
       if args.old_st_store.preferences["notificationChild"] ~= device.preferences.notificationChild and args.old_st_store.preferences["notificationChild"] == false and device.preferences.notificationChild == true then
         if not device:get_child_by_parent_assigned_key('notification') then
-          add_child(driver,device,'rgbw-bulb','notificaiton')
+          add_child(driver,device,'rgbw-bulb','notification')
         end
       end
 
@@ -280,7 +287,6 @@ local function info_changed(driver, device, event, args)
           device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
         end
       end
-      device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
     else
       log.info("info_changed running more than once. Cancelling this run. Time diff: " .. time_diff)
     end
@@ -352,6 +358,7 @@ local inovelli_vzw32_sn = {
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,
+    added = device_added,
   },
   zwave_handlers = {
     [cc.CENTRAL_SCENE] = {
@@ -371,7 +378,7 @@ local inovelli_vzw32_sn = {
     },
     [capabilities.switchLevel.ID] = {
       [capabilities.switchLevel.commands.setLevel.NAME] = switch_level_set
-    }
+    },
   },
   can_handle = can_handle_inovelli_vzw32
 }
