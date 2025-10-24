@@ -1,10 +1,12 @@
-name: aqara-single-button
+name: one-button-batteryLevel
 components:
   - id: main
     capabilities:
       - id: button
         version: 1
       - id: batteryLevel
+        version: 1
+      - id: firmwareUpdate
         version: 1
       - id: refresh
         version: 1

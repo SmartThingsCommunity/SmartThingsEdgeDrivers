@@ -32,7 +32,7 @@ local PRIVATE_ATTRIBUTE_ID_E1 = 0x0125
 local COMP_LIST = { "button1", "button2", "all" }
 local mock_device_e1 = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("aqara-single-button.yml"),
+    profile = t_utils.get_profile_definition("one-button-batteryLevel.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
