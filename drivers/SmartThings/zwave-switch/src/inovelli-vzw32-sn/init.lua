@@ -115,42 +115,6 @@ local function add_child(driver,parent,profile,child_type)
   driver:try_create_device(child_metadata)
 end
 
-local function initialize(device)
-  if device:get_latest_state("main", capabilities.illuminanceMeasurement.ID, capabilities.illuminanceMeasurement.illuminance.NAME) == nil then
-    device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
-  end
-  if device:get_latest_state("main", capabilities.motionSensor.ID, capabilities.motionSensor.motion.NAME) == nil then
-    device:emit_event(capabilities.motionSensor.motion.active())
-  end
-  if device:get_latest_state("main", capabilities.powerMeter.ID, capabilities.powerMeter.power.NAME) == nil then
-    device:emit_event(capabilities.powerMeter.power(0))
-  end
-  if device:get_latest_state("main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) == nil then
-    device:emit_event(capabilities.energyMeter.energy(0))
-  end
-  if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil then
-    device:emit_event(capabilities.switchLevel.level(0))
-  end
-
-  for _, component in pairs(device.profile.components) do
-    if string.find(component.id, "button") ~= nil then
-      if device:get_latest_state(component.id, capabilities.button.ID, capabilities.button.supportedButtonValues.NAME) == nil then
-        device:emit_component_event(
-          component,
-          capabilities.button.supportedButtonValues(
-            {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
-            { visibility = { displayed = false } }
-          )
-        )
-        device:emit_component_event(
-          component,
-          capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
-        )
-      end
-    end
-  end
-end
-
 local function getNotificationValue(device, value)
   local notificationValue = 0
   local level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) or 100
