@@ -15,10 +15,6 @@
 local zigbee_constants = require "st.zigbee.constants"
 local configurations = require "configurations"
 
-local ZIGBEE_METERING_SWITCH_FINGERPRINTS = {
-  { model = "E240-KR116Z-HA" }
-}
-
 local do_init = function(self, device)
   device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
   device:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 1000, {persist = true})

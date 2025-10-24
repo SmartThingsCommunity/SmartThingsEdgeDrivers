@@ -18,10 +18,8 @@ local OnOff = clusters.OnOff
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local utils = require "st.utils"
 local configurations = require "configurations"
-local lazy_require = utils.lazy_require
 
 local CHILD_ENDPOINT = 2
-
 
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))

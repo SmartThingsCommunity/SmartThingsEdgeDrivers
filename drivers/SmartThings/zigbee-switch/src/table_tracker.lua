@@ -22,8 +22,8 @@ local mt = {
 
 local track = function(t)
   local proxy = {
-  	__reads = {},
-  	__writes = {},
+    __reads = {},
+    __writes = {},
   }
   proxy[index] = t
 
