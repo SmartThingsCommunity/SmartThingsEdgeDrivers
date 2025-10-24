@@ -101,7 +101,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-          if id == fields.GENERIC_SWITCH_ID and
+          if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
              attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
              attr ~= clusters.PowerSource.attributes.BatChargeLevel then
             device:add_subscribed_event(attr)

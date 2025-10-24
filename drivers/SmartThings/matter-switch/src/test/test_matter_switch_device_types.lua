@@ -505,6 +505,7 @@ local function test_init_mounted_on_off_control()
   test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "doConfigure" })
+  mock_device_mounted_on_off_control:expect_metadata_update({ profile = "switch-binary" })
   mock_device_mounted_on_off_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
@@ -526,6 +527,7 @@ local function test_init_mounted_dimmable_load_control()
   test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "doConfigure" })
+  mock_device_mounted_dimmable_load_control:expect_metadata_update({ profile = "switch-level" })
   mock_device_mounted_dimmable_load_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
@@ -566,6 +568,7 @@ local function test_init_parent_child_different_types()
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "doConfigure" })
+  mock_device_parent_child_different_types:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_different_types:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   mock_device_parent_child_different_types:expect_device_create({
@@ -584,14 +587,6 @@ local function test_init_parent_child_unsupported_device_type()
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_unsupported_device_type.id, "doConfigure" })
   mock_device_parent_child_unsupported_device_type:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_unsupported_device_type:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-
-  mock_device_parent_child_unsupported_device_type:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Matter Switch 2",
-    profile = "switch-binary",
-    parent_device_id = mock_device_parent_child_unsupported_device_type.id,
-    parent_assigned_child_key = string.format("%d", 10)
-  })
 end
 
 local function test_init_light_level_motion()
@@ -617,6 +612,7 @@ local function test_init_light_level_motion()
   test.socket.matter:__expect_send({mock_device_light_level_motion.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "doConfigure" })
+  mock_device_light_level_motion:expect_metadata_update({ profile = "light-level-motion" })
   mock_device_light_level_motion:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 

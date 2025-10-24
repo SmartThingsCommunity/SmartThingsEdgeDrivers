@@ -31,103 +31,87 @@ local DeviceConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 
-function SwitchDeviceConfiguration.assign_child_profile(device, child_ep)
-  local profile
-
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == child_ep then
-      -- Some devices report multiple device types which are a subset of
-      -- a superset device type (For example, Dimmable Light is a superset of
-      -- On/Off light). This mostly applies to the four light types, so we will want
-      -- to match the profile for the superset device type. This can be done by
-      -- matching to the device type with the highest ID
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      profile = fields.device_type_profile_map[id]
-      break
-    end
-  end
-
-  -- Check if device has an overridden child profile that differs from the profile that would match
-  -- the child's device type for the following two cases:
-  --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
-  --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
-  --      determined in the "for" loop above (e.g., light-binary)
-  --   2. The selected profile for the child device matches the initial profile defined in
-  --      child_device_profile_overrides
-  for id, vendor in pairs(fields.child_device_profile_overrides_per_vendor_id) do
-    for _, fingerprint in ipairs(vendor) do
-      if device.manufacturer_info.product_id == fingerprint.product_id and
-         ((device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and child_ep == 1) or profile == fingerprint.initial_profile) then
-         return fingerprint.target_profile
+local function server_onoff_supported(ep_info)
+  for _, cluster in pairs(ep_info.clusters) do
+    if cluster.cluster_id == clusters.OnOff.ID then
+      if cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH" then
+        return true
+      else
+        return false
       end
     end
   end
-
-  -- default to "switch-binary" if no profile is found
-  return profile or "switch-binary"
 end
 
-function SwitchDeviceConfiguration.create_child_switch_devices(driver, device, main_endpoint)
-  local num_switch_server_eps = 0
-  local parent_child_device = false
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  table.sort(switch_eps)
-  for idx, ep in ipairs(switch_eps) do
-    if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-      num_switch_server_eps = num_switch_server_eps + 1
-      if ep ~= main_endpoint then -- don't create a child device that maps to the main endpoint
-        local name = string.format("%s %d", device.label, num_switch_server_eps)
-        local child_profile = SwitchDeviceConfiguration.assign_child_profile(device, ep)
+function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, onoff_ep_id, is_child_device)
+  local ep_info = switch_utils.get_endpoint_info(device, onoff_ep_id)
+
+  local primary_dt_id = switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.LIGHT)
+    or ep_info.device_types[1] and ep_info.device_types[1].device_type_id
+
+  -- workaround: for 'Light Switch' Device Type EPs that break spec and implement their OnOff cluster as 'server'.
+  -- For this, check server is supported before attempting to profile a device according to a Switch device type
+  if switch_utils.tbl_contains(fields.DEVICE_TYPE_ID.SWITCH, primary_dt_id) and server_onoff_supported(ep_info) then
+    primary_dt_id = switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.SWITCH)
+  end
+
+  local profile = fields.device_type_profile_map[primary_dt_id]
+
+  if is_child_device then
+    -- Check if device has an overridden child profile that differs from the profile that would match
+    -- the child's device type for the following two cases:
+    --   1. To add Electrical Sensor only to the first EDGE_CHILD (light-power-energy-powerConsumption)
+    --      for the Aqara Light Switch H2. The profile of the second EDGE_CHILD for this device is
+    --      determined in the "for" loop above (e.g., light-binary)
+    --   2. The selected profile for the child device matches the initial profile defined in
+    --      child_device_profile_overrides
+    for _, vendor in pairs(fields.child_device_profile_overrides_per_vendor_id) do
+      for _, fingerprint in ipairs(vendor) do
+        if device.manufacturer_info.product_id == fingerprint.product_id and
+           ((device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and onoff_ep_id == 1) or profile == fingerprint.initial_profile) then
+            return fingerprint.target_profile
+        end
+      end
+    end
+  end
+
+  return profile
+end
+
+function SwitchDeviceConfiguration.create_child_devices(driver, device, onoff_ep_ids, main_endpoint_id)
+  if #onoff_ep_ids == 1 and onoff_ep_ids[1] == main_endpoint_id then -- no children will be created
+   return
+  end
+
+  local device_num = 0
+  table.sort(onoff_ep_ids)
+  for idx, ep_id in ipairs(onoff_ep_ids) do
+    device_num = device_num + 1
+    if ep_id ~= main_endpoint_id then -- don't create a child device that maps to the main endpoint
+      local name = string.format("%s %d", device.label, device_num)
+      local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
+      if child_profile then -- a supported child profile was found
         driver:try_create_device(
           {
             type = "EDGE_CHILD",
             label = name,
             profile = child_profile,
             parent_device_id = device.id,
-            parent_assigned_child_key = string.format("%d", ep),
+            parent_assigned_child_key = string.format("%d", ep_id),
             vendor_provided_label = name
           }
         )
-        parent_child_device = true
         if idx == 1 and string.find(child_profile, "energy") then
           -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-          device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
+          device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep_id, {persist = true})
         end
       end
     end
   end
 
-  -- If the device is a parent child device, set the find_child function on init. This is persisted because initialize_buttons_and_switches
-  -- is only run once, but find_child function should be set on each driver init.
-  if parent_child_device then
-    device:set_field(fields.IS_PARENT_CHILD_DEVICE, true, {persist = true})
-  end
-
-  -- this is needed in initialize_buttons_and_switches
-  return num_switch_server_eps
-end
-
-function SwitchDeviceConfiguration.update_devices_with_onOff_server_clusters(device, main_endpoint)
-  local cluster_id = 0
-  for _, ep in ipairs(device.endpoints) do
-    -- main_endpoint only supports server cluster by definition of get_endpoints()
-    if main_endpoint == ep.endpoint_id then
-      for _, dt in ipairs(ep.device_types) do
-        -- no device type that is not in the switch subset should be considered.
-        if (fields.ON_OFF_SWITCH_ID <= dt.device_type_id and dt.device_type_id <= fields.ON_OFF_COLOR_DIMMER_SWITCH_ID) then
-          cluster_id = math.max(cluster_id, dt.device_type_id)
-        end
-      end
-      break
-    end
-  end
-
-  if fields.device_type_profile_map[cluster_id] then
-    device:try_update_metadata({profile = fields.device_type_profile_map[cluster_id]})
-  end
+  -- Persist so that the find_child function is always set on each driver init.
+  device:set_field(fields.IS_PARENT_CHILD_DEVICE, true, {persist = true})
+  device:set_find_child(switch_utils.find_child)
 end
 
 function ButtonDeviceConfiguration.update_button_profile(device, main_endpoint, num_button_eps)
@@ -199,71 +183,56 @@ end
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
-function DeviceConfiguration.initialize_buttons_and_switches(driver, device, main_endpoint)
-  local profile_found = false
+function DeviceConfiguration.match_profile(driver, device)
+  local main_endpoint_id = switch_utils.find_default_endpoint(device)
+  local updated_profile = nil
+
+  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
+  if #valve_eps > 0 then
+    updated_profile = "water-valve"
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      updated_profile = updated_profile .. "-level"
+    end
+  end
+
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
+  if #onoff_ep_ids > 0 then
+    SwitchDeviceConfiguration.create_child_devices(driver, device, onoff_ep_ids, main_endpoint_id)
+    updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, main_endpoint_id)
+    local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
+
+    if generic_profile("plug-binary") or generic_profile("plug-level") then
+      if switch_utils.check_switch_category_vendor_overrides(device) then
+        updated_profile = string.gsub(updated_profile, "plug", "switch")
+      else
+        local electrical_tags = ""
+        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-power" end
+        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
+        if electrical_tags ~= "" then updated_profile = string.gsub(updated_profile, "-binary", "") .. electrical_tags end
+      end
+    elseif generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+      updated_profile = "light-color-level-fan"
+    elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
+      updated_profile = "light-level-motion"
+    elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
+      -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
+      -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
+      return
+    end
+  end
+
+  -- initialize the main device card with buttons if applicable
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    ButtonDeviceConfiguration.update_button_profile(device, main_endpoint, #button_eps)
+    ButtonDeviceConfiguration.update_button_profile(device, main_endpoint_id, #button_eps)
     -- All button endpoints found will be added as additional components in the profile containing the main_endpoint.
-    -- The resulting endpoint to component map is saved in the COMPONENT_TO_ENDPOINT_MAP field
-    ButtonDeviceConfiguration.update_button_component_map(device, main_endpoint, button_eps)
+    ButtonDeviceConfiguration.update_button_component_map(device, main_endpoint_id, button_eps)
     ButtonDeviceConfiguration.configure_buttons(device)
-    profile_found = true
-  end
-
-  -- Without support for bindings, only clusters that are implemented as server are counted. This count is handled
-  -- while building switch child profiles
-  local num_switch_server_eps = SwitchDeviceConfiguration.create_child_switch_devices(driver, device, main_endpoint)
-
-  -- We do not support the Light Switch device types because they require OnOff to be implemented as 'client', which requires us to support bindings.
-  -- However, this workaround profiles devices that claim to be Light Switches, but that break spec and implement OnOff as 'server'.
-  -- Note: since their device type isn't supported, these devices join as a matter-thing.
-  if num_switch_server_eps > 0 and switch_utils.detect_matter_thing(device) then
-    SwitchDeviceConfiguration.update_devices_with_onOff_server_clusters(device, main_endpoint)
-    profile_found = true
-  end
-  return profile_found
-end
-
-function DeviceConfiguration.match_profile(driver, device)
-  local main_endpoint = switch_utils.find_default_endpoint(device)
-  -- initialize the main device card with buttons if applicable, and create child devices as needed for multi-switch devices.
-  local profile_found = DeviceConfiguration.initialize_buttons_and_switches(driver, device, main_endpoint)
-  if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(switch_utils.find_child)
-  end
-  if profile_found then
     return
   end
 
-  local fan_eps = device:get_endpoints(clusters.FanControl.ID)
-  local level_eps = device:get_endpoints(clusters.LevelControl.ID)
-  local energy_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-  local power_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID)
-  local valve_eps = embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID)
-  local profile_name = nil
-  local level_support = ""
-  if #level_eps > 0 then
-    level_support = "-level"
-  end
-  if #energy_eps > 0 and #power_eps > 0 then
-    profile_name = "plug" .. level_support .. "-power-energy-powerConsumption"
-  elseif #energy_eps > 0 then
-    profile_name = "plug" .. level_support .. "-energy-powerConsumption"
-  elseif #power_eps > 0 then
-    profile_name = "plug" .. level_support .. "-power"
-  elseif #valve_eps > 0 then
-    profile_name = "water-valve"
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
-      profile_name = profile_name .. "-level"
-    end
-  elseif #fan_eps > 0 then
-    profile_name = "light-color-level-fan"
-  end
-  if profile_name then
-    device:try_update_metadata({ profile = profile_name })
-  end
+  device:try_update_metadata({ profile = updated_profile })
 end
 
 return {
