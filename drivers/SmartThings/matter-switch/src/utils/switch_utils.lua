@@ -222,7 +222,7 @@ end
 
 function utils.detect_matter_thing(device)
   -- every profile except for matter-thing supports at least 2 capabilities (refresh, firmwareUpdate)
-  for i, _ in pairs(device.profile.components.main.capabilities) do
+  for i, _ in ipairs(device.profile.components.main.capabilities) do
     if i > 1 then return false end
   end
   return true
@@ -265,6 +265,29 @@ function utils.report_power_consumption_to_st_energy(device, latest_total_import
       energy = latest_total_imported_energy_wh
     }))
   end
+end
+
+function utils.update_subscriptions(device)
+  local main_endpoint = utils.find_default_endpoint(device)
+  -- ensure subscription to all endpoint attributes- including those mapped to child devices
+  for idx, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id ~= main_endpoint then
+      local id = 0
+      for _, dt in ipairs(ep.device_types) do
+        id = math.max(id, dt.device_type_id)
+      end
+      for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
+        if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
+           attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
+           attr ~= clusters.PowerSource.attributes.BatChargeLevel then
+          device:add_subscribed_event(attr)
+        else
+          device:add_subscribed_attribute(attr)
+        end
+      end
+    end
+  end
+  device:subscribe()
 end
 
 return utils

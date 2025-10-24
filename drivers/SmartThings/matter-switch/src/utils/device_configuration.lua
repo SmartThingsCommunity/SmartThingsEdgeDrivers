@@ -50,6 +50,8 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, onoff_ep_
       for _, fingerprint in ipairs(vendor) do
         if device.manufacturer_info.product_id == fingerprint.product_id and
            ((device.manufacturer_info.vendor_id == fields.AQARA_MANUFACTURER_ID and onoff_ep_id == 1) or profile == fingerprint.initial_profile) then
+            -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
+            device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, onoff_ep_id, {persist = true})
             return fingerprint.target_profile
         end
       end
