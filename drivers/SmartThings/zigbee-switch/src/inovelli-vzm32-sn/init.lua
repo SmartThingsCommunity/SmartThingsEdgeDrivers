@@ -201,13 +201,11 @@ local function info_changed(driver, device, event, args)
         time_diff = os.difftime(os.time(), last_clock_set_time)
     end
     device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time(), {persist = true})
-    configure_illuminance_reporting(device)
-
     if time_diff > 2 then
       local preferences = preference_map
       if args.old_st_store.preferences["notificationChild"] ~= device.preferences.notificationChild and args.old_st_store.preferences["notificationChild"] == false and device.preferences.notificationChild == true then
         if not device:get_child_by_parent_assigned_key('notification') then
-          add_child(driver,device,'rgbw-bulb-2700K-6500K','notificaiton')
+          add_child(driver,device,'rgbw-bulb-2700K-6500K','notification')
         end
       end
       for id, value in pairs(device.preferences) do
@@ -235,86 +233,45 @@ local function info_changed(driver, device, event, args)
           end
         end
       end
-      device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
     end
   end
 end
 
-local do_configure = function(self, device)
+local function refresh_handler(driver, device, command)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:refresh()
-    device:configure()
-    configure_illuminance_reporting(device)
-    send_ota_image_notify(device)
-
-
-    device:send(device_management.build_bind_request(device, PRIVATE_CLUSTER_ID, self.environment_info.hub_zigbee_eui, 2)) -- Bind device for button presses.
-    device:send(device_management.build_bind_request(device, OccupancySensing.ID, self.environment_info.hub_zigbee_eui))
-
-    -- Retrieve Neutral Setting "Parameter 21"
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, 21, MFG_CODE))
-    device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
-
-    -- Additional one time configuration
-    if  device:supports_capability(capabilities.powerMeter) then
-      -- Divisor and multipler for PowerMeter
-      device:send(clusters.SimpleMetering.attributes.Divisor:read(device))
-      device:send(clusters.SimpleMetering.attributes.Multiplier:read(device))
-    end
-
-    if device:supports_capability(capabilities.energyMeter) then
-      -- Divisor and multipler for EnergyMeter
-      device:send(clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
-      device:send(clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
-    end
+    device:send(clusters.OccupancySensing.attributes.Occupancy:read(device))
+  else
+    device:refresh()
   end
 end
 
-local device_init = function(self, device)
+local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    device:set_field(LATEST_CLOCK_SET_TIMESTAMP, os.time())
-    if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil and device:supports_capability(capabilities.switchLevel)then
-      device:emit_event(capabilities.switchLevel.level(0))
-    end
-    if device:get_latest_state("main", capabilities.powerMeter.ID, capabilities.powerMeter.power.NAME) == nil and device:supports_capability(capabilities.powerMeter) then
-      device:emit_event(capabilities.powerMeter.power(0))
-    end
-    if device:get_latest_state("main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) == nil and device:supports_capability(capabilities.energyMeter)then
-      device:emit_event(capabilities.energyMeter.energy(0))
-    end
-    if device:get_latest_state("main", capabilities.illuminanceMeasurement.ID, capabilities.illuminanceMeasurement.illuminance.NAME) == nil and device:supports_capability(capabilities.illuminanceMeasurement) then
-      device:emit_event(capabilities.illuminanceMeasurement.illuminance(0))
-    end
-    if device:get_latest_state("main", capabilities.motionSensor.ID, capabilities.motionSensor.motion.NAME) == nil and device:supports_capability(capabilities.motionSensor) then
-      device:emit_event(capabilities.motionSensor.motion.active())
-    end
-
-    for _, component in pairs(device.profile.components) do
-      if string.find(component.id, "button") ~= nil then
-        if device:get_latest_state(component.id, capabilities.button.ID, capabilities.button.supportedButtonValues.NAME) == nil then
-          device:emit_component_event(
-            component,
-            capabilities.button.supportedButtonValues(
-              {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
-              { visibility = { displayed = false } }
-            )
-          )
-        end
-        if device:get_latest_state(component.id, capabilities.button.ID, capabilities.button.numberOfButtons.NAME) == nil then
-          device:emit_component_event(
-            component,
-            capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
-          )
-        end
-      end
-    end
-    device:send(cluster_base.read_attribute(device, data_types.ClusterId(0x0000), 0x4000))
+    refresh_handler(driver, device, {}) -- Use our custom refresh handler instead of device:refresh()
   else
     device:emit_event(capabilities.colorControl.hue(1))
     device:emit_event(capabilities.colorControl.saturation(1))
+    device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
     device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
     device:emit_event(capabilities.switchLevel.level(100))
     device:emit_event(capabilities.switch.switch("off"))
+  end
+end
+
+local function device_configure(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    device:configure()
+    send_ota_image_notify(device)
+    device:send(device_management.build_bind_request(device, PRIVATE_CLUSTER_ID, driver.environment_info.hub_zigbee_eui, 2)) -- Bind device for button presses.
+    device:send(device_management.build_bind_request(device, OccupancySensing.ID, driver.environment_info.hub_zigbee_eui)) -- Since we are using the motion capability we need an explicit bind here
+    device:send(clusters.SimpleMetering.attributes.Divisor:read(device))
+    device:send(clusters.SimpleMetering.attributes.Multiplier:read(device))
+    device:send(clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
+    device:send(clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
+    configure_illuminance_reporting(device)
+  else
+    device:configure()
   end
 end
 
@@ -457,8 +414,8 @@ end
 local inovelli_vzm32_sn = {
   NAME = "inovelli vzm32-sn handler",
   lifecycle_handlers = {
-    doConfigure = do_configure,
-    init = configurations.power_reconfig_wrapper(device_init),
+    added = device_added,
+    doConfigure = device_configure,
     infoChanged = info_changed
   },
   zigbee_handlers = {
@@ -496,6 +453,9 @@ local inovelli_vzm32_sn = {
     },
     [capabilities.energyMeter.ID] = {
       [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = handle_resetEnergyMeter,
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = refresh_handler,
     }
   },
   can_handle = is_inovelli_vzm32_sn
