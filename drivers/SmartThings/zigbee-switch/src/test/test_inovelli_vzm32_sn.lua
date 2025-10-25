@@ -17,6 +17,9 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
+local utils = require "st.utils"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -383,5 +386,54 @@ test.register_message_test(
     }
   }
 )
+
+-- Test energy meter reset command
+test.register_message_test(
+  "Energy meter reset command should send reset commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        { capability = "energyMeter", command = "resetEnergyMeter", args = {} }
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        cluster_base.build_manufacturer_specific_command(
+          mock_inovelli_vzm32_sn,
+          0xFC31, -- PRIVATE_CLUSTER_ID
+          0x02,   -- PRIVATE_CMD_ENERGY_RESET_ID
+          0x122F, -- MFG_CODE
+          utils.serialize_int(0, 1, false, false)
+        )
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.SimpleMetering.attributes.CurrentSummationDelivered:read(mock_inovelli_vzm32_sn)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.ElectricalMeasurement.attributes.ActivePower:read(mock_inovelli_vzm32_sn)
+      }
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
+)
+
 
 test.run_registered_tests()

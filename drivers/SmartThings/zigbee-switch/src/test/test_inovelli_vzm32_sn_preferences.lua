@@ -17,6 +17,7 @@ local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local data_types = require "st.zigbee.data_types"
 local cluster_base = require "st.zigbee.cluster_base"
+local utils = require "st.utils"
 
 -- Device endpoints with supported clusters
 local inovelli_vzm32_sn_endpoints = {
@@ -58,6 +59,28 @@ test.register_coroutine_test(
         0x122F, -- MFG_CODE
         data_types.Uint8,
         new_param_value
+      )
+    })
+  end
+)
+
+-- Test parameter9 preference change
+test.register_coroutine_test(
+  "parameter9 preference should send configuration command",
+  function()
+    local new_param_value = 10
+    local expected_value = utils.round(new_param_value / 100 * 254)
+    test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzm32_sn:generate_info_changed({preferences = {parameter9 = new_param_value}}))
+
+    test.socket.zigbee:__expect_send({
+      mock_inovelli_vzm32_sn.id,
+      cluster_base.write_manufacturer_specific_attribute(
+        mock_inovelli_vzm32_sn,
+        0xFC31, -- PRIVATE_CLUSTER_ID
+        9,      -- parameter_number
+        0x122F, -- MFG_CODE
+        data_types.Uint8,
+        expected_value
       )
     })
   end
