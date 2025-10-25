@@ -43,30 +43,6 @@ local INOVELLI_VZW32_SN_FINGERPRINTS = {
   { mfr = 0x031E, prod = 0x0017, model = 0x0001 } -- Inovelli VZW32-SN
 }
 
---- Map component to end_points(channels)
----
---- @param device st.zwave.Device
---- @param component_id string ID
---- @return table dst_channels destination channels e.g. {2} for Z-Wave channel 2 or {} for unencapsulated
-local function component_to_endpoint(device, component_id)
-  local ep_num = component_id:match("switch(%d)")
-  return { ep_num and tonumber(ep_num) }
-end
-
---- Map end_point(channel) to Z-Wave endpoint 9 channel)
----
---- @param device st.zwave.Device
---- @param ep number the endpoint(Z-Wave channel) ID to find the component for
---- @return string the component ID the endpoint matches to
-local function endpoint_to_component(device, ep)
-  local switch_comp = string.format("switch%d", ep)
-  if device.profile.components[switch_comp] ~= nil then
-    return switch_comp
-  else
-    return "main"
-  end
-end
-
 local function button_to_component(buttonId)
   if buttonId > 0 then
     return string.format("button%d", buttonId)
