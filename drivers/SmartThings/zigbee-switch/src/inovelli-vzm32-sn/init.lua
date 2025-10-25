@@ -19,7 +19,6 @@ local st_device = require "st.device"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
-local configurations = require "configurations"
 local OccupancySensing = clusters.OccupancySensing
 local OTAUpgrade = clusters.OTAUpgrade
 

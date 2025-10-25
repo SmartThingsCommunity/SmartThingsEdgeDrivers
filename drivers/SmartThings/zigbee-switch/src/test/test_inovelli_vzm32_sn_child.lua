@@ -17,13 +17,8 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local data_types = require "st.zigbee.data_types"
 local cluster_base = require "st.zigbee.cluster_base"
 local utils = require "st.utils"
-
-local OnOff = clusters.OnOff
-local Level = clusters.Level
-local ColorControl = clusters.ColorControl
 
 -- Device endpoints with supported clusters
 local inovelli_vzm32_sn_endpoints = {

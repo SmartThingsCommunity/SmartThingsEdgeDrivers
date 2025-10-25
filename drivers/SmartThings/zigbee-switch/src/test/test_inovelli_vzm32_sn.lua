@@ -16,18 +16,11 @@ local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local cluster_base = require "st.zigbee.cluster_base"
-local device_management = require "st.zigbee.device_management"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local data_types = require "st.zigbee.data_types"
-local utils = require "st.utils"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
-local ColorControl = clusters.ColorControl
 local OccupancySensing = clusters.OccupancySensing
-local SimpleMetering = clusters.SimpleMetering
-local ElectricalMeasurement = clusters.ElectricalMeasurement
 
 -- Inovelli VZM32-SN device identifiers
 local INOVELLI_MANUFACTURER_ID = "Inovelli"
@@ -37,8 +30,8 @@ local INOVELLI_VZM32_SN_MODEL = "VZM32-SN"
 local inovelli_vzm32_sn_endpoints = {
   [1] = {
     id = 1,
-    manufacturer = "Inovelli",
-    model = "VZM32-SN",
+    manufacturer = INOVELLI_MANUFACTURER_ID,
+    model = INOVELLI_VZM32_SN_MODEL,
     server_clusters = {0x0006, 0x0008, 0x0300, 0x0406} -- OnOff, Level, ColorControl, OccupancySensing
   }
 }
@@ -70,7 +63,7 @@ test.register_message_test(
       direction = "send",
       message = { 
         mock_inovelli_vzm32_sn.id, 
-        clusters.Level.attributes.CurrentLevel:read(mock_inovelli_vzm32_sn) 
+        clusters.Level.attributes.CurrentLevel:read(mock_inovelli_vzm32_sn)
       }
     },
     {
@@ -78,7 +71,7 @@ test.register_message_test(
       direction = "send",
       message = { 
         mock_inovelli_vzm32_sn.id, 
-        clusters.OnOff.attributes.OnOff:read(mock_inovelli_vzm32_sn) 
+        clusters.OnOff.attributes.OnOff:read(mock_inovelli_vzm32_sn)
       }
     },
     {
@@ -207,7 +200,6 @@ local function build_inovelli_button_message(device, button_number, key_attribut
   local zb_const = require "st.zigbee.constants"
   local data_types = require "st.zigbee.data_types"
   local frameCtrl = require "st.zigbee.zcl.frame_ctrl"
-  local utils = require "st.utils"
   
   -- Combine button_number and key_attribute into a single value
   -- button_number in lower byte, key_attribute in upper byte

@@ -14,16 +14,10 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local data_types = require "st.zigbee.data_types"
 local cluster_base = require "st.zigbee.cluster_base"
-local utils = require "st.utils"
-local json = require "st.json"
-
-local OnOff = clusters.OnOff
-local Level = clusters.Level
 
 -- Device endpoints with supported clusters
 local inovelli_vzm32_sn_endpoints = {
@@ -143,11 +137,11 @@ test.register_coroutine_test(
       data_types.Int16,
       new_param_value
     )
-    
+
     print("=== DEBUG: Expected command ===")
     print("Command type:", type(expected_command))
     print("Command:", expected_command)
-    
+
     test.socket.zigbee:__expect_send({
       mock_inovelli_vzm32_sn.id,
       expected_command
