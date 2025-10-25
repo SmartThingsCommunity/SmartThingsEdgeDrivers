@@ -18,7 +18,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local cluster_base = require "st.zigbee.cluster_base"
-local data_types = require "st.zigbee.data_types"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -283,6 +282,46 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({value = 13}))
+    }
+  }
+)
+
+-- Test motion sensor active
+test.register_message_test(
+  "Motion sensor active should emit motion active event",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.OccupancySensing.attributes.Occupancy:build_test_attr_report(mock_inovelli_vzm32_sn, 0x01)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.motionSensor.motion.active())
+    }
+  }
+)
+
+-- Test motion sensor inactive
+test.register_message_test(
+  "Motion sensor inactive should emit motion inactive event",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.OccupancySensing.attributes.Occupancy:build_test_attr_report(mock_inovelli_vzm32_sn, 0x00)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
   }
 )
