@@ -197,14 +197,6 @@ local function can_handle_inovelli_vzw32(opts, driver, device, ...)
   return false
 end
 
-local device_init = function(self, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    device:set_component_to_endpoint_fn(component_to_endpoint)
-    device:set_endpoint_to_component_fn(endpoint_to_component)
-    --initialize(device)
-  end
-end
-
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
@@ -320,7 +312,6 @@ end
 local inovelli_vzw32_sn = {
   NAME = "inovelli vzw32-sn handler",
   lifecycle_handlers = {
-    init = device_init,
     infoChanged = info_changed,
     added = device_added,
   },
