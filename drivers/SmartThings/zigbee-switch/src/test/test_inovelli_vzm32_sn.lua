@@ -17,6 +17,8 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -265,26 +267,83 @@ test.register_message_test(
   }
 )
 
--- Test motion sensor
+-- Test illuminance measurement
 test.register_message_test(
-  "Motion sensor should emit motion events",
+  "Illuminance measurement should emit illuminance events",
   {
     {
       channel = "zigbee",
       direction = "receive",
       message = {
         mock_inovelli_vzm32_sn.id,
-        OccupancySensing.attributes.Occupancy:build_test_attr_report(mock_inovelli_vzm32_sn, 0x01)
+        clusters.IlluminanceMeasurement.attributes.MeasuredValue:build_test_attr_report(mock_inovelli_vzm32_sn, 11271)
       }
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.motionSensor.motion.active())
-    },
-  },
+      message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({value = 13}))
+    }
+  }
+)
+
+-- Test power meter from SimpleMetering
+test.register_message_test(
+  "Power meter from SimpleMetering should emit power events",
   {
-    inner_block_ordering = "relaxed"
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_inovelli_vzm32_sn, 1500)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.powerMeter.power({value = 150.0, unit = "W"}))
+    }
+  }
+)
+
+-- Test power meter from ElectricalMeasurement
+test.register_message_test(
+  "Power meter from ElectricalMeasurement should emit power events",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_inovelli_vzm32_sn, 2000)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.powerMeter.power({value = 200.0, unit = "W"}))
+    }
+  }
+)
+
+-- Test energy meter
+test.register_message_test(
+  "Energy meter should emit energy events",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_inovelli_vzm32_sn, 50000)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.energyMeter.energy({value = 500.0, unit = "kWh"}))
+    }
   }
 )
 
