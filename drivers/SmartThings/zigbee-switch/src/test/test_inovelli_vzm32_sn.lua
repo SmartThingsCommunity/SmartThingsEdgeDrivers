@@ -61,24 +61,24 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { 
-        mock_inovelli_vzm32_sn.id, 
+      message = {
+        mock_inovelli_vzm32_sn.id,
         clusters.Level.attributes.CurrentLevel:read(mock_inovelli_vzm32_sn)
       }
     },
     {
       channel = "zigbee",
       direction = "send",
-      message = { 
-        mock_inovelli_vzm32_sn.id, 
+      message = {
+        mock_inovelli_vzm32_sn.id,
         clusters.OnOff.attributes.OnOff:read(mock_inovelli_vzm32_sn)
       }
     },
     {
       channel = "zigbee",
       direction = "send",
-      message = { 
-        mock_inovelli_vzm32_sn.id, 
+      message = {
+        mock_inovelli_vzm32_sn.id,
         clusters.OccupancySensing.attributes.Occupancy:read(mock_inovelli_vzm32_sn)
       }
     }
@@ -182,9 +182,9 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { 
-        mock_inovelli_vzm32_sn.id, 
-        clusters.Level.server.commands.MoveToLevelWithOnOff(mock_inovelli_vzm32_sn, math.floor(50/100.0 * 254), 0xFFFF) 
+      message = {
+        mock_inovelli_vzm32_sn.id,
+        clusters.Level.server.commands.MoveToLevelWithOnOff(mock_inovelli_vzm32_sn, math.floor(50/100.0 * 254), 0xFFFF)
       }
     },
   },
@@ -200,11 +200,11 @@ local function build_inovelli_button_message(device, button_number, key_attribut
   local zb_const = require "st.zigbee.constants"
   local data_types = require "st.zigbee.data_types"
   local frameCtrl = require "st.zigbee.zcl.frame_ctrl"
-  
+
   -- Combine button_number and key_attribute into a single value
   -- button_number in lower byte, key_attribute in upper byte
   local combined_value = (key_attribute * 256) + button_number
-  
+
   -- Create the command body using serialize_int
   local command_body = zcl_messages.ZclMessageBody({
     zcl_header = zcl_messages.ZclHeader({
@@ -215,7 +215,7 @@ local function build_inovelli_button_message(device, button_number, key_attribut
     }),
     zcl_body = data_types.Uint16(combined_value)
   })
-  
+
   local addrh = messages.AddressHeader(
     device:get_short_address(),
     0x02, -- src_endpoint from real device log
@@ -224,7 +224,7 @@ local function build_inovelli_button_message(device, button_number, key_attribut
     zb_const.HA_PROFILE_ID,
     0xFC31 -- PRIVATE_CLUSTER_ID
   )
-  
+
   return messages.ZigbeeMessageRx({
     address_header = addrh,
     body = command_body

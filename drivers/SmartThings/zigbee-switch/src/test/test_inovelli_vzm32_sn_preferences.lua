@@ -14,7 +14,6 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-local clusters = require "st.zigbee.zcl.clusters"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local data_types = require "st.zigbee.data_types"
 local cluster_base = require "st.zigbee.cluster_base"
