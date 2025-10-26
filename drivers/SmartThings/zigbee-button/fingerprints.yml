@@ -8,12 +8,12 @@ zigbeeManufacturer:
     deviceLabel: Aqara Wireless Mini Switch T1
     manufacturer: LUMI
     model: lumi.remote.b1acn02
-    deviceProfileName: one-button-battery
+    deviceProfileName: one-button-batteryLevel
   - id: "LUMI/lumi.remote.acn003"
     deviceLabel: Aqara Wireless Remote Switch E1 (Single Rocker)
     manufacturer: LUMI
     model: lumi.remote.acn003
-    deviceProfileName: one-button-battery
+    deviceProfileName: one-button-batteryLevel
   - id: "LUMI/lumi.remote.b186acn03"
     deviceLabel: Aqara Wireless Remote Switch T1 (Single Rocker)
     manufacturer: LUMI
