@@ -32,6 +32,10 @@ components:
     capabilities:
       - id: mode
         version: 1
+  - id: WarningDuration
+    capabilities:
+      - id: mode
+        version: 1
 preferences:
   - title: "Alarm duration (s)"
     name: warningDuration
@@ -43,6 +47,6 @@ preferences:
       maximum: 65534
       default: 240
 metadata:
-  mnmn: SmartThingsCommunity
-  vid: e5bc0fa2-422b-31c4-8512-401f1b22c2c7
+  mnmn: SmartThings
+  vid: SmartThings-smartthings-frient_Siren
 

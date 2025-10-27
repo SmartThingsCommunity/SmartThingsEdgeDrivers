@@ -34,12 +34,11 @@ local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
 
 local PRIMARY_SW_VERSION = "primary_sw_version"
 local SIREN_ENDIAN = "siren_endian"
-local ALARM_MAX_DURATION = "maxDuration"
+local ALARM_DURATION = "warningDuration"
 local ALARM_DEFAULT_MAX_DURATION = 0x00F0
 local ALARM_DURATION_TEST_VALUE = 5
 local DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR = 0x8000
 local DEVELCO_MANUFACTURER_CODE = 0x1015
-local IASZONE_ENDPOINT = 0x2B
 
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -77,7 +76,7 @@ local function set_new_firmware_and_defaults()
     mock_device:set_field(PRIMARY_SW_VERSION, "010903", {persist = true})
     mock_device:set_field(SIREN_ENDIAN, nil, {persist = true})
     -- set test durations and parameters
-    mock_device:set_field(ALARM_MAX_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
+    mock_device:set_field(ALARM_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
 end
 
 local function set_older_firmware_and_defaults()
@@ -85,10 +84,10 @@ local function set_older_firmware_and_defaults()
     mock_device:set_field(PRIMARY_SW_VERSION, "010901", {persist = true})
     mock_device:set_field(SIREN_ENDIAN, nil, {persist = true})
     -- set test durations and parameters
-    mock_device:set_field(ALARM_MAX_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
+    mock_device:set_field(ALARM_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
 end
 
-local function get_siren_commands_new_fw(warningMode, sirenLevel)
+local function get_siren_commands_new_fw( warningMode, sirenLevel, duration )
     local expectedSirenONConfiguration = SirenConfiguration(0x00)
     expectedSirenONConfiguration:set_warning_mode(warningMode) --WarningMode.BURGLAR
     expectedSirenONConfiguration:set_siren_level(sirenLevel) --IaswdLevel.VERY_HIGH_LEVEL
@@ -98,7 +97,7 @@ local function get_siren_commands_new_fw(warningMode, sirenLevel)
         IASWD.server.commands.StartWarning(
                 mock_device,
                 expectedSirenONConfiguration,
-                data_types.Uint16(ALARM_DURATION_TEST_VALUE),
+                data_types.Uint16(duration),
                 data_types.Uint8(0x00),
                 data_types.Enum8(0x00)
         )
@@ -123,15 +122,15 @@ local function get_siren_commands_old_fw(warningMode, sirenLevel)
 end
 
 local function get_siren_OFF_commands()
-    local expectedSirenONConfiguration = SirenConfiguration(0x00)
-    expectedSirenONConfiguration:set_warning_mode(WarningMode.STOP)
-    expectedSirenONConfiguration:set_siren_level(IaswdLevel.LOW_LEVEL)
+    local expectedSirenOFFConfiguration = SirenConfiguration(0x00)
+    expectedSirenOFFConfiguration:set_warning_mode(WarningMode.STOP)
+    expectedSirenOFFConfiguration:set_siren_level(IaswdLevel.LOW_LEVEL)
 
     test.socket.zigbee:__expect_send({
         mock_device.id,
         IASWD.server.commands.StartWarning(
                 mock_device,
-                expectedSirenONConfiguration,
+                expectedSirenOFFConfiguration,
                 data_types.Uint16(ALARM_DURATION_TEST_VALUE),
                 data_types.Uint8(0x00),
                 data_types.Enum8(0x00)
@@ -333,6 +332,35 @@ test.register_coroutine_test(
         )
 
         test.socket.capability:__expect_send(
+                mock_device:generate_test_message(
+                        "WarningDuration",
+                        capabilities.mode.supportedModes(
+                                {
+                                    "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
+                                    "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
+                                },
+                                { visibility = { displayed = false } })
+                )
+        )
+        test.socket.capability:__expect_send(
+                mock_device:generate_test_message(
+                        "WarningDuration",
+                        capabilities.mode.supportedArguments(
+                                {
+                                    "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
+                                    "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
+                                },
+                                { visibility = { displayed = false } })
+                )
+        )
+        test.socket.capability:__expect_send(
+                mock_device:generate_test_message(
+                        "WarningDuration",
+                        capabilities.mode.mode("4 minutes")
+                )
+        )
+
+        test.socket.capability:__expect_send(
             mock_device:generate_test_message(
     "main",
                 capabilities.alarm.alarm.off()
@@ -360,8 +388,8 @@ test.register_coroutine_test(
 
             test.mock_time.advance_time(1)
             -- Expect the command with given configuration
-            get_siren_commands_new_fw(WarningMode.BURGLAR,IaswdLevel.VERY_HIGH_LEVEL)
-            test.mock_time.advance_time(ALARM_DURATION_TEST_VALUE)
+            get_siren_commands_new_fw(WarningMode.BURGLAR,IaswdLevel.VERY_HIGH_LEVEL,ALARM_DURATION_TEST_VALUE)
+            test.mock_time.advance_time(ALARM_DURATION_TEST_VALUE+1)
             -- stop the siren
             -- Expect the OFF command
             get_siren_OFF_commands()
@@ -417,6 +445,7 @@ test.register_coroutine_test(
             test.socket.zigbee:__set_channel_ordering("relaxed")
             test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
             test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+            test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
             test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
             test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
 
@@ -433,9 +462,20 @@ test.register_coroutine_test(
                 mock_device.id,
                 { capability = "mode", component = "SirenVolume", command = "setMode", args = {"Low"} }
             })
+
             test.mock_time.advance_time(2)
             test.socket.capability:__expect_send(
                     mock_device:generate_test_message("SirenVolume", capabilities.mode.mode("Low"))
+            )
+
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "mode", component = "WarningDuration", command = "setMode", args = {"5 seconds"} }
+            })
+
+            test.mock_time.advance_time(2)
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("WarningDuration", capabilities.mode.mode("5 seconds"))
             )
 
             -- Test siren with update configuration
@@ -446,8 +486,8 @@ test.register_coroutine_test(
 
             test.mock_time.advance_time(1)
             -- Expect the command with given configuration
-            get_siren_commands_new_fw(WarningMode.FIRE,IaswdLevel.LOW_LEVEL)
-            test.mock_time.advance_time(ALARM_DURATION_TEST_VALUE)
+            get_siren_commands_new_fw(WarningMode.FIRE,IaswdLevel.LOW_LEVEL,ALARM_DURATION_TEST_VALUE)
+            test.mock_time.advance_time(5)
             -- stop the siren
             -- Expect the OFF command
             get_siren_OFF_commands()

@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ local capabilities = require "st.capabilities"
 local alarm = capabilities.alarm
 
 local ALARM_COMMAND = "alarmCommand"
-local ALARM_LAST_DURATION = "lastDuration"
-local ALARM_MAX_DURATION = "maxDuration"
+local ALARM_DURATION = "warningDuration"
 local SIREN_FIXED_ENDIAN_SW_VERSION = "010903"
 
 local ALARM_DEFAULT_MAX_DURATION = 0x00F0
@@ -78,6 +77,28 @@ local SIREN_VOICE_MAP = {
   ["Panic Emergency"] = 6
 }
 
+local WARNING_DURATION_MAP = {
+  ["5 seconds"] = 5,
+  ["10 seconds"] = 10,
+  ["15 seconds"] = 15,
+  ["20 seconds"] = 20,
+  ["25 seconds"] = 25,
+  ["30 seconds"] = 30,
+  ["40 seconds"] = 40,
+  ["50 seconds"] = 50,
+  ["1 minute"] = 60,
+  ["2 minutes"] = 120,
+  ["3 minutes"] = 180,
+  ["4 minutes"] = 240,
+  ["5 minutes"] = 300,
+  ["10 minutes"] = 600
+}
+
+local MODEL_DEVICE_PROFILE_MAP = {
+  ["SIRZB-110"] = "frient-siren-battery-source-tamper",
+  ["SIRZB-111"] = "frient-siren-battery-source"
+}
+
 local function configure_battery_handling_based_on_fw(driver, device)
   local sw_version = device:get_field(PRIMARY_SW_VERSION)
 
@@ -92,6 +113,7 @@ local function configure_battery_handling_based_on_fw(driver, device)
 end
 
 local function device_init(driver, device)
+
   for _, attribute in ipairs(IASZone_configuration) do
     device:add_configured_attribute(attribute)
     device:add_monitored_attribute(attribute)
@@ -109,6 +131,16 @@ local function device_added (driver, device)
         device:emit_component_event(comp, capabilities.mode.supportedModes({"Armed", "Disarmed"}, {visibility = {displayed = false}}))
         device:emit_component_event(comp, capabilities.mode.supportedArguments({"Armed", "Disarmed"}, {visibility = {displayed = false}}))
         device:emit_component_event(comp, capabilities.mode.mode("Armed"))
+      elseif comp_name == "WarningDuration" then
+        device:emit_component_event(comp, capabilities.mode.supportedModes({
+          "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
+          "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
+        }, {visibility = {displayed = false}}))
+        device:emit_component_event(comp, capabilities.mode.supportedArguments({
+          "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
+          "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
+        }, {visibility = {displayed = false}}))
+        device:emit_component_event(comp, capabilities.mode.mode("4 minutes"))
       else
         device:emit_component_event(comp, capabilities.mode.supportedModes({"Low", "Medium", "High", "Very High"}, {visibility = {displayed = false}}))
         device:emit_component_event(comp, capabilities.mode.supportedArguments({"Low", "Medium", "High", "Very High"}, {visibility = {displayed = false}}))
@@ -135,7 +167,7 @@ local function do_refresh(driver, device)
 end
 
 local function do_configure(driver, device)
-  device:set_field(ALARM_MAX_DURATION, device.preferences.warningDuration == nil and ALARM_DEFAULT_MAX_DURATION or device.preferences.warningDuration, {persist = true})
+  device:set_field(ALARM_DURATION, device.preferences.warningDuration == nil and ALARM_DEFAULT_MAX_DURATION or device.preferences.warningDuration, { persist = true})
   device:send(IASWD.attributes.MaxDuration:write(device, device.preferences.warningDuration == nil and ALARM_DEFAULT_MAX_DURATION or device.preferences.warningDuration):to_endpoint(0x2B))
 
   -- Check if we have the software version
@@ -144,6 +176,11 @@ local function do_configure(driver, device)
     device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
   else
     configure_battery_handling_based_on_fw(driver, device)
+  end
+
+  -- handle frient sirens that were already connected and using old device profile
+  if (not device:supports_capability_by_id(capabilities.mode.ID)) then
+    device:try_update_metadata({profile = MODEL_DEVICE_PROFILE_MAP[device:get_model()]})
   end
 
   device.thread:call_with_delay(5, function()
@@ -187,10 +224,10 @@ local function send_siren_command(device, warning_mode, warning_siren_level)
     device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
   end
 
-  local max_duration = device:get_field(ALARM_MAX_DURATION)
-  local warning_duration = max_duration and max_duration or ALARM_DEFAULT_MAX_DURATION
-
-  device:set_field(ALARM_LAST_DURATION, warning_duration, {persist = true})
+  -- User may select one of predefine modes on the UI or input duration in preferences
+  -- every time ALARM_DURATION is updated
+  local selected_duration = device:get_field(ALARM_DURATION)
+  local warning_duration = selected_duration and selected_duration or ALARM_DEFAULT_MAX_DURATION
 
   local siren_configuration
 
@@ -225,12 +262,15 @@ local function siren_alarm_siren_handler(driver, device, command)
 
   -- delay is needed to allow st automations get updated fields when mode, volume, voice is set sequentially
   device.thread:call_with_delay(1, function()
-    local sirenVoice_msg = device:get_field("sirenVoice")
-    local sirenVolume_msg = device:get_field("sirenVolume")
-    send_siren_command(device,sirenVoice_msg == nil and WarningMode.BURGLAR or SIREN_VOICE_MAP[sirenVoice_msg] , sirenVolume_msg == nil and IaswdLevel.VERY_HIGH_LEVEL or VOLUME_MAP[sirenVolume_msg])
+    local sirenVoice_msg = device:get_latest_state("SirenVoice", capabilities.mode.ID, capabilities.mode.mode.NAME)
+    local sirenVolume_msg = device:get_latest_state("SirenVolume", capabilities.mode.ID, capabilities.mode.mode.NAME)
+
+    send_siren_command(device,sirenVoice_msg == nil and WarningMode.BURGLAR or SIREN_VOICE_MAP[sirenVoice_msg] , sirenVolume_msg == null and IaswdLevel.VERY_HIGH_LEVEL or VOLUME_MAP[sirenVolume_msg])
   end)
 
-  local warningDurationDelay = device.preferences.warningDuration or ALARM_DEFAULT_MAX_DURATION
+  --send_siren_command(device, device.preferences.warningSound == nil and WarningMode.BURGLAR or WarningMode[device.preferences.warningSound], device.preferences.warningLevel == nil and IaswdLevel.VERY_HIGH_LEVEL or IaswdLevel[device.preferences.warningLevel])
+  local warningDurationDelay = device:get_field(ALARM_DURATION) or ALARM_DEFAULT_MAX_DURATION
+  --device.thread:call_with_delay(device.preferences.warningDuration or ALARM_DEFAULT_MAX_DURATION, function() -- Send command to switch from siren to off in the app when the siren is done
   device.thread:call_with_delay(warningDurationDelay, function() -- Send command to switch from siren to off in the app when the siren is done
     if(device:get_field(ALARM_COMMAND) == alarm_command.SIREN) then
       siren_switch_off_handler(driver, device, command)
@@ -260,16 +300,17 @@ local function send_squawk_command(device, squawk_mode, squawk_siren_level)
 
   device:send(
       IASWD.server.commands.Squawk(
-              device,
-              squawk_configuration
+          device,
+          squawk_configuration
       )
   )
 end
 
 local function siren_tone_beep_handler(driver, device, command)
   device.thread:call_with_delay(1, function ()
-    local squawkVolume_msg = device:get_field("squawkVolume")
-    local squawkVoice_msg = device:get_field("squawkVoice")
+    local squawkVolume_msg = device:get_latest_state("SquawkVolume", capabilities.mode.ID, capabilities.mode.mode.NAME)
+    local squawkVoice_msg = device:get_latest_state("SquawkVoice", capabilities.mode.ID, capabilities.mode.mode.NAME)
+
     send_squawk_command(device, SQUAWK_VOICE_MAP[squawkVoice_msg] or SquawkMode.SOUND_FOR_SYSTEM_IS_ARMED,VOLUME_MAP[squawkVolume_msg] or IaswdLevel.VERY_HIGH_LEVEL)
   end )
 end
@@ -279,7 +320,7 @@ local function info_changed(driver, device, event, args)
     if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
       local input = device.preferences[name]
       if (name == "warningDuration") then
-        device:set_field(ALARM_LAST_DURATION, input, {persist = true})
+        device:set_field(ALARM_DURATION, input, {persist = true})
         device:send(IASWD.attributes.MaxDuration:write(device, tonumber(input)))
       end
     end
@@ -292,14 +333,8 @@ local function siren_mode_handler(driver, device, command)
   local compObj = device.profile.components[component]
 
   if compObj then
-    if component == "SirenVolume" then
-      device:set_field("sirenVolume", mode_set, {persist = true})
-    elseif component == "SirenVoice" then
-      device:set_field("sirenVoice", mode_set, {persist = true})
-    elseif component == "SquawkVolume" then
-      device:set_field("squawkVolume", mode_set, {persist = true})
-    elseif component == "SquawkVoice" then
-      device:set_field("squawkVoice", mode_set, {persist = true})
+    if component == "WarningDuration" then
+      device:set_field(ALARM_DURATION, WARNING_DURATION_MAP[mode_set], {persist = true})
     end
   end
 
