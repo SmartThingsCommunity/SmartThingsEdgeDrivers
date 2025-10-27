@@ -113,6 +113,16 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.hardwareFault.hardwareFault.detected()))
+
+    local attr_report_data_1 = {
+      { PRIVATE_THERMOSTAT_ALARM_INFORMATION_ID, data_types.Uint32.ID, 0x00000000 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_1, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.hardwareFault.hardwareFault.clear()))
   end
 )
 
@@ -128,6 +138,26 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       valveCalibration.calibrationState.calibrationSuccess()))
+
+    local attr_report_data_1 = {
+      { PRIVATE_VALVE_RESULT_CALIBRATION_ID, data_types.Uint8.ID, 0x00 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_1, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      valveCalibration.calibrationState.calibrationPending()))
+
+    local attr_report_data_2 = {
+      { PRIVATE_VALVE_RESULT_CALIBRATION_ID, data_types.Uint8.ID, 0x02 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_2, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      valveCalibration.calibrationState.calibrationFailure()))
   end
 )
 
@@ -145,6 +175,18 @@ test.register_coroutine_test(
       capabilities.thermostatMode.thermostatMode.manual()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       invisibleCapabilities.invisibleCapabilities({""})))
+
+    local attr_report_data_1 = {
+      { PRIVATE_THERMOSTAT_OPERATING_MODE_ATTRIBUTE_ID, data_types.Uint8.ID, 0x02 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_1, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.thermostatMode.thermostatMode.antifreezing()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint"})))
   end
 )
 
@@ -162,6 +204,54 @@ test.register_coroutine_test(
       capabilities.valve.valve.closed()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint","stse.valveCalibration","thermostatMode","lock"})))
+
+    local attr_report_data_1 = {
+      { PRIVATE_THERMOSTAT_OPERATING_MODE_ATTRIBUTE_ID, data_types.Uint8.ID, 0x00 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_1, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.thermostatMode.thermostatMode.manual()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      invisibleCapabilities.invisibleCapabilities({""})))
+
+    local attr_report_data_2 = {
+      { PRIVATE_VALVE_SWITCH_ATTRIBUTE_ID, data_types.Uint8.ID, 0x01 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_2, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.valve.valve.open()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      invisibleCapabilities.invisibleCapabilities({""})))
+
+    local attr_report_data_3 = {
+      { PRIVATE_THERMOSTAT_OPERATING_MODE_ATTRIBUTE_ID, data_types.Uint8.ID, 0x02 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_3, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.thermostatMode.thermostatMode.antifreezing()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint"})))
+
+    local attr_report_data_4 = {
+      { PRIVATE_VALVE_SWITCH_ATTRIBUTE_ID, data_types.Uint8.ID, 0x01 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_4, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.valve.valve.open()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      invisibleCapabilities.invisibleCapabilities({"thermostatHeatingSetpoint"})))
   end
 )
 
@@ -177,6 +267,16 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("ChildLock",
       capabilities.lock.lock.unlocked()))
+
+    local attr_report_data_1 = {
+      { PRIVATE_CHILD_LOCK_ID, data_types.Uint8.ID, 0x01 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data_1, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("ChildLock",
+      capabilities.lock.lock.locked()))
   end
 )
 

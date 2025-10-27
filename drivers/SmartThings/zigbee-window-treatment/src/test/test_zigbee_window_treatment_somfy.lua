@@ -505,4 +505,26 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+    "PhysicalClosedLimitLift attribute handler",
+    function()
+      --test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      test.socket.zigbee:__queue_receive(
+        {
+          mock_device.id,
+          WindowCovering.attributes.PhysicalClosedLimitLift:build_test_attr_report(mock_device, 10)
+        }
+      )
+      test.socket.capability:__expect_send(
+          {
+            mock_device.id,
+            {
+              capability_id = "windowShadeLevel", component_id = "main",
+              attribute_id = "shadeLevel", state = { value = 0 }
+            }
+          }
+      )
+    end
+)
+
 test.run_registered_tests()

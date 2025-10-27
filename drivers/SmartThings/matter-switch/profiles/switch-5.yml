@@ -1,3 +1,4 @@
+# Deprecated: do not use this profile for device fingerprinting.
 name: switch-5
 components:
   - id: main
