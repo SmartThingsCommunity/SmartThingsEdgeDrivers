@@ -223,38 +223,36 @@ test.register_message_test(
         }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
         "ZoneStatusChangeNotification should be handled: detected",
-        {
-            {
-                channel = "zigbee",
-                direction = "receive",
-                -- ZoneStatus | Bit0 Alarm1 set to 1
-                message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
-            }
-        }
+        function()
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00)
+            })
+
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
+            )
+
+            test.wait_for_events()
+        end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
         "ZoneStatusChangeNotification should be handled: tested",
-        {
-            {
-                channel = "zigbee",
-                direction = "receive",
-                -- ZoneStatus | Bit8: Test set to 1
-                message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x100, 0x01) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
-            }
-        }
+        function()
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0100, 0x01)
+            })
+
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
+            )
+
+            test.wait_for_events()
+        end
 )
 
 test.register_message_test(
