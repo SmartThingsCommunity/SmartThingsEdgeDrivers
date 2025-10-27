@@ -17,6 +17,11 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
+local version = require "version"
+
+if version.api < 11 then
+  clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("water-valve-level.yml"),

@@ -636,6 +636,11 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1002
     deviceProfileName: switch-level
+  - id: "4251/4102"
+    deviceLabel: Decora Smart Motion Sensing Dimmer Switch
+    vendorId: 0x109B
+    productId: 0x1006
+    deviceProfileName: light-level-motion
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
@@ -795,6 +800,22 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2250
     deviceProfileName: button-battery
+#Meross
+  - id: "4933/40987"
+    deviceLabel: Smart Wi-Fi Switch
+    vendorId: 0x1345
+    productId: 0xA01B
+    deviceProfileName: switch-binary
+  - id: "4933/40978"
+    deviceLabel: Smart Wi-Fi Switch
+    vendorId: 0x1345
+    productId: 0xA012
+    deviceProfileName: switch-binary
+  - id: "4933/45057"
+    deviceLabel: Smart Wi-Fi Power Strip
+    vendorId: 0x1345
+    productId: 0xB001
+    deviceProfileName: switch-binary
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
