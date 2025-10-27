@@ -255,6 +255,11 @@ matterManufacturer:
     vendorId: 0x1434
     productId: 0x1000
     deviceProfileName: matter-bridge
+  - id: "5172/4352"
+    deviceLabel: A3 Home Gateway
+    vendorId: 0x1434
+    productId: 0x1100
+    deviceProfileName: plug-binary
 
 #GE
   - id: "4921/177"
