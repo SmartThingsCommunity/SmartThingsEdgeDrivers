@@ -265,7 +265,7 @@ local function siren_alarm_siren_handler(driver, device, command)
     local sirenVoice_msg = device:get_latest_state("SirenVoice", capabilities.mode.ID, capabilities.mode.mode.NAME)
     local sirenVolume_msg = device:get_latest_state("SirenVolume", capabilities.mode.ID, capabilities.mode.mode.NAME)
 
-    send_siren_command(device,sirenVoice_msg == nil and WarningMode.BURGLAR or SIREN_VOICE_MAP[sirenVoice_msg] , sirenVolume_msg == null and IaswdLevel.VERY_HIGH_LEVEL or VOLUME_MAP[sirenVolume_msg])
+    send_siren_command(device,sirenVoice_msg == nil and WarningMode.BURGLAR or SIREN_VOICE_MAP[sirenVoice_msg] , sirenVolume_msg == nil and IaswdLevel.VERY_HIGH_LEVEL or VOLUME_MAP[sirenVolume_msg])
   end)
 
   --send_siren_command(device, device.preferences.warningSound == nil and WarningMode.BURGLAR or WarningMode[device.preferences.warningSound], device.preferences.warningLevel == nil and IaswdLevel.VERY_HIGH_LEVEL or IaswdLevel[device.preferences.warningLevel])
