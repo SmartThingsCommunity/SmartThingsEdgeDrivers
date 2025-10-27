@@ -68,6 +68,25 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "State transition to unknown",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 255)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.unknown())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+    )
+  end
+)
+
+test.register_coroutine_test(
   "State transition from opening to partially open",
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
@@ -186,6 +205,22 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 30)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "SetShadeLevel command handler",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 50 }}
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
   end
 )
