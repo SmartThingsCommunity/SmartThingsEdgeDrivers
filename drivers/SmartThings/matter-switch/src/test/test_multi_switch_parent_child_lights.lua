@@ -274,10 +274,11 @@ local function test_init_parent_child_endpoints_non_sequential()
     parent_assigned_child_key = string.format("%d", child2_ep_non_sequential)
   })
 
+  -- switch-binary will be selected as an overridden child device profile
   mock_device_parent_child_endpoints_non_sequential:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 3",
-    profile = "plug-binary",
+    profile = "switch-binary",
     parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
     parent_assigned_child_key = string.format("%d", child3_ep_non_sequential)
   })

@@ -107,6 +107,10 @@ SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND
 
 
 SwitchFields.vendor_overrides = {
+  [0x1321] = {
+    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
+  },
   [0x115F] = { -- AQARA_MANUFACTURER_ID
     [0x1003] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
     [0x1004] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)

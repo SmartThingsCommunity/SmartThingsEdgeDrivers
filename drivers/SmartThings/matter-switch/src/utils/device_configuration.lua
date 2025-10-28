@@ -51,7 +51,7 @@ function SwitchDeviceConfiguration.assign_child_profile(device, child_ep)
   end
 
   -- workaround: Aqara Light Switch H2: add Electrical Sensor profile only to the first EDGE_CHILD
-  if child_ep == 1 then
+  if child_ep == 1 or profile == switch_utils.get_product_override_field(device, "initial_profile") then
     profile = switch_utils.get_product_override_field(device, "target_profile") or profile
   end
 
