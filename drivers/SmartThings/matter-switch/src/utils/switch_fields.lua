@@ -112,13 +112,13 @@ SwitchFields.vendor_overrides = {
     [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
   [0x115F] = { -- AQARA_MANUFACTURER_ID
-    [0x1003] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    [0x1004] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    [0x1005] = { target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    [0x1008] = { target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    [0x1009] = { target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    [0x1006] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    [0x100A] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    [0x1003] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    [0x1004] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    [0x1005] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    [0x1008] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    [0x1009] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    [0x1006] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    [0x100A] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
   }
 }
