@@ -80,5 +80,24 @@ zigbeeGeneric:
       server:
         - 0x0702 #Simple Metering
     deviceProfileName: power-meter
+  - id: "ChameleonCTClamp"
+    deviceLabel: Zigbee CT
+    deviceIdentifiers:
+      - 0x000D
+    zigbeeProfiles:
+      - 0x0104
+    clusters:
+      server:
+        - 0x0000 #Basic
+        - 0x0001 #Power Configuration
+        - 0x0002 #Device Temperature Configuration
+        - 0x0003 #Identify
+        - 0x0019 #Over the Air Bootloading
+        - 0x0020 #Poll Control
+        - 0x0702 #Simple Metering
+        - 0x0B04 #Electrical Measurement
+      client:
+        - 0x0003 #Identify
+    deviceProfileName: ct-clamp    
 
     
