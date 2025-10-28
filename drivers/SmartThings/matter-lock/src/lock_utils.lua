@@ -50,7 +50,9 @@ local lock_utils = {
   ENDPOINT_KEY_INDEX = "endpointKeyIndex",
   ENDPOINT_KEY_TYPE = "endpointKeyType",
   DEVICE_KEY_ID = "deviceKeyId",
-  COMMAND_REQUEST_ID = "commandRequestId"
+  COMMAND_REQUEST_ID = "commandRequestId",
+  MAX_PIN_CODE_LENGTH = "max_pin_code_length",
+  REQUIRE_PIN_FOR_REMOTE_OPERATION_IB = "require_pin_for_remote_operation_ib"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"
