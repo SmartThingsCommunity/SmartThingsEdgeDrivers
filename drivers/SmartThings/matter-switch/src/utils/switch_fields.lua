@@ -106,19 +106,20 @@ SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_
 SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
 
-SwitchFields.child_device_profile_overrides_per_vendor_id = {
+SwitchFields.vendor_overrides = {
   [0x1321] = {
-    { product_id = 0x000C, target_profile = "switch-binary", initial_profile = "plug-binary" },
-    { product_id = 0x000D, target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
-  [0x115F] = {
-    { product_id = 0x1003, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1004, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x1005, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    { product_id = 0x1006, target_profile = "light-level-power-energy-powerConsumption" }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    { product_id = 0x1008, target_profile = "light-power-energy-powerConsumption" },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    { product_id = 0x1009, target_profile = "light-power-energy-powerConsumption" },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    { product_id = 0x100A, target_profile = "light-level-power-energy-powerConsumption" }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+  [0x115F] = { -- AQARA_MANUFACTURER_ID
+    [0x1003] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    [0x1004] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    [0x1005] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
+    [0x1008] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
+    [0x1009] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
+    [0x1006] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    [0x100A] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
   }
 }
 
@@ -149,9 +150,6 @@ SwitchFields.INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that sup
 SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
-
-SwitchFields.AQARA_MANUFACTURER_ID = 0x115F
-SwitchFields.AQARA_CLIMATE_SENSOR_W100_ID = 0x2004
 
 SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
 -- When sent with a command, these options mask and override bitmaps cause the command
