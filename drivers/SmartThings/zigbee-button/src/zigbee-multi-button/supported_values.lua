@@ -130,6 +130,13 @@ local devices = {
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "down_hold", "up" },
     NUMBER_OF_BUTTONS = 2
+  },
+  SONOFF_BUTTON_4 = {
+    MATCHING_MATRIX = {
+      { mfr = "SONOFF", model = "SNZB-01M" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "double", "held", "pushed_3x" },
+    NUMBER_OF_BUTTONS = 4
   }
 }
 

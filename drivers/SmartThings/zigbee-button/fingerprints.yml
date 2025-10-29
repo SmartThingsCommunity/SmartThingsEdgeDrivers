@@ -242,6 +242,12 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401SCA4
     deviceProfileName: thirty-buttons
+  # SONOFF
+  - id: "SONOFF/SNZB-01M"
+    deviceLabel: SNZB-01M
+    manufacturer: SONOFF
+    model: SNZB-01M
+    deviceProfileName: sonoff-buttons-battery
 zigbeeGeneric:
   - id: "generic-button-sensor"
     deviceLabel: "Zigbee Generic Button"
