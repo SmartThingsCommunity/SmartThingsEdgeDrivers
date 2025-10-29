@@ -31,6 +31,11 @@ local attribute_handlers = require "generic_handlers.attribute_handlers"
 local event_handlers = require "generic_handlers.event_handlers"
 local capability_handlers = require "generic_handlers.capability_handlers"
 
+local capdefs = require "capabilities.capabilitydefs"
+
+local statelessSwitchLevelStep = capabilities.build_cap_from_json_string(capdefs.statelessSwitchLevelStep)
+capabilities["adminmirror01019.statelessSwitchLevelStep"] = statelessSwitchLevelStep
+
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
@@ -305,6 +310,9 @@ local matter_driver_template = {
       [capabilities.valve.commands.close.NAME] = capability_handlers.handle_valve_close,
       [capabilities.valve.commands.open.NAME] = capability_handlers.handle_valve_open,
     },
+    [statelessSwitchLevelStep.ID] = {
+       [statelessSwitchLevelStep.commands.stepLevel.NAME] = capability_handlers.handle_step_level,
+    }
   },
   supported_capabilities = fields.supported_capabilities,
   sub_drivers = {

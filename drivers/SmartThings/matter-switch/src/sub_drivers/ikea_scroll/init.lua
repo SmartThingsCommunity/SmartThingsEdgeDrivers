@@ -17,6 +17,14 @@ local clusters = require "st.matter.clusters"
 local device_lib = require "st.device"
 local im = require "st.matter.interaction_model"
 local log = require "log"
+local utils = require "st.utils"
+local switch_utils = require "utils.switch_utils"
+local fields = require "utils.switch_fields"
+
+local capdefs = require "capabilities.capabilitydefs"
+
+local knob = capabilities.build_cap_from_json_string(capdefs.knob)
+capabilities["adminmirror01019.knob"] = knob
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
@@ -47,7 +55,7 @@ local function endpoint_to_component(device, ep)
   return "main"
 end
 
-local function subscribe_to_switch_event(endpoint, event)
+local function subscribe_to_switch_event(device, endpoint, event)
   local ib = im.InteractionInfoBlock(endpoint, clusters.Switch.ID, nil, event)
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
   subscribe_request:with_info_block(ib)
@@ -56,16 +64,21 @@ end
 
 -- override subscribe function to prevent subscribing to additional events from the main driver
 local function subscribe(device)
-  for _, n in ipairs(ENDPOINTS_ROTATE_RIGHT + ENDPOINTS_ROTATE_LEFT) do
-    subscribe_to_switch_event(n, clusters.Switch.events.MultiPressOngoing.ID)
-    subscribe_to_switch_event(n, clusters.Switch.events.MultiPressComplete.ID)
+  for _, n in ipairs(ENDPOINTS_ROTATE_RIGHT) do
+    subscribe_to_switch_event(device, n, clusters.Switch.events.MultiPressOngoing.ID)
+    subscribe_to_switch_event(device, n, clusters.Switch.events.MultiPressComplete.ID)
+  end
+
+  for _, n in ipairs(ENDPOINTS_ROTATE_LEFT) do
+    subscribe_to_switch_event(device, n, clusters.Switch.events.MultiPressOngoing.ID)
+    subscribe_to_switch_event(device, n, clusters.Switch.events.MultiPressComplete.ID)
   end
 
   for _, n in ipairs(ENDPOINTS_PRESS) do
-    subscribe_to_switch_event(n, clusters.Switch.events.MultiPressOngoing.ID)
-    subscribe_to_switch_event(n, clusters.Switch.events.MultiPressComplete.ID)
-    subscribe_to_switch_event(n, clusters.Switch.events.LongPress.ID)
-    subscribe_to_switch_event(n, clusters.Switch.events.LongRelease.ID)
+    subscribe_to_switch_event(device, n, clusters.Switch.events.MultiPressOngoing.ID)
+    subscribe_to_switch_event(device, n, clusters.Switch.events.MultiPressComplete.ID)
+    subscribe_to_switch_event(device, n, clusters.Switch.events.LongPress.ID)
+    subscribe_to_switch_event(device, n, clusters.Switch.events.LongRelease.ID)
   end
   
 end
@@ -99,14 +112,16 @@ local function device_init(driver, device)
   device:extend_device("subscribe", subscribe)
   device:subscribe()
 
-  device:emit_component_event('group1', capabilities.switchLevel.level(50))
-  device:emit_component_event('group2', capabilities.switchLevel.level(50))
-  device:emit_component_event('group3', capabilities.switchLevel.level(50))
+  device:emit_component_event(device.profile.components["group1"], knob.knob(0))
+  device:emit_component_event(device.profile.components["group2"], knob.knob(0))
+  device:emit_component_event(device.profile.components["group3"], knob.knob(0))
 end
 
 -- override device_added to prevent it running in the main driver
 local function device_added(driver, device) 
-
+  device:emit_component_event(device.profile.components["group1"], knob.knob(0))
+  device:emit_component_event(device.profile.components["group2"], knob.knob(0))
+  device:emit_component_event(device.profile.components["group3"], knob.knob(0))
 end
 
 local function info_changed(driver, device, event, args)
@@ -126,36 +141,87 @@ local function do_configure(driver, device)
   match_profile(driver, device)
 end
 
+
+
 local function driver_switched(driver, device)
   match_profile(driver, device)
+end
+
+function multi_press_ongoing_handler(driver, device, ib, response)
+  if ib.data then
+    local press_value = ib.data.elements.current_number_of_presses_counted.value
+    local last_value = nil
+    if switch_utils.get_field_for_endpoint(device, fields.MP_ONGOING, ib.endpoint_id) then
+      last_value = device:get_latest_state("group1", knob.ID, knob.knob.NAME)
+    end
+
+    for _, n in ipairs(ENDPOINTS_ROTATE_RIGHT) do
+      if ib.endpoint_id == n then
+        local knob_value = utils.round(press_value / 18 * 100)
+        if last_value ~= nil then
+          knob_value = knob_value - last_value
+        end
+        device:emit_component_event(device.profile.components["group1"], knob.knob(knob_value))
+      end
+    end
+
+    for _, n in ipairs(ENDPOINTS_ROTATE_LEFT) do
+      if ib.endpoint_id == n then
+        local knob_value = -utils.round(press_value / 18 * 100)
+        if last_value ~= nil then
+          knob_value = knob_value - last_value
+        end
+        device:emit_component_event(device.profile.components["group1"], knob.knob(knob_value))
+      end
+    end
+
+    switch_utils.set_field_for_endpoint(device, fields.MP_ONGOING, ib.endpoint_id, true)
+  end
 end
 
 function multi_press_complete_handler(driver, device, ib, response)
   if ib.data then
     local press_value = ib.data.elements.total_number_of_presses_counted.value
-    --if ib.endpoint_id in ENDPOINTS_ROTATE_RIGHT then 
-    --end
-  end
 
-
-
-  if ib.data and not switch_utils.get_field_for_endpoint(device, fields.IGNORE_NEXT_MPC, ib.endpoint_id) then
-    local press_value = ib.data.elements.total_number_of_presses_counted.value
-    --capability only supports up to 6 presses
-    if press_value < 7 then
-      local button_event = capabilities.button.button.pushed({state_change = true})
-      if press_value == 2 then
-        button_event = capabilities.button.button.double({state_change = true})
-      elseif press_value > 2 then
-        button_event = capabilities.button.button(string.format("pushed_%dx", press_value), {state_change = true})
+    if switch_utils.get_field_for_endpoint(device, fields.MP_ONGOING, ib.endpoint_id) == nil then
+      for _, n in ipairs(ENDPOINTS_ROTATE_RIGHT) do
+        if ib.endpoint_id == n then
+          local knob_value = utils.round(press_value / 18 * 100)
+          device:emit_component_event(device.profile.components["group1"], knob.knob(knob_value))
+        end
       end
 
-      device:emit_event_for_endpoint(ib.endpoint_id, button_event)
+      for _, n in ipairs(ENDPOINTS_ROTATE_LEFT) do
+        if ib.endpoint_id == n then
+          local knob_value = -utils.round(press_value / 18 * 100)
+          device:emit_component_event(device.profile.components["group1"], knob.knob(knob_value))
+        end
+      end
     else
-      device.log.info(string.format("Number of presses (%d) not supported by capability", press_value))
+      switch_utils.set_field_for_endpoint(device, fields.MP_ONGOING, ib.endpoint_id, nil)
+    end
+
+    for _, n in ipairs(ENDPOINTS_PRESS) do
+      if ib.endpoint_id == n then
+        if not switch_utils.get_field_for_endpoint(device, fields.IGNORE_NEXT_MPC, ib.endpoint_id) then
+          --capability only supports up to 6 presses
+          if press_value < 7 then
+            local button_event = capabilities.button.button.pushed({state_change = true})
+            if press_value == 2 then
+              button_event = capabilities.button.button.double({state_change = true})
+            elseif press_value > 2 then
+              button_event = capabilities.button.button(string.format("pushed_%dx", press_value), {state_change = true})
+            end
+
+            device:emit_event_for_endpoint(ib.endpoint_id, button_event)
+          else
+            device.log.info(string.format("Number of presses (%d) not supported by capability", press_value))
+          end
+        end
+        switch_utils.set_field_for_endpoint(device, fields.IGNORE_NEXT_MPC, ib.endpoint_id, nil)
+      end
     end
   end
-  switch_utils.set_field_for_endpoint(device, fields.IGNORE_NEXT_MPC, ib.endpoint_id, nil)
 end
 
 local function initial_press_event_handler(driver, device, ib, response)
@@ -174,7 +240,7 @@ local ikea_scroll_handler = {
   matter_handlers = {
     event = {
       [clusters.Switch.ID] = {
-        --[clusters.Switch.events.MultiPressOngoing.ID] = multi_press_ongoing,
+        [clusters.Switch.events.MultiPressOngoing.ID] = multi_press_ongoing_handler,
         [clusters.Switch.events.MultiPressComplete.ID] = multi_press_complete_handler
         --[clusters.Switch.events.LongPress.ID] = long_press_handler,
        -- [clusters.Switch.events.LongRelease.ID] = long_release_handler
