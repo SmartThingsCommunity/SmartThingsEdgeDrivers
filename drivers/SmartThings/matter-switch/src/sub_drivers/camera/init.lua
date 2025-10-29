@@ -1011,26 +1011,15 @@ local function zones_attr_handler(driver, device, ib, response)
         [clusters.ZoneManagement.types.ZoneUseEnum.PRIVACY] = "privacy"
       }
       local zone_color = zone.two_d_cartesian_zone.elements.color and zone.two_d_cartesian_zone.elements.color.value or nil
-      if zone_color then
-        table.insert(zones, {
-          id = zone_id,
-          name = zone_name,
-          type = "2DCartesian",
-          polygonVertices = zone_vertices,
-          source = zone_source == clusters.ZoneManagement.types.ZoneSourceEnum.MFG and "manufacturer" or "user",
-          use = zone_uses[zone_use],
-          color = zone_color
-        })
-      else
-        table.insert(zones, {
-          id = zone_id,
-          name = zone_name,
-          type = "2DCartesian",
-          polygonVertices = zone_vertices,
-          source = zone_source == clusters.ZoneManagement.types.ZoneSourceEnum.MFG and "manufacturer" or "user",
-          use = zone_uses[zone_use]
-        })
-      end
+      table.insert(zones, {
+        id = zone_id,
+        name = zone_name,
+        type = "2DCartesian",
+        polygonVertices = zone_vertices,
+        source = zone_source == clusters.ZoneManagement.types.ZoneSourceEnum.MFG and "manufacturer" or "user",
+        use = zone_uses[zone_use],
+        color = zone_color
+      })
     else
       device.log.warn(string.format("Zone type not currently supported: (%s)", zone_type))
     end
@@ -1043,24 +1032,14 @@ local function triggers_attr_handler(driver, device, ib, response)
   local triggers = {}
   for _, v in ipairs(ib.data.elements) do
     local trigger = v.elements
-    if feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) then
-      table.insert(triggers, {
-        zoneId = trigger.zone_id.value,
-        initialDuration = trigger.initial_duration.value,
-        augmentationDuration = trigger.augmentation_duration.value,
-        maxDuration = trigger.max_duration.value,
-        blindDuration = trigger.blind_duration.value,
-        sensitivity = trigger.sensitivity.value
-      })
-    else
-      table.insert(triggers, {
-        zoneId = trigger.zone_id.value,
-        initialDuration = trigger.initial_duration.value,
-        augmentationDuration = trigger.augmentation_duration.value,
-        maxDuration = trigger.max_duration.value,
-        blindDuration = trigger.blind_duration.value
-      })
-    end
+    table.insert(triggers, {
+      zoneId = trigger.zone_id.value,
+      initialDuration = trigger.initial_duration.value,
+      augmentationDuration = trigger.augmentation_duration.value,
+      maxDuration = trigger.max_duration.value,
+      blindDuration = trigger.blind_duration.value,
+      sensitivity = feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and trigger.sensitivity.value
+    })
   end
   local component = device.profile.components[component_map.main]
   device:emit_component_event(component, capabilities.zoneManagement.triggers(triggers))
@@ -1223,19 +1202,13 @@ end
 
 local function handle_set_mode(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  if cmd.args.mode == "low" then
-    device:send(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(device, endpoint_id,
-      clusters.Global.types.ThreeLevelAutoEnum.LOW))
-  elseif cmd.args.mode == "medium" then
-    device:send(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(device, endpoint_id,
-      clusters.Global.types.ThreeLevelAutoEnum.MEDIUM))
-  elseif cmd.args.mode == "high" then
-    device:send(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(device, endpoint_id,
-      clusters.Global.types.ThreeLevelAutoEnum.HIGH))
-  else
-    device:send(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(device, endpoint_id,
-      clusters.Global.types.ThreeLevelAutoEnum.AUTO))
-  end
+  local level_auto_value
+  if cmd.args.mode == "low" then level_auto_value = "LOW"
+  elseif cmd.args.mode == "medium" then level_auto_value = "MEDIUM"
+  elseif cmd.args.mode == "high" then level_auto_value = "HIGH"
+  else level_auto_value = "AUTO" end
+  device:send(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(device, endpoint_id,
+    clusters.Global.types.ThreeLevelAutoEnum[level_auto_value]))
 end
 
 local function handle_switch_on(driver, device, cmd)
@@ -1346,18 +1319,10 @@ local function handle_update_zone(driver, device, cmd)
     local found_zone = false
     for _, v in pairs(zones) do
       if v.id == cmd.args.zoneId then
-        if not cmd.args.name then
-          cmd.args.name = v.name
-        end
-        if not cmd.args.polygonVertices then
-          cmd.args.polygonVertices = v.polygonVertices
-        end
-        if not cmd.args.use then
-          cmd.args.use = v.use
-        end
-        if not cmd.args.color then
-          cmd.args.color = v.color -- color may be nil, but it is optional in TwoDCartesianZoneStruct
-        end
+        if not cmd.args.name then cmd.args.name = v.name end
+        if not cmd.args.polygonVertices then cmd.args.polygonVertices = v.polygonVertices end
+        if not cmd.args.use then cmd.args.use = v.use end
+        if not cmd.args.color then cmd.args.color = v.color end -- color may be nil, but it is optional in TwoDCartesianZoneStruct
         found_zone = true
         break
       end
@@ -1399,17 +1364,11 @@ local function handle_create_or_update_trigger(driver, device, cmd)
     local found_trigger = false
     for _, v in pairs(triggers) do
       if v.zoneId == cmd.args.zoneId then
-        if not cmd.args.augmentationDuration then
-          cmd.args.augmentationDuration = v.augmentationDuration
-        end
-        if not cmd.args.maxDuration then
-          cmd.args.maxDuration = v.maxDuration
-        end
-        if not cmd.args.blindDuration then
-          cmd.args.blindDuration = v.blindDuration
-        end
-        if (feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and
-          not cmd.args.sensitivity) then
+        if not cmd.args.augmentationDuration then cmd.args.augmentationDuration = v.augmentationDuration end
+        if not cmd.args.maxDuration then cmd.args.maxDuration = v.maxDuration end
+        if not cmd.args.blindDuration then cmd.args.blindDuration = v.blindDuration end
+        if feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and
+          not cmd.args.sensitivity then
           cmd.args.sensitivity = v.sensitivity
         end
         found_trigger = true
