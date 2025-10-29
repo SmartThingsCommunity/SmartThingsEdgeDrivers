@@ -10,8 +10,6 @@ components:
     version: 1
   - id: colorControl
     version: 1
-  - id: firmwareUpdate
-    version: 1
   - id: refresh
     version: 1
   categories:

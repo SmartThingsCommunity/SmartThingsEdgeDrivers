@@ -176,7 +176,7 @@ end
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
-    device:refresh()
+    refresh_handler(driver, device)
   else
     if device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) == nil then
       device:emit_event(capabilities.colorControl.hue(1))
@@ -222,6 +222,16 @@ local function info_changed(driver, device, event, args)
     else
       log.info("info_changed running more than once. Cancelling this run. Time diff: " .. time_diff)
     end
+  end
+end
+
+local function refresh_handler(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    device:refresh()
+    --device:send(Notification:Get({}))
+    --device:send(Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.STATE_IDLE}))
+  else
+    device:refresh()
   end
 end
 
@@ -310,6 +320,9 @@ local inovelli_vzw32_sn = {
     [capabilities.switchLevel.ID] = {
       [capabilities.switchLevel.commands.setLevel.NAME] = switch_level_set
     },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = refresh_handler
+    }
   },
   can_handle = can_handle_inovelli_vzw32
 }
