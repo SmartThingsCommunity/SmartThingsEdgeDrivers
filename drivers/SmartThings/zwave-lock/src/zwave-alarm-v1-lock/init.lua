@@ -21,7 +21,7 @@ local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.defaults.lockCodes
 local lock_code_defaults = require "st.zwave.defaults.lockCodes"
-local json = require "dkjson"
+local json = require "st.json"
 
 local METHOD = {
   KEYPAD = "keypad",

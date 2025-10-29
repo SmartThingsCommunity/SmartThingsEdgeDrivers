@@ -2,7 +2,7 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
-local dkjson = require "dkjson"
+local json = require "st.json"
 
 local clusters = require "st.matter.generated.zap_clusters"
 local button_attr = capabilities.button.button
@@ -144,7 +144,7 @@ local function test_init()
   -- simulate the profile change update taking affect and the device info changing
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
   device_info_copy.profile.id = "5-buttons-battery"
-  local device_info_json = dkjson.encode(device_info_copy)
+  local device_info_json = json.encode(device_info_copy)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   expect_configure_buttons()
