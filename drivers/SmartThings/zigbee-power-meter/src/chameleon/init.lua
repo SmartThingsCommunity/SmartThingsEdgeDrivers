@@ -32,20 +32,28 @@ local configuration = {
 }
 
 local is_chameleon_ct_clamp = function(opts, driver, device)
-  log.info("is_chameleon_ct_clamp")
   for _, fingerprint in ipairs(ZIGBEE_FINGERPRINT) do
       if device:get_model() == fingerprint.model then
-         log.info("Yes it is a ct clamp")
          return true
       end
   end
-  log.info("No it isnt a ct clamp")
   return false
 end
 
-local function battery_level_handler(driver, device, value, zb_rx)
+local function battery_level_handler(driver, device, value, _zb_rx)
   log.info("battery_level_handler")
-  device:emit_event(capabilities.battery.battery(value.value))
+  local number = value.value/2
+  local integer_result = math.floor(number)
+  device:emit_event(capabilities.battery.battery(integer_result))
+end
+
+local function temperature_handler(driver, device, value, _zb_rx)
+  log.info("temperature_handler")
+  if type(value.value) == "number" then
+    device:emit_event(capabilities.temperatureMeasurement.temperature({ value = value.value, unit = "C" }))
+  else
+      log.error("Invalid temperature value received: " .. tostring(value.value))
+  end
 end
 
 local function device_init(driver, device)
@@ -56,8 +64,7 @@ local function device_init(driver, device)
     end
   end
 
-  local batt_level = device:get_latest_state("main", capabilities.battery.ID, capabilities.battery.battery
-  .NAME) or nil
+  local batt_level = device:get_latest_state("main", capabilities.battery.ID, capabilities.battery.battery.NAME) or nil
   if batt_level == nil then
     device:emit_event(capabilities.battery.battery.normal())
   end
@@ -75,6 +82,9 @@ local ct_clamp_battery_temperature_handler = {
     attr = {
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_level_handler
+      },
+      [TemperatureMeasurement.ID] = {
+        [TemperatureMeasurement.attributes.CurrentTemperature.ID] = temperature_handler
       }
     }
   },
