@@ -21,6 +21,9 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ver
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version=7})
+local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
+local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local t_utils = require "integration_test.utils"
 
 -- Inovelli VZW32-SN device identifiers
@@ -38,6 +41,9 @@ local inovelli_vzw32_sn_endpoints = {
       {value = zw.CONFIGURATION},
       {value = zw.CENTRAL_SCENE},
       {value = zw.ASSOCIATION},
+      {value = zw.SENSOR_MULTILEVEL},
+      {value = zw.METER},
+      {value = zw.NOTIFICATION},
     }
   }
 }
@@ -83,6 +89,38 @@ test.register_message_test(
       message = zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         SwitchMultilevel:Get({})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ILLUMINANCE})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS })
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.MOTION_DETECTION})
       )
     },
   },
@@ -242,6 +280,38 @@ test.register_message_test(
       message = zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         SwitchMultilevel:Get({})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ILLUMINANCE})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS })
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_vzw32_sn,
+        Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.MOTION_DETECTION})
       )
     },
   },

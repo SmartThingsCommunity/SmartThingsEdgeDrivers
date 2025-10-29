@@ -23,6 +23,12 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
+--- @type st.zwave.CommandClass.SensorMultilevel
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 7 })
+--- @type st.zwave.CommandClass.Meter
+local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
+--- @type st.zwave.CommandClass.Notification
+local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local preferencesMap = require "preferences"
 
 --- @type st.utils
@@ -173,6 +179,16 @@ local function can_handle_inovelli_vzw32(opts, driver, device, ...)
   return false
 end
 
+local function refresh_handler(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    device:send(SwitchMultilevel:Get({}))
+    device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ILLUMINANCE}))
+    device:send(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }))
+    device:send(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }))
+    device:send(Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.MOTION_DETECTION}))
+  end
+end
+
 local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
@@ -222,16 +238,6 @@ local function info_changed(driver, device, event, args)
     else
       log.info("info_changed running more than once. Cancelling this run. Time diff: " .. time_diff)
     end
-  end
-end
-
-local function refresh_handler(driver, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    device:refresh()
-    --device:send(Notification:Get({}))
-    --device:send(Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.STATE_IDLE}))
-  else
-    device:refresh()
   end
 end
 
