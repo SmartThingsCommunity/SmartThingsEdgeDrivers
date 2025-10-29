@@ -11,6 +11,8 @@ components:
       values:
         - key: "level.value"
           range: [1, 100]
+  - id: adminmirror01019.statelessSwitchLevelStep
+    version: 1
   - id: colorTemperature
     version: 1
     config:

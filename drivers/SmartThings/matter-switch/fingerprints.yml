@@ -1,6 +1,15 @@
 matterManufacturer:
   - id: "ikea-scroll"
-    deviceLabel: Aqara LED Bulb T2 RGB CCT
+    deviceLabel: Ikea Scroll Wheel
     vendorId: 0xFFF1
     productId: 0x8000
     deviceProfileName: ikea-scroll
+<<<<<<< HEAD
+=======
+  - id: "Nanoleaf NL67"
+    deviceLabel: Essentials A19/A60
+    vendorId: 0x115a
+    productId: 0x43
+    deviceProfileName: light-color-level-2700K-6500K
+
+>>>>>>> 2b080301 (WIP)

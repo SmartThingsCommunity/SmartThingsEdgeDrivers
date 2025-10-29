@@ -170,6 +170,8 @@ SwitchFields.STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 -- to tell the driver to ignore MultiPressComplete if it is received after a long press to avoid this extra event.
 SwitchFields.IGNORE_NEXT_MPC = "__ignore_next_mpc"
 
+SwitchFields.MP_ONGOING = "__multipress_ongoing"
+
 -- These are essentially storing the supported features of a given endpoint
 -- TODO: add an is_feature_supported_for_endpoint function to matter.device that takes an endpoint
 SwitchFields.EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) devices we can emulate this on the software side

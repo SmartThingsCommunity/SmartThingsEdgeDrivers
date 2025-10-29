@@ -57,6 +57,19 @@ function CapabilityHandlers.handle_switch_set_level(driver, device, cmd)
   device:send(clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate, 0, 0))
 end
 
+function CapabilityHandlers.handle_step_level(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local step_size = cmd.args.stepSize
+  if step_size ~= 0 then
+    local step_mode = clusters.LevelControl.types.StepModeEnum.UP
+    if step_size < 0 then
+      step_size = -step_size
+      step_mode = clusters.LevelControl.types.StepModeEnum.DOWN
+    end
+    device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, step_size, null, 0, 0))
+  end
+end
+
 
 -- [[ COLOR CONTROL CAPABILITY COMMANDS ]] --
 

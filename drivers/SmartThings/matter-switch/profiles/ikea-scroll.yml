@@ -13,7 +13,7 @@ components:
   - id: group1
     label: Group 1
     capabilities:
-      - id: switchLevel
+      - id: adminmirror01019.knob
         version: 1
       - id: button
         version: 1
@@ -22,7 +22,7 @@ components:
   - id: group2
     label: Group 2
     capabilities:
-      - id: switchLevel
+      - id: adminmirror01019.knob
         version: 1
       - id: button
         version: 1
@@ -31,7 +31,7 @@ components:
   - id: group3
     label: Group 3
     capabilities:
-      - id: switchLevel
+      - id: adminmirror01019.knob
         version: 1
       - id: button
         version: 1
