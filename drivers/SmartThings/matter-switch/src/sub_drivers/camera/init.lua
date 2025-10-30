@@ -18,6 +18,9 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local cfg = require "utils.device_configuration"
+local switch_utils = require "utils.switch_utils"
+local utils = require "st.utils"
 
 local CAMERA_INITIALIZED = "__camera_initialized"
 local IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
@@ -188,19 +191,6 @@ local function component_to_endpoint(device, component)
   return nil
 end
 
-local function find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
-end
-
-local function tbl_contains(array, value)
-  for index, element in ipairs(array) do
-    if element == value then
-      return index
-    end
-  end
-  return false
-end
-
 local function get_ptz_map(device)
   local mechanicalPanTiltZoom = capabilities.mechanicalPanTiltZoom
   local ptz_map = {
@@ -234,7 +224,7 @@ local function update_supported_attributes(device, component, capability, attrib
   local attribute_set = device:get_latest_state(
     component_map.main, capability.ID, capability.supportedAttributes.NAME
   ) or {}
-  if not tbl_contains(attribute_set, attribute) then
+  if not switch_utils.tbl_contains(attribute_set, attribute) then
     local updated_attribute_set = {}
     for _, v in ipairs(attribute_set) do
       table.insert(updated_attribute_set, v)
@@ -273,12 +263,12 @@ local function compare_optional_capabilities(optional_capabilities, prev_optiona
     return false
   end
   for _, capability in pairs(optional_capabilities) do
-    if not tbl_contains(prev_optional_capabilities, capability) then
+    if not switch_utils.tbl_contains(prev_optional_capabilities, capability) then
       return false
     end
   end
   for _, capability in pairs(prev_optional_capabilities) do
-    if not tbl_contains(optional_capabilities, capability) then
+    if not switch_utils.tbl_contains(optional_capabilities, capability) then
       return false
     end
   end
@@ -482,7 +472,7 @@ local function match_profile(device, status_light_enabled_present, status_light_
   end
   if feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.SNAPSHOT) then
     table.insert(main_component_capabilities, capabilities.imageCapture.ID)
-    if not tbl_contains(main_component_capabilities, capabilities.localMediaStorage.ID) and
+    if not switch_utils.tbl_contains(main_component_capabilities, capabilities.localMediaStorage.ID) and
       feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE) then
       table.insert(main_component_capabilities, capabilities.localMediaStorage.ID)
     end
@@ -527,7 +517,7 @@ local function match_profile(device, status_light_enabled_present, status_light_
     table.insert(status_led_component_capabilities, capabilities.mode.ID)
   end
   for _, ep in ipairs(device.endpoints) do
-    if tbl_contains(device:get_endpoints(clusters.Switch.ID) or {}, ep.endpoint_id) then
+    if switch_utils.tbl_contains(device:get_endpoints(clusters.Switch.ID) or {}, ep.endpoint_id) then
       for _, dt in ipairs(ep.device_types) do
         if dt == 0x0143 then
           table.insert(doorbell_component_capabilities, capabilities.button.ID)
@@ -557,27 +547,6 @@ local function match_profile(device, status_light_enabled_present, status_light_
     device:set_field(CAMERA_INITIALIZED, true, {persist = true})
     device:set_field(OPTIONAL_SUPPORTED_COMPONENT_CAPABILITIES, optional_supported_component_capabilities, {persist = true})
   end
-end
-
-local function assign_child_profile(device, child_ep)
-  local profile
-  local device_type_profile_map = {
-    [ON_OFF_LIGHT_DEVICE_TYPE_ID] = "light-binary",
-    [DIMMABLE_LIGHT_DEVICE_TYPE_ID] = "light-level",
-    [COLOR_TEMP_LIGHT_DEVICE_TYPE_ID] = "light-level-colorTemperature",
-    [EXTENDED_COLOR_LIGHT_DEVICE_TYPE_ID] = "light-color-level",
-  }
-  for _, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id == child_ep then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      profile = device_type_profile_map[id]
-      break
-    end
-  end
-  return profile or false
 end
 
 local function initialize_camera_capabilities(device)
@@ -622,7 +591,7 @@ local function device_init(driver, device)
     local parent_child_device = false
     for _, ep in ipairs(device.endpoints) do
       if device:supports_server_cluster(clusters.OnOff.ID, ep.endpoint_id) then
-        local child_profile = assign_child_profile(device, ep.endpoint_id)
+        local child_profile = cfg.SwitchCfg.assign_child_profile(device, ep.endpoint_id)
         if child_profile then
           num_floodlight_eps = num_floodlight_eps + 1
           local name = string.format("%s %d", "Floodlight", num_floodlight_eps)
@@ -646,7 +615,7 @@ local function device_init(driver, device)
     initialize_camera_capabilities(device)
   end
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(find_child)
+    device:set_find_child(switch_utils.find_child)
   end
   subscribe(device)
 end
@@ -691,7 +660,6 @@ local night_vision_attr_factory = function(attribute)
 end
 
 local function image_rotation_attr_handler(driver, device, ib, response)
-  local utils = require "st.utils"
   local degrees = utils.clamp_value(ib.data.value, 0, 359)
   local component = device.profile.components[component_map.main]
   device:emit_component_event(component, capabilities.imageControl.imageRotation(degrees))
@@ -719,7 +687,6 @@ end
 
 local volume_level_attr_factory = function(component)
   return function(driver, device, ib, response)
-    local utils = require "st.utils"
     local max_volume = device:get_field(MAX_VOLUME_LEVEL .. "_" .. component) or ABS_VOL_MAX
     local min_volume = device:get_field(MIN_VOLUME_LEVEL .. "_" .. component) or ABS_VOL_MIN
     -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
@@ -912,7 +879,6 @@ local function ptz_position_attr_handler(driver, device, ib, response)
   local ptz_map = get_ptz_map(device)
   local emit_event = function(idx, value)
     if value ~= ptz_map[idx].current then
-      local utils = require "st.utils"
       device:emit_component_event(component, ptz_map[idx].attribute(
         utils.clamp_value(value, ptz_map[idx].range.minimum, ptz_map[idx].range.maximum)
       ))
@@ -1087,7 +1053,7 @@ end
 
 local function zone_triggered_event_handler(driver, device, ib, response)
   local triggered_zones = device:get_field(TRIGGERED_ZONES) or {}
-  if not tbl_contains(triggered_zones, ib.data.elements.zone.value) then
+  if not switch_utils.tbl_contains(triggered_zones, ib.data.elements.zone.value) then
     table.insert(triggered_zones, {zoneId = ib.data.elements.zone.value})
     device:set_field(TRIGGERED_ZONES, triggered_zones)
     local component = device.profile.components[component_map.main]
@@ -1130,7 +1096,6 @@ local set_night_vision_factory = function(attribute)
 end
 
 local function handle_set_image_rotation(driver, device, cmd)
-  local utils = require "st.utils"
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local degrees = utils.clamp_value(cmd.args.rotation, 0, 359)
   device:send(clusters.CameraAvStreamManagement.attributes.ImageRotation:write(device, endpoint_id, degrees))
@@ -1152,7 +1117,6 @@ local handle_mute_commands_factory = function(command)
 end
 
 local function handle_set_volume(driver, device, cmd)
-  local utils = require "st.utils"
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local max_volume = device:get_field(MAX_VOLUME_LEVEL .. "_" .. cmd.component) or ABS_VOL_MAX
   local min_volume = device:get_field(MIN_VOLUME_LEVEL .. "_" .. cmd.component) or ABS_VOL_MIN
@@ -1167,7 +1131,6 @@ local function handle_set_volume(driver, device, cmd)
 end
 
 local function handle_volume_up(driver, device, cmd)
-  local utils = require "st.utils"
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local max_volume = device:get_field(MAX_VOLUME_LEVEL .. "_" .. cmd.component) or ABS_VOL_MAX
   local min_volume = device:get_field(MIN_VOLUME_LEVEL .. "_" .. cmd.component) or ABS_VOL_MIN
@@ -1184,7 +1147,6 @@ local function handle_volume_up(driver, device, cmd)
 end
 
 local function handle_volume_down(driver, device, cmd)
-  local utils = require "st.utils"
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local max_volume = device:get_field(MAX_VOLUME_LEVEL .. "_" .. cmd.component) or ABS_VOL_MAX
   local min_volume = device:get_field(MIN_VOLUME_LEVEL .. "_" .. cmd.component) or ABS_VOL_MIN
@@ -1241,7 +1203,6 @@ end
 
 local ptz_set_position_factory = function(command)
   return function (driver, device, cmd)
-    local utils = require "st.utils"
     local ptz_map = get_ptz_map(device)
     if command == capabilities.mechanicalPanTiltZoom.commands.setPanTiltZoom then
       ptz_map[PAN_IDX].current = cmd.args.pan
