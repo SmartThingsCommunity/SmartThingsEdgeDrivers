@@ -275,7 +275,7 @@ local function compare_optional_capabilities(optional_capabilities, prev_optiona
   return true
 end
 
-local function subscribe(device)
+local function add_camera_subscribed_attributes(device)
   if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) > 0 then
     device:add_subscribed_attribute(clusters.CameraAvStreamManagement.attributes.AttributeList)
   end
@@ -337,7 +337,6 @@ local function subscribe(device)
       end
     end
   end
-  device:subscribe()
 end
 
 local function init_webrtc(device)
@@ -617,14 +616,16 @@ local function device_init(driver, device)
   if device:get_field(IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(switch_utils.find_child)
   end
-  subscribe(device)
+  add_camera_subscribed_attributes(device)
+  device:subscribe()
 end
 
 local function info_changed(driver, device, event, args)
   -- resubscribe and initialize relevant camera capabilities if a modular update has occurred
   if not compare_components(device.profile.components, args.old_st_store.profile.components) then
     initialize_camera_capabilities(device)
-    subscribe(device)
+    add_camera_subscribed_attributes(device)
+    device:subscribe()
   end
 end
 
