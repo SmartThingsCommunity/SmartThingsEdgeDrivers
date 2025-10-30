@@ -2369,6 +2369,12 @@ zigbeeManufacturer:
     manufacturer: LAISIAO
     model: yuba
     deviceProfileName: switch-smart-bath-heater-laisiao
+  # NodOn
+  - id: "NodOn/SIN-4-1-20"
+    deviceLabel: Zigbee Multifunction Relay Switch
+    manufacturer: NodOn
+    model: SIN-4-1-20
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch
