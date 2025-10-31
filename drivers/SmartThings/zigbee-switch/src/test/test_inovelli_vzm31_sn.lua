@@ -20,9 +20,6 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local cluster_base = require "st.zigbee.cluster_base"
 local utils = require "st.utils"
 
-local OnOff = clusters.OnOff
-local Level = clusters.Level
-
 -- Inovelli VZM31-SN device identifiers
 local INOVELLI_MANUFACTURER_ID = "Inovelli"
 local INOVELLI_VZM31_SN_MODEL = "VZM31-SN"

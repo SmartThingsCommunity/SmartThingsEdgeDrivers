@@ -18,8 +18,6 @@ local utils = require "st.utils"
 local st_device = require "st.device"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
-local device_management = require "st.zigbee.device_management"
-local configurations = require "configurations"
 local inovelli_common = require "inovelli.common"
 
 -- Load VZM32-only dependencies (handlers will check device type)
@@ -39,10 +37,6 @@ local PRIVATE_CMD_ENERGY_RESET_ID = 0x02
 local PRIVATE_CMD_SCENE_ID = 0x00
 local PRIVATE_CMD_MMWAVE_ID = 0x00
 local MFG_CODE = 0x122F
-
-local function is_vzm32(device)
-  return device:get_model() == "VZM32-SN"
-end
 
 -- Base preferences shared by all models
 local base_preference_map = {
@@ -202,7 +196,7 @@ local function info_changed(driver, device, event, args)
                 PRIVATE_CMD_MMWAVE_ID,
                 MFG_CODE,
                 utils.serialize_int(new_parameter_value,1,false,false)))
-            else 
+            else
               device:send(cluster_base.write_manufacturer_specific_attribute(device, preferences[id].cluster, preferences[id].parameter_number, MFG_CODE, preferences[id].size, new_parameter_value))
             end
         end
@@ -279,7 +273,7 @@ local function on_handler(driver, device, command)
       device.thread:call_with_delay(1,send_configuration)
     end
   end
-  
+
   local function off_handler(driver, device, command)
     if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
       device:send(clusters.OnOff.server.commands.Off(device))
@@ -332,7 +326,7 @@ local function set_color_temperature(driver, device, command)
     end
     device.thread:call_with_delay(1,send_configuration)
   end
-  
+
   local function set_color(driver, device, command)
     device:emit_event(capabilities.colorControl.hue(command.args.color.hue))
     device:emit_event(capabilities.colorControl.saturation(command.args.color.saturation))
