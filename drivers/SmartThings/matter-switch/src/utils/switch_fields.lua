@@ -124,7 +124,10 @@ SwitchFields.vendor_overrides = {
     [0x1006] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
     [0x100A] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
-  }
+  },
+  [0xFFF1] = { -- IKEA_MANUFACTURER_ID
+    [0x8000] = { is_ikea_scroll = true }
+  },
 }
 
 SwitchFields.switch_category_vendor_overrides = {

@@ -118,6 +118,7 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
+local st_utils = require "st.utils"
 
 function ButtonDeviceConfiguration.configure_buttons(device)
   local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
@@ -127,6 +128,8 @@ function ButtonDeviceConfiguration.configure_buttons(device)
 
   for _, ep in ipairs(ms_eps) do
     if device.profile.components[switch_utils.endpoint_to_component(device, ep)] then
+      print(st_utils.stringify_table(device.profile.components[switch_utils.endpoint_to_component(device, ep)]))
+      print(device.profile.components[switch_utils.endpoint_to_component(device, ep)])
       device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event
       -- this ordering is important, since MSM & MSL devices must also support MSR
