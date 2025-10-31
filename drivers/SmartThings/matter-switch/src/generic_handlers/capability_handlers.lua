@@ -66,7 +66,7 @@ function CapabilityHandlers.handle_step_level(driver, device, cmd)
       step_size = -step_size
       step_mode = clusters.LevelControl.types.StepModeEnum.DOWN
     end
-    device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, step_size, null, 0, 0))
+    device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, step_size, 0, 0, 0))
   end
 end
 
