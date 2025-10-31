@@ -396,12 +396,7 @@ local mock_device_light_level_motion = test.mock_device.build_test_matter_device
     {
       endpoint_id = 1,
       clusters = {
-        {
-          cluster_id = clusters.OnOff.ID,
-          cluster_type = "SERVER",
-          cluster_revision = 1,
-          feature_map = 0, --u32 bitmap
-        },
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
       },
       device_types = {
@@ -454,6 +449,10 @@ end
 
 local function test_init_onoff_client()
   test.mock_device.add_test_device(mock_device_onoff_client)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "init" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "doConfigure" })
+  mock_device_onoff_client:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_parent_client_child_server()
@@ -473,6 +472,8 @@ end
 
 local function test_init_dimmer()
   test.mock_device.add_test_device(mock_device_dimmer)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "init" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "doConfigure" })
   mock_device_dimmer:expect_metadata_update({ profile = "switch-level" })
   mock_device_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
