@@ -1,0 +1,42 @@
+name: aqara-double-buttons-mode
+components:
+  - id: main
+    capabilities:
+      - id: button
+        version: 1
+      - id: batteryLevel
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button1
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button2
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: all
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - preferenceId: stse.allowOperationModeChange
+    explicit: true
+  # - name: "modeSwitch"
+  #   title: "Mode switching"
+  #   description: "Setting for Mode Change Feature Activation"
+  #   required: true
+  #   preferenceType: boolean
+  #   definition:
+  #     default: false

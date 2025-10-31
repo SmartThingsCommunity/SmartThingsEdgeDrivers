@@ -19,11 +19,15 @@ local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local button_utils = require "button_utils"
 
+local MODE = "devicemode"
+local MODE_CHANGE = "stse.allowOperationModeChange"
+local SUPPORTED_BUTTON = { { "pushed" }, { "pushed", "held", "double" } }
 
 local PowerConfiguration = clusters.PowerConfiguration
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID_T1 = 0x0009
 local PRIVATE_ATTRIBUTE_ID_E1 = 0x0125
+local PRIVATE_ATTRIBUTE_ID_ALIVE = 0x00F7
 local MFG_CODE = 0x115F
 
 local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
@@ -34,7 +38,9 @@ local FINGERPRINTS = {
   ["lumi.remote.b1acn02"] = { mfr = "LUMI", btn_cnt = 1 },
   ["lumi.remote.acn003"] = { mfr = "LUMI", btn_cnt = 1 },
   ["lumi.remote.b186acn03"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b286acn03"] = { mfr = "LUMI", btn_cnt = 3 }
+  ["lumi.remote.b286acn03"] = { mfr = "LUMI", btn_cnt = 3 },
+  ["lumi.remote.b18ac1"] = { mfr = "LUMI", btn_cnt = 1 },
+  ["lumi.remote.b28ac1"] = { mfr = "LUMI", btn_cnt = 3 }
 }
 
 local configuration = {
@@ -101,6 +107,36 @@ local function battery_level_handler(driver, device, value, zb_rx)
   end
 end
 
+local function mode_switching_handler(driver, device, value, zb_rx)
+  local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
+  local allow = device.preferences[MODE_CHANGE] or false
+  if allow then
+    local mode = device:get_field(MODE) or 1
+    mode = 3 - mode
+    device:set_field(MODE, mode, { persist = true })
+    device:send(cluster_base.write_manufacturer_specific_attribute(device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1,
+      MFG_CODE, data_types.Uint8, mode))
+    device:emit_event(capabilities.button.supportedButtonValues(SUPPORTED_BUTTON[mode],
+      { visibility = { displayed = false } }))
+    device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
+    button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME,
+      capabilities.button.button.pushed({ state_change = false }))
+    if btn_evt_cnt > 1 then
+      for i = 1, btn_evt_cnt do
+        device:emit_component_event(device.profile.components[COMP_LIST[i]],
+          capabilities.button.supportedButtonValues(SUPPORTED_BUTTON[mode],
+            { visibility = { displayed = false } }))
+        device:emit_component_event(device.profile.components[COMP_LIST[i]],
+          capabilities.button.numberOfButtons({ value = 1 }))
+        device:emit_component_event(device.profile.components[COMP_LIST[i]],
+          capabilities.button.button.pushed({ state_change = false }))
+        button_utils.emit_event_if_latest_state_missing(device, COMP_LIST[i], capabilities.button,
+          capabilities.button.button.NAME, capabilities.button.button.pushed({ state_change = false }))
+      end
+    end
+  end
+end
+
 local is_aqara_products = function(opts, driver, device)
   local isAqaraProducts = false
   if FINGERPRINTS[device:get_model()] and FINGERPRINTS[device:get_model()].mfr == device:get_manufacturer() then
@@ -120,8 +156,18 @@ end
 
 local function added_handler(self, device)
   local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
+  local mode = device:get_field(MODE) or 0
+  local model = device:get_model()
 
-  device:emit_event(capabilities.button.supportedButtonValues({ "pushed", "held", "double" },
+  if mode == 0 then
+    if model == "lumi.remote.b18ac1" or model == "lumi.remote.b28ac1" then
+      mode = 1
+    else
+      mode = 2
+    end
+  end
+  device:set_field(MODE, mode, { persist = true })
+  device:emit_event(capabilities.button.supportedButtonValues(SUPPORTED_BUTTON[mode],
     { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
   button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME,
@@ -133,7 +179,7 @@ local function added_handler(self, device)
   if btn_evt_cnt > 1 then
     for i = 1, btn_evt_cnt do
       device:emit_component_event(device.profile.components[COMP_LIST[i]],
-        capabilities.button.supportedButtonValues({ "pushed", "held", "double" },
+        capabilities.button.supportedButtonValues(SUPPORTED_BUTTON[mode],
           { visibility = { displayed = false } }))
       device:emit_component_event(device.profile.components[COMP_LIST[i]],
         capabilities.button.numberOfButtons({ value = 1 }))
@@ -177,6 +223,9 @@ local aqara_wireless_switch_handler = {
       },
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryVoltage.ID] = battery_level_handler
+      },
+      [PRIVATE_CLUSTER_ID] = {
+        [PRIVATE_ATTRIBUTE_ID_ALIVE] = mode_switching_handler
       }
     }
   },
