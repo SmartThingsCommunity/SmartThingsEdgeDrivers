@@ -310,6 +310,7 @@ local matter_driver_template = {
   sub_drivers = {
     require("sub_drivers.aqara_cube"),
     require("sub_drivers.eve_energy"),
+    require("sub_drivers.ikea_scroll"),
     require("sub_drivers.third_reality_mk1")
   }
 }
