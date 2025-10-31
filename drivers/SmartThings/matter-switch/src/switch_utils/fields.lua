@@ -112,7 +112,10 @@ SwitchFields.vendor_overrides = {
     [0x1006] = { ignore_combo_switch_button = true }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
     [0x100A] = { ignore_combo_switch_button = true }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
-  }
+  },
+  [0x117C] = { -- IKEA_MANUFACTURER_ID
+    [0x8000] = { is_ikea_scroll = true }
+  },
 }
 
 SwitchFields.switch_category_vendor_overrides = {
@@ -168,6 +171,8 @@ SwitchFields.STATIC_BUTTON_PROFILE_SUPPORTED = {1, 2, 3, 4, 5, 6, 7, 8, 9}
 -- the "held" capability event is generated when the LongPress event is received. The IGNORE_NEXT_MPC flag is used
 -- to tell the driver to ignore MultiPressComplete if it is received after a long press to avoid this extra event.
 SwitchFields.IGNORE_NEXT_MPC = "__ignore_next_mpc"
+
+SwitchFields.MP_ONGOING = "__multipress_ongoing"
 
 -- These are essentially storing the supported features of a given endpoint
 -- TODO: add an is_feature_supported_for_endpoint function to matter.device that takes an endpoint
