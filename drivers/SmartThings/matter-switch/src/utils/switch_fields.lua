@@ -206,6 +206,18 @@ SwitchFields.supported_capabilities = {
   capabilities.switchLevel,
   capabilities.temperatureMeasurement,
   capabilities.valve,
+  capabilities.hdr,
+  capabilities.nightVision,
+  capabilities.imageControl,
+  capabilities.audioRecording,
+  capabilities.cameraPrivacyMode,
+  capabilities.webrtc,
+  capabilities.mechanicalPanTiltZoom,
+  capabilities.zoneManagement,
+  capabilities.sounds,
+  capabilities.videoStreamSettings,
+  capabilities.localMediaStorage,
+  capabilities.cameraViewportSettings
 }
 
 SwitchFields.device_type_attribute_map = {
