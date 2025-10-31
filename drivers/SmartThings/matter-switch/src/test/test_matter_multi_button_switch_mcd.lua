@@ -412,13 +412,15 @@ test.register_coroutine_test(
       clusters.Switch.server.events.MultiPressComplete,
     }
     local unsup_mock_device = mock_device_mcd_unsupported_switch_device_type
-    local added_subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
-
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
+    for _, cluster in ipairs(cluster_subscribe_list) do
+      subscribe_request:merge(cluster:subscribe(unsup_mock_device))
+    end
     test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
-    test.socket.matter:__expect_send({unsup_mock_device.id, added_subscribe_request})
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
     test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
-    test.socket.matter:__expect_send({unsup_mock_device.id, added_subscribe_request})
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
     test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "doConfigure" })
     unsup_mock_device:expect_device_create({
