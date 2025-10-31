@@ -10,7 +10,7 @@ local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
-local reverseRollerShadeDir = capabilities["stse.reverseRollerShadeDir"]
+local reverseRollerShadeDir = "stse.reverseRollerShadeDir"
 local shadeRotateState = capabilities["stse.shadeRotateState"]
 local setRotateStateCommandName = "setRotateState"
 
@@ -82,9 +82,9 @@ end
 
 local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir.ID]
+    local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir]
     if reverseRollerShadeDirPrefValue ~= nil and
-        reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDir.ID] then
+        reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDir] then
       local raw_value = reverseRollerShadeDirPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
