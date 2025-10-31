@@ -19,13 +19,18 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 local capabilities = require "st.capabilities"
 
 local function can_handle_v1_contact_event(opts, driver, device, cmd, ...)
-  return opts.dispatcher_class == "ZwaveDispatcher" and
+  if opts.dispatcher_class == "ZwaveDispatcher" and
     cmd ~= nil and
     cmd.cmd_class ~= nil and
     cmd.cmd_class == cc.NOTIFICATION and
     cmd.cmd_id == Notification.REPORT and
     cmd.args.notification_type == Notification.notification_type.HOME_SECURITY and
-    cmd.args.v1_alarm_type == 0x07
+    cmd.args.v1_alarm_type == 0x07 then
+      local subdriver = require("v1-contact-event")
+      return true, subdriver
+    else
+      return false
+    end
 end
 
 -- This behavior is from zwave-door-window-sensor.groovy, where it is

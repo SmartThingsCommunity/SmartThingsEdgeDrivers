@@ -59,7 +59,6 @@ local function device_init(driver, device)
         battery_defaults.enable_battery_voltage_table(device, config.battery_voltage_table)
       elseif (config.cluster) then
         device:add_configured_attribute(config)
-        device:add_monitored_attribute(config)
       end
     end
   end
@@ -99,6 +98,7 @@ local zigbee_water_driver_template = {
     require("sengled"),
     require("sinope")
   },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_water_driver_template,

@@ -1,6 +1,7 @@
 local log = require "log"
 local Fields = require "fields"
 local cosock = require "cosock"
+local utils = require "utils"
 
 --- Room or zone with the children translated from their hue device id or light resource id to
 --- their SmartThings represented device object. The grouped light resource id is also moved into
@@ -100,10 +101,11 @@ end
 ---@param group_kind string room or zone
 ---@param driver HueDriver
 ---@param hue_id_to_device table
+---@param light_id_to_device table
 ---@param resp table?
 ---@param err any?
 ---@return HueLightGroup[]?
-local function handle_group_scan_response(group_kind, driver, hue_id_to_device, resp, err)
+local function handle_group_scan_response(group_kind, driver, hue_id_to_device, light_id_to_device, resp, err)
   if err or not resp then
     log.error(string.format("Failed to scan for %s: %s", group_kind, err or "unknown error"))
     return nil
@@ -121,7 +123,7 @@ local function handle_group_scan_response(group_kind, driver, hue_id_to_device, 
 
   log.info(string.format("Successfully got %d %s", #resp.data, group_kind))
   for _, group in ipairs(resp.data) do
-    build_hue_light_group(group, hue_id_to_device, driver.hue_identifier_to_device_record)
+    build_hue_light_group(group, hue_id_to_device, light_id_to_device)
     log.info(string.format("Found light group %s with %d device records", group.id, #group.devices))
   end
 
@@ -134,12 +136,14 @@ end
 --- @param hue_id_to_device table
 function grouped_utils.scan_groups(driver, bridge_device, api, hue_id_to_device)
   local rooms, zones
-  while not (rooms and zones) do -- TODO: Should this be one and done? Timeout?
+  -- These are the hue light/other service ids rather than the hue device ids
+  local light_id_to_device = utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
+  while not (rooms and zones) do
     if not rooms then
-      rooms = handle_group_scan_response("rooms", driver, hue_id_to_device, api:get_rooms())
+      rooms = handle_group_scan_response("rooms", driver, hue_id_to_device, light_id_to_device, api:get_rooms())
     end
     if not zones then
-      zones = handle_group_scan_response("zones", driver, hue_id_to_device, api:get_zones())
+      zones = handle_group_scan_response("zones", driver, hue_id_to_device, light_id_to_device, api:get_zones())
     end
   end
   -- Combine rooms and zones.
@@ -204,7 +208,10 @@ function grouped_utils.group_update(driver, bridge_device, to_update)
   if to_update.children then
     local devices =
       build_group_device_table(
-        to_update, build_hue_id_to_device_map(bridge_device), driver.hue_identifier_to_device_record
+        to_update,
+        build_hue_id_to_device_map(bridge_device),
+        -- These are the hue light/other service ids rather than the hue device ids
+        utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
       )
     -- check if number of children has changed and if we need to move it
     update_index = #devices ~= #group.devices
@@ -241,7 +248,10 @@ function grouped_utils.group_add(driver, bridge_device, to_add)
   end
   local hue_light_group =
     build_hue_light_group(
-      to_add, build_hue_id_to_device_map(bridge_device), driver.hue_identifier_to_device_record
+      to_add,
+      build_hue_id_to_device_map(bridge_device),
+      -- These are the hue light/other service ids rather than the hue device ids
+      utils.get_hue_id_to_device_table_by_bridge(driver, bridge_device) or {}
     )
   insert(groups, hue_light_group)
   log.info(string.format("Adding group %s, %d devices",

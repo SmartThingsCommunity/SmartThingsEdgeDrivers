@@ -53,19 +53,26 @@ local function device_init(driver, device)
 
   for _, attribute in ipairs(CONFIGURATIONS) do
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
-
-  device:emit_event(capabilities.batteryLevel.type("CR1632"))
-  device:emit_event(capabilities.batteryLevel.quantity(1))
-  device:emit_event(capabilities.batteryLevel.battery("normal"))
-  device:emit_event(capabilities.contactSensor.contact.open())
 end
 
 local function do_configure(self, device)
   device:configure()
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01))
+end
+
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
+local function added_handler(driver, device)
+  device:emit_event(capabilities.batteryLevel.type("CR1632"))
+  device:emit_event(capabilities.batteryLevel.quantity(1))
+  device:emit_event(capabilities.batteryLevel.battery("normal"))
+  emit_event_if_latest_state_missing(device, "main", capabilities.contactSensor, capabilities.contactSensor.contact.NAME, capabilities.contactSensor.contact.open())
 end
 
 local function contact_status_handler(self, device, value, zb_rx)
@@ -126,7 +133,8 @@ local aqara_contact_handler = {
   },
   lifecycle_handlers = {
     init = device_init,
-    doConfigure = do_configure
+    doConfigure = do_configure,
+    added = added_handler,
   },
   can_handle = is_aqara_products
 }

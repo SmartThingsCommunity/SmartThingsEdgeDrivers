@@ -1,3 +1,4 @@
+# Deprecated: do not use this profile for device fingerprinting.
 name: light-level-colorTemperature-2700K-6500K
 components:
 - id: main

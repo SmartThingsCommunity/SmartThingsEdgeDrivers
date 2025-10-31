@@ -17,11 +17,19 @@ local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
-
 local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
+local version = require "version"
 
-local DEFERRED_CONFIGURE = "__DEFERRED_CONFIGURE"
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
+
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
 
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1
@@ -159,7 +167,8 @@ local function configure_buttons()
 end
 
 local function test_init()
-  local opts = { persist = true }
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(aqara_mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.Switch.server.events.InitialPress,
@@ -176,13 +185,16 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(aqara_mock_device))
     end
   end
+
+  -- Test added -> doConfigure logic
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
+  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "init" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
-  test.mock_devices_api._expected_device_updates[aqara_mock_device.device_id] = "00000000-1111-2222-3333-000000000001"
-  test.mock_devices_api._expected_device_updates[1] = {device_id = "00000000-1111-2222-3333-000000000001"}
-  test.mock_devices_api._expected_device_updates[1].metadata = {deviceId="00000000-1111-2222-3333-000000000001", profileReference="4-button"}
+  configure_buttons()
+  aqara_mock_device:expect_metadata_update({ profile = "4-button" })
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.mock_device.add_test_device(aqara_mock_device)
   -- to test powerConsumptionReport
   test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
 
@@ -206,11 +218,6 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", aqara_child2_ep)
   })
 
-  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
-  configure_buttons()
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-
-  aqara_mock_device:set_field(DEFERRED_CONFIGURE, true, opts)
   local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
   device_info_copy.profile.id = "4-button"
   local device_info_json = dkjson.encode(device_info_copy)
@@ -287,6 +294,8 @@ test.register_coroutine_test(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.powerMeter.power({value = 17.0, unit="W"}))
       )
 
+      test.mock_time.advance_time(901) -- move time 15 minutes past 0 (this can be assumed to be true in practice in all cases)
+
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
@@ -298,8 +307,15 @@ test.register_coroutine_test(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
       )
 
-      -- in order to do powerConsumptionReport, CumulativeEnergyImported must be called twice.
-      -- This is because related variable settings are required in set_poll_report_timer_and_schedule().
+      test.socket.capability:__expect_send(
+        aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+          start = "1970-01-01T00:00:00Z",
+          ["end"] = "1970-01-01T00:15:00Z",
+          deltaEnergy = 0.0,
+          energy = 19.0
+        }))
+      )
+
       test.socket.matter:__queue_receive(
         {
           aqara_mock_device.id,
@@ -310,6 +326,11 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
       )
+
+      -- don't send a powerConsumptionReport event, 15 minutes have not passed since the last one.
+
+      test.wait_for_events()
+      test.mock_time.advance_time(1500)
 
       test.socket.matter:__queue_receive(
         {
@@ -324,12 +345,10 @@ test.register_coroutine_test(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.energyMeter.energy({ value = 39.0, unit = "Wh" }))
       )
 
-      -- to test powerConsumptionReport
-      test.mock_time.advance_time(2000)
       test.socket.capability:__expect_send(
         aqara_mock_children[aqara_child1_ep]:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T00:33:19Z",
+          start = "1970-01-01T00:15:01Z",
+          ["end"] = "1970-01-01T00:40:00Z",
           deltaEnergy = 0.0,
           energy = 39.0
         }))

@@ -58,9 +58,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -79,6 +77,7 @@ end
 test.register_coroutine_test(
   "Handle added lifecycle",
   function()
+    -- The initial window shade event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -89,6 +88,24 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", hookLockState.hookLockState.unlocked())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", chargingState.chargingState.stopped())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.battery.battery(100))
+    )
+    -- Avoid sending the initial window shade event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())

@@ -83,6 +83,8 @@ local device_desc = {
 }
 
 local test_init_common = function(device)
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(device)
   local cluster_subscribe_list = {
     clusters.Thermostat.attributes.SystemMode,
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
@@ -99,6 +101,7 @@ local test_init_common = function(device)
     clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(device)
@@ -107,7 +110,6 @@ local test_init_common = function(device)
       subscribe_request:merge(cluster:subscribe(device))
     end
   end
-  test.socket.matter:__expect_send({ device.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ device.id, "added" })
   local read_request_on_added = {
     clusters.Thermostat.attributes.ControlSequenceOfOperation,
@@ -124,15 +126,13 @@ local test_init_common = function(device)
     device.id, read_request
   })
 
-  test.mock_device.add_test_device(device)
+  test.socket.device_lifecycle:__queue_receive({ device.id, "init" })
+  test.socket.matter:__expect_send({ device.id, subscribe_request })
 end
 
 local mock_device = test.mock_device.build_test_matter_device(device_desc)
 local function test_init()
   test_init_common(mock_device)
-  test.socket.matter:__expect_send({
-    mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-  })
 end
 
 -- Create device with Thermostat clusters having features AUTO, HEAT & COOL
@@ -142,22 +142,12 @@ local mock_device_with_auto = test.mock_device.build_test_matter_device(device_d
 local test_init_auto = function()
   test_init_common(mock_device_with_auto)
   test.socket.matter:__expect_send({
-    mock_device_with_auto.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device_with_auto)
-  })
-  test.socket.matter:__expect_send({
     mock_device_with_auto.id, clusters.Thermostat.attributes.MinSetpointDeadBand:read(mock_device_with_auto)
   })
 end
 
 -- Set feature map of ElectricalEnergyMeasurement Cluster to only PERE and IMPE
 device_desc.endpoints[2].clusters[1].feature_map = 9
-local mock_device_with_pere_impe = test.mock_device.build_test_matter_device(device_desc)
-local test_init_pere_impe = function()
-  test_init_common(mock_device_with_pere_impe)
-  test.socket.matter:__expect_send({
-    mock_device_with_pere_impe.id, clusters.Thermostat.attributes.MinSetpointDeadBand:read(mock_device_with_pere_impe)
-  })
-end
 
 test.set_test_init_function(test_init)
 
@@ -184,6 +174,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 40.0, unit = "C" }))
     },
     {
@@ -193,6 +188,11 @@ test.register_message_test(
         mock_device.id,
         clusters.Thermostat.server.attributes.OccupiedHeatingSetpoint:build_test_report_data(mock_device, THERMOSTAT_TWO_EP, 23*100)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
     },
     {
       channel = "capability",
@@ -216,6 +216,11 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_device:generate_test_message("thermostatOne", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 39.0, unit = "C" }))
     },
     {
@@ -225,6 +230,11 @@ test.register_message_test(
         mock_device.id,
         clusters.Thermostat.server.attributes.OccupiedCoolingSetpoint:build_test_report_data(mock_device, THERMOSTAT_TWO_EP, 19*100)
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { maximum = 100.0, minimum = 0.0, step = 0.1 }, unit = "C" }))
     },
     {
       channel = "capability",
@@ -635,12 +645,9 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-  "The total energy consumption of the device must be reported every 15 minutes",
+  "The total energy consumption of the device must be reported a maximum of every 15 minutes",
   function()
-    test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
+    test.mock_time.advance_time(901) -- move time 15 minutes past 0 (this can be assumed to be true in practice in all cases)
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
@@ -653,24 +660,18 @@ test.register_coroutine_test(
       }))
     )
 
-    test.wait_for_events()
-    test.mock_time.advance_time(60 * 15)
-
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
       capabilities.powerConsumptionReport.powerConsumption({
         energy = 20,
-        deltaEnergy = 20,
+        deltaEnergy = 0.0,
           start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T00:14:59Z"
+          ["end"] = "1970-01-01T00:15:00Z"
         }))
-      )
+    )
 
     test.wait_for_events()
-
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
+    test.mock_time.advance_time(60 * 10)
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
@@ -682,60 +683,10 @@ test.register_coroutine_test(
           value = 30, unit = "Wh"
         }))
     )
-
-    test.wait_for_events()
-    test.mock_time.advance_time(60 * 15)
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({
-          energy = 30,
-          deltaEnergy = 10,
-          start = "1970-01-01T00:15:00Z",
-          ["end"] = "1970-01-01T00:29:59Z"
-        }))
-    )
-    test.wait_for_events()
   end,
   {
     test_init = function()
       test_init()
-      test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "polling_report_schedule_timer")
-      test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
-    end
-  }
-)
-
-test.register_coroutine_test(
-  "Ensure the driver does not send read request to devices without CUME & IMPE features",
-  function()
-    local timer = mock_device_with_pere_impe:get_field("__recurring_poll_timer")
-    assert(timer == nil, "Polling timer must not be created if the device does not support CUME & IMPE features")
-  end,
-  {
-    test_init = function()
-      test_init_pere_impe()
-    end
-  }
-)
-
-test.register_coroutine_test(
-  "PeriodicEnergyImported should report the energyMeter values",
-  function()
-    test.socket.matter:__queue_receive({ mock_device_with_pere_impe.id, clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(mock_device_with_pere_impe,
-    HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 30000, start_timestamp = 0, end_timestamp = 100, start_systime = 0, end_systime = 0 })) }) -- 30Wh
-
-    test.socket.capability:__expect_send(
-      mock_device_with_pere_impe:generate_test_message("main",
-        capabilities.energyMeter.energy({
-          value = 30, unit = "Wh"
-        }))
-    )
-  end,
-  {
-    test_init = function()
-      test_init_pere_impe()
     end
   }
 )
@@ -743,10 +694,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Ensure only the cumulative energy reports are considered if the device supports both PERE and CUME features.",
   function()
-    test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
+    test.mock_time.advance_time(901) -- move time 15 minutes past 0 (this can be assumed to be true in practice in all cases)
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
@@ -759,6 +707,16 @@ test.register_coroutine_test(
       }))
     )
 
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:00:00Z",
+        ["end"] = "1970-01-01T00:18:00Z",
+        deltaEnergy = 0.0,
+        energy = 20
+      }))
+    )
+
+    test.mock_time.advance_time(180) -- move time 180s, which is less than 15m (obviously).
     test.wait_for_events()
 
     -- do not expect energyMeter event for this report.
@@ -766,78 +724,21 @@ test.register_coroutine_test(
     HEAT_PUMP_EP,
     clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 800, start_systime = 0, end_systime = 0 })) }) -- 20Wh
 
-    test.wait_for_events()
-    test.mock_time.advance_time(60 * 15)
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-      capabilities.powerConsumptionReport.powerConsumption({
-        energy = 20,
-        deltaEnergy = 20,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T00:14:59Z"
-        }))
-    )
-
-    test.wait_for_events()
-  end,
-  {
-    test_init = function()
-      test_init()
-      test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "polling_report_schedule_timer")
-      test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
-    end
-  }
-)
-
-test.register_coroutine_test(
-  "Consider the device reported time interval in case it is greater than 15 minutes for powerConsumptionReport capability reports",
-  function()
-    test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:read(mock_device)
-    })
-
+    -- do not expect a powerConsumptionReport to be emitted
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 20Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 50000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 50Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
       capabilities.energyMeter.energy({
-        value = 20, unit = "Wh"
+        value = 50, unit = "Wh"
       }))
     )
-
-    test.wait_for_events()
-
-    -- do not expect energyMeter event for this report. Only consider the time interval as it is greater than 15 minutes.
-    test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(mock_device,
-    HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 1080, start_systime = 0, end_systime = 0 })) }) -- 20Wh 18 minutes
-
-
-    test.wait_for_events()
-    test.mock_time.advance_time(60 * 18)
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-      capabilities.powerConsumptionReport.powerConsumption({
-        energy = 20,
-        deltaEnergy = 20,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T00:17:59Z"
-        }))
-    )
-
-    test.wait_for_events()
   end,
   {
     test_init = function()
       test_init()
-      test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "polling_report_schedule_timer")
-      test.timer.__create_and_queue_test_time_advance_timer(60 * 18, "interval", "polling_report_schedule_timer")
-      test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
   }
 )

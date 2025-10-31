@@ -46,9 +46,7 @@ local mock_simple_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_simple_device)end
 
 local function build_config_response_msg(cluster, status)
   local addr_header = messages.AddressHeader(
@@ -111,10 +109,21 @@ test.register_message_test(
 )
 
 local add_device = function()
+  -- The initial presenceSensor event should be send during the device's first time onboarding
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
     capabilities.presenceSensor.presence("present")
   ))
+  test.socket.zigbee:__expect_send({
+    mock_simple_device.id,
+    PowerConfiguration.attributes.BatteryVoltage:read(mock_simple_device)
+  })
+  test.wait_for_events()
+end
+
+local add_device_after_switch_over = function()
+  -- Avoid sending the initial presenceSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+  test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.zigbee:__expect_send({
     mock_simple_device.id,
     PowerConfiguration.attributes.BatteryVoltage:read(mock_simple_device)
@@ -187,6 +196,7 @@ test.register_coroutine_test(
     "Added lifecycle should be handlded",
     function ()
       add_device()
+      add_device_after_switch_over()
     end
 )
 
@@ -201,9 +211,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     end,
     {
-      test_init = function()
-        zigbee_test_utils.init_noop_health_check_timer()
-      end
+      test_init = function()      end
     }
 )
 

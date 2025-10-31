@@ -81,7 +81,6 @@ local function device_init(driver, device)
   if CONFIGURATIONS ~= nil then
     for _, attribute in ipairs(CONFIGURATIONS) do
       device:add_configured_attribute(attribute)
-      device:add_monitored_attribute(attribute)
     end
   end
 end

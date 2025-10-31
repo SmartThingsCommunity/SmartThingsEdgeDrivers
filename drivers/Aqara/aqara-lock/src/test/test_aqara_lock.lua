@@ -13,6 +13,7 @@ test.add_package_capability("lockCredentialInfo.yaml")
 local lockAlarm = capabilities["lockAlarm"]
 test.add_package_capability("lockAlarm.yaml")
 local Battery = capabilities.battery
+local BatteryLevel = capabilities.batteryLevel
 local Lock = capabilities.lock
 
 local PRI_CLU = 0xFCC0
@@ -45,7 +46,9 @@ local function test_init()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     Lock.supportedUnlockDirections({"fromInside", "fromOutside"}, { visibility = { displayed = false } })))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.type("AA")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", BatteryLevel.type("AA")))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.quantity(8)))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", BatteryLevel.quantity(8)))
   test.mock_device.add_test_device(mock_device)
 end
 test.set_test_init_function(test_init)
@@ -59,6 +62,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       remoteControlStatus.remoteControlEnabled('false', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.battery(100)))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", BatteryLevel.battery("normal")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       lockAlarm.alarm.clear({ visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -76,6 +80,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       remoteControlStatus.remoteControlEnabled('true', { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", Battery.battery(100)))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", BatteryLevel.battery("normal")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       lockAlarm.alarm.clear({ visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",

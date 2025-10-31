@@ -1,4 +1,5 @@
 local log = require "log"
+local st_utils = require "st.utils"
 
 local PlayerFields = require "fields".SonosPlayerFields
 
@@ -125,14 +126,47 @@ end
 ---@param tbl table<string,any>
 ---@param key string
 local function __case_insensitive_key_index(tbl, key)
-  assert(type(key) == "string", "key for CaseInsensitiveKeyTable must be a string!")
-  local lowercase = key:lower()
-  return rawget(tbl, lowercase)
+  if type(key) ~= "string" then
+    local fmt_val
+    if type(key) == "table" then
+      fmt_val = st_utils.stringify_table(key)
+    else
+      fmt_val = key or "<nil>"
+    end
+    log.warn_with(
+      { hub_logs = false },
+      string.format(
+        "Expected `string` key for CaseInsensitiveKeyTable, received (%s: %s)",
+        fmt_val,
+        type(key)
+      )
+    )
+    return nil
+  else
+    local lowercase = key:lower()
+    return rawget(tbl, lowercase)
+  end
 end
 
 local function __case_insensitive_key_newindex(tbl, key, value)
-  assert(type(key) == "string", "key for CaseInsensitiveKeyTable must be a string!")
-  rawset(tbl, key:lower(), value)
+  if type(key) ~= "string" then
+    local fmt_val
+    if type(key) == "table" then
+      fmt_val = st_utils.stringify_table(key)
+    else
+      fmt_val = key or "<nil>"
+    end
+    log.warn_with(
+      { hub_logs = false },
+      string.format(
+        "Expected `string` key for CaseInsensitiveKeyTable, received (%s: %s)",
+        fmt_val,
+        type(key)
+      )
+    )
+  else
+    rawset(tbl, key:lower(), value)
+  end
 end
 
 local _case_insensitive_key_mt = {
@@ -145,8 +179,14 @@ function utils.new_case_insensitive_table()
   return setmetatable({}, _case_insensitive_key_mt)
 end
 
----@param sonos_device_info SonosDeviceInfo
+---@param sonos_device_info SonosDeviceInfoObject
 function utils.extract_mac_addr(sonos_device_info)
+  if type(sonos_device_info) ~= "table" or type(sonos_device_info.serialNumber) ~= "string" then
+    log.error_with(
+      { hub_logs = false },
+      string.format("Bad sonos device info passed to `extract_mac_addr`: %s", sonos_device_info)
+    )
+  end
   local mac, _ = sonos_device_info.serialNumber:match("(.*):.*"):gsub("-", "")
   return utils.normalize_mac_address(mac)
 end
@@ -279,7 +319,7 @@ function utils.deep_table_eq(tbl1, tbl2)
   if tbl1 == tbl2 then
     return true
   elseif type(tbl1) == "table" and type(tbl2) == "table" then
-    for key1, value1 in pairs(tbl1) do
+    for key1, value1 in pairs(tbl1 or {}) do
       local value2 = tbl2[key1]
 
       if value2 == nil then
@@ -297,7 +337,7 @@ function utils.deep_table_eq(tbl1, tbl2)
     end
 
     -- check for missing keys in tbl1
-    for key2, _ in pairs(tbl2) do
+    for key2, _ in pairs(tbl2 or {}) do
       if tbl1[key2] == nil then
         return false
       end

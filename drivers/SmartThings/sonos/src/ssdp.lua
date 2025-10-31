@@ -64,7 +64,7 @@ end
 ---@diagnostic disable-next-line: inject-field
 function Ssdp.check_headers_contain(headers, keys_to_check)
   local missing = {}
-  for _, header_key in ipairs(keys_to_check) do
+  for _, header_key in ipairs(keys_to_check or {}) do
     if headers:get_one(header_key) == nil then
       table.insert(missing, header_key)
     end
@@ -197,7 +197,7 @@ end
 --- the search end time will be pushed out based on the `mx` parameter, extending the amount of
 --- time that `receive_m_search_response` will return results with a timeout.
 function _ssdp_mt:multicast_m_search()
-  for term, _ in pairs(self.search_terms) do
+  for term, _ in pairs(self.search_terms or {}) do
     local multicast_msg = table.concat({
       "M-SEARCH * HTTP/1.1",
       "HOST: 239.255.255.250:1900",
@@ -284,7 +284,7 @@ function _ssdp_mt:next_msearch_response()
     )
   end
 
-  for _, location in ipairs(location_candidates) do
+  for _, location in ipairs(location_candidates or {}) do
     local location_host_match = location:match("http://([^,/]+):[^/]+/.+%.xml")
     if location_host_match ~= nil then
       possible_locations[location_host_match] = location
@@ -294,7 +294,8 @@ function _ssdp_mt:next_msearch_response()
   if possible_locations[recv_ip_or_err] == nil then
     return Err(
       string.format(
-        "IP addres [%s] from socket receivefrom doesn't match any of the reply locations: %s",
+        "IP address [%s] from socket receivefrom doesn't match any of the reply locations: %s",
+        recv_ip_or_err,
         table.concat(location_candidates, ", ")
       )
     )
@@ -425,8 +426,11 @@ end
 function Ssdp.new_search_instance(mx)
   local udp_sock, sock_err = socket.udp()
   if sock_err or not udp_sock then
-    log.error(string.format("Error opening UDP socket for SSDP search: %s", sock_err))
-    return nil, "sock_err"
+    log.error_with(
+      { hub_logs = true },
+      string.format("Error opening UDP socket for SSDP search: %s", sock_err)
+    )
+    return nil, sock_err
   end
 
   local listen_ip = "0.0.0.0"
@@ -435,7 +439,10 @@ function Ssdp.new_search_instance(mx)
   local _, bind_err = udp_sock:setsockname(listen_ip, listen_port)
 
   if bind_err then
-    log.error(string.format("Unable to bind UDP socket for SSDP search: %s", bind_err))
+    log.error_with(
+      { hub_logs = true },
+      string.format("Unable to bind UDP socket for SSDP search: %s", bind_err)
+    )
     return nil, bind_err
   end
 

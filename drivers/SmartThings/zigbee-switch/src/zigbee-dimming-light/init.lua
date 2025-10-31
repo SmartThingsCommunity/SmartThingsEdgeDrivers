@@ -15,6 +15,7 @@
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local configurations = require "configurations"
+local switch_utils = require "switch_utils"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -84,22 +85,27 @@ local function can_handle_zigbee_dimming_light(opts, driver, device)
   return false
 end
 
+local function do_configure(driver, device)
+  device:refresh()
+  device:configure()
+end
+
 local function device_init(driver, device)
   for _,attribute in ipairs(DIMMING_LIGHT_CONFIGURATION) do
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.switchLevel.level(100))
+  switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.switchLevel, capabilities.switchLevel.level.NAME, capabilities.switchLevel.level(100))
 end
 
 local zigbee_dimming_light = {
   NAME = "Zigbee Dimming Light",
   lifecycle_handlers = {
     init = configurations.power_reconfig_wrapper(device_init),
-    added = device_added
+    added = device_added,
+    doConfigure = do_configure
   },
   sub_drivers = {
     require("zigbee-dimming-light/osram-iqbr30"),

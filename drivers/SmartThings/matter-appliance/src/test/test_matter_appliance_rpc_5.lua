@@ -1,4 +1,4 @@
--- Copyright 2024 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -13,12 +13,19 @@
 -- limitations under the License.
 
 local test = require "integration_test"
+test.set_rpc_version(5)
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local version = require "version"
 
-clusters.OvenMode = require "OvenMode"
-clusters.TemperatureControl = require "TemperatureControl"
+if version.api < 10 then
+  clusters.TemperatureControl = require "TemperatureControl"
+end
+
+if version.api < 12 then
+  clusters.OvenMode = require "OvenMode"
+end
 
 local dishwasher_ep = 1
 local washer_ep = 1
@@ -261,6 +268,8 @@ local mock_device_refrigerator = test.mock_device.build_test_matter_device({
 })
 
 local function test_init_dishwasher()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_dishwasher)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.DishwasherMode.attributes.CurrentMode,
@@ -275,7 +284,6 @@ local function test_init_dishwasher()
     clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
     clusters.TemperatureControl.attributes.SupportedTemperatureLevels
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_dishwasher)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -283,12 +291,21 @@ local function test_init_dishwasher()
     end
   end
   test.socket.matter:__expect_send({ mock_device_dishwasher.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device_dishwasher)
   test.socket.device_lifecycle:__queue_receive({ mock_device_dishwasher.id, "added" })
-  test.set_rpc_version(5)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dishwasher.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_dishwasher.id, subscribe_request })
+  local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
+  read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
+  test.socket.matter:__expect_send({mock_device_dishwasher.id, read_req})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dishwasher.id, "doConfigure"})
+  mock_device_dishwasher:expect_metadata_update({ profile = "dishwasher-tn-tl" })
+  mock_device_dishwasher:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
-local function test_init_washer_dryer()
+local function test_init_dryer()
+  test.disable_startup_messages()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  test.mock_device.add_test_device(mock_device_dryer)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LaundryWasherMode.attributes.CurrentMode,
@@ -302,29 +319,62 @@ local function test_init_washer_dryer()
     clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
     clusters.TemperatureControl.attributes.SupportedTemperatureLevels
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_dryer)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
       subscribe_request:merge(cluster:subscribe(mock_device_dryer))
     end
   end
-  local subscribe_request_washer = cluster_subscribe_list[1]:subscribe(mock_device_washer)
+  test.socket.matter:__expect_send({ mock_device_dryer.id, subscribe_request })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dryer.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dryer.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_dryer.id, subscribe_request })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dryer.id, "doConfigure"})
+  local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
+  read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
+  test.socket.matter:__expect_send({mock_device_dryer.id, read_req})
+  mock_device_dryer:expect_metadata_update({ profile = "laundry-dryer-tn-tl" })
+  mock_device_dryer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_washer()
+  test.disable_startup_messages()
+  test.socket.matter:__set_channel_ordering("relaxed")
+  test.mock_device.add_test_device(mock_device_washer)
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LaundryWasherMode.attributes.CurrentMode,
+    clusters.LaundryWasherMode.attributes.SupportedModes,
+    clusters.OperationalState.attributes.OperationalState,
+    clusters.OperationalState.attributes.OperationalError,
+    clusters.OperationalState.attributes.AcceptedCommandList,
+    clusters.TemperatureControl.attributes.TemperatureSetpoint,
+    clusters.TemperatureControl.attributes.MaxTemperature,
+    clusters.TemperatureControl.attributes.MinTemperature,
+    clusters.TemperatureControl.attributes.SelectedTemperatureLevel,
+    clusters.TemperatureControl.attributes.SupportedTemperatureLevels
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_washer)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
-      subscribe_request_washer:merge(cluster:subscribe(mock_device_washer))
+      subscribe_request:merge(cluster:subscribe(mock_device_washer))
     end
   end
-  test.socket.matter:__expect_send({ mock_device_dryer.id, subscribe_request })
-  test.socket.matter:__expect_send({ mock_device_washer.id, subscribe_request_washer })
-  test.mock_device.add_test_device(mock_device_dryer)
-  test.mock_device.add_test_device(mock_device_washer)
-  test.socket.device_lifecycle:__queue_receive({ mock_device_dryer.id, "added" })
+  test.socket.matter:__expect_send({ mock_device_washer.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "added" })
-  test.set_rpc_version(5)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_washer.id, subscribe_request })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_washer.id, "doConfigure"})
+  local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
+  read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
+  test.socket.matter:__expect_send({mock_device_washer.id, read_req})
+  mock_device_washer:expect_metadata_update({ profile = "laundry-washer-tn-tl" })
+  mock_device_washer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_oven()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_oven)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
@@ -336,7 +386,6 @@ local function test_init_oven()
     clusters.OvenMode.attributes.CurrentMode,
     clusters.OvenMode.attributes.SupportedModes,
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_oven)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -344,12 +393,16 @@ local function test_init_oven()
     end
   end
   test.socket.matter:__expect_send({ mock_device_oven.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device_oven)
   test.socket.device_lifecycle:__queue_receive({ mock_device_oven.id, "added" })
-  test.set_rpc_version(5)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_oven.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_oven.id, subscribe_request })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_oven.id, "doConfigure"})
+  mock_device_oven:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_refrigerator()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_refrigerator)
   local cluster_subscribe_list = {
     clusters.RefrigeratorAlarm.attributes.State,
     clusters.RefrigeratorAndTemperatureControlledCabinetMode.attributes.CurrentMode,
@@ -359,7 +412,6 @@ local function test_init_refrigerator()
     clusters.TemperatureControl.attributes.MinTemperature,
     clusters.TemperatureMeasurement.attributes.MeasuredValue
   }
-  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_refrigerator)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
@@ -367,14 +419,19 @@ local function test_init_refrigerator()
     end
   end
   test.socket.matter:__expect_send({ mock_device_refrigerator.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device_refrigerator)
   test.socket.device_lifecycle:__queue_receive({ mock_device_refrigerator.id, "added" })
-  test.set_rpc_version(5)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_refrigerator.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_refrigerator.id, subscribe_request })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_refrigerator.id, "doConfigure"})
+  local read_req = clusters.TemperatureControl.attributes.MinTemperature:read()
+  read_req:merge(clusters.TemperatureControl.attributes.MaxTemperature:read())
+  test.socket.matter:__expect_send({mock_device_refrigerator.id, read_req})
+  mock_device_refrigerator:expect_metadata_update({ profile = "refrigerator-freezer-tn-tl" })
+  mock_device_refrigerator:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for dishwasher", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_dishwasher.id,
@@ -414,7 +471,6 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for dishwasher, temp bounds out of range and temp setpoint converted from F to C", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_dishwasher.id,
@@ -454,7 +510,6 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for laundry washer", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_washer.id,
@@ -489,12 +544,11 @@ test.register_coroutine_test(
       { mock_device_washer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, washer_ep, 28 * 100, nil) }
     )
   end,
-  { test_init = test_init_washer_dryer }
+  { test_init = test_init_washer }
 )
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for laundry washer, temp bounds out of range and temp setpoint converted from F to C", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_washer.id,
@@ -529,12 +583,11 @@ test.register_coroutine_test(
       { mock_device_washer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, washer_ep, 50 * 100, nil) }
     )
   end,
-  { test_init = test_init_washer_dryer }
+  { test_init = test_init_washer }
 )
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for laundry dryer", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_dryer.id,
@@ -569,12 +622,11 @@ test.register_coroutine_test(
       { mock_device_dryer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_dryer, dryer_ep, 40 * 100, nil) }
     )
   end,
-  { test_init = test_init_washer_dryer }
+  { test_init = test_init_dryer }
 )
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for laundry dryer, temp bounds out of range and temp setpoint converted from F to C", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_dryer.id,
@@ -609,12 +661,11 @@ test.register_coroutine_test(
       { mock_device_dryer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_dryer, dryer_ep, 40 * 100, nil) }
     )
   end,
-  { test_init = test_init_washer_dryer }
+  { test_init = test_init_dryer }
 )
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for oven", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_oven.id,
@@ -654,7 +705,6 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for oven, temp bounds out of range and temp setpoint converted from F to C", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_oven.id,
@@ -694,7 +744,6 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for refrigerator endpoint", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_refrigerator.id,
@@ -714,7 +763,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=0.0,maximum=15.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
@@ -734,7 +783,6 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for refrigerator endpoint, temp bounds out of range and temp setpoint converted from F to C", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_refrigerator.id,
@@ -754,7 +802,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-6.0,maximum=20.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-6.0,maximum=20.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
@@ -774,7 +822,6 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for freezer endpoint", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_refrigerator.id,
@@ -794,7 +841,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-22.0,maximum=-14.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -17.0, unit = "C"}))
@@ -814,7 +861,6 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "temperatureSetpoint command should send appropriate commands for freezer endpoint, temp bounds out of range and temp setpoint converted from F to C", function()
-    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.matter:__queue_receive(
       {
         mock_device_refrigerator.id,
@@ -834,7 +880,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-24.0,maximum=-12.0,step=0.1}, unit = "C"}))
+      mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpointRange({value = {minimum=-24.0,maximum=-12.0,step=0.1}, unit = "C"}, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device_refrigerator:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -15.0, unit = "C"}))

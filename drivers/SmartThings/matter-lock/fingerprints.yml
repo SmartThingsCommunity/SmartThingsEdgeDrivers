@@ -10,6 +10,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2801
     deviceProfileName: lock-user-pin
+  - id: "4447/10247"
+    deviceLabel: Aqara Smart Lock U200 Lite
+    vendorId: 0x115F
+    productId: 0x2807
+    deviceProfileName: lock-battery
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
@@ -61,7 +66,12 @@ matterManufacturer:
     deviceLabel: Level Lock Pro
     vendorId: 0x129F
     productId: 0x0004
-    deviceProfileName: lock-nocodes-notamper  
+    deviceProfileName: lock-nocodes-notamper-batteryLevel
+  - id: "4767/5"
+    deviceLabel: Level Lock (Matter)
+    vendorId: 0x129F
+    productId: 0x0005
+    deviceProfileName: lock-nocodes-notamper-batteryLevel
   #Nuki
   - id: "4957/161"
     deviceLabel: Nuki Smart Lock Ultra
@@ -94,6 +104,17 @@ matterManufacturer:
     vendorId: 0x147F
     productId: 0x0001
     deviceProfileName: lock-user-pin-battery
+  - id: "5247/8"
+    deviceLabel: ULTRALOQ Bolt Smart Matter Door Lock
+    vendorId: 0x147F
+    productId: 0x0008
+    deviceProfileName: lock-user-pin-battery
+  #Yale
+  - id: "4125/33040"
+    deviceLabel: Yale Lock with Matter
+    vendorId: 0x101D
+    productId: 0x8110
+    deviceProfileName: lock-user-pin-schedule-battery
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock

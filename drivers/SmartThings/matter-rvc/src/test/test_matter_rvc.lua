@@ -17,6 +17,7 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local version = require "version"
+test.add_package_capability("robotCleanerOperatingState.yml")
 
 if version.api < 10 then
   clusters.RvcCleanMode = require "RvcCleanMode"
@@ -31,6 +32,7 @@ if version.api < 13 then
 end
 
 local APPLICATION_ENDPOINT = 10
+local SERVICE_AREA_PROFILED = "__SERVICE_AREA_PROFILED"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("rvc-clean-mode-service-area.yml"),
@@ -64,16 +66,20 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local function test_init()
+  mock_device:set_field(SERVICE_AREA_PROFILED, true, { persist = true })
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
   local subscribed_attributes = {
     [capabilities.mode.ID] = {
-        clusters.RvcRunMode.attributes.SupportedModes,
-        clusters.RvcRunMode.attributes.CurrentMode,
-        clusters.RvcCleanMode.attributes.SupportedModes,
-        clusters.RvcCleanMode.attributes.CurrentMode,
+      clusters.RvcRunMode.attributes.SupportedModes,
+      clusters.RvcRunMode.attributes.CurrentMode,
+      clusters.RvcCleanMode.attributes.SupportedModes,
+      clusters.RvcCleanMode.attributes.CurrentMode,
     },
     [capabilities.robotCleanerOperatingState.ID] = {
-        clusters.RvcOperationalState.attributes.OperationalState,
-        clusters.RvcOperationalState.attributes.OperationalError
+      clusters.RvcOperationalState.attributes.OperationalStateList,
+      clusters.RvcOperationalState.attributes.OperationalState,
+      clusters.RvcOperationalState.attributes.OperationalError
     },
     [capabilities.serviceArea.ID] = {
       clusters.ServiceArea.attributes.SupportedAreas,
@@ -90,9 +96,14 @@ local function test_init()
       end
     end
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure"})
+  mock_device:expect_metadata_update({ profile = "rvc-clean-mode-service-area" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.RvcOperationalState.attributes.AcceptedCommandList:read()})
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
 
@@ -111,8 +122,6 @@ local RUN_MODES = {
   IDLE_MODE,
   CLEANING_MODE,
 }
-
-local RUN_MODE_LABELS = { RUN_MODES[1].label, RUN_MODES[2].label, RUN_MODES[3].label }
 
 local CLEAN_MODE_1 = { label = "Clean Mode 1", mode = 0, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 1 }) } }
 local CLEAN_MODE_2 = { label = "Clean Mode 2", mode = 1, mode_tags = { modeTagStruct({ mfg_code = 0x1E1E, value = 2 }) } }
@@ -136,12 +145,6 @@ local function supported_run_mode_init()
       }
     )
   })
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message(
-      "runMode",
-      capabilities.mode.supportedModes(RUN_MODE_LABELS, { visibility = { displayed = false } })
-    )
-  )
 end
 
 local function supported_clean_mode_init()
@@ -156,13 +159,13 @@ local function supported_clean_mode_init()
   })
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
-      "cleanMode",
+      "main",
       capabilities.mode.supportedModes(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
     )
   )
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
-      "cleanMode",
+      "main",
       capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
     )
   )
@@ -194,6 +197,19 @@ local function operating_state_init()
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
       "main",
+      capabilities.robotCleanerOperatingState.supportedCommands(
+        {
+          capabilities.robotCleanerOperatingState.commands.pause.NAME,
+          capabilities.robotCleanerOperatingState.commands.start.NAME,
+          capabilities.robotCleanerOperatingState.commands.goHome.NAME
+        },
+        {visibility = {displayed = false}}
+      )
+    )
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
       capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
         {capabilities.robotCleanerOperatingState.commands.goHome.NAME},
         {visibility = {displayed = false}}
@@ -216,7 +232,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "On changing the run mode to a mode with an IDLE tag, supportedArgument must be set to the appropriate value", function()
+  "On changing the run mode to a mode with an IDLE tag, supportedOperatingStateCommands must be set to the appropriate value", function()
     supported_run_mode_init()
     supported_clean_mode_init()
     operating_state_init()
@@ -230,12 +246,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -246,23 +256,11 @@ test.register_coroutine_test(
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
   end
 )
 
 test.register_coroutine_test(
-  "On changing the run mode to a mode with an CLEANING tag, supportedArgument must be set to the appropriate value", function()
+  "On changing the run mode to a mode with an CLEANING tag, supportedOperatingStateCommands must be set to the appropriate value", function()
     supported_run_mode_init()
     supported_clean_mode_init()
     operating_state_init()
@@ -276,12 +274,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = CLEANING_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {capabilities.robotCleanerOperatingState.commands.goHome.NAME},
@@ -289,23 +281,11 @@ test.register_coroutine_test(
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
   end
 )
 
 test.register_coroutine_test(
-  "On changing the run mode to a mode with an MAPPING tag, supportedArgument must be set to the appropriate value", function()
+  "On changing the run mode to a mode with an MAPPING tag, supportedOperatingStateCommands must be set to the appropriate value", function()
     supported_run_mode_init()
     supported_clean_mode_init()
     operating_state_init()
@@ -319,29 +299,11 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = MAPPING_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {capabilities.robotCleanerOperatingState.commands.goHome.NAME},
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
   end
@@ -363,28 +325,10 @@ test.register_coroutine_test(
       })
       test.socket.capability:__expect_send(
         mock_device:generate_test_message(
-          "cleanMode",
+          "main",
           capabilities.mode.mode({value = cleanMode.label})
         )
       )
-    end
-  end
-)
-
-test.register_coroutine_test(
-  "On changing the rvc run mode, appropriate RvcRunMode command must be sent to the device", function()
-    supported_run_mode_init()
-    operating_state_init()
-    test.wait_for_events()
-    for _, runMode in ipairs(RUN_MODES) do
-      test.socket.capability:__queue_receive({
-        mock_device.id,
-        { capability = "mode", component = "runMode", command = "setMode", args = { runMode.label } }
-      })
-      test.socket.matter:__expect_send({
-        mock_device.id,
-        clusters.RvcRunMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, runMode.mode)
-      })
     end
   end
 )
@@ -397,7 +341,7 @@ test.register_coroutine_test(
     for _, cleanMode in ipairs(CLEAN_MODES) do
       test.socket.capability:__queue_receive({
         mock_device.id,
-        { capability = "mode", component = "cleanMode", command = "setMode", args = { cleanMode.label } }
+        { capability = "mode", component = "main", command = "setMode", args = { cleanMode.label } }
       })
       test.socket.matter:__expect_send({
         mock_device.id,
@@ -408,7 +352,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "On receive the Start Command, supportedArgument must be set to the appropriate value", function()
+  "On receive the start Command of the capability, ChangeToMode command must be sent to the device", function()
     supported_run_mode_init()
     supported_clean_mode_init()
     operating_state_init()
@@ -423,12 +367,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -437,18 +375,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.wait_for_events()
@@ -464,7 +390,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "On receive the goHome Command, supportedArgument must be set to the appropriate value", function()
+  "On receive the goHome Command of the capability, GoHome command must be sent to the device", function()
     supported_run_mode_init()
     supported_clean_mode_init()
     operating_state_init()
@@ -479,29 +405,11 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = CLEANING_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {capabilities.robotCleanerOperatingState.commands.goHome.NAME},
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({IDLE_MODE.label}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.wait_for_events()
@@ -517,7 +425,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "On receive the pause Command, supportedArgument must be set to the appropriate value", function()
+  "On receive the pause Command of the capability, Pause command must be sent to the device", function()
     supported_run_mode_init()
     supported_clean_mode_init()
     operating_state_init()
@@ -532,29 +440,11 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = CLEANING_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {capabilities.robotCleanerOperatingState.commands.goHome.NAME},
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({IDLE_MODE.label}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({
@@ -581,18 +471,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.wait_for_events()
@@ -622,12 +500,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -636,18 +508,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({
@@ -673,18 +533,6 @@ test.register_coroutine_test(
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
   end
 )
 
@@ -703,12 +551,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -717,18 +559,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({
@@ -757,18 +587,6 @@ test.register_coroutine_test(
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
   end
 )
 
@@ -787,12 +605,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -801,18 +613,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({
@@ -841,18 +641,6 @@ test.register_coroutine_test(
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({ IDLE_MODE.label }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
   end
 )
 
@@ -871,12 +659,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -885,18 +667,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({
@@ -922,18 +692,6 @@ test.register_coroutine_test(
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
   end
 )
 
@@ -952,12 +710,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -966,18 +718,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({
@@ -1003,18 +743,6 @@ test.register_coroutine_test(
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
   end
 )
 
@@ -1033,12 +761,6 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.mode({value = IDLE_MODE.label})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
         "main",
         capabilities.robotCleanerOperatingState.supportedOperatingStateCommands(
           {
@@ -1047,18 +769,6 @@ test.register_coroutine_test(
           },
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments(RUN_MODE_LABELS, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments(CLEAN_MODE_LABELS, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({
@@ -1076,18 +786,6 @@ test.register_coroutine_test(
           {},
           {visibility = {displayed = false}}
         )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "runMode",
-        capabilities.mode.supportedArguments({}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "cleanMode",
-        capabilities.mode.supportedArguments({}, { visibility = { displayed = false } })
       )
     )
     test.socket.matter:__queue_receive({

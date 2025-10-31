@@ -204,9 +204,6 @@ local zll_dimmer_bulb = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_set_color_temperature
     }
   },
-  sub_drivers = {
-    require("zll-dimmer-bulb/ikea-xy-color-bulb")
-  },
   can_handle = can_handle_zll_dimmer_bulb
 }
 

@@ -65,7 +65,6 @@ local function device_init(driver, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-      device:add_monitored_attribute(attribute)
     end
   end
 end
@@ -107,7 +106,8 @@ local zigbee_contact_driver_template = {
     require("sengled"),
     require("frient")
   },
-  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE
+  ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_contact_driver_template,

@@ -14,11 +14,11 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
-
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
+local uint32 = require "st.matter.data_types.Uint32"
 
+test.disable_startup_messages()
 test.set_rpc_version(8)
 
 local mock_device_basic = test.mock_device.build_test_matter_device({
@@ -38,18 +38,18 @@ local mock_device_basic = test.mock_device.build_test_matter_device({
       }
     },
     {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
-          {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
-          {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
-        },
-        device_types = {
-          {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
-        }
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
       }
+    }
   }
 })
 
@@ -70,22 +70,23 @@ local mock_device_no_state = test.mock_device.build_test_matter_device({
       }
     },
     {
-        endpoint_id = 1,
-        clusters = {
-          {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
-          {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
-          {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
-          {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
-        },
-        device_types = {
-          {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
-        }
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.Thermostat.ID, cluster_type = "SERVER", feature_map = 63},
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER", feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0072, device_type_revision = 1} -- Room Air Conditioner
       }
+    }
   }
 })
 
 local function initialize_mock_device(generic_mock_device, generic_subscribed_attributes)
+  test.mock_device.add_test_device(generic_mock_device)
   local subscribe_request = nil
   for _, attributes in pairs(generic_subscribed_attributes) do
     for _, attribute in ipairs(attributes) do
@@ -97,12 +98,27 @@ local function initialize_mock_device(generic_mock_device, generic_subscribed_at
     end
   end
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(generic_mock_device)
   return subscribe_request
+end
+
+local function read_req_on_added(device)
+  local attributes = {
+    clusters.Thermostat.attributes.ControlSequenceOfOperation,
+    clusters.FanControl.attributes.FanModeSequence,
+    clusters.FanControl.attributes.WindSupport,
+    clusters.FanControl.attributes.RockSupport,
+    clusters.Thermostat.attributes.AttributeList,
+  }
+  local read_request = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  for _, clus in ipairs(attributes) do
+    read_request:merge(clus:read(device))
+  end
+  test.socket.matter:__expect_send({ device.id, read_request })
 end
 
 local subscribe_request_basic
 local function test_init_basic()
+  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribed_attributes = {
     [capabilities.switch.ID] = {
       clusters.OnOff.attributes.OnOff
@@ -134,6 +150,7 @@ local function test_init_basic()
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
     },
     [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
@@ -144,6 +161,8 @@ local function test_init_basic()
       clusters.FanControl.attributes.WindSetting
     },
   }
+  test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "added" })
+  read_req_on_added(mock_device_basic)
   subscribe_request_basic = initialize_mock_device(mock_device_basic, subscribed_attributes)
   local read_setpoint_deadband = clusters.Thermostat.attributes.MinSetpointDeadBand:read()
   test.socket.matter:__expect_send({mock_device_basic.id, read_setpoint_deadband})
@@ -180,6 +199,7 @@ local subscribed_attributes_no_state = {
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
     },
     [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
@@ -202,8 +222,8 @@ for _, attributes in pairs(subscribed_attributes_no_state) do
   end
 end
 
-
 local function test_init_no_state()
+  test.socket.matter:__set_channel_ordering("relaxed")
   local subscribed_attributes = {
     [capabilities.switch.ID] = {
       clusters.OnOff.attributes.OnOff
@@ -235,6 +255,7 @@ local function test_init_no_state()
       clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit
     },
     [capabilities.airConditionerFanMode.ID] = {
+      clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
@@ -246,6 +267,8 @@ local function test_init_no_state()
     },
   }
 
+  test.socket.device_lifecycle:__queue_receive({ mock_device_no_state.id, "added" })
+  read_req_on_added(mock_device_no_state)
   -- initially, device onboards WITH thermostatOperatingState, the test below will
   -- check if it is removed correctly when switching to modular profile. This is done
   -- to test that cases where the modular profile is different from the static profile
@@ -257,14 +280,19 @@ local function test_init_no_state()
 end
 
 -- run the profile configuration tests
-local function test_room_ac_device_type_update_modular_profile(generic_mock_device, expected_metadata, subscribe_request)
+local function test_room_ac_device_type_update_modular_profile(generic_mock_device, expected_metadata, subscribe_request, thermostat_attr_list_value)
   test.socket.device_lifecycle:__queue_receive({generic_mock_device.id, "doConfigure"})
-  generic_mock_device:expect_metadata_update(expected_metadata)
   generic_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  local device_info_copy = utils.deep_copy(generic_mock_device.raw_st_data)
-  device_info_copy.profile.id = "room-air-conditioner-modular"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ generic_mock_device.id, "infoChanged", device_info_json })
+  test.wait_for_events()
+  test.socket.matter:__queue_receive({
+    generic_mock_device.id,
+    clusters.Thermostat.attributes.AttributeList:build_test_report_data(generic_mock_device, 1, {thermostat_attr_list_value})
+  })
+  generic_mock_device:expect_metadata_update(expected_metadata)
+  local updated_device_profile = t_utils.get_profile_definition("air-purifier-modular.yml",
+    {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.socket.device_lifecycle:__queue_receive(generic_mock_device:generate_info_changed({ profile = updated_device_profile }))
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
 end
 
@@ -289,9 +317,7 @@ local expected_metadata_basic= {
 test.register_coroutine_test(
   "Device with modular profile should enable correct optional capabilities - basic",
   function()
-    mock_device_basic:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
-    mock_device_basic:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", true) -- since we're assuming this would have happened during device_added in this case.
-    test_room_ac_device_type_update_modular_profile(mock_device_basic, expected_metadata_basic, subscribe_request_basic)
+    test_room_ac_device_type_update_modular_profile(mock_device_basic, expected_metadata_basic, subscribe_request_basic, uint32(0x29))
   end,
   { test_init = test_init_basic }
 )
@@ -316,9 +342,7 @@ local expected_metadata_no_state = {
 test.register_coroutine_test(
   "Device with modular profile should enable correct optional capabilities - no thermo state",
   function()
-    mock_device_no_state:set_field("__BATTERY_SUPPORT", "NO_BATTERY") -- since we're assuming this would have happened during device_added in this case.
-    mock_device_no_state:set_field("__THERMOSTAT_RUNNING_STATE_SUPPORT", false) -- since we're assuming this would have happened during device_added in this case.
-    test_room_ac_device_type_update_modular_profile(mock_device_no_state, expected_metadata_no_state, subscribe_request_no_state)
+    test_room_ac_device_type_update_modular_profile(mock_device_no_state, expected_metadata_no_state, subscribe_request_no_state, uint32(0))
   end,
   { test_init = test_init_no_state }
 )

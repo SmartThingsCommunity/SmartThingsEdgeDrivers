@@ -20,6 +20,12 @@ local SimpleMetering = clusters.SimpleMetering
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local messages = require "st.zigbee.messages"
+local config_reporting_response = require "st.zigbee.zcl.global_commands.configure_reporting_response"
+local zb_const = require "st.zigbee.constants"
+local zcl_messages = require "st.zigbee.zcl"
+local data_types = require "st.zigbee.data_types"
+local Status = require "st.zigbee.generated.types.ZclStatus"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     { profile = t_utils.get_profile_definition("power-meter.yml") }
@@ -27,11 +33,142 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
+  mock_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
 end
 
 test.set_test_init_function(test_init)
+
+local function build_config_response_msg(device, cluster, global_status, attribute, attr_status)
+  local addr_header = messages.AddressHeader(
+    device:get_short_address(),
+    device.fingerprinted_endpoint_id,
+    zb_const.HUB.ADDR,
+    zb_const.HUB.ENDPOINT,
+    zb_const.HA_PROFILE_ID,
+    cluster
+  )
+  local config_response_body
+  if global_status ~= nil then
+     config_response_body = config_reporting_response.ConfigureReportingResponse({}, global_status)
+  else
+    local individual_record = config_reporting_response.ConfigureReportingResponseRecord(attr_status, 0x01, attribute)
+    config_response_body = config_reporting_response.ConfigureReportingResponse({individual_record}, nil)
+  end
+  local zcl_header = zcl_messages.ZclHeader({
+    cmd = data_types.ZCLCommandId(config_response_body.ID)
+  })
+  local message_body = zcl_messages.ZclMessageBody({
+    zcl_header = zcl_header,
+    zcl_body = config_response_body
+  })
+  return messages.ZigbeeMessageRx({
+    address_header = addr_header,
+    body = message_body
+  })
+end
+
+test.register_coroutine_test(
+    "configuration version below 1",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      assert(mock_device:get_field("_configuration_version") == nil)
+      test.mock_device.add_test_device(mock_device)
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+      test.wait_for_events()
+      test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1)})
+      test.mock_time.advance_time(5*60 + 1)
+      test.wait_for_events()
+      test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, ElectricalMeasurement.ID, Status.SUCCESS)})
+      test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, SimpleMetering.ID, Status.SUCCESS)})
+      test.wait_for_events()
+      assert(mock_device:get_field("_configuration_version") == 1)
+    end,
+    {
+      test_init = function()
+        -- no op to override auto device add on startup
+      end
+    }
+)
+
+test.register_coroutine_test(
+    "configuration version below 1 config response not success",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      assert(mock_device:get_field("_configuration_version") == nil)
+      test.mock_device.add_test_device(mock_device)
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+      test.wait_for_events()
+      test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1)})
+      test.mock_time.advance_time(5*60 + 1)
+      test.wait_for_events()
+      test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, ElectricalMeasurement.ID, Status.UNSUPPORTED_ATTRIBUTE)})
+      test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, SimpleMetering.ID, Status.UNSUPPORTED_ATTRIBUTE)})
+      test.wait_for_events()
+      assert(mock_device:get_field("_configuration_version") == nil)
+    end,
+    {
+      test_init = function()
+        -- no op to override auto device add on startup
+      end
+    }
+)
+
+test.register_coroutine_test(
+    "configuration version below 1 individual config response records ElectricalMeasurement",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      assert(mock_device:get_field("_configuration_version") == nil)
+      test.mock_device.add_test_device(mock_device)
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+      test.wait_for_events()
+      test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1)})
+      test.mock_time.advance_time(5*60 + 1)
+      test.wait_for_events()
+      test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, ElectricalMeasurement.ID, nil, ElectricalMeasurement.attributes.ActivePower.ID,  Status.SUCCESS)})
+      test.wait_for_events()
+      assert(mock_device:get_field("_configuration_version") == 1)
+    end,
+    {
+      test_init = function()
+        -- no op to override auto device add on startup
+      end
+    }
+)
+
+test.register_coroutine_test(
+    "configuration version below 1 individual config response records SimpleMetering",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      assert(mock_device:get_field("_configuration_version") == nil)
+      test.mock_device.add_test_device(mock_device)
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+      test.wait_for_events()
+      test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)})
+      test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1)})
+      test.mock_time.advance_time(5*60 + 1)
+      test.wait_for_events()
+      test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, SimpleMetering.ID, nil, SimpleMetering.attributes.InstantaneousDemand.ID,  Status.SUCCESS)})
+      test.wait_for_events()
+      assert(mock_device:get_field("_configuration_version") == 1)
+    end,
+    {
+      test_init = function()
+        -- no op to override auto device add on startup
+      end
+    }
+)
 
 test.register_message_test(
     "ActivePower Report should be handled. Sensor value is in W, capability attribute value is in hectowatts",
@@ -101,7 +238,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 5)
+                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -115,7 +252,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 5)
+                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,

@@ -363,7 +363,7 @@ local function open_action(source)
   -- the number of bytes to read per the chunked encoding spec
   local recv_as_num = tonumber(recv, 16)
 
-  if recv_as_num ~= nil then
+  if recv_as_num ~= nil and recv_as_num > 0 then
     recv, err, partial = source._sock:receive(recv_as_num)
     if err then
       if err == "timeout" or err == "wantread" then

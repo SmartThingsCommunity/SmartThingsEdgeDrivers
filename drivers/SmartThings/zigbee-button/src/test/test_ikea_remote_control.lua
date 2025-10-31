@@ -43,9 +43,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -190,6 +188,59 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    -- The initial button pushed event should be send during the device's first time onboarding
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held"  }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 5 }, { visibility = { displayed = false } })
+      )
+    )
+    for button_name, _ in pairs(mock_device.profile.components) do
+      if button_name ~= "main" then
+        if button_name ~= "button5" then
+          test.socket.capability:__expect_send(
+            mock_device:generate_test_message(
+              button_name,
+              capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+            )
+          )
+        else
+          test.socket.capability:__expect_send(
+            mock_device:generate_test_message(
+              button_name,
+              capabilities.button.supportedButtonValues({ "pushed"}, { visibility = { displayed = false } })
+            )
+          )
+        end
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+    })
+    -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      {
+        capability_id = "button", component_id = "main",
+        attribute_id = "button", state = { value = "pushed" }
+      }
+    })
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.wait_for_events()
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
@@ -233,13 +284,6 @@ test.register_coroutine_test(
       PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
 
-   test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "button", state = { value = "pushed" }
-      }
-    })
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()
     end

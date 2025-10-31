@@ -15,7 +15,7 @@ matterManufacturer:
     deviceLabel: "Door/window contact II [M]"
     vendorId: 0x1209
     productId: 0x3015
-    deviceProfileName: contact-button-battery  
+    deviceProfileName: contact-button-battery
   #Elko
   - id: "5170/4098"
     deviceLabel: RFWD-100/MT
@@ -68,7 +68,12 @@ matterManufacturer:
     deviceLabel: Smart co sensor
     vendorId: 0x120B
     productId: 0x1007
-    deviceProfileName: co  
+    deviceProfileName: co
+  - id: "4619/4104"
+    deviceLabel: Smart water leakage sensor
+    vendorId: 0x120B
+    productId: 0x1008
+    deviceProfileName: leak-battery
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -81,6 +86,38 @@ matterManufacturer:
     vendorId: 0x102E
     productId: 0x2010
     deviceProfileName: aqs-temp-humidity-co2-pm1-pm25-pm10-meas
+  # Maco
+  - id: "5447/1001"
+    deviceLabel: Sense by MACO | Window Pro T&T
+    vendorId: 0x1547
+    productId: 0x03E9
+    deviceProfileName: contact-battery
+  - id: "5447/1003"
+    deviceLabel: Sense by MACO | Casement
+    vendorId: 0x1547
+    productId: 0x03EB
+    deviceProfileName: contact-battery
+  - id: "5447/1004"
+    deviceLabel: Sense by MACO | Door
+    vendorId: 0x1547
+    productId: 0x03EC
+    deviceProfileName: contact-battery
+  - id: "5447/1005"
+    deviceLabel: Sense by MACO | Universal
+    vendorId: 0x1547
+    productId: 0x03ED
+    deviceProfileName: contact-battery
+  - id: "5447/1002"
+    deviceLabel: Sense by MACO | Window TT
+    vendorId: 0x1547
+    productId: 0x03EA
+    deviceProfileName: contact-battery
+  # Meross
+  - id: "4933/16897"
+    deviceLabel: Smart Presence Sensor
+    vendorId: 0x1345
+    productId: 0x4201
+    deviceProfileName: motion-illuminance
   # Neo
   - id: "4991/1122"
     deviceLabel: Door Sensor
@@ -130,7 +167,13 @@ matterManufacturer:
     deviceLabel: LG Motion Sensor
     vendorId: 0x102E
     productId: 0x2030
-    deviceProfileName: motion-illuminance-battery  
+    deviceProfileName: motion-illuminance-battery
+  # Sensereo
+  - id: "5526/1"
+    deviceLabel: Sensereo Matter Smoke Alarm MS1
+    vendorId: 0x1596
+    productId: 0x0001
+    deviceProfileName: smoke-battery
   # Siterwell
   - id: "4736/847"
     deviceLabel: Siterwell Door Window Sensor
@@ -141,7 +184,7 @@ matterManufacturer:
     deviceLabel: Siterwell Smart Smoke Alarm
     vendorId: 0x1280
     productId: 0x8014
-    deviceProfileName: smoke 
+    deviceProfileName: smoke
   - id: "4736/32789"
     deviceLabel: Siterwell Smart Carbon Monoxide Alarm
     vendorId: 0x1280
