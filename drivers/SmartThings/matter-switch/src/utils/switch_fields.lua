@@ -115,6 +115,31 @@ SwitchFields.vendor_overrides = {
   }
 }
 
+SwitchFields.switch_category_vendor_overrides = {
+  [0x1432] = -- Elko
+    {0x1000},
+  [0x130A] = -- Eve
+    {0x005D, 0x0043},
+  [0x1339] = -- GE
+    {0x007D, 0x0074, 0x0075},
+  [0x1372] = -- Innovation Matters
+    {0x0002},
+  [0x1021] = -- Legrand
+    {0x0005},
+  [0x109B] = -- Leviton
+    {0x1001, 0x1000, 0x100B, 0x100E, 0x100C, 0x100D, 0x1009, 0x1003, 0x1004, 0x1002},
+  [0x142B] = -- LeTianPai
+    {0x1004, 0x1003, 0x1002},
+  [0x1509] = -- SmartSetup
+    {0x0004, 0x0001},
+  [0x1321] = -- SONOFF
+    {0x000B, 0x000C, 0x000D},
+  [0x147F] = -- U-Tec
+    {0x0004},
+  [0x139C] = -- Zemismart
+    {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
+}
+
 SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
 SwitchFields.POWER_CONSUMPTION_REPORT_EP = "__POWER_CONSUMPTION_REPORT_EP"
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__ELECTRICAL_SENSOR_EPS"
@@ -181,13 +206,13 @@ SwitchFields.supported_capabilities = {
 
 SwitchFields.device_type_attribute_map = {
   [SwitchFields.DEVICE_TYPE_ID.LIGHT.ON_OFF] = {
-    clusters.OnOff.attributes.OnOff,
+    clusters.OnOff.attributes.OnOff
   },
   [SwitchFields.DEVICE_TYPE_ID.LIGHT.DIMMABLE] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
+    clusters.LevelControl.attributes.MinLevel
   },
   [SwitchFields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE] = {
     clusters.OnOff.attributes.OnOff,
@@ -196,7 +221,7 @@ SwitchFields.device_type_attribute_map = {
     clusters.LevelControl.attributes.MinLevel,
     clusters.ColorControl.attributes.ColorTemperatureMireds,
     clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
   },
   [SwitchFields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR] = {
     clusters.OnOff.attributes.OnOff,
@@ -212,22 +237,22 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentY
   },
   [SwitchFields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT] = {
-    clusters.OnOff.attributes.OnOff,
+    clusters.OnOff.attributes.OnOff
   },
   [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
+    clusters.LevelControl.attributes.MinLevel
   },
   [SwitchFields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT] = {
-    clusters.OnOff.attributes.OnOff,
+    clusters.OnOff.attributes.OnOff
   },
   [SwitchFields.DEVICE_TYPE_ID.SWITCH.DIMMER] = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
     clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
+    clusters.LevelControl.attributes.MinLevel
   },
   [SwitchFields.DEVICE_TYPE_ID.SWITCH.COLOR_DIMMER] = {
     clusters.OnOff.attributes.OnOff,
@@ -240,7 +265,14 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.CurrentY
+  },
+  [SwitchFields.DEVICE_TYPE_ID.GENERIC_SWITCH] = {
+    clusters.PowerSource.attributes.BatPercentRemaining,
+    clusters.Switch.events.InitialPress,
+    clusters.Switch.events.LongPress,
+    clusters.Switch.events.ShortRelease,
+    clusters.Switch.events.MultiPressComplete
   },
   [SwitchFields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR] = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
