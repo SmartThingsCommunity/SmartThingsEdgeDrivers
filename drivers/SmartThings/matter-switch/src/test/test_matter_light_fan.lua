@@ -54,6 +54,44 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_switch = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("switch-fan.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = mock_device_ep1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 2} -- On Off Plugin Unit
+      }
+    },
+    {
+      endpoint_id = mock_device_ep2,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 15},
+      },
+      device_types = {
+        {device_type_id = 0x002B, device_type_revision = 1,} -- Fan
+      }
+    }
+  }
+})
+
 local CLUSTER_SUBSCRIBE_LIST ={
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
@@ -67,6 +105,13 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.ColorControl.attributes.CurrentX,
   clusters.ColorControl.attributes.CurrentY,
   clusters.ColorControl.attributes.ColorMode,
+  clusters.FanControl.attributes.FanModeSequence,
+  clusters.FanControl.attributes.FanMode,
+  clusters.FanControl.attributes.PercentCurrent,
+}
+
+local SWITCH_CLUSTER_SUBSCRIBE_LIST ={
+  clusters.OnOff.attributes.OnOff,
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.PercentCurrent,
@@ -94,6 +139,31 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+local function test_init_switch()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_switch)
+  local subscribe_request = SWITCH_CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device_switch)
+  for i, clus in ipairs(SWITCH_CLUSTER_SUBSCRIBE_LIST) do
+    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_switch)) end
+  end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch.id, "added" })
+  test.socket.matter:__expect_send({mock_device_switch.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch.id, "init" })
+  test.socket.matter:__expect_send({mock_device_switch.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch.id, "doConfigure" })
+  mock_device_switch:expect_metadata_update({ profile = "switch-fan" })
+  mock_device_switch:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+test.register_message_test(
+  "On Off Plug In Unit + Fan should profile as switch-fan",
+  {},
+  { test_init = test_init_switch }
+)
 
 test.register_coroutine_test(
   "Switch capability should send the appropriate commands", function()
