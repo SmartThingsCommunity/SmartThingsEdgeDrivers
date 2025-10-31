@@ -386,7 +386,6 @@ local inovelli = {
     }
   },
   sub_drivers = {
-    require("inovelli/vzm31-sn"),
     require("inovelli/vzm32-sn"),
   },
   capability_handlers = {
