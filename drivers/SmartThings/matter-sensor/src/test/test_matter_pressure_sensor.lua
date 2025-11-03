@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local PressureMeasurementCluster = require "PressureMeasurement"
 
 --Note all endpoints are being mapped to the main component
 -- in the matter-sensor driver. If any devices require invoke/write
@@ -35,7 +34,7 @@ local matter_endpoints = {
   {
     endpoint_id = 1,
     clusters = {
-      {cluster_id = PressureMeasurementCluster.ID, cluster_type = "SERVER"},
+      {cluster_id = clusters.PressureMeasurement.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
     },
     device_types = {
@@ -51,7 +50,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  local subscribe_request = PressureMeasurementCluster.attributes.MeasuredValue:subscribe(mock_device)
+  local subscribe_request = clusters.PressureMeasurement.attributes.MeasuredValue:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
@@ -65,7 +64,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PressureMeasurementCluster.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1054)
+        clusters.PressureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1054)
       }
     },
     {
@@ -78,7 +77,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PressureMeasurementCluster.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1055)
+        clusters.PressureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1055)
       }
     },
     {
@@ -91,7 +90,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PressureMeasurementCluster.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 0)
+        clusters.PressureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 0)
       }
     },
     {
@@ -124,7 +123,7 @@ test.register_message_test(
 
 local function refresh_commands(dev)
   local req = clusters.PowerSource.attributes.BatPercentRemaining:read(dev)
-  req:merge(PressureMeasurementCluster.attributes.MeasuredValue:read(dev))
+  req:merge(clusters.PressureMeasurement.attributes.MeasuredValue:read(dev))
   return req
 end
 

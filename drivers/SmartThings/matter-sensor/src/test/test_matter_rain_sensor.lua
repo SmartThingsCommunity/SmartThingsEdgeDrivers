@@ -18,8 +18,6 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
 
-clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
-
 local mock_device_rain = test.mock_device.build_test_matter_device({
     profile = t_utils.get_profile_definition("rain-fault.yml"),
     manufacturer_info = {

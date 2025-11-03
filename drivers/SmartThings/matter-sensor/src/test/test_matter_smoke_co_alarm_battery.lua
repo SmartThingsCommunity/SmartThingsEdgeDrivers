@@ -16,13 +16,12 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
 local clusters = require "st.matter.clusters"
-clusters.SmokeCoAlarm = require "SmokeCoAlarm"
+
 local version = require "version"
 if version.api < 10 then
-  clusters.SmokeCoAlarm = require "SmokeCoAlarm"
-  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+  clusters.SmokeCoAlarm = require "embedded_clusters.SmokeCoAlarm"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -69,6 +68,8 @@ local cluster_subscribe_list = {
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
   clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
   clusters.PowerSource.attributes.BatPercentRemaining,
+  clusters.PowerSource.attributes.BatChargeLevel,
+  clusters.SmokeCoAlarm.attributes.BatteryAlert,
 }
 
 local function test_init()

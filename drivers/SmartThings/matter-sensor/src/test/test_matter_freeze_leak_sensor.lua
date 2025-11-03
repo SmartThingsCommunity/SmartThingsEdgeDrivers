@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-clusters.BooleanStateConfiguration = require "BooleanStateConfiguration"
 
 local mock_device_freeze_leak = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("freeze-leak-fault-freezeSensitivity-leakSensitivity.yml"),

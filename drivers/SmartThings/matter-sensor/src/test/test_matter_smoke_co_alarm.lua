@@ -18,11 +18,10 @@ local t_utils = require "integration_test.utils"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
 local clusters = require "st.matter.clusters"
-clusters.SmokeCoAlarm = require "SmokeCoAlarm"
 local version = require "version"
 if version.api < 10 then
-  clusters.SmokeCoAlarm = require "SmokeCoAlarm"
-  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
+  clusters.SmokeCoAlarm = require "embedded_clusters.SmokeCoAlarm"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
