@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
   { mfr = "LUMI", model = "lumi.switch.n1acn1",   children = 1, child_profile = "" },
   { mfr = "LUMI", model = "lumi.switch.n2acn1",   children = 2, child_profile = "aqara-switch-child" },

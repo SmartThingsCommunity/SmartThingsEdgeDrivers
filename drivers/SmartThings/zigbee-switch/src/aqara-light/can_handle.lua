@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return function(opts, driver, device)
   local FINGERPRINTS = {
     { mfr = "LUMI", model = "lumi.light.acn004" },

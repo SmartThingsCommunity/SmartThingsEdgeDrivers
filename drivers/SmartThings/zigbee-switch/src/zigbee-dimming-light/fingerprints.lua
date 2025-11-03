@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
   {mfr = "Vimar", model = "DimmerSwitch_v1.0"},               -- Vimar Smart Dimmer Switch
   {mfr = "OSRAM", model = "LIGHTIFY A19 ON/OFF/DIM"},         -- SYLVANIA Smart A19 Soft White

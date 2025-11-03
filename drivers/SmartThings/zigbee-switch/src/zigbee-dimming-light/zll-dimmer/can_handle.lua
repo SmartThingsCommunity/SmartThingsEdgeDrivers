@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return function(opts, driver, device)
   local ZLL_DIMMER_FINGERPRINTS = require("zigbee-dimming-light.zll-dimmer.fingerprints")
   for _, fingerprint in ipairs(ZLL_DIMMER_FINGERPRINTS) do

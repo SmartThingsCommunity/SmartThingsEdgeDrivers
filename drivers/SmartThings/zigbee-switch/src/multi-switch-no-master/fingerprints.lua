@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
   { mfr = "DAWON_DNS", model = "PM-S240-ZB", children = 1 },
   { mfr = "DAWON_DNS", model = "PM-S240R-ZB", children = 1 },

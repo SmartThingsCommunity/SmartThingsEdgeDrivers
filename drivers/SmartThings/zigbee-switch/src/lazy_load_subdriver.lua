@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return function(sub_driver_name)
   -- gets the current lua libs api version
   local version = require "version"

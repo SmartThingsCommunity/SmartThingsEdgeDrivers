@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
   { mfr = "WALL HERO", model = "ACL-401S4I", switches = 4, buttons = 0 },
   { mfr = "WALL HERO", model = "ACL-401S8I", switches = 4, buttons = 4 },

@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return function (opts, driver, device)
   local PRIVATE_MODE = "PRIVATE_MODE"
   local private_mode = device:get_field(PRIVATE_MODE) or 0

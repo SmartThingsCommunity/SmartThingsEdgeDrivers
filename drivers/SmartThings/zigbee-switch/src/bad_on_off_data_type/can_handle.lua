@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- There are reports of at least one device (SONOFF 01MINIZB) which occasionally
 -- reports this value as an Int8, rather than a Boolean, as per the spec

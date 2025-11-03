@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT = {
   {mfr = "Aurora", model = "DoubleSocket50AU"}
 }

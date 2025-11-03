@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local device_lib = require "st.device"
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"

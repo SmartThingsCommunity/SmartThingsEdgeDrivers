@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return function(opts, driver, device)
 local ROBB_DIMMER_FINGERPRINTS = {
   { mfr = "ROBB smarrt", model = "ROB_200-011-0" },

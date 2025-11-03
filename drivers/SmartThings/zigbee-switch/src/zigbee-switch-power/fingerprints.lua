@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
   { mfr = "Vimar", model = "Mains_Power_Outlet_v1.0" },
   { model = "PAN18-v1.0.7" },

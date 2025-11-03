@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local function is_multi_endpoint(device)
   local main_endpoint = device:get_endpoint(0x0006)
   for _, ep in ipairs(device.zigbee_endpoints) do

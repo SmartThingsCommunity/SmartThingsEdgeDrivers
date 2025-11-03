@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
     { mfr = "LUMI", model = "lumi.plug.maeu01" },
     { mfr = "LUMI", model = "lumi.plug.macn01" },
