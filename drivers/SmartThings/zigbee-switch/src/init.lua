@@ -84,7 +84,8 @@ local zigbee_switch_driver_template = {
     capabilities.colorTemperature,
     capabilities.powerMeter,
     capabilities.energyMeter,
-    capabilities.motionSensor
+    capabilities.motionSensor,
+    capabilities.illuminanceMeasurement,
   },
   sub_drivers = {
     lazy_load_if_possible("non_zigbee_devices"),
@@ -112,7 +113,7 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("bad_on_off_data_type"),
     lazy_load_if_possible("robb"),
     lazy_load_if_possible("wallhero"),
-    lazy_load_if_possible("inovelli-vzm31-sn"),
+    lazy_load_if_possible("inovelli"), -- Combined driver for both VZM31-SN and VZM32-SN
     lazy_load_if_possible("laisiao"),
     lazy_load_if_possible("tuya-multi"),
     lazy_load_if_possible("frient")
