@@ -42,6 +42,7 @@ SwitchFields.DEVICE_TYPE_ID = {
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
+  CONTACT_SENSOR = 0x0015,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -113,7 +114,10 @@ SwitchFields.vendor_overrides = {
     [0x1006] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
     [0x100A] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
-  }
+  },
+  [0x1209]= { -- BOSCH_MANUFACTURER_ID
+    [0x3015] = { is_bosch_contact_button = true }, -- Bosch Contact Button, requires unique profile
+  },
 }
 
 SwitchFields.switch_category_vendor_overrides = {
@@ -271,6 +275,13 @@ SwitchFields.device_type_attribute_map = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+  }
+}
+
+SwitchFields.BOOLEAN_STATE_TO_CAPABILITY_STATE = {
+  [SwitchFields.DEVICE_TYPE_ID.CONTACT_SENSOR] = {
+    [true]  = capabilities.contactSensor.contact.closed(),
+    [false] = capabilities.contactSensor.contact.open(),
   }
 }
 

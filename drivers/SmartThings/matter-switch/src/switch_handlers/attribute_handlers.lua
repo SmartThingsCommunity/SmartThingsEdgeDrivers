@@ -351,6 +351,8 @@ function AttributeHandlers.power_source_attribute_list_handler(driver, device, i
 
     if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
       profile_name = profile_name .. "-temperature-humidity"
+    elseif switch_utils.get_product_override_field(device, "is_bosch_contact_button") then
+      profile_name = "contact-" .. profile_name
     end
     device:try_update_metadata({ profile = profile_name })
   end
@@ -490,6 +492,19 @@ function AttributeHandlers.percent_current_handler(driver, device, ib, response)
     return
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
+end
+
+
+-- [[ BOOLEAN STATE CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.boolean_state_value_handler(driver, device, ib, response)
+  local ep_info = switch_utils.get_endpoint_info(device, ib.endpoint_id)
+  local ep_device_type = ep_info.device_types[1].device_type_id
+  if fields.BOOLEAN_STATE_TO_CAPABILITY_STATE[ep_device_type] then
+    device:emit_event_for_endpoint(ib.endpoint_id, fields.BOOLEAN_STATE_TO_CAPABILITY_STATE[ep_device_type][ib.data.value])
+  else
+    device.log.error(string.format("Unsupported device type %d found on endpoint %d.", ep_device_type, ib.endpoint_id))
+  end
 end
 
 return AttributeHandlers

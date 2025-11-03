@@ -125,6 +125,9 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
+      [clusters.BooleanState.ID] = {
+        [clusters.BooleanState.attributes.StateValue.ID] = attribute_handlers.boolean_state_value_handler
+      },
       [clusters.ColorControl.ID] = {
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = attribute_handlers.color_capabilities_handler,
         [clusters.ColorControl.attributes.ColorMode.ID] = attribute_handlers.color_mode_handler,
@@ -194,6 +197,9 @@ local matter_driver_template = {
     fallback = switch_utils.matter_handler,
   },
   subscribed_attributes = {
+    [capabilities.contactSensor.ID] = {
+      clusters.BooleanState.attributes.StateValue
+    },
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
