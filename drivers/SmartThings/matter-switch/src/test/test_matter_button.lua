@@ -45,6 +45,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 -- add device for each mock device
 local CLUSTER_SUBSCRIBE_LIST ={
+  clusters.PowerSource.server.attributes.AttributeList,
   clusters.PowerSource.server.attributes.BatPercentRemaining,
   clusters.Switch.server.events.InitialPress,
   clusters.Switch.server.events.LongPress,
@@ -72,8 +73,6 @@ local function test_init()
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   configure_buttons()
 
   local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
@@ -387,7 +386,9 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(12)})
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(
+          clusters.PowerSource.attributes.BatPercentRemaining.ID
+        )})
       }
     )
     mock_device:expect_metadata_update({ profile = "button-battery" })
@@ -395,7 +396,22 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Test profile does not change to button-battery when battery percent remaining attribute (attribute ID 12) is not available",
+  "Test profile change to button-batteryLevel when battery percent remaining attribute (attribute ID 14) is available",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(
+          clusters.PowerSource.attributes.BatChargeLevel.ID
+        )})
+      }
+    )
+    mock_device:expect_metadata_update({ profile = "button-batteryLevel" })
+  end
+)
+
+test.register_coroutine_test(
+  "Test profile does not update when battery attributes are not available",
   function()
     test.socket.matter:__queue_receive(
       {

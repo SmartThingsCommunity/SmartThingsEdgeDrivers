@@ -111,6 +111,12 @@ function SwitchLifecycleHandlers.device_init(driver, device)
         end
       end
     end
+    -- For devices supporting BATTERY, add the PowerSource AttributeList to the list of subscribed
+    -- attributes in order to determine whether to use the battery or batteryLevel capability.
+    local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
+    if battery_supported then
+      device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
+    end
     device:subscribe()
 
     -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
