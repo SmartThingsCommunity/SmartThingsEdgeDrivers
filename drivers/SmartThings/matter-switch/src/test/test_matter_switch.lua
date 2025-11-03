@@ -77,6 +77,52 @@ local mock_device_no_hue_sat = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_color_temp = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("light-level-colorTemperature.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 1}, -- On/Off Light
+        {device_type_id = 0x010C, device_type_revision = 1} -- Color Temperature Light
+      }
+    }
+  }
+})
+
+local mock_device_extended_color = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("light-color-level.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 1}, -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 1}, -- Dimmable Light
+        {device_type_id = 0x010C, device_type_revision = 1}, -- Color Temperature Light
+        {device_type_id = 0x010D, device_type_revision = 1}, -- Extended Color Light
+      }
+    }
+  }
+})
+
 local cluster_subscribe_list = {
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
@@ -145,6 +191,67 @@ local function test_init_no_hue_sat()
   test.mock_device.add_test_device(mock_device_no_hue_sat)
   set_color_mode(mock_device_no_hue_sat, 1, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY)
 end
+
+
+local cluster_subscribe_list_color_temp = {
+  clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
+  clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
+}
+
+local function test_init_color_temp()
+  test.mock_device.add_test_device(mock_device_color_temp)
+  local subscribe_request = cluster_subscribe_list_color_temp[1]:subscribe(mock_device_color_temp)
+  for i, cluster in ipairs(cluster_subscribe_list_color_temp) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_color_temp))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "added" })
+  test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "init" })
+  test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "doConfigure" })
+  mock_device_color_temp:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_extended_color()
+  test.mock_device.add_test_device(mock_device_extended_color)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_extended_color)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_extended_color))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "added" })
+  test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "init" })
+  test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "doConfigure" })
+  mock_device_extended_color:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+test.register_message_test(
+  "Test that Color Temperature Light device does not switch profiles",
+  {},
+  { test_init = test_init_color_temp }
+)
+
+test.register_message_test(
+  "Test that Extended Color Light device does not switch profiles",
+  {},
+  { test_init = test_init_extended_color }
+)
 
 test.register_message_test(
   "On command should send the appropriate commands",

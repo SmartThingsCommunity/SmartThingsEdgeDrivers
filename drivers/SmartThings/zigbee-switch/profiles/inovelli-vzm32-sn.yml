@@ -1,0 +1,355 @@
+name: inovelli-vzm32-sn
+components:
+  - id: main
+    capabilities:
+    - id: switch
+      version: 1
+    - id: switchLevel
+      version: 1
+    - id: motionSensor
+      version: 1
+    - id: illuminanceMeasurement
+      version: 1
+      config:
+        values:
+          - key: "illuminance.value"
+            range: [0, 5000]
+    - id: powerMeter
+      version: 1
+    - id: energyMeter
+      version: 1
+    - id: refresh
+      version: 1
+    - id: firmwareUpdate
+      version: 1
+    categories:
+    - name: Switch
+  - id: button1
+    label: Down Button
+    capabilities:
+    - id: button
+      version: 1
+    categories:
+    - name: RemoteController
+  - id: button2
+    label: Up Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button3
+    label: Config Button
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - name: "notificationChild"
+    title: "Add Child Device - Notification"
+    description: "Create Separate Child Device for Notification Control"
+    required: false
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: "notificationType"
+    title: "Notification Effect"
+    description: "This is the notification effect used by the notification child device"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "255": "Clear"
+        "1": "Solid"
+        "2": "Fast Blink"
+        "3": "Slow Blink"
+        "4": "Pulse"
+        "5": "Chase"
+        "6": "Open/Close"
+        "7": "Small-to-Big"
+        "8": "Aurora"
+        "9": "Slow Falling"
+        "10": "Medium Falling"
+        "11": "Fast Falling"
+        "12": "Slow Rising"
+        "13": "Medium Rising"
+        "14": "Fast Rising"
+        "15": "Medium Blink"
+        "16": "Slow Chase"
+        "17": "Fast Chase"
+        "18": "Fast Siren"
+        "19": "Slow Siren"
+      default: 1
+  - name: "parameter258"
+    title: "258. Switch Mode"
+    description: "Use as a Dimmer or an On/Off switch"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Dimmer (default)"
+        "1": "On/Off"
+      default: 0
+  - name: "parameter52"
+    title: "52. Smart Bulb Mode"
+    description: "For use with Smart Bulbs that need constant power and are controlled via commands rather than power. Smart Bulb Mode does not work in Dumb 3-Way Switch mode."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled (default)"
+        "1": "Smart Bulb Mode"
+      default: 0
+  - name: "parameter1"
+    title: "1. Dimming Speed (Remote)"
+    description: "This changes the speed that the light dims up when controlled from the hub. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
+  Default=25 (2500ms or 2.5s)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 126
+      default: 25
+  - name: "parameter2"
+    title: "2. Dimming Speed (Local)"
+    description: "This changes the speed that the light dims up when controlled at the switch. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
+  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 127
+      default: 127
+  - name: "parameter3"
+    title: "3. Ramp Rate (Remote)"
+    description: "This changes the speed that the light turns on when controlled from the hub. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
+  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 127
+      default: 127
+  - name: "parameter4"
+    title: "4. Ramp Rate (Local)"
+    description: "This changes the speed that the light turns on when controlled at the switch. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
+  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 3)"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 127
+      default: 127
+  - name: "parameter9"
+    title: "9. Minimum Level"
+    description: "The minimum level that the light can be dimmed. Useful when the user has a light that does not turn on or flickers at a lower level."
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 1
+  - name: "parameter10"
+    title: "10. Maximum Level"
+    description: "The maximum level that the light can be dimmed. Useful when the user wants to limit the maximum brighness."
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 2
+      maximum: 100
+      default: 100
+  - name: "parameter15"
+    title: "15. Level After Power Restored"
+    description: "The level the switch will return to when power is restored after power failure.
+  0=Off
+  1-100=Set Level
+  101=Use previous level."
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 101
+      default: 101
+  - name: "parameter95"
+    title: "95. LED Indicator Color (w/On)"
+    description: "Set the color of the Full LED Indicator when the load is on."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Red"
+        "7": "Orange"
+        "28": "Lemon"
+        "64": "Lime"
+        "85": "Green"
+        "106": "Teal"
+        "127": "Cyan"
+        "148": "Aqua"
+        "170": "Blue (default)"
+        "190": "Violet"
+        "212": "Magenta"
+        "234": "Pink"
+        "255": "White"
+      default: 170
+  - name: "parameter96"
+    title: "96. LED Indicator Color (w/Off)"
+    description: "Set the color of the Full LED Indicator when the load is off."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Red"
+        "7": "Orange"
+        "28": "Lemon"
+        "64": "Lime"
+        "85": "Green"
+        "106": "Teal"
+        "127": "Cyan"
+        "148": "Aqua"
+        "170": "Blue (default)"
+        "190": "Violet"
+        "212": "Magenta"
+        "234": "Pink"
+        "255": "White"
+      default: 170
+  - name: "parameter97"
+    title: "97. LED Indicator Intensity (w/On)"
+    description: "Set the intensity of the Full LED Indicator when the load is on."
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 50
+  - name: "parameter98"
+    title: "98. LED Indicator Intensity (w/Off)"
+    description: "Set the intensity of the Full LED Indicator when the load is off."
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 5
+  - name: "parameter101"
+    title: "101. mmWave Height Minimum (Floor)"
+    description: "Minimum range of the Z-Axis in cm"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: -600
+      maximum: 600
+      default: -300
+  - name: "parameter102"
+    title: "102. mmWave Height Maximum (Ceiling)"
+    description: "Maximum range of the Z-Axis in cm"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: -600
+      maximum: 600
+      default: 300
+  - name: "parameter103"
+    title: "103. mmWave Width Minimum (Left)"
+    description: "Minimum range of the X-Axis in cm"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: -600
+      maximum: 600
+      default: -600
+  - name: "parameter104"
+    title: "104. mmWave Width Maximum (Right)"
+    description: "Maximum range of the X-Axis in cm"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: -600
+      maximum: 600
+      default: 600
+  - name: "parameter105"
+    title: "105. mmWave Depth Minimum (Near)"
+    description: "Minimum range of the Y-Axis in cm"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 600
+      default: 0
+  - name: "parameter106"
+    title: "106. mmWave Depth Maximum (Far)"
+    description: "Maximum range of the Y-Axis in cm"
+    required: true
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 600
+      default: 600
+  - name: "parameter110"
+    title: "110. Light On Presence Behavior"
+    description: "When presence is detected, choose how to control the light load"
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Disabled"
+        "1": "Auto On/Off when occupied (default)"
+        "2": "Auto Off when vacant"
+        "3": "Auto On when occupied"
+        "4": "Auto On/Off when Vacant"
+        "5": "Auto On when Vacant"
+        "6": "Auto Off when Occupied"
+      default: 1
+  - name: "parameter111"
+    title: "111. mmWave Control Commands"
+    description: "Advanced commands to send to the mmWave Module (Please see documentation)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "1": "Set Interference Area"
+        "3": "Clear Interference Area"
+        "0": "Factory Reset Module"
+      default: 3
+  - name: "parameter112"
+    title: "112. mmWave Detection Sensitivity"
+    description: "Adjust the sensitivity of the mmWave sensor. 0-Low, 1-Medium, 2-High."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Low"
+        "1": "Medium"
+        "2": "High (default)"
+      default: 2
+  - name: "parameter113"
+    title: "113. mmWave Detection Delay"
+    description: "The time from detecting a person to triggering an action. 0-Low (5s), 1-Medium (1s), 2-Fast (0.2s)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "5 seconds"
+        "1": "1 second"
+        "2": "0.2 seconds (default)"
+      default: 2
+  - name: "parameter114"
+    title: "114. mmWave Time Out"
+    description: "Adjust the timeout after presence is no longer detected. After the timeout the load will turn off."
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 4294967295
+      default: 30
+  - name: "parameter34"
+    title: "34. OTA Image Type"
+    description: "Which endpoint should the switch advertise for OTA update (Zigbee, mmWave, or both)."
+    required: true
+    preferenceType: enumeration
+    definition:
+      options:
+        "0": "Zigbee (default)"
+        "1": "mmWave"
+        "2": "Alternating"
+      default: 0
