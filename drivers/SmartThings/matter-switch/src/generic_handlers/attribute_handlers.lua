@@ -342,29 +342,29 @@ function AttributeHandlers.bat_charge_level_handler(driver, device, ib, response
 end
 
 function AttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
-  local profile_name = ""
-
+  local profile_name
   local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
-    -- BatChargeLevel (Attribute ID 0x0E) is present.
-    if attr.value == 0x0C then
+    -- Re-profile the device if BatPercentRemaining or BatChargeLevel is present, exiting
+    -- the loop early if BatPercentRemaining is found to prefer button-battery profile.
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
       profile_name = "button-battery"
       break
-    elseif attr.value == 0x0E then
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
       profile_name = "button-batteryLevel"
-      break
     end
   end
-  if profile_name ~= "" then
+  if profile_name then
     if #button_eps > 1 then
       profile_name = string.format("%d-", #button_eps) .. profile_name
     end
-
     if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
       profile_name = profile_name .. "-temperature-humidity"
     end
-    device:try_update_metadata({ profile = profile_name })
+    if profile_name ~= device:get_field(fields.BUTTON_PROFILE_NAME) then
+      device:try_update_metadata({ profile = profile_name })
+      device:set_field(fields.BUTTON_PROFILE_NAME, profile_name, {persist = true})
+    end
   end
 end
 

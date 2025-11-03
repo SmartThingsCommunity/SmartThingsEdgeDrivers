@@ -123,6 +123,7 @@ local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(aqara_mock_device)
   local cluster_subscribe_list = {
+    clusters.PowerSource.server.attributes.AttributeList,
     clusters.PowerSource.server.attributes.BatPercentRemaining,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
     clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
@@ -148,8 +149,6 @@ local function test_init()
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
   configure_buttons()
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 

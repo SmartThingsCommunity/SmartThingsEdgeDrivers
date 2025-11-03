@@ -94,9 +94,7 @@ function ButtonDeviceConfiguration.update_button_profile(device, default_endpoin
     profile_name = profile_name .. "-motion"
   end
   local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
-  if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-  else
+  if not battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
     device:try_update_metadata({profile = profile_name})
   end
 end

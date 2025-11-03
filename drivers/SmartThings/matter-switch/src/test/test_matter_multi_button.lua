@@ -92,6 +92,7 @@ local mock_device = test.mock_device.build_test_matter_device(
 
 -- add device for each mock device
 local CLUSTER_SUBSCRIBE_LIST ={
+  clusters.PowerSource.server.attributes.AttributeList,
   clusters.PowerSource.server.attributes.BatPercentRemaining,
   clusters.Switch.server.events.InitialPress,
   clusters.Switch.server.events.LongPress,
@@ -136,7 +137,6 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
 
   --doConfigure sets the provisioning state to provisioned
-  test.socket.matter:__expect_send({mock_device.id, clusters.PowerSource.attributes.AttributeList:read()})
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   expect_configure_buttons()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })

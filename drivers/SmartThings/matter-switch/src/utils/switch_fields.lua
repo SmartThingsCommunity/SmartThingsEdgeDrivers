@@ -176,6 +176,8 @@ SwitchFields.EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRele
 SwitchFields.SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
 SwitchFields.INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
 
+SwitchFields.BUTTON_PROFILE_NAME = "__button_profile_name"
+
 SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
