@@ -112,7 +112,7 @@ AirQualitySensorFields.units = {
   PCIL = 0xFF -- not in matter spec
 }
 
-local units = AirQualitySensorFields.units -- copy to remove the prefix in uses below 
+local units = AirQualitySensorFields.units -- copy to remove the prefix in uses below
 
 AirQualitySensorFields.unit_strings = {
   [units.PPM] = "ppm",
