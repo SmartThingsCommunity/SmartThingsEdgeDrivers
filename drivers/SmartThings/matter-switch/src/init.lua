@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
@@ -18,18 +7,16 @@ local device_lib = require "st.device"
 local clusters = require "st.matter.clusters"
 local log = require "log"
 local version = require "version"
-local embedded_cluster_utils = require "utils.embedded_cluster_utils"
-
-local fields = require "utils.switch_fields"
-local switch_utils = require "utils.switch_utils"
-local cfg = require "utils.device_configuration"
+local cfg = require "switch_utils.device_configuration"
 local device_cfg = cfg.DeviceCfg
 local switch_cfg = cfg.SwitchCfg
 local button_cfg = cfg.ButtonCfg
-
-local attribute_handlers = require "generic_handlers.attribute_handlers"
-local event_handlers = require "generic_handlers.event_handlers"
-local capability_handlers = require "generic_handlers.capability_handlers"
+local fields = require "switch_utils.fields"
+local switch_utils = require "switch_utils.utils"
+local attribute_handlers = require "switch_handlers.attribute_handlers"
+local event_handlers = require "switch_handlers.event_handlers"
+local capability_handlers = require "switch_handlers.capability_handlers"
+local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
