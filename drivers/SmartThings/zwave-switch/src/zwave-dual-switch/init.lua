@@ -26,28 +26,6 @@ local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local dualSwitchConfigurationsMap = require "zwave-dual-switch/dual_switch_configurations"
 local utils = require "st.utils"
 
-local ZWAVE_DUAL_SWITCH_FINGERPRINTS = {
-  { mfr = 0x0086, prod = 0x0103, model = 0x008C }, -- Aeotec Switch 1
-  { mfr = 0x0086, prod = 0x0003, model = 0x008C }, -- Aeotec Switch 1
-  { mfr = 0x0258, prod = 0x0003, model = 0x008B }, -- NEO Coolcam Switch 1
-  { mfr = 0x0258, prod = 0x0003, model = 0x108B }, -- NEO Coolcam Switch 1
-  { mfr = 0x0312, prod = 0xC000, model = 0xC004 }, -- EVA Switch 1
-  { mfr = 0x0312, prod = 0xFF00, model = 0xFF05 }, -- Minoston Switch 1
-  { mfr = 0x0312, prod = 0xC000, model = 0xC007 }, -- Evalogik Switch 1
-  { mfr = 0x010F, prod = 0x1B01, model = 0x1000 }, -- Fibaro Walli Double Switch
-  { mfr = 0x027A, prod = 0xA000, model = 0xA003 }  -- Zooz Double Plug
-}
-
-local function can_handle_zwave_dual_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZWAVE_DUAL_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("zwave-dual-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function find_child(parent, src_channel)
   if src_channel == 1 then
     return parent
@@ -166,7 +144,7 @@ local zwave_dual_switch = {
     added = device_added,
     init = device_init
   },
-  can_handle = can_handle_zwave_dual_switch
+  can_handle = require("zwave-dual-switch.can_handle")
 }
 
 return zwave_dual_switch

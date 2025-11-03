@@ -31,32 +31,6 @@ local MULTI_METERING_SWITCH_CONFIGURATION_MAP = require "multi-metering-switch/m
 
 local PARENT_ENDPOINT = 1
 
-local MULTI_METERING_SWITCH_FINGERPRINTS = {
-  {mfr = 0x0086, prod = 0x0003, model = 0x0084}, -- Aeotec Nano Switch 1
-  {mfr = 0x0086, prod = 0x0103, model = 0x0084}, -- Aeotec Nano Switch 1
-  {mfr = 0x0086, prod = 0x0203, model = 0x0084}, -- AU Aeotec Nano Switch 1
-  {mfr = 0x027A, prod = 0xA000, model = 0xA004}, -- Zooz ZEN Power Strip 1
-  {mfr = 0x015F, prod = 0x3102, model = 0x0201}, -- WYFY Touch 1-button Switch
-  {mfr = 0x015F, prod = 0x3102, model = 0x0202}, -- WYFY Touch 2-button Switch
-  {mfr = 0x015F, prod = 0x3102, model = 0x0204}, -- WYFY Touch 4-button Switch
-  {mfr = 0x015F, prod = 0x3111, model = 0x5102}, -- WYFY Touch 1-button Switch
-  {mfr = 0x015F, prod = 0x3121, model = 0x5102}, -- WYFY Touch 2-button Switch
-  {mfr = 0x015F, prod = 0x3141, model = 0x5102}, -- WYFY Touch 4-button Switch
-  {mfr = 0x0460, prod = 0x0002, model = 0x0081}, -- Shelly Wave 2PM
-  {mfr = 0x0460, prod = 0x0002, model = 0x008C}, -- Shelly Wave Pro 2
-  {mfr = 0x0460, prod = 0x0002, model = 0x008D}, -- Shelly Wave Pro 2PM
-}
-
-local function can_handle_multi_metering_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(MULTI_METERING_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("multi-metering-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function find_child(parent, ep_id)
   if ep_id == PARENT_ENDPOINT then
     return parent
@@ -199,7 +173,7 @@ local multi_metering_switch = {
     init = device_init,
     added = device_added
   },
-  can_handle = can_handle_multi_metering_switch,
+  can_handle = require("multi-metering-switch.can_handle"),
 }
 
 return multi_metering_switch

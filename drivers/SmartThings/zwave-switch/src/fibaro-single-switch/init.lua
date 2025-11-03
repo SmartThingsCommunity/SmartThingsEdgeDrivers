@@ -28,22 +28,6 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 
-local FIBARO_SINGLE_SWITCH_FINGERPRINTS = {
-  {mfr = 0x010F, prod = 0x0403, model = 0x1000}, -- Fibaro Switch
-  {mfr = 0x010F, prod = 0x0403, model = 0x2000}, -- Fibaro Switch
-  {mfr = 0x010F, prod = 0x0403, model = 0x3000} -- Fibaro Switch
-}
-
-local function can_handle_fibaro_single_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FIBARO_SINGLE_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("fibaro-single-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function central_scene_notification_handler(self, device, cmd)
   if cmd.src_channel == nil or cmd.src_channel == 0 then
     ButtonDefaults.zwave_handlers[cc.CENTRAL_SCENE][CentralScene.NOTIFICATION](self, device, cmd)
@@ -94,7 +78,7 @@ local fibaro_single_switch = {
       [capabilities.switch.commands.off.NAME] = switch_handler_factory(0x00),
     }
   },
-  can_handle = can_handle_fibaro_single_switch,
+  can_handle = require("fibaro-single-switch.can_handle")
 }
 
 return fibaro_single_switch

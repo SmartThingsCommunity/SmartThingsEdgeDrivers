@@ -24,27 +24,6 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 --- @type st.zwave.CommandClass.Association
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 
-local INOVELLI_2_CHANNEL_SMART_PLUG_FINGERPRINTS = {
-  {mfr = 0x015D, prod = 0x0221, model = 0x251C}, -- Show Home Outlet
-  {mfr = 0x0312, prod = 0x0221, model = 0x251C}, -- Inovelli Outlet
-  {mfr = 0x0312, prod = 0xB221, model = 0x251C}, -- Inovelli Outlet
-  {mfr = 0x0312, prod = 0x0221, model = 0x611C}, -- Inovelli Outlet
-  {mfr = 0x015D, prod = 0x0221, model = 0x611C}, -- Inovelli Outlet
-  {mfr = 0x015D, prod = 0x6100, model = 0x6100}, -- Inovelli Outlet
-  {mfr = 0x0312, prod = 0x6100, model = 0x6100}, -- Inovelli Outlet
-  {mfr = 0x015D, prod = 0x2500, model = 0x2500}, -- Inovelli Outlet
-}
-
-local function can_handle_inovelli_2_channel_smart_plug(opts, driver, device, ...)
-  for _, fingerprint in ipairs(INOVELLI_2_CHANNEL_SMART_PLUG_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("inovelli-2-channel-smart-plug")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function handle_main_switch_event(device, value)
   if value == SwitchBinary.value.ON_ENABLE then
     device:emit_event(capabilities.switch.switch.on())
@@ -125,7 +104,7 @@ local inovelli_2_channel_smart_plug = {
   lifecycle_handlers = {
     doConfigure = do_configure
   },
-  can_handle = can_handle_inovelli_2_channel_smart_plug,
+  can_handle = require("inovelli-2-channel-smart-plug.can_handle")
 }
 
 return inovelli_2_channel_smart_plug

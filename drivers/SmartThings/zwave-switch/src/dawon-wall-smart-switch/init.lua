@@ -24,30 +24,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 
-local DAWON_WALL_SMART_SWITCH_FINGERPRINTS = {
-  {mfr = 0x018C, prod = 0x0061, model = 0x0001}, -- Dawon Multipurpose Sensor + Smart Switch endpoint 1 KR
-  {mfr = 0x018C, prod = 0x0062, model = 0x0001}, -- Dawon Multipurpose Sensor + Smart Switch endpoint 2 KR
-  {mfr = 0x018C, prod = 0x0063, model = 0x0001}, -- Dawon Multipurpose Sensor + Smart Switch endpoint 3 KR
-  {mfr = 0x018C, prod = 0x0064, model = 0x0001}, -- Dawon Multipurpose Sensor + Smart Switch endpoint 1 US
-  {mfr = 0x018C, prod = 0x0065, model = 0x0001}, -- Dawon Multipurpose Sensor + Smart Switch endpoint 2 US
-  {mfr = 0x018C, prod = 0x0066, model = 0x0001} -- Dawon Multipurpose Sensor + Smart Switch endpoint 3 US
-}
-
---- Determine whether the passed device is Dawon wall smart switch
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
-local function can_handle_dawon_wall_smart_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(DAWON_WALL_SMART_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("dawon-wall-smart-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 --- Default handler for notification reports
 ---
 --- @param self st.zwave.Driver
@@ -97,7 +73,7 @@ local dawon_wall_smart_switch = {
     doConfigure = do_configure,
     infoChanged = info_changed
   },
-  can_handle = can_handle_dawon_wall_smart_switch,
+  can_handle = require("dawon-wall-smart-switch.can_handle"),
 }
 
 return dawon_wall_smart_switch

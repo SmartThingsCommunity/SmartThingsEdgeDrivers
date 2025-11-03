@@ -18,9 +18,6 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.CentralScene
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
 
-local INOVELLI_MANUFACTURER_ID = 0x031E
-local INOVELLI_LZW31SN_PRODUCT_TYPE = 0x0001
-local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
 local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local supported_button_values = {
@@ -85,17 +82,6 @@ local function central_scene_notification_handler(self, device, cmd)
   end
 end
 
-local function can_handle_inovelli_lzw31sn(opts, driver, device, ...)
-  if device:id_match(
-    INOVELLI_MANUFACTURER_ID,
-    INOVELLI_LZW31SN_PRODUCT_TYPE,
-    INOVELLI_DIMMER_PRODUCT_ID
-  ) then
-    return true
-  end
-  return false
-end
-
 local inovelli_led_lzw31sn = {
   NAME = "Inovelli LED LZW 31SN",
   zwave_handlers = {
@@ -106,7 +92,7 @@ local inovelli_led_lzw31sn = {
   lifecycle_handlers = {
     added = device_added
   },
-  can_handle = can_handle_inovelli_lzw31sn
+  can_handle = require("inovelli-LED.inovelli-lzw31sn.can_handle")
 }
 
 return inovelli_led_lzw31sn

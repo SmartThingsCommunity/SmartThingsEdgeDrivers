@@ -28,22 +28,6 @@ local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
 
-local FINGERPRINTS = {
-  {mfr = 0x0086, prodId = 0x0060},
-  {mfr = 0x0371, prodId = 0x00AF}, -- Smart Switch 7 EU
-  {mfr = 0x0371, prodId = 0x0017}  -- Smart Switch 7 US
-}
-
-local function can_handle(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, nil, fingerprint.prodId) then
-      local subdriver = require("aeotec-smart-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function emit_power_consumption_report_event(device, value, channel)
   -- powerConsumptionReport report interval
   local current_time = os.time()
@@ -144,7 +128,7 @@ local aeotec_smart_switch = {
       [Meter.REPORT] = meter_report_handler
     }
   },
-  can_handle = can_handle
+  can_handle = require("aeotec-smart-switch.can_handle")
 }
 
 return aeotec_smart_switch

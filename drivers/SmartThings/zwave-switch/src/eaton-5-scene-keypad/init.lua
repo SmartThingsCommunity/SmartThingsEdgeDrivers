@@ -29,10 +29,6 @@ local SceneControllerConf = (require "st.zwave.CommandClass.SceneControllerConf"
 
 local INDICATOR_SWITCH_STATES = "Indicator_switch_states"
 
-local EATON_5_SCENE_KEYPAD_FINGERPRINT = {
-  {mfr = 0x001A, prod = 0x574D, model = 0x0000}, -- Eaton 5-Scene Keypad
-}
-
 local function upsert_after_bit_update_at_index(device, bit_position, new_bit)
   local old_value = device:get_field(INDICATOR_SWITCH_STATES) or 0
   local mask = ~(0x1 << (bit_position - 1))
@@ -108,16 +104,6 @@ local function do_configure(self, device)
   device:set_field(INDICATOR_SWITCH_STATES, 0, { persist = true})
 end
 
-local function can_handle_eaton_5_scene_keypad(opts, driver, device, ...)
-  for _, fingerprint in ipairs(EATON_5_SCENE_KEYPAD_FINGERPRINT) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("eaton-5-scene-keypad")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local eaton_5_scene_keypad = {
   NAME = "Eaton 5-Scene Keypad",
   zwave_handlers = {
@@ -146,7 +132,7 @@ local eaton_5_scene_keypad = {
   lifecycle_handlers = {
     doConfigure = do_configure,
   },
-  can_handle = can_handle_eaton_5_scene_keypad,
+  can_handle = require("eaton-5-scene-keypad.can_handle"),
 }
 
 return eaton_5_scene_keypad

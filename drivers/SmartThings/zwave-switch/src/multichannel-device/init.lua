@@ -12,7 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 local cc = require "st.zwave.CommandClass"
-local capabilities = require "st.capabilities"
 local st_device = require "st.device"
 local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 3 })
 local utils = require "st.utils"
@@ -26,14 +25,6 @@ local map_device_class_to_profile = {
   [0x20] = "generic-sensor",
   [0xA1] = "generic-sensor"
 }
-
-local function can_handle_multichannel_device(opts, driver, device, ...)
-  if device:supports_capability(capabilities.zwMultichannel) then
-    local subdriver = require("multichannel-device")
-    return true, subdriver
-  end
-  return false
-end
 
 local function find_child(device, src_channel)
   if src_channel == 0 then
@@ -91,7 +82,7 @@ local multichannel_device = {
       [MultiChannel.CAPABILITY_REPORT] = capability_get_report_handler
     }
   },
-  can_handle = can_handle_multichannel_device
+  can_handle = require("multichannel-device.can_handle")
 }
 
 return multichannel_device

@@ -12,21 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local FIBARO_WALL_PLUG_FINGERPRINTS = {
-  {mfr = 0x010F, prod = 0x1401, model = 0x1001}, -- Fibaro Outlet
-  {mfr = 0x010F, prod = 0x1401, model = 0x2000}, -- Fibaro Outlet
-}
-
-local function can_handle_fibaro_wall_plug(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FIBARO_WALL_PLUG_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("fibaro-wall-plug-us")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function component_to_endpoint(device, component_id)
   if component_id == "main" then
     return {1}
@@ -54,7 +39,7 @@ local fibaro_wall_plug = {
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = can_handle_fibaro_wall_plug,
+  can_handle = require("fibaro-wall-plug-us.can_handle"),
 }
 
 return fibaro_wall_plug

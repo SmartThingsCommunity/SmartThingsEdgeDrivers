@@ -20,20 +20,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
-local ZOOZ_POWER_STRIP_FINGERPRINTS = {
-  {mfr = 0x015D, prod = 0x0651, model = 0xF51C} -- Zooz ZEN 20 Power Strip
-}
-
-local function can_handle_zooz_power_strip(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZOOZ_POWER_STRIP_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("zooz-power-strip")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function binary_event_helper(driver, device, cmd)
   if cmd.src_channel > 0 then
     local value = cmd.args.value and cmd.args.value or cmd.args.target_value
@@ -124,7 +110,7 @@ local zooz_power_strip = {
       [capabilities.switch.commands.off.NAME] = switch_off_handler
     }
   },
-  can_handle = can_handle_zooz_power_strip,
+  can_handle = require("zooz-power-strip.can_handle"),
 }
 
 return zooz_power_strip

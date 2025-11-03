@@ -20,20 +20,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 
 local switch_utils = require "switch_utils"
 
-local EATON_ANYPLACE_SWITCH_FINGERPRINTS = {
-  { manufacturerId = 0x001A, productType = 0x4243, productId = 0x0000 } -- Eaton Anyplace Switch
-}
-
-local function can_handle_eaton_anyplace_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(EATON_ANYPLACE_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      local subdriver = require("eaton-anyplace-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function basic_set_handler(self, device, cmd)
   if cmd.args.value == 0xFF then
     device:emit_event(capabilities.switch.switch.on())
@@ -76,7 +62,7 @@ local eaton_anyplace_switch = {
   lifecycle_handlers = {
     added = device_added
   },
-  can_handle = can_handle_eaton_anyplace_switch
+  can_handle = require("eaton-anyplace-switch.can_handle")
 }
 
 return eaton_anyplace_switch

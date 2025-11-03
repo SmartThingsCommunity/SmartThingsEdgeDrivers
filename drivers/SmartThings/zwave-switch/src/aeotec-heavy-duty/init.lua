@@ -29,20 +29,6 @@ local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
 
-local FINGERPRINTS = {
-  { mfr = 0x0086, model = 0x004E }
-}
-
-local function can_handle(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, nil, fingerprint.model) then
-      local subdriver = require("aeotec-heavy-duty")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function emit_power_consumption_report_event(device, value, channel)
   -- powerConsumptionReport report interval
   local current_time = os.time()
@@ -128,7 +114,7 @@ local driver_template = {
   lifecycle_handlers = {
     infoChanged = info_changed
   },
-  can_handle = can_handle
+  can_handle = require("aeotec-heavy-duty.can_handle")
 }
 
 return driver_template;

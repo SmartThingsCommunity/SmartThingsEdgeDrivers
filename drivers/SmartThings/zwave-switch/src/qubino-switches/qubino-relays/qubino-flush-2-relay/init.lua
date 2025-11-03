@@ -30,12 +30,6 @@ local utils = require "st.utils"
 local CHILD_SWITCH_EP = 2
 local CHILD_TEMP_SENSOR_EP = 3
 
-local QUBINO_FLUSH_2_RELAY_FINGERPRINT = { mfr = 0x0159, prod = 0x0002, model = 0x0051 }
-
-local function can_handle_qubino_flush_2_relay(opts, driver, device, ...)
-  return device:id_match(QUBINO_FLUSH_2_RELAY_FINGERPRINT.mfr, QUBINO_FLUSH_2_RELAY_FINGERPRINT.prod, QUBINO_FLUSH_2_RELAY_FINGERPRINT.model)
-end
-
 local function component_to_endpoint(device, component_id)
   return { 1 }
 end
@@ -178,7 +172,7 @@ local qubino_flush_2_relay = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
-  can_handle = can_handle_qubino_flush_2_relay
+  can_handle = require("qubino-switches.qubino-relays.qubino-flush-2-relay.can_handle")
 }
 
 return qubino_flush_2_relay

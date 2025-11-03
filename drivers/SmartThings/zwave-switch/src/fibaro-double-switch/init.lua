@@ -34,22 +34,6 @@ local ENDPOINTS = {
   child = 2
 }
 
-local FIBARO_DOUBLE_SWITCH_FINGERPRINTS = {
-  {mfr = 0x010F, prod = 0x0203, model = 0x1000}, -- Fibaro Switch
-  {mfr = 0x010F, prod = 0x0203, model = 0x2000}, -- Fibaro Switch
-  {mfr = 0x010F, prod = 0x0203, model = 0x3000} -- Fibaro Switch
-}
-
-local function can_handle_fibaro_double_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FIBARO_DOUBLE_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("fibaro-double-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function do_refresh(driver, device, command)
   local component = command and command.component and command.component or "main"
   device:send_to_component(SwitchBinary:Get({}), component)
@@ -140,7 +124,7 @@ local fibaro_double_switch = {
     init = device_init,
     added = device_added
   },
-  can_handle = can_handle_fibaro_double_switch,
+  can_handle = require("fibaro-double-switch.can_handle")
 }
 
 return fibaro_double_switch

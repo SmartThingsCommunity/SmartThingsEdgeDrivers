@@ -28,6 +28,8 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ ve
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
 
+local lazy_load_if_possible = require "lazy_load_subdriver"
+
 --- Map component to end_points(channels)
 ---
 --- @param device st.zwave.Device
@@ -101,19 +103,6 @@ end
 local function switch_multilevel_stop_level_change_handler(driver, device, cmd)
   device:emit_event_for_endpoint(cmd.src_channel, capabilities.switch.switch.on())
   device:send(SwitchMultilevel:Get({}))
-end
-
-local function lazy_load_if_possible(sub_driver_name)
-  -- gets the current lua libs api version
-  local version = require "version"
-
-  -- version 9 will include the lazy loading functions
-  if version.api >= 9 then
-    return ZwaveDriver.lazy_load_sub_driver(require(sub_driver_name))
-  else
-    return require(sub_driver_name)
-  end
-
 end
 
 -------------------------------------------------------------------------------------------
