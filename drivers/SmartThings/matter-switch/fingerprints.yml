@@ -884,6 +884,16 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0AC5
     deviceProfileName: light-color-level
+  - id: "4489/61442"
+    deviceLabel: OSRAM MATTER CLASSIC A 100W
+    vendorId: 0x1189
+    productId: 0xF002
+    deviceProfileName: light-color-level
+  - id: "4489/2755"
+    deviceLabel: SMART MAT A60 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC3
+    deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
