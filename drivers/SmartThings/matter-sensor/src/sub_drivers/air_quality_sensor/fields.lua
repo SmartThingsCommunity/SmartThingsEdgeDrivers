@@ -24,8 +24,6 @@ end
 
 local AirQualitySensorFields = {}
 
-AirQualitySensorFields.AIR_QUALITY_SENSOR_DEVICE_TYPE_ID = 0x002C
-
 AirQualitySensorFields.SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
 
 AirQualitySensorFields.units_required = {

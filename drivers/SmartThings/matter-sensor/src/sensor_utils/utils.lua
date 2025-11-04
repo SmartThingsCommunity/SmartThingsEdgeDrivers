@@ -1,6 +1,8 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local fields = require "sensor_utils.fields"
+
 local utils = {}
 
 function utils.get_field_for_endpoint(device, field, endpoint)
@@ -19,6 +21,28 @@ function utils.tbl_contains(array, value)
     end
   end
   return false
+end
+
+function utils.get_endpoint_info(device, endpoint_id)
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == endpoint_id then return ep end
+  end
+  return {}
+end
+
+function utils.primary_device_type(ep_info)
+  if #ep_info.device_types == 1 then
+    -- generically, device types should be unique on an endpoint  
+    return ep_info.device_types[1].device_type_id
+  else
+    for _, dt in ipairs(ep_info.device_types) do
+      if dt.device_type_id == fields.DEVICE_TYPE_ID.POWER_SOURCE then
+        -- Power Source can be attached to some device types. Ex. Root Node
+        return fields.DEVICE_TYPE_ID.POWER_SOURCE
+      end
+    end
+  end
+  return ep_info.device_types[1].device_type_id
 end
 
 return utils

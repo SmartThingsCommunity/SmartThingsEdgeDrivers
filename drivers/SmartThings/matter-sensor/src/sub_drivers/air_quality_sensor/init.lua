@@ -7,7 +7,8 @@ local utils = require "st.utils"
 local version = require "version"
 local log = require "log"
 
-local fields = require "sub_drivers.air_quality_sensor.fields"
+local sensor_fields = require "sensor_utils.fields"
+local aqs_fields = require "sub_drivers.air_quality_sensor.fields"
 local match_modular_profile = require "sub_drivers.air_quality_sensor.modular_configuration"
 local match_profile_static = require "sub_drivers.air_quality_sensor.static_configuration"
 
@@ -34,7 +35,7 @@ local air_quality_sensor_utils = {}
 function air_quality_sensor_utils.is_matter_air_quality_sensor(opts, driver, device)
     for _, ep in ipairs(device.endpoints) do
       for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == fields.AIR_QUALITY_SENSOR_DEVICE_TYPE_ID then
+        if dt.device_type_id == sensor_fields.DEVICE_TYPE_ID.AIR_QUALITY_SENSOR then
           return true
         end
       end
@@ -44,11 +45,11 @@ function air_quality_sensor_utils.is_matter_air_quality_sensor(opts, driver, dev
   end
 
 function air_quality_sensor_utils.supports_capability_by_id_modular(device, capability, component)
-  if not device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
+  if not device:get_field(aqs_fields.SUPPORTED_COMPONENT_CAPABILITIES) then
     device.log.warn_with({hub_logs = true}, "Device has overriden supports_capability_by_id, but does not have supported capabilities set.")
     return false
   end
-  for _, component_capabilities in ipairs(device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES)) do
+  for _, component_capabilities in ipairs(device:get_field(aqs_fields.SUPPORTED_COMPONENT_CAPABILITIES)) do
     local comp_id = component_capabilities[1]
     local capability_ids = component_capabilities[2]
     if (component == nil) or (component == comp_id) then
@@ -69,7 +70,7 @@ local AirQualitySensorLifecycleHandlers = {}
 
 function AirQualitySensorLifecycleHandlers.do_configure(driver, device)
   -- we have to read the unit before reports of values will do anything
-  for _, cluster in ipairs(fields.units_required) do
+  for _, cluster in ipairs(aqs_fields.units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
   if version.api >= 14 and version.rpc >= 8 then
@@ -81,7 +82,7 @@ end
 
 function AirQualitySensorLifecycleHandlers.driver_switched(driver, device)
   -- we have to read the unit before reports of values will do anything
-  for _, cluster in ipairs(fields.units_required) do
+  for _, cluster in ipairs(aqs_fields.units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
   if version.api >= 14 and version.rpc >= 8 then
@@ -92,7 +93,7 @@ function AirQualitySensorLifecycleHandlers.driver_switched(driver, device)
 end
 
 function AirQualitySensorLifecycleHandlers.device_init(driver, device)
-  if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) and (version.api < 15 or version.rpc < 9) then
+  if device:get_field(aqs_fields.SUPPORTED_COMPONENT_CAPABILITIES) and (version.api < 15 or version.rpc < 9) then
     -- assume that device is using a modular profile on 0.57 FW, override supports_capability_by_id
     -- library function to utilize optional capabilities
     device:extend_device("supports_capability_by_id", air_quality_sensor_utils.supports_capability_by_id_modular)
@@ -102,7 +103,7 @@ end
 
 function AirQualitySensorLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
+    if device:get_field(aqs_fields.SUPPORTED_COMPONENT_CAPABILITIES) then
       --re-up subscription with new capabilities using the modular supports_capability override
        device:extend_device("supports_capability_by_id", air_quality_sensor_utils.supports_capability_by_id_modular)
     end
@@ -121,9 +122,9 @@ function sub_driver_handlers.measurement_unit_factory(capability_name)
 end
 
 local function unit_conversion(value, from_unit, to_unit)
-  local conversion_function = fields.conversion_tables[from_unit][to_unit]
+  local conversion_function = aqs_fields.conversion_tables[from_unit][to_unit]
   if conversion_function == nil then
-    log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", fields.unit_strings[from_unit], fields.unit_strings[to_unit]))
+    log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", aqs_fields.unit_strings[from_unit], aqs_fields.unit_strings[to_unit]))
     return 1
   end
 
@@ -139,17 +140,17 @@ function sub_driver_handlers.measured_value_factory(capability_name, attribute, 
     local reporting_unit = device:get_field(capability_name.."_unit")
 
     if reporting_unit == nil then
-      reporting_unit = fields.unit_default[capability_name]
+      reporting_unit = aqs_fields.unit_default[capability_name]
       device:set_field(capability_name.."_unit", reporting_unit, {persist = true})
     end
 
     if reporting_unit then
       local value = unit_conversion(ib.data.value, reporting_unit, target_unit)
-      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = fields.unit_strings[target_unit]}))
+      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = aqs_fields.unit_strings[target_unit]}))
 
       -- handle case where device profile supports both fineDustLevel and dustLevel
       if capability_name == capabilities.fineDustSensor.NAME and device:supports_capability(capabilities.dustSensor) then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = fields.unit_strings[target_unit]}))
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = aqs_fields.unit_strings[target_unit]}))
       end
     end
   end
@@ -157,7 +158,7 @@ end
 
 function sub_driver_handlers.level_value_factory(attribute)
   return function(driver, device, ib, response)
-    device:emit_event_for_endpoint(ib.endpoint_id, attribute(fields.level_strings[ib.data.value]))
+    device:emit_event_for_endpoint(ib.endpoint_id, attribute(aqs_fields.level_strings[ib.data.value]))
   end
 end
 
