@@ -18,6 +18,8 @@ components:
         version: 1
       - id: sec.wifiConfiguration
         version: 1
+      - id: sec.appliedHubGroupMemberState
+        version: 1
     categories:
       - name: Hub
         categoryType: manufacturer

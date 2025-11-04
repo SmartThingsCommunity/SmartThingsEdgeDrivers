@@ -713,5 +713,19 @@ test.register_coroutine_test("Setting the thermostat mode to heat should generat
     Thermostat.attributes.SystemMode.HEAT)})
 end)
 
+test.register_coroutine_test("ThermostatRunningState reporting shoulb create the appropriate events", function()
+  test.socket.zigbee:__queue_receive({mock_device.id,
+                                      Thermostat.attributes.ThermostatRunningState:build_test_attr_report(mock_device, 0x0001)})
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.thermostatOperatingState.thermostatOperatingState({value="heating"})))
+  test.socket.zigbee:__queue_receive({mock_device.id,
+                                      Thermostat.attributes.ThermostatRunningState:build_test_attr_report(mock_device, 0x0002)})
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.thermostatOperatingState.thermostatOperatingState({value="cooling"})))
+  test.socket.zigbee:__queue_receive({mock_device.id,
+                                      Thermostat.attributes.ThermostatRunningState:build_test_attr_report(mock_device, 0x0004)})
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.thermostatOperatingState.thermostatOperatingState({value="fan only"})))
+end)
 
 test.run_registered_tests()

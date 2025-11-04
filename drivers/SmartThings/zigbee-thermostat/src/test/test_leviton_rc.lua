@@ -192,4 +192,36 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Handle added lifecycle",
+  function()
+    -- The initial valve and lock event should be send during the device's first time onboarding
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+      capabilities.thermostatMode.supportedThermostatModes({
+        capabilities.thermostatMode.thermostatMode.auto.NAME,
+        capabilities.thermostatMode.thermostatMode.cool.NAME,
+        capabilities.thermostatMode.thermostatMode.heat.NAME,
+        capabilities.thermostatMode.thermostatMode.emergency_heat.NAME
+      }, { visibility = { displayed = false } }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+      capabilities.thermostatFanMode.supportedThermostatFanModes({
+        capabilities.thermostatFanMode.thermostatFanMode.auto.NAME,
+        capabilities.thermostatFanMode.thermostatFanMode.on.NAME,
+        capabilities.thermostatFanMode.thermostatFanMode.circulate.NAME
+      }, { visibility = { displayed = false } }))
+    )
+    test.socket.zigbee:__expect_send( { mock_device.id, FanControl.attributes.FanMode:read(mock_device):to_endpoint(ENDPOINT) })
+    test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.SystemMode:read(mock_device):to_endpoint(ENDPOINT) })
+    test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:read(mock_device):to_endpoint(ENDPOINT) })
+    test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device):to_endpoint(ENDPOINT) })
+    test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device):to_endpoint(ENDPOINT) })
+    test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.LocalTemperature:read(mock_device):to_endpoint(ENDPOINT) })
+  end
+)
+
+
 test.run_registered_tests()

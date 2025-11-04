@@ -1,3 +1,4 @@
+# Deprecated: do not use this profile for device fingerprinting.
 name: light-color-level-illuminance-motion-1000K-15000K
 components:
 - id: main

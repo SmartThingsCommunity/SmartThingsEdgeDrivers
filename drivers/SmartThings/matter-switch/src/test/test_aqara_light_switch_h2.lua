@@ -19,6 +19,13 @@ local utils = require "st.utils"
 local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
+local version = require "version"
+
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
 
 local aqara_parent_ep = 4
 local aqara_child1_ep = 1
