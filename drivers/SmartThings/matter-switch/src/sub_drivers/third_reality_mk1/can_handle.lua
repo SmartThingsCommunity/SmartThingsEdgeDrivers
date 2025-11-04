@@ -8,7 +8,7 @@ local function is_third_reality_mk1(opts, driver, device)
      device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
      device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
     log.info("Using Third Reality MK1 sub driver")
-    return true
+    return true, require("third_reality_mk1")
   end
   return false
 end
