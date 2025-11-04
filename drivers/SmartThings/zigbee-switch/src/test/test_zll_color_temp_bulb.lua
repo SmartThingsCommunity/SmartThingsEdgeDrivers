@@ -15,6 +15,7 @@
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local t_utils = require "integration_test.utils"
+local version = require "version"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
@@ -83,6 +84,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switch", component = "main", command = "on", args = {} } })
+    if version.api > 15 then mock_device:expect_native_cmd_handler_registration("switch", "on") end
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.On(mock_device)})
     test.wait_for_events()
     test.mock_time.advance_time(2)
@@ -98,6 +100,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switch", component = "main", command = "off", args = {} } })
+    if version.api > 15 then mock_device:expect_native_cmd_handler_registration("switch", "off") end
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.Off(mock_device)})
     test.wait_for_events()
     test.mock_time.advance_time(2)
@@ -113,6 +116,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = {50} } })
+    if version.api > 15 then mock_device:expect_native_cmd_handler_registration("switchLevel", "setLevel") end
     test.socket.zigbee:__expect_send({ mock_device.id, Level.commands.MoveToLevelWithOnOff(mock_device, math.floor(50 / 100.0 * 254), 0xFFFF)})
     test.wait_for_events()
     test.mock_time.advance_time(2)
@@ -128,6 +132,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {200} } })
+    if version.api > 15 then mock_device:expect_native_cmd_handler_registration("colorTemperature", "setColorTemperature") end
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.commands.On(mock_device)})
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.commands.MoveToColorTemperature(mock_device, 5000, 0x0000)})
     test.wait_for_events()

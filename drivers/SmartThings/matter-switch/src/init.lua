@@ -85,10 +85,10 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
-    local main_endpoint = switch_utils.find_default_endpoint(device)
+    local default_endpoint_id = switch_utils.find_default_endpoint(device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
     for idx, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint then
+      if ep.endpoint_id ~= default_endpoint_id then
         if device:supports_server_cluster(clusters.OnOff.ID, ep) then
           local child_profile = switch_cfg.assign_child_profile(device, ep)
           if idx == 1 and string.find(child_profile, "energy") then
@@ -101,7 +101,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-          if id == fields.GENERIC_SWITCH_ID and
+          if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
              attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
              attr ~= clusters.PowerSource.attributes.BatChargeLevel then
             device:add_subscribed_event(attr)

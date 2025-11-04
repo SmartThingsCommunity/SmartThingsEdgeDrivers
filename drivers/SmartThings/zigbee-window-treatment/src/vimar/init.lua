@@ -14,7 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
 local windowShade = capabilities.windowShade.windowShade
@@ -124,7 +124,7 @@ end
 
 -- COMMAND HANDLER for PresetPosition
 local function window_shade_preset_handler(driver, device, command)
-  local level = device.preferences.presetPosition or device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, command.component)
   command.args.shadeLevel = level
   window_shade_set_level_handler(driver, device, command)
 end
@@ -134,6 +134,20 @@ local device_init = function(self, device)
   -- Reset Status
   device:set_field(VIMAR_SHADES_CLOSING, false)
   device:set_field(VIMAR_SHADES_OPENING, false)
+
+  -- for windowshadepreset update migration
+  if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
+    device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
+
+    -- These should only ever be nil once (and at the same time) for already-installed devices
+    -- It can be removed after migration is complete
+    device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, { visibility = { displayed = false }}))
+
+    local preset_position = window_shade_utils.get_preset_level(device, "main")
+
+    device:emit_event(capabilities.windowShadePreset.position(preset_position, { visibility = {displayed = false}}))
+    device:set_field(window_shade_utils.PRESET_LEVEL_KEY, preset_position, {persist = true})
+  end
 end
 
 -- DRIVER HANDLER CONFIGURATION

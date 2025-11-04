@@ -56,7 +56,7 @@ local mock_device = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
       },
       device_types = {
-        { device_type_id = 0x010A, device_type_revision = 1 } -- OnOff Plug
+        { device_type_id = 0x010B, device_type_revision = 1 }, -- Dimmable Plug In Unit
       }
     }
   },
@@ -88,10 +88,20 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
         { device_type_id = 0x0510, device_type_revision = 1 } -- Electrical Sensor
       }
     },
+    {
+      endpoint_id = 2,
+      clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 }, -- On Off Plug In Unit
+      }
+    }
   },
 })
 
 local subscribed_attributes_periodic = {
+  clusters.OnOff.attributes.OnOff,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
 }

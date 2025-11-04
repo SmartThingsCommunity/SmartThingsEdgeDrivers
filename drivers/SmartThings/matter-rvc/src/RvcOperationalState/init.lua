@@ -39,6 +39,7 @@ function RvcOperationalState:get_server_command_by_id(command_id)
     [0x0001] = "Stop",
     [0x0002] = "Start",
     [0x0003] = "Resume",
+    [0x0080] = "GoHome",
   }
   if server_id_map[command_id] ~= nil then
     return self.server.commands[server_id_map[command_id]]
@@ -74,6 +75,7 @@ RvcOperationalState.command_direction_map = {
   ["Stop"] = "server",
   ["Start"] = "server",
   ["Resume"] = "server",
+  ["GoHome"] = "server",
   ["OperationalCommandResponse"] = "client",
 }
 

@@ -65,4 +65,3 @@ end
 
 setmetatable(ActivePower, {__call = ActivePower.new_value, __index = ActivePower.base_type})
 return ActivePower
-

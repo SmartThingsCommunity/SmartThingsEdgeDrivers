@@ -93,13 +93,18 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSM0147Z
     deviceProfileName: humidity-temp-battery
+  - id: "NodOn/STPH-4-1-00"
+    deviceLabel: Zigbee Temperature and Humidity Sensor
+    manufacturer: NodOn
+    model: STPH-4-1-00
+    deviceProfileName: humidity-temp-battery
 zigbeeGeneric:
   - id: "HumidityTempGeneric"
     deviceLabel: Multipurpose Sensor
     deviceIdentifiers:
       - 0x0302
-    clusters: 
-      server: 
+    clusters:
+      server:
         - 0x0402 # Temperature Measurement Cluster
         - 0x0405 # Relative Humidity Measurement Cluster
     deviceProfileName: humidity-temperature

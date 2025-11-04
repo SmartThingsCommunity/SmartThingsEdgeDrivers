@@ -2364,11 +2364,22 @@ zigbeeManufacturer:
     manufacturer: Inovelli
     model: VZM31-SN
     deviceProfileName: inovelli-vzm31-sn
+  - id: "Inovelli/VZM32-SN"
+    deviceLabel: "Inovelli mmWave Dimmer Blue Series"
+    manufacturer: Inovelli
+    model: VZM32-SN
+    deviceProfileName: inovelli-vzm32-sn
   - id: "LAISIAO/BATH"
     deviceLabel: Laisiao Bathroom Heater
     manufacturer: LAISIAO
     model: yuba
     deviceProfileName: switch-smart-bath-heater-laisiao
+  # NodOn
+  - id: "NodOn/SIN-4-1-20"
+    deviceLabel: Zigbee Multifunction Relay Switch
+    manufacturer: NodOn
+    model: SIN-4-1-20
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

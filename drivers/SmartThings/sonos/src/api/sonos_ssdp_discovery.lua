@@ -9,7 +9,140 @@ local utils = require "utils"
 local SonosApi = require "api"
 local SSDP_SCAN_INTERVAL_SECONDS = 600
 
+local SONOS_DEFAULT_PORT = 1443
+local SONOS_DEFAULT_WSS_PATH = "websocket/api"
+local SONOS_DEFAULT_REST_PATH = "api/v1"
+
+--- Cached information gathered during discovery scanning, created from a subset of the
+--- found [SonosSSDPInfo](lua://SonosSSDPInfo) and [SonosDiscoveryInfoObject](lua://SonosDiscoveryInfoObject)
+---
+--- @class SpeakerDiscoveryInfo
+--- @field public unique_key UniqueKey
+--- @field public mac_addr string
+--- @field public expires_at integer
+--- @field public ipv4 string
+--- @field public port integer
+--- @field public household_id HouseholdId
+--- @field public player_id PlayerId
+--- @field public name string
+--- @field public model string
+--- @field public model_display_name string
+--- @field public sw_gen integer
+--- @field public wss_url table
+--- @field public rest_url table
+--- @field public is_group_coordinator boolean
+--- @field public group_name string? nil if a speaker is the non-primary in a bonded set
+--- @field public group_id GroupId? nil if a speaker is the non-primary in a bonded set
+--- @field package wss_path string? nil if equivalent to the default value; does not include leading slash!
+--- @field package rest_path string? nil if equivalent to the default value; does not include leading slash!
+local SpeakerDiscoveryInfo = {}
+
+local proxy_index = function(self, k)
+  if k == "rest_url" and not rawget(self, "rest_url") then
+    rawset(
+      self,
+      "rest_url",
+      net_url.parse(
+        string.format(
+          "https://%s:%s/%s",
+          self.ipv4,
+          self.port,
+          self.rest_path or SONOS_DEFAULT_REST_PATH
+        )
+      )
+    )
+  end
+
+  if k == "wss_url" and not rawget(self, "wss_url") then
+    rawset(
+      self,
+      "wss_url",
+      net_url.parse(
+        string.format(
+          "https://%s:%s/%s",
+          self.ipv4,
+          self.port,
+          self.wss_path or SONOS_DEFAULT_WSS_PATH
+        )
+      )
+    )
+  end
+
+  return rawget(self, k)
+end
+
+local proxy_newindex = function(_, _, _)
+  error("attempt to index a read-only table", 2)
+end
+
+---@param ssdp_info SonosSSDPInfo
+---@param discovery_info SonosDiscoveryInfoObject
+---@return SpeakerDiscoveryInfo info
+function SpeakerDiscoveryInfo.new(ssdp_info, discovery_info)
+  local mac_addr = utils.extract_mac_addr(discovery_info.device)
+  local port, rest_path = string.match(discovery_info.restUrl, "^.*:(%d*)/(.*)$")
+  local _, wss_path = string.match(discovery_info.websocketUrl, "^.*:(%d*)/(.*)$")
+  port = tonumber(port) or SONOS_DEFAULT_PORT
+
+  local ret = {
+    unique_key = utils.sonos_unique_key_from_ssdp(ssdp_info),
+    expires_at = ssdp_info.expires_at,
+    ipv4 = ssdp_info.ip,
+    port = port,
+    mac_addr = mac_addr,
+    household_id = ssdp_info.household_id,
+    player_id = ssdp_info.player_id,
+    name = discovery_info.device.name,
+    model = discovery_info.device.model,
+    model_display_name = discovery_info.device.modelDisplayName,
+    sw_gen = discovery_info.device.swGen,
+    is_group_coordinator = ssdp_info.is_group_coordinator,
+  }
+
+  if type(ssdp_info.group_name) == "string" and #ssdp_info.group_name > 0 then
+    ret.group_name = ssdp_info.group_name
+  end
+
+  if type(ssdp_info.group_id) == "string" and #ssdp_info.group_id > 0 then
+    ret.group_id = ssdp_info.group_id
+  end
+
+  if type(wss_path) == "string" and #wss_path > 0 and wss_path ~= SONOS_DEFAULT_WSS_PATH then
+    ret.wss_path = wss_path
+  end
+
+  if type(rest_path) == "string" and #rest_path > 0 and rest_path ~= SONOS_DEFAULT_REST_PATH then
+    ret.rest_path = rest_path
+  end
+
+  for k, v in pairs(SpeakerDiscoveryInfo or {}) do
+    rawset(ret, k, v)
+  end
+
+  return setmetatable(ret, { __index = proxy_index, __newindex = proxy_newindex })
+end
+
+function SpeakerDiscoveryInfo:is_bonded()
+  return (self.group_id == nil)
+end
+
+---@return SonosSSDPInfo
+function SpeakerDiscoveryInfo:as_ssdp_info()
+  ---@type SonosSSDPInfo
+  return {
+    ip = self.ipv4,
+    group_id = self.group_id or "",
+    group_name = self.group_name or "",
+    expires_at = self.expires_at,
+    player_id = self.player_id,
+    wss_url = self.wss_url:build(),
+    household_id = self.household_id,
+    is_group_coordinator = self.is_group_coordinator,
+  }
+end
+
 local sonos_ssdp = {}
+sonos_ssdp.SpeakerDiscoveryInfo = SpeakerDiscoveryInfo
 
 ---@module 'luncheon.headers'
 
@@ -94,7 +227,7 @@ local function make_persistent_task_impl(
         log.warn(string.format("Select error: %s", select_err))
       end
 
-      for _, receiver in ipairs(recv_ready) do
+      for _, receiver in ipairs(recv_ready or {}) do
         if receiver == interval_timer then
           interval_timer:handled()
           ssdp_search_handle:multicast_m_search()
@@ -147,6 +280,18 @@ function sonos_ssdp.ssdp_info_eq(a, b)
     and (a.wss_url == b.wss_url)
 end
 
+---@param disco_info SpeakerDiscoveryInfo
+---@param ssdp_info SonosSSDPInfo
+function sonos_ssdp.known_speaker_matches_ssdp_info(disco_info, ssdp_info)
+  return (disco_info.group_id == ssdp_info.group_id)
+    and (disco_info.group_name == ssdp_info.group_name)
+    and (disco_info.household_id == ssdp_info.household_id)
+    and (disco_info.ipv4 == ssdp_info.ip)
+    and (disco_info.is_group_coordinator == ssdp_info.is_group_coordinator)
+    and (disco_info.player_id == ssdp_info.player_id)
+    and (disco_info.wss_url:build() == ssdp_info.wss_url)
+end
+
 ---@return SsdpSearchTerm the Sonos ssdp search term
 ---@return SsdpSearchKwargs the default set of keyword arguments for Sonos
 function sonos_ssdp.new_search_term_context()
@@ -160,8 +305,8 @@ end
 
 ---@class SonosPersistentSsdpTask
 ---@field package ssdp_search_handle SsdpSearchHandle
----@field package player_info_by_sonos_ids table<UniqueKey, { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo }>
----@field package player_info_by_mac_addrs table<string, { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo }>
+---@field package player_info_by_sonos_ids table<UniqueKey, SpeakerDiscoveryInfo>
+---@field package player_info_by_mac_addrs table<string, SpeakerDiscoveryInfo>
 ---@field package waiting_for_unique_key table<UniqueKey, table[]>
 ---@field package waiting_for_mac_addr table<string, table[]>
 ---@field package control_tx table
@@ -186,7 +331,7 @@ function SonosPersistentSsdpTask:get_all_known()
   -- make a shallow copy of the table so it doesn't get clobbered
   -- the player info itself is a read-only proxy table as well
   local known = {}
-  for id, info in pairs(self.player_info_by_sonos_ids) do
+  for id, info in pairs(self.player_info_by_sonos_ids or {}) do
     known[id] = info
   end
   return known
@@ -217,7 +362,7 @@ function SonosPersistentSsdpTask:get_player_info(reply_tx, ...)
   end
 
   local maybe_existing = lookup_table[lookup_key]
-  if maybe_existing and maybe_existing.ssdp_info.expires_at > os.time() then
+  if maybe_existing and maybe_existing.expires_at > os.time() then
     reply_tx:send(maybe_existing)
     return
   end
@@ -267,11 +412,12 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
     local maybe_known = task_handle.player_info_by_sonos_ids[unique_key]
     local is_new_information = not (
       maybe_known
-      and maybe_known.ssdp_info.expires_at > os.time()
-      and sonos_ssdp.ssdp_info_eq(maybe_known.ssdp_info, sonos_ssdp_info)
+      and maybe_known.expires_at > os.time()
+      and sonos_ssdp.known_speaker_matches_ssdp_info(maybe_known, sonos_ssdp_info)
     )
 
-    local info_to_send
+    local speaker_info
+    local event_bus_msg
 
     if is_new_information then
       local headers = SonosApi.make_headers()
@@ -283,30 +429,21 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
       )
       if not discovery_info then
         log.error(string.format("Error getting discovery info from SSDP response: %s", err))
+      elseif discovery_info._objectType == "globalError" then
+        log.error(string.format("Error message in discovery info: %s", discovery_info.errorCode))
       else
-        local unified_info =
-          { ssdp_info = sonos_ssdp_info, discovery_info = discovery_info, force_refresh = true }
-        task_handle.player_info_by_sonos_ids[unique_key] = unified_info
-        info_to_send = unified_info
+        speaker_info = SpeakerDiscoveryInfo.new(sonos_ssdp_info, discovery_info)
+        task_handle.player_info_by_sonos_ids[unique_key] = speaker_info
+        event_bus_msg = { speaker_info = speaker_info, force_refresh = true }
       end
     else
-      info_to_send = {
-        ssdp_info = maybe_known.ssdp_info,
-        discovery_info = maybe_known.discovery_info,
-        force_refresh = false,
-      }
+      speaker_info = maybe_known
+      event_bus_msg = { speaker_info = speaker_info, force_refresh = false }
     end
 
-    if info_to_send then
-      if not (info_to_send.discovery_info and info_to_send.discovery_info.device) then
-        log.error_with(
-          { hub_logs = false },
-          st_utils.stringify_table(info_to_send, "Sonos Discovery Info has unexpected structure")
-        )
-        return
-      end
-      event_bus:send(info_to_send)
-      local mac_addr = utils.extract_mac_addr(info_to_send.discovery_info.device)
+    if speaker_info then
+      event_bus:send(event_bus_msg)
+      local mac_addr = speaker_info.mac_addr
       local waiting_handles = task_handle.waiting_for_unique_key[unique_key] or {}
 
       log.debug(st_utils.stringify_table(waiting_handles, "waiting for unique keys", true))
@@ -317,8 +454,8 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
       log.debug(
         st_utils.stringify_table(waiting_handles, "waiting for unique keys and mac addresses", true)
       )
-      for _, reply_tx in ipairs(waiting_handles) do
-        reply_tx:send(info_to_send)
+      for _, reply_tx in ipairs(waiting_handles or {}) do
+        reply_tx:send(speaker_info)
       end
 
       task_handle.waiting_for_unique_key[unique_key] = {}
