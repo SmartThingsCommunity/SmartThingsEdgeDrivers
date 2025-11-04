@@ -277,6 +277,13 @@ matterGeneric:
     deviceTypes:
       - id: 0x0076 # Smoke CO Alarm
     deviceProfileName: smoke-co
+  - id: "matter/smoke-temp-humidity/sensor"
+    deviceLabel: Matter Smoke/Temp/Humidity Sensor
+    deviceTypes:
+      - id: 0x0076 # Smoke CO Alarm
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+    deviceProfileName: smoke-temp-humidity-battery
   - id: "matter/rain/sensor"
     deviceLabel: Matter Rain Sensor
     deviceTypes:
