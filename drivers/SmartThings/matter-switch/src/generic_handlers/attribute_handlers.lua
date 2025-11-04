@@ -20,7 +20,6 @@ local im = require "st.matter.interaction_model"
 local st_utils = require "st.utils"
 local fields = require "utils.switch_fields"
 local switch_utils = require "utils.switch_utils"
-local color_utils = require "utils.color_utils"
 
 local AttributeHandlers = {}
 
@@ -146,7 +145,7 @@ function AttributeHandlers.current_x_handler(driver, device, ib, response)
     device:set_field(fields.RECEIVED_X, ib.data.value)
   else
     local x = ib.data.value
-    local h, s, _ = color_utils.safe_xy_to_hsv(x, y, nil)
+    local h, s, _ = st_utils.safe_xy_to_hsv(x, y, nil)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(fields.RECEIVED_Y, nil)
@@ -162,7 +161,7 @@ function AttributeHandlers.current_y_handler(driver, device, ib, response)
     device:set_field(fields.RECEIVED_Y, ib.data.value)
   else
     local y = ib.data.value
-    local h, s, _ = color_utils.safe_xy_to_hsv(x, y, nil)
+    local h, s, _ = st_utils.safe_xy_to_hsv(x, y, nil)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
     device:set_field(fields.RECEIVED_X, nil)
