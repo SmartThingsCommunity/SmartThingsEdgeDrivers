@@ -15,8 +15,19 @@
 local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
 local OTAUpgrade = require("st.zigbee.zcl.clusters").OTAUpgrade
+local zigbee_constants = require "st.zigbee.constants"
 
 local M = {}
+
+-- Utility function to check if device is VZM32-SN
+function M.is_vzm32(device)
+  return device:get_model() == "VZM32-SN"
+end
+
+-- Utility function to check if device is VZM32-SN
+function M.is_vzm30(device)
+  return device:get_model() == "VZM30-SN"
+end
 
 -- Sends a generic configure for Inovelli devices (all models):
 -- - device:configure
@@ -36,7 +47,12 @@ function M.base_device_configure(driver, device, private_cluster_id, mfg_code)
   device:send(device_management.build_bind_request(device, private_cluster_id, driver.environment_info.hub_zigbee_eui, 2))
 
   -- Read divisors/multipliers for power/energy reporting
-  device:send(clusters.SimpleMetering.attributes.Divisor:read(device))
+  -- Set default divisor to 1000 for VZM32-SN and VZM30-SN. In initial firmware the divisor is incorrectly set to 100.
+  if M.is_vzm32(device) or M.is_vzm30(device) then
+    device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
+  else
+    device:send(clusters.SimpleMetering.attributes.Divisor:read(device))
+  end
   device:send(clusters.SimpleMetering.attributes.Multiplier:read(device))
   device:send(clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
   device:send(clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))

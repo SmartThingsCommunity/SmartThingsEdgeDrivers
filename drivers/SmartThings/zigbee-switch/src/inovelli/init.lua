@@ -26,6 +26,7 @@ local OccupancySensing = clusters.OccupancySensing
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
 local INOVELLI_FINGERPRINTS = {
+  { mfr = "Inovelli", model = "VZM30-SN" },
   { mfr = "Inovelli", model = "VZM31-SN" },
   { mfr = "Inovelli", model = "VZM32-SN" }
 }
@@ -57,6 +58,11 @@ local base_preference_map = {
 
 -- Model-specific overrides/additions
 local model_preference_overrides = {
+  ["VZM30-SN"] = {
+    parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
+    parameter17 = {parameter_number = 17, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+    parameter22 = {parameter_number = 22, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+  },
   ["VZM31-SN"] = {
     parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
     parameter17 = {parameter_number = 17, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
@@ -226,18 +232,6 @@ local function device_configure(driver, device)
   end
 end
 
-local function energy_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 100
-  device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh" }))
-end
-
-local function power_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 10
-  device:emit_event(capabilities.powerMeter.power({value = raw_value, unit = "W" }))
-end
-
 local function huePercentToValue(value)
   if value <= 2 then return 0
   elseif value >= 98 then return 255
@@ -362,13 +356,6 @@ local inovelli = {
   },
   zigbee_handlers = {
     attr = {
-      [clusters.SimpleMetering.ID] = {
-        [clusters.SimpleMetering.attributes.InstantaneousDemand.ID] = power_meter_handler,
-        [clusters.SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
-      },
-      [clusters.ElectricalMeasurement.ID] = {
-        [clusters.ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
-      },
       [OccupancySensing.ID] = {
         [OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler
       },
@@ -380,6 +367,7 @@ local inovelli = {
     }
   },
   sub_drivers = {
+    require("inovelli/vzm30-sn"),
     require("inovelli/vzm32-sn"),
   },
   capability_handlers = {
