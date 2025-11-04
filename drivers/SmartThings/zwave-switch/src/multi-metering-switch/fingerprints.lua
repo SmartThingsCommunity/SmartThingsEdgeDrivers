@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
   {mfr = 0x0086, prod = 0x0003, model = 0x0084}, -- Aeotec Nano Switch 1
   {mfr = 0x0086, prod = 0x0103, model = 0x0084}, -- Aeotec Nano Switch 1

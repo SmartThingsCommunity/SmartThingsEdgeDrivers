@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 return {
   {mfr = 0x0159, prod = 0x0001, model = 0x0051, deviceProfile = "qubino-flush-dimmer"}, -- Qubino Flush Dimmer
   {mfr = 0x0159, prod = 0x0001, model = 0x0052, deviceProfile = "qubino-din-dimmer"}, -- Qubino DIN Dimmer

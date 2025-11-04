@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local fingerprints = require("zooz-zen-30-dimmer-relay.fingerprints")
 
 local function can_handle_zooz_zen_30_dimmer_relay_double_switch(opts, driver, device, ...)

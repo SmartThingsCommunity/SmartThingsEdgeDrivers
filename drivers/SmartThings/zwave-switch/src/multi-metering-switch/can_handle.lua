@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local fingerprints = require("multi-metering-switch.fingerprints")
 
 local function can_handle_multi_metering_switch(opts, driver, device, ...)

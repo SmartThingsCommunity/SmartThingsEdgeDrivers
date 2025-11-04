@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local fingerprints = require("fibaro-double-switch.fingerprints")
 
 local function can_handle_fibaro_double_switch(opts, driver, device, ...)

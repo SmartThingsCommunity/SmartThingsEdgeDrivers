@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local fingerprints = require("aeon-smart-strip.fingerprints")
 
 --- Determine whether the passed device is Aeon smart strip
