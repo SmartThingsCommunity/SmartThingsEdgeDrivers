@@ -88,43 +88,43 @@ local matter_driver_template = {
   },
   matter_handlers = {
     attr = {
-      [clusters.RelativeHumidityMeasurement.ID] = {
-        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.humidity_measured_value_handler
+      [clusters.BooleanState.ID] = {
+        [clusters.BooleanState.attributes.StateValue.ID] = attribute_handlers.boolean_state_value_handler
       },
-      [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
-        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
-        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MAX),
+      [clusters.BooleanStateConfiguration.ID] = {
+        [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = attribute_handlers.sensor_fault_handler,
+        [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = attribute_handlers.supported_sensitivity_levels_handler,
+      },
+      [clusters.FlowMeasurement.ID] = {
+        [clusters.FlowMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.flow_measured_value_handler,
+        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.flow_measured_value_bounds_factory(fields.FLOW_MIN),
+        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.flow_measured_value_bounds_factory(fields.FLOW_MAX)
       },
       [clusters.IlluminanceMeasurement.ID] = {
         [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.illuminance_measured_value_handler
       },
-      [clusters.BooleanState.ID] = {
-        [clusters.BooleanState.attributes.StateValue.ID] = attribute_handlers.boolean_state_value_handler
+      [clusters.OccupancySensing.ID] = {
+        [clusters.OccupancySensing.attributes.Occupancy.ID] = attribute_handlers.occupancy_measured_value_handler,
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.AttributeList.ID] = attribute_handlers.power_source_attribute_list_handler,
         [clusters.PowerSource.attributes.BatChargeLevel.ID] = attribute_handlers.bat_charge_level_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = attribute_handlers.bat_percent_remaining_handler,
       },
-      [clusters.OccupancySensing.ID] = {
-        [clusters.OccupancySensing.attributes.Occupancy.ID] = attribute_handlers.occupancy_measured_value_handler,
-      },
       [clusters.PressureMeasurement.ID] = {
         [clusters.PressureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.pressure_measured_value_handler,
       },
-      [clusters.BooleanStateConfiguration.ID] = {
-        [clusters.BooleanStateConfiguration.attributes.SensorFault.ID] = attribute_handlers.sensor_fault_handler,
-        [clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels.ID] = attribute_handlers.supported_sensitivity_levels_handler,
+      [clusters.RelativeHumidityMeasurement.ID] = {
+        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.humidity_measured_value_handler
       },
       [clusters.Thermostat.ID] = {
         [clusters.Thermostat.attributes.LocalTemperature.ID] = attribute_handlers.temperature_measured_value_handler -- TemperatureMeasurement:MeasuredValue handler can support this attibute
       },
-      [clusters.FlowMeasurement.ID] = {
-        [clusters.FlowMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.flow_measured_value_handler,
-        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.flow_measured_value_bounds_factory(fields.FLOW_MIN),
-        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.flow_measured_value_bounds_factory(fields.FLOW_MAX)
-      }
+      [clusters.TemperatureMeasurement.ID] = {
+        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MAX),
+      },
     }
   },
   subscribed_attributes = {
@@ -176,6 +176,7 @@ local matter_driver_template = {
     [capabilities.waterSensor.ID] = {
       clusters.BooleanState.attributes.StateValue,
     },
+    -- AIR QUALITY SENSOR SPECIFIC CAPABILITIES --
     [capabilities.airQualityHealthConcern.ID] = {
       clusters.AirQuality.attributes.AirQuality
     },
@@ -257,6 +258,7 @@ local matter_driver_template = {
       clusters.Pm1ConcentrationMeasurement.attributes.MeasuredValue,
       clusters.Pm1ConcentrationMeasurement.attributes.MeasurementUnit,
     },
+    -- SMOKE CO ALARM SPECIFIC CAPABILITIES --
     [capabilities.carbonMonoxideDetector.ID] = {
       clusters.SmokeCoAlarm.attributes.COState,
       clusters.SmokeCoAlarm.attributes.TestInProgress,
