@@ -27,7 +27,6 @@ local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local ON_OFF_STATES = "ON_OFF_STATES"
 
-local EVE_MANUFACTURER_ID = 0x130A
 local PRIVATE_CLUSTER_ID = 0x130AFC01
 
 local PRIVATE_ATTR_ID_WATT = 0x130A000A
@@ -46,16 +45,6 @@ local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in s
 -------------------------------------------------------------------------------------
 -- Eve specifics
 -------------------------------------------------------------------------------------
-
-local function is_eve_energy_products(opts, driver, device)
-  -- this sub driver does not support child devices
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-      device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
-    return true
-  end
-
-  return false
-end
 
 -- Return a ISO 8061 formatted timestamp in UTC (Z)
 -- @return e.g. 2022-02-02T08:00:00Z
@@ -377,7 +366,7 @@ local eve_energy_handler = {
     capabilities.energyMeter,
     capabilities.powerConsumptionReport
   },
-  can_handle = is_eve_energy_products
+  can_handle = require("sub_drivers.eve_energy.can_handle")
 }
 
 return eve_energy_handler

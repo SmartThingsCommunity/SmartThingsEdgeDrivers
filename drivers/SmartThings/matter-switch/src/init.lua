@@ -127,6 +127,8 @@ function SwitchLifecycleHandlers.device_init(driver, device)
   end
 end
 
+local lazy_load_if_possible = require "utils.lazy_load_subdriver"
+
 local matter_driver_template = {
   lifecycle_handlers = {
     added = SwitchLifecycleHandlers.device_added,
@@ -308,9 +310,9 @@ local matter_driver_template = {
   },
   supported_capabilities = fields.supported_capabilities,
   sub_drivers = {
-    require("sub_drivers.aqara_cube"),
-    require("sub_drivers.eve_energy"),
-    require("sub_drivers.third_reality_mk1")
+    lazy_load_if_possible("sub_drivers.aqara_cube"),
+    lazy_load_if_possible("sub_drivers.eve_energy"),
+    lazy_load_if_possible("sub_drivers.third_reality_mk1")
   }
 }
 
