@@ -269,6 +269,13 @@ local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
     refresh_handler(driver, device)
+    if is_gen2(device) then
+      local ledBarComponent = device.profile.components[LED_BAR_COMPONENT_NAME]
+      if ledBarComponent ~= nil then
+        device:emit_component_event(ledBarComponent, capabilities.colorControl.hue(1))
+        device:emit_component_event(ledBarComponent, capabilities.colorControl.saturation(1))
+      end
+    end
   else
     device:emit_event(capabilities.colorControl.hue(1))
     device:emit_event(capabilities.colorControl.saturation(1))
