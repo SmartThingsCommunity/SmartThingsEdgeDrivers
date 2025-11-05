@@ -16,7 +16,6 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
