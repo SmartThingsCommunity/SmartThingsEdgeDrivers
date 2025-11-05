@@ -1,3 +1,6 @@
+-- Copyright © 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 test.add_package_capability("cubeAction.yml")
 test.add_package_capability("cubeFace.yml")
