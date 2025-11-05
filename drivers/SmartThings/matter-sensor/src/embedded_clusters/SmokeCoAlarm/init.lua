@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local cluster_base = require "st.matter.cluster_base"
 local SmokeCoAlarmServerAttributes = require "embedded_clusters.SmokeCoAlarm.server.attributes"
 local SmokeCoAlarmServerCommands = require "embedded_clusters.SmokeCoAlarm.server.commands"

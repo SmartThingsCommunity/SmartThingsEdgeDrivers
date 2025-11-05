@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local cluster_base = require "st.matter.cluster_base"
 local AirQualityServerAttributes = require "embedded_clusters.AirQuality.server.attributes"
 local AirQualityTypes = require "embedded_clusters.AirQuality.types"

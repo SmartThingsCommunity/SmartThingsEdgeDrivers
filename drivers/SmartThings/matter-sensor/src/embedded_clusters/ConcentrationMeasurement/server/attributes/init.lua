@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local attr_mt = {}
 attr_mt.__attr_cache = {}
 attr_mt.__index = function(self, key)

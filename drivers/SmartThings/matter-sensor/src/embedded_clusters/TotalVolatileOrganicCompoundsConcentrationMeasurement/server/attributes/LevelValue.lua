@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local ConcentrationMeasurementServerAttributesLevelValue = require "ConcentrationMeasurement.server.attributes.LevelValue"
 
 local LevelValue = {
