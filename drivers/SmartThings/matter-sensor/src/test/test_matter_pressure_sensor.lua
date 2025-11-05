@@ -6,6 +6,11 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
+if not pcall(function(cluster) return clusters[cluster] end,
+             "PressureMeasurement") then
+  clusters.PressureMeasurement = require "embedded_clusters.PressureMeasurement"
+end
+
 --Note all endpoints are being mapped to the main component
 -- in the matter-sensor driver. If any devices require invoke/write
 -- requests to support the capabilities/preferences, custom mappings

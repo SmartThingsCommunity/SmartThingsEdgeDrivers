@@ -3,7 +3,7 @@
 
 local cluster_base = require "st.matter.cluster_base"
 local CarbonDioxideConcentrationMeasurementServerAttributes = require "embedded_clusters.CarbonDioxideConcentrationMeasurement.server.attributes"
-local ConcentrationMeasurement = require "ConcentrationMeasurement"
+local ConcentrationMeasurement = require "embedded_clusters.ConcentrationMeasurement"
 
 local CarbonDioxideConcentrationMeasurement = {}
 

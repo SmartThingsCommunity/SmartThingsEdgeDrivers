@@ -4,7 +4,7 @@
 local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
-local ConcentrationMeasurementServerAttributesMeasuredValue = require "ConcentrationMeasurement.server.attributes.MeasuredValue"
+local ConcentrationMeasurementServerAttributesMeasuredValue = require "embedded_clusters.ConcentrationMeasurement.server.attributes.MeasuredValue"
 
 
 local MeasuredValue = {

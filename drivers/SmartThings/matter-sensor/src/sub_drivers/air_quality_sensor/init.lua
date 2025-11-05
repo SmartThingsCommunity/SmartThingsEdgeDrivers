@@ -8,8 +8,6 @@ local version = require "version"
 local log = require "log"
 
 local fields = require "sub_drivers.air_quality_sensor.fields"
-local match_modular_profile = require "sub_drivers.air_quality_sensor.modular_configuration"
-local match_profile_static = require "sub_drivers.air_quality_sensor.static_configuration"
 
 -- Include driver-side definitions when lua libs api version is < 10
 if version.api < 10 then
@@ -73,9 +71,11 @@ function AirQualitySensorLifecycleHandlers.do_configure(driver, device)
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
   if version.api >= 14 and version.rpc >= 8 then
-    match_modular_profile(device)
+    local modular_device_cfg = require "sub_drivers.air_quality_sensor.device_configuration"
+    modular_device_cfg.match_profile(device)
   else
-    match_profile_static(device)
+    local legacy_device_cfg = require "sub_drivers.air_quality_sensor.legacy_device_configuration"
+    legacy_device_cfg.match_profile(device)
   end
 end
 
@@ -85,9 +85,11 @@ function AirQualitySensorLifecycleHandlers.driver_switched(driver, device)
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
   if version.api >= 14 and version.rpc >= 8 then
-    match_modular_profile(device)
+    local modular_device_cfg = require "sub_drivers.air_quality_sensor.device_configuration"
+    modular_device_cfg.match_profile(device)
   else
-    match_profile_static(device)
+    local legacy_device_cfg = require "sub_drivers.air_quality_sensor.legacy_device_configuration"
+    legacy_device_cfg.match_profile(device)
   end
 end
 

@@ -2,8 +2,8 @@
 -- Licensed under the Apache License, Version 2.0
 
 local cluster_base = require "st.matter.cluster_base"
-local ConcentrationMeasurementServerAttributes = require "ConcentrationMeasurement.server.attributes"
-local ConcentrationMeasurementTypes = require "ConcentrationMeasurement.types"
+local ConcentrationMeasurementServerAttributes = require "embedded_clusters.ConcentrationMeasurement.server.attributes"
+local ConcentrationMeasurementTypes = require "embedded_clusters.ConcentrationMeasurement.types"
 
 local ConcentrationMeasurement = {}
 

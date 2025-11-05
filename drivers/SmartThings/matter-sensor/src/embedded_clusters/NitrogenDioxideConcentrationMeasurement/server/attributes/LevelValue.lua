@@ -1,12 +1,12 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local ConcentrationMeasurementServerAttributesLevelValue = require "ConcentrationMeasurement.server.attributes.LevelValue"
+local ConcentrationMeasurementServerAttributesLevelValue = require "embedded_clusters.ConcentrationMeasurement.server.attributes.LevelValue"
 
 local LevelValue = {
   ID = 0x000A,
   NAME = "LevelValue",
-  base_type = require "ConcentrationMeasurement.types.LevelValueEnum",
+  base_type = require "embedded_clusters.ConcentrationMeasurement.types.LevelValueEnum",
 }
 
 function LevelValue:new_value(...)

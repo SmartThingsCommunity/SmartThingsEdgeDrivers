@@ -13,7 +13,7 @@ local attribute_handlers = require "sensor_handlers.attribute_handlers"
 -- This can be removed once LuaLibs supports the PressureMeasurement cluster
 if not pcall(function(cluster) return clusters[cluster] end,
              "PressureMeasurement") then
-  clusters.PressureMeasurement = require "PressureMeasurement"
+  clusters.PressureMeasurement = require "embedded_clusters.PressureMeasurement"
 end
 
 -- Include driver-side definitions when lua libs api version is < 10
@@ -117,13 +117,13 @@ local matter_driver_template = {
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.humidity_measured_value_handler
       },
-      [clusters.Thermostat.ID] = {
-        [clusters.Thermostat.attributes.LocalTemperature.ID] = attribute_handlers.temperature_measured_value_handler -- TemperatureMeasurement:MeasuredValue handler can support this attibute
-      },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
         [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
         [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MAX),
+      },
+      [clusters.Thermostat.ID] = {
+        [clusters.Thermostat.attributes.LocalTemperature.ID] = attribute_handlers.temperature_measured_value_handler -- TemperatureMeasurement.MeasuredValue handler can support this attibute
       },
     }
   },
@@ -144,8 +144,10 @@ local matter_driver_template = {
       clusters.FlowMeasurement.attributes.MaxMeasuredValue
     },
     [capabilities.hardwareFault.ID] = {
-      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
       clusters.BooleanStateConfiguration.attributes.SensorFault,
+      -- THESE ARE USED IN THE CASE OF THE SMOKE CO ALARM.
+      -- TODO: move this unique subscription logic into the subdriver
+      clusters.SmokeCoAlarm.attributes.HardwareFaultAlert,
       clusters.SmokeCoAlarm.attributes.BatteryAlert,
       clusters.PowerSource.attributes.BatChargeLevel,
     },

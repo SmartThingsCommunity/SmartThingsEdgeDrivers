@@ -7,6 +7,7 @@ local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
 local fields = require "sub_drivers.air_quality_sensor.fields"
 local sensor_utils = require "sensor_utils.utils"
 
+local LegacyDeviceConfiguration = {}
 
 local function set_supported_health_concern_values(device, setter_function, cluster, cluster_ep)
   -- read_datatype_value works since all the healthConcern capabilities' datatypes are equivalent to the one in airQualityHealthConcern
@@ -36,7 +37,7 @@ local function set_supported_health_concern_values(device, setter_function, clus
   device:emit_event_for_endpoint(cluster_ep, setter_function(supported_values, { visibility = { displayed = false }}))
 end
 
-local function create_level_measurement_profile(device)
+function LegacyDeviceConfiguration.create_level_measurement_profile(device)
   local meas_name, level_name = "", ""
   for _, cap in ipairs(fields.CONCENTRATION_MEASUREMENT_PROFILE_ORDERING) do
     local cap_id = cap.ID
@@ -59,7 +60,7 @@ local function create_level_measurement_profile(device)
 end
 
 -- MATCH STATIC PROFILE
-return function(device)
+function LegacyDeviceConfiguration.match_profile(device)
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
@@ -74,7 +75,7 @@ return function(device)
     profile_name = profile_name .. "-humidity"
   end
 
-  local meas_name, level_name = create_level_measurement_profile(device)
+  local meas_name, level_name = LegacyDeviceConfiguration.create_level_measurement_profile(device)
 
   -- If all endpoints are supported, use '-all' in the profile name so that it
   -- remains under the profile name character limit
@@ -116,3 +117,5 @@ return function(device)
   device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s", profile_name))
   device:try_update_metadata({profile = profile_name})
 end
+
+return LegacyDeviceConfiguration

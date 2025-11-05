@@ -18,7 +18,7 @@ local event_mt = {}
 event_mt.__event_cache = {}
 event_mt.__index = function(self, key)
   if event_mt.__event_cache[key] == nil then
-    local req_loc = string.format("PressureMeasurement.server.events.%s", key)
+    local req_loc = string.format("embedded_clusters.PressureMeasurement.server.events.%s", key)
     local raw_def = require(req_loc)
     local cluster = rawget(self, "_cluster")
     raw_def:set_parent_cluster(cluster)

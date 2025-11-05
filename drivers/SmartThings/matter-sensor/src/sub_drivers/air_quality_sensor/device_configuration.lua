@@ -7,7 +7,9 @@ local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
 local fields = require "sub_drivers.air_quality_sensor.fields"
 local version = require "version"
 
-local function supported_level_measurements(device)
+local DeviceConfiguration = {}
+
+function DeviceConfiguration.supported_level_measurements(device)
   local measurement_caps, level_caps = {}, {}
   for _, cap in ipairs(fields.CONCENTRATION_MEASUREMENT_PROFILE_ORDERING) do
     local cap_id  = cap.ID
@@ -29,7 +31,7 @@ local function supported_level_measurements(device)
 end
 
 -- Match Modular Profile
-return function(device)
+function DeviceConfiguration.match_profile(device)
   local temp_eps = embedded_cluster_utils.get_endpoints(device, clusters.TemperatureMeasurement.ID)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
@@ -46,7 +48,7 @@ return function(device)
     table.insert(main_component_capabilities, capabilities.relativeHumidityMeasurement.ID)
   end
 
-  local measurement_caps, level_caps = supported_level_measurements(device)
+  local measurement_caps, level_caps = DeviceConfiguration.supported_level_measurements(device)
 
   for _, cap_id in ipairs(measurement_caps) do
     table.insert(main_component_capabilities, cap_id)
@@ -82,3 +84,5 @@ return function(device)
     device:set_field(fields.SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
   end
 end
+
+return DeviceConfiguration

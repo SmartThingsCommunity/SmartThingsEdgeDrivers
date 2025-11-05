@@ -6,6 +6,11 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.clusters"
+local version = require "version"
+
+if version.api < 11 then
+  clusters.BooleanStateConfiguration = require "embedded_clusters.BooleanStateConfiguration"
+end
 
 local mock_device_rain = test.mock_device.build_test_matter_device({
     profile = t_utils.get_profile_definition("rain-fault.yml"),

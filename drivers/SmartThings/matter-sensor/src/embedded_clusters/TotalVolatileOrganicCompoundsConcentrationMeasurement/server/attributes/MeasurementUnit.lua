@@ -2,13 +2,13 @@
 -- Licensed under the Apache License, Version 2.0
 
 local TLVParser = require "st.matter.TLV.TLVParser"
-local ConcentrationMeasurementServerAttributesMeasurementUnit = require "ConcentrationMeasurement.server.attributes.MeasurementUnit"
+local ConcentrationMeasurementServerAttributesMeasurementUnit = require "embedded_clusters.ConcentrationMeasurement.server.attributes.MeasurementUnit"
 
 
 local MeasurementUnit = {
   ID = 0x0008,
   NAME = "MeasurementUnit",
-  base_type = require "ConcentrationMeasurement.types.MeasurementUnitEnum",
+  base_type = require "embedded_clusters.ConcentrationMeasurement.types.MeasurementUnitEnum",
 }
 
 function MeasurementUnit:new_value(...)
