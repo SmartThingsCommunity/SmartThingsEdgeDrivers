@@ -51,6 +51,19 @@ local function refresh_handler(driver, device, command)
   end
 end
 
+local function device_added(driver, device)
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    refresh_handler(driver, device, {})
+  else
+    device:emit_event(capabilities.colorControl.hue(1))
+    device:emit_event(capabilities.colorControl.saturation(1))
+    device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
+    device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
+    device:emit_event(capabilities.switchLevel.level(100))
+    device:emit_event(capabilities.switch.switch("off"))
+  end
+end
+
 local function device_configure(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     inovelli_common.base_device_configure(driver, device, PRIVATE_CLUSTER_ID, MFG_CODE)
@@ -65,6 +78,7 @@ local vzm32_sn = {
   NAME = "inovelli vzm32-sn device-specific",
   can_handle = can_handle_inovelli_vzm32_sn,
   lifecycle_handlers = {
+    added = device_added,
     doConfigure = device_configure,
   },
   capability_handlers = {
