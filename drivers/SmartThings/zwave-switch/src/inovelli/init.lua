@@ -23,12 +23,8 @@ local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 7 })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local preferencesMap = require "preferences"
 
 --- @type st.utils
@@ -66,10 +62,6 @@ local function is_gen3(device)
   return device:id_match(0x031E, {0x0015, 0x0017}, 0x0001)
 end
 
-local function is_gen2_red(device)
-  return device:id_match(0x031E, {0x0001}, 0x0001)
-end
-
 -- Helper function to get the correct notification parameter number based on device type
 local function get_notification_parameter_number(device)
   -- For child devices, check the parent device type
@@ -77,7 +69,7 @@ local function get_notification_parameter_number(device)
   if device.network_type == st_device.NETWORK_TYPE_CHILD then
     device_to_check = device:get_parent_device()
   end
-  
+
   if is_gen3(device_to_check) then
     return GEN3_NOTIFICATION_PARAMETER_NUMBER
   else
@@ -148,16 +140,16 @@ local function getNotificationValue(device, value)
   local color = utils.round(device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) or 100)
   local effect = device:get_parent_device().preferences.notificationType or 1
   local duration = 255 -- Default duration
-  
+
   -- Get the parent device to check generation for child devices
   local device_to_check = device
   if device.network_type == st_device.NETWORK_TYPE_CHILD then
     device_to_check = device:get_parent_device()
   end
-  
+
   local colorValue = huePercentToValue(value or color)
   local notificationValue = 0
-  
+
   if is_gen3(device_to_check) then
     -- Gen3 order: duration, level, color, effect (bytes 0-3 from low to high)
     notificationValue = notificationValue + (effect * 16777216)   -- byte 3 (highest)
@@ -171,7 +163,7 @@ local function getNotificationValue(device, value)
     notificationValue = notificationValue + (level * 256)          -- byte 1
     notificationValue = notificationValue + (colorValue * 1)        -- byte 0 (lowest)
   end
-  
+
   return notificationValue
 end
 

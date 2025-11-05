@@ -15,12 +15,8 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 7 })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.Association
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 --- @type st.device
@@ -35,6 +31,8 @@ local supported_button_values = {
     ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
     ["button3"] = {"pushed"}
 }
+
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local function refresh_handler(driver, device)
   device:send(SwitchMultilevel:Get({}))

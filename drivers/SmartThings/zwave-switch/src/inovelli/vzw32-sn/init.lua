@@ -48,7 +48,7 @@ local function device_added(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
     for _, component in pairs(device.profile.components) do
-      if component.id ~= "main" and component.id ~= LED_BAR_COMPONENT_NAME then
+      if component.id ~= "main" and component.id ~= "LEDColorConfiguration" then
         device:emit_component_event(
           component,
           capabilities.button.supportedButtonValues(
