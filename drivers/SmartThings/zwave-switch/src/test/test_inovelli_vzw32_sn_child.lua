@@ -91,11 +91,6 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_child_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(6500))
-    },
-    {
-      channel = "capability",
-      direction = "send",
       message = mock_child_device:generate_test_message("main", capabilities.switchLevel.level(100))
     },
     {

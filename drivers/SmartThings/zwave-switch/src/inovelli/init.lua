@@ -40,14 +40,50 @@ local st_device = require "st.device"
 
 --- @type st.zwave.CommandClass.CentralScene
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=3})
+--- @type st.zwave.constants
+local constants = require "st.zwave.constants"
 
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 
-local NOTIFICATION_PARAMETER_NUMBER = 99
+local GEN3_NOTIFICATION_PARAMETER_NUMBER = 99
+local GEN2_NOTIFICATION_PARAMETER_NUMBER = 16
+local LED_COLOR_CONTROL_PARAMETER_NUMBER = 13
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
+local LED_GENERIC_SATURATION = 100
 
-local INOVELLI_VZW32_SN_FINGERPRINTS = {
-  { mfr = 0x031E, prod = 0x0017, model = 0x0001 } -- Inovelli VZW32-SN
+local INOVELLI_FINGERPRINTS = {
+  { mfr = 0x031E, prod = 0x0017, model = 0x0001 }, -- Inovelli VZW32-SN
+  { mfr = 0x031E, prod = 0x0001, model = 0x0001 }, -- Inovelli LZW31SN
+  { mfr = 0x031E, prod = 0x0003, model = 0x0001 }, -- Inovelli LZW31
 }
+
+-- Device type detection helpers
+local function is_gen2(device)
+  return device:id_match(0x031E, {0x0001, 0x0003}, 0x0001)
+end
+
+local function is_gen3(device)
+  return device:id_match(0x031E, {0x0015, 0x0017}, 0x0001)
+end
+
+local function is_gen2_red(device)
+  return device:id_match(0x031E, {0x0001}, 0x0001)
+end
+
+-- Helper function to get the correct notification parameter number based on device type
+local function get_notification_parameter_number(device)
+  -- For child devices, check the parent device type
+  local device_to_check = device
+  if device.network_type == st_device.NETWORK_TYPE_CHILD then
+    device_to_check = device:get_parent_device()
+  end
+  
+  if is_gen3(device_to_check) then
+    return GEN3_NOTIFICATION_PARAMETER_NUMBER
+  else
+    return GEN2_NOTIFICATION_PARAMETER_NUMBER
+  end
+end
 
 local function button_to_component(buttonId)
   if buttonId > 0 then
@@ -62,6 +98,16 @@ local function huePercentToValue(value)
     return 255
   else
     return utils.round(value / 100 * 255)
+  end
+end
+
+local function valueToHuePercent(value)
+  if value <= 2 then
+    return 0
+  elseif value >= 254 then
+    return 100
+  else
+    return utils.round(value / 255 * 100)
   end
 end
 
@@ -98,55 +144,105 @@ local function add_child(driver,parent,profile,child_type)
 end
 
 local function getNotificationValue(device, value)
-  local notificationValue = 0
   local level = device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) or 100
   local color = utils.round(device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) or 100)
   local effect = device:get_parent_device().preferences.notificationType or 1
-  notificationValue = notificationValue + (effect*16777216)
-  notificationValue = notificationValue + (huePercentToValue(value or color)*65536)
-  notificationValue = notificationValue + (level*256)
-  notificationValue = notificationValue + (255*1)
+  local duration = 255 -- Default duration
+  
+  -- Get the parent device to check generation for child devices
+  local device_to_check = device
+  if device.network_type == st_device.NETWORK_TYPE_CHILD then
+    device_to_check = device:get_parent_device()
+  end
+  
+  local colorValue = huePercentToValue(value or color)
+  local notificationValue = 0
+  
+  if is_gen3(device_to_check) then
+    -- Gen3 order: duration, level, color, effect (bytes 0-3 from low to high)
+    notificationValue = notificationValue + (effect * 16777216)   -- byte 3 (highest)
+    notificationValue = notificationValue + (colorValue * 65536)   -- byte 2
+    notificationValue = notificationValue + (level * 256)          -- byte 1
+    notificationValue = notificationValue + (duration * 1)        -- byte 0 (lowest)
+  else
+    -- Gen2 order: color, level, duration, effect (bytes 0-3 from low to high)
+    notificationValue = notificationValue + (effect * 16777216)    -- byte 3 (highest)
+    notificationValue = notificationValue + (duration * 65536)     -- byte 2
+    notificationValue = notificationValue + (level * 256)          -- byte 1
+    notificationValue = notificationValue + (colorValue * 1)        -- byte 0 (lowest)
+  end
+  
   return notificationValue
 end
 
 local function set_color(driver, device, command)
-  device:emit_event(capabilities.colorControl.hue(command.args.color.hue))
-  device:emit_event(capabilities.colorControl.saturation(command.args.color.saturation))
-  device:emit_event(capabilities.switch.switch("on"))
-  local dev = device:get_parent_device()
-  local config = Configuration:Set({
-    parameter_number=NOTIFICATION_PARAMETER_NUMBER,
-    configuration_value=getNotificationValue(device),
-    size=4
-  })
-  local send_configuration = function()
-    dev:send(config)
+  if device.network_type == st_device.NETWORK_TYPE_CHILD then
+    device:emit_event(capabilities.colorControl.hue(command.args.color.hue))
+    device:emit_event(capabilities.colorControl.saturation(command.args.color.saturation))
+    device:emit_event(capabilities.switch.switch("on"))
+    local dev = device:get_parent_device()
+    local config = Configuration:Set({
+      parameter_number=get_notification_parameter_number(device),
+      configuration_value=getNotificationValue(device),
+      size=4
+    })
+    local send_configuration = function()
+      dev:send(config)
+    end
+    device.thread:call_with_delay(1,send_configuration)
+  else
+    local value = huePercentToValue(command.args.color.hue)
+    local config = Configuration:Set({
+      parameter_number=LED_COLOR_CONTROL_PARAMETER_NUMBER,
+      configuration_value=value,
+      size=2
+    })
+    device:send(config)
+
+    local query_configuration = function()
+      device:send(Configuration:Get({ parameter_number=LED_COLOR_CONTROL_PARAMETER_NUMBER }))
+    end
+
+    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_configuration)
   end
-  device.thread:call_with_delay(1,send_configuration)
 end
 
 local function set_color_temperature(driver, device, command)
-  device:emit_event(capabilities.colorControl.hue(100))
-  device:emit_event(capabilities.colorTemperature.colorTemperature(command.args.temperature))
-  device:emit_event(capabilities.switch.switch("on"))
-  local dev = device:get_parent_device()
-  local config = Configuration:Set({
-    parameter_number=NOTIFICATION_PARAMETER_NUMBER,
-    configuration_value=getNotificationValue(device, 100),
-    size=4
-  })
-  local send_configuration = function()
-    dev:send(config)
+  if device.network_type == st_device.NETWORK_TYPE_CHILD then
+    device:emit_event(capabilities.colorControl.hue(100))
+    device:emit_event(capabilities.colorTemperature.colorTemperature(command.args.temperature))
+    device:emit_event(capabilities.switch.switch("on"))
+    local dev = device:get_parent_device()
+    local config = Configuration:Set({
+      parameter_number=get_notification_parameter_number(device),
+      configuration_value=getNotificationValue(device, 100),
+      size=4
+    })
+    local send_configuration = function()
+      dev:send(config)
+    end
+    device.thread:call_with_delay(1,send_configuration)
+  else
+    local value = huePercentToValue(100)
+    local config = Configuration:Set({
+      parameter_number=LED_COLOR_CONTROL_PARAMETER_NUMBER,
+      configuration_value=value,
+      size=2
+    })
+    device:send(config)
+
+    local query_configuration = function()
+      device:send(Configuration:Get({ parameter_number=LED_COLOR_CONTROL_PARAMETER_NUMBER }))
+    end
+
+    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_configuration)
   end
-  device.thread:call_with_delay(1,send_configuration)
 end
 
 local function switch_level_set(driver, device, command)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     local level = utils.round(command.args.level)
     level = utils.clamp_value(level, 0, 99)
-
-    --device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
 
     device:send(SwitchMultilevel:Set({ value=level, duration=command.args.rate or "default" }))
 
@@ -158,7 +254,7 @@ local function switch_level_set(driver, device, command)
     device:emit_event(capabilities.switch.switch(command.args.level ~= 0 and "on" or "off"))
     local dev = device:get_parent_device()
     local config = Configuration:Set({
-      parameter_number=NOTIFICATION_PARAMETER_NUMBER,
+      parameter_number=get_notification_parameter_number(device),
       configuration_value=getNotificationValue(device),
       size=4
     })
@@ -169,23 +265,11 @@ local function switch_level_set(driver, device, command)
   end
 end
 
-local function can_handle_inovelli_vzw32(opts, driver, device, ...)
-  for _, fingerprint in ipairs(INOVELLI_VZW32_SN_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      local subdriver = require("inovelli-vzw32-sn")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function refresh_handler(driver, device)
   if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
     device:send(SwitchMultilevel:Get({}))
-    device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ILLUMINANCE}))
     device:send(Meter:Get({ scale = Meter.scale.electric_meter.WATTS }))
     device:send(Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS }))
-    device:send(Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.MOTION_DETECTION}))
   end
 end
 
@@ -194,22 +278,11 @@ local function device_added(driver, device)
     device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
     refresh_handler(driver, device)
   else
-    if device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.hue.NAME) == nil then
-      device:emit_event(capabilities.colorControl.hue(1))
-    end
-    if device:get_latest_state("main", capabilities.colorControl.ID, capabilities.colorControl.saturation.NAME) == nil then
-      device:emit_event(capabilities.colorControl.saturation(1))
-    end
-    if device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME) == nil then
-      device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
-      device:emit_event(capabilities.colorTemperature.colorTemperature(6500))
-    end
-    if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil then
-      device:emit_event(capabilities.switchLevel.level(100))
-    end
-    if device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME) == nil then
-      device:emit_event(capabilities.switch.switch("off"))
-    end
+    device:emit_event(capabilities.colorControl.hue(1))
+    device:emit_event(capabilities.colorControl.saturation(1))
+    device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
+    device:emit_event(capabilities.switchLevel.level(100))
+    device:emit_event(capabilities.switch.switch("off"))
   end
 end
 
@@ -253,7 +326,7 @@ local function switch_set_on_off_handler(value)
       device:emit_event(capabilities.switch.switch(value == 0 and "off" or "on"))
       local dev = device:get_parent_device()
       local config = Configuration:Set({
-        parameter_number=NOTIFICATION_PARAMETER_NUMBER,
+        parameter_number=get_notification_parameter_number(device),
         configuration_value=(value == 0 and 0 or getNotificationValue(device)),
         size=4
       })
@@ -261,6 +334,18 @@ local function switch_set_on_off_handler(value)
         dev:send(config)
       end
       device.thread:call_with_delay(1,send_configuration)
+    end
+  end
+end
+
+local function configuration_report(driver, device, cmd)
+  if cmd.args.parameter_number == LED_COLOR_CONTROL_PARAMETER_NUMBER and is_gen2(device) then
+    local hue = valueToHuePercent(cmd.args.configuration_value)
+
+    local ledBarComponent = device.profile.components[LED_BAR_COMPONENT_NAME]
+    if ledBarComponent ~= nil then
+      device:emit_component_event(ledBarComponent, capabilities.colorControl.hue(hue))
+      device:emit_component_event(ledBarComponent, capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
     end
   end
 end
@@ -298,11 +383,21 @@ local function central_scene_notification_handler(self, device, cmd)
   end
 end
 
+local function can_handle_inovelli(opts, driver, device, ...)
+  for _, fingerprint in ipairs(INOVELLI_FINGERPRINTS) do
+    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
+      local subdriver = require("inovelli")
+      return true, subdriver
+    end
+  end
+  return false
+end
+
 -------------------------------------------------------------------------------------------
 -- Register message handlers and run driver
 -------------------------------------------------------------------------------------------
-local inovelli_vzw32_sn = {
-  NAME = "inovelli vzw32-sn handler",
+local inovelli = {
+  NAME = "Inovelli Devices",
   lifecycle_handlers = {
     infoChanged = info_changed,
     added = device_added,
@@ -311,6 +406,9 @@ local inovelli_vzw32_sn = {
     [cc.CENTRAL_SCENE] = {
       [CentralScene.NOTIFICATION] = central_scene_notification_handler
     },
+    [cc.CONFIGURATION] = {
+      [Configuration.REPORT] = configuration_report
+    }
   },
   capability_handlers = {
     [capabilities.switch.ID] = {
@@ -330,7 +428,11 @@ local inovelli_vzw32_sn = {
       [capabilities.refresh.commands.refresh.NAME] = refresh_handler
     }
   },
-  can_handle = can_handle_inovelli_vzw32
+  sub_drivers = {
+    require("inovelli/vzw32-sn"),
+    require("inovelli/lzw31-sn")
+  },
+  can_handle = can_handle_inovelli
 }
 
-return inovelli_vzw32_sn
+return inovelli

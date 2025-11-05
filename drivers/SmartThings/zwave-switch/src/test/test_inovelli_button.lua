@@ -18,6 +18,9 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
+local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
+local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local t_utils = require "integration_test.utils"
 
 local INOVELLI_MANUFACTURER_ID = 0x031E
@@ -66,8 +69,8 @@ end
 test.set_test_init_function(test_init)
 
 local supported_button_values = {
-  ["button1"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
-  ["button2"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
   ["button3"] = {"pushed"}
 }
 
@@ -100,7 +103,26 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_dimmer,
-        Basic:Get({})
+        Association:Set({ grouping_identifier = 1, node_ids = {}, payload = "\x01" })
+      )
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_dimmer,
+        SwitchMultilevel:Get({})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_dimmer,
+        Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_dimmer,
+        Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS })
       )
     )
   end
@@ -126,7 +148,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed({state_change = true}))
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed({state_change = true}))
     }
   }
 )
@@ -150,7 +172,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_4x({ state_change = true }))
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_4x({ state_change = true }))
     }
   }
 )

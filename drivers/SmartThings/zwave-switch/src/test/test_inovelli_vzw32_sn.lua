@@ -30,6 +30,7 @@ local t_utils = require "integration_test.utils"
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_VZW32_SN_PRODUCT_TYPE = 0x0017
 local INOVELLI_VZW32_SN_PRODUCT_ID = 0x0001
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 -- Device endpoints with supported command classes
 local inovelli_vzw32_sn_endpoints = {
@@ -62,19 +63,41 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
+local supported_button_values = {
+  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button3"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
+}
+
 -- Test device initialization
-test.register_message_test(
+test.register_coroutine_test(
   "Device should initialize properly on added lifecycle event",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_inovelli_vzw32_sn.id, "added" },
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_inovelli_vzw32_sn.id, "added" })
+
+    for button_name, _ in pairs(mock_inovelli_vzw32_sn.profile.components) do
+      if button_name ~= "main" and button_name ~= LED_BAR_COMPONENT_NAME then
+        test.socket.capability:__expect_send(
+          mock_inovelli_vzw32_sn:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues(
+              supported_button_values[button_name],
+              { visibility = { displayed = false } }
+            )
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_inovelli_vzw32_sn:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         Association:Set({
           grouping_identifier = 1,
@@ -82,51 +105,41 @@ test.register_message_test(
           payload = "\x01", -- Should contain grouping_identifier = 1
         })
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         SwitchMultilevel:Get({})
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ILLUMINANCE})
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS })
       )
-    },
-    {
-      channel = "zwave",
-      direction = "send",
-      message = zw_test_utils.zwave_test_build_send_command(
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_vzw32_sn,
         Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.MOTION_DETECTION})
       )
-    },
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+    )
+  end
 )
 
 -- Test switch on command
