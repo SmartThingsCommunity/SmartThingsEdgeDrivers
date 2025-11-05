@@ -125,6 +125,22 @@ test.register_coroutine_test(
         Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS })
       )
     )
+
+    local ledBarComponent = mock_inovelli_dimmer.profile.components[LED_BAR_COMPONENT_NAME]
+    if ledBarComponent ~= nil then
+      test.socket.capability:__expect_send(
+        mock_inovelli_dimmer:generate_test_message(
+          LED_BAR_COMPONENT_NAME,
+          capabilities.colorControl.hue(1)
+        )
+      )
+      test.socket.capability:__expect_send(
+        mock_inovelli_dimmer:generate_test_message(
+          LED_BAR_COMPONENT_NAME,
+          capabilities.colorControl.saturation(1)
+        )
+      )
+    end
   end
 )
 
