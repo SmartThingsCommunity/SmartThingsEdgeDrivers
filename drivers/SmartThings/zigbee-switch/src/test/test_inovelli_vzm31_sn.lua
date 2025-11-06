@@ -247,7 +247,7 @@ test.register_coroutine_test(
     -- For VZM31, the divisor is read from the device, but for testing we need to set it
     -- The test expects 50000 -> 500.0 kWh, which means divisor of 100
     mock_inovelli_vzm31_sn:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 100, {persist = true})
-    
+
     test.socket.zigbee:__queue_receive({
       mock_inovelli_vzm31_sn.id,
       clusters.SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_inovelli_vzm31_sn, 50000)
@@ -313,7 +313,7 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_inovelli_vzm31_sn.id, "doConfigure" })
-    
+
     -- Button capability messages from base_device_configure
     for _, component in pairs(mock_inovelli_vzm31_sn.profile.components) do
       if component.id ~= "main" then
@@ -334,23 +334,23 @@ test.register_coroutine_test(
         )
       end
     end
-    
+
     -- device:configure() sends bind requests and configure reporting (default handler)
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, require("integration_test.zigbee_test_utils").build_bind_request(mock_inovelli_vzm31_sn, require("integration_test.zigbee_test_utils").mock_hub_eui, clusters.OnOff.ID) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.OnOff.attributes.OnOff:configure_reporting(mock_inovelli_vzm31_sn, 0, 300) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, require("integration_test.zigbee_test_utils").build_bind_request(mock_inovelli_vzm31_sn, require("integration_test.zigbee_test_utils").mock_hub_eui, clusters.Level.ID) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.Level.attributes.CurrentLevel:configure_reporting(mock_inovelli_vzm31_sn, 1, 3600, 1) })
-    
+
     -- base_device_configure sends OTA ImageNotify and private cluster bind
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, OTAUpgrade.commands.ImageNotify(mock_inovelli_vzm31_sn, 0x00, 100, 0x122F, 0xFFFF, 0xFFFFFFFF) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, device_management.build_bind_request(mock_inovelli_vzm31_sn, 0xFC31, require("integration_test.zigbee_test_utils").mock_hub_eui, 2) })
-    
+
     -- Read divisors/multipliers
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.SimpleMetering.attributes.Divisor:read(mock_inovelli_vzm31_sn) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.SimpleMetering.attributes.Multiplier:read(mock_inovelli_vzm31_sn) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_inovelli_vzm31_sn) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_inovelli_vzm31_sn) })
-    
+
     mock_inovelli_vzm31_sn:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )

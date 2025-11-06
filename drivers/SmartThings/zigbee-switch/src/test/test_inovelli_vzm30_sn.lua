@@ -356,7 +356,7 @@ test.register_coroutine_test(
     -- Set the divisor field as the device does during configuration
     -- For VZM30-SN, the divisor is set to 1000 (like VZM32-SN)
     mock_inovelli_vzm30_sn:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
-    
+
     test.socket.zigbee:__queue_receive({
       mock_inovelli_vzm30_sn.id,
       clusters.SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_inovelli_vzm30_sn, 212)
@@ -422,7 +422,7 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_inovelli_vzm30_sn.id, "doConfigure" })
-    
+
     -- Button capability messages from base_device_configure
     for _, component in pairs(mock_inovelli_vzm30_sn.profile.components) do
       if component.id ~= "main" then
@@ -443,7 +443,7 @@ test.register_coroutine_test(
         )
       end
     end
-    
+
     -- device:configure() sends bind requests and configure reporting (default handler)
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, require("integration_test.zigbee_test_utils").build_bind_request(mock_inovelli_vzm30_sn, require("integration_test.zigbee_test_utils").mock_hub_eui, clusters.Level.ID) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, clusters.Level.attributes.CurrentLevel:configure_reporting(mock_inovelli_vzm30_sn, 1, 3600, 1) })
@@ -453,20 +453,20 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, clusters.OnOff.attributes.OnOff:configure_reporting(mock_inovelli_vzm30_sn, 0, 300) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, device_management.build_bind_request(mock_inovelli_vzm30_sn, TemperatureMeasurement.ID, require("integration_test.zigbee_test_utils").mock_hub_eui) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_inovelli_vzm30_sn, 30, 600, 100) })
-    
+
     -- base_device_configure sends OTA ImageNotify and private cluster bind
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, OTAUpgrade.commands.ImageNotify(mock_inovelli_vzm30_sn, 0x00, 100, 0x122F, 0xFFFF, 0xFFFFFFFF) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, device_management.build_bind_request(mock_inovelli_vzm30_sn, 0xFC31, require("integration_test.zigbee_test_utils").mock_hub_eui, 2) })
-    
+
     -- Read divisors/multipliers
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, clusters.SimpleMetering.attributes.Multiplier:read(mock_inovelli_vzm30_sn) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_inovelli_vzm30_sn) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_inovelli_vzm30_sn) })
-    
+
     -- VZM30-specific: temperature and humidity reporting configuration
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_inovelli_vzm30_sn, 30, 3600, 50) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, RelativeHumidity.attributes.MeasuredValue:configure_reporting(mock_inovelli_vzm30_sn, 30, 3600, 50) })
-    
+
     mock_inovelli_vzm30_sn:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
