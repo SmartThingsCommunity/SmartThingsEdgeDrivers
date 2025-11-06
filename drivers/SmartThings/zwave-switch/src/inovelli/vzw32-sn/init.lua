@@ -82,7 +82,7 @@ local function can_handle_vzw32_sn(opts, driver, device, ...)
 end
 
 local vzw32_sn = {
-  NAME = "Inovelli VZW32-SN",
+  NAME = "Inovelli VZW32-SN mmWave Dimmer",
   lifecycle_handlers = {
     added = device_added,
   },

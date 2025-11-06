@@ -83,7 +83,7 @@ local function can_handle_lzw31_sn(opts, driver, device, ...)
 end
 
 local lzw31_sn = {
-  NAME = "Inovelli LZW31-SN",
+  NAME = "Inovelli LZW31-SN Z-Wave Dimmer",
   lifecycle_handlers = {
     added = device_added,
   },

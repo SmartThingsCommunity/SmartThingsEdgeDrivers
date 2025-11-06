@@ -396,7 +396,7 @@ end
 -- Register message handlers and run driver
 -------------------------------------------------------------------------------------------
 local inovelli = {
-  NAME = "Inovelli Devices",
+  NAME = "Inovelli Z-Wave Switch",
   lifecycle_handlers = {
     infoChanged = info_changed,
     added = device_added,
