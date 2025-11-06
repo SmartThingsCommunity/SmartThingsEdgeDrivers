@@ -480,14 +480,6 @@ local function test_init_color_dimmer()
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_dimmer.id, "added" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_dimmer.id, "init" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_dimmer.id, "doConfigure" })
-  -- test.socket.matter:__expect_send({
-  --   mock_device_color_dimmer.id,
-  --   clusters.LevelControl.attributes.Options:write(mock_device_color_dimmer, 7, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
-  -- })
-  -- test.socket.matter:__expect_send({
-  --   mock_device_color_dimmer.id,
-  --   clusters.ColorControl.attributes.Options:write(mock_device_color_dimmer, 7, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
-  -- })
   mock_device_color_dimmer:expect_metadata_update({ profile = "switch-color-level" })
   mock_device_color_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
