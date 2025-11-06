@@ -400,6 +400,7 @@ test.register_coroutine_test(
   "Test profile change on init for Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 2, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
     mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
