@@ -187,6 +187,22 @@ function utils.get_endpoint_info(device, endpoint_id)
   return {}
 end
 
+function utils.ep_supports_cluster(ep_info, cluster_id, opts)
+  opts = opts or {}
+  local clus_has_features = function(cluster, checked_feature)
+    return (cluster.feature_map & checked_feature) == checked_feature
+  end
+  for _, cluster in ipairs(ep_info.clusters) do
+      if ((cluster.cluster_id == cluster_id)
+            and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
+            and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
+              or (opts.cluster_type == cluster.cluster_type))
+            or (cluster_id == nil)) then
+              return true
+      end
+  end
+end
+
 -- Fallback handler for responses that dont have their own handler
 function utils.matter_handler(driver, device, response_block)
   device.log.info(string.format("Fallback handler for %s", response_block))

@@ -178,6 +178,9 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, child1_ep, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, child2_ep, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, child2_ep, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   mock_device:expect_metadata_update({ profile = "light-binary" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
@@ -222,7 +225,9 @@ for i, endpoint in ipairs(mock_device_parent_child_endpoints_non_sequential.endp
 end
 
 local function test_init_parent_child_endpoints_non_sequential()
-  test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)
+  local unsup_mock_device = mock_device_parent_child_endpoints_non_sequential
+
+  test.mock_device.add_test_device(unsup_mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
@@ -236,49 +241,53 @@ local function test_init_parent_child_endpoints_non_sequential()
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY
   }
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_endpoints_non_sequential)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_parent_child_endpoints_non_sequential))
+      subscribe_request:merge(cluster:subscribe(unsup_mock_device))
     end
   end
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "added" })
-  test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "init" })
-  test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "doConfigure" })
-  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ profile = "light-binary" })
-  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child1_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.ColorControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+
+  unsup_mock_device:expect_metadata_update({ profile = "light-binary" })
+  unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children_non_sequential) do
     test.mock_device.add_test_device(child)
   end
 
-  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+  unsup_mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 2",
     profile = "light-color-level",
-    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_device_id = unsup_mock_device.id,
     parent_assigned_child_key = string.format("%d", child2_ep_non_sequential)
   })
 
   -- switch-binary will be selected as an overridden child device profile
-  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+  unsup_mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 3",
     profile = "switch-binary",
-    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_device_id = unsup_mock_device.id,
     parent_assigned_child_key = string.format("%d", child3_ep_non_sequential)
   })
 
-  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+  unsup_mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 4",
     profile = "light-level",
-    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_device_id = unsup_mock_device.id,
     parent_assigned_child_key = string.format("%d", child1_ep_non_sequential)
   })
 end

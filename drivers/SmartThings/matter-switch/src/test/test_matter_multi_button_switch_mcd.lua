@@ -226,6 +226,9 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", mock_device_ep5)
   })
   expect_configure_buttons()
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, mock_device_ep1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, mock_device_ep5, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, mock_device_ep5, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
 
   -- simulate the profile change update taking affect and the device info changing
