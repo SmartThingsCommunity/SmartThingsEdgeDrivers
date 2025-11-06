@@ -641,6 +641,11 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1006
     deviceProfileName: light-level-motion
+  - id: "4251/4103"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Scene Controller Switch
+    vendorId: 0x109B
+    productId: 0x1007
+    deviceProfileName: 3-button
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
