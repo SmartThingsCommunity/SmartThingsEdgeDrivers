@@ -43,7 +43,7 @@ local function device_configure(driver, device)
 end
 
 local vzm30_sn = {
-  NAME = "inovelli vzm30-sn device-specific",
+  NAME = "Inovelli VZM30-SN Zigbee Switch",
   can_handle = require("inovelli.vzm30-sn.can_handle"),
   lifecycle_handlers = {
     doConfigure = device_configure,

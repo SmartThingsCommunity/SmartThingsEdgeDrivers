@@ -322,7 +322,7 @@ local function handle_resetEnergyMeter(self, device)
 end
 
 local inovelli = {
-  NAME = "inovelli combined handler",
+  NAME = "Inovelli Zigbee Switch",
   lifecycle_handlers = {
     doConfigure = device_configure,
     infoChanged = info_changed,
