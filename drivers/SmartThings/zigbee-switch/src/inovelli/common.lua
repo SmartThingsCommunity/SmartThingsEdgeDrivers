@@ -16,8 +16,15 @@ local clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
 local OTAUpgrade = require("st.zigbee.zcl.clusters").OTAUpgrade
 local zigbee_constants = require "st.zigbee.constants"
+local capabilities = require "st.capabilities"
 
 local M = {}
+
+local supported_button_values = {
+  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button3"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
+}
 
 -- Utility function to check if device is VZM32-SN
 function M.is_vzm32(device)
@@ -56,6 +63,22 @@ function M.base_device_configure(driver, device, private_cluster_id, mfg_code)
   device:send(clusters.SimpleMetering.attributes.Multiplier:read(device))
   device:send(clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
   device:send(clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
+
+  for _, component in pairs(device.profile.components) do
+    if component.id ~= "main" then
+      device:emit_component_event(
+        component,
+        capabilities.button.supportedButtonValues(
+          supported_button_values[component.id],
+          { visibility = { displayed = false } }
+        )
+      )
+      device:emit_component_event(
+        component,
+        capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
+      )
+    end
+  end
 end
 
 return M
