@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local data_types = require "st.zigbee.data_types"
@@ -5,26 +8,6 @@ local zcl_messages = require "st.zigbee.zcl"
 local messages = require "st.zigbee.messages"
 local zb_const = require "st.zigbee.constants"
 local read_attribute = require "st.zigbee.zcl.global_commands.read_attribute"
-
-local TUYA_MFR_HEADER = "_TZ"
-
-local function is_multi_endpoint(device)
-  local main_endpoint = device:get_endpoint(clusters.OnOff.ID)
-  for _, ep in ipairs(device.zigbee_endpoints) do
-    if ep.id ~= main_endpoint then
-      return true
-    end
-  end
-  return false
-end
-
-local function is_tuya_products(opts, driver, device)
-  if string.sub(device:get_manufacturer(),1,3) == TUYA_MFR_HEADER and is_multi_endpoint(device) then  -- if it is a tuya device, then send the magic packet
-      local subdriver = require("tuya-multi")
-      return true, subdriver
-  end
-  return false
-end
 
 local function read_attribute_function(device, cluster_id, attr_id)
   local read_body = read_attribute.ReadAttribute( attr_id )
@@ -65,7 +48,7 @@ local tuya_switch_handler = {
   supported_capabilities = {
       capabilities.switch
   },
-  can_handle = is_tuya_products
+  can_handle = require("tuya-multi.can_handle"),
 }
 
 return tuya_switch_handler

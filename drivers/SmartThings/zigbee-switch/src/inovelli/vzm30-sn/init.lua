@@ -19,21 +19,8 @@ local inovelli_common = require "inovelli.common"
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local RelativeHumidity = clusters.RelativeHumidity
 
-local INOVELLI_VZM30_SN_FINGERPRINTS = {
-  { mfr = "Inovelli", model = "VZM30-SN" },
-}
-
 local PRIVATE_CLUSTER_ID = 0xFC31
 local MFG_CODE = 0x122F
-
-local function can_handle_inovelli_vzm30_sn(opts, driver, device)
-  for _, fp in ipairs(INOVELLI_VZM30_SN_FINGERPRINTS) do
-    if device:get_manufacturer() == fp.mfr and device:get_model() == fp.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function configure_temperature_reporting(device)
   local min_temp_change = 50  -- 0.5°C in 0.01°C units
@@ -57,7 +44,7 @@ end
 
 local vzm30_sn = {
   NAME = "inovelli vzm30-sn device-specific",
-  can_handle = can_handle_inovelli_vzm30_sn,
+  can_handle = require("inovelli.vzm30-sn.can_handle"),
   lifecycle_handlers = {
     doConfigure = device_configure,
   },

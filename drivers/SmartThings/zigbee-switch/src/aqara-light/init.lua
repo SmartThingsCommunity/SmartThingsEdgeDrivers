@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
@@ -11,21 +14,6 @@ local ColorControl = clusters.ColorControl
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
-
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.light.acn004" },
-  { mfr = "Aqara", model = "lumi.light.acn014" }
-}
-
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("aqara-light")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
@@ -65,7 +53,7 @@ local aqara_light_handler = {
       [capabilities.switchLevel.commands.setLevel.NAME] = set_level_handler
         }
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara-light.can_handle"),
 }
 
 return aqara_light_handler
