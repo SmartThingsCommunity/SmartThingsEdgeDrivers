@@ -16,8 +16,6 @@ components:
       version: 1
     - id: refresh
       version: 1
-    - id: configuration
-      version: 1
     - id: firmwareUpdate
       version: 1
     categories:
@@ -96,9 +94,9 @@ preferences:
     preferenceType: enumeration
     definition:
       options:
-        "0": "None (default)"
-        "1": "3-Way Aux Switch"
-      default: 0
+        "0": "None"
+        "1": "3-Way Aux Switch (default)"
+      default: 1
   - name: "parameter52"
     title: "52. Smart Bulb Mode"
     description: "For use with Smart Bulbs that need constant power and are controlled via commands rather than power. Smart Bulb Mode does not work in Dumb 3-Way Switch mode."
@@ -132,13 +130,13 @@ preferences:
   - name: "parameter3"
     title: "3. Ramp Rate (Remote)"
     description: "This changes the speed that the light turns on when controlled from the hub. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
-  (i.e 25 = 2500ms or 2.5s) Default=127 (Sync with parameter 1)"
+  (i.e 25 = 2500ms or 2.5s) Default=0"
     required: false
     preferenceType: number
     definition:
       minimum: 0
       maximum: 127
-      default: 127
+      default: 0
   - name: "parameter4"
     title: "4. Ramp Rate (Local)"
     description: "This changes the speed that the light turns on when controlled at the switch. A setting of '0' turns the light immediately on. Increasing the value slows down the transition speed. Value is multiplied by 100ms. 
@@ -149,24 +147,6 @@ preferences:
       minimum: 0
       maximum: 127
       default: 127
-  - name: "parameter9"
-    title: "9. Minimum Level"
-    description: "The minimum level that the light can be dimmed. Useful when the user has a light that does not turn on or flickers at a lower level."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 1
-      maximum: 99
-      default: 1
-  - name: "parameter10"
-    title: "10. Maximum Level"
-    description: "The maximum level that the light can be dimmed. Useful when the user wants to limit the maximum brighness."
-    required: false
-    preferenceType: number
-    definition:
-      minimum: 2
-      maximum: 100
-      default: 100
   - name: "parameter11"
     title: "11. Invert Switch"
     description: "Inverts the orientation of the switch. Useful when the switch is installed upside down. Essentially up becomes down and down becomes up."
@@ -189,26 +169,6 @@ preferences:
       minimum: 0
       maximum: 101
       default: 101
-  - name: "parameter17"
-    title: "17. Load Level Indicator Timeout"
-    description: "Shows the level that the load is at for x number of seconds after the load is adjusted and then returns to the Default LED state."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        "0": "Do not display Load Level"
-        "1": "1 Second"
-        "2": "2 Seconds"
-        "3": "3 Seconds"
-        "4": "4 Seconds"
-        "5": "5 Seconds"
-        "6": "6 Seconds"
-        "7": "7 Seconds"
-        "8": "8 Seconds"
-        "9": "9 Seconds"
-        "10": "10 Seconds"
-        "11": "Display Load Level with no timeout"
-      default: 11
   - name: "parameter95"
     title: "95. LED Indicator Color (w/On)"
     description: "Set the color of the Full LED Indicator when the load is on."

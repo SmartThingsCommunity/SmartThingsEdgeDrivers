@@ -47,8 +47,6 @@ local base_preference_map = {
   parameter2 = {parameter_number = 2, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter3 = {parameter_number = 3, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter4 = {parameter_number = 4, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
-  parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
-  parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter15 = {parameter_number = 15, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter95 = {parameter_number = 95, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter96 = {parameter_number = 96, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
@@ -60,15 +58,18 @@ local base_preference_map = {
 local model_preference_overrides = {
   ["VZM30-SN"] = {
     parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
-    parameter17 = {parameter_number = 17, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter22 = {parameter_number = 22, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   },
   ["VZM31-SN"] = {
+    parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+    parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
     parameter17 = {parameter_number = 17, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter22 = {parameter_number = 22, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   },
   ["VZM32-SN"] = {
+    parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+    parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter34 = {parameter_number = 34, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter101 = {parameter_number = 101, size = data_types.Int16, cluster = PRIVATE_CLUSTER_MMWAVE_ID},
     parameter102 = {parameter_number = 102, size = data_types.Int16, cluster = PRIVATE_CLUSTER_MMWAVE_ID},

@@ -66,18 +66,18 @@ test.register_coroutine_test(
 
 -- Test parameter9 preference change
 test.register_coroutine_test(
-  "parameter9 preference should send configuration command",
+  "parameter15 preference should send configuration command",
   function()
     local new_param_value = 10
     local expected_value = utils.round(new_param_value / 100 * 254)
-    test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzm30_sn:generate_info_changed({preferences = {parameter9 = new_param_value}}))
+    test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzm30_sn:generate_info_changed({preferences = {parameter15 = new_param_value}}))
 
     test.socket.zigbee:__expect_send({
       mock_inovelli_vzm30_sn.id,
       cluster_base.write_manufacturer_specific_attribute(
         mock_inovelli_vzm30_sn,
         0xFC31, -- PRIVATE_CLUSTER_ID
-        9,      -- parameter_number
+        15,      -- parameter_number
         0x122F, -- MFG_CODE
         data_types.Uint8,
         expected_value
@@ -151,17 +151,17 @@ test.register_coroutine_test(
 
 -- Test parameter17 preference change (VZM30-only, same as VZM31)
 test.register_coroutine_test(
-  "parameter17 preference should send configuration command",
+  "parameter95 preference should send configuration command",
   function()
-    local new_param_value = 5
-    test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzm30_sn:generate_info_changed({preferences = {parameter17 = new_param_value}}))
+    local new_param_value = 64
+    test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzm30_sn:generate_info_changed({preferences = {parameter95 = new_param_value}}))
 
     test.socket.zigbee:__expect_send({
       mock_inovelli_vzm30_sn.id,
       cluster_base.write_manufacturer_specific_attribute(
         mock_inovelli_vzm30_sn,
         0xFC31, -- PRIVATE_CLUSTER_ID
-        17,     -- parameter_number
+        95,     -- parameter_number
         0x122F, -- MFG_CODE
         data_types.Uint8,
         new_param_value
