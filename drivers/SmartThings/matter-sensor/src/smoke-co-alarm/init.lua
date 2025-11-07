@@ -67,6 +67,7 @@ local supported_profiles =
   "smoke-temp-humidity-battery",
   "smoke-co-comeas",
   "smoke-co-comeas-battery",
+  "smoke-co-comeas-colevel-battery",
   "smoke-co-temp-humidity-comeas",
   "smoke-co-temp-humidity-comeas-battery"
 }
@@ -248,6 +249,18 @@ local function handle_battery_percent_remaining(driver, device, ib, response)
   end
 end
 
+local level_strings = {
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.UNKNOWN] = "unknown",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.LOW] = "good",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.MEDIUM] = "moderate",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.HIGH] = "unhealthy",
+  [clusters.CarbonMonoxideConcentrationMeasurement.types.LevelValueEnum.CRITICAL] = "hazardous",
+}
+
+local function carbon_monoxide_level_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.carbonMonoxideHealthConcern.carbonMonoxideHealthConcern(level_strings[ib.data.value]))
+end
+
 local function do_configure(driver, device)
   local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
   if #battery_feature_eps > 0 then
@@ -276,6 +289,7 @@ local matter_smoke_co_alarm_handler = {
       [clusters.CarbonMonoxideConcentrationMeasurement.ID] = {
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue.ID] = carbon_monoxide_attr_handler,
         [clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit.ID] = carbon_monoxide_unit_attr_handler,
+        [clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue.ID] = carbon_monoxide_level_handler,
       },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
@@ -307,6 +321,9 @@ local matter_smoke_co_alarm_handler = {
     [capabilities.carbonMonoxideMeasurement.ID] = {
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
       clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+    [capabilities.carbonMonoxideHealthConcern.ID] = {
+      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
     },
     [capabilities.batteryLevel.ID] = {
       clusters.PowerSource.attributes.BatChargeLevel,
