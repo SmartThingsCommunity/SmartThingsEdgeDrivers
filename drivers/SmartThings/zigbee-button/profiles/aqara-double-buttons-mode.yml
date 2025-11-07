@@ -33,10 +33,3 @@ components:
 preferences:
   - preferenceId: stse.allowOperationModeChange
     explicit: true
-  # - name: "modeSwitch"
-  #   title: "Mode switching"
-  #   description: "Setting for Mode Change Feature Activation"
-  #   required: true
-  #   preferenceType: boolean
-  #   definition:
-  #     default: false
