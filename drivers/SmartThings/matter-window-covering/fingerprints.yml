@@ -36,6 +36,12 @@ matterManufacturer:
     vendorId: 0x153B
     productId: 0x3801
     deviceProfileName: window-covering-tilt
+# Meross
+  - id: "4933/61453"
+    deviceLabel: Smart Wi-Fi Roller Shutter Timer
+    vendorId: 0x1345
+    productId: 0xF00D
+    deviceProfileName: window-covering
 # Mamaba
   - id: "4965/4097"
     deviceLabel: Wi-Fi Curtain

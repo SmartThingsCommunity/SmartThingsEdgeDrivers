@@ -1,0 +1,23 @@
+name: projector-screen-VWSDSTUST120H
+components:
+  - label: " "
+    id: main
+    capabilities:
+      - id: windowShade
+        version: 1
+      - id: mode
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Projector
+  - label: " "
+    id: hardwareFault
+    capabilities:
+      - id: hardwareFault
+        version: 1
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-VIVIDSTORM_Projector_Screen

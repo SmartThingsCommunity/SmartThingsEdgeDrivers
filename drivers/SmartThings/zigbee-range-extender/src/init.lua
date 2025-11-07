@@ -13,7 +13,7 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-
+local defaults = require "st.zigbee.defaults"
 local Basic = (require "st.zigbee.zcl.clusters").Basic
 local ZigbeeDriver = require "st.zigbee"
 
@@ -23,7 +23,8 @@ end
 
 local zigbee_range_driver_template = {
   supported_capabilities = {
-    capabilities.refresh
+    capabilities.refresh,
+    capabilities.battery
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
@@ -31,7 +32,12 @@ local zigbee_range_driver_template = {
     }
   },
   health_check = false,
+  sub_drivers = {
+    require("frient")
+  }
 }
+
+defaults.register_for_default_handlers(zigbee_range_driver_template, zigbee_range_driver_template.supported_capabilities)
 
 local zigbee_range_extender_driver = ZigbeeDriver("zigbee-range-extender", zigbee_range_driver_template)
 
@@ -42,6 +48,7 @@ function zigbee_range_extender_driver:device_health_check()
     device:send(Basic.attributes.ZCLVersion:read(device))
   end
 end
+
 zigbee_range_extender_driver.device_health_timer = zigbee_range_extender_driver.call_on_schedule(zigbee_range_extender_driver, 300, zigbee_range_extender_driver.device_health_check)
 
 zigbee_range_extender_driver:run()

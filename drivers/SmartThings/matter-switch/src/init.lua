@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
@@ -18,18 +7,16 @@ local device_lib = require "st.device"
 local clusters = require "st.matter.clusters"
 local log = require "log"
 local version = require "version"
-local embedded_cluster_utils = require "utils.embedded_cluster_utils"
-
-local fields = require "utils.switch_fields"
-local switch_utils = require "utils.switch_utils"
-local cfg = require "utils.device_configuration"
+local cfg = require "switch_utils.device_configuration"
 local device_cfg = cfg.DeviceCfg
 local switch_cfg = cfg.SwitchCfg
 local button_cfg = cfg.ButtonCfg
-
-local attribute_handlers = require "generic_handlers.attribute_handlers"
-local event_handlers = require "generic_handlers.event_handlers"
-local capability_handlers = require "generic_handlers.capability_handlers"
+local fields = require "switch_utils.fields"
+local switch_utils = require "switch_utils.utils"
+local attribute_handlers = require "switch_handlers.attribute_handlers"
+local event_handlers = require "switch_handlers.event_handlers"
+local capability_handlers = require "switch_handlers.capability_handlers"
+local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -85,10 +72,10 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
-    local main_endpoint = switch_utils.find_default_endpoint(device)
+    local default_endpoint_id = switch_utils.find_default_endpoint(device)
     -- ensure subscription to all endpoint attributes- including those mapped to child devices
     for idx, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= main_endpoint then
+      if ep.endpoint_id ~= default_endpoint_id then
         if device:supports_server_cluster(clusters.OnOff.ID, ep) then
           local child_profile = switch_cfg.assign_child_profile(device, ep)
           if idx == 1 and string.find(child_profile, "energy") then
@@ -101,7 +88,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
           id = math.max(id, dt.device_type_id)
         end
         for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-          if id == fields.GENERIC_SWITCH_ID and
+          if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
              attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
              attr ~= clusters.PowerSource.attributes.BatChargeLevel then
             device:add_subscribed_event(attr)

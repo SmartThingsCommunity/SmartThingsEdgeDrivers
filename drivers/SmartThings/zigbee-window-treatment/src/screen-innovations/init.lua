@@ -15,7 +15,7 @@
 -- require st provided libraries
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
+local window_shade_utils = require "window_shade_utils"
 local device_management = require "st.zigbee.device_management"
 local utils = require "st.utils"
 
@@ -52,9 +52,9 @@ end
 
 -- this is window_shade_preset_cmd
 local function window_shade_preset_cmd(driver, device, command)
-  local go_to_level = device.preferences.presetPosition or device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, command.component)
   -- send levels without inverting as: 0% closed (i.e., open) to 100% closed
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, go_to_level))
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
 end
 
 -- this is device_added

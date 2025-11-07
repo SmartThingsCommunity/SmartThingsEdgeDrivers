@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local cluster_base = require "st.matter.cluster_base"
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
@@ -65,4 +68,3 @@ end
 
 setmetatable(ActivePower, {__call = ActivePower.new_value, __index = ActivePower.base_type})
 return ActivePower
-

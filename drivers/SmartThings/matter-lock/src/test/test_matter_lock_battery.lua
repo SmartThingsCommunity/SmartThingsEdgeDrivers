@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-test.add_package_capability("lockAlarm.yml")
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"

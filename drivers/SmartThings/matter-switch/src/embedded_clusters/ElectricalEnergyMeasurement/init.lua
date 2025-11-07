@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local cluster_base = require "st.matter.cluster_base"
 local ElectricalEnergyMeasurementServerAttributes = require "embedded_clusters.ElectricalEnergyMeasurement.server.attributes"
 local ElectricalEnergyMeasurementTypes = require "embedded_clusters.ElectricalEnergyMeasurement.types"
@@ -12,15 +15,8 @@ ElectricalEnergyMeasurement.types = ElectricalEnergyMeasurementTypes
 
 function ElectricalEnergyMeasurement:get_attribute_by_id(attr_id)
   local attr_id_map = {
-    [0x0000] = "Accuracy",
     [0x0001] = "CumulativeEnergyImported",
-    [0x0002] = "CumulativeEnergyExported",
     [0x0003] = "PeriodicEnergyImported",
-    [0x0004] = "PeriodicEnergyExported",
-    [0x0005] = "CumulativeEnergyReset",
-    [0xFFF9] = "AcceptedCommandList",
-    [0xFFFA] = "EventList",
-    [0xFFFB] = "AttributeList",
   }
   local attr_name = attr_id_map[attr_id]
   if attr_name ~= nil then
@@ -30,15 +26,8 @@ function ElectricalEnergyMeasurement:get_attribute_by_id(attr_id)
 end
 
 ElectricalEnergyMeasurement.attribute_direction_map = {
-  ["Accuracy"] = "server",
   ["CumulativeEnergyImported"] = "server",
-  ["CumulativeEnergyExported"] = "server",
   ["PeriodicEnergyImported"] = "server",
-  ["PeriodicEnergyExported"] = "server",
-  ["CumulativeEnergyReset"] = "server",
-  ["AcceptedCommandList"] = "server",
-  ["EventList"] = "server",
-  ["AttributeList"] = "server",
 }
 
 ElectricalEnergyMeasurement.FeatureMap = ElectricalEnergyMeasurement.types.Feature

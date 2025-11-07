@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local cluster_base = require "st.matter.cluster_base"
 local ValveConfigurationAndControlServerAttributes = require "embedded_clusters.ValveConfigurationAndControl.server.attributes"
 local ValveConfigurationAndControlServerCommands = require "embedded_clusters.ValveConfigurationAndControl.server.commands"
@@ -14,20 +17,8 @@ ValveConfigurationAndControl.types = ValveConfigurationAndControlTypes
 
 function ValveConfigurationAndControl:get_attribute_by_id(attr_id)
   local attr_id_map = {
-    [0x0000] = "OpenDuration",
-    [0x0001] = "DefaultOpenDuration",
-    [0x0002] = "AutoCloseTime",
-    [0x0003] = "RemainingDuration",
     [0x0004] = "CurrentState",
-    [0x0005] = "TargetState",
     [0x0006] = "CurrentLevel",
-    [0x0007] = "TargetLevel",
-    [0x0008] = "DefaultOpenLevel",
-    [0x0009] = "ValveFault",
-    [0x000A] = "LevelStep",
-    [0xFFF9] = "AcceptedCommandList",
-    [0xFFFA] = "EventList",
-    [0xFFFB] = "AttributeList",
   }
   local attr_name = attr_id_map[attr_id]
   if attr_name ~= nil then
@@ -47,32 +38,9 @@ function ValveConfigurationAndControl:get_server_command_by_id(command_id)
   return nil
 end
 
-function ValveConfigurationAndControl:get_event_by_id(event_id)
-  local event_id_map = {
-    [0x0000] = "ValveStateChanged",
-    [0x0001] = "ValveFault",
-  }
-  if event_id_map[event_id] ~= nil then
-    return self.server.events[event_id_map[event_id]]
-  end
-  return nil
-end
-
 ValveConfigurationAndControl.attribute_direction_map = {
-  ["OpenDuration"] = "server",
-  ["DefaultOpenDuration"] = "server",
-  ["AutoCloseTime"] = "server",
-  ["RemainingDuration"] = "server",
   ["CurrentState"] = "server",
-  ["TargetState"] = "server",
   ["CurrentLevel"] = "server",
-  ["TargetLevel"] = "server",
-  ["DefaultOpenLevel"] = "server",
-  ["ValveFault"] = "server",
-  ["LevelStep"] = "server",
-  ["AcceptedCommandList"] = "server",
-  ["EventList"] = "server",
-  ["AttributeList"] = "server",
 }
 
 ValveConfigurationAndControl.command_direction_map = {
@@ -110,13 +78,6 @@ command_helper_mt.__index = function(self, key)
 end
 ValveConfigurationAndControl.commands = {}
 setmetatable(ValveConfigurationAndControl.commands, command_helper_mt)
-
-local event_helper_mt = {}
-event_helper_mt.__index = function(self, key)
-  return ValveConfigurationAndControl.server.events[key]
-end
-ValveConfigurationAndControl.events = {}
-setmetatable(ValveConfigurationAndControl.events, event_helper_mt)
 
 setmetatable(ValveConfigurationAndControl, {__index = cluster_base})
 

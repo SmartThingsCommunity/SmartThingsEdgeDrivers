@@ -29,3 +29,8 @@ zigbeeManufacturer:
     manufacturer: Insta GmbH
     model: NEXENTRO Pushbutton Interface
     deviceProfileName: range-extender
+  - id: "frientA/S/111"
+    deviceLabel: frient Zigbee Range Extender
+    manufacturer: frient A/S
+    model: REXZB-111
+    deviceProfileName: range-extender-battery-source

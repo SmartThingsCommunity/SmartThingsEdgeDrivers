@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -505,6 +494,7 @@ local function test_init_mounted_on_off_control()
   test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "doConfigure" })
+  mock_device_mounted_on_off_control:expect_metadata_update({ profile = "switch-binary" })
   mock_device_mounted_on_off_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
@@ -526,6 +516,7 @@ local function test_init_mounted_dimmable_load_control()
   test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "doConfigure" })
+  mock_device_mounted_dimmable_load_control:expect_metadata_update({ profile = "switch-level" })
   mock_device_mounted_dimmable_load_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
@@ -566,6 +557,7 @@ local function test_init_parent_child_different_types()
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "doConfigure" })
+  mock_device_parent_child_different_types:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_different_types:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   mock_device_parent_child_different_types:expect_device_create({
@@ -617,6 +609,7 @@ local function test_init_light_level_motion()
   test.socket.matter:__expect_send({mock_device_light_level_motion.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "doConfigure" })
+  mock_device_light_level_motion:expect_metadata_update({ profile = "light-level-motion" })
   mock_device_light_level_motion:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
