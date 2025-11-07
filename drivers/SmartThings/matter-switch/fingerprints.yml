@@ -899,6 +899,12 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0AC3
     deviceProfileName: light-color-level
+#Safiery
+  - id: "5449/4662"
+    deviceLabel: STAR-Rover
+    vendorId: 0x1549
+    productId: 0x1236
+    deviceProfileName: plug-level-power-energy-powerConsumption
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
