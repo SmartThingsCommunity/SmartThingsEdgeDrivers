@@ -1,9 +1,11 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local fingerprints = require("eaton-accessory-dimmer.fingerprints")
 
 local function can_handle_eaton_accessory_dimmer(opts, driver, device, ...)
+  local fingerprints = {
+    {mfr = 0x001A, prod = 0x4441, model = 0x0000} -- Eaton Dimmer Switch
+  }
   for _, fingerprint in ipairs(fingerprints) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
       local subdriver = require("eaton-accessory-dimmer")

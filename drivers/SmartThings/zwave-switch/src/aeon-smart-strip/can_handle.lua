@@ -1,7 +1,6 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local fingerprints = require("aeon-smart-strip.fingerprints")
 
 --- Determine whether the passed device is Aeon smart strip
 ---
@@ -9,6 +8,9 @@ local fingerprints = require("aeon-smart-strip.fingerprints")
 --- @param device Device device isntance
 --- @return boolean true if the device proper, else false
 local function can_handle_aeon_smart_strip(opts, driver, device, ...)
+  local fingerprints = {
+    {mfr = 0x0086, prod = 0x0003, model = 0x000B}, -- Aeon Smart Strip DSC11-ZWUS
+  }
   for _, fingerprint in ipairs(fingerprints) do
     if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
       local subdriver = require("aeon-smart-strip")
