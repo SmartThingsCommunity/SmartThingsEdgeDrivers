@@ -1,14 +1,14 @@
-name: aeotec-water-sensor-8-panic
+name: aeotec-water-sensor-8-contact
 components:
 - id: main
   capabilities:
-  - id: panicAlarm
+  - id: contactSensor
     version: 1
   - id: temperatureMeasurement
     config:
-        values:
-          - key: "temperature.value"
-            range: [-10, 60]
+      values:
+        - key: "temperature.value"
+          range: [-10, 60]
     version: 1
   - id: relativeHumidityMeasurement
     version: 1
@@ -25,7 +25,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: PanicButton
+  - name: ContactSensor
 preferences:
   - name: "parameter1"
     title: "1 Set threshold Check Time"
@@ -91,7 +91,7 @@ preferences:
       default: 0
   - name: "parameter13"
     title: "13 Mold alarm offset"
-    desccription: "Increase the humidity threshold."
+    description: "Increase the humidity threshold."
     required: false
     preferenceType: integer
     definition:
