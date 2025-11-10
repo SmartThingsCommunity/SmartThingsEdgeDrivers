@@ -7,10 +7,10 @@ local data_types = require "st.zigbee.data_types"
 
 local devices = {
   AQARA_LIGHT = {
-    MATCHING_MATRIX = { 
-      { mfr = "LUMI", model = "lumi.light.acn004" },
-      { mfr = "LUMI", model = "lumi.light.cwacn1" }
-    },
+    MATCHING_MATRIX = {
+        { mfr = "LUMI", model = "lumi.light.acn004" },
+        { mfr = "LUMI", model = "lumi.light.cwacn1" }
+      },
     PARAMETERS = {
       ["stse.restorePowerState"] = function(device, value)
         return cluster_base.write_manufacturer_specific_attribute(device, 0xFCC0,
@@ -67,11 +67,29 @@ preferences.sync_preferences = function(driver, device)
 end
 
 preferences.get_device_parameters = function(zigbee_device)
+  local mfr   = zigbee_device:get_manufacturer()
+  local model = zigbee_device:get_model()
+
   for _, device in pairs(devices) do
-    if zigbee_device:get_manufacturer() == device.MATCHING_MATRIX.mfr and
-        zigbee_device:get_model() == device.MATCHING_MATRIX.model then
-      return device.PARAMETERS
+    local matrix = device.MATCHING_MATRIX
+    if not matrix then goto continue end
+
+    -- Single table format: { mfr = "...", model = "..." }
+    if matrix.mfr and matrix.model then
+      if matrix.mfr == mfr and matrix.model == model then
+        return device.PARAMETERS
+      end
+      goto continue
     end
+    -- Array format: { { mfr = "...", model = "..." }, ... }
+    if type(matrix) == "table" then
+      for _, match in ipairs(matrix) do
+        if match.mfr == mfr and match.model == model then
+          return device.PARAMETERS
+        end
+      end
+    end
+    ::continue::
   end
   return nil
 end
