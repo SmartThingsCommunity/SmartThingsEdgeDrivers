@@ -88,7 +88,7 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "double", "held"}, {visibility = {displayed = false}}))
     )
     test.socket.matter:__queue_receive({
-      mock_device.id, 
+      mock_device.id,
       clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 6, {uint32(0x0C)})})
     mock_device:expect_metadata_update({ profile = "contact-button-battery" })
   end
