@@ -133,6 +133,11 @@ zigbeeManufacturer:
     manufacturer: NodOn
     model: SIN-4-RS-20
     deviceProfileName: window-treatment-profile
+  - id: "HOPOsmart/A2230011"
+    deviceLabel: HOPOsmart Window Opener A2230011
+    manufacturer: HOPOsmart
+    model: A2230011
+    deviceProfileName: window-shade-only
 
 zigbeeGeneric:
   - id: "genericShade"

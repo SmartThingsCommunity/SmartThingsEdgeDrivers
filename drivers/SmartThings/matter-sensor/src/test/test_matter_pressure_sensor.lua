@@ -1,22 +1,15 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local PressureMeasurementCluster = require "PressureMeasurement"
+
+if not pcall(function(cluster) return clusters[cluster] end,
+             "PressureMeasurement") then
+  clusters.PressureMeasurement = require "embedded_clusters.PressureMeasurement"
+end
 
 --Note all endpoints are being mapped to the main component
 -- in the matter-sensor driver. If any devices require invoke/write
@@ -35,7 +28,7 @@ local matter_endpoints = {
   {
     endpoint_id = 1,
     clusters = {
-      {cluster_id = PressureMeasurementCluster.ID, cluster_type = "SERVER"},
+      {cluster_id = clusters.PressureMeasurement.ID, cluster_type = "SERVER"},
       {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER"},
     },
     device_types = {
@@ -51,7 +44,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  local subscribe_request = PressureMeasurementCluster.attributes.MeasuredValue:subscribe(mock_device)
+  local subscribe_request = clusters.PressureMeasurement.attributes.MeasuredValue:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
@@ -65,7 +58,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PressureMeasurementCluster.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1054)
+        clusters.PressureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1054)
       }
     },
     {
@@ -78,7 +71,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PressureMeasurementCluster.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1055)
+        clusters.PressureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 1055)
       }
     },
     {
@@ -91,7 +84,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        PressureMeasurementCluster.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 0)
+        clusters.PressureMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_device, 1, 0)
       }
     },
     {
@@ -124,7 +117,7 @@ test.register_message_test(
 
 local function refresh_commands(dev)
   local req = clusters.PowerSource.attributes.BatPercentRemaining:read(dev)
-  req:merge(PressureMeasurementCluster.attributes.MeasuredValue:read(dev))
+  req:merge(clusters.PressureMeasurement.attributes.MeasuredValue:read(dev))
   return req
 end
 

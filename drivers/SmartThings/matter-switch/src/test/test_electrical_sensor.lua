@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -121,6 +110,8 @@ local cumulative_report_val_19 = {
   end_timestamp = 0,
   start_systime = 0,
   end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
 }
 
 local cumulative_report_val_29 = {
@@ -129,6 +120,8 @@ local cumulative_report_val_29 = {
   end_timestamp = 0,
   start_systime = 0,
   end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
 }
 
 local cumulative_report_val_39 = {
@@ -137,6 +130,8 @@ local cumulative_report_val_39 = {
   end_timestamp = 0,
   start_systime = 0,
   end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
 }
 
 local periodic_report_val_23 = {
@@ -145,6 +140,8 @@ local periodic_report_val_23 = {
   end_timestamp = 0,
   start_systime = 0,
   end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
 }
 
 local function test_init()
