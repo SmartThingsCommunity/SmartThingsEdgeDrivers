@@ -49,6 +49,7 @@ local mock_device_basic = test.mock_device.build_test_matter_device({
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0},
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
       },
       device_types = {
         {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
@@ -65,7 +66,6 @@ local function initialize_mock_device(generic_mock_device, generic_subscribed_at
       subscribe_request:merge(cluster:subscribe(generic_mock_device))
     end
   end
-  test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
   return subscribe_request
 end
 
@@ -107,6 +107,7 @@ local function test_init()
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "init" })
   subscribe_request_basic = initialize_mock_device(mock_device_basic, subscribed_attributes)
+  test.socket.matter:__expect_send({mock_device_basic.id, subscribe_request_basic})
 end
 
 -- run the profile configuration tests
@@ -134,6 +135,7 @@ local expected_metadata = {
       {
         "relativeHumidityMeasurement",
         "fanMode",
+        "fanSpeedPercent",
         "thermostatHeatingSetpoint",
         "thermostatCoolingSetpoint"
       },
@@ -145,7 +147,28 @@ local expected_metadata = {
 test.register_coroutine_test(
   "Device with modular profile should enable correct optional capabilities",
   function()
-    test_thermostat_device_type_update_modular_profile(mock_device_basic, expected_metadata, subscribe_request_basic)
+    local subscribed_attributes = {
+      clusters.Thermostat.attributes.LocalTemperature,
+      clusters.Thermostat.attributes.OccupiedCoolingSetpoint,
+      clusters.Thermostat.attributes.OccupiedHeatingSetpoint,
+      clusters.Thermostat.attributes.AbsMinCoolSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit,
+      clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
+      clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
+      clusters.Thermostat.attributes.SystemMode,
+      clusters.Thermostat.attributes.ThermostatRunningState,
+      clusters.Thermostat.attributes.ControlSequenceOfOperation,
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+      clusters.FanControl.attributes.FanMode,
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.PercentCurrent,
+      clusters.PowerSource.attributes.BatPercentRemaining,
+    }
+    local subscribe_request = initialize_mock_device(mock_device_basic, subscribed_attributes)
+    test_thermostat_device_type_update_modular_profile(mock_device_basic, expected_metadata, subscribe_request)
   end,
   { test_init = test_init }
 )
