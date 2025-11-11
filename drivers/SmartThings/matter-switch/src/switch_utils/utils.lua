@@ -193,13 +193,13 @@ function utils.ep_supports_cluster(ep_info, cluster_id, opts)
     return (cluster.feature_map & checked_feature) == checked_feature
   end
   for _, cluster in ipairs(ep_info.clusters) do
-      if ((cluster.cluster_id == cluster_id)
-            and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
-            and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
-              or (opts.cluster_type == cluster.cluster_type))
-            or (cluster_id == nil)) then
-              return true
-      end
+    if ((cluster.cluster_id == cluster_id)
+      and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
+      and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
+      or (opts.cluster_type == cluster.cluster_type))
+      or (cluster_id == nil)) then
+        return true
+    end
   end
 end
 
