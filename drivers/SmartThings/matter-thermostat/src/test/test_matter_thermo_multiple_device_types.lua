@@ -197,6 +197,7 @@ local expected_metadata = {
       {
         "relativeHumidityMeasurement",
         "fanMode",
+        "fanSpeedPercent",
         "fanOscillationMode",
         "thermostatHeatingSetpoint",
         "thermostatCoolingSetpoint"
@@ -220,6 +221,7 @@ local new_cluster_subscribe_list = {
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.FanModeSequence,
+  clusters.FanControl.attributes.PercentCurrent,
   clusters.FanControl.attributes.RockSupport,  -- These two attributes will be subscribed to following the profile
   clusters.FanControl.attributes.RockSetting,  -- change since the fanOscillationMode capability will be enabled.
 }

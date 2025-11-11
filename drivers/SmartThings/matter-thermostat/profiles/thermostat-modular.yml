@@ -9,6 +9,13 @@ components:
       - id: fanMode
         version: 1
         optional: true
+      - id: fanSpeedPercent
+        version: 1
+        config:
+          values:
+            - key: "percent.value"
+              range: [ 1, 100 ]
+        optional: true
       - id: fanOscillationMode
         version: 1
         optional: true
