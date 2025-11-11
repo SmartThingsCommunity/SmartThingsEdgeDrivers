@@ -277,6 +277,7 @@ local cluster_subscribe_list = {
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.PercentSetting,
   clusters.FanControl.attributes.WindSupport,
   clusters.FanControl.attributes.WindSetting,
   clusters.HepaFilterMonitoring.attributes.ChangeIndication,
@@ -289,6 +290,7 @@ local cluster_subscribe_list_rock = {
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.PercentSetting,
   clusters.FanControl.attributes.WindSupport,
   clusters.FanControl.attributes.WindSetting,
   clusters.FanControl.attributes.RockSupport,
@@ -327,7 +329,8 @@ local cluster_subscribe_list_configured = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.fanSpeedPercent.ID] = {
-    clusters.FanControl.attributes.PercentCurrent
+    clusters.FanControl.attributes.PercentCurrent,
+    clusters.FanControl.attributes.PercentSetting
   },
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
@@ -581,7 +584,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, 1, 10)
+        clusters.FanControl.attributes.PercentSetting:build_test_report_data(mock_device, 1, 10)
       }
     },
     {
@@ -764,26 +767,6 @@ test.register_message_test(
     }
   }
 )
-
-test.register_message_test(
-  "Set percent command should clamp invalid percentage values",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, 1, 255)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.fanSpeedPercent.percent(100))
-    }
-  }
-)
-
 
 local supportedFanRock = {
   capabilities.fanOscillationMode.fanOscillationMode.off.NAME,

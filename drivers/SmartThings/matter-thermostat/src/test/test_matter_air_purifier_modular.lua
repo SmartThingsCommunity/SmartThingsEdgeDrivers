@@ -143,6 +143,7 @@ local cluster_subscribe_list = {
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.PercentSetting,
   clusters.FanControl.attributes.WindSupport,
   clusters.FanControl.attributes.WindSetting,
   clusters.HepaFilterMonitoring.attributes.ChangeIndication,
@@ -179,7 +180,8 @@ local cluster_subscribe_list_configured = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.fanSpeedPercent.ID] = {
-    clusters.FanControl.attributes.PercentCurrent
+    clusters.FanControl.attributes.PercentCurrent,
+    clusters.FanControl.attributes.PercentSetting
   },
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
