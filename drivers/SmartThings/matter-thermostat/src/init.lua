@@ -1436,7 +1436,7 @@ local function sequence_of_operation_handler(driver, device, ib, response)
   if device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then
     device:set_field(OPTIONAL_THERMOSTAT_MODES_SEEN, {capabilities.thermostatMode.thermostatMode.off.NAME}, {persist=true})
   end
-  local supported_modes = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN) or {})
+  local supported_modes = utils.deep_copy(device:get_field(OPTIONAL_THERMOSTAT_MODES_SEEN))
   local disallowed_mode_operations = {}
 
   local modes_for_inclusion = {}
@@ -1542,42 +1542,55 @@ local function fan_mode_handler(driver, device, ib, response)
 end
 
 local function fan_mode_sequence_handler(driver, device, ib, response)
-  local supportedFanModes, supported_fan_modes_attribute
+  local supported_fan_modes, supported_fan_modes_capability, supported_fan_modes_attribute
   if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
-    supportedFanModes = { "low", "medium", "high" }
+    supported_fan_modes = { "low", "medium", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
-    supportedFanModes = { "low", "high" }
+    supported_fan_modes = { "low", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
-    supportedFanModes = { "low", "medium", "high", "auto" }
+    supported_fan_modes = { "low", "medium", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
-    supportedFanModes = { "low", "high", "auto" }
+    supported_fan_modes = { "low", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
-    supportedFanModes = { "high", "auto" }
+    supported_fan_modes = { "high", "auto" }
   else
-    supportedFanModes = { "high" }
-  end
-  if get_device_type(device) ~= THERMOSTAT_DEVICE_TYPE_ID then
-    table.insert(supportedFanModes, 1, "off")
+    supported_fan_modes = { "high" }
   end
 
-  if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
-    supported_fan_modes_attribute = capabilities.airPurifierFanMode.supportedAirPurifierFanModes
-  elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
-    supported_fan_modes_attribute = capabilities.airConditionerFanMode.supportedAcFanModes
-  elseif device:supports_capability_by_id(capabilities.thermostatFanMode.ID) then
+  if device:supports_capability_by_id(capabilities.thermostatFanMode.ID) then
     supported_fan_modes_attribute = capabilities.thermostatFanMode.supportedThermostatFanModes
     -- Our thermostat fan mode control is not granular enough to handle all of the supported modes
     if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
       ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
-      supportedFanModes = { "auto", "on" }
+      supported_fan_modes = { "auto", "on" }
     else
-      supportedFanModes = { "on" }
+      supported_fan_modes = { "on" }
     end
   else
-    supported_fan_modes_attribute = capabilities.fanMode.supportedFanModes
+    if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
+      supported_fan_modes_capability = capabilities.airPurifierFanMode
+      supported_fan_modes_attribute = supported_fan_modes_capability.supportedAirPurifierFanModes
+    elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
+      supported_fan_modes_capability = capabilities.airConditionerFanMode
+      supported_fan_modes_attribute = supported_fan_modes_capability.supportedAcFanModes
+    else
+      supported_fan_modes_capability = capabilities.fanMode
+      supported_fan_modes_attribute = supported_fan_modes_capability.supportedFanModes
+    end
+    local prev_supported_fan_modes = device:get_latest_state(
+      device:endpoint_to_component(ib.endpoint_id),
+      supported_fan_modes_capability.ID,
+      supported_fan_modes_attribute.NAME
+    ) or {}
+    -- add 'off' as a supported fan mode for non-thermostat device types,
+    -- or for thermostat device types that previously had 'off' as a supported
+    -- fan mode to avoid breaking routines
+    if get_device_type(device) ~= THERMOSTAT_DEVICE_TYPE_ID or tbl_contains(prev_supported_fan_modes, "off") then
+      table.insert(supported_fan_modes, 1, "off")
+    end
   end
 
-  local event = supported_fan_modes_attribute(supportedFanModes, {visibility = {displayed = false}})
+  local event = supported_fan_modes_attribute(supported_fan_modes, {visibility = {displayed = false}})
   device:emit_event_for_endpoint(ib.endpoint_id, event)
 end
 
