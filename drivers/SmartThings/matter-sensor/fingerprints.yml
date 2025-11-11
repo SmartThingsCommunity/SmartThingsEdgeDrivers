@@ -74,6 +74,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1008
     deviceProfileName: leak-battery
+  - id: "4619/4192"
+    deviceLabel: Smart Humidity&Temperature Sensor
+    vendorId: 0x120B
+    productId: 0x1060
+    deviceProfileName: temperature-humidity-battery
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
