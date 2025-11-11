@@ -1544,20 +1544,26 @@ end
 local function fan_mode_sequence_handler(driver, device, ib, response)
   local supported_fan_modes, supported_fan_modes_capability, supported_fan_modes_attribute
   if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
-    supported_fan_modes = { "low", "medium", "high" }
+    supported_fan_modes = { "off", "low", "medium", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
-    supported_fan_modes = { "low", "high" }
+    supported_fan_modes = { "off", "low", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
-    supported_fan_modes = { "low", "medium", "high", "auto" }
+    supported_fan_modes = { "off", "low", "medium", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
-    supported_fan_modes = { "low", "high", "auto" }
+    supported_fan_modes = { "off", "low", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
-    supported_fan_modes = { "high", "auto" }
+    supported_fan_modes = { "off", "high", "auto" }
   else
-    supported_fan_modes = { "high" }
+    supported_fan_modes = { "off", "high" }
   end
 
-  if device:supports_capability_by_id(capabilities.thermostatFanMode.ID) then
+  if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
+    supported_fan_modes_capability = capabilities.airPurifierFanMode
+    supported_fan_modes_attribute = supported_fan_modes_capability.supportedAirPurifierFanModes
+  elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
+    supported_fan_modes_capability = capabilities.airConditionerFanMode
+    supported_fan_modes_attribute = supported_fan_modes_capability.supportedAcFanModes
+  elseif device:supports_capability_by_id(capabilities.thermostatFanMode.ID) then
     supported_fan_modes_attribute = capabilities.thermostatFanMode.supportedThermostatFanModes
     -- Our thermostat fan mode control is not granular enough to handle all of the supported modes
     if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
@@ -1567,26 +1573,23 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
       supported_fan_modes = { "on" }
     end
   else
-    if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
-      supported_fan_modes_capability = capabilities.airPurifierFanMode
-      supported_fan_modes_attribute = supported_fan_modes_capability.supportedAirPurifierFanModes
-    elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
-      supported_fan_modes_capability = capabilities.airConditionerFanMode
-      supported_fan_modes_attribute = supported_fan_modes_capability.supportedAcFanModes
-    else
-      supported_fan_modes_capability = capabilities.fanMode
-      supported_fan_modes_attribute = supported_fan_modes_capability.supportedFanModes
-    end
+    supported_fan_modes_capability = capabilities.fanMode
+    supported_fan_modes_attribute = supported_fan_modes_capability.supportedFanModes
+  end
+
+  -- remove 'off' as a supported fan mode for thermostat device types, unless the
+  -- device previously had 'off' as a supported fan mode to avoid breaking routines
+  if get_device_type(device) == THERMOSTAT_DEVICE_TYPE_ID then
     local prev_supported_fan_modes = device:get_latest_state(
       device:endpoint_to_component(ib.endpoint_id),
       supported_fan_modes_capability.ID,
       supported_fan_modes_attribute.NAME
     ) or {}
-    -- add 'off' as a supported fan mode for non-thermostat device types,
-    -- or for thermostat device types that previously had 'off' as a supported
-    -- fan mode to avoid breaking routines
-    if get_device_type(device) ~= THERMOSTAT_DEVICE_TYPE_ID or tbl_contains(prev_supported_fan_modes, "off") then
-      table.insert(supported_fan_modes, 1, "off")
+    if not tbl_contains(prev_supported_fan_modes, "off") then
+      local _, off_idx = tbl_contains(supported_fan_modes, "off")
+      if off_idx then
+        table.remove(supported_fan_modes, off_idx)
+      end
     end
   end
 
