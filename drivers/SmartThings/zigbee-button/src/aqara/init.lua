@@ -76,9 +76,7 @@ local function calc_battery_percentage(voltage)
   local percentage = 0
   if millivolt >= 3000 then
     percentage = 100
-  elseif millivolt < 2600 then
-    percentage = 0
-  else
+  elseif millivolt >= 2600 then
     local fVoltage = (millivolt * millivolt) * 0.00045;
     percentage = fVoltage - 2.277 * millivolt + 2880
   end
