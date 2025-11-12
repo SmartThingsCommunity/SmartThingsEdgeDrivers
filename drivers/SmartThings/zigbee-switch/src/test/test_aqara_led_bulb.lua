@@ -52,6 +52,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
+    -- test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6000 })))
   end
 )
 
