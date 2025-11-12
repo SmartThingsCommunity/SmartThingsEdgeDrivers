@@ -70,15 +70,37 @@ local function present_value_attr_handler(driver, device, value, zb_rx)
     device:emit_component_event(device.profile.components[COMP_LIST[end_point]], evt)
   end
 end
+
+local function calc_battery_percentage(voltage)
+  local millivolt = voltage * 100
+  local percentage = 0
+  if millivolt >= 3000 then
+    percentage = 100
+  elseif millivolt < 2600 then
+    percentage = 0
+  else
+    local fVoltage = (millivolt * millivolt) * 0.00045;
+    percentage = fVoltage - 2.277 * millivolt + 2880
+  end
+
+  return math.floor(percentage)
+end
+
 local function battery_level_handler(driver, device, value, zb_rx)
   local voltage = value.value
   local batteryLevel = "normal"
+
   if voltage <= 25 then
     batteryLevel = "critical"
   elseif voltage < 28 then
     batteryLevel = "warning"
   end
-  device:emit_event(capabilities.batteryLevel.battery(batteryLevel))
+
+  if device:supports_capability_by_id(capabilities.battery.ID) then
+    device:emit_event(capabilities.battery.battery(calc_battery_percentage(voltage)))
+  elseif device:supports_capability_by_id(capabilities.batteryLevel.ID) then
+    device:emit_event(capabilities.batteryLevel.battery(batteryLevel))
+  end
 end
 
 local is_aqara_products = function(opts, driver, device)
