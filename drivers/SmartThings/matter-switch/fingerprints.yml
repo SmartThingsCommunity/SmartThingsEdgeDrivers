@@ -878,6 +878,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Onvis
+  - id: "5181/4097"
+    deviceLabel: Onvis Smart Plug S4EU
+    vendorId: 0x143D
+    productId: 0x1001
+    deviceProfileName: plug-binary
 #Osram
   - id: "4489/2564"
     deviceLabel: OSRAM MATTER PLUG UK
