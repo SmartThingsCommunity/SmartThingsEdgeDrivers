@@ -4,7 +4,7 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
-local dkjson = require 'dkjson'
+local json = require "st.json"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
@@ -142,7 +142,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_qubino_flush_dimmer_0_10V.raw_st_data)
       device_data.preferences["dimmingTimeKeyPressed"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_qubino_flush_dimmer_0_10V.id, "infoChanged", device_data_json })
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
@@ -165,7 +165,7 @@ do
     function()
       local device_data = utils.deep_copy(mock_qubino_flush_dimmer_0_10V.raw_st_data)
       device_data.preferences["dimmingDuration"] = new_param_value
-      local device_data_json = dkjson.encode(device_data)
+      local device_data_json = json.encode(device_data)
       test.socket.device_lifecycle:__queue_receive({ mock_qubino_flush_dimmer_0_10V.id, "infoChanged", device_data_json })
 
       test.socket.zwave:__expect_send(
