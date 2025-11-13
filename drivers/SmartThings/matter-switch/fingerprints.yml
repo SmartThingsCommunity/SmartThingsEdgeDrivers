@@ -1,5 +1,15 @@
 matterManufacturer:
 #Aqara
+  - id: "4447/4106"
+    deviceLabel: Aqara Dimmer Switch H2 EU
+    vendorId: 0x115F
+    productId: 0x100A
+    deviceProfileName: light-level-power-energy-powerConsumption
+  - id: "4447/4102"
+    deviceLabel: Aqara Dimmer Switch H2 US
+    vendorId: 0x115F
+    productId: 0x1006
+    deviceProfileName: light-level-power-energy-powerConsumption  
   - id: "4447/6145"
     deviceLabel: Aqara LED Bulb T2 RGB CCT
     vendorId: 0x115F
