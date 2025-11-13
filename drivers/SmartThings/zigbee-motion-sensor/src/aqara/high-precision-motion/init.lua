@@ -118,9 +118,7 @@ local aqara_high_precision_motion_handler = {
       }
     }
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "lumi.motion.agl04"
-  end
+  can_handle = require("aqara.high-precision-motion.can_handle")
 }
 
 return aqara_high_precision_motion_handler
