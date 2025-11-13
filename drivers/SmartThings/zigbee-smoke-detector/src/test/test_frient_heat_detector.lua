@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ local TemperatureMeasurement = clusters.TemperatureMeasurement
 local Basic = clusters.Basic
 local capabilities = require "st.capabilities"
 local alarm = capabilities.alarm
-local smokeDetector = capabilities.smokeDetector
+local temperatureAlarm = capabilities.temperatureAlarm
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local IasEnrollResponseCode = require "st.zigbee.generated.zcl_clusters.IASZone.types.EnrollResponseCode"
 local t_utils = require "integration_test.utils"
@@ -40,14 +40,13 @@ local DEVELCO_MANUFACTURER_CODE = 0x1015
 local cluster_base = require "st.zigbee.cluster_base"
 local defaultWarningDuration = 240
 
-
 local mock_device = test.mock_device.build_test_zigbee_device(
-        { profile = t_utils.get_profile_definition("smoke-temp-battery-alarm.yml"),
+        { profile = t_utils.get_profile_definition("heat-temp-battery-alarm.yml"),
           zigbee_endpoints = {
               [0x01] = {
                   id = 0x01,
                   manufacturer = "frient A/S",
-                  model = "SMSZB-120",
+                  model = "HESZB-120",
                   server_clusters = { 0x0003, 0x0005, 0x0006 }
               },
               [0x23] = {
@@ -68,7 +67,7 @@ local function test_init()
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-        "Clear alarm and smokeDetector states, and read firmware version when the device is added", function()
+        "Clear alarm and temperatureAlarm states, and read firmware version when the device is added", function()
             test.socket.matter:__set_channel_ordering("relaxed")
             test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
@@ -77,7 +76,7 @@ test.register_coroutine_test(
             )
 
             test.socket.capability:__expect_send(
-                    mock_device:generate_test_message("main", smokeDetector.smoke.clear())
+                    mock_device:generate_test_message("main", temperatureAlarm.temperatureAlarm.cleared())
             )
 
             test.socket.zigbee:__expect_send({
@@ -106,7 +105,7 @@ test.register_coroutine_test(
             )
 
             test.socket.capability:__expect_send(
-                    mock_device:generate_test_message("main", smokeDetector.smoke.clear())
+                    mock_device:generate_test_message("main", temperatureAlarm.temperatureAlarm.cleared())
             )
 
             test.socket.zigbee:__expect_send({
@@ -224,42 +223,40 @@ test.register_message_test(
         }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
         "ZoneStatusChangeNotification should be handled: detected",
-        {
-            {
-                channel = "zigbee",
-                direction = "receive",
-                -- ZoneStatus | Bit0 Alarm1 set to 1
-                message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
-            }
-        }
-)
+        function()
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00)
+            })
 
-test.register_message_test(
-        "ZoneStatusChangeNotification should be handled: tested",
-        {
-            {
-                channel = "zigbee",
-                direction = "receive",
-                -- ZoneStatus | Bit8: Test set to 1
-                message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x100, 0x01) }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
-            }
-        }
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
+            )
+
+            test.wait_for_events()
+        end
 )
 
 test.register_coroutine_test(
-        "ZoneStatusChangeNotification should be handled: clear",
+        "ZoneStatusChangeNotification should be handled: tested",
+        function()
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0100, 0x01)
+            })
+
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
+            )
+
+            test.wait_for_events()
+        end
+)
+
+test.register_coroutine_test(
+        "ZoneStatusChangeNotification should be handled: cleared",
         function()
             test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
             test.socket.zigbee:__queue_receive({
@@ -269,7 +266,7 @@ test.register_coroutine_test(
 
             test.mock_time.advance_time(6)
             test.socket.capability:__expect_send(
-                    mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+                    mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
             )
 
             test.wait_for_events()
@@ -290,52 +287,15 @@ test.register_message_test(
                 message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
             },
             {
-            channel = "devices",
-            direction = "send",
-            message = {
-                "register_native_capability_attr_handler",
-                { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
-            }
+                channel = "devices",
+                direction = "send",
+                message = {
+                    "register_native_capability_attr_handler",
+                    { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+                }
             }
         }
 )
-
--- test.register_coroutine_test(
---         "Health check should check all relevant attributes",
---         function()
---             test.wait_for_events()
-
---             test.mock_time.advance_time(50000) -- battery is 21600 for max reporting interval
---             test.socket.zigbee:__set_channel_ordering("relaxed")
-
---             test.socket.zigbee:__expect_send(
---                     {
---                         mock_device.id,
---                         PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
---                     }
---             )
-
---             test.socket.zigbee:__expect_send(
---                     {
---                         mock_device.id,
---                         TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
---                     }
---             )
-
---             test.socket.zigbee:__expect_send(
---                     {
---                         mock_device.id,
---                         IASZone.attributes.ZoneStatus:read(mock_device)
---                     }
---             )
---         end,
---         {
---             test_init = function()
---                 test.mock_device.add_test_device(mock_device)
---                 test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
---             end
---         }
--- )
 
 test.register_message_test(
         "Refresh should read all necessary attributes",
@@ -413,211 +373,211 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Should detect older firmware version and use correct endian format to turn on the siren",
-    function()
-        -- Manually set the firmware version and endian format for testing
-        mock_device:set_field(PRIMARY_SW_VERSION, "040002", {persist = true})
-        mock_device:set_field(SIREN_ENDIAN, "reverse", {persist = true})
+        "Should detect older firmware version and use correct endian format to turn on the siren",
+        function()
+            -- Manually set the firmware version and endian format for testing
+            mock_device:set_field(PRIMARY_SW_VERSION, "040002", {persist = true})
+            mock_device:set_field(SIREN_ENDIAN, "reverse", {persist = true})
 
-        -- Verify fields are set correctly
-        assert(mock_device:get_field(PRIMARY_SW_VERSION) < "040005", "PRIMARY_SW_VERSION should be less than '040005'")
-        assert(mock_device:get_field(SIREN_ENDIAN) == "reverse", "SIREN_ENDIAN should be set to 'reverse'")
+            -- Verify fields are set correctly
+            assert(mock_device:get_field(PRIMARY_SW_VERSION) < "040005", "PRIMARY_SW_VERSION should be less than '040005'")
+            assert(mock_device:get_field(SIREN_ENDIAN) == "reverse", "SIREN_ENDIAN should be set to 'reverse'")
 
-        -- Test the siren command with reversed endian
-        test.socket.capability:__queue_receive({
-            mock_device.id,
-            { capability = "alarm", component = "main", command = "siren", args = {} }
-        })
+            -- Test the siren command with reversed endian
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "alarm", component = "main", command = "siren", args = {} }
+            })
 
-        -- Expect the command with reverse endian format
-        local expectedConfiguration = SirenConfiguration(0x01)
+            -- Expect the command with reverse endian format
+            local expectedConfiguration = SirenConfiguration(0x01)
 
-        test.socket.zigbee:__expect_send({
-            mock_device.id,
-            IASWD.server.commands.StartWarning(mock_device,
-                expectedConfiguration,
-                data_types.Uint16(defaultWarningDuration),
-                data_types.Uint8(00),
-                data_types.Enum8(00))
-        })
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASWD.server.commands.StartWarning(mock_device,
+                        expectedConfiguration,
+                        data_types.Uint16(defaultWarningDuration),
+                        data_types.Uint8(00),
+                        data_types.Enum8(00))
+            })
 
-        test.wait_for_events()
-    end
-)
-
-test.register_coroutine_test(
-    "Should detect newer firmware version and use correct endian format to turn on the siren",
-    function()
-        -- Manually set the firmware version and endian format for testing
-        mock_device:set_field(PRIMARY_SW_VERSION, "040005", {persist = true})
-        mock_device:set_field(SIREN_ENDIAN, nil, {persist = true})
-
-        -- Verify fields are set correctly
-        assert(mock_device:get_field(PRIMARY_SW_VERSION) >= "040005", "PRIMARY_SW_VERSION should be greater than or equal to '040005'")
-        assert(mock_device:get_field(SIREN_ENDIAN) == nil, "SIREN_ENDIAN should be set to 'nil'")
-
-        -- Test the siren command with reversed endian
-        test.socket.capability:__queue_receive({
-            mock_device.id,
-            { capability = "alarm", component = "main", command = "siren", args = {} }
-        })
-
-        -- Expect the command with reverse endian format
-        local expectedConfiguration = SirenConfiguration(0x00)
-        expectedConfiguration:set_warning_mode(0x01)
-
-        test.socket.zigbee:__expect_send({
-            mock_device.id,
-            IASWD.server.commands.StartWarning(mock_device,
-                expectedConfiguration,
-                data_types.Uint16(defaultWarningDuration),
-                data_types.Uint8(00),
-                data_types.Enum8(00))
-        })
-
-        test.wait_for_events()
-    end
-)
-
-test.register_coroutine_test(
-    "Should detect older firmware version and use correct endian format to turn on the siren",
-    function()
-        -- Manually set the firmware version and endian format for testing
-        mock_device:set_field(PRIMARY_SW_VERSION, "040002", {persist = true})
-        mock_device:set_field(SIREN_ENDIAN, "reverse", {persist = true})
-
-        -- Verify fields are set correctly
-        assert(mock_device:get_field(PRIMARY_SW_VERSION) < "040005", "PRIMARY_SW_VERSION should be less than '040005'")
-        assert(mock_device:get_field(SIREN_ENDIAN) == "reverse", "SIREN_ENDIAN should be set to 'reverse'")
-
-        -- Test the siren command with reversed endian
-        test.socket.capability:__queue_receive({
-            mock_device.id,
-            { capability = "alarm", component = "main", command = "off", args = {} }
-        })
-
-        -- Expect the command with reverse endian format
-        local expectedConfiguration = SirenConfiguration(0x00)
-
-        test.socket.zigbee:__expect_send({
-            mock_device.id,
-            IASWD.server.commands.StartWarning(mock_device,
-                expectedConfiguration,
-                data_types.Uint16(0x00),
-                data_types.Uint8(00),
-                data_types.Enum8(00))
-        })
-
-        test.wait_for_events()
-    end
-)
-
-test.register_coroutine_test(
-    "Should detect newer firmware version and use correct endian format to turn off the siren",
-    function()
-        -- Manually set the firmware version and endian format for testing
-        mock_device:set_field(PRIMARY_SW_VERSION, "040005", {persist = true})
-        mock_device:set_field(SIREN_ENDIAN, nil, {persist = true})
-
-        -- Verify fields are set correctly
-        assert(mock_device:get_field(PRIMARY_SW_VERSION) >= "040005", "PRIMARY_SW_VERSION should be greater than or equal to '040005'")
-        assert(mock_device:get_field(SIREN_ENDIAN) == nil, "SIREN_ENDIAN should be set to 'nil'")
-
-        -- Test the siren command with reversed endian
-        test.socket.capability:__queue_receive({
-            mock_device.id,
-            { capability = "alarm", component = "main", command = "off", args = {} }
-        })
-
-        -- Expect the command with reverse endian format
-        local expectedConfiguration = SirenConfiguration(0x00)
-        expectedConfiguration:set_warning_mode(0x00)
-
-        test.socket.zigbee:__expect_send({
-            mock_device.id,
-            IASWD.server.commands.StartWarning(mock_device,
-                expectedConfiguration,
-                data_types.Uint16(0x00),
-                data_types.Uint8(00),
-                data_types.Enum8(00))
-        })
-
-        test.wait_for_events()
-    end
-)
-
-test.register_coroutine_test(
-    "Test firmware version conversion using direct simulation",
-    function()
-        -- Binary firmware version test cases
-        local test_cases = {
-            {
-                binary = string.char(4, 0, 5),      -- \004\000\005
-                expected_hex = "040005"             -- Expected output
-            },
-            {
-                binary = string.char(4, 0, 12),     -- \004\000\012
-                expected_hex = "04000c"             -- Expected output
-            },
-            {
-                binary = string.char(5, 1, 3),      -- \005\001\003
-                expected_hex = "050103"             -- Expected output
-            }
-        }
-
-        for i, test_case in ipairs(test_cases) do
-            print("\n----- Test Case " .. i .. " -----")
-            local binary_fw = test_case.binary
-            local expected_hex = test_case.expected_hex
-
-            -- Print the raw binary version and its byte values
-            print("Binary firmware version (raw):", binary_fw)
-            print("Binary firmware bytes:", string.format(
-                "\\%03d\\%03d\\%03d",
-                string.byte(binary_fw, 1),
-                string.byte(binary_fw, 2),
-                string.byte(binary_fw, 3)
-            ))
-
-            -- Reset the field for clean test
-            mock_device:set_field(PRIMARY_SW_VERSION, nil, {persist = true})
-
-            -- Create a mock value object
-            local mock_value = {
-                value = binary_fw
-            }
-
-            -- Simulate what happens in primary_sw_version_attr_handler
-            local primary_sw_version = mock_value.value:gsub('.', function (c)
-                return string.format('%02x', string.byte(c))
-            end)
-
-            -- Store the version in PRIMARY_SW_VERSION field
-            mock_device:set_field(PRIMARY_SW_VERSION, primary_sw_version, {persist = true})
-
-            -- What the conversion should do
-            print("\nConversion steps:")
-            local hex_result = ""
-            for i = 1, #binary_fw do
-                local char = binary_fw:sub(i, i)
-                local byte_val = string.byte(char)
-                local hex_val = string.format('%02x', byte_val)
-                hex_result = hex_result .. hex_val
-                print(string.format("Character at position %d: byte value = %d, hex = %02x",
-                      i, byte_val, byte_val))
-            end
-
-            print("\nExpected hex result:", expected_hex)
-            print("Manual conversion result:", hex_result)
-
-            -- Verify the stored version
-            local stored_version = mock_device:get_field(PRIMARY_SW_VERSION)
-            print("\nStored version in device field:", stored_version)
-            assert(stored_version == expected_hex,
-                  string.format("Version mismatch! Expected '%s' but got '%s'",
-                  expected_hex, stored_version or "nil"))
+            test.wait_for_events()
         end
-    end
+)
+
+test.register_coroutine_test(
+        "Should detect newer firmware version and use correct endian format to turn on the siren",
+        function()
+            -- Manually set the firmware version and endian format for testing
+            mock_device:set_field(PRIMARY_SW_VERSION, "040005", {persist = true})
+            mock_device:set_field(SIREN_ENDIAN, nil, {persist = true})
+
+            -- Verify fields are set correctly
+            assert(mock_device:get_field(PRIMARY_SW_VERSION) >= "040005", "PRIMARY_SW_VERSION should be greater than or equal to '040005'")
+            assert(mock_device:get_field(SIREN_ENDIAN) == nil, "SIREN_ENDIAN should be set to 'nil'")
+
+            -- Test the siren command with reversed endian
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "alarm", component = "main", command = "siren", args = {} }
+            })
+
+            -- Expect the command with reverse endian format
+            local expectedConfiguration = SirenConfiguration(0x00)
+            expectedConfiguration:set_warning_mode(0x01)
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASWD.server.commands.StartWarning(mock_device,
+                        expectedConfiguration,
+                        data_types.Uint16(defaultWarningDuration),
+                        data_types.Uint8(00),
+                        data_types.Enum8(00))
+            })
+
+            test.wait_for_events()
+        end
+)
+
+test.register_coroutine_test(
+        "Should detect older firmware version and use correct endian format to turn on the siren",
+        function()
+            -- Manually set the firmware version and endian format for testing
+            mock_device:set_field(PRIMARY_SW_VERSION, "040002", {persist = true})
+            mock_device:set_field(SIREN_ENDIAN, "reverse", {persist = true})
+
+            -- Verify fields are set correctly
+            assert(mock_device:get_field(PRIMARY_SW_VERSION) < "040005", "PRIMARY_SW_VERSION should be less than '040005'")
+            assert(mock_device:get_field(SIREN_ENDIAN) == "reverse", "SIREN_ENDIAN should be set to 'reverse'")
+
+            -- Test the siren command with reversed endian
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "alarm", component = "main", command = "off", args = {} }
+            })
+
+            -- Expect the command with reverse endian format
+            local expectedConfiguration = SirenConfiguration(0x00)
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASWD.server.commands.StartWarning(mock_device,
+                        expectedConfiguration,
+                        data_types.Uint16(0x00),
+                        data_types.Uint8(00),
+                        data_types.Enum8(00))
+            })
+
+            test.wait_for_events()
+        end
+)
+
+test.register_coroutine_test(
+        "Should detect newer firmware version and use correct endian format to turn off the siren",
+        function()
+            -- Manually set the firmware version and endian format for testing
+            mock_device:set_field(PRIMARY_SW_VERSION, "040005", {persist = true})
+            mock_device:set_field(SIREN_ENDIAN, nil, {persist = true})
+
+            -- Verify fields are set correctly
+            assert(mock_device:get_field(PRIMARY_SW_VERSION) >= "040005", "PRIMARY_SW_VERSION should be greater than or equal to '040005'")
+            assert(mock_device:get_field(SIREN_ENDIAN) == nil, "SIREN_ENDIAN should be set to 'nil'")
+
+            -- Test the siren command with reversed endian
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "alarm", component = "main", command = "off", args = {} }
+            })
+
+            -- Expect the command with reverse endian format
+            local expectedConfiguration = SirenConfiguration(0x00)
+            expectedConfiguration:set_warning_mode(0x00)
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASWD.server.commands.StartWarning(mock_device,
+                        expectedConfiguration,
+                        data_types.Uint16(0x00),
+                        data_types.Uint8(00),
+                        data_types.Enum8(00))
+            })
+
+            test.wait_for_events()
+        end
+)
+
+test.register_coroutine_test(
+        "Test firmware version conversion using direct simulation",
+        function()
+            -- Binary firmware version test cases
+            local test_cases = {
+                {
+                    binary = string.char(4, 0, 5),      -- \004\000\005
+                    expected_hex = "040005"             -- Expected output
+                },
+                {
+                    binary = string.char(4, 0, 12),     -- \004\000\012
+                    expected_hex = "04000c"             -- Expected output
+                },
+                {
+                    binary = string.char(5, 1, 3),      -- \005\001\003
+                    expected_hex = "050103"             -- Expected output
+                }
+            }
+
+            for i, test_case in ipairs(test_cases) do
+                print("\n----- Test Case " .. i .. " -----")
+                local binary_fw = test_case.binary
+                local expected_hex = test_case.expected_hex
+
+                -- Print the raw binary version and its byte values
+                print("Binary firmware version (raw):", binary_fw)
+                print("Binary firmware bytes:", string.format(
+                        "\\%03d\\%03d\\%03d",
+                        string.byte(binary_fw, 1),
+                        string.byte(binary_fw, 2),
+                        string.byte(binary_fw, 3)
+                ))
+
+                -- Reset the field for clean test
+                mock_device:set_field(PRIMARY_SW_VERSION, nil, {persist = true})
+
+                -- Create a mock value object
+                local mock_value = {
+                    value = binary_fw
+                }
+
+                -- Simulate what happens in primary_sw_version_attr_handler
+                local primary_sw_version = mock_value.value:gsub('.', function (c)
+                    return string.format('%02x', string.byte(c))
+                end)
+
+                -- Store the version in PRIMARY_SW_VERSION field
+                mock_device:set_field(PRIMARY_SW_VERSION, primary_sw_version, {persist = true})
+
+                -- What the conversion should do
+                print("\nConversion steps:")
+                local hex_result = ""
+                for i = 1, #binary_fw do
+                    local char = binary_fw:sub(i, i)
+                    local byte_val = string.byte(char)
+                    local hex_val = string.format('%02x', byte_val)
+                    hex_result = hex_result .. hex_val
+                    print(string.format("Character at position %d: byte value = %d, hex = %02x",
+                            i, byte_val, byte_val))
+                end
+
+                print("\nExpected hex result:", expected_hex)
+                print("Manual conversion result:", hex_result)
+
+                -- Verify the stored version
+                local stored_version = mock_device:get_field(PRIMARY_SW_VERSION)
+                print("\nStored version in device field:", stored_version)
+                assert(stored_version == expected_hex,
+                        string.format("Version mismatch! Expected '%s' but got '%s'",
+                                expected_hex, stored_version or "nil"))
+            end
+        end
 )
 
 test.run_registered_tests()
