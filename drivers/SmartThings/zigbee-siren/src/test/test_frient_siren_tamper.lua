@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -47,26 +47,26 @@ local t_utils = require "integration_test.utils"
 
 
 local mock_device = test.mock_device.build_test_zigbee_device(
-    {
-      profile = t_utils.get_profile_definition("frient-siren-battery-source.yml"),
-      zigbee_endpoints = {
-        [0x01] = {
-          id = 0x01,
-          manufacturer = "frient A/S",
-          model = "SIRZB-111",
-          server_clusters = { Scenes.ID, OnOff.ID}
-        },
-        [0x2B] = {
-            id = 0x2B,
-            server_clusters = { Basic.ID, Identify.ID, PowerConfiguration.ID, Groups.ID, IASZone.ID, IASWD.ID }
+        {
+            profile = t_utils.get_profile_definition("frient-siren-battery-source-tamper.yml"),
+            zigbee_endpoints = {
+                [0x01] = {
+                    id = 0x01,
+                    manufacturer = "frient A/S",
+                    model = "SIRZB-111",
+                    server_clusters = { Scenes.ID, OnOff.ID}
+                },
+                [0x2B] = {
+                    id = 0x2B,
+                    server_clusters = { Basic.ID, Identify.ID, PowerConfiguration.ID, Groups.ID, IASZone.ID, IASWD.ID }
+                }
+            }
         }
-      }
-    }
 )
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
+    test.mock_device.add_test_device(mock_device)
 end
 
 test.set_test_init_function(test_init)
@@ -87,7 +87,7 @@ local function set_older_firmware_and_defaults()
     mock_device:set_field(ALARM_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
 end
 
-local function get_siren_commands_new_fw( warningMode, sirenLevel, duration )
+local function get_siren_commands_new_fw(warningMode, sirenLevel, duration)
     local expectedSirenONConfiguration = SirenConfiguration(0x00)
     expectedSirenONConfiguration:set_warning_mode(warningMode) --WarningMode.BURGLAR
     expectedSirenONConfiguration:set_siren_level(sirenLevel) --IaswdLevel.VERY_HIGH_LEVEL
@@ -176,27 +176,27 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 IASWD.attributes.MaxDuration:write(
-                    mock_device,
-                    ALARM_DEFAULT_MAX_DURATION
+                        mock_device,
+                        ALARM_DEFAULT_MAX_DURATION
                 )
             })
 
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 cluster_base.read_manufacturer_specific_attribute(
-                    mock_device,
-                    Basic.ID,
-                    DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR,
-                    DEVELCO_MANUFACTURER_CODE)
+                        mock_device,
+                        Basic.ID,
+                        DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR,
+                        DEVELCO_MANUFACTURER_CODE)
             })
 
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 zigbee_test_utils.build_bind_request(
-                    mock_device,
-                    zigbee_test_utils.mock_hub_eui,
-                    PowerConfiguration.ID,
-                    0x2B
+                        mock_device,
+                        zigbee_test_utils.mock_hub_eui,
+                        PowerConfiguration.ID,
+                        0x2B
                 ):to_endpoint(0x2B)
             })
 
@@ -253,120 +253,127 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "lifecycle - added test",
-    function()
-        test.socket.capability:__set_channel_ordering("relaxed")
-        test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SirenVoice",
-                capabilities.mode.supportedModes({ "Burglar", "Fire", "Emergency", "Panic", "Panic Fire", "Panic Emergency" }, { visibility = { displayed = false } }
-                )
+        "lifecycle - added test",
+        function()
+            test.socket.capability:__set_channel_ordering("relaxed")
+            test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SirenVoice",
+                            capabilities.mode.supportedModes({ "Burglar", "Fire", "Emergency", "Panic", "Panic Fire", "Panic Emergency" }, { visibility = { displayed = false } }
+                            )
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SirenVoice",
-                capabilities.mode.supportedArguments({ "Burglar", "Fire", "Emergency", "Panic", "Panic Fire", "Panic Emergency" }, { visibility = { displayed = false } })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SirenVoice",
+                            capabilities.mode.supportedArguments({ "Burglar", "Fire", "Emergency", "Panic", "Panic Fire", "Panic Emergency" }, { visibility = { displayed = false } })
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SirenVoice",
-                capabilities.mode.mode("Burglar")
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SirenVoice",
+                            capabilities.mode.mode("Burglar")
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SirenVolume",
-                capabilities.mode.supportedModes({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SirenVolume",
+                            capabilities.mode.supportedModes({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SirenVolume",
-                capabilities.mode.supportedArguments({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SirenVolume",
+                            capabilities.mode.supportedArguments({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SirenVolume",
-                capabilities.mode.mode({value = "Very High"})
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SirenVolume",
+                            capabilities.mode.mode({value = "Very High"})
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SquawkVoice",
-                capabilities.mode.supportedModes({ "Armed", "Disarmed" }, { visibility = { displayed = false } })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SquawkVoice",
+                            capabilities.mode.supportedModes({ "Armed", "Disarmed" }, { visibility = { displayed = false } })
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SquawkVoice",
-                capabilities.mode.supportedArguments({ "Armed", "Disarmed" }, { visibility = { displayed = false } })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SquawkVoice",
+                            capabilities.mode.supportedArguments({ "Armed", "Disarmed" }, { visibility = { displayed = false } })
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-                "SquawkVoice",
-                capabilities.mode.mode("Armed")
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SquawkVoice",
+                            capabilities.mode.mode("Armed")
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-                "SquawkVolume",
-                capabilities.mode.supportedModes({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SquawkVolume",
+                            capabilities.mode.supportedModes({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "SquawkVolume",
-                capabilities.mode.supportedArguments({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SquawkVolume",
+                            capabilities.mode.supportedArguments({ "Low", "Medium", "High", "Very High" }, { visibility = { displayed = false } })
+                    )
             )
-        )
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-                "SquawkVolume",
-                capabilities.mode.mode("Very High")
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "SquawkVolume",
+                            capabilities.mode.mode("Very High")
+                    )
             )
-        )
 
-        test.socket.capability:__expect_send(
-                mock_device:generate_test_message(
-                        "WarningDuration",
-                        capabilities.mode.supportedModes(
-                                {
-                                    "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
-                                    "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
-                                },
-                                { visibility = { displayed = false } })
-                )
-        )
-        test.socket.capability:__expect_send(
-                mock_device:generate_test_message(
-                        "WarningDuration",
-                        capabilities.mode.supportedArguments(
-                                {
-                                    "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
-                                    "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
-                                },
-                                { visibility = { displayed = false } })
-                )
-        )
-        test.socket.capability:__expect_send(
-                mock_device:generate_test_message(
-                        "WarningDuration",
-                        capabilities.mode.mode("4 minutes")
-                )
-        )
-
-        test.socket.capability:__expect_send(
-            mock_device:generate_test_message(
-    "main",
-                capabilities.alarm.alarm.off()
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "WarningDuration",
+                            capabilities.mode.supportedModes(
+                                    {
+                                        "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
+                                        "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
+                                    },
+                                    { visibility = { displayed = false } })
+                    )
             )
-        )
-    end
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "WarningDuration",
+                            capabilities.mode.supportedArguments(
+                                    {
+                                        "5 seconds", "10 seconds", "15 seconds", "20 seconds", "25 seconds", "30 seconds", "40 seconds", "50 seconds",
+                                        "1 minute", "2 minutes", "3 minutes", "4 minutes", "5 minutes", "10 minutes"
+                                    },
+                                    { visibility = { displayed = false } })
+                    )
+            )
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "WarningDuration",
+                            capabilities.mode.mode("4 minutes")
+                    )
+            )
+
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "main",
+                            capabilities.alarm.alarm.off()
+                    )
+            )
+
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "main",
+                            capabilities.tamperAlert.tamper.clear()
+                    )
+            )
+        end
 )
 
 test.register_coroutine_test(
@@ -389,7 +396,7 @@ test.register_coroutine_test(
             test.mock_time.advance_time(1)
             -- Expect the command with given configuration
             get_siren_commands_new_fw(WarningMode.BURGLAR,IaswdLevel.VERY_HIGH_LEVEL,ALARM_DURATION_TEST_VALUE)
-            test.mock_time.advance_time(ALARM_DURATION_TEST_VALUE+1)
+            test.mock_time.advance_time(ALARM_DURATION_TEST_VALUE)
             -- stop the siren
             -- Expect the OFF command
             get_siren_OFF_commands()
@@ -455,14 +462,13 @@ test.register_coroutine_test(
             })
             test.mock_time.advance_time(2)
             test.socket.capability:__expect_send(
-                mock_device:generate_test_message("SirenVoice", capabilities.mode.mode("Fire"))
+                    mock_device:generate_test_message("SirenVoice", capabilities.mode.mode("Fire"))
             )
 
             test.socket.capability:__queue_receive({
                 mock_device.id,
                 { capability = "mode", component = "SirenVolume", command = "setMode", args = {"Low"} }
             })
-
             test.mock_time.advance_time(2)
             test.socket.capability:__expect_send(
                     mock_device:generate_test_message("SirenVolume", capabilities.mode.mode("Low"))
@@ -498,10 +504,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
         "Should detect newer firmware version and use correct endian format to turn on squawk (test with default settings)",
         function()
-            --test.socket.zigbee:__set_channel_ordering("relaxed")
-            --test.socket.capability:__set_channel_ordering("relaxed")
-            --test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-
             set_new_firmware_and_defaults()
 
             -- Verify fields are set correctly
@@ -615,23 +617,24 @@ test.register_coroutine_test(
             })
 
             test.socket.zigbee:__expect_send(
-                {
-                    mock_device.id,
-                    IASZone.attributes.ZoneStatus:read(mock_device)
-                }
+                    {
+                        mock_device.id,
+                        IASZone.attributes.ZoneStatus:read(mock_device)
+                    }
             )
 
             test.socket.zigbee:__expect_send(
-                {
-                    mock_device.id,
-                    cluster_base.read_manufacturer_specific_attribute(
-                            mock_device,
-                            Basic.ID,
-                            DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR,
-                            DEVELCO_MANUFACTURER_CODE
-                    )
-                }
+                    {
+                        mock_device.id,
+                        cluster_base.read_manufacturer_specific_attribute(
+                                mock_device,
+                                Basic.ID,
+                                DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR,
+                                DEVELCO_MANUFACTURER_CODE
+                        )
+                    }
             )
+
             test.wait_for_events()
         end
 )
@@ -642,18 +645,26 @@ test.register_message_test(
             {
                 channel = "zigbee",
                 direction = "receive",
-                message = { mock_device.id, ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0000) }
+                message = { mock_device.id, ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0005) }
             },
             {
                 channel = "capability",
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
             }
+        },
+        {
+            inner_block_ordering = "relaxed"
         }
 )
 
 test.register_message_test(
-        "Power source / battery and tamper clear should be handled",
+        "Power source / battery should be handled",
         {
             {
                 channel = "zigbee",
@@ -664,7 +675,15 @@ test.register_message_test(
                 channel = "capability",
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.battery())
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
             }
+        },
+        {
+            inner_block_ordering = "relaxed"
         }
 )
 
