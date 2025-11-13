@@ -17,16 +17,15 @@ local log = require "log"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local im = require "st.matter.interaction_model"
-
 local MatterDriver = require "st.matter.driver"
 local utils = require "st.utils"
+local version = require "version"
 
 local SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
 -- declare match_profile function for use throughout file
 local match_profile
 
 -- Include driver-side definitions when lua libs api version is < 10
-local version = require "version"
 if version.api < 10 then
   clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
   clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
@@ -966,6 +965,7 @@ local function match_modular_profile_thermostat(driver, device)
 
   if #fan_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
   end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
