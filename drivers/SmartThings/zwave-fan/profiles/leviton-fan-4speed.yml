@@ -1,0 +1,75 @@
+name: leviton-fan-4speed
+components:
+- id: main
+  capabilities:
+  - id: fanSpeed
+    version: 1
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Fan
+preferences:
+- name: "ledLevelIndicatorTimeout"
+  title: "Level Indicator"
+  description: "0 = Level Indicator always off;  1-254 = Level indicator on time in seconds;  255 = Level Indicator always on"
+  required: true
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 255
+    default: 3
+- name: "statusLEDConfiguration"
+  title: "Status LED"
+  description: "Status LED On when"
+  preferenceType: enumeration
+  required: true
+  definition:
+    options:
+      254: "Fan is On"
+      255: "Fan is Off"
+      0:   "Always Off"
+    default: 255
+- name: "minimumFanSpeedLevel"
+  title: "Minimum Fan Speed Level"
+  description: "The lowest speed can be increased for larger fans which may struggle to turn on at the lowest level"
+  preferenceType: enumeration
+  required: true
+  definition:
+    options:
+      25: "Low"
+      50: "Medium"
+      75: "High"
+      99: "Max"
+    default: 25
+- name: "maximumFanSpeedLevel"
+  title: "Maximum Fan Speed Level"
+  description: "The maximum speed can be set lower than the fastest speed to prevent wobbling"
+  preferenceType: enumeration
+  required: true
+  definition:
+    options:
+      25: "Low"
+      50: "Medium"
+      75: "High"
+      99: "Max"
+    default: 99
+- name: "presetFanSpeedLevel"
+  title: "Turn On Speed"
+  description: "Fan Speed Level when the fan is turned on"
+  preferenceType: enumeration
+  required: true
+  definition:
+    options:
+      0:  "Return to the last speed"
+      25: "Low"
+      50: "Medium"
+      75: "High"
+      99: "Max"
+    default: 0
+metadata:
+  mnmn: SmartThingsEdge
+  vid: generic-fan-4-speed
