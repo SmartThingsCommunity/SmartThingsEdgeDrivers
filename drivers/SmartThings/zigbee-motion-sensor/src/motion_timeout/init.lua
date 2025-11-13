@@ -16,25 +16,13 @@ local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local IASZone = zcl_clusters.IASZone
 
-local ZIGBEE_MOTION_SENSOR_FINGERPRINTS = {
-  { mfr = "ORVIBO", model = "895a2d80097f4ae2b2d40500d5e03dcc", timeout = 20 },
-  { mfr = "Megaman", model = "PS601/z1", timeout = 20 },
-  { mfr = "HEIMAN", model = "PIRSensor-N", timeout = 20 }
-}
 
-local is_zigbee_motion_sensor = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_MOTION_SENSOR_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
-  end
-  return false
-end
 
 local generate_event_from_zone_status = function(driver, device, zone_status, zigbee_message)
+  local FINGERPRINTS = require("motion_timeout.fingerprints")
   device:emit_event(
       (zone_status:is_alarm1_set() or zone_status:is_alarm2_set()) and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
-  for _, fingerprint in ipairs(ZIGBEE_MOTION_SENSOR_FINGERPRINTS) do
+  for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       device.thread:call_with_delay(fingerprint.timeout, function(d)
           device:emit_event(capabilities.motionSensor.motion.inactive())
@@ -66,7 +54,7 @@ local motion_timeout_handler = {
       }
     }
   },
-  can_handle = is_zigbee_motion_sensor
+  can_handle = require("motion_timeout.can_handle"),
 }
 
 return motion_timeout_handler

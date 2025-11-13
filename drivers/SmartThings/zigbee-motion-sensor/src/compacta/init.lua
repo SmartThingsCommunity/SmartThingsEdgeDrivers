@@ -43,9 +43,7 @@ local compacta_driver = {
     added = added_handler,
     doConfigure = do_configure
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "Compacta"
-  end
+  can_handle = require("compacta.can_handle"),
 }
 
 return compacta_driver
