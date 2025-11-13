@@ -3,15 +3,13 @@
 
 
 return function(opts, driver, device)
-  local INOVELLI_FINGERPRINTS = {
+  local INOVELLI_VZM30_SN_FINGERPRINTS = {
     { mfr = "Inovelli", model = "VZM30-SN" },
-    { mfr = "Inovelli", model = "VZM31-SN" },
-    { mfr = "Inovelli", model = "VZM32-SN" }
   }
-  for _, fp in ipairs(INOVELLI_FINGERPRINTS) do
+  for _, fp in ipairs(INOVELLI_VZM30_SN_FINGERPRINTS) do
     if device:get_manufacturer() == fp.mfr and device:get_model() == fp.model then
-      local subdriver = require("inovelli")
-      return true, subdriver
+      local sub_driver = require("inovelli.vzm30-sn")
+      return true, sub_driver
     end
   end
   return false

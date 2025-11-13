@@ -30,8 +30,6 @@ local base_preference_map = {
   parameter2 = {parameter_number = 2, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter3 = {parameter_number = 3, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter4 = {parameter_number = 4, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
-  parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
-  parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter15 = {parameter_number = 15, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter95 = {parameter_number = 95, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter96 = {parameter_number = 96, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
@@ -41,12 +39,20 @@ local base_preference_map = {
 
 -- Model-specific overrides/additions
 local model_preference_overrides = {
+  ["VZM30-SN"] = {
+    parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
+    parameter22 = {parameter_number = 22, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+  },
   ["VZM31-SN"] = {
+    parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+    parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
     parameter17 = {parameter_number = 17, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter22 = {parameter_number = 22, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   },
   ["VZM32-SN"] = {
+    parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+    parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter34 = {parameter_number = 34, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter101 = {parameter_number = 101, size = data_types.Int16, cluster = PRIVATE_CLUSTER_MMWAVE_ID},
     parameter102 = {parameter_number = 102, size = data_types.Int16, cluster = PRIVATE_CLUSTER_MMWAVE_ID},
@@ -200,18 +206,6 @@ local function device_configure(driver, device)
   end
 end
 
-local function energy_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 100
-  device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh" }))
-end
-
-local function power_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 10
-  device:emit_event(capabilities.powerMeter.power({value = raw_value, unit = "W" }))
-end
-
 local function huePercentToValue(value)
   if value <= 2 then return 0
   elseif value >= 98 then return 255
@@ -328,7 +322,7 @@ local function handle_resetEnergyMeter(self, device)
 end
 
 local inovelli = {
-  NAME = "inovelli combined handler",
+  NAME = "Inovelli Zigbee Switch",
   lifecycle_handlers = {
     doConfigure = device_configure,
     infoChanged = info_changed,
@@ -336,13 +330,6 @@ local inovelli = {
   },
   zigbee_handlers = {
     attr = {
-      [clusters.SimpleMetering.ID] = {
-        [clusters.SimpleMetering.attributes.InstantaneousDemand.ID] = power_meter_handler,
-        [clusters.SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
-      },
-      [clusters.ElectricalMeasurement.ID] = {
-        [clusters.ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
-      },
       [OccupancySensing.ID] = {
         [OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler
       },
