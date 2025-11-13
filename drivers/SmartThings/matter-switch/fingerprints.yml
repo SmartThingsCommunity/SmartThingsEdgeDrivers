@@ -25,6 +25,17 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2004
     deviceProfileName: 3-button-battery-temperature-humidity
+#Atios
+  - id: "5197/4097"
+    deviceLabel: Atios KNX Bridge
+    vendorId: 0x144D
+    productId: 0x1001
+    deviceProfileName: matter-bridge
+  - id: "5197/8193"
+    deviceLabel: Atios SmartCore
+    vendorId: 0x144D
+    productId: 0x2001
+    deviceProfileName: matter-bridge
 #AiDot
   - id: "Linkind/Smart/Light/Bulb/A19/RGBTW"
     deviceLabel: Linkind Smart Light Bulb A19 RGBTW
