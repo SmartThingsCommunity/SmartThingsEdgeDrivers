@@ -28,6 +28,46 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: "PMM-300Z3"
     deviceProfileName: power-meter-consumption-report-sihas
+  - id: "BITUO TECHNIK/SPM01-E0"
+    deviceLabel: Energy Monitor 1PN
+    manufacturer: BITUO TECHNIK
+    model: "SPM01-E0"
+    deviceProfileName: power-meter-1p
+  - id: "BITUO TECHNIK/SPM01X"
+    deviceLabel: Energy Monitor 1PN
+    manufacturer: BITUO TECHNIK
+    model: "SPM01X"
+    deviceProfileName: power-meter-1p
+  - id: "BITUO TECHNIK/SDM02-E0"
+    deviceLabel: Energy Monitor 2PN
+    manufacturer: BITUO TECHNIK
+    model: "SDM02-E0"
+    deviceProfileName: power-meter-2p
+  - id: "BITUO TECHNIK/SDM02X"
+    deviceLabel: Energy Monitor 2PN
+    manufacturer: BITUO TECHNIK
+    model: "SDM02X"
+    deviceProfileName: power-meter-2p
+  - id: "BITUO TECHNIK/SPM02-E0"
+    deviceLabel: Energy Monitor 3PN
+    manufacturer: BITUO TECHNIK
+    model: "SPM02-E0"
+    deviceProfileName: power-meter-3p
+  - id: "BITUO TECHNIK/SPM02X"
+    deviceLabel: Energy Monitor 3PN
+    manufacturer: BITUO TECHNIK
+    model: "SPM02X"
+    deviceProfileName: power-meter-3p
+  - id: "BITUO TECHNIK/SDM01W"
+    deviceLabel: Energy Monitor 3PN
+    manufacturer: BITUO TECHNIK
+    model: "SDM01W"
+    deviceProfileName: power-meter-3p
+  - id: "BITUO TECHNIK/SDM01B"
+    deviceLabel: Energy Monitor 1PN
+    manufacturer: BITUO TECHNIK
+    model: "SDM01B"
+    deviceProfileName: power-meter-1p
 zigbeeGeneric:
   - id: "genericMeter"
     deviceLabel: Zigbee Meter
