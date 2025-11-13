@@ -8,4 +8,3 @@ tools/test_output/*
 tools/coverage_output/*
 .DS_Store
 .venv/
-
