@@ -110,9 +110,7 @@ local aqara_motion_handler = {
       }
     }
   },
-  sub_drivers = {
-    require("aqara.high-precision-motion")
-  },
+  sub_drivers = require("aqara.sub_drivers"),
   can_handle = require("aqara.can_handle"),
 }
 
