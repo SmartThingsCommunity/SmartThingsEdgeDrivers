@@ -11,7 +11,7 @@ local ZIGBEE_FINGERPRINT = {
   {model = "CT101xxxx" }
 }
 
--- temperature: 0.5C, humidity: 2%
+-- temperature: 0.5C, battery level remaining: 1%
 local configuration = {
   {
     cluster = TemperatureMeasurement.ID,
@@ -19,7 +19,7 @@ local configuration = {
     minimum_interval = 30,
     maximum_interval = 3600,
     data_type = TemperatureMeasurement.attributes.CurrentTemperature.base_type,
-    reportable_change = 50
+    reportable_change = 1
   },
   {
     cluster = PowerConfiguration.ID,
@@ -27,7 +27,7 @@ local configuration = {
     minimum_interval = 30,
     maximum_interval = 3600,
     data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
-    reportable_change = 1
+    reportable_change = 2
   }
 }
 
@@ -41,14 +41,16 @@ local is_chameleon_ct_clamp = function(opts, driver, device)
 end
 
 local function battery_level_handler(driver, device, value, _zb_rx)
-  log.info("battery_level_handler")
+  if type(value.value) == "number" then
   local number = value.value/2
   local integer_result = math.floor(number)
   device:emit_event(capabilities.battery.battery(integer_result))
+  else
+      log.error("Invalid battery level value received: " .. tostring(value.value))
+  end
 end
 
 local function temperature_handler(driver, device, value, _zb_rx)
-  log.info("temperature_handler")
   if type(value.value) == "number" then
     device:emit_event(capabilities.temperatureMeasurement.temperature({ value = value.value, unit = "C" }))
   else
@@ -57,7 +59,6 @@ local function temperature_handler(driver, device, value, _zb_rx)
 end
 
 local function device_init(driver, device)
-  log.info("device_init")
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
@@ -71,7 +72,6 @@ local function device_init(driver, device)
 end
 
 local function added_handler(self, device)
-  log.info("added_handler")
   device:emit_event(capabilities.temperatureMeasurement.temperature({ value = 0, unit = "C" }))
   device:emit_event(capabilities.battery.battery({value = 0, unit = "%" }))
 end
