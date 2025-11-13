@@ -8,4 +8,4 @@ tools/test_output/*
 tools/coverage_output/*
 .DS_Store
 .venv/
-drivers/SmartThings/zigbee-power-meter/zigbee-power-meter.code-workspace
+
