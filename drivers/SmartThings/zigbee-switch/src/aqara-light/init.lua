@@ -49,7 +49,7 @@ local function device_added(driver, device, event)
 
   local value = { minimum = 2700, maximum = 6000 }
   if device:get_model() == "lumi.light.cwacn1" then
-    value = { minimum = 2700, maximum = 6500 }
+    value.maximum = 6500
   end
   emit_event_if_latest_state_missing(device, "main", capabilities.colorTemperature, capabilities.colorTemperature.colorTemperatureRange.NAME, capabilities.colorTemperature.colorTemperatureRange(value))
 end
@@ -71,13 +71,11 @@ local function set_level_handler(driver, device, cmd)
 end
 
 local function init(self, device)
-  local min = 2700
-  local max = 6000
-
+  local value = { minimum = 2700, maximum = 6000 }
   if device:get_model() == "lumi.light.cwacn1" then
-    max = 6500
+    value.maximum = 6500
   end
-  device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ minimum = min, maximum = max }))
+  emit_event_if_latest_state_missing(device, "main", capabilities.colorTemperature, capabilities.colorTemperature.colorTemperatureRange.NAME, capabilities.colorTemperature.colorTemperatureRange(value))
 end
 
 local aqara_light_handler = {
