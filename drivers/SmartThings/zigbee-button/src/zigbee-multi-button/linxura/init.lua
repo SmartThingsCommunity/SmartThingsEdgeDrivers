@@ -37,10 +37,10 @@ local configuration = {
   {
     cluster = PowerConfiguration.ID,
     attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
-    minimum_interval = 0,     
-    maximum_interval = 3600,    
+    minimum_interval = 0,
+    maximum_interval = 3600,
     data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
-    reportable_change = 2       
+    reportable_change = 2
   }
 }
 local is_linxura_button = function(opts, driver, device)
@@ -91,7 +91,6 @@ local function battery_attr_handler(driver, device, value, zb_rx)
 
   if pct then
     device:emit_event(capabilities.battery.battery(pct))
-  else
   end
 end
 local function device_init(driver, device)
