@@ -479,6 +479,17 @@ local function make_ssdp_event_handler(
 end
 
 function SonosDriver:start_ssdp_event_task()
+  if self.ssdp_task ~= nil then
+    return
+  end
+  cosock.spawn(function ()
+    while self:start_ssdp_event_task_inner() == false do
+      cosock.socket.sleep(30)
+    end
+  end)
+end
+
+function SonosDriver:start_ssdp_event_task_inner()
   local ssdp_task, err = sonos_ssdp.spawn_persistent_ssdp_task()
   if err then
     log.error_with({ hub_logs = true }, string.format("Unable to create SSDP task: %s", err))
@@ -492,7 +503,9 @@ function SonosDriver:start_ssdp_event_task()
     end
     self.ssdp_event_thread_handle =
       cosock.spawn(make_ssdp_event_handler(self, ssdp_task_subscription, oauth_token_subscription))
+    return true
   end
+  return false
 end
 
 ---@param api_key string
