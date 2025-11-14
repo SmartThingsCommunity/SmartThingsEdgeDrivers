@@ -40,6 +40,7 @@ end
 
 function SwitchLifecycleHandlers.do_configure(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+    switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
   end
 end
