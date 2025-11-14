@@ -23,7 +23,8 @@ local devices = {
   FRIENT_HUMIDITY_TEMP_SENSOR = {
     FINGERPRINTS = {
       { mfr = "frient A/S", model = "HMSZB-110" },
-      { mfr = "frient A/S", model = "HMSZB-120" }
+      { mfr = "frient A/S", model = "HMSZB-120" },
+      { mfr = "frient A/S", model = "AQSZB-110" }
     },
     CONFIGURATION = {
       {
