@@ -118,7 +118,7 @@ local function device_added(driver, device)
   end
   device:emit_event(capabilities.button.button.pushed({state_change = false}))
 
-  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
+  -- device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
 local function do_configure(driver, device)
