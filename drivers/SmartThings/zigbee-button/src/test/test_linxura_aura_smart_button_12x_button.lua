@@ -19,7 +19,6 @@ local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
-local PowerConfiguration = clusters.PowerConfiguration
 
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
 local button_attr = capabilities.button.button
