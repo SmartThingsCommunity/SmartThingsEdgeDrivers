@@ -119,10 +119,16 @@ local devices = {
       { mfr = "ShinaSystem", model = "SBM300ZC4" },
       { mfr = "ShinaSystem", model = "SQM300ZC4" },
       { mfr = "Linxura", model = "Smart Controller" },
-      { mfr = "Linxura", model = "Aura Smart Button" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 4
+  },
+  BUTTON_PUSH_HELD_DOUBLE_12 = {
+    MATCHING_MATRIX = {
+      { mfr = "Linxura", model = "Aura Smart Button" }
+    },
+    SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
+    NUMBER_OF_BUTTONS = 12
   },
   BUTTON_PUSH_DOWN_HOLD_UP_VIMAR_2 = {
     MATCHING_MATRIX = {
