@@ -3068,6 +3068,11 @@ matterGeneric:
       - id: 0x0101 # Dimmable Light
       - id: 0x0107 # Occupancy Sensor
     deviceProfileName: light-level-motion
+  - id: "matter/camera"
+    deviceLabel: Matter Camera
+    deviceTypes:
+      - id: 0x0142 # Camera
+    deviceProfileName: camera
 
 matterThing:
   - id: SmartThings/MatterThing
