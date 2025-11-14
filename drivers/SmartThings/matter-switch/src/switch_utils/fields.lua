@@ -113,6 +113,9 @@ SwitchFields.vendor_overrides = {
     [0x1006] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
     [0x100A] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
+  },
+  [0x1209] = { -- Bosch
+    [0x3013] = {target_profile = "light-level-motion-illuminance-battery-temp"}
   }
 }
 
