@@ -19,6 +19,7 @@ local IASZone = clusters.IASZone
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local PowerConfiguration = clusters.PowerConfiguration
 
 local ZoneStatusAttribute = IASZone.attributes.ZoneStatus
 local button_attr = capabilities.button.button
@@ -31,7 +32,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
           id = 1,
           manufacturer = "Linxura",
           model = "Aura Smart Button",
-          server_clusters = {0x0500, 0x0000}
+          server_clusters = {0x0001, 0x0500, 0x0000}
         }
       }
     }
