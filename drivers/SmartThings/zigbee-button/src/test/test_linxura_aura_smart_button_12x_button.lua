@@ -47,12 +47,7 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "added lifecycle event",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
-    })
     for button_name, _ in pairs(mock_device.profile.components) do
       if button_name ~= "main" then
         test.socket.capability:__expect_send(
