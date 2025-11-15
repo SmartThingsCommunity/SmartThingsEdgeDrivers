@@ -17,18 +17,7 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local device_management = require "st.zigbee.device_management"
 local OccupancySensing = zcl_clusters.OccupancySensing
 
-local ZIGBEE_PLUGIN_MOTION_SENSOR_FINGERPRINTS = {
-  { model = "E280-KR0A0Z0-HA" }
-}
 
-local is_zigbee_plugin_motion_sensor = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_PLUGIN_MOTION_SENSOR_FINGERPRINTS) do
-    if device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function occupancy_attr_handler(driver, device, occupancy, zb_rx)
   device:emit_event(occupancy.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
@@ -59,7 +48,7 @@ local zigbee_plugin_motion_sensor = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
   },
-  can_handle = is_zigbee_plugin_motion_sensor
+  can_handle = require("zigbee-plugin-motion-sensor.can_handle"),
 }
 
 return zigbee_plugin_motion_sensor

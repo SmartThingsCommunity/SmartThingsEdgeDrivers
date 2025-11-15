@@ -84,9 +84,7 @@ local gator_handler = {
     added = device_added,
     doConfigure = do_configure
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "GatorSystem" and device:get_model() == "GSHW01"
-  end
+  can_handle = require("gatorsystem.can_handle"),
 }
 
 return gator_handler

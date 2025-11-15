@@ -18,9 +18,6 @@ local utils = require "st.utils"
 local motion = capabilities.motionSensor.motion
 local signalStrength = capabilities.signalStrength
 
-local SMARTSENSE_MFR = "SmartThings"
-local SMARTSENSE_MODEL = "PGC314"
-local SMARTSENSE_PROFILE_ID = 0xFC01
 local SMARTSENSE_MOTION_CLUSTER = 0xFC04
 local SMARTSENSE_MOTION_STATUS_CMD = 0x00
 local MOTION_MASK = 0x02
@@ -43,14 +40,6 @@ local battery_table = {
   [0] = 0
 }
 
-local function can_handle(opts, driver, device, ...)
-  local endpoint = device.zigbee_endpoints[1] or device.zigbee_endpoints["1"]
-  if (device:get_manufacturer() == SMARTSENSE_MFR and device:get_model() == SMARTSENSE_MODEL) or
-    endpoint.profile_id == SMARTSENSE_PROFILE_ID then
-    return true
-  end
-  return false
-end
 
 local function device_added(driver, device)
   device:emit_event(motion.inactive())
@@ -96,7 +85,7 @@ local smartsense_motion = {
   lifecycle_handlers = {
     added = device_added
   },
-  can_handle = can_handle
+  can_handle = require("smartsense.can_handle"),
 }
 
 return smartsense_motion

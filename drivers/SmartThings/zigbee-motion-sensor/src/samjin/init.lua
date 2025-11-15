@@ -44,9 +44,7 @@ local samjin_driver = {
       }
     }
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "Samjin"
-  end
+  can_handle = require("samjin.can_handle"),
 }
 
 return samjin_driver

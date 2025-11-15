@@ -46,9 +46,7 @@ local centralite_handler = {
   lifecycle_handlers = {
     init = init_handler
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "CentraLite"
-  end
+  can_handle = require("centralite.can_handle"),
 }
 
 return centralite_handler

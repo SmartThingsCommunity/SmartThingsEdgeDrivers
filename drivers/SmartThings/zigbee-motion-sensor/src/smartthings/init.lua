@@ -44,9 +44,7 @@ local smartthings_motion = {
   lifecycle_handlers = {
     init = init_handler
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "SmartThings"
-  end
+  can_handle = require("smartthings.can_handle"),
 }
 
 return smartthings_motion

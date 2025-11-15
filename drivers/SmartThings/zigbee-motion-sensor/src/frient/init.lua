@@ -35,20 +35,7 @@ local POWER_CONFIGURATION_ENDPOINT = 0x23
 local TEMPERATURE_ENDPOINT = 0x26
 local ILLUMINANCE_ENDPOINT = 0x27
 
-local FRIENT_DEVICE_FINGERPRINTS = {
-  { mfr = "frient A/S", model = "MOSZB-140"},
-  { mfr = "frient A/S", model = "MOSZB-141"},
-  { mfr = "frient A/S", model = "MOSZB-153"}
-}
 
-local function can_handle_frient_motion_sensor(opts, driver, device)
-  for _, fingerprint in ipairs(FRIENT_DEVICE_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function occupancy_attr_handler(driver, device, occupancy, zb_rx)
   device:emit_event(occupancy.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
@@ -214,6 +201,6 @@ local frient_motion_driver = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
-  can_handle = can_handle_frient_motion_sensor
+  can_handle = require("frient.can_handle"),
 }
 return frient_motion_driver

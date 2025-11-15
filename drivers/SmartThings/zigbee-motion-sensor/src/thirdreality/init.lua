@@ -20,19 +20,7 @@ local utils = require "st.utils"
 
 local APPLICATION_VERSION = "application_version"
 
-local ZIGBEE_MOTION_SENSOR_FINGERPRINTS = {
-  { mfr = "Third Reality, Inc", model = "3RMS16BZ"},
-  { mfr = "THIRDREALITY", model = "3RMS16BZ"}
-}
 
-local is_third_reality_motion_sensor = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_MOTION_SENSOR_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local device_added = function(self, device)
   device:set_field(APPLICATION_VERSION, 0)
@@ -73,7 +61,7 @@ local third_reality_motion_sensor = {
   lifecycle_handlers = {
     added = device_added,
   },
-  can_handle = is_third_reality_motion_sensor
+  can_handle = require("thirdreality.can_handle"),
 }
 
 return third_reality_motion_sensor
