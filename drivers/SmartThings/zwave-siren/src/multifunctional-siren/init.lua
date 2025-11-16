@@ -15,17 +15,9 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.zwave.defaults
-local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 --- @type st.zwave.CommandClass.Battery
-local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
---- @type st.zwave.CommandClass.SwitchBinary
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version=5})
---- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 
 local MULTIFUNCTIONAL_SIREN_FINGERPRINTS = {
@@ -46,8 +38,6 @@ local function can_handle_multifunctional_siren(opts, driver, device, ...)
   end
   return false
 end
-
-local zwave_handlers = {}
 
 --- Default handler for notification command class reports
 ---
@@ -73,8 +63,6 @@ local do_configure = function(self, device)
   device:send(Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY}))
   device:send(Basic:Get({}))
 end
-
-local capability_handlers = {}
 
 local multifunctional_siren = {
   zwave_handlers = {

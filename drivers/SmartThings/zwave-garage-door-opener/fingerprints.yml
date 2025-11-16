@@ -16,6 +16,12 @@ zwaveManufacturer:
     manufacturerId: 0x0084
     productType: 0x0453
     deviceProfileName: base-garage-door
+  - id: "Ecolink"
+    deviceLabel: Ecolink Garage Door Controller
+    manufacturerId: 0x014A
+    productType: 0x0007
+    productId: 0x4731
+    deviceProfileName: eco-zw-gdo-profile
 zwaveGeneric:
   - id: "GenericGarageDoor"
     deviceLabel: Garage Door

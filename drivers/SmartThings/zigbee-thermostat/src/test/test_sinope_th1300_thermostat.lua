@@ -39,9 +39,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -125,7 +123,6 @@ test.register_coroutine_test(
           floorHighLimit = 30
         }
       }
-      local MFG_CODE = 0x0000
       local SINOPE_CUSTOM_CLUSTER = 0xFF01
       local MFR_TIME_FORMAT_ATTRIBUTE = 0x0114
       local MFR_AIR_FLOOR_MODE_ATTRIBUTE = 0x0105

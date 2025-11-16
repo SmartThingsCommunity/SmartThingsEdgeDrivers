@@ -1,0 +1,22 @@
+name: aqara-pet-feeder
+components:
+  - id: main
+    capabilities:
+      - id: feederOperatingState
+        version: 1
+      - id: feederPortion
+        version: 1
+      - id: powerSource
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Feeder
+preferences:
+  - preferenceId: stse.buttonLock
+    explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Pet_Feeder

@@ -1,0 +1,22 @@
+id: stse.lifeTimeReport
+version: 1
+status: proposed
+name: Life Time Report
+ephemeral: false
+attributes:
+  lifeTimeState:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - normal
+            - beAboutToEnd
+            - endOfLife
+      additionalProperties: false
+      required:
+        - value
+    enumCommands: []
+commands: {
+}

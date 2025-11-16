@@ -130,9 +130,7 @@ local function thermostat_local_temperature_handler(driver, device, value, zb_rx
     device:emit_event(TemperatureAlarm.temperatureAlarm.freeze())
   elseif temperature == 0x7fff then -- Overheat Alarm
     device:emit_event(TemperatureAlarm.temperatureAlarm.heat())
-  elseif temperature == 0x8000 or temperature == -32768 then -- Invalid temperature
-    -- Do nothing
-  else
+  elseif temperature ~= 0x8000 and temperature ~= -32768 then -- Invalid temperature
     if temperature > 0x8000 then -- Handle negative C (< 32F) readings
       temperature = -(utils.round(2 * (65536 - temperature)) / 2)
     end
@@ -310,7 +308,7 @@ local function do_configure(self, device)
 end
 
 local function device_added(self, device)
-  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_MODES))
+  device:emit_event(ThermostatMode.supportedThermostatModes(SUPPORTED_MODES, { visibility = { displayed = false } }))
   device:emit_event(TemperatureAlarm.temperatureAlarm.cleared())
 end
 

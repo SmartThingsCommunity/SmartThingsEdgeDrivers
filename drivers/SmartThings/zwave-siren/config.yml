@@ -2,3 +2,5 @@ name: 'Z-Wave Siren'
 packageKey: 'zwave-siren'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave siren devices"
+vendorSupportInformation: "https://support.smartthings.com"

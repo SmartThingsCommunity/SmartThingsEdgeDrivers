@@ -3,7 +3,7 @@ zigbeeManufacturer:
     deviceLabel: Aqara Door and Window Sensor T1
     manufacturer: LUMI
     model: lumi.magnet.agl02
-    deviceProfileName: contact-battery-profile
+    deviceProfileName: contact-batteryLevel
   - id: "NYCE/3010"
     deviceLabel: NYCE Open/Closed Sensor
     manufacturer: NYCE
@@ -23,6 +23,11 @@ zigbeeManufacturer:
     deviceLabel: Sengled Open/Closed Sensor
     manufacturer: sengled
     model: E1D-G73
+    deviceProfileName: contact-battery-profile
+  - id: "sengled/E2D-G73"
+    deviceLabel: Sengled Open/Closed Sensor
+    manufacturer: sengled
+    model: E2D-G73
     deviceProfileName: contact-battery-profile
   - id: "Visonic/MCT-340 SMA"
     deviceLabel: Tyco Open/Closed Sensor
@@ -135,15 +140,20 @@ zigbeeManufacturer:
     model: SS-B100-ZB
     deviceProfileName: contact-battery-temperature
   - id: "frient A/S/WISZB-120"
-    deviceLabel: frient Open/Closed Sensor
+    deviceLabel: frient Entry Sensor Pro
     manufacturer: frient A/S
     model: WISZB-120
-    deviceProfileName: contact-battery-temperature
+    deviceProfileName: contact-battery-temperature-tamper
   - id: "frient A/S/WISZB-121"
-    deviceLabel: frient Open/Closed Sensor
+    deviceLabel: frient Entry Sensor
     manufacturer: frient A/S
     model: WISZB-121
-    deviceProfileName: contact-battery-temperature
+    deviceProfileName: contact-battery-profile
+  - id: "frient A/S/WISZB-131"
+    deviceLabel: frient Entry Sensor 2 Pro
+    manufacturer: frient A/S
+    model: WISZB-131
+    deviceProfileName: frient-contact-battery-temperature
   - id: "Compacta/ZBWDS"
     deviceLabel: Smartenit Open/Closed Sensor
     manufacturer: Compacta
@@ -178,12 +188,22 @@ zigbeeManufacturer:
     deviceLabel: Multipurpose Sensor
     manufacturer: SmartThings
     model: PGC313
-    deviceProfileName: smartsense-multi
+    deviceProfileName: multi-sensor
   - id: Smartsense/multi/2
     deviceLabel: Multipurpose Sensor
     manufacturer: SmartThings
     model: PGC313EU
-    deviceProfileName: smartsense-multi
+    deviceProfileName: multi-sensor
+  - id: "Third Reality/3RVS01031Z"
+    deviceLabel: ThirdReality Vibration Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RVS01031Z
+    deviceProfileName: thirdreality-multi-sensor
+  - id: "Aug. Winkhaus SE/FM.V.ZB"
+    deviceLabel: Funkkontakt FM.V.ZB
+    manufacturer: Aug. Winkhaus SE
+    model: FM.V.ZB
+    deviceProfileName: contact-battery-profile
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"
@@ -207,4 +227,4 @@ zigbeeGeneric:
       - 0xFC01
     deviceIdentifiers:
       - 0x0139
-    deviceProfileName: smartsense-multi
+    deviceProfileName: multi-sensor

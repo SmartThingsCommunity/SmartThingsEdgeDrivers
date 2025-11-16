@@ -1,0 +1,6 @@
+name: 'Matter Media'
+packageKey: 'matter-media'
+permissions:
+  matter: {}
+description: "SmartThings driver for Matter media devices"
+vendorSupportInformation: "https://support.smartthings.com"

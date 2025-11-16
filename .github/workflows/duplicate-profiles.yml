@@ -1,0 +1,47 @@
+name: Check for duplicate profiles
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'drivers/**/profiles/*.yml'
+env:
+  LUA_PATH: /home/runner/work/lua_libs/?.lua;./?.lua;/home/runner/work/lua_libs/?/init.lua;./?/init.lua
+jobs:
+  find-duplicate-profiles:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Creates file "$/files.csv", among others
+      - id: file_changes
+        name: Gather file changes
+        uses: trilom/file-changes-action@1.2.4
+        with:
+          output: ','
+          fileOutput: ','
+
+      # For verification
+      - name: Show files changed
+        run: |
+          cat $HOME/files.csv
+
+      - name: Run python script
+        run: |
+          python ./.github/scripts/check_duplicates.py
+
+      - name: Upload duplicate profile comment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: duplicate_profile_comment
+          path: |
+            profile-comment-body.md
+
+      - run: echo ${{ github.event.number }} > pr_number.txt
+
+      - name: Upload PR info
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr_number
+          path: |
+            pr_number.txt

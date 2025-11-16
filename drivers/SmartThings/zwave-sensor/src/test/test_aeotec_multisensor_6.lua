@@ -120,7 +120,54 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-    "Configuration value sholud be updated and device refreshed, when wakeup notification received",
+    "Receiving Wakeup command should generate the correct commands",
+    function ()
+      test.socket.zwave:__set_channel_ordering("relaxed")
+      test.socket.zwave:__queue_receive(
+        {
+          mock_sensor.id,
+          WakeUp:Notification({})
+        }
+      )
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          WakeUp:IntervalGet({})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Configuration:Get({parameter_number = 9})
+      ))
+
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorBinary:Get({sensor_type = SensorBinary.sensor_type.MOTION})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Battery:Get({})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE, scale = SensorMultilevel.scale.luminance.LUX})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY})
+      ))
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET})
+      ))
+
+
+      end
+)
+test.register_coroutine_test(
+    "Configuration value should be updated and device refreshed, when wakeup notification received",
     function()
       test.socket.zwave:__set_channel_ordering("relaxed")
       test.socket.device_lifecycle():__queue_receive({mock_sensor.id, "init"})
@@ -140,6 +187,10 @@ test.register_coroutine_test(
           WakeUp:Notification({})
         }
       )
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          WakeUp:IntervalGet({})
+      ))
       test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
           Configuration:Set({parameter_number = 3, size = 2, configuration_value = 120})
@@ -176,90 +227,190 @@ test.register_coroutine_test(
           mock_sensor,
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET})
       ))
+
+      test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          Configuration:Get({parameter_number = 9})
+      ))
+
     end
 )
 
 test.register_message_test(
   "SensorMultilevel report ultraviolet type should be handled as ultravioletIndex",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
-          sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET,
-          sensor_value = 10
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.ultravioletIndex.ultravioletIndex({value = 10}))
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
+        sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET,
+        sensor_value = 10
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.ultravioletIndex.ultravioletIndex({value = 10}))
     }
+  }
 )
 
 test.register_message_test(
-    "Notification reports about power management should be handled",
+  "Notification reports about power management should be handled",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_sensor.id,
-          Notification:Report({notification_type = Notification.notification_type.POWER_MANAGEMENT, event = Notification.event.power_management.AC_MAINS_DISCONNECTED})
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
-      },
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_sensor.id,
-          Notification:Report({notification_type = Notification.notification_type.POWER_MANAGEMENT, event = Notification.event.power_management.AC_MAINS_RE_CONNECTED})
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        Notification:Report({notification_type = Notification.notification_type.POWER_MANAGEMENT, event = Notification.event.power_management.AC_MAINS_DISCONNECTED})
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        Notification:Report({notification_type = Notification.notification_type.POWER_MANAGEMENT, event = Notification.event.power_management.AC_MAINS_RE_CONNECTED})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
     }
+  }
 )
 
 test.register_message_test(
-    "Configuration reports about power management should be handled",
+  "Configuration reports about power management should be handled",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_sensor.id,
-          Configuration:Report({parameter_number = 9, configuration_value = 0})
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
-      },
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = {
-          mock_sensor.id,
-          Configuration:Report({parameter_number = 9, configuration_value = 256})
-        }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        Configuration:Report({parameter_number = 9, configuration_value = 2}) -- device docs report this should be zero, but actual devices report 2
       }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        Configuration:Report({parameter_number = 9, configuration_value = 256})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
     }
+  }
+)
+
+test.register_message_test(
+  "Notification reports about tamper should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        Notification:Report({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "Tampers should clear after 10 seconds",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(10, "oneshot")
+    test.socket.zwave:__queue_receive({
+      mock_sensor.id,
+      Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    )
+    test.mock_time.advance_time(10)
+    test.socket.capability:__expect_send(
+      mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Subsequent tampers should only clear 10 seconds after the most recent",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(10, "oneshot")
+    test.socket.zwave:__queue_receive({
+      mock_sensor.id,
+      Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    )
+    test.mock_time.advance_time(5)
+    test.socket.zwave:__queue_receive({
+      mock_sensor.id,
+      Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    )
+    test.mock_time.advance_time(10)
+    test.socket.capability:__expect_send(
+      mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Tamper clears from the device should also send a no motion event",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(10, "oneshot")
+    test.socket.zwave:__queue_receive({
+      mock_sensor.id,
+      Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.STATE_IDLE
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+    )
+    test.mock_time.advance_time(10)
+    test.socket.capability:__expect_send(
+      mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
+  end
 )
 
 test.run_registered_tests()

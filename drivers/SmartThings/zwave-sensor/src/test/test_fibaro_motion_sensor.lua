@@ -126,6 +126,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
@@ -163,10 +171,49 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+      message = mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.active())
     }
   }
 )
+
+test.register_message_test(
+    "Sensor Alarm report (general) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(SensorAlarm:Report({
+          sensor_type = SensorAlarm.sensor_type.GENERAL_PURPOSE_ALARM,
+          sensor_state = SensorAlarm.sensor_state.NO_ALARM
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive())
+      }
+    }
+)
+
+test.register_message_test(
+    "Sensor Alarm report (general) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(SensorAlarm:Report({
+          sensor_type = SensorAlarm.sensor_type.GENERAL_PURPOSE_ALARM,
+          sensor_state = 50
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.active())
+      }
+    }
+)
+
 
 test.register_message_test(
   "Illuminance reports should be handled",
@@ -237,6 +284,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
@@ -257,6 +312,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )
@@ -276,6 +339,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )

@@ -1,0 +1,31 @@
+name: smoke-co-temp-humidity-comeas
+components:
+- id: main
+  capabilities:
+  - id: smokeDetector
+    version: 1
+  - id: carbonMonoxideDetector
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: carbonMonoxideMeasurement
+    version: 1
+  - id: batteryLevel
+    version: 1
+  - id: hardwareFault
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: SmokeDetector
+preferences:
+  - preferenceId: certifiedpreferences.smokeSensorSensitivity
+    explicit: true
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true

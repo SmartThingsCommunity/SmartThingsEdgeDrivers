@@ -175,7 +175,7 @@ test.register_coroutine_test(
               mock_fan,
               SwitchMultilevel:Set({
                           value=fan_speed_helper.levels_for_4_speed.LOW, -- switch level corresponding to fanSpeed 1 (low)
-                          duration = 1
+                          duration = "default"
                         })
           )
       )

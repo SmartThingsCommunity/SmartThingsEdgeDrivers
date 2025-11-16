@@ -1,0 +1,20 @@
+name: base-electric-meter-negative-values
+components:
+- id: main
+  capabilities:
+  - id: powerMeter
+    version: 1
+    config:
+      values:
+        - key: "power.value"
+          range: [-5000, 5000]
+  - id: energyMeter
+    version: 1
+    config:
+      values:
+        - key: "energy.value"
+          range: [-50000, 50000]
+  - id: refresh
+    version: 1
+  categories:
+  - name: CurbPowerMeter

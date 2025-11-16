@@ -12,30 +12,35 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local OccupancySensing = zcl_clusters.OccupancySensing
 
 local ZIGBEE_IRIS_MOTION_SENSOR_FINGERPRINTS = {
-    { mfr = "iMagic by GreatStar", model = "1117-S" }
+  { mfr = "iMagic by GreatStar", model = "1117-S" }
 }
 
+-- TODO: the IAS Zone changes should be replaced after supporting functions are included in the lua libs
+local do_init = function(driver, device)
+  battery_defaults.build_linear_voltage_init(2.4, 2.7)(driver, device)
+  device:remove_monitored_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+  device:remove_configured_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+end
+
 local is_zigbee_iris_motion_sensor = function(opts, driver, device)
-    for _, fingerprint in ipairs(ZIGBEE_IRIS_MOTION_SENSOR_FINGERPRINTS) do
-        if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-            return true
-        end
+  for _, fingerprint in ipairs(ZIGBEE_IRIS_MOTION_SENSOR_FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
     end
-    return false
+  end
+  return false
 end
 
 local iris_motion_handler = {
-    NAME = "Iris Motion Handler",
-    lifecycle_handlers = {
-        init = battery_defaults.build_linear_voltage_init(2.4, 2.7)
-    },
-    can_handle = is_zigbee_iris_motion_sensor
+  NAME = "Iris Motion Handler",
+  lifecycle_handlers = {
+    init = do_init
+  },
+  can_handle = is_zigbee_iris_motion_sensor
 }
 
 return iris_motion_handler

@@ -20,7 +20,6 @@ local button_utils = require "button_utils"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
-local PowerConfiguration = clusters.PowerConfiguration
 
 local ADURO_NUM_ENDPOINT = 0x04
 local ADURO_MANUFACTURER_SPECIFIC_CLUSTER = 0xFCCC
@@ -44,10 +43,10 @@ end
 
 local do_configuration = function(self, device)
   for endpoint = 1,ADURO_NUM_ENDPOINT do
-    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
+    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui, endpoint))
   end
-  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x02))
-  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui):to_endpoint(0x03))
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui, 0x02))
+  device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui, 0x03))
   device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
 end
 

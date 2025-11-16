@@ -1,0 +1,7 @@
+name: 'Wemo'
+packageKey: 'com.smartthings.wemo'
+permissions:
+  lan: {}
+  discovery: {}
+description: "SmartThings driver for Wemo devices"
+vendorSupportInformation: "https://support.smartthings.com"

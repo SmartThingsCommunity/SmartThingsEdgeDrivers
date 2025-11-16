@@ -24,7 +24,7 @@ local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({v
 local zw = require "st.zwave"
 local t_utils = require "integration_test.utils"
 
--- supported comand classes
+-- supported command classes
 local thermostat_endpoints = {
   {
     command_classes = {
@@ -244,6 +244,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+        }
       }
     }
 )
@@ -363,7 +371,9 @@ test.register_coroutine_test(
               mock_device,
               ThermostatSetpoint:Set({
                                        setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-                                       value = 21.5
+                                       value = 21.5,
+                                       precision = 1,
+                                       size = 2
                                      })
           )
       )

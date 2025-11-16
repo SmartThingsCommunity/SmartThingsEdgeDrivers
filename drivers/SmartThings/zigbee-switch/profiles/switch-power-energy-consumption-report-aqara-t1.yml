@@ -1,0 +1,29 @@
+name: switch-power-energy-consumption-report-aqara-t1
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: powerMeter
+        version: 1
+      - id: energyMeter
+        version: 1
+      - id: powerConsumptionReport
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: SmartPlug
+preferences:
+  - preferenceId: stse.maxPowerCN
+    explicit: true
+  - preferenceId: stse.restorePowerState
+    explicit: true
+  - preferenceId: stse.turnOffIndicatorLight
+    explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Smart_Plug
+  

@@ -1,0 +1,127 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+local capabilities = require "st.capabilities"
+local clusters = require "st.matter.clusters"
+local device_lib = require "st.device"
+local im = require "st.matter.interaction_model"
+local log = require "log"
+
+local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
+
+-------------------------------------------------------------------------------------
+-- Third Reality MK1 specifics
+-------------------------------------------------------------------------------------
+
+local THIRD_REALITY_MK1_FINGERPRINT = { vendor_id = 0x1407, product_id = 0x1388 }
+
+local function is_third_reality_mk1(opts, driver, device)
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
+     device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
+     device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
+    log.info("Using Third Reality MK1 sub driver")
+    return true
+  end
+  return false
+end
+
+local function endpoint_to_component(device, ep)
+  local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
+  for component, endpoint in pairs(map) do
+    if endpoint == ep then
+      return component
+    end
+  end
+  return "main"
+end
+
+-- override subscribe function to prevent subscribing to additional events from the main driver
+local function subscribe(device)
+  local ib = im.InteractionInfoBlock(nil, clusters.Switch.ID, nil, clusters.Switch.events.InitialPress.ID)
+  local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
+  subscribe_request:with_info_block(ib)
+  device:send(subscribe_request)
+end
+
+local function configure_buttons(device)
+  local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  for _, ep in ipairs(ms_eps) do
+    if device.profile.components[endpoint_to_component(device, ep)] then
+      device.log.info(string.format("Configuring Supported Values for generic switch endpoint %d", ep))
+      local supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
+      device:emit_event_for_endpoint(ep, supportedButtonValues_event)
+      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
+    else
+      device.log.info(string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
+    end
+  end
+end
+
+local function build_button_component_map(device)
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  table.sort(button_eps)
+  local component_map = {}
+  component_map["main"] = button_eps[1]
+  for component_num = 2, 12 do
+    component_map["F" .. component_num] = button_eps[component_num]
+  end
+  device:set_field(COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
+end
+
+local function device_init(driver, device)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
+  device:extend_device("subscribe", subscribe)
+  device:subscribe()
+end
+
+-- override device_added to prevent it running in the main driver
+local function device_added(driver, device) end
+
+local function info_changed(driver, device, event, args)
+  if device.profile.id ~= args.old_st_store.profile.id then
+    configure_buttons(device)
+    device:subscribe()
+  end
+end
+
+local function match_profile(driver, device)
+  device:try_update_metadata({profile = "12-button-keyboard"})
+  build_button_component_map(device)
+  configure_buttons(device)
+end
+
+local function do_configure(driver, device)
+  match_profile(driver, device)
+end
+
+local function driver_switched(driver, device)
+  match_profile(driver, device)
+end
+
+local function initial_press_event_handler(driver, device, ib, response)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.pushed({state_change = true}))
+end
+
+local third_reality_mk1_handler = {
+  NAME = "ThirdReality MK1 Handler",
+  lifecycle_handlers = {
+    init = device_init,
+    added = device_added,
+    infoChanged = info_changed,
+    doConfigure = do_configure,
+    driverSwitched = driver_switched
+  },
+  matter_handlers = {
+    event = {
+      [clusters.Switch.ID] = {
+        [clusters.Switch.events.InitialPress.ID] = initial_press_event_handler
+      }
+    }
+  },
+  supported_capabilities = {
+    capabilities.button
+  },
+  can_handle = is_third_reality_mk1
+}
+
+return third_reality_mk1_handler

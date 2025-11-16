@@ -17,7 +17,6 @@ local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 local zcl_global_commands = require "st.zigbee.zcl.global_commands"
 local data_types = require "st.zigbee.data_types"
-local device_management = require "st.zigbee.device_management"
 
 --ZCL
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -32,9 +31,7 @@ local IaswdLevel = IASWD.types.IaswdLevel
 --Capability
 local capabilities = require "st.capabilities"
 local alarm = capabilities.alarm
-local battery = capabilities.battery
 local switch = capabilities.switch
-local temperatureMeasurement = capabilities.temperatureMeasurement
 
 -- Constants
 local ALARM_COMMAND = "alarmCommand"
@@ -165,9 +162,9 @@ local zigbee_siren_driver_template = {
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   zigbee_handlers = {
     global = {
-        [IASWD.ID] = {
-            [zcl_global_commands.DEFAULT_RESPONSE_ID] = default_response_handler
-        }
+      [IASWD.ID] = {
+        [zcl_global_commands.DEFAULT_RESPONSE_ID] = default_response_handler
+      }
     },
     attr = {
       [IASWD.ID] = {
@@ -189,7 +186,7 @@ local zigbee_siren_driver_template = {
   },
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,    
+    added = device_added,
     doConfigure = do_configure
   },
   sub_drivers = { require("ozom"), require("frient") },
@@ -203,7 +200,8 @@ local zigbee_siren_driver_template = {
         data_type = IASZone.attributes.ZoneStatus.base_type
       }
     }
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_siren_driver_template, zigbee_siren_driver_template.supported_capabilities)

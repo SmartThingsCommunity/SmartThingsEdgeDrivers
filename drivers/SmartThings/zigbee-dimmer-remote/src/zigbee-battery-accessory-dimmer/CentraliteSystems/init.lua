@@ -18,7 +18,6 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local Level = zcl_clusters.Level
 local OnOff = zcl_clusters.OnOff
-local PowerConfiguration = zcl_clusters.PowerConfiguration
 
 local capabilities = require "st.capabilities"
 
@@ -88,6 +87,23 @@ local is_centralite_systems = function(opts, driver, device)
   return false
 end
 
+local voltage_configuration = {
+  cluster = zcl_clusters.PowerConfiguration.ID,
+  attribute = zcl_clusters.PowerConfiguration.attributes.BatteryVoltage.ID,
+  minimum_interval = 30,
+  maximum_interval = 14300,
+  data_type = zcl_clusters.PowerConfiguration.attributes.BatteryVoltage.base_type,
+  reportable_change = 1
+}
+
+local function device_init(driver, device)
+  device:add_configured_attribute(voltage_configuration)
+  device:remove_monitored_attribute(zcl_clusters.PowerConfiguration.ID, zcl_clusters.PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
+  device:remove_configured_attribute(zcl_clusters.PowerConfiguration.ID, zcl_clusters.PowerConfiguration.attributes.BatteryPercentageRemaining.ID)
+  device:set_field(battery_defaults.DEVICE_MIN_VOLTAGE_KEY, 2.3)
+  device:set_field(battery_defaults.DEVICE_MAX_VOLTAGE_KEY, 3.0)
+end
+
 local centralite_systems = {
   NAME = "centralite systems",
   zigbee_handlers = {
@@ -99,7 +115,7 @@ local centralite_systems = {
     }
   },
   lifecycle_handlers = {
-    init = battery_defaults.build_linear_voltage_init(2.3, 3.0),
+    init = device_init,
     doConfigure = do_configure
   },
   can_handle = is_centralite_systems

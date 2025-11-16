@@ -17,7 +17,6 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local BarrierOperator = (require "st.zwave.CommandClass.BarrierOperator")({ version = 1 })
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local t_utils = require "integration_test.utils"
 
 -- supported comand classes

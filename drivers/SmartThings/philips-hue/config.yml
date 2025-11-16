@@ -1,0 +1,7 @@
+name: 'Philips Hue'
+packageKey: 'philips-hue'
+permissions:
+  lan: {}
+  discovery: {}
+description: "SmartThings driver for Philips Hue devices"
+vendorSupportInformation: "https://support.smartthings.com"

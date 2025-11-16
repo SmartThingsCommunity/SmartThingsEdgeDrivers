@@ -1,0 +1,6 @@
+name: 'Aqara Cube'
+packageKey: 'aqara-cube'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Aqara Cube devices"
+vendorSupportInformation: "https://www.aqara.com/en/support/"

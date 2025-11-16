@@ -264,10 +264,10 @@ test.register_coroutine_test(
       test.socket.device_lifecycle():__queue_receive(mock_siren:generate_info_changed(
           {
               preferences = {
-                alarmLength = 5,
-                alarmLEDflash = 0,
-                comfortLED = 10,
-                tamper = 0
+                ["certifiedpreferences.alarmLength"] = 5,
+                ["certifiedpreferences.alarmLEDflash"] = 0,
+                ["certifiedpreferences.comfortLED"] = 10,
+                ["certifiedpreferences.tamper"] = 0
               }
           }
       ))

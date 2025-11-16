@@ -2,3 +2,5 @@ name: 'Zigbee Motion Sensor'
 packageKey: 'zigbee-motion-sensor'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee motion sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"

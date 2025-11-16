@@ -10,6 +10,10 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [-20, 100]
   - id: tamperAlert
     version: 1
   - id: refresh

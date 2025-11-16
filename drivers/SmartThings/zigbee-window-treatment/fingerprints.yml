@@ -1,4 +1,34 @@
 zigbeeManufacturer:
+  - id: "Vimar/xx594-roller-shutter"
+    deviceLabel: Vimar Smart Roller Shutter
+    manufacturer: Vimar
+    model: Window_Cov_v1.0
+    deviceProfileName: window-treatment-profile-no-firmware-update
+  - id: "Vimar/03982-roller-shutter-module"
+    deviceLabel: Vimar Smart Roller Shutter Module
+    manufacturer: Vimar
+    model: Window_Cov_Module_v1.0
+    deviceProfileName: window-treatment-profile-no-firmware-update
+  - id: "LUMI/lumi.curtain.aq2"
+    deviceLabel: Aqara Roller Shade Controller
+    manufacturer: LUMI
+    model: lumi.curtain.aq2
+    deviceProfileName: window-treatment-aqara-roller-shade-rotate
+  - id: "LUMI/lumi.curtain"
+    deviceLabel: Aqara Curtain Controller
+    manufacturer: LUMI
+    model: lumi.curtain
+    deviceProfileName: window-treatment-aqara
+  - id: "LUMI/lumi.curtain.v1"
+    deviceLabel: Aqara Curtain Controller
+    manufacturer: LUMI
+    model: lumi.curtain.v1
+    deviceProfileName: window-treatment-aqara
+  - id: "LUMI/lumi.curtain.agl001"
+    deviceLabel: Aqara Curtain Driver E1
+    manufacturer: LUMI
+    model: lumi.curtain.agl001
+    deviceProfileName: window-treatment-aqara-curtain-driver-e1
   - id: "REXENSE/KG0001"
     deviceLabel: Window Treatment
     manufacturer: REXENSE
@@ -68,6 +98,47 @@ zigbeeManufacturer:
     manufacturer: AXIS
     model: Gear
     deviceProfileName: window-treatment-battery
+  - id: "_TZE204_fzbskaga/TS0601"
+    deviceLabel: Window Treatment
+    manufacturer: _TZE204_fzbskaga
+    model: TS0601
+    deviceProfileName: window-treatment-hanssem
+  - id: "Smartwings/WM25/L-Z"
+    deviceLabel: Smartwings Window Treatment
+    manufacturer: Smartwings
+    model: WM25/L-Z
+    deviceProfileName: window-treatment-battery
+  - id: "Insta GmbH/Blinds Actuator"
+    deviceLabel: NEXENTRO Blinds Actuator
+    manufacturer: Insta GmbH
+    model: NEXENTRO Blinds Actuator
+    deviceProfileName: window-treatment-profile
+  - id: "ScreenInnovations/WM25/L-Z"
+    deviceLabel: Screen Innovations Window Treatment
+    manufacturer: Screen Innovations
+    model: WM25/L-Z
+    deviceProfileName: window-treatment-powerSource
+  - id: "Shade Revolution/Indoor Shade Motors"
+    deviceLabel: Smart Shade
+    manufacturer: Shade Revolution
+    model: Indoor Shade Motors
+    deviceProfileName: window-treatment-powerSource
+  - id: "VIVIDSTORM/VWSDSTUST120H"
+    deviceLabel: VIVIDSTORM Smart Screen VWSDSTUST120H
+    manufacturer: VIVIDSTORM
+    model: VWSDSTUST120H
+    deviceProfileName: projector-screen-VWSDSTUST120H
+  - id: "NodOn/SIN-4-RS-20"
+    deviceLabel: Zigbee Roller Shutter Relay Switch
+    manufacturer: NodOn
+    model: SIN-4-RS-20
+    deviceProfileName: window-treatment-profile
+  - id: "HOPOsmart/A2230011"
+    deviceLabel: HOPOsmart Window Opener A2230011
+    manufacturer: HOPOsmart
+    model: A2230011
+    deviceProfileName: window-shade-only
+
 zigbeeGeneric:
   - id: "genericShade"
     deviceLabel: Zigbee Window Treatment

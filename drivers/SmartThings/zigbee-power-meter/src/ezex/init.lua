@@ -13,12 +13,12 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local ZigbeeDriver = require "st.zigbee"
-local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
-local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
+local ElectricalMeasurement = clusters.ElectricalMeasurement
+local energy_meter_defaults = require "st.zigbee.defaults.energyMeter_defaults"
+local configurations = require "configurations"
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = {
   { model = "E240-KR080Z0-HA" }
@@ -34,6 +34,15 @@ local is_ezex_power_meter = function(opts, driver, device)
   return false
 end
 
+local instantaneous_demand_configuration = {
+  cluster = SimpleMetering.ID,
+  attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
+  minimum_interval = 5,
+  maximum_interval = 3600,
+  data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
+  reportable_change = 500
+}
+
 local do_configure = function(self, device)
   device:refresh()
   device:configure()
@@ -42,7 +51,13 @@ end
 local device_init = function(self, device)
   device:set_field(constants.SIMPLE_METERING_DIVISOR_KEY, 1000000, {persist = true})
   device:set_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
+  device:remove_configured_attribute(ElectricalMeasurement.ID, ElectricalMeasurement.attributes.ActivePower.ID)
+  device:remove_configured_attribute(ElectricalMeasurement.ID, ElectricalMeasurement.attributes.ACPowerDivisor.ID)
+  device:remove_configured_attribute(ElectricalMeasurement.ID, ElectricalMeasurement.attributes.ACPowerMultiplier.ID)
+  device:add_configured_attribute(instantaneous_demand_configuration)
 end
+
+local function noop_active_power(driver, device, value, zb_rx) end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value_miliwatts = value.value
@@ -54,10 +69,7 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   end
   device:emit_event(capabilities.powerConsumptionReport.powerConsumption({energy = raw_value_watts, deltaEnergy = delta_energy })) -- the unit of these values should be 'Wh'
 
-  local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
-  local divisor = device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) or 1000000
-  local converted_value = raw_value_miliwatts * multiplier/divisor -- unit: kWh
-  device:emit_event(capabilities.energyMeter.energy({value = converted_value, unit = "kWh"}))
+  energy_meter_defaults.energy_meter_handler(driver, device, value, zb_rx)
 end
 
 local ezex_power_meter_handler = {
@@ -66,11 +78,14 @@ local ezex_power_meter_handler = {
     attr = {
       [SimpleMetering.ID] = {
         [SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
+      },
+      [ElectricalMeasurement.ID] = {
+        [ElectricalMeasurement.attributes.ActivePower.ID] = noop_active_power
       }
     }
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
   can_handle = is_ezex_power_meter

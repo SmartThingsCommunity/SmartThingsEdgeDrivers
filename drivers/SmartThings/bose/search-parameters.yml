@@ -1,0 +1,2 @@
+ssdp:
+  - searchTerm: urn:schemas-upnp-org:device:MediaRenderer:1

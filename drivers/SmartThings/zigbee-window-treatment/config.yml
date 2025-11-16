@@ -2,3 +2,5 @@ name: 'Zigbee Window Treatment'
 packageKey: 'zigbee-window-treatment'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee window treatment devices"
+vendorSupportInformation: "https://support.smartthings.com"

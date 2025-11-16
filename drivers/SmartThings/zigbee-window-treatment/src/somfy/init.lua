@@ -14,8 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
-local window_preset_defaults = require "st.zigbee.defaults.windowShadePreset_defaults"
-local window_shade_defaults = require "st.zigbee.defaults.windowShade_defaults"
+local window_shade_utils = require "window_shade_utils"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local WindowCovering = zcl_clusters.WindowCovering
 
@@ -65,6 +64,7 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
     elseif current_level ~= level then
       event = current_level < level and windowShade.opening() or windowShade.closing()
       local timer = device.thread:call_with_delay(2, function(d)
+        device:set_field(FINAL_STATE_POLL_TIMER, nil)
         local current_level = device:get_latest_state(device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
           capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME)
         if current_level > 0 and current_level < 100 then
@@ -109,7 +109,7 @@ local function window_shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
-  local level = device.preferences.presetPosition or device:get_field(window_preset_defaults.PRESET_LEVEL_KEY) or window_preset_defaults.PRESET_LEVEL
+  local level = window_shade_utils.get_preset_level(device, command.component)
   command.args.shadeLevel = level
   window_shade_level_cmd(driver, device, command)
 end

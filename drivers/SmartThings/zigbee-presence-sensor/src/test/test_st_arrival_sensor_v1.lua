@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local data_types = require "st.zigbee.data_types"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
@@ -69,6 +68,7 @@ end
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local add_device = function()
+  -- The initial presenceSensor event should be send during the device's first time onboarding
   test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
   test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main",
     capabilities.presenceSensor.presence("present")
@@ -76,10 +76,14 @@ local add_device = function()
   test.wait_for_events()
 end
 
-local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
+local add_device_after_switch_over = function()
+  -- Avoid sending the initial presenceSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+  test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added"})
+  test.wait_for_events()
 end
+
+local function test_init()
+  test.mock_device.add_test_device(mock_simple_device)end
 
 test.set_test_init_function(test_init)
 
@@ -129,6 +133,7 @@ test.register_coroutine_test(
     "Added lifecycle should be handlded",
     function ()
       add_device()
+      add_device_after_switch_over()
     end
 )
 
@@ -181,6 +186,21 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(0)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
   end
+)
+
+test.register_coroutine_test(
+    "init followed by no action should result in timeout",
+    function ()
+      test.mock_device.add_test_device(mock_simple_device)
+      test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+      test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "init"})
+      test.wait_for_events()
+      test.mock_time.advance_time(121)
+      test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
+    end,
+    {
+      test_init = function()      end
+    }
 )
 
 test.run_registered_tests()

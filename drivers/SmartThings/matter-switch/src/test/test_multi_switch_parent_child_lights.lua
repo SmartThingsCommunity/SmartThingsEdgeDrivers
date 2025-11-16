@@ -1,0 +1,690 @@
+-- Copyright © 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+local test = require "integration_test"
+local t_utils = require "integration_test.utils"
+local capabilities = require "st.capabilities"
+local clusters = require "st.matter.clusters"
+
+test.disable_startup_messages()
+
+local TRANSITION_TIME = 0
+local OPTIONS_MASK = 0x01
+local OPTIONS_OVERRIDE = 0x01
+
+local parent_ep = 10
+local child1_ep = 20
+local child2_ep = 30
+
+local mock_device = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("light-level-colorTemperature.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = parent_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
+      }
+    },
+    {
+      endpoint_id = child1_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 2}, -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 2} -- Dimmable Light
+      }
+    },
+    {
+      endpoint_id = child2_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
+      },
+      device_types = {
+        {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+      }
+    },
+  }
+})
+
+local child1_ep_non_sequential = 50
+local child2_ep_non_sequential = 30
+local child3_ep_non_sequential = 40
+
+local mock_device_parent_child_endpoints_non_sequential = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("light-level-colorTemperature.yml"),
+  manufacturer_info = {
+    vendor_id = 0x1321,
+    product_id = 0x000C,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = parent_ep,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 2} -- On/Off Light
+      }
+    },
+    {
+      endpoint_id = child1_ep_non_sequential,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 2}, -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 2} -- Dimmable Light
+      }
+    },
+    {
+      endpoint_id = child2_ep_non_sequential,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
+      },
+      device_types = {
+        {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+      }
+    },
+    {
+      endpoint_id = child3_ep_non_sequential,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 2} -- On/Off Plug
+      }
+    },
+  }
+})
+
+local child_profiles = {
+  [child1_ep] = t_utils.get_profile_definition("light-level.yml"),
+  [child2_ep] = t_utils.get_profile_definition("light-color-level.yml"),
+}
+
+local mock_children = {}
+for i, endpoint in ipairs(mock_device.endpoints) do
+  if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
+    local child_data = {
+      profile = child_profiles[endpoint.endpoint_id],
+      device_network_id = string.format("%s:%d", mock_device.id, endpoint.endpoint_id),
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
+    }
+    mock_children[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
+  end
+end
+
+local function test_init()
+  test.mock_device.add_test_device(mock_device)
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device))
+    end
+  end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, child1_ep, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, child2_ep, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, child2_ep, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  mock_device:expect_metadata_update({ profile = "light-binary" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  for _, child in pairs(mock_children) do
+    test.mock_device.add_test_device(child)
+  end
+
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 2",
+    profile = "light-level",
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", child1_ep)
+  })
+
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 3",
+    profile = "light-color-level",
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", child2_ep)
+  })
+end
+
+local child_profiles_non_sequential = {
+  [child1_ep_non_sequential] = t_utils.get_profile_definition("light-level.yml"),
+  [child2_ep_non_sequential] = t_utils.get_profile_definition("light-color-level.yml"),
+  [child3_ep_non_sequential] = t_utils.get_profile_definition("light-color-level.yml"),
+}
+
+local mock_children_non_sequential = {}
+for i, endpoint in ipairs(mock_device_parent_child_endpoints_non_sequential.endpoints) do
+  if endpoint.endpoint_id ~= parent_ep and endpoint.endpoint_id ~= 0 then
+    local child_data = {
+      profile = child_profiles_non_sequential[endpoint.endpoint_id],
+      device_network_id = string.format("%s:%d", mock_device_parent_child_endpoints_non_sequential.id, endpoint.endpoint_id),
+      parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+      parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
+    }
+    mock_children_non_sequential[endpoint.endpoint_id] = test.mock_device.build_test_child_device(child_data)
+  end
+end
+
+local function test_init_parent_child_endpoints_non_sequential()
+  local unsup_mock_device = mock_device_parent_child_endpoints_non_sequential
+
+  test.mock_device.add_test_device(unsup_mock_device)
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(unsup_mock_device))
+    end
+  end
+
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child1_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.ColorControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+
+  unsup_mock_device:expect_metadata_update({ profile = "light-binary" })
+  unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  for _, child in pairs(mock_children_non_sequential) do
+    test.mock_device.add_test_device(child)
+  end
+
+  unsup_mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 2",
+    profile = "light-color-level",
+    parent_device_id = unsup_mock_device.id,
+    parent_assigned_child_key = string.format("%d", child2_ep_non_sequential)
+  })
+
+  -- switch-binary will be selected as an overridden child device profile
+  unsup_mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 3",
+    profile = "switch-binary",
+    parent_device_id = unsup_mock_device.id,
+    parent_assigned_child_key = string.format("%d", child3_ep_non_sequential)
+  })
+
+  unsup_mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Switch 4",
+    profile = "light-level",
+    parent_device_id = unsup_mock_device.id,
+    parent_assigned_child_key = string.format("%d", child1_ep_non_sequential)
+  })
+end
+
+test.set_test_init_function(test_init)
+
+test.register_message_test(
+  "Parent device: switch capability should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.OnOff.server.commands.On(mock_device, parent_ep)
+      },
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, parent_ep, true)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+  }
+)
+
+test.register_message_test(
+  "First child device: switch capability switch should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_children[child1_ep].id,
+        { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_children[child1_ep].id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.OnOff.server.commands.On(mock_device, child1_ep)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, child1_ep, true)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+  }
+)
+
+test.register_message_test(
+  "Second child device: switch capability should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_children[child2_ep].id,
+        { capability = "switch", component = "main", command = "on", args = { } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_children[child2_ep].id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.OnOff.server.commands.On(mock_device, child2_ep)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, child2_ep, true)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+  }
+)
+
+test.register_message_test(
+  "Current level reports should generate appropriate events",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.attributes.CurrentLevel:build_test_report_data(mock_device, child1_ep, 50)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.level(math.floor((50 / 254.0 * 100) + 0.5)))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
+    },
+  }
+)
+
+test.register_message_test(
+  "Set color temperature should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_children[child2_ep].id,
+        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, child2_ep)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, child2_ep, 556)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
+    },
+  }
+)
+
+test.register_message_test(
+  "X and Y color values should report hue and saturation once both have been received",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, child2_ep, 15091)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, child2_ep, 21547)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.hue(50))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.saturation(72))
+    }
+  }
+)
+
+test.register_message_test(
+  "Set color command should send the appropriate commands",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_children[child2_ep].id,
+        { capability = "colorControl", component = "main", command = "setColor", args = { { hue = 50, saturation = 72 } } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.server.commands.MoveToColor:build_test_command_response(mock_device, child2_ep)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentX:build_test_report_data(mock_device, child2_ep, 15091)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.CurrentY:build_test_report_data(mock_device, child2_ep, 21547)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.hue(50))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.saturation(72))
+    }
+  }
+)
+
+test.register_message_test(
+  "Min and max level attributes set capability constraint for child devices",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, child1_ep, 1)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, child1_ep, 254)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child1_ep]:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 1, maximum = 100}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, child2_ep, 127)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, child2_ep, 203)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 50, maximum = 80}))
+    }
+  }
+)
+
+test.register_message_test(
+  "Min and max color temp attributes set capability constraint for child devices",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_report_data(mock_device, child2_ep, 153)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, child2_ep, 555)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "Test child devices are created in order of their endpoints",
+  function()
+  end,
+  { test_init = test_init_parent_child_endpoints_non_sequential }
+)
+
+test.run_registered_tests()

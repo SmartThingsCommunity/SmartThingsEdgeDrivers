@@ -49,11 +49,18 @@ local function device_added(self, device)
   device:send(WakeUp:IntervalSet({node_id = self.environment_info.hub_zwave_id, seconds = FIBARO_SMOKE_SENSOR_WAKEUP_INTERVAL}))
   device:emit_event(capabilities.smokeDetector.smoke.clear())
   device:emit_event(capabilities.tamperAlert.tamper.clear())
+  device:emit_event(capabilities.temperatureAlarm.temperatureAlarm.cleared())
   device:send(Battery:Get({}))
   device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}))
 end
 
 local function wakeup_notification_handler(self, device, cmd)
+  --Note sending WakeUpIntervalGet the first time a device wakes up will happen by default in Lua libs 0.49.x and higher
+  --This is done to help the hub correctly set the checkInterval for migrated devices.
+  if not device:get_field("__wakeup_interval_get_sent") then
+    device:send(WakeUp:IntervalGetV1({}))
+    device:set_field("__wakeup_interval_get_sent", true)
+  end
   device:emit_event(capabilities.smokeDetector.smoke.clear())
   device:send(Battery:Get({}))
   device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}))
@@ -70,6 +77,7 @@ local fibaro_smoke_sensor = {
   },
   NAME = "fibaro smoke sensor",
   can_handle = can_handle_fibaro_smoke_sensor,
+  health_check = false,
 }
 
 return fibaro_smoke_sensor

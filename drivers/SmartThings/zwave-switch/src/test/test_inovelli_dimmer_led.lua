@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -25,6 +14,7 @@ local LED_GENERIC_SATURATION = 100
 local INOVELLI_MANUFACTURER_ID = 0x031E
 local INOVELLI_LZW31_PRODUCT_TYPE = 0x0003
 local INOVELLI_DIMMER_PRODUCT_ID = 0x0001
+local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 
 local function huePercentToZwaveValue(value)
   if value <= 2 then
@@ -132,12 +122,12 @@ do
       {
         channel = "capability",
         direction = "send",
-        message = mock_inovelli_dimmer:generate_test_message("main", capabilities.colorControl.hue(zwaveValueToHuePercent(color)))
+        message = mock_inovelli_dimmer:generate_test_message(LED_BAR_COMPONENT_NAME, capabilities.colorControl.hue(zwaveValueToHuePercent(color)))
       },
       {
         channel = "capability",
         direction = "send",
-        message = mock_inovelli_dimmer:generate_test_message("main", capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
+        message = mock_inovelli_dimmer:generate_test_message(LED_BAR_COMPONENT_NAME, capabilities.colorControl.saturation(LED_GENERIC_SATURATION))
       }
     }
   )

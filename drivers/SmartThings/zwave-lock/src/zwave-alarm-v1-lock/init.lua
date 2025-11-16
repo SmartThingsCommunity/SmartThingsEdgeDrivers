@@ -23,11 +23,6 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local lock_code_defaults = require "st.zwave.defaults.lockCodes"
 local json = require "dkjson"
 
-local LOCK_V1_FINGERPRINTS = {
-  -- list of models that use these parameters
-  { mfr = 0x0129, prod = 0x0002, model = 0x0800 }, -- Yale YRD120
-}
-
 local METHOD = {
   KEYPAD = "keypad",
   MANUAL = "manual",
@@ -103,14 +98,14 @@ local function alarm_report_handler(driver, device, cmd)
     for code_id, _ in pairs(lock_codes) do
       lock_code_defaults.code_deleted(device, code_id)
     end
-    device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device))))
+    device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
   elseif (alarm_type == 33) then
     -- user code deleted
     if (code_id ~= nil) then
       lock_code_defaults.clear_code_state(device, code_id)
       if (lock_codes[code_id] ~= nil) then
         lock_code_defaults.code_deleted(device, code_id)
-        device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device))))
+        device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
       end
     end
   elseif (alarm_type == 13 or alarm_type == 112) then
@@ -118,7 +113,7 @@ local function alarm_report_handler(driver, device, cmd)
     if (code_id ~= nil) then
       local code_name = lock_code_defaults.get_code_name(device, code_id)
       local change_type = lock_code_defaults.get_change_type(device, code_id)
-      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. change_type)
+      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. change_type, { state_change = true })
       code_changed_event["data"] = { codeName = code_name}
       lock_code_defaults.code_set_event(device, code_id, code_name)
       lock_code_defaults.clear_code_state(device, code_id)
@@ -127,7 +122,7 @@ local function alarm_report_handler(driver, device, cmd)
   elseif (alarm_type == 34 or alarm_type == 113) then
     -- duplicate lock code
     if (code_id ~= nil) then
-      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. lock_code_defaults.CHANGE_TYPE.FAILED)
+      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. lock_code_defaults.CHANGE_TYPE.FAILED, { state_change = true })
       lock_code_defaults.clear_code_state(device, code_id)
       device:emit_event(code_changed_event)
     end

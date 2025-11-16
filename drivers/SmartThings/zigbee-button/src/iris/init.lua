@@ -60,9 +60,9 @@ local function ias_zone_status_change_handler(self, device, zb_rx)
 end
 
 local function added_handler(self, device)
-  device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}))
-  device:emit_event(capabilities.button.numberOfButtons({value = 1}))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }}))
+  device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
 

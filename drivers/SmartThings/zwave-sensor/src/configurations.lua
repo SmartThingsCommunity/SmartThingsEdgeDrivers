@@ -21,15 +21,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version=3 
 --- @type st.zwave.CommandClass.WakeUp
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
---- @type st.zwave.CommandClass.Association
-local Association = (require "st.zwave.CommandClass.Association")({ version=2 })
---- @type st.zwave.CommandClass.Notification
-local Notification = (require "st.zwave.CommandClass.Notification")({ version=3 })
---- @type st.zwave.CommandClass.WakeUp
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
-
 local devices = {
   AEOTEC_MULTISENSOR_GEN5 = {
     MATCHING_MATRIX = {
@@ -333,7 +324,7 @@ local devices = {
       {grouping_identifier = 3}
     },
     CONFIGURATION = {
-      {parameter_number = 1, configuration_value = 0, size = 1},
+      {parameter_number = 1, configuration_value = 0, size = 2},
       {parameter_number = 2, configuration_value = 1, size = 1},
       {parameter_number = 3, configuration_value = 0, size = 1},
       {parameter_number = 5, configuration_value = 255, size = 2},

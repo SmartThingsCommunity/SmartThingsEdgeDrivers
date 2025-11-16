@@ -18,7 +18,6 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local Thermostat = clusters.Thermostat
@@ -30,7 +29,6 @@ local ThermostatMode = capabilities.thermostatMode
 local ThermostatOperatingState  = capabilities.thermostatOperatingState
 
 local RAW_TEMP = "raw_temp"
-local RAW_SETPOINT = "raw_setpoint"
 local STORED_SYSTEM_MODE = "stored_system_mode"
 
 local MFR_SETPOINT_MODE_ATTTRIBUTE = 0x401C
@@ -53,9 +51,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -414,7 +410,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "eco" }))
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "eco" }, { visibility = { displayed = false } }))
     },
     {
       channel = "capability",
@@ -483,6 +479,54 @@ test.register_message_test(
       }
     },
   }
+)
+
+test.register_coroutine_test("Setting the heating setpoint should generate the appropriate messages", function()
+  test.socket.capability:__queue_receive({mock_device.id, {
+    component = "main",
+    capability = capabilities.thermostatHeatingSetpoint.ID,
+    command = "setHeatingSetpoint",
+    args = {21}
+  }})
+  test.socket.zigbee:__expect_send({mock_device.id,
+                                    Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2100)})
+  test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device)
+    })
+  test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.PIHeatingDemand:read(mock_device)
+    })
+end)
+
+test.register_coroutine_test(
+  "Setting thermostat mode to eco should generate correct zigbee messages",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = "thermostatMode", component = "main", command = "setThermostatMode", args = {"eco"}}
+    })
+    test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:write(mock_device, ThermostatSystemMode.HEAT)
+      })
+    test.socket.zigbee:__expect_send({
+        mock_device.id,
+        cluster_base.write_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE, data_types.Enum8, 0x05)
+      })
+    test.wait_for_events()
+
+    test.mock_time.advance_time(2)
+    test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:read(mock_device)
+      })
+    test.socket.zigbee:__expect_send({
+        mock_device.id,
+        cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
+      })
+  end
 )
 
 test.run_registered_tests()

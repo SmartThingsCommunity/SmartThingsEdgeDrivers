@@ -1,0 +1,6 @@
+name: 'Matter Thermostat'
+packageKey: 'matter-thermostat'
+permissions:
+  matter: {}
+description: "SmartThings driver for Matter thermostat devices"
+vendorSupportInformation: "https://support.smartthings.com"

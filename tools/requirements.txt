@@ -1,3 +1,4 @@
 junit_xml
 requests
-PyYAML==5.4.1
+PyYAML
+regex

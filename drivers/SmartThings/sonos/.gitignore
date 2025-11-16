@@ -1,0 +1,6 @@
+app_key.lua
+.vscode/
+.zed/
+.editorconfig
+.luarc.json
+.stylua.toml

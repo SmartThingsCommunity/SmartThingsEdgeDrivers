@@ -6,7 +6,7 @@ SmartThings Edge is our new architecture for Hub Connected devices that uses Dev
 
 ## Documentation and Tutorials
 
-Visit the SmartThings Edge Device Driver documentation on our new [developer documentation portal](https://developer-preview.smartthings.com/docs/devices/hub-connected/get-started) to get started.
+Visit the SmartThings Edge Device Driver documentation on our [developer documentation portal](https://developer.smartthings.com/docs/devices/hub-connected/get-started) to get started.
 
 Be sure to check out the SmartThings Community for [tutorials](https://community.smartthings.com/c/developer-programs/tutorials/103), code samples, and more.
 
@@ -17,8 +17,17 @@ The code of conduct for SmartThingsEdgeDrivers can be found in
 
 ## How to Contribute
 
-We welcome contributions to SmartThingsEdgeDrivers. Read our contribution
-guidelines in [CONTRIBUTING.md](CONTRIBUTING.md).
+Pull requests to this repo are intended to be from OEMs submitting pull requests for devices seeking Works With SmartThings (WWST) Certification, for maintaining existing certification, and for bug fixes to existing drivers. For more info on WWST certification and the submission process, visit our [certification documentation](https://developer.smartthings.com/docs/devices/hub-connected/certify-your-device).
+
+By submitting a pull request, you represent that you have the right to
+license your contribution to SmartThings and agree by submitting your patch that
+your contributions are licensed under the [Apache 2.0 license](LICENSE). Before
+submitting your pull request, please make sure you have tested your changes and that
+they follow the project guidelines for [contributing code](https://developer.smartthings.com/docs/devices/hub-connected/certify-your-device#code-formatting-and-submission-criteria).
+
+Before contributions can be merged, all contributors must agree to the [SmartThings
+Individual Contributor License
+Agreement](https://cla-assistant.io/SmartThingsCommunity/SmartThingsEdgeDrivers).
 
 ## License
 

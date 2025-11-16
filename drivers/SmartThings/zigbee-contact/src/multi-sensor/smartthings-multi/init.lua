@@ -17,6 +17,7 @@ local zcl_commands = require "st.zigbee.zcl.global_commands"
 local multi_utils = require "multi-sensor/multi_utils"
 local capabilities = require "st.capabilities"
 local data_types = require "st.zigbee.data_types"
+local zcl_clusters = require "st.zigbee.zcl.clusters"
 
 local SMARTTHINGS_MFG = 0x110A
 
@@ -55,6 +56,8 @@ end
 
 local function init_handler(driver, device)
   battery_defaults.enable_battery_voltage_table(device, battery_table)
+  device:remove_configured_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+  device:remove_monitored_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
 end
 
 local function do_configure(self, device)

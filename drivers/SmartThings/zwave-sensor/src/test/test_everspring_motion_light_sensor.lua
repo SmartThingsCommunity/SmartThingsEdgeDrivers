@@ -13,12 +13,11 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
+local capabilities = require "st.capabilities"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2,strict=true})
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({version=2})
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local t_utils = require "integration_test.utils"
 
 local sensor_endpoints = {

@@ -2,3 +2,5 @@ name: 'Zigbee Illuminance Sensor'
 packageKey: 'zigbee-illuminance-sensor'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee illuminance sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"

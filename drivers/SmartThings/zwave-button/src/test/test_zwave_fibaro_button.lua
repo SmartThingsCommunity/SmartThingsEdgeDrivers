@@ -41,39 +41,31 @@ local function  test_init()
 end
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-        "Fibaro button's supported button values",
-        {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_fibaro_button.id, "added" }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_button:generate_test_message("main",
-                        capabilities.button.supportedButtonValues({"pushed", "held", "down_hold", "double", "pushed_3x", "pushed_4x", "pushed_5x"}))
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_fibaro_button:generate_test_message("main", capabilities.button.numberOfButtons(
-                  { value = 1 }
-                ))
-            },
-            {
-                channel = "zwave",
-                direction = "send",
-                message = zw_test_utils.zwave_test_build_send_command(
-                  mock_fibaro_button,
-                  Battery:Get({})
-                )
-            }
-        },
-        {
-            inner_block_ordering = "relaxed"
-        }
+test.register_coroutine_test(
+    "Fibaro button's supported button values",
+    function()
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock_fibaro_button.id, "added" })
+
+      test.socket.capability:__expect_send(
+        mock_fibaro_button:generate_test_message(
+          "main",
+          capabilities.button.supportedButtonValues({"pushed", "held", "down_hold", "double", "pushed_3x", "pushed_4x", "pushed_5x"}, {visibility = { displayed = false }})
+        )
+      )
+      test.socket.capability:__expect_send(
+        mock_fibaro_button:generate_test_message(
+          "main",
+          capabilities.button.numberOfButtons({ value = 1 }, {visibility = { displayed = false }})
+        )
+      )
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_fibaro_button,
+          Battery:Get({})
+        )
+      )
+    end
 )
 
 test.run_registered_tests()

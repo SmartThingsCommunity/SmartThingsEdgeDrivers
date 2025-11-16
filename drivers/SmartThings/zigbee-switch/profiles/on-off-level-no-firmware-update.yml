@@ -1,0 +1,12 @@
+name: on-off-level-no-firmware-update
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: switchLevel
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Light

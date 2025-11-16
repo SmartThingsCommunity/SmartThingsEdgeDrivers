@@ -1,0 +1,30 @@
+name: jbl
+components: 
+- id: main
+  capabilities:
+  - id: mediaPlayback
+    version: 1
+    config:
+      values:
+        - key: "playbackStatus.value"
+          enabledValues:
+            - 'playing'
+            - 'paused'
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'play'
+            - 'pause'
+  - id: mediaTrackControl
+    version: 1
+  - id: audioMute
+    version: 1
+  - id: audioVolume
+    version: 1
+  - id: audioTrackData
+    version: 1
+  - id: refresh
+    version: 1
+  - id: audioNotification
+    version: 1
+  categories:
+  - name: Speaker 

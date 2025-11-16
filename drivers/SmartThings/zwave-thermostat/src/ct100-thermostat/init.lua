@@ -13,43 +13,69 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local utils = require "st.utils"
---- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
---- @type st.zwave.CommandClass.ThermostatFanMode
-local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ version = 3 })
---- @type st.zwave.CommandClass.ThermostatFanState
-local ThermostatFanState = (require "st.zwave.CommandClass.ThermostatFanState")({ version = 2 })
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 2 })
 --- @type st.zwave.CommandClass.ThermostatMode
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 --- @type st.zwave.CommandClass.ThermostatOperatingState
 local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({ version = 1 })
 --- @type st.zwave.CommandClass.ThermostatSetpoint
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 1 })
+--- @type st.zwave.CommandClass.ThermostatFanMode
+local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ version = 1 })
+--- @type st.zwave.CommandClass.Battery
+local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+--- @type st.zwave.CommandClass.MultiChannel
+local MultiChannel = (require "st.zwave.CommandClass.MultiChannel")({ version = 4 })
+local heating_setpoint_defaults = require "st.zwave.defaults.thermostatHeatingSetpoint"
+local cooling_setpoint_defaults = require "st.zwave.defaults.thermostatCoolingSetpoint"
+local constants = require "st.zwave.constants"
+local utils = require "st.utils"
 
 local CT100_THERMOSTAT_FINGERPRINTS = {
   { manufacturerId = 0x0098, productType = 0x6401, productId = 0x0107 }, -- 2Gig CT100 Programmable Thermostat
   { manufacturerId = 0x0098, productType = 0x6501, productId = 0x000C }, -- Iris Thermostat
 }
 
--- Constants
-local TEMPERATURE_SCALE = "temperature_scale"
-local PRECISION = "precision"
-local CURRENT_HEATING_SETPOINT = "current_heating_setpoint"
-local CURRENT_COOLING_SETPOINT = "currnet_cooling_setpoint"
-local MODE = "mode"
-local TEMPERATURE = "temperature"
-local HEATING_SETPOINT_IS_LIMITED = "heating_setpoint_is_limited"
-local COOLING_SETPOINT_IS_LIMITED = "cooling_setpoint_is_limited"
+-- This old device uses separate endpoints to get values of temp and humidity
+-- DTH actually uses the old mutliInstance encap, but multichannel should be back-compat
+local TEMPERATURE_ENDPOINT = 1
+local HUMIDITY_ENDPOINT = 2
+local SETPOINT_REPORT_QUEUE = "_setpoint_report_queue"
 
-local MIN_HEATING_SETPOINT = 35.0
-local MAX_HEATING_SETPOINT = 92.0
-local MIN_COOLING_SETPOINT = 38.0
-local MAX_COOLING_SETPOINT = 95.0
+--TODO: Update this once we've decided how to handle setpoint commands
+local function convert_to_device_temp(command_temp, device_scale)
+  -- under 40, assume celsius
+  if (command_temp <= 35 and device_scale == ThermostatSetpoint.scale.FAHRENHEIT) then
+    command_temp = utils.c_to_f(command_temp)
+  elseif (command_temp > 35 and (device_scale == ThermostatSetpoint.scale.CELSIUS or device_scale == nil)) then
+    command_temp = utils.f_to_c(command_temp)
+  end
+  return command_temp
+end
 
-local function can_handle_ct100_thermostat(opts, driver, device, cmd, ...)
+local function set_setpoint_factory(setpoint_type)
+  return function(driver, device, command)
+    local scale = device:get_field(constants.TEMPERATURE_SCALE)
+    local value = convert_to_device_temp(command.args.setpoint, scale)
+
+    local set = ThermostatSetpoint:Set({
+      setpoint_type = setpoint_type,
+      scale = scale,
+      value = value
+    })
+    device:send_to_component(set, command.component)
+
+    device.thread:call_with_delay(.5, function() device:send_to_component(ThermostatSetpoint:Get({setpoint_type = setpoint_type}), command.component) end)
+    device:set_field(SETPOINT_REPORT_QUEUE, function ()
+      device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}}))
+      device:send(ThermostatOperatingState:Get({}))
+    end)
+  end
+end
+
+local function can_handle_ct100_thermostat(opts, driver, device)
   for _, fingerprint in ipairs(CT100_THERMOSTAT_FINGERPRINTS) do
     if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
       return true
@@ -57,168 +83,6 @@ local function can_handle_ct100_thermostat(opts, driver, device, cmd, ...)
   end
 
   return false
-end
-
-local function send_setpoint_to_device(device, data)
-  local scale = device:get_field(TEMPERATURE_SCALE)
-  local precision = device:get_field(PRECISION)
-
-  if data.target_heating_setpoint ~= nil then
-    device:set_field(HEATING_SETPOINT_IS_LIMITED, true, {persist = true})
-    device:send(ThermostatSetpoint:Set({
-      setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-      scale = scale,
-      precision = precision,
-      value = data.target_heating_setpoint
-    }))
-  end
-
-  if data.target_cooling_setpoint ~= nil then
-    device:set_field(COOLING_SETPOINT_IS_LIMITED, true, {persist = true})
-    device:send(ThermostatSetpoint:Set({
-      setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
-      scale = scale,
-      precision = precision,
-      value = data.target_cooling_setpoint
-    }))
-  end
-
-  device:send(SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE}))
-  device:send(ThermostatOperatingState:Get({}))
-
-  if data.target_heating_setpoint ~= nil then
-    device:send(ThermostatSetpoint:Get({
-      setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
-    }))
-  end
-
-  if data.target_cooling_setpoint ~= nil then
-    device:send(ThermostatSetpoint:Get({
-      setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
-    }))
-  end
-end
-
-local function f_to_c(fahrenheit)
-  return (utils.round((fahrenheit - 32 * 5 / 9.0) * 2) / 2)
-end
-
-local function enforce_setpoint_limits(device, setpoint_type, data)
-  local device_scale = device:get_field(TEMPERATURE_SCALE)
-  local min_heating_setpoint = device_scale == ThermostatSetpoint.scale.CELSIUS and f_to_c(MIN_HEATING_SETPOINT) or MIN_HEATING_SETPOINT
-  local min_cooling_setpoint = device_scale == ThermostatSetpoint.scale.CELSIUS and f_to_c(MIN_COOLING_SETPOINT) or MIN_COOLING_SETPOINT
-  local max_heating_setpoint = device_scale == ThermostatSetpoint.scale.CELSIUS and f_to_c(MAX_HEATING_SETPOINT) or MAX_HEATING_SETPOINT
-  local max_cooling_setpoint = device_scale == ThermostatSetpoint.scale.CELSIUS and f_to_c(MAX_COOLING_SETPOINT) or MAX_COOLING_SETPOINT
-
-  local min_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1) and min_heating_setpoint or min_cooling_setpoint
-  local max_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1) and max_heating_setpoint or max_cooling_setpoint
-
-  local deadband = (device_scale == ThermostatSetpoint.scale.FAHRENHEIT) and 3 or 2
-
-  local comp_heating_setpoint = data.current_heating_setpoint ~= nil and data.current_heating_setpoint or 0
-  local comp_cooling_setpoint = data.current_cooling_setpoint ~= nil and data.current_cooling_setpoint or 0
-
-  local target_value = data.target_value
-  local heating_setpoint = nil
-  local cooling_setpoint = nil
-
-  if target_value > max_setpoint then
-    -- In case of heating_setpoint
-    ---- heating_setpoint value is 92F
-    ---- cooling_setpoint value is 95F
-    -- In case of cooling_setpoint
-    ---- heating_setpoint value is current heating_setpoint
-    ---- cooling_setpoint value is 95F
-    heating_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1) and max_setpoint or data.current_heating_setpoint
-    cooling_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1) and max_setpoint + deadband or max_setpoint
-  elseif target_value < min_setpoint then
-    -- In case of heating_setpoint
-    ---- heating_setpoint value is 38F
-    ---- cooling_setpoint value is current cooling_setpoint
-    -- In case of cooling_setpoint
-    ---- heating_setpoint value is 35F
-    ---- cooling_setpoint value is 38F
-    heating_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1) and min_setpoint - deadband or min_setpoint
-    cooling_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1) and min_setpoint or data.current_cooling_setpoint
-  end
-
-  if setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1 and cooling_setpoint == nil then
-    heating_setpoint = target_value
-    cooling_setpoint = (heating_setpoint + deadband > comp_cooling_setpoint) and heating_setpoint + deadband or nil
-  end
-
-  if setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1 and heating_setpoint == nil then
-    cooling_setpoint = target_value
-    heating_setpoint = (cooling_setpoint - deadband < comp_heating_setpoint) and cooling_setpoint - deadband or nil
-  end
-
-  return {target_heating_setpoint = heating_setpoint, target_cooling_setpoint = cooling_setpoint}
-end
-
-local function update_enforce_setpoint_limits(device, setpoint_type, value)
-  local heating_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1) and value or device:get_field(CURRENT_HEATING_SETPOINT)
-  local cooling_setpoint = (setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1) and value or device:get_field(CURRENT_COOLING_SETPOINT)
-
-  local data = enforce_setpoint_limits(device, setpoint_type, {target_value = value, current_heating_setpoint = heating_setpoint, current_cooling_setpoint = cooling_setpoint})
-
-  if setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1 and data.target_heating_setpoint then
-    data.target_heating_setpoint = nil
-  elseif setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1 and data.target_cooling_setpoint then
-    data.target_cooling_setpoint = nil
-  end
-
-  if data.target_heating_setpoint ~= nil or data.target_cooling_setpoint ~= nil then
-    send_setpoint_to_device(device, data)
-  end
-end
-
-local function update_setpoints(device, setpoint_type, value)
-  local scale = device:get_field(TEMPERATURE_SCALE)
-  local heating_setpoint = device:get_field(CURRENT_HEATING_SETPOINT)
-  local cooling_setpoint = device:get_field(CURRENT_COOLING_SETPOINT)
-  local data = { target_heating_setpoint = nil, target_cooling_setpoint = nil }
-
-  data = enforce_setpoint_limits(device, setpoint_type, {target_value = value, current_heating_setpoint = heating_setpoint, current_cooling_setpoint = cooling_setpoint})
-  if setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1 then
-    data.target_heating_setpoint = data.target_heating_setpoint and data.target_heating_setpoint or heating_setpoint
-  end
-
-  send_setpoint_to_device(device, data)
-end
-
-local function thermostat_setpoint_report_handler(self, device, cmd)
-  if (cmd.args.setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1 or cmd.args.setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1) then
-    local cmd_scale = (cmd.args.scale == ThermostatSetpoint.scale.FAHRENHEIT) and 'F' or 'C'
-    local value = cmd.args.value
-    local mode = device:get_field(MODE)
-
-    device:set_field(TEMPERATURE_SCALE, cmd.args.scale, {persist = true})
-    device:set_field(PRECISION, cmd.args.precision, {persist = true})
-
-    if cmd.args.setpoint_type == ThermostatSetpoint.setpoint_type.HEATING_1 then
-      local is_limited = device:get_field(HEATING_SETPOINT_IS_LIMITED)
-      if is_limited then
-        -- In case heating_setpoint is limited by enforce_setpoint_limits()
-        device:set_field(HEATING_SETPOINT_IS_LIMITED, false, {persist = true})
-        device:set_field(CURRENT_HEATING_SETPOINT, value, {persist = true})
-        device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = value, unit = cmd_scale}))
-      elseif mode ~= nil and mode ~= ThermostatMode.mode.COOL then
-        -- In case heating_setpoint is changed by device
-        update_enforce_setpoint_limits(device, ThermostatSetpoint.setpoint_type.HEATING_1, value)
-      end
-    elseif cmd.args.setpoint_type == ThermostatSetpoint.setpoint_type.COOLING_1 then
-      local is_limited = device:get_field(COOLING_SETPOINT_IS_LIMITED)
-      if is_limited then
-        -- In case cooling_setpoint is limited by enforce_setpoint_limits()
-        device:set_field(COOLING_SETPOINT_IS_LIMITED, false, {persist = true})
-        device:set_field(CURRENT_COOLING_SETPOINT, value, {persist = true})
-        device:emit_event(capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = value, unit = cmd_scale}))
-      elseif mode ~= nil and (mode ~= ThermostatMode.mode.HEAT or mode ~= ThermostatMode.mode.AUXILIARY_HEAT) then
-        -- In case cooling_setpoint is changed by device
-        update_enforce_setpoint_limits(device, ThermostatSetpoint.setpoint_type.COOLING_1, value)
-      end
-    end
-  end
 end
 
 local function thermostat_mode_report_handler(self, device, cmd)
@@ -237,61 +101,113 @@ local function thermostat_mode_report_handler(self, device, cmd)
     event = capabilities.thermostatMode.thermostatMode.emergency_heat()
   end
 
-  device:set_field(MODE, mode, {persist = true})
-
   if (event ~= nil) then
     device:emit_event(event)
   end
 
-  local heating_setpoint = device:get_field(CURRENT_HEATING_SETPOINT)
-  local cooling_setpoint = device:get_field(CURRENT_COOLING_SETPOINT)
-  local current_temperature = device:get_field(TEMPERATURE)
+  local heating_setpoint = device:get_latest_state("main", capabilities.thermostatHeatingSetpoint.ID, capabilities.thermostatHeatingSetpoint.heatingSetpoint.NAME, 0)
+  local cooling_setpoint = device:get_latest_state("main", capabilities.thermostatCoolingSetpoint.ID, capabilities.thermostatCoolingSetpoint.coolingSetpoint.NAME, 0)
+  local current_temperature = device:get_latest_state("main", capabilities.temperatureMeasurement.ID, capabilities.temperatureMeasurement.temperature.NAME, 0)
 
   device:send(ThermostatOperatingState:Get({}))
   if mode == ThermostatMode.mode.COOL or
-    ((mode == ThermostatMode.mode.COOL or mode == ThermostatMode.mode.OFF) and (current_temperature > (heating_setpoint + cooling_setpoint) / 2)) then
+    ((mode == ThermostatMode.mode.AUTO or mode == ThermostatMode.mode.OFF) and (current_temperature > (heating_setpoint + cooling_setpoint) / 2)) then
     device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
-    device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
+    device:set_field(SETPOINT_REPORT_QUEUE, function ()
+      device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
+    end)
   else
     device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
-    device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
+    device:set_field(SETPOINT_REPORT_QUEUE, function ()
+      device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1}))
+    end)
   end
 end
 
-local function temperature_report_handler(self, device, cmd)
-  if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
-    local scale = 'C'
-    if (cmd.args.scale == SensorMultilevel.scale.temperature.FAHRENHEIT) then scale = 'F' end
-    device:emit_event_for_endpoint(cmd.src_channel, capabilities.temperatureMeasurement.temperature({value = cmd.args.sensor_value, unit = scale}))
-    device:set_field(TEMPERATURE, cmd.args.sensor_value, {persist = true})
+-- The CT100 fails to respond if it receives too many commands in a short timeframe
+-- Waiting for a setpoint report is the only way to guarantee that we get a response
+-- before we send the next command.
+local function setpoint_report_handler(self, device, cmd)
+  heating_setpoint_defaults.zwave_handlers[cc.THERMOSTAT_SETPOINT][ThermostatSetpoint.REPORT](self, device, cmd)
+  cooling_setpoint_defaults.zwave_handlers[cc.THERMOSTAT_SETPOINT][ThermostatSetpoint.REPORT](self, device, cmd)
+
+  local queued_commands = device:get_field(SETPOINT_REPORT_QUEUE)
+  if queued_commands then
+    queued_commands()
+  end
+  device:set_field(SETPOINT_REPORT_QUEUE, nil)
+end
+
+-- The context for this handler is that the ct100 has been observed to use the
+-- multiinstance command encap (0x06) and then pass in multi channel
+-- command encap arguments (i.e. including a destination endpoint).
+-- This causes everything to be off by 1 byte, and the dest endpoint to be
+-- parsed as the command class. Real nasty business. -sg
+
+-- e.g.:
+-- CC:Multi-Channel ID:0x06 Len:8 Payload:0x01 00 31 05 01 2A 02 58 Encap:None
+-- parsed as:
+-- (Thermostat)> received Z-Wave command: {args={command=49, command_class=0, instance=1, parameter="\x05\x01\x2A\x02\x58", res=false},
+-- cmd_class="MULTI_CHANNEL", cmd_id="MULTI_INSTANCE_CMD_ENCAP", dst_channels={}, encap="NONE", payload="\x01\x00\x31\x05\x01\x2A\x02\x58",
+-- src_channel=0, version=2}
+local function multi_instance_encap_handler(self, device, cmd)
+  if (cmd.args.command == cc.SENSOR_MULTILEVEL and
+    string.byte(cmd.args.parameter, 1, 2) == SensorMultilevel.REPORT) then
+    local size_scale_precision = string.byte(string.sub(cmd.args.parameter, 3, 4))
+    local precision = (size_scale_precision >> 5) & 0x7 -- last 3 bits
+    local sensor_value = utils.bit_list_to_int(utils.bitify(string.sub(cmd.args.parameter, 4))) / (10 ^ precision)
+
+    local repack = SensorMultilevel:Report({
+      sensor_type = string.byte(string.sub(cmd.args.parameter, 2, 3)),
+      size = size_scale_precision & 0x7, -- first three bits
+      scale = (size_scale_precision >> 3) & 0x3, -- next two bits
+      precision = precision,
+      sensor_value = sensor_value
+    })
+    device.thread:queue_event(self.zwave_dispatcher.dispatch, self.zwave_dispatcher, self, device, repack)
   end
 end
 
-local function set_setpoint_factory(setpoint_type)
-  return function(driver, device, command)
-    update_setpoints(device, setpoint_type, command.args.setpoint)
-  end
+local function do_refresh(self, device)
+  device:send(ThermostatFanMode:Get({}))
+  device:send(ThermostatOperatingState:Get({}))
+  device:send(SensorMultilevel:Get({},{dst_channels={TEMPERATURE_ENDPOINT}}))
+  device:send(SensorMultilevel:Get({},{dst_channels={HUMIDITY_ENDPOINT}}))
+  device:send(Battery:Get({}))
+  device:send(ThermostatMode:Get({})) -- this get prompts setpoint gets on report
+end
+
+local function added_handler(self, device)
+  device:send(ThermostatMode:SupportedGet({}))
+  device:send(ThermostatFanMode:SupportedGet({}))
+  do_refresh(self, device)
 end
 
 local ct100_thermostat = {
   NAME = "CT100 thermostat",
+  lifecycle_handlers = {
+    added = added_handler
+  },
   zwave_handlers = {
-    [cc.SENSOR_MULTILEVEL] = {
-      [SensorMultilevel.REPORT] = temperature_report_handler
-    },
-    [cc.THERMOSTAT_SETPOINT] = {
-      [ThermostatSetpoint.REPORT] = thermostat_setpoint_report_handler
-    },
     [cc.THERMOSTAT_MODE] = {
       [ThermostatMode.REPORT] = thermostat_mode_report_handler
+    },
+    [cc.MULTI_CHANNEL] = {
+      [MultiChannel.MULTI_INSTANCE_CMD_ENCAP] = multi_instance_encap_handler
+    },
+    [cc.THERMOSTAT_SETPOINT] = {
+      [ThermostatSetpoint.REPORT] = setpoint_report_handler
     }
   },
   capability_handlers = {
+    [capabilities.thermostatCoolingSetpoint.ID] = {
+      [capabilities.thermostatCoolingSetpoint.commands.setCoolingSetpoint.NAME] = set_setpoint_factory(ThermostatSetpoint.setpoint_type.COOLING_1)
+    },
     [capabilities.thermostatHeatingSetpoint.ID] = {
       [capabilities.thermostatHeatingSetpoint.commands.setHeatingSetpoint.NAME] = set_setpoint_factory(ThermostatSetpoint.setpoint_type.HEATING_1)
     },
-    [capabilities.thermostatCoolingSetpoint.ID] = {
-      [capabilities.thermostatCoolingSetpoint.commands.setCoolingSetpoint.NAME] = set_setpoint_factory(ThermostatSetpoint.setpoint_type.COOLING_1)
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
   can_handle = can_handle_ct100_thermostat,

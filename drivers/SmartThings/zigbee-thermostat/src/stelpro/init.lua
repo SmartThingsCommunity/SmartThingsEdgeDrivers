@@ -14,14 +14,10 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local device_management = require "st.zigbee.device_management"
-local utils = require "st.utils"
 
-local RelativeHumidity = clusters.RelativeHumidity
 local Thermostat = clusters.Thermostat
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
 
-local ThermostatMode = capabilities.thermostatMode
 local ThermostatOperatingState = capabilities.thermostatOperatingState
 
 local RX_FREEZE_VALUE = 0x7ffd
@@ -37,9 +33,9 @@ local STELPRO_THERMOSTAT_FINGERPRINTS = {
 
 local is_stelpro_thermostat = function(opts, driver, device)
   for _, fingerprint in ipairs(STELPRO_THERMOSTAT_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
   end
   return false
 end
@@ -77,11 +73,11 @@ local function thermostat_local_temp_attr_handler(driver, device, value, zb_rx)
         (last_alarm == "freeze" and temperature > FREEZE_ALRAM_TEMPERATURE) or
         (last_alarm == "heat" and temperature < HEAT_ALRAM_TEMPERATURE)
       ) then
-            if last_alarm == "freeze" then
-              event = capabilities.temperatureAlarm.temperatureAlarm.freeze()
-            else
-              event = capabilities.temperatureAlarm.temperatureAlarm.heat()
-            end
+        if last_alarm == "freeze" then
+          event = capabilities.temperatureAlarm.temperatureAlarm.freeze()
+        else
+          event = capabilities.temperatureAlarm.temperatureAlarm.heat()
+        end
       end
     else
       if temperature <= FREEZE_ALRAM_TEMPERATURE then
@@ -109,7 +105,7 @@ end
 
 local function info_changed(driver, device, event, args)
   if device.preferences ~= nil and device.preferences.lock ~= args.old_st_store.preferences.lock then
-    device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, device.preferences.lock))
+    device:send(ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(device, tonumber(device.preferences.lock)))
   end
 end
 

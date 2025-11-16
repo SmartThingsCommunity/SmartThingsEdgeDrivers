@@ -1,0 +1,16 @@
+name: thermostat-cooling-only-nostate-nobattery
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: thermostatCoolingSetpoint
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat

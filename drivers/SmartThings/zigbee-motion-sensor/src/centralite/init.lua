@@ -13,12 +13,17 @@
 -- limitations under the License.
 
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+local zcl_clusters = require "st.zigbee.zcl.clusters"
 
 local TARGET_DEV_MAJOR = 1
 local TARGET_DEV_MINOR = 15
 local TARGET_DEV_BUILD = 7
 
 local init_handler = function(self, device)
+  -- TODO: the IAS Zone changes should be replaced after supporting functions are included in the lua libs
+  device:remove_monitored_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+  device:remove_configured_attribute(zcl_clusters.IASZone.ID, zcl_clusters.IASZone.attributes.ZoneStatus.ID)
+
   local firmware_full_version = device.data.firmwareFullVersion or "0000"
   local dev_major = tonumber(firmware_full_version:sub(1,1), 16)
   local dev_minor = tonumber(firmware_full_version:sub(2,2), 16)

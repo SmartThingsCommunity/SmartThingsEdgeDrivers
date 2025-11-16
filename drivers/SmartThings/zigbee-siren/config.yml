@@ -2,3 +2,5 @@ name: 'Zigbee Siren'
 packageKey: 'zigbee-siren'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee siren devices"
+vendorSupportInformation: "https://support.smartthings.com"

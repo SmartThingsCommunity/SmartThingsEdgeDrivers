@@ -1,0 +1,4 @@
+name: 'Virtual Switch'
+packageKey: 'virtual-switch'
+description: "SmartThings driver for virtual switches"
+vendorSupportInformation: "https://support.smartthings.com"

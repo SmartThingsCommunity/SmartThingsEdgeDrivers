@@ -17,6 +17,7 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
+local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local t_utils = require "integration_test.utils"
 
@@ -76,6 +77,25 @@ test.register_coroutine_test(
   function()
     test.socket.zwave:__queue_receive({mock_sensor.id, Configuration:Report( { configuration_value = 0x00, parameter_number = 12 } )})
     mock_sensor:expect_metadata_update({ profile = "illuminance-temperature" })
+  end
+)
+
+test.register_coroutine_test(
+  "Wakeup Notification should prompt a configuration get until a report is received",
+  function ()
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({})})
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_sensor,
+      Configuration:Get({ parameter_number = 12})
+    ))
+    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
+      mock_sensor,
+      WakeUp:IntervalGet({})
+    ))
+    test.socket.zwave:__queue_receive({mock_sensor.id, Configuration:Report( { configuration_value = 0x00, parameter_number = 12 } )})
+    mock_sensor:expect_metadata_update({ profile = "illuminance-temperature" })
+    test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({})})
   end
 )
 

@@ -1,0 +1,4 @@
+name: 'Matter Button'
+packageKey: 'matter-button'
+permissions:
+  matter: {}

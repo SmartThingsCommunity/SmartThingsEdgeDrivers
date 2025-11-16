@@ -38,7 +38,6 @@ local function device_init(driver, device)
   if configuration ~= nil then
     for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-      device:add_monitored_attribute(attribute)
     end
   end
 end
@@ -87,7 +86,12 @@ local lock_without_codes = {
     cluster = {
       [DoorLock.ID] = {
         [DoorLock.commands.LockDoorResponse.ID] = handle_lock_door,
-        [DoorLock.commands.UnlockDoorResponse.ID] = handle_lock_door
+        [DoorLock.commands.UnlockDoorResponse.ID] = handle_lock_door,
+      }
+    },
+    attr = {
+      [DoorLock.ID] = {
+        [DoorLock.attributes.NumberOfPINUsersSupported.ID] = function() end -- just to make sure we don't switch profiles
       }
     }
   },

@@ -1,0 +1,36 @@
+name: two-buttons-battery-holdTime
+components:
+  - id: main
+    capabilities:
+      - id: button
+        version: 1
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button1
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+  - id: button2
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+      - name: RemoteController
+preferences:
+  - name: "holdTime"
+    title: "Hold time"
+    description: "Minimum time in seconds for a press to count as held"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 10
+      default: 1

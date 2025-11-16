@@ -12,18 +12,6 @@ components:
     version: 1
   categories:
   - name: Switch
-- id: switch1
-  capabilities:
-  - id: switch
-    version: 1
-  - id: powerMeter
-    version: 1
-  - id: energyMeter
-    version: 1
-  - id: refresh
-    version: 1
-  categories:
-  - name: Switch
 preferences:
 - name: "ledFrameColourWhenOn"
   title: "LED frame colour when ON"

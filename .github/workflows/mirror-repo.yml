@@ -1,0 +1,22 @@
+name: Mirror repo
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+      - production
+
+jobs:
+  to_ecode:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url:
+            git@github.ecodesamsung.com:iot/EdgeDriversMirror.git
+          ssh_private_key:
+            ${{ secrets.ECODE_SSH_PRIVATE_KEY }}

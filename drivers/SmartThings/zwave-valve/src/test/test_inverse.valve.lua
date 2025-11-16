@@ -18,6 +18,7 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
+local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 
 local fortrezz_valve_endpoints = {
   {
@@ -48,7 +49,7 @@ test.register_message_test(
         channel = "zwave",
         direction = "receive",
         message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.ON_ENABLE})
         ) }
       },
       {
@@ -66,13 +67,49 @@ test.register_message_test(
         channel = "zwave",
         direction = "receive",
         message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.OFF_DISABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.OFF_DISABLE})
         ) }
       },
       {
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic valve on/off report should be handled: off",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value=SwitchBinary.value.OFF_DISABLE})
+        ) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic valve on/off report should be handled: on",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(
+          Basic:Report({value=SwitchBinary.value.ON_ENABLE})
+        ) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.valve.valve.closed())
       }
     }
 )

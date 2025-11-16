@@ -6,6 +6,10 @@ components:
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 4, 28 ]
   - id: thermostatCoolingSetpoint
     version: 1
   - id: thermostatMode
@@ -14,6 +18,14 @@ components:
     version: 1
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - cooling
+            - fan only
+            - idle
   - id: firmwareUpdate
     version: 1
   - id: refresh

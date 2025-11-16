@@ -68,6 +68,22 @@ local do_refresh = function(self, device)
   end
 end
 
+local function siren_on(self, device, cmd)
+  device:send_to_component(Basic:Set({value = 0xFF}), cmd.component)
+  device:send_to_component(SwitchBinary:Get({}), cmd.component)
+  if cmd.component == "siren1" then
+    local delayed_command = function()
+      device:send_to_component(SwitchBinary:Get({}), cmd.component)
+    end
+    device.thread:call_with_delay(2, delayed_command)
+  end
+end
+
+local function siren_off(self, device, cmd)
+  device:send_to_component(Basic:Set({value = 0x00}), cmd.component)
+  device:send_to_component(SwitchBinary:Get({}), cmd.component)
+end
+
 local ecolink_wireless_siren = {
   NAME = "Ecolink Wireless Siren",
   zwave_handlers = {
@@ -78,6 +94,10 @@ local ecolink_wireless_siren = {
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
+    },
+    [capabilities.alarm.ID] = {
+      [capabilities.alarm.commands.both.NAME] = siren_on,
+      [capabilities.alarm.commands.off.NAME] = siren_off
     }
   },
   lifecycle_handlers = {

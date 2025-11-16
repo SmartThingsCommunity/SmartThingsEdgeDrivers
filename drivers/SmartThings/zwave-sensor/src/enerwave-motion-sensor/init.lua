@@ -23,10 +23,19 @@ local WakeUp = (require "st.zwave.CommandClass.WakeUp")({version=1})
 local ENERWAVE_MFR = 0x011A
 
 local function can_handle_enerwave_motion_sensor(opts, driver, device, cmd, ...)
-  return device.zwave_manufacturer_id == ENERWAVE_MFR
+  if device.zwave_manufacturer_id == ENERWAVE_MFR then
+    local subdriver = require("enerwave-motion-sensor")
+    return true, subdriver
+  else return false end
 end
 
 local function wakeup_notification(driver, device, cmd)
+  --Note sending WakeUpIntervalGet the first time a device wakes up will happen by default in Lua libs 0.49.x and higher
+  --This is done to help the hub correctly set the checkInterval for migrated devices.
+  if not device:get_field("__wakeup_interval_get_sent") then
+    device:send(WakeUp:IntervalGetV1({}))
+    device:set_field("__wakeup_interval_get_sent", true)
+  end
   local current_motion_status = device:get_latest_state("main", capabilities.motionSensor.ID, capabilities.motionSensor.motion.NAME)
   if current_motion_status == nil then
     device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))

@@ -35,7 +35,7 @@ local zwave_lock_endpoints = {
   {
     command_classes = {
       {value = zw.BATTERY},
-      {value = DoorLock},
+      {value = zw.DOOR_LOCK},
       {value = zw.USER_CODE},
       {value = zw.NOTIFICATION}
     }
@@ -56,217 +56,217 @@ test.set_test_init_function(test_init)
 
 local expect_reload_all_codes_messages = function()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-          capabilities.lockCodes.lockCodes(json.encode({} ))
+          capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
   ))
   test.socket.zwave:__expect_send( UserCode:UsersNumberGet({}):build_test_tx(mock_device.id) )
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning")))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning", { visibility = { displayed = false } })))
   test.socket.zwave:__expect_send( UserCode:Get({ user_identifier = 1 }):build_test_tx(mock_device.id) )
 end
 
 test.register_coroutine_test(
-        "When the device is added it should be set up and start reading codes",
-        function()
-          test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  "When the device is added it should be set up and start reading codes",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
-          expect_reload_all_codes_messages()
-          test.socket.zwave:__expect_send(
-            zw_test_utils.zwave_test_build_send_command(
-              mock_device,
-              DoorLock:OperationGet({})
-            )
-          )
-          test.socket.zwave:__expect_send(
-            zw_test_utils.zwave_test_build_send_command(
-              mock_device,
-              Battery:Get({})
-            )
-          )
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-        end
+    expect_reload_all_codes_messages()
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        DoorLock:OperationGet({})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Battery:Get({})
+      )
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
+  end
 )
 
 test.register_coroutine_test(
-        "Door Lock Operation Reports should be handled",
-        function()
-          test.socket.zwave:__queue_receive({mock_device.id,
-                                             DoorLock:OperationReport({door_lock_mode = DoorLock.door_lock_mode.DOOR_SECURED})
-          })
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked()))
-        end
+  "Door Lock Operation Reports should be handled",
+  function()
+    test.socket.zwave:__queue_receive({mock_device.id,
+                                        DoorLock:OperationReport({door_lock_mode = DoorLock.door_lock_mode.DOOR_SECURED})
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked()))
+  end
 )
 
 test.register_message_test(
-        "Battery percentage report should be handled",
-        {
-          {
-            channel = "zwave",
-            direction = "receive",
-            message = { mock_device.id, Battery:Report({ battery_level = 0x63 }) }
-          },
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
-          }
-        }
+  "Battery percentage report should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, Battery:Report({ battery_level = 0x63 }) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
+    }
+  }
 )
 
 test.register_message_test(
-        "Lock notification reporting should be handled",
-        {
-          {
-            channel = "zwave",
-            direction = "receive",
-            message = { mock_device.id,
-                        Notification:Report({
-                          notification_type = Notification.notification_type.ACCESS_CONTROL,
-                          event = Notification.event.access_control.MANUAL_LOCK_OPERATION
-                        })
-            }
-          },
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
-          }
-        }
+  "Lock notification reporting should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id,
+                  Notification:Report({
+                    notification_type = Notification.notification_type.ACCESS_CONTROL,
+                    event = Notification.event.access_control.MANUAL_LOCK_OPERATION
+                  })
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
+    }
+  }
 )
 
 test.register_message_test(
-        "Code set reports should be handled",
-        {
-          {
-            channel = "zwave",
-            direction = "receive",
-            message = { mock_device.id,
-                        UserCode:Report({
-                          user_identifier = 2,
-                          user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-                        })
-            }
-          },
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.lockCodes(json.encode({["2"] = "Code 2"})) )
-          },
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 set",
-                    { data = { codeName = "Code 2"} }))
-          }
-        },
-        {
-          inner_block_ordering = "relaxed"
-        }
+  "Code set reports should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id,
+                  UserCode:Report({
+                    user_identifier = 2,
+                    user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
+                  })
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+              capabilities.lockCodes.lockCodes(json.encode({["2"] = "Code 2"}), { visibility = { displayed = false } }) )
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 set",
+              { data = { codeName = "Code 2"}, state_change = true }))
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
 )
 
 test.register_message_test(
-        "Alarm tamper events should be handled",
-        {
-          {
-            channel = "zwave",
-            direction = "receive",
-            message = { mock_device.id,
-                        Notification:Report({
-                          notification_type = Notification.notification_type.ACCESS_CONTROL,
-                          event = Notification.event.access_control.KEYPAD_TEMPORARY_DISABLED
-                        })
-            }
-          },
+  "Alarm tamper events should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id,
+                  Notification:Report({
+                    notification_type = Notification.notification_type.ACCESS_CONTROL,
+                    event = Notification.event.access_control.KEYPAD_TEMPORARY_DISABLED
+                  })
+      }
+    },
 
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
-          }
-        }
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    }
+  }
 )
 
 test.register_coroutine_test(
-        "Sending the lock command should be handled",
-        function()
-          test.timer.__create_and_queue_test_time_advance_timer(4.2, "oneshot")
-          test.socket.capability:__queue_receive({mock_device.id,
-                                                  { capability = "lock", component = "main", command = "lock", args = {} }
-          })
-          test.socket.zwave:__expect_send(DoorLock:OperationSet({door_lock_mode = DoorLock.door_lock_mode.DOOR_SECURED}):build_test_tx(mock_device.id))
-          test.wait_for_events()
-          test.mock_time.advance_time(4.2)
-          test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
-        end
+  "Sending the lock command should be handled",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(4.2, "oneshot")
+    test.socket.capability:__queue_receive({mock_device.id,
+                                            { capability = "lock", component = "main", command = "lock", args = {} }
+    })
+    test.socket.zwave:__expect_send(DoorLock:OperationSet({door_lock_mode = DoorLock.door_lock_mode.DOOR_SECURED}):build_test_tx(mock_device.id))
+    test.wait_for_events()
+    test.mock_time.advance_time(4.2)
+    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
+  end
 )
 
 test.register_message_test(
-        "Max user code number report should be handled",
-        {
-          {
-            channel = "zwave",
-            direction = "receive",
-            message = { mock_device.id, UserCode:UsersNumberReport({ supported_users = 16 }) }
-          },
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(16))
-          }
-        }
+  "Max user code number report should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, UserCode:UsersNumberReport({ supported_users = 16 }) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(16, { visibility = { displayed = false } }))
+    }
+  }
 )
 
 test.register_coroutine_test(
-        "Reloading all codes of an unconfigured lock should generate correct attribute checks",
-        function()
-          test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
-          expect_reload_all_codes_messages()
-        end
+  "Reloading all codes of an unconfigured lock should generate correct attribute checks",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
+    expect_reload_all_codes_messages()
+  end
 )
 
 test.register_message_test(
-        "Requesting a user code should be handled",
-        {
-          {
-            channel = "capability",
-            direction = "receive",
-            message = { mock_device.id, { capability = capabilities.lockCodes.ID, command = "requestCode", args = { 1 } } }
-          },
-          {
-            channel = "zwave",
-            direction = "send",
-            message = UserCode:Get({user_identifier = 1}):build_test_tx(mock_device.id)
-          }
-        }
+  "Requesting a user code should be handled",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = { mock_device.id, { capability = capabilities.lockCodes.ID, command = "requestCode", args = { 1 } } }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = UserCode:Get({user_identifier = 1}):build_test_tx(mock_device.id)
+    }
+  }
 )
 
 test.register_coroutine_test(
-        "Deleting a user code should be handled",
-        function()
-          test.timer.__create_and_queue_test_time_advance_timer(4.2, "oneshot")
-          test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "deleteCode", args = { 1 } } })
-          test.socket.zwave:__expect_send(UserCode:Set( {user_identifier = 1, user_id_status = UserCode.user_id_status.AVAILABLE}):build_test_tx(mock_device.id))
-          test.wait_for_events()
+  "Deleting a user code should be handled",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(4.2, "oneshot")
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "deleteCode", args = { 1 } } })
+    test.socket.zwave:__expect_send(UserCode:Set( {user_identifier = 1, user_id_status = UserCode.user_id_status.AVAILABLE}):build_test_tx(mock_device.id))
+    test.wait_for_events()
 
-          test.mock_time.advance_time(4.2)
-          test.socket.zwave:__expect_send(UserCode:Get( {user_identifier = 1}):build_test_tx(mock_device.id))
-        end
+    test.mock_time.advance_time(4.2)
+    test.socket.zwave:__expect_send(UserCode:Get( {user_identifier = 1}):build_test_tx(mock_device.id))
+  end
 )
 
 test.register_coroutine_test(
-        "Setting a user code should result in the named code changed event firing",
-        function()
-          test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "1234", "test" } } })
-          test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 1, user_code = "1234", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id) )
-          test.wait_for_events()
-          test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({user_identifier = 1, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}) })
-          test.socket.capability:__set_channel_ordering("relaxed")
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}))
-          ))
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"} }))
-          )
-        end
+  "Setting a user code should result in the named code changed event firing",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "1234", "test" } } })
+    test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 1, user_code = "1234", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id) )
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({user_identifier = 1, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}) })
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+            capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })
+    ))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+            capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
+    )
+  end
 )
 
 local function init_code_slot(slot_number, name, device)
@@ -279,223 +279,224 @@ local function init_code_slot(slot_number, name, device)
 end
 
 test.register_coroutine_test(
-        "Setting a user code name should be handled",
-        function()
-          init_code_slot(1, "initialName", mock_device)
-          test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "nameSlot", args = { 1, "foo" } } })
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"} ))
-          ))
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed",
-                  {})))
-        end
+  "Setting a user code name should be handled",
+  function()
+    init_code_slot(1, "initialName", mock_device)
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "nameSlot", args = { 1, "foo" } } })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+            capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"} ), { visibility = { displayed = false } })
+    ))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed",
+            {state_change = true})))
+  end
+)
+
+test.register_coroutine_test(
+  "Calling updateCodes should send properly spaced commands",
+  function ()
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "updateCodes", args = {{code1 = "1234", code2 = "2345", code3 = "3456", code4 = ""}}}})
+    test.mock_time.advance_time(2)
+    test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 1, user_code = "1234", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id))
+    test.mock_time.advance_time(2)
+    test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 2, user_code = "2345", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id))
+    test.mock_time.advance_time(2)
+    test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 3, user_code = "3456", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id))
+    test.mock_time.advance_time(2)
+    test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 4, user_id_status = UserCode.user_id_status.AVAILABLE}):build_test_tx(mock_device.id))
+    test.mock_time.advance_time(2)
+    test.socket.zwave:__expect_send(UserCode:Get({user_identifier = 4}):build_test_tx(mock_device.id))
+    test.wait_for_events()
+  end
 )
 
 test.register_message_test(
-        "Setting all user codes should result in a code set event for each",
-        {
-          {
-            channel = "capability",
-            direction = "receive",
-            message = {
-              mock_device.id,
-              {
-                capability = capabilities.lockCodes.ID,
-                command = "updateCodes",
-                args = {
-                  {
-                    code1 = "1234",
-                    code2 = "2345",
-                    code3 = "3456"
-                  }
-                }
-              }
-            }
-          },
-          {
-            channel = "zwave",
-            direction = "send",
-            message =
-            UserCode:Set({user_identifier = 1, user_code = "1234", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id)
-          },
-          {
-            channel = "zwave",
-            direction = "send",
-            message =
-            UserCode:Set({user_identifier = 2, user_code = "2345", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id)
-          },
-          {
-            channel = "zwave",
-            direction = "send",
-            message =
-            UserCode:Set({user_identifier = 3, user_code = "3456", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id)
-          }
-        },
-        {
-          inner_block_ordering = "relaxed"
-        }
+  "Master code programming event should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = Notification.event.access_control.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION
+      })}
+    },
+
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+              capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"}, state_change = true  })
+      )
+    }
+  }
 )
 
 test.register_message_test(
-        "Master code programming event should be handled",
-        {
-          {
-            channel = "zwave",
-            direction = "receive",
-            message = { mock_device.id, Notification:Report({
-              notification_type = Notification.notification_type.ACCESS_CONTROL,
-              event = Notification.event.access_control.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION
-            })}
-          },
-
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"} })
-            )
-          }
-        }
-)
-
-test.register_message_test(
-        "The lock reporting a single code has been set should be handled",
-        {
-          {
-            channel = "zwave",
-            direction = "receive",
-            message = {
-              mock_device.id,
-              UserCode:Report({ user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS, user_identifier = 1})
-            }
-          },
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"})) )
-          },
-          {
-            channel = "capability",
-            direction = "send",
-            message = mock_device:generate_test_message("main",
-                    capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "Code 1"} }))
-          }
-        },
-        {
-          inner_block_ordering = "relaxed"
-        }
+  "The lock reporting a single code has been set should be handled",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        UserCode:Report({ user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS, user_identifier = 1})
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+              capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"}), { visibility = { displayed = false } }) )
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+              capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "Code 1"}, state_change = true  }))
+    }
+  },
+  {
+    inner_block_ordering = "relaxed"
+  }
 )
 
 test.register_coroutine_test(
-        "The lock reporting a code has been deleted should be handled",
-        function()
-          init_code_slot(1, "Code 1", mock_device)
-          test.socket.zwave:__queue_receive(
-                  {
-                    mock_device.id,
-                    UserCode:Report({user_identifier = 1, user_id_status = UserCode.user_id_status.AVAILABLE})
-                  }
-          )
-          test.socket.capability:__expect_send(
-                  mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"} })
-                  )
-          )
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({} ))
-          ))
-        end
+  "The lock reporting a code has been deleted should be handled",
+  function()
+    init_code_slot(1, "Code 1", mock_device)
+    test.socket.zwave:__queue_receive(
+      {
+        mock_device.id,
+        UserCode:Report({user_identifier = 1, user_id_status = UserCode.user_id_status.AVAILABLE})
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+              capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"}, state_change = true  })
+      )
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+            capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
+    ))
+  end
 )
 
 test.register_coroutine_test(
-        "The lock reporting that all codes have been deleted should be handled",
-        function()
-          init_code_slot(1, "Code 1", mock_device)
-          init_code_slot(2, "Code 2", mock_device)
-          init_code_slot(3, "Code 3", mock_device)
-          test.socket.zwave:__queue_receive(
-                  {
-                    mock_device.id,
-                    Notification:Report({
-                      notification_type = Notification.notification_type.ACCESS_CONTROL,
-                      event = Notification.event.access_control.ALL_USER_CODES_DELETED
-                    })
-                  }
-          )
+  "The lock reporting that all codes have been deleted should be handled",
+  function()
+    init_code_slot(1, "Code 1", mock_device)
+    init_code_slot(2, "Code 2", mock_device)
+    init_code_slot(3, "Code 3", mock_device)
+    test.socket.zwave:__queue_receive(
+      {
+        mock_device.id,
+        Notification:Report({
+          notification_type = Notification.notification_type.ACCESS_CONTROL,
+          event = Notification.event.access_control.ALL_USER_CODES_DELETED
+        })
+      }
+    )
 
-          test.socket.capability:__set_channel_ordering("relaxed")
-          test.socket.capability:__expect_send(
-                  mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"} })
-                  )
-          )
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+              capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "Code 1"}, state_change = true  })
+      )
+    )
 
-          test.socket.capability:__expect_send(
-                  mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("2 deleted", { data = { codeName = "Code 2"} })
-                  )
-          )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+              capabilities.lockCodes.codeChanged("2 deleted", { data = { codeName = "Code 2"}, state_change = true  })
+      )
+    )
 
-          test.socket.capability:__expect_send(
-                  mock_device:generate_test_message("main",
-                          capabilities.lockCodes.codeChanged("3 deleted", { data = { codeName = "Code 3"} })
-                  )
-          )
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({} ))
-          ))
-        end
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+              capabilities.lockCodes.codeChanged("3 deleted", { data = { codeName = "Code 3"}, state_change = true  })
+      )
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
+    ))
+  end
 )
 
 test.register_coroutine_test(
-        "The lock reporting unlock via code should include the code info in the report",
-        function()
-          init_code_slot(1, "Code 1", mock_device)
-          test.socket.zwave:__queue_receive(
-                  {
-                    mock_device.id,
-                    Notification:Report({
-                      notification_type = Notification.notification_type.ACCESS_CONTROL,
-                      event = Notification.event.access_control.KEYPAD_UNLOCK_OPERATION,
-                      event_parameter = ""
-                    })
-                  }
-          )
-          test.socket.capability:__expect_send(
-                  mock_device:generate_test_message("main",
-                          capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Code 1" } })
-                  )
-          )
-        end
+  "The lock reporting unlock via code should include the code info in the report",
+  function()
+    init_code_slot(1, "Superb Owl", mock_device)
+    test.socket.zwave:__queue_receive(
+      {
+        mock_device.id,
+        Notification:Report({
+          notification_type = Notification.notification_type.ACCESS_CONTROL,
+          event = Notification.event.access_control.KEYPAD_UNLOCK_OPERATION,
+          event_parameter = ""
+        })
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+              capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Superb Owl" } })
+      )
+    )
+  end
 )
 
 test.register_coroutine_test(
-        "Getting all lock codes should advance as expected",
-        function()
-          test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
-          expect_reload_all_codes_messages()
-          test.wait_for_events()
-          test.socket.zwave:__queue_receive({mock_device.id, UserCode:UsersNumberReport({ supported_users = 4 }) })
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4)))
-          for i = 1, 4 do
-            if (i ~= 1) then
-              test.socket.zwave:__expect_send(UserCode:Get({user_identifier = i}):build_test_tx(mock_device.id))
-            end
-            test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({
-              user_identifier = i,
-              user_id_status = UserCode.user_id_status.AVAILABLE
-            })})
-            test.socket.capability:__expect_send(
-                    mock_device:generate_test_message("main",
-                            capabilities.lockCodes.codeChanged(i.." unset")
-                    )
-            )
-          end
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.scanCodes("Complete")
-          ))
-        end
+  "The lock reporting unlock via code should include the code number as the name if no name is set",
+  function()
+    init_code_slot(1, nil, mock_device)
+    test.socket.zwave:__queue_receive(
+      {
+        mock_device.id,
+        Notification:Report({
+          notification_type = Notification.notification_type.ACCESS_CONTROL,
+          event = Notification.event.access_control.KEYPAD_UNLOCK_OPERATION,
+          event_parameter = ""
+        })
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+              capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Code 1" } })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Getting all lock codes should advance as expected",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
+    expect_reload_all_codes_messages()
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({mock_device.id, UserCode:UsersNumberReport({ supported_users = 4 }) })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4, { visibility = { displayed = false } })))
+    for i = 1, 4 do
+      if (i ~= 1) then
+        test.socket.zwave:__expect_send(UserCode:Get({user_identifier = i}):build_test_tx(mock_device.id))
+      end
+      test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({
+        user_identifier = i,
+        user_id_status = UserCode.user_id_status.AVAILABLE
+      })})
+      test.socket.capability:__expect_send(
+              mock_device:generate_test_message("main",
+                      capabilities.lockCodes.codeChanged(i.." unset", { state_change = true })
+              )
+      )
+    end
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+            capabilities.lockCodes.scanCodes("Complete", { visibility = { displayed = false } })
+    ))
+  end
 )
 
 test.register_message_test(
@@ -655,7 +656,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({})))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({}), { visibility = { displayed = false } }))
     },
     {
       channel = "zwave",
@@ -668,12 +669,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({["5"] = "Code 5"})))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({["5"] = "Code 5"}), { visibility = { displayed = false } }))
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("5 set", {data={codeName="Code 5"}}))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("5 set", {data={codeName="Code 5"}, state_change = true }))
     },
     {
       channel = "zwave",
@@ -686,7 +687,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 failed"))
+      message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("2 failed", { state_change = true }))
     },
     {
       channel = "zwave",
@@ -731,25 +732,45 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-        "Setting a user code should result in the named code changed event firing when notified via Notification CC",
-        function()
-          test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "1234", "test" } } })
-          test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 1, user_code = "1234", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id) )
-          test.wait_for_events()
-          test.socket.zwave:__queue_receive({mock_device.id, Notification:Report({
-            notification_type = Notification.notification_type.ACCESS_CONTROL,
-            event = Notification.event.access_control.NEW_USER_CODE_ADDED,
-            v1_alarm_level = 1,
-            event_parameter = ""
-          }) })
-          test.socket.capability:__set_channel_ordering("relaxed")
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}))
-          ))
-          test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-                  capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"} }))
-          )
-        end
+  "Setting a user code should result in the named code changed event firing when notified via Notification CC",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "1234", "test" } } })
+    test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 1, user_code = "1234", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id) )
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({mock_device.id, Notification:Report({
+      notification_type = Notification.notification_type.ACCESS_CONTROL,
+      event = Notification.event.access_control.NEW_USER_CODE_ADDED,
+      v1_alarm_level = 1,
+      event_parameter = ""
+    }) })
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+            capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })
+    ))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+            capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "When the device is added it should be set up and start reading codes",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        DoorLock:OperationGet({})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Battery:Get({})
+      )
+    )
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
 )
 
 test.run_registered_tests()

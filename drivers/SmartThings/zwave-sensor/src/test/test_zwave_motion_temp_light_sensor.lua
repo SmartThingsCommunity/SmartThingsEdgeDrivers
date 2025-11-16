@@ -23,11 +23,9 @@ local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local t_utils = require "integration_test.utils"
 
--- supported comand classes
+-- supported command classes
 local sensor_endpoints = {
   {
     command_classes = {
@@ -80,6 +78,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
@@ -191,6 +197,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )

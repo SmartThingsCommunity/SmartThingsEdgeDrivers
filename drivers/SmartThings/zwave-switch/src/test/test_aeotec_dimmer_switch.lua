@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -119,7 +108,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({ target_value = SwitchBinary.value.ON_ENABLE })
+          SwitchBinary:Report({ current_value = SwitchBinary.value.ON_ENABLE })
         )
       }
     },
@@ -129,6 +118,14 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+    {
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
@@ -136,9 +133,6 @@ test.register_message_test(
         Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
       )
     }
-  },
-  {
-    inner_block_ordering = "relaxed"
   }
 )
 
@@ -151,7 +145,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({ target_value = SwitchBinary.value.OFF_DISABLE })
+          SwitchBinary:Report({ current_value = SwitchBinary.value.OFF_DISABLE })
         )
       }
     },
@@ -161,6 +155,14 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+    {
       channel = "zwave",
       direction = "send",
       message = zw_test_utils.zwave_test_build_send_command(
@@ -168,9 +170,6 @@ test.register_message_test(
         Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
       )
     }
-  },
-  {
-    inner_block_ordering = "relaxed"
   }
 )
 
@@ -184,8 +183,8 @@ test.register_message_test(
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
+            target_value = 0,
+            current_value = SwitchMultilevel.value.OFF_DISABLE,
             duration = 0
           })
         )
@@ -195,6 +194,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     },
     {
       channel = "zwave",
@@ -217,8 +224,8 @@ test.register_message_test(
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 5,
+            target_value = 0,
+            current_value = 5,
             duration = 0
           })
         )
@@ -230,9 +237,25 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
+    },
+    {
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level(5))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
+      }
     },
     {
       channel = "zwave",
@@ -262,6 +285,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 55, unit = "W" }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+      }
     }
   }
 )
@@ -297,13 +328,14 @@ test.register_coroutine_test(
       mock_device.id,
       { capability = "switch", component = "main", command = "on", args = {} }
     })
+    mock_device:expect_native_cmd_handler_registration("switch", "on")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchBinary:Set({
-          target_value = SwitchBinary.value.ON_ENABLE,
-          duration = 0
+        SwitchMultilevel:Set({
+          value = 0xFF,
+          duration = "default"
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -319,7 +351,7 @@ test.register_coroutine_test(
       mock_device.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.ON_ENABLE
+          current_value = SwitchBinary.value.ON_ENABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -332,6 +364,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.switch.switch.on())
     )
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -362,13 +395,14 @@ test.register_coroutine_test(
       mock_device.id,
       { capability = "switch", component = "main", command = "off", args = {} }
     })
+    mock_device:expect_native_cmd_handler_registration("switch", "off")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
-        SwitchBinary:Set({
-          target_value = SwitchBinary.value.OFF_DISABLE,
-          duration = 0
+        SwitchMultilevel:Set({
+          value = 0x00,
+          duration = "default"
         },
           {
             encap = zw.ENCAP.AUTO,
@@ -384,7 +418,7 @@ test.register_coroutine_test(
       mock_device.id,
       SwitchBinary:Report(
         {
-          target_value = SwitchBinary.value.OFF_DISABLE
+          current_value = SwitchBinary.value.OFF_DISABLE
         },
         {
           encap = zw.ENCAP.AUTO,
@@ -397,6 +431,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.switch.switch.off())
     )
+    mock_device:expect_native_attr_handler_registration("switch", "switch")
 
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -426,6 +461,8 @@ test.register_coroutine_test(
       mock_device.id,
       { capability = "switchLevel", command = "setLevel", args = { 50 } }
     })
+    mock_device:expect_native_cmd_handler_registration("switchLevel", "setLevel")
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,

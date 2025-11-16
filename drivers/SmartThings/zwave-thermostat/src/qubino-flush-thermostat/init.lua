@@ -12,11 +12,16 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+--- @type st.zwave.defaults.switch
+local TemperatureMeasurementDefaults = require "st.zwave.defaults.temperatureMeasurement"
+
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = (require "st.zwave.CommandClass")
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
+--- @type st.zwave.CommandClass.Meter
+local Meter = (require "st.zwave.CommandClass.Meter")({version=3})
 --- @type st.zwave.CommandClass.ThermostatSetpoint
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 1 })
 --- @type st.zwave.CommandClass.ThermostatMode
@@ -32,6 +37,8 @@ local QUBINO_FINGERPRINTS = {
 
 -- parameter which tells whether device is configured heat or cool thermostat mode
 local DEVICE_MODE_PARAMETER = 59
+-- thermostat reports -999.9 if the digital temperature sensor is not connected
+local DIGITAL_TEMPERATURE_SENSOR_NOT_CONNECTED = -999.9
 
 -- fieldnames
 local CONFIGURED_MODE = "configured_mode"
@@ -75,6 +82,8 @@ local function do_refresh(self, device)
   device:send(SensorMultilevel:Get({}))
   device:send(ThermostatOperatingState:Get({}))
   device:send(ThermostatSetpoint:Get({setpoint_type = current_setpoint_type}))
+  device:send(Meter:Get({scale = Meter.scale.electric_meter.WATTS}))
+  device:send(Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS}))
 end
 
 local function configuration_report(driver, device, cmd)
@@ -92,21 +101,30 @@ local function configuration_report(driver, device, cmd)
       table.insert(supported_modes, capabilities.thermostatMode.thermostatMode.heat.NAME)
       device:try_update_metadata({profile = "qubino-flush-thermostat"})
     end
-    device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes))
+    device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes, { visibility = { displayed = false } }))
   end
+  device:refresh()
+end
 
+local function sensor_multilevel_report_handler(driver, device, cmd)
+  if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE and
+      cmd.args.sensor_value ~= DIGITAL_TEMPERATURE_SENSOR_NOT_CONNECTED) then
+    TemperatureMeasurementDefaults.zwave_handlers[cc.SENSOR_MULTILEVEL][SensorMultilevel.REPORT](driver, device, cmd)
+  end
 end
 
 local device_added = function (self, device)
   device:set_field(CONFIGURED_MODE, nil, {persist = true})
   device:send(Configuration:Get({parameter_number = DEVICE_MODE_PARAMETER}))
-  device:refresh()
 end
 
 local qubino_thermostat = {
   zwave_handlers = {
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report
+    },
+    [cc.SENSOR_MULTILEVEL] = {
+      [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
     }
   },
   capability_handlers = {

@@ -15,14 +15,10 @@
 -- Mock out globals
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
-local cluster_base = require "st.zigbee.cluster_base"
-local data_types = require "st.zigbee.data_types"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local capabilities = require "st.capabilities"
-local ThermostatOperatingState  = capabilities.thermostatOperatingState
 
 local Thermostat = clusters.Thermostat
 
@@ -43,9 +39,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -141,7 +135,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send(
           {
             mock_device.id,
-            Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2600)
+            Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2556)
           }
       )
       test.wait_for_events()

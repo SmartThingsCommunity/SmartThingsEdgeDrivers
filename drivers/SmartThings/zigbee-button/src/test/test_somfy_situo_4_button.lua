@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 -- Mock out globals
-local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local mgmt_bind_response = require "st.zigbee.zdo.mgmt_bind_response"
@@ -42,9 +41,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 test.register_coroutine_test(
@@ -70,7 +67,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               WindowCovering.ID):to_endpoint(0x01)
+                                               WindowCovering.ID, 1)
         }
       )
       test.socket.zigbee:__expect_send(
@@ -78,7 +75,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               WindowCovering.ID):to_endpoint(0x02)
+                                               WindowCovering.ID, 2)
         }
       )
       test.socket.zigbee:__expect_send(
@@ -86,7 +83,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               WindowCovering.ID):to_endpoint(0x03)
+                                               WindowCovering.ID, 3)
         }
       )
       test.socket.zigbee:__expect_send(
@@ -94,7 +91,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               WindowCovering.ID):to_endpoint(0x04)
+                                               WindowCovering.ID, 4)
         }
       )
 
@@ -200,36 +197,32 @@ test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "numberOfButtons", state = { value = 12 }
-      }
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 12 }, { visibility = { displayed = false } })
+      )
+    )
     for button_name, _ in pairs(mock_device.profile.components) do
       if button_name ~= "main" then
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
-          }
-        })
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "numberOfButtons", state = { value = 1 }
-          }
-        })
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
       end
     end
     test.socket.capability:__expect_send({

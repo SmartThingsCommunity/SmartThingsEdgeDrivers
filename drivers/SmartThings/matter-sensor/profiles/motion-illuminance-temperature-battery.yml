@@ -1,0 +1,21 @@
+name: motion-illuminance-temperature-battery
+components:
+- id: main
+  capabilities:
+  - id: motionSensor
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: MotionSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true

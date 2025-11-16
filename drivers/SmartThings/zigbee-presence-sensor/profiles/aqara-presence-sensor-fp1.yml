@@ -1,0 +1,19 @@
+name: aqara-presence-sensor-fp1
+components:
+  - id: main
+    capabilities:
+      - id: presenceSensor
+        version: 1
+      - id: stse.movementSensor
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+    categories:
+      - name: PresenceSensor
+preferences:
+  - preferenceId: stse.sensitivity
+    explicit: true
+  - preferenceId: stse.resetPresence
+    explicit: true
+  - preferenceId: stse.approachDistance
+    explicit: true

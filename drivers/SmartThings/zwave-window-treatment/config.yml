@@ -2,3 +2,5 @@ name: 'Z-Wave Window Treatment'
 packageKey: 'zwave-window-treatment'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave window treatment devices"
+vendorSupportInformation: "https://support.smartthings.com"

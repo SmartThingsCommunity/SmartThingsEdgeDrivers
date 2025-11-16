@@ -1,0 +1,24 @@
+name: switch-alarm-generic-siren-7
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: alarm
+    version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - 'off'
+            - siren
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'off'
+            - siren
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories :
+  - name: Siren

@@ -2,9 +2,9 @@ name: qubino-3-phase-meter
 components:
 - id: main
   capabilities:
-  - id: energyMeter
-    version: 1
   - id: powerMeter
+    version: 1
+  - id: energyMeter
     version: 1
   - id: refresh
     version: 1

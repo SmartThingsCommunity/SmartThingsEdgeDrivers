@@ -17,7 +17,6 @@ local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
@@ -27,7 +26,12 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
 end
 
 test.set_test_init_function(test_init)
@@ -222,7 +226,42 @@ test.register_message_test(
           mock_device.id,
           clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
         }
-      }
+      },
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          {
+            capability = "windowShadePreset", component = "main",
+            command = "setPresetPosition", args = {20}
+          }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShadePreset.position(20))
+      },
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          {
+            capability = "windowShadePreset", component = "main",
+            command = "presetPosition", args = {}
+          }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_device.id,
+          clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 20)
+        }
+      },
     }
 )
 
@@ -230,13 +269,9 @@ test.register_coroutine_test(
     "Refresh necessary attributes",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.wait_for_events()
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -257,13 +292,9 @@ test.register_coroutine_test(
     "Configure should configure all necessary attributes",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.wait_for_events()
 
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })

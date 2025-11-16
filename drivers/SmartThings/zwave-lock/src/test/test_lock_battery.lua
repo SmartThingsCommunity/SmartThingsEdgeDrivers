@@ -18,6 +18,7 @@ local zw = require "st.zwave"
 --- @type st.zwave.CommandClass.DoorLock
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+local Time = (require "st.zwave.CommandClass.Time")({ version = 1 })
 
 local DANALOCK_MANUFACTURER_ID = 0x010E
 local DANALOCK_PRODUCT_TYPE = 0x0008
@@ -113,6 +114,24 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(4.2)
     test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
+  end
+)
+
+test.register_coroutine_test(
+  "The driver should respond correctly to a time get",
+  function ()
+    test.socket.zwave:__queue_receive({ mock_device.id, Time:Get({},{
+        encap = zw.ENCAP.AUTO,
+        src_channel = 0,
+        dst_channels = {}
+      })
+    })
+    local time = os.date("*t")
+    test.socket.zwave:__expect_send(Time:Report({
+      hour_local_time = time.hour,
+      minute_local_time = time.min,
+      second_local_time = time.sec
+    }):build_test_tx(mock_device.id))
   end
 )
 

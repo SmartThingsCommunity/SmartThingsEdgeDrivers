@@ -1,0 +1,7 @@
+name: 'bose'
+packageKey: 'bose'
+permissions:
+  lan: {}
+  discovery: {}
+description: "SmartThings driver for Bose devices"
+vendorSupportInformation: "https://support.smartthings.com"

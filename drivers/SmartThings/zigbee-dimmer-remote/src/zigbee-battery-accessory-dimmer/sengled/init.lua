@@ -12,10 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local zcl_clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 
-local DEFAULT_LEVEL = 100
 local STEP = 5
 local DOUBLE_STEP = 10
 

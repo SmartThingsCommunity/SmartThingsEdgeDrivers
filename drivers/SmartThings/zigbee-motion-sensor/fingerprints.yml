@@ -1,8 +1,28 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.motion.ac02"
+    deviceLabel: Aqara Motion Sensor P1
+    manufacturer: LUMI
+    model: lumi.motion.ac02
+    deviceProfileName: motion-illuminance-battery-aqara
+  - id: "LUMI/lumi.motion.agl02"
+    deviceLabel: Aqara Motion Sensor T1
+    manufacturer: LUMI
+    model: lumi.motion.agl02
+    deviceProfileName: motion-illuminance-battery-aqara
+  - id: "LUMI/lumi.motion.agl04"
+    deviceLabel: Aqara High Precision Motion Sensor
+    manufacturer: LUMI
+    model: lumi.motion.agl04
+    deviceProfileName: motion-battery-aqara
   - id: "eWeLink/MS01"
     deviceLabel: eWeLink Motion Sensor
     manufacturer: eWeLink
     model: MS01
+    deviceProfileName: motion-battery
+  - id: "eWeLink/MSO1"
+    deviceLabel: eWeLink Motion Sensor
+    manufacturer: eWeLink
+    model: MSO1
     deviceProfileName: motion-battery
   - id: "ORVIBO/895a2d80097f4ae2b2d40500d5e0"
     deviceLabel: Orvibo Motion Sensor
@@ -139,21 +159,26 @@ zigbeeManufacturer:
     model: VMS_ADUROLIGHT
     deviceProfileName: motion-battery
   - id: frientA/S/140
-    deviceLabel: frient Motion Sensor
+    deviceLabel: frient Motion Sensor Pro
     manufacturer: frient A/S
     model: MOSZB-140
-    deviceProfileName: motion-temp-battery
+    deviceProfileName: frient-motion-temp-illuminance-tamper-battery
   - id: frientA/S/141
     deviceLabel: frient Motion Sensor
     manufacturer: frient A/S
     model: MOSZB-141
-    deviceProfileName: motion-battery
+    deviceProfileName: frient-motion-battery
+  - id: frientA/S/153
+    deviceLabel: frient Motion Sensor 2 Pet
+    manufacturer: frient A/S
+    model: MOSZB-153
+    deviceProfileName: frient-motion-temp-illuminance-battery
   - id: Compacta/ZBMS3-1
     deviceLabel: Smartenit Motion Sensor
     manufacturer: Compacta
     model: ZBMS3-1
     deviceProfileName: motion-temp-battery
-# This model has been seen to have an invisible character in the model string
+  # This model has been seen to have an invisible character in the model string
   - id: Compacta/ZBMS3-1/0x1F
     deviceLabel: Smartenit Motion Sensor
     manufacturer: Compacta
@@ -174,3 +199,16 @@ zigbeeManufacturer:
     manufacturer: THIRDREALITY
     model: 3RMS16BZ
     deviceProfileName: motion-battery
+  - id: "sengled/E1M-G7H"
+    deviceLabel: Sengled Motion Sensor
+    manufacturer: sengled
+    model: E1M-G7H
+    deviceProfileName: motion-battery
+zigbeeGeneric:
+  - id: kickstarter/motion/1
+    deviceLabel: SmartThings Motion Sensor
+    zigbeeProfiles:
+      - 0xFC01
+    deviceIdentifiers:
+      - 0x013A
+    deviceProfileName: smartsense-motion

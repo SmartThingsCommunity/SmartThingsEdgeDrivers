@@ -1,0 +1,13 @@
+name: virtual-dimmer-switch
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: switchLevel
+        version: 1
+    categories:
+      - name: Switch
+preferences:
+  - preferenceId: certifiedpreferences.forceStateChange
+    explicit: true

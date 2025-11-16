@@ -6,12 +6,29 @@ components:
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 4, 28 ]
   - id: thermostatMode
     version: 1
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - idle
   - id: temperatureAlarm
     version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
+            - heat
   - id: firmwareUpdate
     version: 1
   - id: refresh

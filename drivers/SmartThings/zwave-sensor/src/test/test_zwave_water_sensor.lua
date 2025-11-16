@@ -23,8 +23,6 @@ local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
-local Association = (require "st.zwave.CommandClass.Association")({ version = 2 })
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
 local sensor_endpoints = {

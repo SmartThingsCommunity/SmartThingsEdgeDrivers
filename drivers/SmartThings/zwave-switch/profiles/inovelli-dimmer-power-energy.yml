@@ -1,5 +1,4 @@
 name: inovelli-dimmer-power-energy
-
 components:
 - id: main
   capabilities:
@@ -7,16 +6,26 @@ components:
     version: 1
   - id: switchLevel
     version: 1
+    config:
+      values:
+        - key: "level.value"
+          range: [1, 100]
   - id: powerMeter
     version: 1
   - id: energyMeter
-    version: 1
-  - id: colorControl
     version: 1
   - id: refresh
     version: 1
   categories:
   - name: Switch
+- id: LEDColorConfiguration
+  capabilities:
+  - id: colorControl
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Light
 - id: button1
   capabilities:
   - id: button
@@ -35,7 +44,6 @@ components:
       version: 1
   categories:
     - name: RemoteController
-
 preferences:
   - name: "dimmingSpeed"
     title: "Dimming Speed"

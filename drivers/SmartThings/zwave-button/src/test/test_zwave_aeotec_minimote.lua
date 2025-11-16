@@ -17,7 +17,6 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
-local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local t_utils = require "integration_test.utils"
 
@@ -305,94 +304,48 @@ test.register_coroutine_test(
     ))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
         mock_aeotec_minimote,
-        Configuration:Set({parameter_number = 140, size = 4, configuration_value = 26017792}) --payload="åç  "
+        Configuration:Set({parameter_number = 140, size = 4, configuration_value = 26017792}) --payload="ÔøΩÔøΩ  "
     ))
     mock_aeotec_minimote:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Device added event should make proper event for aeotec minimote",
-  {
-    {
-      channel = "device_lifecycle",
-      direction = "receive",
-      message = { mock_aeotec_minimote.id, "added" },
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.numberOfButtons(
-        { value = 4 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button1", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button1", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button2", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button2", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button3", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button3", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button4", capabilities.button.numberOfButtons(
-        { value = 1 }
-      ))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_aeotec_minimote:generate_test_message("button4", capabilities.button.supportedButtonValues(
-        {"pushed", "held"}
-      ))
-    }
-  },
-  {
-    inner_block_ordering = "relaxed"
-  }
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_aeotec_minimote.id, "added" })
+
+    test.socket.capability:__expect_send(
+      mock_aeotec_minimote:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_aeotec_minimote:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 4 }, {visibility = { displayed = false }})
+      )
+    )
+
+    for button_name, _ in pairs(mock_aeotec_minimote.profile.components) do
+      if button_name ~= "main" then
+        test.socket.capability:__expect_send(
+          mock_aeotec_minimote:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_aeotec_minimote:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+  end
 )
 
 test.run_registered_tests()

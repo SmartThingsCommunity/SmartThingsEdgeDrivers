@@ -1,0 +1,25 @@
+name: aqs-temp-humidity-tvoc-level-pm25-meas
+components:
+  - id: main
+    capabilities:
+      - id: airQualityHealthConcern
+        version: 1
+      - id: temperatureMeasurement
+        version: 1
+      - id: relativeHumidityMeasurement
+        version: 1
+      - id: fineDustSensor
+        version: 1
+      - id: tvocHealthConcern
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: AirQualityDetector
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true

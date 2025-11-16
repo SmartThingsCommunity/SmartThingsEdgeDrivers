@@ -4,6 +4,10 @@ components:
   capabilities:
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 4, 28 ]
   - id: battery
     version: 1
   - id: refresh

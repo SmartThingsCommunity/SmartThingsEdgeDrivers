@@ -6,10 +6,20 @@ components:
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 5, 30 ]
   - id: thermostatMode
     version: 1
   - id: thermostatOperatingState
     version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - idle
   - id: firmwareUpdate
     version: 1
   - id: refresh
@@ -17,6 +27,16 @@ components:
   categories:
   - name: Thermostat
 preferences:
+  - name: "temperatureDisplayMode"
+    title: "Temperature Display Mode"
+    description: "Change temperature display mode."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+       0: "Celsius"
+       1: "Fahrenheit"
+      default: 0
   - name: "keypadLock"
     title: "Keypad Lock"
     description: "Enable or disable the device's buttons."

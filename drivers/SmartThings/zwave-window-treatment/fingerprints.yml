@@ -57,3 +57,26 @@ zwaveManufacturer:
     manufacturerId: 0x0371
     productId: 0x008D
     deviceProfileName: stateless-curtain-power-button
+  - id: 277/529/16
+    deviceLabel: RYSE SmartShades
+    manufacturerId: 0x0115
+    productId: 0x0010
+    productType: 0x0211
+    deviceProfileName: window-treatment-preset-reverse  
+zwaveGeneric:
+  - id: window-treatment/generic/1
+    deviceLabel: Z-Wave Window Treatment
+    genericType: 0x11 # switch multilevel
+    specificType:
+      - 0x07 # position/endpoint aware window covering
+    commandClasses:
+      supported:
+        - 0x26
+    deviceProfileName: base-window-treatment
+  - id: window-treatment/generic/2
+    deviceLabel: Z-Wave Window Treatment
+    genericType: 0x09 # window covering
+    commandClasses:
+      supported:
+        - 0x26 # switch multilevel
+    deviceProfileName: base-window-treatment

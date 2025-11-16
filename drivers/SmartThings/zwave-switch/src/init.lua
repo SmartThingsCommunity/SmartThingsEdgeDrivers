@@ -1,26 +1,24 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
+--- @type st.Device
+local st_device = require "st.device"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
+--- @type st.zwave.CommandClass
+local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
+--- @type st.zwave.CommandClass.SwitchMultilevel
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
+local utils = require "st.utils"
+
+local lazy_load_if_possible = require "lazy_load_subdriver"
 
 --- Map component to end_points(channels)
 ---
@@ -51,8 +49,10 @@ end
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
 local device_init = function(self, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
+  if device.network_type == st_device.NETWORK_TYPE_ZWAVE then
+    device:set_component_to_endpoint_fn(component_to_endpoint)
+    device:set_endpoint_to_component_fn(endpoint_to_component)
+  end
 end
 
 --- Handle preference changes
@@ -66,7 +66,7 @@ local function info_changed(driver, device, event, args)
   for id, value in pairs(device.preferences) do
     if args.old_st_store.preferences[id] ~= value and preferences and preferences[id] then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
-      device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
+      device:send(Configuration:Set({ parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = utils.unsigned_to_signed(new_parameter_value, preferences[id].size) }))
     end
   end
 end
@@ -79,13 +79,20 @@ local function do_configure(driver, device)
   local configuration = configurationsMap.get_device_configuration(device)
   if configuration ~= nil then
     for _, value in ipairs(configuration) do
-      device:send(Configuration:Set({parameter_number = value.parameter_number, size = value.size, configuration_value = value.configuration_value}))
+      device:send(Configuration:Set({ parameter_number = value.parameter_number, size = value.size, configuration_value = utils.unsigned_to_signed(value.configuration_value, value.size) }))
     end
   end
 end
 
 local function device_added(driver, device)
   device:refresh()
+end
+
+-- This functionality was present in "Z-Wave Dimmer Switch Generic" and, while non-standard,
+-- appears to be important for some devices.
+local function switch_multilevel_stop_level_change_handler(driver, device, cmd)
+  device:emit_event_for_endpoint(cmd.src_channel, capabilities.switch.switch.on())
+  device:send(SwitchMultilevel:Get({}))
 end
 
 -------------------------------------------------------------------------------------------
@@ -101,25 +108,40 @@ local driver_template = {
     capabilities.colorControl,
     capabilities.button,
     capabilities.temperatureMeasurement,
-    capabilities.relativeHumidityMeasurement
+    capabilities.relativeHumidityMeasurement,
+    capabilities.illuminanceMeasurement,
+    capabilities.contactSensor,
+    capabilities.motionSensor,
+    capabilities.smokeDetector,
+    capabilities.waterSensor,
+    capabilities.zwMultichannel
+  },
+  zwave_handlers = {
+    [cc.SWITCH_MULTILEVEL] = {
+      [SwitchMultilevel.STOP_LEVEL_CHANGE] = switch_multilevel_stop_level_change_handler
+    }
   },
   sub_drivers = {
-    require("eaton-accessory-dimmer"),
-    require("inovelli-LED"),
-    require("dawon-smart-plug"),
-    require("inovelli-2-channel-smart-plug"),
-    require("zwave-dual-switch"),
-    require("eaton-anyplace-switch"),
-    require("fibaro-wall-plug-us"),
-    require("dawon-wall-smart-switch"),
-    require("zooz-power-strip"),
-    require("aeon-smart-strip"),
-    require("qubino-switches"),
-    require("fibaro-double-switch"),
-    require("fibaro-single-switch"),    
-    require("eaton-5-scene-keypad"),
-    require("ecolink-switch"),
-    require("zooz-zen-30-dimmer-relay")
+    lazy_load_if_possible("eaton-accessory-dimmer"),
+    lazy_load_if_possible("inovelli-LED"),
+    lazy_load_if_possible("dawon-smart-plug"),
+    lazy_load_if_possible("inovelli-2-channel-smart-plug"),
+    lazy_load_if_possible("zwave-dual-switch"),
+    lazy_load_if_possible("eaton-anyplace-switch"),
+    lazy_load_if_possible("fibaro-wall-plug-us"),
+    lazy_load_if_possible("dawon-wall-smart-switch"),
+    lazy_load_if_possible("zooz-power-strip"),
+    lazy_load_if_possible("aeon-smart-strip"),
+    lazy_load_if_possible("qubino-switches"),
+    lazy_load_if_possible("fibaro-double-switch"),
+    lazy_load_if_possible("fibaro-single-switch"),
+    lazy_load_if_possible("eaton-5-scene-keypad"),
+    lazy_load_if_possible("ecolink-switch"),
+    lazy_load_if_possible("multi-metering-switch"),
+    lazy_load_if_possible("zooz-zen-30-dimmer-relay"),
+    lazy_load_if_possible("multichannel-device"),
+    lazy_load_if_possible("aeotec-smart-switch"),
+    lazy_load_if_possible("aeotec-heavy-duty")
   },
   lifecycle_handlers = {
     init = device_init,
@@ -129,7 +151,9 @@ local driver_template = {
   }
 }
 
-defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)
+defaults.register_for_default_handlers(driver_template,
+  driver_template.supported_capabilities,
+  {native_capability_cmds_enabled = true, native_capability_attrs_enabled = true})
 --- @type st.zwave.Driver
 local switch = ZwaveDriver("zwave_switch", driver_template)
 switch:run()

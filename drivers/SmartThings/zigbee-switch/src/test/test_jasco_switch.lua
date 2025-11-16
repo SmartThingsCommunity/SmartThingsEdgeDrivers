@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -26,13 +15,14 @@ local mock_device = test.mock_device.build_test_zigbee_device({
       id = 1,
       manufacturer = "Jasco Products",
       model = "43078",
-      server_clusters = { 0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0702, 0x0B05 },
+      server_clusters = { 0x0000, 0x0003, 0x0004, 0x0005, 0x0006, 0x0702, 0x0B04 },
       client_clusters = { 0x000A, 0x0019 }
     }
   }
 })
 
 local function test_init()
+  mock_device:set_field("_configuration_version", 1, {persist = true})
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -45,6 +35,14 @@ test.register_message_test(
       channel = "capability",
       direction = "receive",
       message = { mock_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
     },
     {
       channel = "zigbee",
@@ -61,6 +59,14 @@ test.register_message_test(
       channel = "capability",
       direction = "receive",
       message = { mock_device.id, { capability = "switch", component = "main", command = "off", args = { } } }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+      }
     },
     {
       channel = "zigbee",

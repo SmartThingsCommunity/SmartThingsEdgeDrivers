@@ -1,0 +1,68 @@
+name: ecolink-wireless-siren
+components:
+  - id: main
+    capabilities:
+    - id: alarm
+      version: 1
+      config:
+        values:
+          - key: "alarm.value"
+            enabledValues:
+              - 'off'
+              - both
+          - key: "{{enumCommands}}"
+            enabledValues:
+              - 'off'
+              - both
+    - id: refresh
+      version: 1
+    categories:
+      - name: Siren
+  - id: siren1
+    capabilities:
+    - id: alarm
+      version: 1
+      config:
+        values:
+          - key: "alarm.value"
+            enabledValues:
+              - 'off'
+              - both
+          - key: "{{enumCommands}}"
+            enabledValues:
+              - 'off'
+              - both
+    categories:
+      - name: Siren
+  - id: siren2
+    capabilities:
+    - id: alarm
+      version: 1
+      config:
+        values:
+          - key: "alarm.value"
+            enabledValues:
+              - 'off'
+              - both
+          - key: "{{enumCommands}}"
+            enabledValues:
+              - 'off'
+              - both
+    categories:
+      - name: Siren
+  - id: siren3
+    capabilities:
+    - id: alarm
+      version: 1
+      config:
+        values:
+          - key: "alarm.value"
+            enabledValues:
+              - 'off'
+              - both
+          - key: "{{enumCommands}}"
+            enabledValues:
+              - 'off'
+              - both
+    categories:
+      - name: Siren

@@ -267,6 +267,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
       }
     }
 )
@@ -324,6 +332,42 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic Set (contact) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+          value = 1
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      }
+    }
+)
+
+test.register_message_test(
+    "Basic Set (contact) should be handled",
+    {
+      {
+        channel = "zwave",
+        direction = "receive",
+        message = { mock_motion_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+          value = 1
+        })) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_motion_device:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
     }
 )
@@ -573,6 +617,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_motion_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_motion_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
       }
     }
 )
@@ -589,6 +641,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_water_device:generate_test_message("main", capabilities.waterSensor.water.wet())
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_water_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
       }
     }
 )
@@ -605,6 +665,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_contact_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_contact_device.id, capability_id = "switch", capability_attr_id = "switch" }
+        }
       }
     }
 )

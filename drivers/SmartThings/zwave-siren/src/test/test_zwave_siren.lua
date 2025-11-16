@@ -1,3 +1,4 @@
+---@diagnostic disable: param-type-mismatch, undefined-field
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,11 +15,10 @@
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local constants = require "st.zwave.constants"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
+local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=1})
 local t_utils = require "integration_test.utils"
 
 local BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT = 33
@@ -162,7 +162,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value=SwitchBinary.value.OFF_DISABLE})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value=SwitchBinary.value.OFF_DISABLE})) }
       },
       {
         channel = "capability",
@@ -185,7 +185,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value = BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value = BASIC_AND_SWITCH_BINARY_REPORT_STROBE_LIMIT})) }
       },
       {
         channel = "capability",
@@ -208,7 +208,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value = BASIC_AND_SWITCH_BINARY_REPORT_SIREN_LIMIT})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value = BASIC_AND_SWITCH_BINARY_REPORT_SIREN_LIMIT})) }
       },
       {
         channel = "capability",
@@ -231,7 +231,7 @@ test.register_message_test(
         direction = "receive",
         message = {
           mock_siren_switch_binary.id,
-          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})) }
+          zw_test_utils.zwave_test_build_receive_command(SwitchBinary:Report({value=SwitchBinary.value.ON_ENABLE})) }
       },
       {
         channel = "capability",
@@ -384,6 +384,44 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
+    end
+)
+
+test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send({
+      mock_siren_basic.id,
+      {
+        capability_id = "alarm", component_id = "main",
+        attribute_id = "alarm", state = { value = "off" }
+      }
+    })
+    test.socket.capability:__expect_send({
+      mock_siren_basic.id,
+      {
+        capability_id = "battery", component_id = "main",
+        attribute_id = "battery", state = { value = 100 }
+      }
+    })
+    test.socket.capability:__expect_send({
+      mock_siren_basic.id,
+      {
+        capability_id = "switch", component_id = "main",
+        attribute_id = "switch", state = { value = "off" }
+      }
+    })
+    test.socket.capability:__expect_send({
+      mock_siren_basic.id,
+      {
+        capability_id = "tamperAlert", component_id = "main",
+        attribute_id = "tamper", state = { value = "clear" }
+      }
+    })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_siren_basic.id, "added" })
+    test.wait_for_events()
     end
 )
 

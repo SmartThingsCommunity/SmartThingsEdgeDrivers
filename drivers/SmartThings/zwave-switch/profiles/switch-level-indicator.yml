@@ -1,0 +1,28 @@
+name: switch-level-indicator
+components:
+- id: main
+  capabilities:
+    - id: switch
+      version: 1
+    - id: switchLevel
+      version: 1
+      config:
+      values:
+        - key: "level.value"
+          range: [1, 100]
+    - id: refresh
+      version: 1
+  categories:
+    - name: Switch
+preferences:
+  - name: "ledIndicator"
+    title: "LED Indicator"
+    description: "Turn LED indicator on..."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "When Off"
+        1: "When On"
+        2: "Never"
+      default: 0

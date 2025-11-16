@@ -1,0 +1,51 @@
+name: Delete PR channel
+on:
+  pull_request_target:
+    types:
+      - closed
+    paths:
+      - 'drivers/**'
+
+jobs:
+  delete-channel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List channels
+        id: channels
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/distchannels/'
+          method: GET
+          bearerToken: ${{ secrets.TOKEN }}
+          timeout: 10000
+      - name: Store channel name
+        uses: actions/github-script@v5
+        with:
+          script: core.exportVariable('channel_name', '${{ format('{0}{1}', github.head_ref, github.event.number) }}')
+      - name: Get existing channel JSON
+        if: ${{ contains(steps.channels.outputs.response, env.channel_name) }}
+        run: |
+          jq -r ' .items[] | select(.name=="${{ env.channel_name }}") | @json ' <<< '${{ steps.channels.outputs.response}}' > channel.json
+          echo "CHANNEL_JSON=$(cat channel.json)" >> $GITHUB_ENV
+      - name: Assign the driver
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://api.smartthings.com/distchannels/${{ fromJSON(env.CHANNEL_JSON).channelId }}'
+          bearerToken: ${{ secrets.TOKEN }}
+          method: DELETE
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          body-includes: Invitation URL
+          comment-author: 'github-actions[bot]'
+          issue-number: ${{ github.event.number }}
+      - name: post comment
+        if: ${{ steps.fc.outputs.comment-id != 0 }}
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          body: |
+            Channel deleted.
+          edit-mode: replace
+          issue-number: ${{ github.event.number }}
+          comment-id: ${{ steps.fc.outputs.comment-id }}

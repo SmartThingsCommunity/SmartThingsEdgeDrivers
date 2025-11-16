@@ -66,12 +66,17 @@ local function do_configure(driver, device)
   device:send(Association:Remove({grouping_identifier = 1, node_ids = driver.environment_info.hub_zwave_id}))
 end
 
-local function device_added(driver, device)
-  do_refresh(driver, device)
-  device:emit_event(capabilities.tamperAlert.tamper.clear())
-  device:emit_event(capabilities.contactSensor.contact.open())
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
 end
 
+local function device_added(driver, device)
+  do_refresh(driver, device)
+  emit_event_if_latest_state_missing(device, "main", capabilities.contactSensor, capabilities.contactSensor.contact.NAME, capabilities.contactSensor.contact.open())
+  emit_event_if_latest_state_missing(device, "main", capabilities.tamperAlert, capabilities.tamperAlert.tamper.NAME, capabilities.tamperAlert.tamper.clear())
+end
 
 local fibaro_door_window_sensor_1 = {
   NAME = "fibaro door window sensor 1",

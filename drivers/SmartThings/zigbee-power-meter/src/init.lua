@@ -17,8 +17,10 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local zigbee_constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
-local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
+local ElectricalMeasurement = clusters.ElectricalMeasurement
+local zcl_global_commands = require "st.zigbee.zcl.global_commands"
+local configurations = require "configurations"
 
 local do_configure = function(self, device)
   device:refresh()
@@ -27,9 +29,6 @@ local do_configure = function(self, device)
   -- Additional one time configuration
   if device:supports_capability(capabilities.energyMeter) or device:supports_capability(capabilities.powerMeter) then
     -- Divisor and multipler for EnergyMeter
-    device:send(ElectricalMeasurement.attributes.ACPowerDivisor:read(device))
-    device:send(ElectricalMeasurement.attributes.ACPowerMultiplier:read(device))
-    -- Divisor and multipler for PowerMeter
     device:send(SimpleMetering.attributes.Divisor:read(device))
     device:send(SimpleMetering.attributes.Multiplier:read(device))
   end
@@ -53,15 +52,27 @@ local zigbee_power_meter_driver_template = {
     capabilities.energyMeter,
     capabilities.powerConsumptionReport,
   },
+  zigbee_handlers = {
+    global = {
+      [SimpleMetering.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurations.handle_reporting_config_response
+      },
+     [ElectricalMeasurement.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurations.handle_reporting_config_response
+      }
+    }
+  },
+  current_config_version = 1,
   sub_drivers = {
     require("ezex"),
     require("frient"),
     require("shinasystems"),
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_power_meter_driver_template, zigbee_power_meter_driver_template.supported_capabilities)

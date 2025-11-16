@@ -4,6 +4,16 @@ components:
   capabilities:
   - id: alarm
     version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - 'off'
+            - both
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'off'
+            - both
   - id: tamperAlert
     version: 1
   - id: battery

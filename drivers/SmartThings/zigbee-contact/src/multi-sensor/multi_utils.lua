@@ -77,7 +77,7 @@ multi_utils.handle_three_axis_report = function(device, x, y, z)
   if x ~= nil and y ~= nil and z ~= nil then
     device:emit_event(capabilities.threeAxis.threeAxis({value = {x, y, z}}))
   end
-  if z ~= nil and device.preferences["garageSensor"] then
+  if z ~= nil and device.preferences["certifiedpreferences.garageSensor"] then
     handle_garage_event(device, math.abs(z))
   end
 end
@@ -138,7 +138,7 @@ multi_utils.convert_to_signedInt16 = function(byte1, byte2)
   local finalValue
   local swapped = (byte2 << 8) | byte1
   local sign_mask = 0x8000
-  local int16mask = 0xFF
+  local int16mask = 0xFFFF
   local isNegative = (swapped & sign_mask) >> 15
 
   if(isNegative == 1) then
@@ -148,7 +148,6 @@ multi_utils.convert_to_signedInt16 = function(byte1, byte2)
   else
     finalValue = swapped
   end
-  print("signedInt16 "..finalValue)
   return finalValue
 end
 

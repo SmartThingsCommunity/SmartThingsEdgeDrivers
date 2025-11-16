@@ -4,42 +4,28 @@ components:
   capabilities:
   - id: alarm
     version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - 'off'
+            - both
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'off'
+            - both
   - id: tamperAlert
     version: 1
   - id: battery
     version: 1
   categories:
   - name: Siren
-metadata:
-  mnmn: SmartThingsEdge
-  vid: generic-siren-12  # Filtering non-supported alarm values (signal/strobe only)
 preferences:
-- name: alarmLength
-  title: Alarm length
-  description: Enter alarm length
-  required: false
-  preferenceType: integer
-  definition:
-    minimum: 1
-    maximum: 10
-    default: 10
-- name: alarmLEDflash
-  title: Alarm LED flash
-  required: false
-  preferenceType: boolean
-  definition:
-    default: true
-- name: comfortLED
-  title: Comfort LED (x10 sec)
-  required: false
-  preferenceType: integer
-  definition:
-    minimum: 0
-    maximum: 25
-    default: 0
-- name: tamper
-  title: Tamper alert
-  required: false
-  preferenceType: boolean
-  definition:
-    default: true
+- preferenceId: certifiedpreferences.alarmLength
+  explicit: true
+- preferenceId: certifiedpreferences.alarmLEDflash
+  explicit: true
+- preferenceId: certifiedpreferences.comfortLED
+  explicit: true
+- preferenceId: certifiedpreferences.tamper
+  explicit: true

@@ -113,11 +113,16 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0B00
     deviceProfileName: water-temperature-battery-tamper
-  - id: "aeotec/water/7"
+  - id: "aeotec/water/7pro"
     deviceLabel: Aeotec Water Sensor 7 Pro
     manufacturerId: 0x0371
     productId: 0x0013
     deviceProfileName: water-temperature-humidity-tamper-battery
+  - id: "aeotec/water/7"
+    deviceLabel: Aeotec Water Sensor 7
+    manufacturerId: 0x0371
+    productId: 0x0012
+    deviceProfileName: water-battery-tamper
   - id: "everspring/multi/ST814"
     deviceLabel: Everspring ST814
     manufacturerId: 0x0060
@@ -140,12 +145,6 @@ zwaveManufacturer:
     deviceLabel: Homeseer Multi Sensor HSM100
     manufacturerId: 0x001E
     productType: 0x0002
-    productId: 0x0001
-    deviceProfileName: motion-battery-illuminance-temperature
-  - id: "homeseer/multi/hsm200"
-    deviceLabel: Homeseer Multi Sensor HSM200
-    manufacturerId: 0x000C
-    productType: 0x0004
     productId: 0x0001
     deviceProfileName: motion-battery-illuminance-temperature
   - id: 010F/0700 # Fibaro Open/Closed Sensor (FGK-10x) / Europe (0x1000), NA(0x2000)
@@ -543,6 +542,12 @@ zwaveManufacturer:
     productType: 0x0000
     productId: 0x0001
     deviceProfileName: base-water
+  - id: shelly/wave/motion
+    deviceLabel: Shelly Wave Motion
+    manufacturerId: 0x0460
+    productType: 0x0100
+    productId: 0x0082
+    deviceProfileName: shelly-wave-motion
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor

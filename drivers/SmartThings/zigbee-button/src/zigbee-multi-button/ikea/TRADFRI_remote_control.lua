@@ -47,18 +47,18 @@ end
 local function added_handler(self, device)
   for comp_name, comp in pairs(device.profile.components) do
     if comp_name == "button5" then
-      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed"}))
+      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
     else
-      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}))
+      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }}))
     end
     if comp_name == "main" then
-      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 5}))
+      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 5}, {visibility = { displayed = false }}))
     else
-      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}))
+      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
     end
   end
-  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local remote_control = {

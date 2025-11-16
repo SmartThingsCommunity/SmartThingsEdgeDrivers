@@ -1,0 +1,14 @@
+name: generic-multi-sensor
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: illuminanceMeasurement
+    version: 1
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GenericSensor

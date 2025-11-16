@@ -22,6 +22,8 @@ local user_id_status = UserCode.user_id_status
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local access_control_event = Notification.event.access_control
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=2})
+local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
+local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 
@@ -48,37 +50,51 @@ end
 local function reload_all_codes(self, device, cmd)
   LockCodesDefaults.capability_handlers[capabilities.lockCodes.commands.reloadAllCodes](self, device, cmd)
   local current_code_length = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  if current_code_length ~= nil then
+  if current_code_length == nil then
     device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
   end
 end
 
 local function set_code(self, device, cmd)
-  -- it's copied function from defaults with additional check for Schlage's configuration
-  if (cmd.args.codeName ~= nil) then
-    if (device:get_field(constants.CODE_STATE) == nil) then device:set_field(constants.CODE_STATE, {}) end
-    local code_state = device:get_field(constants.CODE_STATE)
-    code_state["setName"..cmd.args.codeSlot] = cmd.args.codeName
-    device:set_field(constants.CODE_STATE, code_state)
-  end
-  local send_set_user_code = function ()
-    device:send(UserCode:Set({
-      user_identifier = cmd.args.codeSlot,
-      user_code = cmd.args.codePIN,
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS})
-    )
-  end
-  local current_code_length = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  if current_code_length ~= nil then
-    device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
-    device.thread:call_with_delay(DEFAULT_COMMANDS_DELAY, send_set_user_code)
+  if (cmd.args.codePIN == "") then
+    self:inject_capability_command(device, {
+      capability = capabilities.lockCodes.ID,
+      command = capabilities.lockCodes.commands.nameSlot.NAME,
+      args = {cmd.args.codeSlot, cmd.args.codeName},
+    })
   else
-    send_set_user_code()
+    -- copied from defaults with additional check for Schlage's configuration
+    if (cmd.args.codeName ~= nil and cmd.args.codeName ~= "") then
+      if (device:get_field(constants.CODE_STATE) == nil) then device:set_field(constants.CODE_STATE, { persist = true }) end
+      local code_state = device:get_field(constants.CODE_STATE)
+      code_state["setName"..cmd.args.codeSlot] = cmd.args.codeName
+      device:set_field(constants.CODE_STATE, code_state, { persist = true })
+    end
+    local send_set_user_code = function ()
+      device:send(UserCode:Set({
+        user_identifier = cmd.args.codeSlot,
+        user_code = cmd.args.codePIN,
+        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS})
+      )
+    end
+    local current_code_length = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
+    if current_code_length == nil then
+      device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
+      device.thread:call_with_delay(DEFAULT_COMMANDS_DELAY, send_set_user_code)
+    else
+      send_set_user_code()
+    end
   end
 end
 
 local function do_configure(self, device)
   device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
+  device:send(Association:Set({grouping_identifier = 2, node_ids = {self.environment_info.hub_zwave_id}}))
+end
+
+local function basic_set_handler(self, device, cmd)
+  device:emit_event(cmd.args.value == 0 and capabilities.lock.lock.unlocked() or capabilities.lock.lock.locked())
+  device:send(Association:Remove({grouping_identifier = 1, node_ids = {self.environment_info.hub_zwave_id}}))
 end
 
 local function configuration_report(self, device, cmd)
@@ -103,9 +119,9 @@ local function is_user_code_report_mfr_specific(device, cmd)
   local code_id = cmd.args.user_identifier
 
   if reported_user_id_status == user_id_status.ENABLED_GRANT_ACCESS or -- OCCUPIED in UserCodeV1
-      (user_code == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
+      (reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
     local code_state = device:get_field(constants.CODE_STATE)
-    return user_code == "**********" or user_code == nil or code_state["setName"..cmd.args.user_identifier] ~= nil
+    return user_code == "**********" or user_code == nil or (code_state ~= nil and code_state["setName"..cmd.args.user_identifier] ~= nil)
   else
     return (code_id == 0 and reported_user_id_status == user_id_status.AVAILABLE) or
           reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE
@@ -120,10 +136,10 @@ local function user_code_report_handler(self, device, cmd)
     local event
 
     if reported_user_id_status == user_id_status.ENABLED_GRANT_ACCESS or -- OCCUPIED in UserCodeV1
-        (user_code == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
+        (reported_user_id_status == user_id_status.STATUS_NOT_AVAILABLE and user_code ~= nil) then
       local code_name = LockCodesDefaults.get_code_name(device, code_id)
       local change_type = LockCodesDefaults.get_change_type(device, code_id)
-      event = capabilities.lockCodes.codeChanged(code_id..""..change_type)
+      event = capabilities.lockCodes.codeChanged(code_id..""..change_type, { state_change = true })
       event.data = {codeName = code_name}
       if code_id ~= 0 then -- ~= MASTER_CODE
         LockCodesDefaults.code_set_event(device, code_id, code_name)
@@ -131,17 +147,17 @@ local function user_code_report_handler(self, device, cmd)
     elseif code_id == 0 and reported_user_id_status == user_id_status.AVAILABLE then
       local lock_codes = LockCodesDefaults.get_lock_codes(device)
       for _code_id, _ in pairs(lock_codes) do
-        code_deleted(device, _code_id)
+        LockCodesDefaults.code_deleted(device, _code_id)
       end
-      device:emit_event(capabilities.lockCodes.lockCodes(json.encode(LockCodesDefaults.get_lock_codes(device))))
+      device:emit_event(capabilities.lockCodes.lockCodes(json.encode(LockCodesDefaults.get_lock_codes(device)), { visibility = { displayed = false } }))
     else -- user_id_status.STATUS_NOT_AVAILABLE
-      event = capabilities.lockCodes.codeChanged(code_id.." failed")
+      event = capabilities.lockCodes.codeChanged(code_id.." failed", { state_change = true })
     end
 
     if event ~= nil then
       device:emit_event(event)
     end
-
+    LockCodesDefaults.clear_code_state(device, code_id)
     LockCodesDefaults.verify_set_code_completion(device, cmd, code_id)
   else
     LockCodesDefaults.zwave_handlers[cc.USER_CODE][UserCode.REPORT](self, device, cmd)
@@ -162,10 +178,13 @@ local schlage_lock = {
     },
     [cc.CONFIGURATION] = {
       [Configuration.REPORT] = configuration_report
+    },
+    [cc.BASIC] = {
+      [Basic.SET] = basic_set_handler
     }
   },
   lifecycle_handlers = {
-    doConfigure = do_configure
+    doConfigure = do_configure,
   },
   NAME = "Schlage Lock",
   can_handle = can_handle_schlage_lock,

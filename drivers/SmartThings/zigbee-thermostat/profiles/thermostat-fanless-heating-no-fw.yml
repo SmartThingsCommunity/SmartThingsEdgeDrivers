@@ -1,0 +1,27 @@
+name: thermostat-fanless-heating-no-fw
+components:
+  - id: main
+    categories:
+      - name: Thermostat
+    capabilities:
+      - id: temperatureMeasurement
+        version: 1
+      - id: thermostatHeatingSetpoint
+        version: 1
+        config:
+          values:
+            - key: "heatingSetpoint.value"
+              range: [5, 39]
+              step: 0.1
+      - id: thermostatOperatingState
+        version: 1
+        config:
+          values:
+            - key: "thermostatOperatingState.value"
+              enabledValues:
+                - heating
+                - idle
+      - id: thermostatMode
+        version: 1
+      - id: refresh
+        version: 1

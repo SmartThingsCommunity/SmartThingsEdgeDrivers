@@ -19,3 +19,18 @@ zigbeeManufacturer:
     manufacturer: IKEA of Sweden
     model: TRADFRI signal repeater
     deviceProfileName: range-extender
+  - id: "AEOTEC/WG001-Z01"
+    manufacturer: AL001
+    model: WG001-Z01
+    deviceLabel: Aeotec Range Extender Zi
+    deviceProfileName: range-extender
+  - id: "Insta GmbH/Pushbutton Interface"
+    deviceLabel: NEXENTRO Pushbutton Interface
+    manufacturer: Insta GmbH
+    model: NEXENTRO Pushbutton Interface
+    deviceProfileName: range-extender
+  - id: "frientA/S/111"
+    deviceLabel: frient Zigbee Range Extender
+    manufacturer: frient A/S
+    model: REXZB-111
+    deviceProfileName: range-extender-battery-source

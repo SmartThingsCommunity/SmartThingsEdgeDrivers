@@ -2,3 +2,5 @@ name: 'Z-Wave Switch'
 packageKey: 'zwave-switch'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave switch devices"
+vendorSupportInformation: "https://support.smartthings.com"

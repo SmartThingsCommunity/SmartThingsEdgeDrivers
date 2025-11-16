@@ -1,21 +1,8 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require 'dkjson'
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
@@ -31,7 +18,7 @@ local qubino_flush_2_relay_endpoints = {
 }
 
 local mock_qubino_flush_2_relay = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("qubino-flush2-relay-temperature.yml"),
+  profile = t_utils.get_profile_definition("qubino-flush2-relay.yml"),
   zwave_endpoints = qubino_flush_2_relay_endpoints,
   zwave_manufacturer_id = 0x0159,
   zwave_product_type = 0x0002,

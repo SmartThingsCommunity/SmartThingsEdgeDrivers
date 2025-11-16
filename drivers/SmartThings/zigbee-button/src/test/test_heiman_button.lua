@@ -43,10 +43,23 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     }
 )
 
+local mock_device_hs6ssb = test.mock_device.build_test_zigbee_device(
+    {
+      profile = t_utils.get_profile_definition("three-buttons.yml"),
+      zigbee_endpoints = {
+        [1] = {
+          id = 1,
+          manufacturer = "HEIMAN",
+          model = "HS6SSB-W-EF-3.0",
+          server_clusters = {0x0000, 0x0001, 0x0003, 0x0004, 0x0005, 0x0B05}
+        }
+      }
+    }
+)
+
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device_hs6ssb)end
 
 test.set_test_init_function(test_init)
 
@@ -92,6 +105,38 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+    "Test cases for Buttons Pushed",
+    function()
+      test.socket.zigbee:__queue_receive({ mock_device_hs6ssb.id, zigbee_test_utils.build_custom_command_id(mock_device_hs6ssb, Scenes.ID, 0x05, 0x117, "\x00\x10\x02\x00\x01") })
+      test.socket.capability:__expect_send(
+        mock_device_hs6ssb:generate_test_message("button1", button_attr.pushed({ state_change = true }))
+      )
+      test.socket.capability:__expect_send(
+        mock_device_hs6ssb:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      )
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive({ mock_device_hs6ssb.id, zigbee_test_utils.build_custom_command_id(mock_device_hs6ssb, Scenes.ID, 0x05, 0x117, "\x00\x12\x04\x00\x01") })
+      test.socket.capability:__expect_send(
+        mock_device_hs6ssb:generate_test_message("button2", button_attr.pushed({ state_change = true }))
+      )
+      test.socket.capability:__expect_send(
+        mock_device_hs6ssb:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      )
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive({ mock_device_hs6ssb.id, zigbee_test_utils.build_custom_command_id(mock_device_hs6ssb, Scenes.ID, 0x05, 0x117, "\x00\x11\x03\x00\x01") })
+      test.socket.capability:__expect_send(
+        mock_device_hs6ssb:generate_test_message("button3", button_attr.pushed({ state_change = true }))
+      )
+      test.socket.capability:__expect_send(
+        mock_device_hs6ssb:generate_test_message("main", button_attr.pushed({ state_change = true }))
+      )
+      test.wait_for_events()
+    end
+)
+
+test.register_coroutine_test(
     "Configure should configure all necessary attributes",
     function()
       test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
@@ -116,7 +161,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -132,6 +177,27 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_add_hub_to_group(0x0011)
       test.socket.zigbee:__expect_add_hub_to_group(0x0012)
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    end
+)
+
+test.register_coroutine_test(
+    "Configure should configure all necessary attributes",
+    function()
+      test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+      test.wait_for_events()
+      test.socket.device_lifecycle:__queue_receive({ mock_device_hs6ssb.id, "doConfigure" })
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+
+      test.socket.zigbee:__expect_send({
+        mock_device_hs6ssb.id,
+        Basic.attributes.DeviceEnabled:write(mock_device_hs6ssb, true)
+      })
+      test.socket.zigbee:__expect_add_hub_to_group(0x000F)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0010)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0011)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0012)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0013)
+      mock_device_hs6ssb:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )
 
@@ -160,7 +226,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -198,7 +264,7 @@ test.register_coroutine_test(
           mock_device.id,
           zigbee_test_utils.build_bind_request(mock_device,
                                                zigbee_test_utils.mock_hub_eui,
-                                               OnOff.ID):to_endpoint(endpoint)
+                                               OnOff.ID, endpoint)
         })
       end
       test.socket.zigbee:__expect_send({
@@ -214,39 +280,66 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+    "Configure should configure adding device to Zigbee group only once",
+    function()
+      test.socket.environment_update:__queue_receive({ "zigbee", { hub_zigbee_id = base64.encode(zigbee_test_utils.mock_hub_eui) } })
+      test.wait_for_events()
+      test.socket.device_lifecycle:__queue_receive({ mock_device_hs6ssb.id, "doConfigure" })
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+
+      test.socket.zigbee:__expect_send({
+        mock_device_hs6ssb.id,
+        Basic.attributes.DeviceEnabled:write(mock_device_hs6ssb, true)
+      })
+      test.socket.zigbee:__expect_add_hub_to_group(0x000F)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0010)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0011)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0012)
+      test.socket.zigbee:__expect_add_hub_to_group(0x0013)
+      mock_device_hs6ssb:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+      test.wait_for_events()
+      -- Configure again
+      test.socket.device_lifecycle:__queue_receive({ mock_device_hs6ssb.id, "doConfigure" })
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+
+      test.socket.zigbee:__expect_send({
+        mock_device_hs6ssb.id,
+        Basic.attributes.DeviceEnabled:write(mock_device_hs6ssb, true)
+      })
+      mock_device_hs6ssb:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    end
+)
+
+test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
-      }
-    })
-    test.socket.capability:__expect_send({
-      mock_device.id,
-      {
-        capability_id = "button", component_id = "main",
-        attribute_id = "numberOfButtons", state = { value = 4 }
-      }
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed"}, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 4 }, { visibility = { displayed = false } })
+      )
+    )
     for button_name, _ in pairs(mock_device.profile.components) do
       if button_name ~= "main" then
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "supportedButtonValues", state = { value = { "pushed" } }
-          }
-        })
-        test.socket.capability:__expect_send({
-          mock_device.id,
-          {
-            capability_id = "button", component_id = button_name,
-            attribute_id = "numberOfButtons", state = { value = 1 }
-          }
-        })
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
       end
     end
     test.socket.capability:__expect_send({
@@ -258,6 +351,51 @@ test.register_coroutine_test(
     })
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.wait_for_events()
+    end
+)
+
+test.register_coroutine_test(
+  "added lifecycle event",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device_hs6ssb:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed"}, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device_hs6ssb:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 3 }, { visibility = { displayed = false } })
+      )
+    )
+    for button_name, _ in pairs(mock_device_hs6ssb.profile.components) do
+      if button_name ~= "main" then
+        test.socket.capability:__expect_send(
+          mock_device_hs6ssb:generate_test_message(
+            button_name,
+            capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_device_hs6ssb:generate_test_message(
+            button_name,
+            capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+    test.socket.capability:__expect_send({
+      mock_device_hs6ssb.id,
+      {
+        capability_id = "button", component_id = "main",
+        attribute_id = "button", state = { value = "pushed" }
+      }
+    })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_hs6ssb.id, "added" })
     test.wait_for_events()
     end
 )

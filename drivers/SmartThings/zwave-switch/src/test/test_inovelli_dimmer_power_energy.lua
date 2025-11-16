@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -27,6 +16,11 @@ local inovelli_dimmer_endpoints = {
       { value = zw.BASIC },
       { value = zw.SWITCH_MULTILEVEL },
       { value = zw.METER }
+    }
+  },
+  {
+    command_classes = {
+      {value = zw.CONFIGURATION}
     }
   }
 }
@@ -174,8 +168,8 @@ test.register_message_test(
         mock_inovelli_dimmer.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
+            target_value = 0,
+            current_value = SwitchMultilevel.value.OFF_DISABLE,
             duration = 0
           })
         )
@@ -209,8 +203,8 @@ do
           mock_inovelli_dimmer.id,
           zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-              current_value = 0,
-              target_value = level,
+              target_value = 0,
+              current_value = level,
               duration = 0
             })
           )

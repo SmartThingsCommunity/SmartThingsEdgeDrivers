@@ -1,0 +1,45 @@
+id: stse.deviceInitialization
+version: 1
+status: proposed
+name: device initialization
+ephemeral: false
+attributes:
+  initializedState:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - initialized
+            - notInitialized
+            - initializing
+      additionalProperties: false
+      required:
+        - value
+    setter: setInitializedState
+  supportedInitializedState:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+              - initialized
+              - notInitialized
+              - initializing
+commands:
+  setInitializedState:
+    name: setInitializedState
+    arguments:
+      - name: state
+        optional: false
+        schema:
+          type: string
+          enum:
+            - initialized
+            - notInitialized
+            - initializing

@@ -50,11 +50,11 @@ end
 local function added_handler(self, device)
   for _, component in pairs(device.profile.components) do
     local number_of_buttons = component.id == "main" and 2 or 1
-    device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}))
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
+    device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }}))
+    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}, {visibility = { displayed = false }}))
   end
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local function do_configure(self, device)

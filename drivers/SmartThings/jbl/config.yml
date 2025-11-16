@@ -1,0 +1,7 @@
+name: 'JBL'
+packageKey: 'jbl'
+permissions:
+  lan: {}
+  discovery: {}
+description: "SmartThings driver for JBL devices"
+vendorSupportInformation: "https://support.smartthings.com"

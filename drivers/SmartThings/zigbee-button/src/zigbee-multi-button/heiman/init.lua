@@ -23,10 +23,11 @@ local PowerConfiguration = clusters.PowerConfiguration
 local Scenes = clusters.Scenes
 
 local HEIMAN_GROUP_CONFIGURE = "is_group_configured"
-local HEIMAN_NUM_ENDPOINT = 0x04
 
 local HEIMAN_BUTTON_FINGERPRINTS = {
-  { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" }
+  { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0", endpoint_num = 0x04 },
+  { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0", endpoint_num = 0x04 },
+  { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0", endpoint_num = 0x03 },
 }
 
 local is_heiman_button = function(opts, driver, device)
@@ -38,13 +39,24 @@ local is_heiman_button = function(opts, driver, device)
   return false
 end
 
-local do_configure = function(self, device)
-  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
-  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
-  for endpoint = 1,HEIMAN_NUM_ENDPOINT do
-    device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui):to_endpoint(endpoint))
+local function get_endpoint_num(device)
+  for _, fingerprint in ipairs(HEIMAN_BUTTON_FINGERPRINTS) do
+    if device:get_model() == fingerprint.model then
+      return fingerprint.endpoint_num
+    end
   end
-  device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
+end
+
+local do_configure = function(self, device)
+  local heiman_endpoint_num = get_endpoint_num(device)
+  if device:get_model() == "SceneSwitch-EM-3.0" then
+    device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
+    device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
+    for endpoint = 1, heiman_endpoint_num do
+      device:send(device_management.build_bind_request(device, OnOff.ID, self.environment_info.hub_zigbee_eui, endpoint))
+    end
+    device:send(OnOff.attributes.OnOff:configure_reporting(device, 0, 600, 1))
+  end
   device:send(Basic.attributes.DeviceEnabled:write(device, true))
   if not self.datastore[HEIMAN_GROUP_CONFIGURE] then
     -- Configure adding hub to group once
@@ -52,17 +64,42 @@ local do_configure = function(self, device)
     self:add_hub_to_zigbee_group(0x0010)
     self:add_hub_to_zigbee_group(0x0011)
     self:add_hub_to_zigbee_group(0x0012)
+    if device:get_model() ~= "SceneSwitch-EM-3.0" then
+      self:add_hub_to_zigbee_group(0x0013)
+    end
     self.datastore[HEIMAN_GROUP_CONFIGURE] = true
   end
 end
+
+local scene_group_button_mapping = {
+  ["HS6SSA-W-EF-3.0"] = {
+    [1] = "button3",
+    [2] = "button2",
+    [3] = "button4",
+    [4] = "button1"
+  },
+  ["HS6SSB-W-EF-3.0"] = {
+    [2] = "button1",
+    [3] = "button3",
+    [4] = "button2",
+  },
+}
 
 local function scenes_cluster_handler(driver, device, zb_rx)
   local additional_fields = {
     state_change = true
   }
-  local bytes = zb_rx.body.zcl_body.body_bytes
-  local button_num = bytes:byte(3)
-  local button_name = "button" .. button_num
+
+  local button_name
+  if device:get_model() == "SceneSwitch-EM-3.0" then
+    local bytes = zb_rx.body.zcl_body.body_bytes
+    local button_num = bytes:byte(3)
+    button_name = "button" .. button_num
+  else
+    local scene_id = zb_rx.body.zcl_body.scene_id.value
+    button_name = scene_group_button_mapping[device:get_model()][scene_id]
+  end
+
   local event = capabilities.button.button.pushed(additional_fields)
   local comp = device.profile.components[button_name]
   if comp ~= nil then
@@ -81,6 +118,7 @@ local heiman_device_handler = {
   zigbee_handlers = {
     cluster = {
       [Scenes.ID] = {
+        [Scenes.server.commands.RecallScene.ID] = scenes_cluster_handler,
         [0x07] = scenes_cluster_handler
       }
     }

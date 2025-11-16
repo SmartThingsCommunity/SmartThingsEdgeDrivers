@@ -36,9 +36,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -132,6 +130,14 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 55) })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(20)) )
+  end
+)
+
+test.register_coroutine_test(
+  "Battery voltage events should handle 0 percent",
+  function()
+    test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 0) })
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(0)) )
   end
 )
 

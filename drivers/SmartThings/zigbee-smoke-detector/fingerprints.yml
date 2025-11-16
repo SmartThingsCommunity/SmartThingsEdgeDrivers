@@ -1,4 +1,14 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.sensor_gas.acn02"
+    deviceLabel: Aqara Smart Natural Gas Detector
+    manufacturer: LUMI
+    model: lumi.sensor_gas.acn02
+    deviceProfileName: gas-lifetime-selfcheck-aqara
+  - id: "LUMI/lumi.sensor_smoke.acn03"
+    deviceLabel: Aqara Smart Smoke Detector 
+    manufacturer: LUMI
+    model: lumi.sensor_smoke.acn03
+    deviceProfileName: smoke-battery-aqara
   - id: "Heiman/Orvibo/Gas1"
     deviceLabel: Orvibo Smoke Detector
     manufacturer: Heiman
@@ -23,7 +33,12 @@ zigbeeManufacturer:
     deviceLabel: frient Smoke Detector
     manufacturer: frient A/S
     model: SMSZB-120
-    deviceProfileName: smoke-battery
+    deviceProfileName: smoke-temp-battery-alarm
+  - id: "frient/HESZB-120"
+    deviceLabel: frient Heat Detector
+    manufacturer: frient A/S
+    model: HESZB-120
+    deviceProfileName: heat-temp-battery-alarm
   - id: "Heiman/Orvibo/Gas3"
     deviceLabel: Orvibo Gas Detector
     manufacturer: Heiman

@@ -17,8 +17,6 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
-
-local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 
 local button_endpoints = {
@@ -44,39 +42,31 @@ local function  test_init()
 end
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-        "Aeotec nanomote one's supported button values",
-        {
-            {
-                channel = "device_lifecycle",
-                direction = "receive",
-                message = { mock_aeotec_nanomote_one.id, "added" }
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_aeotec_nanomote_one:generate_test_message("main",
-                        capabilities.button.supportedButtonValues({"pushed", "held", "down_hold"}))
-            },
-            {
-                channel = "capability",
-                direction = "send",
-                message = mock_aeotec_nanomote_one:generate_test_message("main", capabilities.button.numberOfButtons(
-                  { value = 1 }
-                ))
-            },
-            {
-                channel = "zwave",
-                direction = "send",
-                message = zw_test_utils.zwave_test_build_send_command(
-                  mock_aeotec_nanomote_one,
-                  Battery:Get({})
-                )
-            }
-        },
-        {
-            inner_block_ordering = "relaxed"
-        }
+test.register_coroutine_test(
+  "Aeotec nanomote one's supported button values",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_aeotec_nanomote_one.id, "added" })
+
+    test.socket.capability:__expect_send(
+      mock_aeotec_nanomote_one:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({"pushed", "held", "down_hold"}, {visibility = { displayed = false }})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_aeotec_nanomote_one:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 1 }, {visibility = { displayed = false }})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_aeotec_nanomote_one,
+        Battery:Get({})
+      )
+    )
+  end
 )
 
 test.run_registered_tests()

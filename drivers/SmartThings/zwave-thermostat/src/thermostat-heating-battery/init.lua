@@ -26,12 +26,9 @@ local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local Clock = (require "st.zwave.CommandClass.Clock")({version=1})
 --- @type st.zwave.CommandClass.Protection
 local Protection = (require "st.zwave.CommandClass.Protection")({version=2})
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local log = require "log"
 
 local constants = (require "st.zwave.constants")
-local DEVICE_WAKEUP_INTERVAL = 5 * 60
 local LATEST_BATTERY_REPORT_TIMESTAMP = "latest_battery_report_timestamp"
 local LATEST_CLOCK_SET_TIMESTAMP = "latest_clock_set_timestamp"
 local CACHED_SETPOINT = "cached_setpoint"
@@ -213,6 +210,12 @@ local function set_heating_setpoint(driver, device, command)
 end
 
 local function wakeup_notification_handler(self, device, cmd)
+    --Note sending WakeUpIntervalGet the first time a device wakes up will happen by default in Lua libs 0.49.x and higher
+    --This is done to help the hub correctly set the checkInterval for migrated devices.
+    if not device:get_field("__wakeup_interval_get_sent") then
+      device:send(WakeUp:IntervalGetV1({}))
+      device:set_field("__wakeup_interval_get_sent", true)
+    end
     check_and_send_cached_setpoint(device)
     check_and_send_battery_get(device)
     check_and_send_clock_set(device)

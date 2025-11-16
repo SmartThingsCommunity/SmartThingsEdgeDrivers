@@ -62,9 +62,14 @@ local devices = {
     PARAMETERS = {
       closeInterval = {parameter_number = 1, size = 1},
       reverse = {parameter_number = 2, size = 1},
+      forceReport = {parameter_number = 3, size = 1},
       defaultOnValue = {parameter_number = 4, size = 1},
       disableResetButton = {parameter_number = 5, size = 1},
       openCloseSpeed = {parameter_number = 6, size = 1},
+      remoteCalibration = {parameter_number = 7, size = 1},
+      minTilt = {parameter_number = 8, size = 1},
+      maxTilt = {parameter_number = 9, size = 1},
+      remap = {parameter_number = 10, size = 1}
     }
   },
   AEON_NANO_SHUTTER = {

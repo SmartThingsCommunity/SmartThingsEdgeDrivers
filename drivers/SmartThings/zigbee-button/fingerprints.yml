@@ -1,4 +1,29 @@
 zigbeeManufacturer:
+  - id: "Vimar/xx591-remote-control"
+    deviceLabel: Vimar Remote Control
+    manufacturer: Vimar
+    model: "RemoteControl_v1.0"
+    deviceProfileName: two-buttons-no-fw-update
+  - id: "LUMI/lumi.remote.b1acn02"
+    deviceLabel: Aqara Wireless Mini Switch T1
+    manufacturer: LUMI
+    model: lumi.remote.b1acn02
+    deviceProfileName: one-button-batteryLevel
+  - id: "LUMI/lumi.remote.acn003"
+    deviceLabel: Aqara Wireless Remote Switch E1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.acn003
+    deviceProfileName: one-button-batteryLevel
+  - id: "LUMI/lumi.remote.b186acn03"
+    deviceLabel: Aqara Wireless Remote Switch T1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b186acn03
+    deviceProfileName: one-button-batteryLevel
+  - id: "LUMI/lumi.remote.b286acn03"
+    deviceLabel: Aqara Wireless Remote Switch T1 (Double Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b286acn03
+    deviceProfileName: aqara-double-buttons
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN
@@ -8,7 +33,12 @@ zigbeeManufacturer:
     deviceLabel: frient Button
     manufacturer: frient A/S
     model: MBTZB-110
-    deviceProfileName: button-profile
+    deviceProfileName: button-profile-frient
+  - id: "frient A/S/SBTZB-110"
+    deviceLabel: frient Button
+    manufacturer: frient A/S
+    model: SBTZB-110
+    deviceProfileName: button-profile-frient
   - id: "LDS/ZBT-CCTSwitch-D0001"
     deviceLabel: EcoSmart Remote Control
     manufacturer: LDS
@@ -44,6 +74,11 @@ zigbeeManufacturer:
     manufacturer: KE
     model: TRADFRI open/close remote
     deviceProfileName: two-buttons-battery
+  - id: "02KE/TRADFRIopenclose"
+    deviceLabel: IKEA Remote Control
+    manufacturer: "\x02KE"
+    model: TRADFRI open/close remote
+    deviceProfileName: two-buttons-battery
   - id: "CentraLite/3450-L"
     deviceLabel: Iris Remote Control
     manufacturer: CentraLite
@@ -59,6 +94,16 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: SceneSwitch-EM-3.0
     deviceProfileName: four-buttons-battery
+  - id: "HEIMAN/HS6SSA-W-EF-3.0"
+    deviceLabel: HEIMAN Scene Panel
+    manufacturer: HEIMAN
+    model: HS6SSA-W-EF-3.0
+    deviceProfileName: four-buttons
+  - id: "HEIMAN/HS6SSB-W-EF-3.0"
+    deviceLabel: HEIMAN Scene Panel
+    manufacturer: HEIMAN
+    model: HS6SSB-W-EF-3.0
+    deviceProfileName: three-buttons
   - id: "AduroSmart Eria/Adurolight_NCC"
     deviceLabel: Eria Remote Control
     manufacturer: AduroSmart Eria
@@ -104,16 +149,41 @@ zigbeeManufacturer:
     manufacturer: ShinaSystem
     model: SBM300ZB3
     deviceProfileName: three-buttons-battery
+  - id: "ShinaSystem/SBM300ZC1"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC1
+    deviceProfileName: one-button-battery
+  - id: "ShinaSystem/SBM300ZC2"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC2
+    deviceProfileName: two-buttons-battery
+  - id: "ShinaSystem/SBM300ZC3"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC3
+    deviceProfileName: three-buttons-battery
+  - id: "ShinaSystem/SBM300ZC4"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SBM300ZC4
+    deviceProfileName: four-buttons-battery
+  - id: "ShinaSystem/SQM300ZC4"
+    deviceLabel: SiHAS Remote Control
+    manufacturer: ShinaSystem
+    model: SQM300ZC4
+    deviceProfileName: four-buttons-battery
   - id: OSRAM/LIGHTIFY Dimming Switch
     deviceLabel: OSRAM Button
     manufacturer: OSRAM
     model: LIGHTIFY Dimming Switch
-    deviceProfileName: two-buttons-battery
+    deviceProfileName: two-buttons-battery-holdTime
   - id: CentraLite/3130
     deviceLabel: Centralite Button
     manufacturer: CentraLite
     model: 3130
-    deviceProfileName: two-buttons-battery
+    deviceProfileName: two-buttons-battery-holdTime
   - id: CentraLite/3455-L
     deviceLabel: Iris Button
     manufacturer: CentraLite
@@ -129,3 +199,65 @@ zigbeeManufacturer:
     manufacturer: Samjin
     model: button
     deviceProfileName: one-button-temp-battery
+  - id: SlateSwitch/button
+    deviceLabel: Slate Switch Button
+    manufacturer: zunzunbee
+    model: SSWZ8T
+    deviceProfileName: eight-buttons-temp-battery
+  - id: eWeLink/WB01
+    deviceLabel: eWeLink Button
+    manufacturer: eWeLink
+    model: WB01
+    deviceProfileName: one-button-battery
+  - id: eWeLink/SNZB-01P
+    deviceLabel: eWeLink Button
+    manufacturer: eWeLink
+    model: SNZB-01P
+    deviceProfileName: one-button-battery
+  - id: "ROBB smarrt/ROB_200-007-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-007-0
+    deviceLabel: ROBB 8x Wireless Smarrt Switch
+    deviceProfileName: eight-buttons-battery
+  - id: "ROBB smarrt/ROB_200-008-0"
+    manufacturer: ROBB smarrt
+    model: ROB_200-008-0
+    deviceLabel: ROBB 4x Wireless Smarrt Switch
+    deviceProfileName: four-buttons-battery
+  - id: "Third Reality/3RSB22BZ"
+    deviceLabel: ThirdReality Smart Button
+    manufacturer: Third Reality, Inc
+    model: 3RSB22BZ
+    deviceProfileName: one-button-battery
+  - id: Samsung/SAMSUNG-ITM-Z-005
+    deviceLabel: ITM Switch
+    manufacturer: Samsung Electronics
+    model: SAMSUNG-ITM-Z-005
+    deviceProfileName: SLED-three-buttons  
+  - id: "Linxura Smart Controller"
+    deviceLabel: Linxura Smart Controller
+    manufacturer: Linxura
+    model: Smart Controller
+    deviceProfileName: four-buttons-without-main-button
+    isJoinable: true
+  - id: "Aura Smart button"
+    deviceLabel: Aura Smart Button
+    manufacturer: Linxura
+    model: Aura Smart Button
+    deviceProfileName: four-buttons-without-main-button
+    isJoinable: true
+  # Wall Hero
+  - id: "WALL HERO/ACL-401SCA4"
+    deviceLabel: WallHero Remote Control (4-Inch)
+    manufacturer: WALL HERO
+    model: ACL-401SCA4
+    deviceProfileName: thirty-buttons
+zigbeeGeneric:
+  - id: "generic-button-sensor"
+    deviceLabel: "Zigbee Generic Button"
+    clusters:
+      server:
+        - 0x0500
+        - 0xFE00 # EZVIZ private cluster
+        - 0xFE05 # EZVIZ private cluster
+    deviceProfileName: one-button-battery

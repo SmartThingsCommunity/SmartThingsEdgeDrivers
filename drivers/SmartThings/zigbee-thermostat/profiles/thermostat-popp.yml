@@ -1,0 +1,71 @@
+name: thermostat-popp
+components:
+- id: main
+  capabilities:
+  - id: thermostatHeatingSetpoint
+    version: 1
+  - id: thermostatMode
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: switch
+    version: 1
+  - id: temperatureAlarm
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - name: "keypadLock"
+    title: "Child lock"
+    description: "Enable or disable the child lock of the Smart Thermostat."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Unlock"
+        1: "Lock"
+      default: 0
+  - name: "viewingDirection"
+    title: "Viewing Direction"
+    description: "Change LCD screen viewing direction of the Smart Thermostat"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "0°"
+        1: "180°"
+      default: 0
+  - name: "eTRVOrientation"
+    title: "Vertical Orientation"
+    description: "Change the orientation of the Smart Thermostat"
+    required: false
+    preferenceType: boolean
+    definition:
+      default: true
+  - name: "regulationSetPointOffset"
+    title: "Regulation of the SetPoint Offset"
+    description: "Change the SetPoint Offset of the Smart Thermostat"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: -2.5
+      maximum: 2.5
+      default: 0
+  - name: "windowOpenFeature"
+    title: "Window open detection"
+    description: "En- or Disable the Window open detection"
+    required: false
+    preferenceType: boolean
+    definition:
+      default: true
+metadata:
+  mnmn: SmartThingsCommunity
+  vid: 53317f80-5bed-3190-a1d6-461a0343066c

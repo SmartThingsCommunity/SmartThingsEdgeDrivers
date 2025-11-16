@@ -92,7 +92,7 @@ local function device_added(self, device)
     capabilities.thermostatMode.thermostatMode.heat.NAME,
     capabilities.thermostatMode.thermostatMode.emergency_heat.NAME
   }
-  device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes))
+  device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes, { visibility = { displayed = false } }))
 
   do_refresh(self, device)
 end

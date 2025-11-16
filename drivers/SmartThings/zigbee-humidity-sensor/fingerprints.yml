@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.sensor_ht.agl02"
+    deviceLabel: Aqara Temperature and Humidity Sensor T1
+    manufacturer: LUMI
+    model: lumi.sensor_ht.agl02
+    deviceProfileName: humidity-temp-battery-aqara
   - id: "eZEX/E282-KR0B0Z1-HA"
     deviceLabel: eZEX Multipurpose Sensor
     model: E282-KR0B0Z1-HA
@@ -54,10 +59,15 @@ zigbeeManufacturer:
     model: HT-EF-3.0
     deviceProfileName: humidity-temp-battery
   - id: frient/HMSZB-110
-    deviceLabel: frient Multipurpose Sensor
+    deviceLabel: frient Humidity Sensor
     manufacturer: frient A/S
     model: HMSZB-110
-    deviceProfileName: humidity-temp-battery
+    deviceProfileName: frient-humidity-temperature-battery
+  - id: frient/HMSZB-120
+    deviceLabel: frient Humidity Sensor
+    manufacturer: frient A/S
+    model: HMSZB-120
+    deviceProfileName: frient-humidity-temperature-battery
   - id: eWeLink/TH01
     deviceLabel: eWeLink Multipurpose Sensor
     manufacturer: eWeLink
@@ -68,16 +78,41 @@ zigbeeManufacturer:
     manufacturer: eWeLink
     model: SNZB-02P
     deviceProfileName: humidity-temp-battery
+  - id: "Third Reality/3RTHS24BZ"
+    deviceLabel: ThirdReality Temperature and Humidity Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RTHS24BZ
+    deviceProfileName: humidity-temp-battery
+  - id: "Third Reality/3RSM0147Z"
+    deviceLabel: ThirdReality Smart Soil Moisture Sensor
+    manufacturer: Third Reality, Inc
+    model: 3RSM0147Z
+    deviceProfileName: humidity-temp-battery
+  - id: "NodOn/STPH-4-1-00"
+    deviceLabel: Zigbee Temperature and Humidity Sensor
+    manufacturer: NodOn
+    model: STPH-4-1-00
+    deviceProfileName: humidity-temp-battery
 zigbeeGeneric:
   - id: "HumidityTempGeneric"
     deviceLabel: Multipurpose Sensor
     deviceIdentifiers:
       - 0x0302
-    clusters: 
-      server: 
+    clusters:
+      server:
         - 0x0402 # Temperature Measurement Cluster
         - 0x0405 # Relative Humidity Measurement Cluster
     deviceProfileName: humidity-temperature
+  - id: "HumidityTempBatteryGeneric"
+    deviceLabel: Multipurpose Sensor
+    deviceIdentifiers:
+      - 0x0302
+    clusters:
+      server:
+        - 0x0001 # PowerConfiguration
+        - 0x0402 # Temperature Measurement Cluster
+        - 0x0405 # Relative Humidity Measurement Cluster
+    deviceProfileName: humidity-temp-battery
   - id: "PlantLinkClusterSpecific"
     deviceLabel: Plant Link Humidity Sensor
     zigbeeProfiles:

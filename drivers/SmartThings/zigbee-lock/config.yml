@@ -2,3 +2,5 @@ name: 'Zigbee Lock'
 packageKey: 'zigbee-lock'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee lock devices"
+vendorSupportInformation: "https://support.smartthings.com"

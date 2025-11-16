@@ -1,0 +1,7 @@
+name: 'Zigbee Fan'
+packageKey: 'zigbee-fan'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for zigbee fan devices"
+vendorSupportInformation: "https://support.smartthings.com"
+

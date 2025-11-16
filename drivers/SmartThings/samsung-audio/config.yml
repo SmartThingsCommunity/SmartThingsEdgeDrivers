@@ -1,0 +1,7 @@
+name: 'SamsungAudio'
+packageKey: 'com.smartthings.SamsungAudio'
+permissions:
+  lan: {}
+  discovery: {}
+description: "SmartThings driver for Samsung audio devices"
+vendorSupportInformation: "https://support.smartthings.com"

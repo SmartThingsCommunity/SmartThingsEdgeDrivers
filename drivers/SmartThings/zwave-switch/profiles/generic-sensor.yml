@@ -1,0 +1,16 @@
+name: generic-sensor
+components:
+- id: main
+  capabilities:
+  - id: contactSensor
+    version: 1
+  - id: motionSensor
+    version: 1
+  - id: smokeDetector
+    version: 1
+  - id: waterSensor
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GenericSensor

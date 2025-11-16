@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local supported_values = require "zigbee-multi-button.supported_values"
+local button_utils = require "button_utils"
 
 local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3450-L" },
@@ -23,10 +24,13 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "AduroSmart Eria", model = "Adurolight_NCC" },
   { mfr = "ADUROLIGHT", model = "Adurolight_NCC" },
   { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" },
+  { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0" },
+  { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0" },
   { mfr = "IKEA of Sweden", model = "TRADFRI on/off switch" },
   { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
   { mfr = "IKEA of Sweden", model = "TRADFRI remote control" },
   { mfr = "KE", model = "TRADFRI open/close remote" },
+  { mfr = "\x02KE", model = "TRADFRI open/close remote" },
   { mfr = "SOMFY", model = "Situo 1 Zigbee" },
   { mfr = "SOMFY", model = "Situo 4 Zigbee" },
   { mfr = "LDS", model = "ZBT-CCTSwitch-D0001" },
@@ -34,7 +38,20 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "ShinaSystem", model = "BSM-300Z" },
   { mfr = "ShinaSystem", model = "SBM300ZB1" },
   { mfr = "ShinaSystem", model = "SBM300ZB2" },
-  { mfr = "ShinaSystem", model = "SBM300ZB3" }
+  { mfr = "ShinaSystem", model = "SBM300ZB3" },
+  { mfr = "ShinaSystem", model = "SBM300ZC1" },
+  { mfr = "ShinaSystem", model = "SBM300ZC2" },
+  { mfr = "ShinaSystem", model = "SBM300ZC3" },
+  { mfr = "ShinaSystem", model = "SBM300ZC4" },
+  { mfr = "ShinaSystem", model = "SQM300ZC4" },
+  { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+  { mfr = "ROBB smarrt", model = "ROB_200-008-0" },
+  { mfr = "WALL HERO", model = "ACL-401SCA4" },
+  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
+  { mfr = "Vimar", model = "RemoteControl_v1.0" },
+  { mfr = "Linxura", model = "Smart Controller" },
+  { mfr = "Linxura", model = "Aura Smart Button" },
+  { mfr = "zunzunbee", model = "SSWZ8T" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
@@ -49,15 +66,20 @@ end
 local function added_handler(self, device)
   local config = supported_values.get_device_parameters(device)
   for _, component in pairs(device.profile.components) do
-    local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
     if config ~= nil then
-      device:emit_component_event(component, capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES))
+      local number_of_buttons = component.id == "main" and config.NUMBER_OF_BUTTONS or 1
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues(config.SUPPORTED_BUTTON_VALUES, { visibility = { displayed = false } }))
+      device:emit_component_event(component,
+        capabilities.button.numberOfButtons({ value = number_of_buttons }, { visibility = { displayed = false } }))
     else
-      device:emit_component_event(component, capabilities.button.supportedButtonValues({"pushed", "held"}))
+      device:emit_component_event(component,
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } }))
+      device:emit_component_event(component,
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } }))
     end
-    device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local zigbee_multi_button = {
@@ -73,7 +95,13 @@ local zigbee_multi_button = {
     require("zigbee-multi-button.centralite"),
     require("zigbee-multi-button.adurosmart"),
     require("zigbee-multi-button.heiman"),
-    require("zigbee-multi-button.shinasystems")
+    require("zigbee-multi-button.shinasystems"),
+    require("zigbee-multi-button.robb"),
+    require("zigbee-multi-button.wallhero"),
+    require("zigbee-multi-button.SLED"),
+    require("zigbee-multi-button.vimar"),
+    require("zigbee-multi-button.linxura"),
+    require("zigbee-multi-button.zunzunbee")
   }
 }
 

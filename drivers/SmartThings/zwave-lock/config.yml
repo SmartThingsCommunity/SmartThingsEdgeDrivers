@@ -2,3 +2,5 @@ name: 'Z-Wave Lock'
 packageKey: 'zwave-lock'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave lock devices"
+vendorSupportInformation: "https://support.smartthings.com"

@@ -121,6 +121,8 @@ test.register_coroutine_test(
       mock_zwave_bulb.id,
       { capability = "switch", command = "off", args = {} }
     })
+    mock_zwave_bulb:expect_native_cmd_handler_registration("switch", "off")
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zwave_bulb,
@@ -177,6 +179,8 @@ test.register_coroutine_test(
       mock_zwave_bulb.id,
       { capability = "switchLevel", command = "setLevel", args = { level } }
     })
+    mock_zwave_bulb:expect_native_cmd_handler_registration("switchLevel", "setLevel")
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zwave_bulb,
@@ -207,6 +211,8 @@ test.register_coroutine_test(
       mock_zwave_bulb.id,
       { capability = "switch", command = "on", args = {} }
     })
+    mock_zwave_bulb:expect_native_cmd_handler_registration("switch", "on")
+
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_zwave_bulb,
@@ -241,8 +247,8 @@ do
           mock_zwave_bulb.id,
           zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-              current_value = 0,
-              target_value = level,
+              target_value = 0,
+              current_value = level,
               duration = 0
             })
           )

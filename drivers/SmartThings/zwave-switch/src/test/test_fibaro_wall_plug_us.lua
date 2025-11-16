@@ -1,22 +1,10 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
@@ -64,7 +52,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.ON_ENABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.ON_ENABLE})
         )
       }
     },
@@ -98,7 +86,7 @@ test.register_message_test(
       message = {
         mock_device.id,
         zw_test_utils.zwave_test_build_receive_command(
-          SwitchBinary:Report({target_value=SwitchBinary.value.OFF_DISABLE})
+          SwitchBinary:Report({current_value=SwitchBinary.value.OFF_DISABLE})
         )
       }
     },

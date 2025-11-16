@@ -17,7 +17,7 @@ local capabilities = require "st.capabilities"
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
-
+--- @type st.zwave.CommandClass.BarrierOperator
 
 local driver_template = {
   supported_capabilities = {
@@ -25,7 +25,8 @@ local driver_template = {
     capabilities.contactSensor,
   },
   sub_drivers = {
-    require("mimolite-garage-door")
+    require("mimolite-garage-door"),
+    require("ecolink-zw-gdo")
   }
 }
 

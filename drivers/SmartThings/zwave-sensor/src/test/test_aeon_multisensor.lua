@@ -13,11 +13,9 @@
 -- limitations under the License.
 
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
-local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })

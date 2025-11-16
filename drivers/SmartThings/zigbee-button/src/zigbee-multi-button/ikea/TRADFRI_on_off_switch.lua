@@ -14,12 +14,10 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local log = require "log"
 local button_utils = require "button_utils"
 
 local Level = clusters.Level
 local OnOff = clusters.OnOff
-local PowerConfiguration = clusters.PowerConfiguration
 
 local on_off_switch = {
   NAME = "On/Off Switch",

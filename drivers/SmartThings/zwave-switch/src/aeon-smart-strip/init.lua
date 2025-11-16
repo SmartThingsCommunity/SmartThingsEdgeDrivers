@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -19,37 +8,17 @@ local cc = require "st.zwave.CommandClass"
 local utils = require "st.utils"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
-local AEON_SMART_STRIP_FINGERPRINTS = {
-  {mfr = 0x0086, prod = 0x0003, model = 0x000B}, -- Aeon Smart Strip DSC11-ZWUS
-}
-
 local ENERGY_UNIT_KWH = "kWh"
 local ENERGY_UNIT_KVAH = "kVAh"
 local POWER_UNIT_WATT = "W"
 
---- Determine whether the passed device is Aeon smart strip
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
-local function can_handle_aeon_smart_strip(opts, driver, device, ...)
-  for _, fingerprint in ipairs(AEON_SMART_STRIP_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
-
 local function binary_event_helper(self, device, cmd)
-  local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
+  local value = cmd.args.value and cmd.args.value or cmd.args.target_value
   local event = value == SwitchBinary.value.OFF_DISABLE and capabilities.switch.switch.off() or capabilities.switch.switch.on()
   if cmd.src_channel == 0 then
     device:emit_event_for_endpoint(cmd.src_channel, event)
@@ -109,10 +78,7 @@ local aeon_smart_strip = {
       [Meter.REPORT] = meter_report_handler
     }
   },
-  lifecycle_handlers = {
-    init = device_init
-  },
-  can_handle = can_handle_aeon_smart_strip,
+  can_handle = require("aeon-smart-strip.can_handle"),
 }
 
 return aeon_smart_strip

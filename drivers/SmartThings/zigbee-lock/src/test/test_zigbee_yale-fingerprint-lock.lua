@@ -19,16 +19,13 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-local Alarm = clusters.Alarms
 local DoorLock = clusters.DoorLock
 
 local mock_device = test.mock_device.build_test_zigbee_device({ profile = t_utils.get_profile_definition("base-lock.yml"), zigbee_endpoints ={ [1] = {id = 1, manufacturer ="ASSA ABLOY iRevo", model ="iZBModule01", server_clusters = {}} } })
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 

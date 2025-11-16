@@ -35,7 +35,7 @@ local function battery_voltage_handler(driver, device, command)
     value = anglesTable[#anglesTable] -- use the maximum value instead
   end
 
-  local index = 1
+  local index = 2
 
   while value > anglesTable[index] do index = index+1 end
 

@@ -19,8 +19,6 @@ local Association = (require "st.zwave.CommandClass.Association")({ version = 2 
 local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version = 1 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 1 })
---- @type st.zwave.CommandClass.SwitchBinary
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 --- @type st.zwave.CommandClass
@@ -71,10 +69,10 @@ local function set_color(driver, device, command)
       device:send(SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED }))
     end
   end
-  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_color)
+  device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_color)
 end
 
-local function switch_color_report(driver, device, command)
+local function switch_color_report(self, device, command)
   local event
   if command.args.color_component_id == SwitchColor.color_component_id.WARM_WHITE then
     local value = command.args.value
@@ -96,7 +94,7 @@ local function switch_color_report(driver, device, command)
   end
 end
 
-local function switch_multilevel_report(driver, device, command)
+local function switch_multilevel_report(self, device, command)
   local endpoint = command.src_channel
   -- ignore multilevel reports from endpoints [1, 2, 3, 4] which mirror SwitchColor values
   -- and in addition cause wrong SwitchLevel events
@@ -127,7 +125,7 @@ local function set_switch(driver, device, command, value)
     local query_white = function()
       device:send(SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.WARM_WHITE }))
     end
-    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_white)
+    device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_white)
   elseif command.component == "rgb" then
     device:set_field(LAST_COLOR_SWITCH_CMD_FIELD, value)
     if value == 255 then
@@ -150,7 +148,7 @@ local function set_switch(driver, device, command, value)
       local query_color = function()
         device:send(SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED }))
       end
-      device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY + constants.DEFAULT_DIMMING_DURATION, query_color)
+      device.thread:call_with_delay(constants.DEFAULT_GET_STATUS_DELAY, query_color)
     end
   end
 end

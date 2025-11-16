@@ -54,6 +54,18 @@ local mock_window_shade_switch_multilevel = test.mock_device.build_test_zwave_de
 local function test_init()
   test.mock_device.add_test_device(mock_window_shade_basic)
   test.mock_device.add_test_device(mock_window_shade_switch_multilevel)
+  test.socket.capability:__expect_send(
+    mock_window_shade_basic:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_window_shade_basic:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
 end
 test.set_test_init_function(test_init)
 
@@ -136,8 +148,8 @@ test.register_message_test(
         mock_window_shade_switch_multilevel.id,
         zw_test_utils.zwave_test_build_receive_command(
             SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = SwitchMultilevel.value.OFF_DISABLE,
+            target_value = 0,
+            current_value = SwitchMultilevel.value.OFF_DISABLE,
             duration = 0
           })
         )
@@ -166,8 +178,8 @@ test.register_message_test(
         mock_window_shade_switch_multilevel.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 50,
+            target_value = 0,
+            current_value = 50,
             duration = 0
           })
         )
@@ -196,8 +208,8 @@ test.register_message_test(
         mock_window_shade_switch_multilevel.id,
         zw_test_utils.zwave_test_build_receive_command(
           SwitchMultilevel:Report({
-            current_value = 0,
-            target_value = 99,
+            target_value = 0,
+            current_value = 99,
             duration = 0
           })
         )
@@ -304,7 +316,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
           {
             mock_window_shade_switch_multilevel.id,
-            { capability = "windowShadePreset", command = "presetPosition", args = {} }
+            { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
           }
       )
       test.socket.zwave:__expect_send(
@@ -374,6 +386,7 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({
       mock_window_shade_switch_multilevel.id,
         SwitchMultilevel:Report({
+          current_value = SwitchMultilevel.value.OFF_DISABLE,
           target_value = SwitchMultilevel.value.OFF_DISABLE,
           duration = 0
         })
@@ -399,7 +412,8 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({
       mock_window_shade_switch_multilevel.id,
         SwitchMultilevel:Report({
-          target_value = 0xFF,
+          current_value = SwitchMultilevel.value.ON_ENABLE,
+          target_value = SwitchMultilevel.value.ON_ENABLE,
           duration = 0
         })
       }

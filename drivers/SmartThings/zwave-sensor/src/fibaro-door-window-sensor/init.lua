@@ -14,7 +14,6 @@
 
 local cc = require "st.zwave.CommandClass"
 local capabilities = require "st.capabilities"
-local Association = (require "st.zwave.CommandClass.Association")({ version = 2 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
@@ -39,7 +38,8 @@ local FIBARO_DOOR_WINDOW_SENSOR_FINGERPRINTS = {
 local function can_handle_fibaro_door_window_sensor(opts, driver, device, ...)
   for _, fingerprint in ipairs(FIBARO_DOOR_WINDOW_SENSOR_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.prod, fingerprint.productId) then
-      return true
+      local subdriver = require("fibaro-door-window-sensor")
+      return true, subdriver
     end
   end
   return false

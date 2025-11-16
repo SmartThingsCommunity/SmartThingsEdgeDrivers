@@ -20,25 +20,25 @@ local CLIMAX_TECHNOLOGY_CARBON_MONOXIDE_FINGERPRINTS = {
 }
 
 local is_climax_technology_carbon_monoxide = function(opts, driver, device)
-    for _, fingerprint in ipairs(CLIMAX_TECHNOLOGY_CARBON_MONOXIDE_FINGERPRINTS) do
-        if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-            return true
-        end
+  for _, fingerprint in ipairs(CLIMAX_TECHNOLOGY_CARBON_MONOXIDE_FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
     end
+  end
 
-    return false
+  return false
 end
 
 local device_added = function(self, device)
-    device:emit_event(capabilities.battery.battery(100))
+  device:emit_event(capabilities.battery.battery(100))
 end
 
 local climax_technology_carbon_monoxide = {
-    NAME = "ClimaxTechnology Carbon Monoxide",
-    lifecycle_handlers = {
-        added = device_added
-    },
-    can_handle = is_climax_technology_carbon_monoxide
+  NAME = "ClimaxTechnology Carbon Monoxide",
+  lifecycle_handlers = {
+    added = device_added
+  },
+  can_handle = is_climax_technology_carbon_monoxide
 }
 
 return climax_technology_carbon_monoxide

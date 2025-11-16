@@ -1,0 +1,33 @@
+id: stse.shadeRotateState
+version: 1
+status: proposed
+name: shade Rotate State
+ephemeral: false
+attributes:
+  rotateState:
+    schema:
+      type: object
+      properties:
+        value:
+          type: string
+          enum:
+            - idle
+            - rotateUp
+            - rotateDown
+      additionalProperties: false
+      required:
+        - value
+    setter: setRotateState
+    enumCommands: []
+commands:
+  setRotateState:
+    name: setRotateState
+    arguments:
+      - name: state
+        optional: false
+        schema:
+          type: string
+          enum:
+            - idle
+            - rotateUp
+            - rotateDown

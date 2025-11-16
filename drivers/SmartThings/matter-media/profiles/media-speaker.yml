@@ -1,0 +1,15 @@
+name: media-speaker
+components:
+- id: main
+  capabilities:
+  - id: audioVolume
+    version: 1
+  - id: audioMute
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Speaker
+  

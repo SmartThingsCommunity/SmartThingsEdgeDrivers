@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -22,32 +11,30 @@ local t_utils = require "integration_test.utils"
 
 -- supported comand classes
 local sensor_endpoints = {
-  {
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    },
-    command_classes = {
-      {value = zw.BASIC},
-      {value = zw.SWITCH_BINARY}
-    }
-  }
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }},
+  {command_classes = {
+    {value = zw.BASIC},
+    {value = zw.SWITCH_BINARY}
+  }}
 }
 
 local mock_device = test.mock_device.build_test_zwave_device({
@@ -443,7 +430,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -483,7 +470,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -523,7 +510,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -563,7 +550,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -603,7 +590,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.ON_ENABLE
+              current_value=SwitchBinary.value.ON_ENABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -643,7 +630,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -683,7 +670,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -723,7 +710,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -763,7 +750,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -803,7 +790,7 @@ test.register_message_test(
         zw_test_utils.zwave_test_build_receive_command(
           SwitchBinary:Report(
             {
-              target_value=SwitchBinary.value.OFF_DISABLE
+              current_value=SwitchBinary.value.OFF_DISABLE
             },
             {
               encap = zw.ENCAP.AUTO,
@@ -834,7 +821,7 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({
       mock_device.id,
         SwitchBinary:Report({
-          target_value = SwitchBinary.value.ON_ENABLE,
+          current_value = SwitchBinary.value.ON_ENABLE,
           duration = 0
         },
         {
@@ -853,7 +840,7 @@ test.register_coroutine_test(
       test.socket.zwave:__queue_receive({
         mock_device.id,
           SwitchBinary:Report({
-            target_value = SwitchBinary.value.OFF_DISABLE,
+            current_value = SwitchBinary.value.OFF_DISABLE,
             duration = 0
           },
           {
@@ -871,7 +858,7 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({
       mock_device.id,
         SwitchBinary:Report({
-          target_value = SwitchBinary.value.OFF_DISABLE,
+          current_value = SwitchBinary.value.OFF_DISABLE,
           duration = 0
         },
         {

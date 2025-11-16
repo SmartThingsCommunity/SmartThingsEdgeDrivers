@@ -1,0 +1,41 @@
+name: aqs-temp-humidity-all-level
+components:
+  - id: main
+    capabilities:
+      - id: airQualityHealthConcern
+        version: 1
+      - id: temperatureMeasurement
+        version: 1
+      - id: relativeHumidityMeasurement
+        version: 1
+      - id: nitrogenDioxideHealthConcern
+        version: 1
+      - id: ozoneHealthConcern
+        version: 1
+      - id: carbonMonoxideHealthConcern
+        version: 1
+      - id: carbonDioxideHealthConcern
+        version: 1
+      - id: formaldehydeHealthConcern
+        version: 1
+      - id: veryFineDustHealthConcern
+        version: 1
+      - id: fineDustHealthConcern
+        version: 1
+      - id: dustHealthConcern
+        version: 1
+      - id: radonHealthConcern
+        version: 1
+      - id: tvocHealthConcern
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: AirQualityDetector
+preferences:
+  - preferenceId: tempOffset
+    explicit: true
+  - preferenceId: humidityOffset
+    explicit: true

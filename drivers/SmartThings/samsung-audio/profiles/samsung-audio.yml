@@ -1,0 +1,30 @@
+name: samsung-audio
+components: 
+- id: main
+  capabilities:
+  - id: mediaPlayback
+    version: 1
+    config:
+      values:
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'play'
+            - 'pause'
+            - 'stop'
+        - key: "playbackStatus.value"
+          enabledValues:
+            - 'playing'
+            - 'paused'
+            - 'stopped'
+  - id: mediaTrackControl
+    version: 1
+  - id: audioMute
+    version: 1
+  - id: audioVolume
+    version: 1
+  - id: audioTrackData 
+    version: 1
+  - id: switch
+    version: 1
+  categories:
+  - name: Speaker 

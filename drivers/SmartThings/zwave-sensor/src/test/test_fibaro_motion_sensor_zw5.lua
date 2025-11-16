@@ -20,8 +20,6 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 local t_utils = require "integration_test.utils"
-local json = require "dkjson"
-
 
 local sensor_endpoints = {
   {
@@ -119,6 +117,11 @@ test.register_coroutine_test(
         zw_test_utils.zwave_test_build_send_command(
           mock_sensor,
           Configuration:Set({parameter_number = 1, size = 2, configuration_value = 100})
+      ))
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_sensor,
+          WakeUp:IntervalGet({})
       ))
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(

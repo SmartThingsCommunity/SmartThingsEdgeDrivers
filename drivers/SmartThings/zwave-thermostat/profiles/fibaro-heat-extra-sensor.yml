@@ -6,6 +6,10 @@ components:
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 10, 30 ]
   - id: battery
     version: 1
   - id: refresh

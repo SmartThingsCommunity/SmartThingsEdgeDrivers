@@ -4,13 +4,13 @@ zwaveManufacturer:
     manufacturerId: 0x0086
     productType: 0x0102
     productId: 0x005F
-    deviceProfileName: base-electric-meter
+    deviceProfileName: base-electric-meter-negative-values
   - id: "AeotecEnergyMonitor/EU"
     deviceLabel: Aeotec Energy Monitor
     manufacturerId: 0x0086
     productType: 0x0002
     productId: 0x005F
-    deviceProfileName: base-electric-meter
+    deviceProfileName: base-electric-meter-negative-values
   - id: "QubinoMeter"
     deviceLabel: Qubino Energy Monitor
     manufacturerId: 0x0159

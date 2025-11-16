@@ -20,9 +20,6 @@ local RelativeHumidity = clusters.RelativeHumidity
 local Thermostat = clusters.Thermostat
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
 
-local ThermostatMode = capabilities.thermostatMode
-local ThermostatOperatingState = capabilities.thermostatOperatingState
-
 local STELPRO_THERMOSTAT_FINGERPRINTS = {
   { mfr = "Stelpro", model = "MaestroStat" },
 }

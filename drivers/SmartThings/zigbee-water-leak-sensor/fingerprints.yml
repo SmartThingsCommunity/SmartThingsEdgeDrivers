@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "LUMI/lumi.flood.agl02"
+    deviceLabel: Aqara Water Leak Sensor
+    manufacturer: LUMI
+    model: lumi.flood.agl02
+    deviceProfileName: water-battery
   - id: "Heiman/Water/1"
     deviceLabel: Orvibo Water Leak Sensor
     manufacturer: Heiman
@@ -28,6 +33,11 @@ zigbeeManufacturer:
     deviceLabel: Sinope Water Leak Sensor
     manufacturer: Sinope Technologies
     model: WL4200S
+    deviceProfileName: water-temp-battery
+  - id: "Sinope/WL4210"
+    deviceLabel: Sinope Water Leak Sensor
+    manufacturer: Sinope Technologies
+    model: WL4210
     deviceProfileName: water-temp-battery
   - id: "WAXMAN/leakSMART Water Sensor V2"
     deviceLabel: leakSMART Water Leak Sensor
@@ -83,7 +93,7 @@ zigbeeManufacturer:
     deviceLabel: ADT Water Leak Detector
     manufacturer: Nortek Security and Control
     model: F-ADT-WTR-1
-    deviceProfileName: water-temp-battery
+    deviceProfileName: water-temp-battery-tempOffset
   - id: ThirdReality/3RWS18BZ/1
     deviceLabel: ThirdReality Water Leak Sensor
     manufacturer: Third Reality, Inc
@@ -93,4 +103,14 @@ zigbeeManufacturer:
     deviceLabel: ThirdReality Water Leak Sensor
     manufacturer: THIRDREALITY
     model: 3RWS18BZ
+    deviceProfileName: water-battery
+  - id: "sengled/E1L-G7K"
+    deviceLabel: Sengled Water Leak Sensor
+    manufacturer: sengled
+    model: E1L-G7K
+    deviceProfileName: water-battery 
+  - id: NEO/NAS_WS11
+    deviceLabel: NEO Water Leak Sensor
+    manufacturer: NEO
+    model: NAS_WS11
     deviceProfileName: water-battery

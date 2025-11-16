@@ -1,0 +1,34 @@
+name: thermostat-resideo-dt300st-m000
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 5, 35 ]
+  - id: thermostatMode
+    version: 1
+    config:
+      values:
+        - key: "thermostatMode.value"
+          enabledValues:
+            - heating
+            - idle
+  - id: thermostatOperatingState
+    version: 1
+    config:
+      values:
+        - key: "thermostatOperatingState.value"
+          enabledValues:
+            - heating
+            - idle
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat

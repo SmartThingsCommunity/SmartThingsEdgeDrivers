@@ -112,41 +112,33 @@ test.register_message_test(
     }
   )
 
-  test.register_message_test(
+test.register_coroutine_test(
     "Device Add should bootstrap UI state",
-    {
-      {
-        channel = "device_lifecycle",
-        direction = "receive",
-        message = { mock.id, "added" },
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock:generate_test_message("main", capabilities.button.supportedButtonValues(
-          {"pushed", "held"}
-        ))
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock:generate_test_message("main", capabilities.button.numberOfButtons(
-          { value = 1 }
-        ))
-      },
-      {
-        channel = "zwave",
-        direction = "send",
-        message = zw_test_utils.zwave_test_build_send_command(
+    function()
+      test.socket.capability:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({ mock.id, "added" })
+
+      test.socket.capability:__expect_send(
+        mock:generate_test_message(
+          "main",
+          capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = { displayed = false }})
+        )
+      )
+      test.socket.capability:__expect_send(
+        mock:generate_test_message(
+          "main",
+          capabilities.button.numberOfButtons({ value = 1 }, {visibility = { displayed = false }})
+        )
+      )
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
           mock,
           Battery:Get({})
         )
-      }
-    },
-    {
-      inner_block_ordering = "relaxed"
-    }
+      )
+    end
   )
+
 
   test.register_message_test(
     "WakeUp.Notification should evoke state refresh Z-Wave GETs",
@@ -155,6 +147,14 @@ test.register_message_test(
         channel = "zwave",
         direction = "receive",
         message = { mock.id, zw_test_utils.zwave_test_build_receive_command(WakeUp:Notification({})) }
+      },
+      {
+        channel = "zwave",
+        direction = "send",
+        message = zw_test_utils.zwave_test_build_send_command(
+          mock,
+          WakeUp:IntervalGet({})
+        )
       },
       {
         channel = "zwave",

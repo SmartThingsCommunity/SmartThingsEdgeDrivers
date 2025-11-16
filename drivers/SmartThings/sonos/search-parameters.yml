@@ -1,0 +1,2 @@
+ssdp:
+  - searchTerm: "urn:smartspeaker-audio:service:SpeakerGroup:1"

@@ -58,6 +58,7 @@ test.set_test_init_function(test_init)
 test.register_message_test(
   "Device should be polled with refresh right after inclusion",
   {
+    -- The initial tamperAlert and contactSensor event should be send during the device's first time onboarding
     {
       channel = "device_lifecycle",
       direction = "receive",
@@ -96,6 +97,36 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.open())
+    },
+    -- Avoid sending the initial tamperAlert and contactSensor event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = { mock_fibaro_door_window_sensor1.id, "added" }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_door_window_sensor1,
+        Battery:Get({})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_door_window_sensor1,
+        SensorBinary:Get({})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_fibaro_door_window_sensor1,
+        SensorAlarm:Get({})
+      )
     }
   },
   {
@@ -111,7 +142,7 @@ test.register_coroutine_test(
       test.socket.zwave:__expect_send(
         zw_test_utils.zwave_test_build_send_command(
           mock_fibaro_door_window_sensor1,
-          Configuration:Set({parameter_number=1, configuration_value=0, size=1})
+          Configuration:Set({parameter_number=1, configuration_value=0, size=2})
         )
       )
       test.socket.zwave:__expect_send(
@@ -255,6 +286,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.open())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor1.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
@@ -271,6 +310,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor1.id, capability_id = "switch", capability_attr_id = "switch" }
+      }
     }
   }
 )
@@ -328,6 +375,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor1.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )
@@ -347,6 +402,14 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_fibaro_door_window_sensor1:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_fibaro_door_window_sensor1.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
     }
   }
 )

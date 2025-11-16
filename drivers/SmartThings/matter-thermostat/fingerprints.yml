@@ -1,0 +1,179 @@
+matterManufacturer:
+  - id: "matter/samsung-room-air-conditioner"
+    deviceLabel: Samsung Room Air Conditioner
+    vendorId: 0x10e1
+    productId: 0x1023
+    deviceProfileName: room-air-conditioner
+  #Aidot
+  - id: "Leedarson AiDot Air Purifier"
+    deviceLabel: AiDot Air Purifier
+    vendorId: 0x1396
+    productId: 0x043A
+    deviceProfileName: air-purifier-hepa
+  #Bosch
+  - id: "4617/12306"
+    deviceLabel: Radiator Thermostat II [M]
+    vendorId: 0x1209
+    productId: 0x3012
+    deviceProfileName: thermostat-heating-only-nostate
+  #Eve
+  - id: "4874/79"
+    deviceLabel: Eve Thermo
+    vendorId: 0x130A
+    productId: 0x004F
+    deviceProfileName: thermostat-heating-only-nostate
+  - id: "4874/125"
+    deviceLabel: Eve Thermo
+    vendorId: 0x130A
+    productId: 0x007D
+    deviceProfileName: thermostat-heating-only-nostate
+  #Habi
+  - id: "5415/1"
+    deviceLabel: habi Matter Wireless Room Thermostat
+    vendorId: 0x1527
+    productId: 0x0001
+    deviceProfileName: thermostat-heating-only-batteryLevel
+  - id: "5415/2"
+    deviceLabel: habi Smart TRV
+    vendorId: 0x1527
+    productId: 0x0002
+    deviceProfileName: thermostat-heating-only-batteryLevel
+  #Lux
+  - id: "4614/1"
+    deviceLabel: LUX TQ1 Smart Thermostat
+    vendorId: 0x1206
+    productId: 0x0001
+    deviceProfileName: thermostat-nostate-nobattery
+  #Meross
+  - id: "4933/57345"
+    deviceLabel: Smart Wi-Fi Thermostat
+    vendorId: 0x1345
+    productId: 0xE001
+    deviceProfileName: thermostat-fan-nostate-nobattery
+  #Siterwell
+  - id: "4736/769"
+    deviceLabel: Siterwell Radiator Thermostat
+    vendorId: 0x1280
+    productId: 0x0301
+    deviceProfileName: thermostat-heating-only-nostate-nobattery
+  #Tado
+  - id: "4942/1"
+    deviceLabel: Smart Radiator Thermostat X
+    vendorId: 0x134E
+    productId: 0x0001
+    deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
+  - id: "4942/2"
+    deviceLabel: Smart Thermostat X
+    vendorId: 0x134E
+    productId: 0x0002
+    deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
+  #720
+  - id: "5482/1"
+    deviceLabel: xCREAS Smart Air Purifier Cyclone400
+    vendorId: 0x156A
+    productId: 0x0001
+    deviceProfileName: air-purifier-hepa-wind-aqs-pm25-meas-pm25-level
+matterGeneric:
+  - id: "matter/hvac/heatcool"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+    deviceProfileName: thermostat-nostate-nobattery
+  - id: "matter/hvac/thermostat"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+    deviceProfileName: thermostat-nostate-nobattery
+  - id: "matter/hvac/heatcool/humidity"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: thermostat-humidity-nostate-nobattery
+  - id: "matter/hvac/thermostat/humidity"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: thermostat-humidity-nostate-nobattery
+  - id: "matter/hvac/heatcool/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-fan-nostate-nobattery
+  - id: "matter/hvac/thermostat/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-fan-nostate-nobattery
+  - id: "matter/hvac/heatcool/humidity/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0300 # HVAC Heating/Cooling Unit
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-humidity-fan-nostate-nobattery
+  - id: "matter/hvac/thermostat/humidity/fan"
+    deviceLabel: Matter Thermostat
+    deviceTypes:
+      - id: 0x0301 # Thermostat
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x002B # Fan
+    deviceProfileName: thermostat-humidity-fan-nostate-nobattery
+  - id: "matter/room-air-conditioner"
+    deviceLabel: Matter Room Air Conditioner
+    deviceTypes:
+      - id: 0x0072
+    deviceProfileName: room-air-conditioner-fan-heating-cooling-nostate
+  - id: "matter/fan"
+    deviceLabel: Matter Fan
+    deviceTypes:
+      - id: 0x002B
+    deviceProfileName: fan-generic
+  - id: "matter/air-purifier"
+    deviceLabel: Matter Air Purifier
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+    deviceProfileName: air-purifier
+  - id: "matter/air-purifier/quality-sensor"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+    deviceProfileName: air-purifier-aqs
+  - id: "matter/ap/aqs/thermostat/humidity"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+      - id: 0x0301 # Thermostat
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: air-purifier-thermostat-nostate-humidity-aqs
+  - id: "matter/ap/aqs/temperature/humidity"
+    deviceLabel: Matter Air Purifier & Quality Sensor
+    deviceTypes:
+      - id: 0x002D # Air Purifier
+      - id: 0x002C # Air Quality Sensor
+      - id: 0x0302 # Temperature Sensor
+      - id: 0x0307 # Humidity Sensor
+    deviceProfileName: air-purifier-temperature-humidity-aqs
+  - id: "matter/water-heater"
+    deviceLabel: Matter Water Heater
+    deviceTypes:
+      - id: 0x050F # Water Heater
+    deviceProfileName: water-heater
+  - id: "matter/heat-pump"
+    deviceLabel: Matter Heat Pump
+    deviceTypes:
+      - id: 0x0309 # Heat Pump
+      - id: 0x0510 # Electrical Sensor
+    deviceProfileName: heat-pump
+  - id: "matter/heat-pump/thermostat"
+    deviceLabel: Matter Heat Pump
+    deviceTypes:
+      - id: 0x0309 # Heat Pump
+      - id: 0x0510 # Electrical Sensor
+      - id: 0x0301 # Thermostat
+    deviceProfileName: heat-pump-thermostat

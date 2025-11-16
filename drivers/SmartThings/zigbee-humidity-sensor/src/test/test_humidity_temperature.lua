@@ -48,6 +48,41 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C"}))
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
+    }
+  }
+)
+
+test.register_message_test(
+  "Minimum & Maximum Temperature report should be handled (C)",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MinMeasuredValue:build_test_attr_report(mock_device, 2000)
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_attr_report(mock_device, 3000)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 20.00, maximum = 30.00 }, unit = "C" }))
     }
   }
 )
@@ -94,7 +129,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 300, 0x10)
+                                         TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 30, 600, 100)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -124,6 +159,7 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" })))
+      mock_device:expect_native_attr_handler_registration("temperatureMeasurement", "temperature")
       test.wait_for_events()
       test.socket.zigbee:__queue_receive(
         {

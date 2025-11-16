@@ -17,7 +17,6 @@ local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-local base64 = require "st.base64"
 local t_utils = require "integration_test.utils"
 
 local WindowCovering = clusters.WindowCovering
@@ -39,7 +38,12 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
 end
 
 test.set_test_init_function(test_init)
@@ -59,6 +63,25 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "State transition to unknown",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zigbee:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 255)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.unknown())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
   end
 )
@@ -165,7 +188,13 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "windowShadePreset capability should be handled",
   function()
-    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({preferences = {presetPosition = 30}}))
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadePreset", component = "main", command = "setPresetPosition", args = {30}}
+      }
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadePreset.position(30)))
     test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
@@ -176,6 +205,22 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 30)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "SetShadeLevel command handler",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 50 }}
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
   end
 )

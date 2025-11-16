@@ -1,0 +1,7 @@
+name: 'Sonos'
+packageKey: 'sonos'
+permissions:
+  lan: {}
+  discovery: {}
+description: "SmartThings driver for Sonos devices"
+vendorSupportInformation: "https://support.smartthings.com"

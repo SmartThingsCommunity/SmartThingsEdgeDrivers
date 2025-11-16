@@ -6,9 +6,16 @@ components:
     version: 1
   - id: temperatureMeasurement
     version: 1
+    config:
+      values:
+        - key: "temperature.value"
+          range: [-20, 100]
   - id: battery
     version: 1
   - id: refresh
     version: 1
   categories:
   - name: ContactSensor
+preferences:
+  - preferenceId: tempOffset
+    explicit: true

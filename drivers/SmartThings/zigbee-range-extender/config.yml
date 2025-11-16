@@ -2,3 +2,5 @@ name: 'Zigbee Range Extender'
 packageKey: 'zigbee-range-extender'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee range extender devices"
+vendorSupportInformation: "https://support.smartthings.com"

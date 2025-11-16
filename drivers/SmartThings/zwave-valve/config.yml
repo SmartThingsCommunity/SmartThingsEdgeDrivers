@@ -2,3 +2,5 @@ name: 'Z-Wave Valve'
 packageKey: 'zwave-valve'
 permissions:
   zwave: {}
+description: "SmartThings driver for Z-Wave valve devices"
+vendorSupportInformation: "https://support.smartthings.com"

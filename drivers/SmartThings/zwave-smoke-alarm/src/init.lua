@@ -30,7 +30,7 @@ local preferencesMap = require "preferences"
 local function update_preferences(self, device, args)
   local preferences = preferencesMap.get_device_parameters(device)
   for id, value in pairs(device.preferences) do
-    if not (args and args.old_st_store) or (args.old_st_store.preferences[id] ~= value and preferences and preferences[id]) then
+    if not (args and args.old_st_store and args.old_st_store.preferences) or (args.old_st_store.preferences[id] ~= value and preferences and preferences[id]) then
       local new_parameter_value = preferencesMap.to_numeric_value(device.preferences[id])
       device:send(Configuration:Set({parameter_number = preferences[id].parameter_number, size = preferences[id].size, configuration_value = new_parameter_value}))
     end
@@ -64,7 +64,7 @@ end
 --- @param device st.zwave.Device
 --- @param event table
 --- @param args
-local function info_changed(driver, device, event, args)
+local function info_changed(self, device, event, args)
   if not device:is_cc_supported(cc.WAKE_UP) then
     update_preferences(self, device, args)
   end
@@ -86,7 +86,8 @@ local driver_template = {
   sub_drivers = {
     require("zwave-smoke-co-alarm-v1"),
     require("zwave-smoke-co-alarm-v2"),
-    require("fibaro-smoke-sensor")
+    require("fibaro-smoke-sensor"),
+    require("apiv6_bugfix"),
   },
   lifecycle_handlers = {
     init = device_init,

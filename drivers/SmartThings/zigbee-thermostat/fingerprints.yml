@@ -1,4 +1,9 @@
 zigbeeManufacturer:
+  - id: "Vimar/02973-smart-wheel-thermostat"
+    deviceLabel: Vimar Smart Thermostat
+    manufacturer: Vimar
+    model: WheelThermostat_v1.0
+    deviceProfileName: thermostat-fanless-heating-no-fw
   - id: "LUX/KONOZ"
     deviceLabel: LUX Thermostat
     manufacturer: LUX
@@ -15,10 +20,15 @@ zigbeeManufacturer:
     model: eTRV0100
     deviceProfileName: thermostat-popp-danfoss
   - id: "D5X84YU/eT093WRO"
-    deviceLabel: POPP Thermostat
+    deviceLabel: POPP Smart Thermostat (Zigbee)
     manufacturer: D5X84YU
     model: eT093WRO
-    deviceProfileName: thermostat-popp-danfoss
+    deviceProfileName: thermostat-popp
+  - id: "D5X84YU/eT093WRG"
+    deviceLabel: POPP Smart Thermostat (Zigbee)
+    manufacturer: D5X84YU
+    model: eT093WRG
+    deviceProfileName: thermostat-popp
   - id: "Zen Within/Zen-01"
     deviceLabel: Zen Thermostat
     manufacturer: Zen Within
@@ -30,27 +40,37 @@ zigbeeManufacturer:
     model: A1732R3
     deviceProfileName: base-thermostat
   - id: "Sinope Technologies/TH1123ZB"
-    deviceLabel: Sinope Thermostat
+    deviceLabel: TH1123ZB Sinope Thermostat
     manufacturer: Sinope Technologies
     model: TH1123ZB
     deviceProfileName: thermostat-sinope
+  - id: "Sinope Technologies/TH1123ZB-G2"
+    deviceLabel: TH1123ZB-G2 Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1123ZB-G2
+    deviceProfileName: thermostat-sinope
   - id: "Sinope Technologies/TH1124ZB"
-    deviceLabel: Sinope Thermostat
+    deviceLabel: TH1124ZB Sinope Thermostat
     manufacturer: Sinope Technologies
     model: TH1124ZB
     deviceProfileName: thermostat-sinope
+  - id: "Sinope Technologies/TH1124ZB-G2"
+    deviceLabel: TH1124ZB-G2 Sinope Thermostat
+    manufacturer: Sinope Technologies
+    model: TH1124ZB-G2
+    deviceProfileName: thermostat-sinope
   - id: "Sinope Technologies/TH1300ZB"
-    deviceLabel: Sinope Thermostat
+    deviceLabel: TH1300ZB Sinope Thermostat
     manufacturer: Sinope Technologies
     model: TH1300ZB
     deviceProfileName: thermostat-sinope-th1300
   - id: "Sinope Technologies/TH1400ZB"
-    deviceLabel: Sinope Thermostat
+    deviceLabel: TH1400ZB Sinope Thermostat
     manufacturer: Sinope Technologies
     model: TH1400ZB
     deviceProfileName: thermostat-sinope-th1400
   - id: "Sinope Technologies/TH1500ZB"
-    deviceLabel: Sinope Thermostat
+    deviceLabel: TH1500ZB Sinope Thermostat
     manufacturer: Sinope Technologies
     model: TH1500ZB
     deviceProfileName: thermostat-sinope
@@ -99,6 +119,16 @@ zigbeeManufacturer:
     manufacturer: Centralite
     model: 3156105
     deviceProfileName: base-thermostat-no-operating-state
+  - id: "Resideo/DT300ST-M000"
+    deviceLabel: Main Thermostat
+    manufacturer: Resideo Korea
+    model: DT300ST-M000
+    deviceProfileName: thermostat-resideo-dt300st-m000
+  - id: "LUMI/lumi.airrtc.agl001"
+    deviceLabel: Aqara Smart Radiator Thermostat E1
+    manufacturer: LUMI
+    model: lumi.airrtc.agl001
+    deviceProfileName: thermostat-aqara
 zigbeeGeneric:
   - id: "genericThermostat"
     deviceLabel: Zigbee Thermostat

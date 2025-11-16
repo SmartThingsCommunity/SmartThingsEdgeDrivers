@@ -26,8 +26,8 @@ local function added_handler(self, device)
     for _, comp in pairs(device.profile.components) do
       if device:supports_capability_by_id(capabilities.button.ID, comp.id) then
         local number_of_buttons = comp.id == "main" and configs.number_of_buttons or 1
-        device:emit_component_event(comp, capabilities.button.numberOfButtons({ value=number_of_buttons }))
-        device:emit_component_event(comp, capabilities.button.supportedButtonValues(configs.supported_button_values))
+        device:emit_component_event(comp, capabilities.button.numberOfButtons({ value=number_of_buttons }, { visibility = { displayed = false } }))
+        device:emit_component_event(comp, capabilities.button.supportedButtonValues(configs.supported_button_values, { visibility = { displayed = false } }))
       end
     end
   end
@@ -42,7 +42,8 @@ local driver_template = {
     added = added_handler,
   },
   sub_drivers = {
-    require("zwave-multi-button")
+    require("zwave-multi-button"),
+    require("apiv6_bugfix"),
   }
 }
 

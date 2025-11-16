@@ -18,8 +18,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local dkjson = require 'dkjson'
-local utils = require "st.utils"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -48,9 +46,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -285,13 +281,9 @@ test.register_coroutine_test(
     "Refresh necessary attributes",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.wait_for_events()
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -324,13 +316,9 @@ test.register_coroutine_test(
     "Handle Configure lifecycle",
     function()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added"})
-      test.socket.capability:__expect_send({
-        mock_device.id,
-        {
-          capability_id = "windowShade", component_id = "main",
-          attribute_id = "supportedWindowShadeCommands", state = { value= { "open", "close", "pause" } }
-        }
-      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" },{ visibility = { displayed = false }}))
+      )
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
       test.socket.zigbee:__set_channel_ordering("relaxed")

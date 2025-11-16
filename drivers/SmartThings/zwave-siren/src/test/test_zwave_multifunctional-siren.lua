@@ -17,8 +17,6 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
-local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
-local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=2})
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({version=5})
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local t_utils = require "integration_test.utils"

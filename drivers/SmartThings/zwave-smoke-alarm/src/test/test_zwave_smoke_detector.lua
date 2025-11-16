@@ -18,7 +18,6 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
 
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
@@ -366,7 +365,15 @@ test.register_message_test(
           sensor_type = SensorBinary.sensor_type.SMOKE
         })
       )
-    }
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        WakeUp:IntervalGet({ })
+      )
+    },
   },
   {
     inner_block_ordering = "relaxed"

@@ -1,0 +1,6 @@
+name: 'Matter Lock'
+packageKey: 'matter-lock'
+permissions:
+  matter: {}
+description: "SmartThings driver for Matter lock devices"
+vendorSupportInformation: "https://support.smartthings.com"

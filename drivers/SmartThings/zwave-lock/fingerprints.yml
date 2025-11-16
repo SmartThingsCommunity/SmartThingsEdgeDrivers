@@ -195,6 +195,78 @@ zwaveManufacturer:
     productType: 0x803A
     productId: 0x0508
     deviceProfileName: base-lock
+  - id: "Yale/YRD410"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D1
+    deviceProfileName: base-lock
+  - id: "Yale/YRD420"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D2
+    deviceProfileName: base-lock
+  - id: "Yale/YRD430"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D3
+    deviceProfileName: base-lock
+  - id: "Yale/YRD440"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x05D4
+    deviceProfileName: base-lock
+  - id: "297/33031/18901"
+    deviceLabel: "Assure 2 Bio 450"
+    manufacturerId: 0x0129
+    productType: 0x8107
+    productId: 0x49D5
+    deviceProfileName: base-lock
+  - id: "Yale/YRD410-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D1
+    deviceProfileName: base-lock
+  - id: "Yale/YRD420-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D2
+    deviceProfileName: base-lock
+  - id: "Yale/YRD430-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D3
+    deviceProfileName: base-lock
+  - id: "Yale/YRD450-ZW3"
+    deviceLabel: Yale Door Lock
+    manufacturerId: 0x0129
+    productType: 0x8104
+    productId: 0x45D5
+    deviceProfileName: base-lock
+  - id: "297/33031/18899"
+    deviceLabel: "Assure 2 Bio 430"
+    manufacturerId: 0x0129
+    productType: 0x8107
+    productId: 0x49D3
+    deviceProfileName: base-lock
+  - id: "297/33031/18897"
+    deviceLabel: "Assure 2 Biometric 410"
+    manufacturerId: 0x0129
+    productType: 0x8107
+    productId: 0x49D1
+    deviceProfileName: base-lock
+  - id: "297/33031/18898"
+    deviceLabel: "Yale Assure 2 Biometric"
+    manufacturerId: 0x0129
+    productId: 0x49D2
+    productType: 0x8107
+    deviceProfileName: base-lock
   # Samsung
   - id: "Samsung/SmartDoorlock"
     deviceLabel: Samsung Door Lock
@@ -220,6 +292,45 @@ zwaveManufacturer:
     deviceLabel: Philia Door Lock
     manufacturerId: 0x0366
     productType: 0x0001
+    productId: 0x0001
+    deviceProfileName: base-lock
+  # Kaadas
+  - id: 541/259/205
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00CD
+    productType: 0x0103
+    deviceProfileName: base-lock
+  - id: 541/259/199
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00C7
+    productType: 0x0103
+    deviceProfileName: base-lock
+  - id: 541/259/200
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00C8
+    productType: 0x0103
+    deviceProfileName: base-lock
+  - id: 541/259/201
+    deviceLabel: Kaadas Z-Wave Lock
+    manufacturerId: 0x021D
+    productId: 0x00C9
+    productType: 0x0103
+    deviceProfileName: base-lock
+  # Philips
+  - id: "541/2307/212"
+    deviceLabel: Philips Lock
+    manufacturerId: 0x021D
+    productId: 0x00D4
+    productType: 0x0903
+    deviceProfileName: base-lock
+  # TLJ
+  - id: "TLJ"
+    deviceLabel: TLJ Door Lock
+    manufacturerId: 0x0449
+    productType: 0x0004
     productId: 0x0001
     deviceProfileName: base-lock
 # LOCKS WITHOUT CODES
@@ -264,6 +375,13 @@ zwaveManufacturer:
     productType: 0x0005
     productId: 0x0001
     deviceProfileName: lock-battery
+  # ULTRALOQ
+  - id: "1106/4/2"
+    deviceLabel: ULTRALOQ Bolt Z-Wave Smart Deadbolt
+    manufacturerId: 0x0452
+    productId: 0x0002
+    productType: 0x0004
+    deviceProfileName: base-lock
 zwaveGeneric:
   - id: "GenericZwaveLock"
     deviceLabel: Door Lock
@@ -271,6 +389,7 @@ zwaveGeneric:
       supported:
         - 0x62 # door lock
         - 0x63 # user code
+        - 0x80 # battery
     deviceProfileName: base-lock
   - id: "GenericZwaveLock2"
     deviceLabel: Door Lock

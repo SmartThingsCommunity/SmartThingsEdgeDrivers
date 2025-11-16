@@ -1,36 +1,10 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local SimpleMetering = clusters.SimpleMetering
 local constants = require "st.zigbee.constants"
-
-local JASCO_SWTICH_FINGERPRINTS = {
-  { mfr = "Jasco Products", model = "43095" },
-  { mfr = "Jasco Products", model = "43132" },
-  { mfr = "Jasco Products", model = "43078" }
-}
-
-local is_jasco_switch = function(opts, driver, device)
-  for _, fingerprint in ipairs(JASCO_SWTICH_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local device_added = function(self, device)
     local customEnergyDivisor = 10000
@@ -62,7 +36,7 @@ local jasco_switch = {
     added = device_added,
     doConfigure = do_configure,
   },
-  can_handle = is_jasco_switch
+  can_handle = require("jasco.can_handle"),
 }
 
 return jasco_switch

@@ -10,6 +10,13 @@ components:
     version: 1
   - id: temperatureAlarm
     version: 1
+    config:
+      values:
+        - key: "temperatureAlarm.value"
+          enabledValues:
+            - cleared
+            - freeze
+            - heat
   - id: temperatureMeasurement
     version: 1
   categories:

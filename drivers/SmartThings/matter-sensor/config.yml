@@ -1,0 +1,6 @@
+name: 'Matter Sensor'
+packageKey: 'matter-sensor'
+permissions:
+  matter: {}
+description: "SmartThings driver for Matter sensor devices"
+vendorSupportInformation: "https://support.smartthings.com"

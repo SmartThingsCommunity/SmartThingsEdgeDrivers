@@ -2,3 +2,5 @@ name: 'Zigbee Smoke Detector'
 packageKey: 'zigbee-smoke-detector'
 permissions:
   zigbee: {}
+description: "SmartThings driver for Zigbee smoke detector devices"
+vendorSupportInformation: "https://support.smartthings.com"

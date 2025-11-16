@@ -1,0 +1,14 @@
+name: water-battery-tamper
+components:
+- id: main
+  capabilities:
+  - id: waterSensor
+    version: 1
+  - id: battery
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+    - name: LeakSensor
