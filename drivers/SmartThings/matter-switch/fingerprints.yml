@@ -641,6 +641,11 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1006
     deviceProfileName: light-level-motion
+  - id: "4251/4103"
+    deviceLabel: Decora Smart Wi-Fi (2nd Gen) Scene Controller Switch
+    vendorId: 0x109B
+    productId: 0x1007
+    deviceProfileName: 3-button
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
@@ -873,6 +878,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Onvis
+  - id: "5181/4097"
+    deviceLabel: Onvis Smart Plug S4EU
+    vendorId: 0x143D
+    productId: 0x1001
+    deviceProfileName: plug-binary
 #Osram
   - id: "4489/2564"
     deviceLabel: OSRAM MATTER PLUG UK
@@ -883,6 +894,16 @@ matterManufacturer:
     deviceLabel: SMART MAT P40 RGBW 827 FR E27
     vendorId: 0x1189
     productId: 0x0AC5
+    deviceProfileName: light-color-level
+  - id: "4489/61442"
+    deviceLabel: OSRAM MATTER CLASSIC A 100W
+    vendorId: 0x1189
+    productId: 0xF002
+    deviceProfileName: light-color-level
+  - id: "4489/2755"
+    deviceLabel: SMART MAT A60 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC3
     deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
@@ -3047,6 +3068,11 @@ matterGeneric:
       - id: 0x0101 # Dimmable Light
       - id: 0x0107 # Occupancy Sensor
     deviceProfileName: light-level-motion
+  - id: "matter/camera"
+    deviceLabel: Matter Camera
+    deviceTypes:
+      - id: 0x0142 # Camera
+    deviceProfileName: camera
 
 matterThing:
   - id: SmartThings/MatterThing
