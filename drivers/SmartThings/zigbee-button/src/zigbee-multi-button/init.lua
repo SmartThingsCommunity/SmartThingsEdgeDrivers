@@ -1,67 +1,13 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local capabilities = require "st.capabilities"
 local supported_values = require "zigbee-multi-button.supported_values"
 local button_utils = require "button_utils"
 
-local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
-  { mfr = "CentraLite", model = "3450-L" },
-  { mfr = "CentraLite", model = "3450-L2" },
-  { mfr = "AduroSmart Eria", model = "ADUROLIGHT_CSC" },
-  { mfr = "ADUROLIGHT", model = "ADUROLIGHT_CSC" },
-  { mfr = "AduroSmart Eria", model = "Adurolight_NCC" },
-  { mfr = "ADUROLIGHT", model = "Adurolight_NCC" },
-  { mfr = "HEIMAN", model = "SceneSwitch-EM-3.0" },
-  { mfr = "HEIMAN", model = "HS6SSA-W-EF-3.0" },
-  { mfr = "HEIMAN", model = "HS6SSB-W-EF-3.0" },
-  { mfr = "IKEA of Sweden", model = "TRADFRI on/off switch" },
-  { mfr = "IKEA of Sweden", model = "TRADFRI open/close remote" },
-  { mfr = "IKEA of Sweden", model = "TRADFRI remote control" },
-  { mfr = "KE", model = "TRADFRI open/close remote" },
-  { mfr = "\x02KE", model = "TRADFRI open/close remote" },
-  { mfr = "SOMFY", model = "Situo 1 Zigbee" },
-  { mfr = "SOMFY", model = "Situo 4 Zigbee" },
-  { mfr = "LDS", model = "ZBT-CCTSwitch-D0001" },
-  { mfr = "ShinaSystem", model = "MSM-300Z" },
-  { mfr = "ShinaSystem", model = "BSM-300Z" },
-  { mfr = "ShinaSystem", model = "SBM300ZB1" },
-  { mfr = "ShinaSystem", model = "SBM300ZB2" },
-  { mfr = "ShinaSystem", model = "SBM300ZB3" },
-  { mfr = "ShinaSystem", model = "SBM300ZC1" },
-  { mfr = "ShinaSystem", model = "SBM300ZC2" },
-  { mfr = "ShinaSystem", model = "SBM300ZC3" },
-  { mfr = "ShinaSystem", model = "SBM300ZC4" },
-  { mfr = "ShinaSystem", model = "SQM300ZC4" },
-  { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
-  { mfr = "ROBB smarrt", model = "ROB_200-008-0" },
-  { mfr = "WALL HERO", model = "ACL-401SCA4" },
-  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-005" },
-  { mfr = "Vimar", model = "RemoteControl_v1.0" },
-  { mfr = "Linxura", model = "Smart Controller" },
-  { mfr = "Linxura", model = "Aura Smart Button" },
-  { mfr = "zunzunbee", model = "SSWZ8T" }
-}
 
-local function can_handle_zigbee_multi_button(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZIGBEE_MULTI_BUTTON_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function added_handler(self, device)
   local config = supported_values.get_device_parameters(device)
@@ -87,22 +33,8 @@ local zigbee_multi_button = {
   lifecycle_handlers = {
     added = added_handler
   },
-  can_handle = can_handle_zigbee_multi_button,
-  sub_drivers = {
-    require("zigbee-multi-button.ikea"),
-    require("zigbee-multi-button.somfy"),
-    require("zigbee-multi-button.ecosmart"),
-    require("zigbee-multi-button.centralite"),
-    require("zigbee-multi-button.adurosmart"),
-    require("zigbee-multi-button.heiman"),
-    require("zigbee-multi-button.shinasystems"),
-    require("zigbee-multi-button.robb"),
-    require("zigbee-multi-button.wallhero"),
-    require("zigbee-multi-button.SLED"),
-    require("zigbee-multi-button.vimar"),
-    require("zigbee-multi-button.linxura"),
-    require("zigbee-multi-button.zunzunbee")
-  }
+  can_handle = require("zigbee-multi-button.can_handle"),
+  sub_drivers = require("zigbee-multi-button.sub_drivers"),
 }
 
 return zigbee_multi_button
