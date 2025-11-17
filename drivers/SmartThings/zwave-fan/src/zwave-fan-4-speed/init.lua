@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local log = require "log"
 local capabilities = require "st.capabilities"
@@ -22,9 +12,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
 local fan_speed_helper = (require "zwave_fan_helpers")
 
-local FAN_4_SPEED_FINGERPRINTS = {
-  {mfr = 0x001D, prod = 0x0038, model = 0x0002}, -- Leviton 4-Speed Fan Controller
-}
 
 local function map_fan_4_speed_to_switch_level (speed)
   if speed == fan_speed_helper.fan_speed.OFF then
@@ -64,14 +51,6 @@ end
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @return boolean true if the device is 4-speed fan, else false
-local function can_handle_fan_4_speed(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FAN_4_SPEED_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local capability_handlers = {}
 
@@ -111,7 +90,7 @@ local zwave_fan_4_speed = {
     }
   },
   NAME = "Z-Wave fan 4 speed",
-  can_handle = can_handle_fan_4_speed,
+  can_handle = require("zwave-fan-4-speed.can_handle"),
 }
 
 return zwave_fan_4_speed
