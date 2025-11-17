@@ -57,17 +57,19 @@ local configuration = {
 }
 
 local function present_value_attr_handler(driver, device, value, zb_rx)
-  local end_point = zb_rx.address_header.src_endpoint.value
-  local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
-  local evt = capabilities.button.button.held({ state_change = true })
-  if value.value == 1 then
-    evt = capabilities.button.button.pushed({ state_change = true })
-  elseif value.value == 2 then
-    evt = capabilities.button.button.double({ state_change = true })
-  end
-  device:emit_event(evt)
-  if btn_evt_cnt > 1 then
-    device:emit_component_event(device.profile.components[COMP_LIST[end_point]], evt)
+  if value.value < 0xFF then
+    local end_point = zb_rx.address_header.src_endpoint.value
+    local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
+    local evt = capabilities.button.button.held({ state_change = true })
+    if value.value == 1 then
+      evt = capabilities.button.button.pushed({ state_change = true })
+    elseif value.value == 2 then
+      evt = capabilities.button.button.double({ state_change = true })
+    end
+    device:emit_event(evt)
+    if btn_evt_cnt > 1 then
+      device:emit_component_event(device.profile.components[COMP_LIST[end_point]], evt)
+    end
   end
 end
 local function battery_level_handler(driver, device, value, zb_rx)
