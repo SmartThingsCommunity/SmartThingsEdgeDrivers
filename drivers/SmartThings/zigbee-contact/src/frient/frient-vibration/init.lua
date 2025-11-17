@@ -27,19 +27,6 @@ local PowerConfiguration = zcl_clusters.PowerConfiguration
 local POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT = 0x2D
 local TEMPERATURE_ENDPOINT = 0x26
 
-local FRIENT_DEVICE_FINGERPRINTS = {
-  { mfr = "frient A/S", model = "WISZB-137", },
-}
-
-local function can_handle_vibration_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FRIENT_DEVICE_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local Frient_AccelerationMeasurementCluster = {
   ID = 0xFC04,
   ManufacturerSpecificCode = 0x1015,
@@ -219,7 +206,7 @@ local frient_vibration_driver_template = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
   },
-  can_handle = can_handle_vibration_sensor
+  can_handle = require ("frient.frient-vibration.can_handle")
 }
 
 return frient_vibration_driver_template
