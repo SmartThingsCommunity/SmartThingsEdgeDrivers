@@ -1,12 +1,12 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
 local IASZone = clusters.IASZone
 local PowerConfiguration = clusters.PowerConfiguration
 
-local FINGERPRINTS = {
-  { mfr = "sengled", model = "E1L-G7K" }
-}
 
 local CONFIGURATIONS = {
   {
@@ -27,14 +27,6 @@ local CONFIGURATIONS = {
   }
 }
 
-local is_sengled_products = function(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
@@ -49,7 +41,7 @@ local sengled_water_leak_sensor_handler = {
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = is_sengled_products
+  can_handle = require("sengled.can_handle"),
 }
 
 return sengled_water_leak_sensor_handler
