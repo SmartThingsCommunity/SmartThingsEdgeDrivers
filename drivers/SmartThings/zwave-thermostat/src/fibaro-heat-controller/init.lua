@@ -37,6 +37,8 @@ local FIBARO_HEAT_FINGERPRINTS = {
 
 local FORCED_REFRESH_THREAD = "forcedRefreshThread"
 
+local REGULATOR_BEHAVIOUR_DATA = {parameter_number = 2, size = 4, }
+
 local function can_handle_fibaro_heat_controller(opts, driver, device, ...)
   for _, fingerprint in ipairs(FIBARO_HEAT_FINGERPRINTS) do
       if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
@@ -72,7 +74,7 @@ local function configuration_report_handler(self, device, cmd)
       device:send_to_component(SensorMultilevel:Get({}), "extraTemperatureSensor")
       device:send_to_component(Battery:Get({}), "extraTemperatureSensor")
     elseif (cmd.args.configuration_value == 0 and utils.table_size(device.st_store.profile.components) > 1) then
-      device:try_update_metadata({profile = "base-radiator-thermostat"})
+      device:try_update_metadata({profile = "fibaro-heat-controller"})
     end
   end
 end
@@ -147,9 +149,13 @@ local function component_to_endpoint(device, component)
   end
 end
 
-local function map_components(self, device)
+local function device_init(self, device, args)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+
+  if device.profile.id ~= "fibaro-heat-controller.yml" then
+    device:try_update_metadata({profile = "fibaro-heat-controller"})
+  end
 end
 
 local function device_added(self, device)
@@ -161,6 +167,17 @@ local function device_added(self, device)
   device:emit_event(capabilities.thermostatMode.supportedThermostatModes(supported_modes, { visibility = { displayed = false } }))
 
   do_refresh(self, device)
+end
+
+local function info_changed (self, device, event, args)
+  for name, info in pairs(device.preferences) do
+    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name] ) then
+      local input = device.preferences[name]
+      if (name == "regulatorBehaviour") then
+        device:send(Configuration:Set({ parameter_number = REGULATOR_BEHAVIOUR_DATA.parameter_number, size = REGULATOR_BEHAVIOUR_DATA.size, configuration_value = input }))
+      end
+    end
+  end
 end
 
 local fibaro_heat_controller = {
@@ -187,7 +204,8 @@ local fibaro_heat_controller = {
   },
   lifecycle_handlers = {
     added = device_added,
-    init = map_components
+    init = device_init,
+    infoChanged = info_changed
   },
   can_handle = can_handle_fibaro_heat_controller
 }

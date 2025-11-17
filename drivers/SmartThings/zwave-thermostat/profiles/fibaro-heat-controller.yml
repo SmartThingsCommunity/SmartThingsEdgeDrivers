@@ -1,0 +1,33 @@
+name: fibaro-heat-controller
+components:
+- id: main
+  capabilities:
+  - id: temperatureMeasurement
+    version: 1
+  - id: thermostatHeatingSetpoint
+    version: 1
+    config:
+      values:
+        - key: "heatingSetpoint.value"
+          range: [ 10, 30 ]
+  - id: thermostatMode
+    version: 1
+  - id: battery
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Thermostat
+preferences:
+  - name: "regulatorBehaviour"
+    title: "Regulator Behaviour"
+    description: "Change regulator behaviour from Rapid to Moderate"
+    preferenceType: enumeration
+    required: true
+    definition:
+      options:
+        0: "Rapid"
+        64: "Moderate"
+      default: '0'
+  - preferenceId: tempOffset
+    explicit: true
