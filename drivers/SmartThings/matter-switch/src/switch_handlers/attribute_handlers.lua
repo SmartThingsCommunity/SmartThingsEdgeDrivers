@@ -306,17 +306,19 @@ end
 
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
-  for i, ep in pairs(set_topology_eps or {}) do
-    if ep.endpoint_id == ib.endpoint_id then
+  for i, ep_info in pairs(set_topology_eps or {}) do
+    if ep_info.endpoint_id == ib.endpoint_id then
       set_topology_eps[i] = nil -- seen, remove from list
       local tags = ""
-      if ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
-      if ep[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
-      table.sort(ib.data.elements)
-      local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
-      switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
-      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
-      break
+      if ep_info[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
+      if ep_info[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
+      if ib.data.elements ~= {} then
+        table.sort(ib.data.elements)
+        local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
+        switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
+        switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
+        break
+      end
     end
   end
 
@@ -334,17 +336,19 @@ end
 
 function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
-  for i, ep in pairs(tree_topology_eps or {}) do
-    if ep.endpoint_id == ib.endpoint_id then
+  for i, ep_info in pairs(tree_topology_eps or {}) do
+    if ep_info.endpoint_id == ib.endpoint_id then
       tree_topology_eps[i] = nil -- seen, remove from list
       local tags = ""
-      if ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
-      if ep[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
-      table.sort(ib.data.elements)
-      local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
-      switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
-      switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
-      break
+      if ep_info[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
+      if ep_info[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
+      if ib.data.elements ~= {} then
+        table.sort(ib.data.elements)
+        local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
+        switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
+        switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
+        break
+      end
     end
   end
 
