@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local utils = require 'st.utils'
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -23,9 +13,6 @@ local capabilities = require "st.capabilities"
 local DEFAULT_LEVEL = 100
 local DOUBLE_STEP = 10
 
-local IKEA_OF_SWEDEN_FINGERPRINTS = {
-  { mfr = "IKEA of Sweden", model = "TRADFRI wireless dimmer" }
-}
 
 local generate_switch_level_event = function(device, value)
   device:emit_event(capabilities.switchLevel.level(value))
@@ -99,15 +86,6 @@ local battery_perc_attr_handler = function(driver, device, value, zb_rx)
   device:emit_event(capabilities.battery.battery(utils.clamp_value(value.value, 0, 100)))
 end
 
-local is_ikea_of_sweden = function(opts, driver, device)
-  for _, fingerprint in ipairs(IKEA_OF_SWEDEN_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-
-  return false
-end
 
 local ikea_of_sweden = {
   NAME = "IKEA of Sweden",
@@ -126,7 +104,7 @@ local ikea_of_sweden = {
       }
     }
   },
-  can_handle = is_ikea_of_sweden
+  can_handle = require("zigbee-battery-accessory-dimmer.IKEAofSweden.can_handle"),
 }
 
 return ikea_of_sweden
