@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
@@ -104,7 +107,7 @@ local aqara_fp1_handler = {
     doConfigure = do_configure,
     infoChanged = device_info_changed
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_fp1_handler
