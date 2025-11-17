@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -18,23 +9,8 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
-local ZWAVE_WATER_TEMP_HUMIDITY_FINGERPRINTS = {
-  { manufacturerId = 0x0371, productType = 0x0002, productId = 0x0013 }, -- Aeotec Water Sensor 7 Pro EU
-  { manufacturerId = 0x0371, productType = 0x0102, productId = 0x0013 }, -- Aeotec Water Sensor 7 Pro US
-  { manufacturerId = 0x0371, productType = 0x0202, productId = 0x0013 }, -- Aeotec Water Sensor 7 Pro AU
-  { manufacturerId = 0x0371, productId = 0x0012 } -- Aeotec Water Sensor 7
-}
 
 --- Determine whether the passed device is zwave water temperature humidiry sensor
-local function can_handle_zwave_water_temp_humidity_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZWAVE_WATER_TEMP_HUMIDITY_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      local subdriver = require("aeotec-water-sensor")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 --- Default handler for notification command class reports
 ---
@@ -68,7 +44,7 @@ local zwave_water_temp_humidity_sensor = {
     },
   },
   NAME = "zwave water temp humidity sensor",
-  can_handle = can_handle_zwave_water_temp_humidity_sensor
+  can_handle = require("aeotec-water-sensor.can_handle"),
 }
 
 return zwave_water_temp_humidity_sensor
