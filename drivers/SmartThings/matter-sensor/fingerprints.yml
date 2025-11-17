@@ -74,6 +74,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1008
     deviceProfileName: leak-battery
+  - id: "4619/4192"
+    deviceLabel: Smart Humidity&Temperature Sensor
+    vendorId: 0x120B
+    productId: 0x1060
+    deviceProfileName: temperature-humidity-battery
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -277,6 +282,13 @@ matterGeneric:
     deviceTypes:
       - id: 0x0076 # Smoke CO Alarm
     deviceProfileName: smoke-co
+  - id: "matter/smoke-temp-humidity/sensor"
+    deviceLabel: Matter Smoke/Temp/Humidity Sensor
+    deviceTypes:
+      - id: 0x0076 # Smoke CO Alarm
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+    deviceProfileName: smoke-temp-humidity-battery
   - id: "matter/rain/sensor"
     deviceLabel: Matter Rain Sensor
     deviceTypes:
