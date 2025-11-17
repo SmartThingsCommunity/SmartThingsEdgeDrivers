@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local clusters = require "st.zigbee.zcl.clusters"
 
 local WindowCovering = clusters.WindowCovering
@@ -17,10 +20,7 @@ local aqara_window_treatment_version_handler = {
       }
     }
   },
-  can_handle = function(opts, driver, device)
-    local softwareVersion = device:get_field(APPLICATION_VERSION)
-    return softwareVersion and softwareVersion ~= 34
-  end
+  can_handle = require("aqara.version.can_handle"),
 }
 
 return aqara_window_treatment_version_handler
