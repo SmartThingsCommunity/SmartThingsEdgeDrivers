@@ -176,29 +176,17 @@ end
 --- @param opts number|table either is an ep_id or a table { endpoint_id, capability_id }
 --- @return string component
 function utils.endpoint_to_component(device, opts)
-  local ep_info = {}
   if type(opts) == "number" then
-    ep_info.endpoint_id = opts
-  elseif type(opts) == "table" then
-    if opts.endpoint_info then
-      ep_info = opts.endpoint_info
-    else
-      ep_info = {
-        endpoint_id = opts.endpoint_id,
-        cluster_id = opts.cluster_id,
-        attribute_id = opts.attribute_id
-      }
-    end
+    opts = { endpoint_id = opts }
   end
   for component, map_info in pairs(device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do
-    if type(map_info) == "number" and map_info == ep_info.endpoint_id then
+    if type(map_info) == "number" and map_info == opts.endpoint_id then
       return component
-    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id then
-      if (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
-        and utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))
-        and (not opts.capability_id or utils.tbl_contains(map_info.capability_ids, opts.capability_id)) then
-        return component
-      end
+    elseif type(map_info) == "table" and map_info.endpoint_id == opts.endpoint_id
+      and (not map_info.cluster_id or (map_info.cluster_id == opts.cluster_id
+      and utils.tbl_contains(map_info.attribute_ids, opts.attribute_id)))
+      and (not opts.capability_id or utils.tbl_contains(map_info.capability_ids, opts.capability_id)) then
+      return component
     end
   end
   return "main"
@@ -214,24 +202,21 @@ end
 --- @param ep_info number|table endpoint_id or ib (includes endpoint_id, cluster_id, attribute_id)
 --- @param event any a capability event object
 function utils.emit_event_for_endpoint(device, ep_info, event)
+  local formatted_info = {}
   if type(ep_info) == "number" then
-    ep_info = { endpoint_id = ep_info }
+    formatted_info = { endpoint_id = ep_info }
   elseif type(ep_info) == "table" then
-    ep_info = {
-      endpoint_id = ep_info.endpoint_id,
-      cluster_id = ep_info.cluster_id,
-      attribute_id = ep_info.attribute_id
-    }
+    formatted_info = ep_info
   end
   if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
-    local child = utils.find_child(device, ep_info.endpoint_id)
+    local child = utils.find_child(device, formatted_info.endpoint_id)
     if child ~= nil then
       child:emit_event(event)
       return
     end
   end
-  local opts = { endpoint_info = ep_info, capability_id = event.capability.ID }
-  local comp_id = utils.endpoint_to_component(device, opts)
+  formatted_info.capability_ID = event.capability.ID
+  local comp_id = utils.endpoint_to_component(device, formatted_info)
   local comp = device.profile.components[comp_id]
   device:emit_component_event(comp, event)
 end
