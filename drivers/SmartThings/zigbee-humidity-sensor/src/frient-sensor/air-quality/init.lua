@@ -1,6 +1,5 @@
 local capabilities = require "st.capabilities"
 local util = require "st.utils"
-local log = require "log"
 local data_types = require "st.zigbee.data_types"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
@@ -72,13 +71,10 @@ end
 local function voc_measure_value_attr_handler(driver, device, attr_val, zb_rx)
   local voc_value = attr_val.value
   if (voc_value < 65535) then -- ignore it if it's outside the limits
-    log.trace("Received VOC MeasuredValue :"..util.stringify_table(voc_value))
     voc_value = util.clamp_value(voc_value, 0, MAX_VOC_REPORTABLE_VALUE)
     device:emit_event(capabilities.airQualitySensor.airQuality({ value = voc_to_caqi(voc_value)}))
     device:emit_event(capabilities.tvocHealthConcern.tvocHealthConcern(voc_to_healthconcern(voc_value)))
     device:emit_event(capabilities.tvocMeasurement.tvocLevel({ value = voc_value, unit = "ppb" }))
-  else
-    log.warn("Ignoring invalid VOC MeasuredValue : "..util.stringify_table(voc_value))
   end
 end
 
@@ -86,15 +82,11 @@ end
 local function temperatureHandler(driver, device, attr_val, zb_rx)
   local temp_value = attr_val.value
   if (temp_value > -32768) then
-    log.debug("Received Temperature MeasuredValue :"..util.stringify_table(temp_value))
     device:emit_event(capabilities.temperatureMeasurement.temperature({ value = temp_value / 100, unit = "C" }))
-  else
-    log.warn("Ignoring invalid Temperature MeasuredValue : "..util.stringify_table(temp_value))
   end
 end
 
 local function device_init(driver, device)
-  log.trace "Initializing sensor"
   battery_defaults.build_linear_voltage_init(2.3, 3.0)(driver, device)
   local configuration = configurationMap.get_device_configuration(device)
   if configuration ~= nil then
@@ -111,7 +103,6 @@ local function device_added(driver, device)
 end
 
 local function do_refresh(driver, device)
-  log.trace "Refreshing sensor attributes"
   for _, fingerprint in ipairs(FRIENT_AIR_QUALITY_SENSOR_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_VOCMeasurement.ID, Frient_VOCMeasurement.attributes.MeasuredValue.ID, Frient_VOCMeasurement.ManufacturerSpecificCode):to_endpoint(0x26))
