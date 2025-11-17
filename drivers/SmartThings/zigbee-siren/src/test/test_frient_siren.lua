@@ -95,14 +95,6 @@ local function set_no_firmware_and_defaults()
     mock_device:set_field(ALARM_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
 end
 
-local function set_no_firmware_and_defaults()
-    -- set the firmware version and endian format for testing
-    mock_device:set_field(PRIMARY_SW_VERSION, nil, {persist = true})
-    mock_device:set_field(SIREN_ENDIAN, nil, {persist = true})
-    -- set test durations and parameters
-    mock_device:set_field(ALARM_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
-end
-
 local function get_siren_commands_new_fw( warningMode, sirenLevel, duration )
     local expectedSirenONConfiguration = SirenConfiguration(0x00)
     expectedSirenONConfiguration:set_warning_mode(warningMode) --WarningMode.BURGLAR
