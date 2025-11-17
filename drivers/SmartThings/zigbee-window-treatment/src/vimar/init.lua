@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
@@ -27,20 +17,8 @@ local windowShade = capabilities.windowShade.windowShade
 local VIMAR_SHADES_OPENING = "_vimarShadesOpening"
 local VIMAR_SHADES_CLOSING = "_vimarShadesClosing"
 
-local ZIGBEE_WINDOW_SHADE_FINGERPRINTS = {
-    { mfr = "Vimar", model = "Window_Cov_v1.0" },
-    { mfr = "Vimar", model = "Window_Cov_Module_v1.0" }
-}
 
 -- UTILS to check manufacturer details
-local is_zigbee_window_shade = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_WINDOW_SHADE_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
-  end
-  return false
-end
 
 -- ATTRIBUTE HANDLER FOR CurrentPositionLiftPercentage
 local function current_position_attr_handler(driver, device, value, zb_rx)
@@ -176,7 +154,7 @@ local vimar_handler = {
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = is_zigbee_window_shade,
+  can_handle = require("vimar.can_handle"),
 }
 
 return vimar_handler
