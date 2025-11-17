@@ -1,11 +1,13 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local MatterDriver = require "st.matter.driver"
 local fields = require "switch_utils.fields"
 local st_utils = require "st.utils"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local log = require "log"
+local version = require "version"
 
 local utils = {}
 
@@ -166,14 +168,72 @@ function utils.component_to_endpoint(device, component)
   return utils.find_default_endpoint(device)
 end
 
-function utils.endpoint_to_component(device, ep)
-  local map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
+--- An extension of the library function endpoint_to_component, to support a mapping scheme
+--- that includes cluster and attribute id's so that we can use multiple components for a
+--- single endpoint.
+---
+--- @param device any a Matter device object
+--- @param opts number|table either is an ep_id or a table { endpoint_id, capability_id }
+--- @return string component
+function utils.endpoint_to_component(device, opts)
+  local ep_info = {}
+  if type(opts) == "number" then
+    ep_info.endpoint_id = opts
+  elseif type(opts) == "table" then
+    if opts.endpoint_info then
+      ep_info = opts.endpoint_info
+    else
+      ep_info = {
+        endpoint_id = opts.endpoint_id,
+        cluster_id = opts.cluster_id,
+        attribute_id = opts.attribute_id
+      }
+    end
+  end
+  for component, map_info in pairs(device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do
+    if type(map_info) == "number" and map_info == ep_info.endpoint_id then
       return component
+    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id then
+      if (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
+        and utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))
+        and (not opts.capability_id or utils.tbl_contains(map_info.capability_ids, opts.capability_id)) then
+        return component
+      end
     end
   end
   return "main"
+end
+
+--- An extension of the library function emit_event_for_endpoint, to support devices with
+--- multiple components defined for the same endpoint, since they can't be easily
+--- differentiated based on a simple endpoint id to component mapping, but we can extend
+--- this mapping to include the cluster and attribute id's so that we know which component
+--- to route events to.
+---
+--- @param device any a Matter device object
+--- @param ep_info number|table endpoint_id or ib (includes endpoint_id, cluster_id, attribute_id)
+--- @param event any a capability event object
+function utils.emit_event_for_endpoint(device, ep_info, event)
+  if type(ep_info) == "number" then
+    ep_info = { endpoint_id = ep_info }
+  elseif type(ep_info) == "table" then
+    ep_info = {
+      endpoint_id = ep_info.endpoint_id,
+      cluster_id = ep_info.cluster_id,
+      attribute_id = ep_info.attribute_id
+    }
+  end
+  if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
+    local child = utils.find_child(device, ep_info.endpoint_id)
+    if child ~= nil then
+      child:emit_event(event)
+      return
+    end
+  end
+  local opts = { endpoint_info = ep_info, capability_id = event.capability.ID }
+  local comp_id = utils.endpoint_to_component(device, opts)
+  local comp = device.profile.components[comp_id]
+  device:emit_component_event(comp, event)
 end
 
 function utils.find_child(parent, ep_id)
@@ -185,6 +245,22 @@ function utils.get_endpoint_info(device, endpoint_id)
     if ep.endpoint_id == endpoint_id then return ep end
   end
   return {}
+end
+
+function utils.ep_supports_cluster(ep_info, cluster_id, opts)
+  opts = opts or {}
+  local clus_has_features = function(cluster, checked_feature)
+    return (cluster.feature_map & checked_feature) == checked_feature
+  end
+  for _, cluster in ipairs(ep_info.clusters) do
+    if ((cluster.cluster_id == cluster_id)
+      and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
+      and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
+      or (opts.cluster_type == cluster.cluster_type))
+      or (cluster_id == nil)) then
+        return true
+    end
+  end
 end
 
 -- Fallback handler for responses that dont have their own handler
@@ -265,6 +341,12 @@ function utils.report_power_consumption_to_st_energy(device, latest_total_import
       deltaEnergy = energy_delta_wh,
       energy = latest_total_imported_energy_wh
     }))
+  end
+end
+
+function utils.lazy_load(sub_driver_name)
+  if version.api >= 16 then
+    return MatterDriver.lazy_load_sub_driver_v2(sub_driver_name)
   end
 end
 

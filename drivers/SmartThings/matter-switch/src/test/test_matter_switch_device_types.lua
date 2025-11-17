@@ -143,7 +143,7 @@ local mock_device_mounted_on_off_control = test.mock_device.build_test_matter_de
       endpoint_id = 7,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "CLIENT", feature_map = 2},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
 
       },
       device_types = {
@@ -173,7 +173,7 @@ local mock_device_mounted_dimmable_load_control = test.mock_device.build_test_ma
       endpoint_id = 7,
       clusters = {
         {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "CLIENT", feature_map = 2},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
 
       },
       device_types = {
@@ -420,6 +420,10 @@ local function test_init_parent_child_switch_types()
   test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_parent_child_switch_types.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_parent_child_switch_types, 7, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_parent_child_switch_types:expect_metadata_update({ profile = "switch-level" })
   mock_device_parent_child_switch_types:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
@@ -463,6 +467,10 @@ end
 local function test_init_dimmer()
   test.mock_device.add_test_device(mock_device_dimmer)
   test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_dimmer.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_dimmer, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_dimmer:expect_metadata_update({ profile = "switch-level" })
   mock_device_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -494,6 +502,10 @@ local function test_init_mounted_on_off_control()
   test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_mounted_on_off_control.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_mounted_on_off_control, 7, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_mounted_on_off_control:expect_metadata_update({ profile = "switch-binary" })
   mock_device_mounted_on_off_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -502,6 +514,9 @@ local function test_init_mounted_dimmable_load_control()
   test.mock_device.add_test_device(mock_device_mounted_dimmable_load_control)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.LevelControl.attributes.MaxLevel,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_mounted_dimmable_load_control)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -516,6 +531,10 @@ local function test_init_mounted_dimmable_load_control()
   test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_mounted_dimmable_load_control.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_mounted_dimmable_load_control, 7, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_mounted_dimmable_load_control:expect_metadata_update({ profile = "switch-level" })
   mock_device_mounted_dimmable_load_control:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -557,6 +576,14 @@ local function test_init_parent_child_different_types()
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_parent_child_different_types.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_parent_child_different_types, 10, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
+  test.socket.matter:__expect_send({
+    mock_device_parent_child_different_types.id,
+    clusters.ColorControl.attributes.Options:write(mock_device_parent_child_different_types, 10, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_parent_child_different_types:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_different_types:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
@@ -575,6 +602,10 @@ local function test_init_parent_child_unsupported_device_type()
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_unsupported_device_type.id, "init" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_unsupported_device_type.id, "doConfigure" })
   mock_device_parent_child_unsupported_device_type:expect_metadata_update({ profile = "switch-binary" })
+  test.socket.matter:__expect_send({
+    mock_device_parent_child_unsupported_device_type.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_parent_child_unsupported_device_type, 10, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_parent_child_unsupported_device_type:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   mock_device_parent_child_unsupported_device_type:expect_device_create({
@@ -609,6 +640,10 @@ local function test_init_light_level_motion()
   test.socket.matter:__expect_send({mock_device_light_level_motion.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_light_level_motion.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_light_level_motion, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_light_level_motion:expect_metadata_update({ profile = "light-level-motion" })
   mock_device_light_level_motion:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end

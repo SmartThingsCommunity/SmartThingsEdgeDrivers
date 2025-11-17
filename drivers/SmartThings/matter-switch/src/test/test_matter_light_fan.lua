@@ -87,6 +87,8 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, mock_device_ep1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, mock_device_ep1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   mock_device:expect_metadata_update({ profile = "light-color-level-fan" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
