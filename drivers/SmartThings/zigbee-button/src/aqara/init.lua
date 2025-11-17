@@ -1,16 +1,6 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -34,14 +24,7 @@ local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
 local PRESENT_ATTRIBUTE_ID = 0x0055
 
 local COMP_LIST = { "button1", "button2", "all" }
-local FINGERPRINTS = {
-  ["lumi.remote.b1acn02"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.acn003"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b186acn03"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b286acn03"] = { mfr = "LUMI", btn_cnt = 3 },
-  ["lumi.remote.b18ac1"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b28ac1"] = { mfr = "LUMI", btn_cnt = 3 }
-}
+local FINGERPRINTS = require "aqara.fingerprints"
 
 local configuration = {
   {
@@ -139,14 +122,6 @@ local function mode_switching_handler(driver, device, value, zb_rx)
   end
 end
 
-local is_aqara_products = function(opts, driver, device)
-  local isAqaraProducts = false
-  if FINGERPRINTS[device:get_model()] and FINGERPRINTS[device:get_model()].mfr == device:get_manufacturer() then
-    isAqaraProducts = true
-  end
-  return isAqaraProducts
-end
-
 local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
   if configuration ~= nil then
@@ -231,7 +206,7 @@ local aqara_wireless_switch_handler = {
       }
     }
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_wireless_switch_handler

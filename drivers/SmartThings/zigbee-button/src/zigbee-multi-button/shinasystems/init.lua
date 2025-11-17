@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -20,30 +10,11 @@ local OnOff = clusters.OnOff
 local device_management = require "st.zigbee.device_management"
 local Groups = clusters.Groups
 
-local SHINASYSTEM_BUTTON_FINGERPRINTS = {
-  { mfr = "ShinaSystem", model = "MSM-300Z", endpoint_num = 0x04 },
-  { mfr = "ShinaSystem", model = "BSM-300Z", endpoint_num = 0x01 },
-  { mfr = "ShinaSystem", model = "SBM300ZB1", endpoint_num = 0x01 },
-  { mfr = "ShinaSystem", model = "SBM300ZB2", endpoint_num = 0x02 },
-  { mfr = "ShinaSystem", model = "SBM300ZB3", endpoint_num = 0x03 },
-  { mfr = "ShinaSystem", model = "SBM300ZC1", endpoint_num = 0x01 },
-  { mfr = "ShinaSystem", model = "SBM300ZC2", endpoint_num = 0x02 },
-  { mfr = "ShinaSystem", model = "SBM300ZC3", endpoint_num = 0x03 },
-  { mfr = "ShinaSystem", model = "SBM300ZC4", endpoint_num = 0x04 },
-  { mfr = "ShinaSystem", model = "SQM300ZC4", endpoint_num = 0x04 }
-}
 
-local is_shinasystem_button = function(opts, driver, device)
-  for _, fingerprint in ipairs(SHINASYSTEM_BUTTON_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function get_ep_num_shinasystem_button(device)
-  for _, fingerprint in ipairs(SHINASYSTEM_BUTTON_FINGERPRINTS) do
+  local FINGERPRINTS = require("zigbee-multi-button.shinasystems.fingerprints")
+  for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_model() == fingerprint.model then
       return fingerprint.endpoint_num
     end
@@ -92,7 +63,7 @@ local shinasystem_device_handler = {
       }
     }
   },
-  can_handle = is_shinasystem_button
+  can_handle = require("zigbee-multi-button.shinasystems.can_handle"),
 }
 
 return shinasystem_device_handler
