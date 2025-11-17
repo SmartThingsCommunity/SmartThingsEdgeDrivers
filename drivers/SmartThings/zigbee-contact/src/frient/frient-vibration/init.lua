@@ -18,8 +18,6 @@ local cluster_base = require "st.zigbee.cluster_base"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local device_management = require "st.zigbee.device_management"
 local data_types = require "st.zigbee.data_types"
-local log = require "log"
-local util = require "st.utils"
 local threeAxis = capabilities.threeAxis
 
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
@@ -45,9 +43,9 @@ local Frient_AccelerationMeasurementCluster = {
   ID = 0xFC04,
   ManufacturerSpecificCode = 0x1015,
   attributes = {
-    MeasuredValueX = { ID = 0x0000, data_type = data_types.name_to_id_map["Int16"] },
-    MeasuredValueY = { ID = 0x0001, data_type = data_types.name_to_id_map["Int16"] },
-    MeasuredValueZ = { ID = 0x0002, data_type = data_types.name_to_id_map["Int16"] }
+    MeasuredValueX = { ID = 0x0000, data_type = data_types.Int16 },
+    MeasuredValueY = { ID = 0x0001, data_type = data_types.Int16 },
+    MeasuredValueZ = { ID = 0x0002, data_type = data_types.Int16 }
   },
 }
 
@@ -65,17 +63,12 @@ local function acceleration_measure_value_attr_handler(driver, device, attr_val,
     if attribute_id == 0x0000 then
       measured_x = axis_value
       device:set_field("measured_x", measured_x)
-      log.trace("Updated X value: " .. axis_value)
     elseif attribute_id == 0x0001 then
       measured_y = axis_value
       device:set_field("measured_y", measured_y)
-      log.trace("Updated Y value: " .. axis_value)
     elseif attribute_id == 0x0002 then
       measured_z = axis_value
       device:set_field("measured_z", measured_z)
-      log.trace("Updated Z value: " .. axis_value)
-    else
-      log.warn("Unknown AttributeId: " .. tostring(attribute_id))
     end
   end
 
@@ -87,7 +80,6 @@ local function acceleration_measure_value_attr_handler(driver, device, attr_val,
   if device.preferences.garageSensor == "Yes" then
     if device.preferences.contactSensorAxis == "X" then
       local initial_position = device.preferences.sensorInitialPosition or 0
-      log.debug("Difference X: " .. math.abs(initial_position - measured_x) .. " Threshold: " .. device.preferences.contactSensorValue)
       if math.abs(initial_position - measured_x) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
         device:emit_event(capabilities.contactSensor.contact.open())
       else
@@ -95,7 +87,6 @@ local function acceleration_measure_value_attr_handler(driver, device, attr_val,
       end
     elseif device.preferences.contactSensorAxis == "Y" then
       local initial_position = device.preferences.sensorInitialPosition or 0
-      log.debug("Difference Y: " .. math.abs(initial_position - measured_y) .. " Threshold: " .. device.preferences.contactSensorValue)
       if math.abs(initial_position - measured_y) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
         device:emit_event(capabilities.contactSensor.contact.open())
       else
@@ -103,7 +94,6 @@ local function acceleration_measure_value_attr_handler(driver, device, attr_val,
       end
     elseif device.preferences.contactSensorAxis == "Z" then
       local initial_position = device.preferences.sensorInitialPosition or 0
-      log.debug("Difference Z: " .. math.abs(initial_position - measured_z) .. " Threshold: " .. device.preferences.contactSensorValue)
       if math.abs(initial_position - measured_z) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
         device:emit_event(capabilities.contactSensor.contact.open())
       else
@@ -115,33 +105,33 @@ end
 
 local function get_cluster_configurations()
   return {
-      {
-          cluster = Frient_AccelerationMeasurementCluster.ID,
-          attribute = Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID,
-          minimum_interval = 0,
-          maximum_interval = 300,
-          reportable_change = 0x0001,
-          data_type = data_types.Int16,
-          mfg_code = Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode
-      },
-      {
-          cluster = Frient_AccelerationMeasurementCluster.ID,
-          attribute = Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID,
-          minimum_interval = 0,
-          maximum_interval = 300,
-          reportable_change = 0x0001,
-          data_type = data_types.Int16,
-          mfg_code = Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode
-      },
-      {
-          cluster = Frient_AccelerationMeasurementCluster.ID,
-          attribute = Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID,
-          minimum_interval = 0,
-          maximum_interval = 300,
-          reportable_change = 0x0001,
-          data_type = data_types.Int16,
-          mfg_code = Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode
-      }
+    {
+      cluster = Frient_AccelerationMeasurementCluster.ID,
+      attribute = Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID,
+      minimum_interval = 0,
+      maximum_interval = 300,
+      reportable_change = 0x0001,
+      data_type = data_types.Int16,
+      mfg_code = Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode
+    },
+    {
+      cluster = Frient_AccelerationMeasurementCluster.ID,
+      attribute = Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID,
+      minimum_interval = 0,
+      maximum_interval = 300,
+      reportable_change = 0x0001,
+      data_type = data_types.Int16,
+      mfg_code = Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode
+    },
+    {
+      cluster = Frient_AccelerationMeasurementCluster.ID,
+      attribute = Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID,
+      minimum_interval = 0,
+      maximum_interval = 300,
+      reportable_change = 0x0001,
+      data_type = data_types.Int16,
+      mfg_code = Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode
+    }
   }
 end
 
@@ -151,65 +141,56 @@ local function generate_event_from_zone_status(driver, device, zone_status, zb_r
 end
 
 local function ias_zone_status_attr_handler(driver, device, attr_val, zb_rx)
-  log.debug("Received IAS Zone Status:"..util.stringify_table(attr_val))
   generate_event_from_zone_status(driver, device, attr_val, zb_rx)
 end
 
 local function ias_zone_status_change_handler(driver, device, zb_rx)
-  log.debug( "Received IAS Zone Change:"..util.stringify_table(zb_rx.body.zcl_body.zone_status))
   generate_event_from_zone_status(driver, device, zb_rx.body.zcl_body.zone_status, zb_rx)
 end
 
 local function device_init(driver, device)
-    log.trace "Initializing sensor"
-    battery_defaults.build_linear_voltage_init(2.3, 3.0)(driver, device)
-    --Add the manufacturer-specific attributes to generate their configure reporting and bind requests
-    for _, config in pairs(get_cluster_configurations()) do
-        device:add_configured_attribute(config)
-    end
+  battery_defaults.build_linear_voltage_init(2.3, 3.0)(driver, device)
+  --Add the manufacturer-specific attributes to generate their configure reporting and bind requests
+  for _, config in pairs(get_cluster_configurations()) do
+    device:add_configured_attribute(config)
+  end
 end
 
 local function do_refresh(driver, device)
-    log.trace "Refreshing vibration sensor attributes"
-    device:send(IASZone.attributes.ZoneStatus:read(device):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_AccelerationMeasurementCluster.ID, Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID, Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_AccelerationMeasurementCluster.ID, Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID, Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
-    device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_AccelerationMeasurementCluster.ID, Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID, Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
-    device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device):to_endpoint(TEMPERATURE_ENDPOINT))
-    device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+  device:send(IASZone.attributes.ZoneStatus:read(device):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_AccelerationMeasurementCluster.ID, Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID, Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_AccelerationMeasurementCluster.ID, Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID, Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_AccelerationMeasurementCluster.ID, Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID, Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device):to_endpoint(TEMPERATURE_ENDPOINT))
+  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
 end
 
 local function do_configure(driver, device, event, args)
-    log.trace("Configuring sensor:" .. event)
-    device:configure()
+  device:configure()
 
-    device:send(device_management.build_bind_request(device, zcl_clusters.IASZone.ID, driver.environment_info.hub_zigbee_eui, POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
-    device:send(IASZone.attributes.ZoneStatus:configure_reporting(device, 0, 1*60*60, 1):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
-    device:send(device_management.build_bind_request(device, Frient_AccelerationMeasurementCluster.ID, driver.environment_info.hub_zigbee_eui, POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  device:send(device_management.build_bind_request(device, zcl_clusters.IASZone.ID, driver.environment_info.hub_zigbee_eui, POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  device:send(IASZone.attributes.ZoneStatus:configure_reporting(device, 0, 1*60*60, 1):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  device:send(device_management.build_bind_request(device, Frient_AccelerationMeasurementCluster.ID, driver.environment_info.hub_zigbee_eui, POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
 
-    local sensitivityLevel = device.preferences.sensitivityLevel or 10
-    log.debug("Writing CurrentZoneSensitivityLevel attribute to: " .. sensitivityLevel)
-    device:send(IASZone.attributes.CurrentZoneSensitivityLevel:write(device, sensitivityLevel):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
+  local sensitivityLevel = device.preferences.sensitivityLevel or 10
+  device:send(IASZone.attributes.CurrentZoneSensitivityLevel:write(device, sensitivityLevel):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT))
 
-    local sensitivity = math.floor((device.preferences.temperatureSensitivity or 0.1) * 100 + 0.5)
-    log.debug("Configuring temperature sensitivity: " .. sensitivity)
-    device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 1 * 60 * 60, sensitivity):to_endpoint(TEMPERATURE_ENDPOINT))
+  local sensitivity = math.floor((device.preferences.temperatureSensitivity or 0.1) * 100 + 0.5)
+  device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 1 * 60 * 60, sensitivity):to_endpoint(TEMPERATURE_ENDPOINT))
 
-    device.thread:call_with_delay(5, function()
-        device:refresh()
-    end)
+  device.thread:call_with_delay(5, function()
+    device:refresh()
+  end)
 end
 
 local function info_changed(driver, device, event, args)
   if args and args.old_st_store then
     if args.old_st_store.preferences.sensitivityLevel ~= device.preferences.sensitivityLevel then
       local sensitivityLevel = device.preferences.sensitivityLevel or 10
-      log.debug("Writing Current Zone Sensitivity Level Attribute To: "..sensitivityLevel)
       device:send(IASZone.attributes.CurrentZoneSensitivityLevel:write(device, sensitivityLevel):to_endpoint(0x2D))
     end
     if args.old_st_store.preferences.temperatureSensitivity ~= device.preferences.temperatureSensitivity then
       local sensitivity = math.floor((device.preferences.temperatureSensitivity or 0.1)*100 + 0.5)
-      log.debug("Configuring temperature sensitivity: "..sensitivity)
       device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 1*60*60, sensitivity):to_endpoint(0x26))
     end
     if args.old_st_store.preferences.garageSensor ~= device.preferences.garageSensor then
