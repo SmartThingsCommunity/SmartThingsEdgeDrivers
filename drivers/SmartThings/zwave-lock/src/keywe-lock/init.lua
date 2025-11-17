@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -23,12 +13,7 @@ local LockDefaults = require "st.zwave.defaults.lock"
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 local TamperDefaults = require "st.zwave.defaults.tamperAlert"
 
-local KEYWE_MFR = 0x037B
 local TAMPER_CLEAR_DELAY = 10
-
-local function can_handle_keywe_lock(opts, self, device, cmd, ...)
-  return device.zwave_manufacturer_id == KEYWE_MFR
-end
 
 local function clear_tamper_if_needed(device)
   local current_tamper_state = device:get_latest_state("main", capabilities.tamperAlert.ID, capabilities.tamperAlert.tamper.NAME)
@@ -80,7 +65,7 @@ local keywe_lock = {
     doConfigure = do_configure
   },
   NAME = "Keywe Lock",
-  can_handle = can_handle_keywe_lock,
+  can_handle = require("keywe-lock.can_handle"),
 }
 
 return keywe_lock
