@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local device_management = require "st.zigbee.device_management"
 
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -30,13 +33,6 @@ local WIRELESS_REMOTE_FINGERPRINTS = {
   }
 }
 
-local function can_handle(opts, driver, device, ...)
-  if device:get_manufacturer() == ROBB_MFR_STRING and WIRELESS_REMOTE_FINGERPRINTS[device:get_model()] then
-    return true
-  else
-    return false
-  end
-end
 
 local button_push_handler = function(addF)
   return function(driver, device, zb_rx)
@@ -186,7 +182,7 @@ local robb_wireless_control = {
       }
     }
   },
-  can_handle = can_handle
+  can_handle = require("zigbee-multi-button.robb.can_handle"),
 }
 
 return robb_wireless_control
