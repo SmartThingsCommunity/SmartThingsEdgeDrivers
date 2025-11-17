@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -30,22 +20,9 @@ local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({v
 
 local utils = require "st.utils"
 
-local FIBARO_HEAT_FINGERPRINTS = {
-    {mfr = 0x010F, prod = 0x1301, model = 0x1000}, -- Fibaro Heat Controller
-    {mfr = 0x010F, prod = 0x1301, model = 0x1001} -- Fibaro Heat Controller
-}
 
 local FORCED_REFRESH_THREAD = "forcedRefreshThread"
 
-local function can_handle_fibaro_heat_controller(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FIBARO_HEAT_FINGERPRINTS) do
-      if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-          return true
-      end
-  end
-
-  return false
-end
 
 local function thermostat_mode_report_handler(self, device, cmd)
   local event = nil
@@ -189,7 +166,7 @@ local fibaro_heat_controller = {
     added = device_added,
     init = map_components
   },
-  can_handle = can_handle_fibaro_heat_controller
+  can_handle = require("fibaro-heat-controller.can_handle"),
 }
 
 return fibaro_heat_controller
