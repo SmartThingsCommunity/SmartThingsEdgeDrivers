@@ -328,13 +328,9 @@ function utils.report_power_consumption_to_st_energy(device, latest_total_import
   end
 end
 
-function utils.lazy_load_if_possible(sub_driver_name)
+function utils.lazy_load(sub_driver_name)
   if version.api >= 16 then
     return MatterDriver.lazy_load_sub_driver_v2(sub_driver_name)
-  elseif version.api >= 9 then
-    return MatterDriver.lazy_load_sub_driver(require(sub_driver_name))
-  else
-    return require(sub_driver_name)
   end
 end
 
