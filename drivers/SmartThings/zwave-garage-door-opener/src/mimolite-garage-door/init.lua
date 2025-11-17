@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -28,23 +18,12 @@ local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
-local MIMOLITE_GARAGE_DOOR_FINGERPRINTS = {
-  { manufacturerId = 0x0084, productType = 0x0453, productId = 0x0111 } -- mimolite garage door
-}
 
 --- Determine whether the passed device is mimolite garage door
 ---
 --- @param driver Driver driver instance
 --- @param device Device device isntance
 --- @return boolean true if the device proper, else false
-local function can_handle_mimolite_garage_door(opts, driver, device, ...)
-  for _, fingerprint in ipairs(MIMOLITE_GARAGE_DOOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 local function door_event_helper(device, value)
   device:emit_event(value == 0x00 and capabilities.doorControl.door.closed() or capabilities.doorControl.door.open())
@@ -118,7 +97,7 @@ local mimolite_garage_door = {
     doConfigure = do_configure
   },
   NAME = "mimolite garage door",
-  can_handle = can_handle_mimolite_garage_door
+  can_handle = require("mimolite-garage-door.can_handle"),
 }
 
 return mimolite_garage_door
