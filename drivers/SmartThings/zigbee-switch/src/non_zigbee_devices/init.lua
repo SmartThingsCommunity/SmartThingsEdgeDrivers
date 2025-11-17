@@ -1,31 +1,13 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- This is a patch for the zigbee-switch driver to fix https://smartthings.atlassian.net/browse/CHAD-16558
 -- Several hubs were found that had zigbee switch drivers hosting zwave devices.
 -- This patch works around it until hubcore 0.59 is released with
 -- https://smartthings.atlassian.net/browse/CHAD-16552
 
-local st_device = require "st.device"
 local log = require "log"
 
-local function can_handle(opts, driver, device)
-  if device.network_type ~= st_device.NETWORK_TYPE_ZIGBEE and device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-    return true, require("non_zigbee_devices")
-  end
-  return false
-end
 
 local function device_added(driver, device, event)
     log.info(string.format("Non zigbee device added: %s", device))
@@ -51,7 +33,7 @@ local non_zigbee_devices = {
     doConfigure = do_configure,
     infoChanged = info_changed
   },
-  can_handle = can_handle
+  can_handle = require("non_zigbee_devices.can_handle"),
 }
 
 return non_zigbee_devices
