@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
@@ -20,18 +10,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local RelativeHumidity = clusters.RelativeHumidity
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 
-local MultiIR_SENSOR_FINGERPRINTS = {
-  { mfr = "MultiIR", model = "PMT1006S-SGM-ZTN" }--This is not a sleep end device
-}
 
-local function can_handle_MultiIR_sensor(opts, driver, device)
-  for _, fingerprint in ipairs(MultiIR_SENSOR_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function send_read_attr_request(device, cluster, attr)
   device:send(
@@ -146,7 +125,7 @@ local MultiIR_sensor = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
   },
-  can_handle = can_handle_MultiIR_sensor
+  can_handle = require("MultiIR.can_handle"),
 }
 
 return MultiIR_sensor
