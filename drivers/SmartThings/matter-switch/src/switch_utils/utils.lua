@@ -45,10 +45,6 @@ function utils.set_field_for_endpoint(device, field, endpoint, value, additional
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
 end
 
-function utils.increment_field(device, field, increment, persist)
-  device:set_field(field, (device:get_field(field) or 0) + increment, { persist = persist })
-end
-
 function utils.mired_to_kelvin(value, minOrMax)
   if value == 0 then -- shouldn't happen, but has
     value = 1
@@ -285,17 +281,6 @@ function utils.matter_handler(driver, device, response_block)
   device.log.info(string.format("Fallback handler for %s", response_block))
 end
 
---helper function to create list of multi press values
-function utils.create_multi_press_values_list(size, supportsHeld)
-  local list = {"pushed", "double"}
-  if supportsHeld then table.insert(list, "held") end
-  -- add multi press values of 3 or greater to the list
-  for i=3, size do
-    table.insert(list, string.format("pushed_%dx", i))
-  end
-  return list
-end
-
 -- get a list of endpoints for a specified device type.
 function utils.get_endpoints_by_device_type(device, device_type_id)
   local dt_eps = {}
@@ -307,6 +292,17 @@ function utils.get_endpoints_by_device_type(device, device_type_id)
     end
   end
   return dt_eps
+end
+
+--helper function to create list of multi press values
+function utils.create_multi_press_values_list(size, supportsHeld)
+  local list = {"pushed", "double"}
+  if supportsHeld then table.insert(list, "held") end
+  -- add multi press values of 3 or greater to the listq
+  for i=3, size do
+    table.insert(list, string.format("pushed_%dx", i))
+  end
+  return list
 end
 
 function utils.detect_bridge(device)
@@ -321,7 +317,7 @@ function utils.detect_matter_thing(device)
   return true
 end
 
-function utils.report_power_consumption_to_st_energy(device)
+function utils.report_power_consumption_to_st_energy(device, total_imported_energy_wh, endpoint_id)
   local current_time = os.time()
   local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
 
@@ -331,18 +327,15 @@ function utils.report_power_consumption_to_st_energy(device)
   end
   device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
 
-  local total_imported_energy_wh = device:get_field(fields.TOTAL_IMPORTED_ENERGY)
-  local state_device = utils.find_child(device, device:get_field(fields.POWER_CONSUMPTION_REPORT_EP)) or device
+  local state_device = utils.find_child(device, endpoint_id) or device
   local previous_imported_report = state_device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
-  local energy_delta_wh = total_imported_energy_wh - previous_imported_report.energy -- Calculate the energy delta between reports
-
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
   local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
-  device:emit_event_for_endpoint(device:get_field(fields.POWER_CONSUMPTION_REPORT_EP), capabilities.powerConsumptionReport.powerConsumption({
+  device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
     start = epoch_to_iso8601(last_time),
     ["end"] = epoch_to_iso8601(current_time - 1),
-    deltaEnergy = energy_delta_wh,
+    deltaEnergy = total_imported_energy_wh - previous_imported_report.energy,
     energy = total_imported_energy_wh
   }))
 end
@@ -366,28 +359,24 @@ function utils.handle_electrical_sensor_info(device)
   end
 
   local electrical_ep = electrical_sensor_eps[1] or {}
-  device:set_field(fields.POWER_CONSUMPTION_REPORT_EP, electrical_ep.endpoint_id, { persist = true })
 
-  local electrical_ep_has_feature = function(feature_name)
-      local feature = clusters.PowerTopology.types.Feature[feature_name]
-      if feature then
-        return clusters.PowerTopology.are_features_supported(feature, electrical_ep[clusters.PowerTopology.ID] or 0)
-      end
+  local electrical_ep_has_feature = function(feature)
+    return clusters.PowerTopology.are_features_supported(feature, electrical_ep[clusters.PowerTopology.ID] or 0)
   end
 
-  if electrical_ep_has_feature("SET_TOPOLOGY") then
+  if electrical_ep_has_feature(clusters.PowerTopology.types.Feature.SET_TOPOLOGY) then
     device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
     device:send(available_eps_req)
     return
   end
 
-  if electrical_ep_has_feature("TREE_TOPOLOGY") then
+  if electrical_ep_has_feature(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY) then
     device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a TREE topology
     device:send(parts_list_req)
     return
   end
 
-  if electrical_ep_has_feature("NODE_TOPOLOGY") then
+  if electrical_ep_has_feature(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY) then
     -- ElectricalSensor EP has a NODE topology, so this is the ONLY Electrical Sensor EP
     device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
     -- associate this EP's electrical tags with the first OnOff EP. These are not necessarily the same EP.

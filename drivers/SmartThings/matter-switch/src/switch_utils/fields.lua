@@ -42,9 +42,9 @@ SwitchFields.DEVICE_TYPE_ID = {
   DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
   GENERIC_SWITCH = 0x000F,
-  ON_OFF_PLUG_IN_UNIT = 0x010A,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
+  ON_OFF_PLUG_IN_UNIT = 0x010A,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -92,7 +92,8 @@ SwitchFields.COLOR_MODE = "__color_mode"
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
   { current_field_name = "__switch_intialized", updated_field_name = nil },
-  { current_field_name = "__energy_management_endpoint", updated_field_name = nil }
+  { current_field_name = "__energy_management_endpoint", updated_field_name = nil },
+  { current_field_name = "__total_imported_energy", updated_field_name = nil },
 }
 
 SwitchFields.vendor_overrides = {
@@ -132,8 +133,6 @@ SwitchFields.switch_category_vendor_overrides = {
     {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
 }
 
-SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
-SwitchFields.POWER_CONSUMPTION_REPORT_EP = "__POWER_CONSUMPTION_REPORT_EP"
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__ELECTRICAL_SENSOR_EPS"
 SwitchFields.ELECTRICAL_TAGS = "__ELECTRICAL_TAGS"
 SwitchFields.profiling_data = {
@@ -141,7 +140,6 @@ SwitchFields.profiling_data = {
 }
 
 SwitchFields.CUMULATIVE_REPORTS_SUPPORTED = "__cumulative_reports_supported"
-SwitchFields.TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
 SwitchFields.LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
 SwitchFields.MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 

@@ -47,17 +47,16 @@ function SwitchDeviceConfiguration.create_child_devices(driver, device, server_o
    return
   end
 
-  local device_num = 0
   table.sort(server_onoff_ep_ids)
-  for idx, ep_id in ipairs(server_onoff_ep_ids) do
-    device_num = device_num + 1
+  for device_num, ep_id in ipairs(server_onoff_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
       local label_and_name = string.format("%s %d", device.label, device_num)
+      local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
       driver:try_create_device(
         {
           type = "EDGE_CHILD",
           label = label_and_name,
-          profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true),
+          profile = child_profile,
           parent_device_id = device.id,
           parent_assigned_child_key = string.format("%d", ep_id),
           vendor_provided_label = label_and_name

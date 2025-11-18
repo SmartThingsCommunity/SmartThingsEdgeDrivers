@@ -247,7 +247,7 @@ end
 
 function AttributeHandlers.active_power_handler(driver, device, ib, response)
   if ib.data.value then
-    local watt_value = ib.data.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
+    local watt_value = ib.data.value / 1000 -- convert received milliwatt to watt
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
   end
   if type(device.register_native_capability_attr_handler) == "function" then
@@ -285,16 +285,14 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
     end
     if ib.data.elements.energy then
-      local energy_imported_wh = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
+      local energy_imported_wh = ib.data.elements.energy.value / 1000 -- convert received milliwatt to watt
       if is_periodic_report then
         -- handle this report only if cumulative reports are not supported
         if device:get_field(fields.CUMULATIVE_REPORTS_SUPPORTED) then return end
         energy_imported_wh = energy_imported_wh + energy_meter_latest_state
       end
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
-      local energy_delta_wh = energy_imported_wh - energy_meter_latest_state
-      switch_utils.increment_field(device, fields.TOTAL_IMPORTED_ENERGY, energy_delta_wh, true)
-      switch_utils.report_power_consumption_to_st_energy(device)
+      switch_utils.report_power_consumption_to_st_energy(device, energy_imported_wh, ib.endpoint_id)
     else
       device.log.warn("Received data from the energy imported attribute does not include a numerical energy value")
     end
@@ -307,8 +305,8 @@ end
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, ep_info in pairs(set_topology_eps or {}) do
-    if ep_info.endpoint_id == ib.endpoint_id then
-      set_topology_eps[i] = nil -- seen, remove from list
+    if ib.endpoint_id == ep_info.endpoint_id then -- find the currently reporting EP from the saved list
+      set_topology_eps[i] = nil -- since it was seen, remove it from the list
       local tags = ""
       if ep_info[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
       if ep_info[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
@@ -322,13 +320,12 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
     end
   end
 
-  if #set_topology_eps ~= 0 then -- we have not handled all eps
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, set_topology_eps) -- permanently remove deleted ep
-    return
+  if #set_topology_eps ~= 0 then -- AKA we have not handled all reporting SET EPs
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, set_topology_eps) -- permanently remove deleted EP data
+  else
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
+    device_cfg.match_profile(driver, device)
   end
-
-  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
-  device_cfg.match_profile(driver, device)
 end
 
 
@@ -352,13 +349,12 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
     end
   end
 
-  if #tree_topology_eps ~= 0 then -- we have not handled all eps
+  if #tree_topology_eps ~= 0 then -- AKA we have not handled all reporting TREE EPs
     device:set_field(fields.ELECTRICAL_SENSOR_EPS, tree_topology_eps) -- permanently remove deleted ep
-    return
+  else
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, {persist=true})
+    device_cfg.match_profile(driver, device)
   end
-
-  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, {persist=true})
-  device_cfg.match_profile(driver, device)
 end
 
 
