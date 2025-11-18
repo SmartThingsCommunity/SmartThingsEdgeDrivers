@@ -93,23 +93,31 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   return utils.tbl_contains(dimmable_eps, endpoint_id)
 end
 
--- Some devices report multiple device types which are a subset of
--- a superset device type (Ex. Dimmable Light is a superset of On/Off Light).
--- We should map to the largest superset device type supported.
--- This can be done by matching to the device type with the highest ID
+--- Some devices report multiple device types which are a subset of
+--- a superset device type (Ex. Dimmable Light is a superset of On/Off Light).
+--- We should map to the largest superset device type supported.
+--- This can be done by matching to the device type with the highest ID
 function utils.find_max_subset_device_type(ep, device_type_set)
   if ep.endpoint_id == 0 then return end -- EP-scoped device types not permitted on Root Node
-  local primary_dt_id = ep.device_types[1] and ep.device_types[1].device_type_id
-  if utils.tbl_contains(device_type_set, primary_dt_id) then
-    for _, dt in ipairs(ep.device_types) do
-      -- only device types in the subset should be considered.
-      if utils.tbl_contains(device_type_set, dt.device_type_id) then
-        primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
-      end
+  local primary_dt_id = -1
+  for _, dt in ipairs(ep.device_types) do
+    -- only device types in the subset should be considered.
+    if utils.tbl_contains(device_type_set, dt.device_type_id) then
+      primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
     end
-    return primary_dt_id
   end
-  return nil
+  return (primary_dt_id > 0) and primary_dt_id or nil
+end
+
+--- Lights and Switches are Device Types that have Superset-style functionality
+--- For all other device types, this function should be used to identify the primary device type
+function utils.find_primary_device_type(ep_info)
+  for _, dt in ipairs(ep_info.device_types) do
+    if dt.device_type_id ~= fields.DEVICE_TYPE_ID.BRIDGED_NODE then
+      -- if this is not a bridged node, return the first device type seen
+      return dt.device_type_id
+    end
+  end
 end
 
 --- find_default_endpoint is a helper function to handle situations where
