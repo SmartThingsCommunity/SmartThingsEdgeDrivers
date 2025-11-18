@@ -146,7 +146,8 @@ local function test_init()
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
-      clusters.FanControl.attributes.PercentCurrent
+      clusters.FanControl.attributes.PercentCurrent,
+      clusters.FanControl.attributes.PercentSetting
     },
     [capabilities.windMode.ID] = {
       clusters.FanControl.attributes.WindSupport,
@@ -204,7 +205,8 @@ local function test_init_configure()
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
-      clusters.FanControl.attributes.PercentCurrent
+      clusters.FanControl.attributes.PercentCurrent,
+      clusters.FanControl.attributes.PercentSetting
     },
     [capabilities.windMode.ID] = {
       clusters.FanControl.attributes.WindSupport,
@@ -259,7 +261,8 @@ local function test_init_nostate()
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
-      clusters.FanControl.attributes.PercentCurrent
+      clusters.FanControl.attributes.PercentCurrent,
+      clusters.FanControl.attributes.PercentSetting
     },
   }
   local subscribe_request = nil
@@ -324,7 +327,7 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_device.id,
-        clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, 1, 10)
+        clusters.FanControl.attributes.PercentSetting:build_test_report_data(mock_device, 1, 10)
       }
     },
     {

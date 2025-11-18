@@ -154,7 +154,8 @@ local function test_init_basic()
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
-      clusters.FanControl.attributes.PercentCurrent
+      clusters.FanControl.attributes.PercentCurrent,
+      clusters.FanControl.attributes.PercentSetting
     },
     [capabilities.windMode.ID] = {
       clusters.FanControl.attributes.WindSupport,
@@ -203,7 +204,8 @@ local subscribed_attributes_no_state = {
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
-      clusters.FanControl.attributes.PercentCurrent
+      clusters.FanControl.attributes.PercentCurrent,
+      clusters.FanControl.attributes.PercentSetting
     },
     [capabilities.windMode.ID] = {
       clusters.FanControl.attributes.WindSupport,
@@ -259,7 +261,8 @@ local function test_init_no_state()
       clusters.FanControl.attributes.FanMode
     },
     [capabilities.fanSpeedPercent.ID] = {
-      clusters.FanControl.attributes.PercentCurrent
+      clusters.FanControl.attributes.PercentCurrent,
+      clusters.FanControl.attributes.PercentSetting
     },
     [capabilities.windMode.ID] = {
       clusters.FanControl.attributes.WindSupport,

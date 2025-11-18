@@ -165,6 +165,7 @@ test.register_coroutine_test(
       clusters.FanControl.attributes.FanMode,
       clusters.FanControl.attributes.FanModeSequence,
       clusters.FanControl.attributes.PercentCurrent,
+      clusters.FanControl.attributes.PercentSetting,
       clusters.PowerSource.attributes.BatPercentRemaining,
     }
     local subscribe_request = initialize_mock_device(mock_device_basic, subscribed_attributes)

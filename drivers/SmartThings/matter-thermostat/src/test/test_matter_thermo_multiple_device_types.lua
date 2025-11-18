@@ -233,6 +233,7 @@ local new_cluster_subscribe_list = {
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.PercentCurrent,
+  clusters.FanControl.attributes.PercentSetting,
   clusters.FanControl.attributes.RockSupport,  -- These two attributes will be subscribed to following the profile
   clusters.FanControl.attributes.RockSetting,  -- change since the fanOscillationMode capability will be enabled.
 }

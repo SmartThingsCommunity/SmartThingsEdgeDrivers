@@ -196,7 +196,8 @@ local subscribed_attributes = {
     clusters.FanControl.attributes.FanMode
   },
   [capabilities.fanSpeedPercent.ID] = {
-    clusters.FanControl.attributes.PercentCurrent
+    clusters.FanControl.attributes.PercentCurrent,
+    clusters.FanControl.attributes.PercentSetting
   },
   [capabilities.windMode.ID] = {
     clusters.FanControl.attributes.WindSupport,
@@ -1599,10 +1600,21 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
 end
 
 local function fan_speed_percent_attr_handler(driver, device, ib, response)
-  local speed = 0
-  if ib.data.value ~= nil then
-    speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
+  if ib.data.value == nil then return end
+  local thermostat_mode = device:get_latest_state(
+    device:endpoint_to_component(ib.endpoint_id),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.thermostatMode.NAME
+  )
+  if thermostat_mode == capabilities.thermostatMode.thermostatMode.auto() then
+    local speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
   end
+end
+
+local function fan_speed_setting_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  local speed = utils.clamp_value(ib.data.value, MIN_ALLOWED_PERCENT_VALUE, MAX_ALLOWED_PERCENT_VALUE)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(speed))
 end
 
@@ -2099,6 +2111,7 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = fan_mode_sequence_handler,
         [clusters.FanControl.attributes.FanMode.ID] = fan_mode_handler,
         [clusters.FanControl.attributes.PercentCurrent.ID] = fan_speed_percent_attr_handler,
+        [clusters.FanControl.attributes.PercentSetting.ID] = fan_speed_setting_attr_handler,
         [clusters.FanControl.attributes.WindSupport.ID] = wind_support_handler,
         [clusters.FanControl.attributes.WindSetting.ID] = wind_setting_handler,
         [clusters.FanControl.attributes.RockSupport.ID] = rock_support_handler,
