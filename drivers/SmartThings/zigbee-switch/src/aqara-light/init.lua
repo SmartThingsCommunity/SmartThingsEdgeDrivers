@@ -15,12 +15,6 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.light.acn004" },
-  { mfr = "Aqara", model = "lumi.light.acn014" },
-  { mfr = "LUMI", model = "lumi.light.cwacn1" }
-}
-
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
   device:send(Level.attributes.CurrentLevel:read(device))
