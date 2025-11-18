@@ -21,16 +21,6 @@ local FINGERPRINTS = {
   { mfr = "LUMI", model = "lumi.light.cwacn1" }
 }
 
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("aqara-light")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
   device:send(Level.attributes.CurrentLevel:read(device))
