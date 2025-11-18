@@ -29,6 +29,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1
 local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({version=1})
 
 local utils = require "st.utils"
+local log = require "log"
 
 local FIBARO_HEAT_FINGERPRINTS = {
     {mfr = 0x010F, prod = 0x1301, model = 0x1000}, -- Fibaro Heat Controller
@@ -131,6 +132,7 @@ local function do_refresh(self, device)
   device:send(ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1}))
   device:send(Battery:Get({}))
   device:send(Configuration:Get({parameter_number = 3}))
+
 end
 
 local function endpoint_to_component(device, endpoint)
@@ -153,8 +155,11 @@ local function device_init(self, device, args)
   device:set_endpoint_to_component_fn(endpoint_to_component)
   device:set_component_to_endpoint_fn(component_to_endpoint)
 
-  if device.profile.id ~= "fibaro-heat-controller.yml" then
+  if not device.preferences["regulatorBehaviour"] then
     device:try_update_metadata({profile = "fibaro-heat-controller"})
+    if  utils.table_size(device.st_store.profile.components) > 1 then
+      device:try_update_metadata({profile = "fibaro-heat-extra-sensor"})
+    end
   end
 end
 
@@ -170,15 +175,15 @@ local function device_added(self, device)
 end
 
 local function info_changed (self, device, event, args)
-  for name, info in pairs(device.preferences) do
-    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name] ) then
-      local input = device.preferences[name]
-      if (name == "regulatorBehaviour") then
-        device:send(Configuration:Set({ parameter_number = REGULATOR_BEHAVIOUR_DATA.parameter_number, size = REGULATOR_BEHAVIOUR_DATA.size, configuration_value = input }))
+    for name, info in pairs(device.preferences) do
+      if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name] ) then
+        local input = device.preferences[name]
+        if (name == "regulatorBehaviour") then
+          device:send(Configuration:Set({ parameter_number = REGULATOR_BEHAVIOUR_DATA.parameter_number, size = REGULATOR_BEHAVIOUR_DATA.size, configuration_value = input }))
+        end
       end
     end
   end
-end
 
 local fibaro_heat_controller = {
   NAME = "fibaro heat controller",

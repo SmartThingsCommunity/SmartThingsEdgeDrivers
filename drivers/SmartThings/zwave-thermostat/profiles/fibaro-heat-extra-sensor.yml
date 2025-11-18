@@ -24,3 +24,16 @@ components:
     version: 1
   categories:
     - name: GenericSensor
+preferences:
+  - name: "regulatorBehaviour"
+    title: "Regulator Behaviour"
+    description: "Change regulator behaviour from Rapid to Moderate"
+    preferenceType: enumeration
+    required: true
+    definition:
+      options:
+        0: "Rapid"
+        64: "Moderate"
+      default: '0'
+  - preferenceId: tempOffset
+    explicit: true
