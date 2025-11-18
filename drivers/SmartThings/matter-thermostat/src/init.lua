@@ -1565,7 +1565,7 @@ local function fan_mode_sequence_handler(driver, device, ib, response)
     supported_fan_modes_attribute = supported_fan_modes_capability.supportedAcFanModes
   elseif device:supports_capability_by_id(capabilities.thermostatFanMode.ID) then
     supported_fan_modes_capability = capabilities.thermostatFanMode
-    supported_fan_modes_attribute = capabilities.thermostatFanMode.supportedThermostatModes
+    supported_fan_modes_attribute = capabilities.thermostatFanMode.supportedThermostatFanModes
     -- Our thermostat fan mode control is not granular enough to handle all of the supported modes
     if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
       ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
