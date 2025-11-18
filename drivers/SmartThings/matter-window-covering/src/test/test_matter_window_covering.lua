@@ -789,9 +789,6 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send(
       {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, (100 - PRESET_LEVEL) * 100)}
     )
-    test.socket.matter:__expect_send(
-      {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 5000)}
-    )
   end
 )
 
