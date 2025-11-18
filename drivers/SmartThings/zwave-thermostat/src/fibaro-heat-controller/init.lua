@@ -156,9 +156,10 @@ local function device_init(self, device, args)
   device:set_component_to_endpoint_fn(component_to_endpoint)
 
   if not device.preferences["regulatorBehaviour"] then
-    device:try_update_metadata({profile = "fibaro-heat-controller"})
-    if  utils.table_size(device.st_store.profile.components) > 1 then
+    if utils.table_size(device.st_store.profile.components) > 1 then
       device:try_update_metadata({profile = "fibaro-heat-extra-sensor"})
+    else
+      device:try_update_metadata({profile = "fibaro-heat-controller"})
     end
   end
 end
