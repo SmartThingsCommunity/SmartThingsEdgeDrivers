@@ -93,9 +93,11 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   return utils.tbl_contains(dimmable_eps, endpoint_id)
 end
 
---- Some devices report multiple device types which are a subset of
---- a superset device type (Ex. Dimmable Light is a superset of On/Off Light).
---- We should map to the largest superset device type supported.
+--- Per spec, "A superset device type is a device type that is functionally similar to a
+--- subset device type and has an overlap in its cluster requirements with a subset device type."
+--- Per spec, "An endpoint implementing a superset device type MAY include the
+--- subset device type(s) in the DeviceTypeList of the descriptor cluster of the endpoint."
+--- That said, we should identify the largest superset device type supported on an endpoint.
 --- This can be done by matching to the device type with the highest ID
 function utils.find_max_subset_device_type(ep, device_type_set)
   if ep.endpoint_id == 0 then return end -- EP-scoped device types not permitted on Root Node
