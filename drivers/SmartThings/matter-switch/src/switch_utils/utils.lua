@@ -257,8 +257,8 @@ function utils.emit_event_for_endpoint(device, ep_info, event)
 end
 
 function utils.find_child(parent_device, ep_id)
-  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.ASSIGNED_CHILD_KEY, ep_id) or ep_id
-  return parent_device:get_child_by_parent_assigned_key(string.format("%d", primary_ep_key))
+  local assigned_key = utils.get_field_for_endpoint(parent_device, fields.ASSIGNED_CHILD_KEY, ep_id) or ep_id
+  return parent_device:get_child_by_parent_assigned_key(string.format("%d", assigned_key))
 end
 
 function utils.get_endpoint_info(device, endpoint_id)

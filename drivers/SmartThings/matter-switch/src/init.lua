@@ -75,7 +75,6 @@ end
 function SwitchLifecycleHandlers.device_init(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.check_field_name_updates(device)
-
     device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
     device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
