@@ -15,7 +15,6 @@ local device_cfg = cfg.DeviceCfg
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
