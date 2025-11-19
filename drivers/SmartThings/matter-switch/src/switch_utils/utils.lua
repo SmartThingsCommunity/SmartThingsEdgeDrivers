@@ -173,19 +173,19 @@ end
 --- to a single endpoint.
 ---
 --- @param device any a Matter device object
---- @param opts number|table either an ep_id or a table { endpoint_id, optional(cluster_id), optional(attribute_id) }
+--- @param ep_info number|table either an ep_id or a table { endpoint_id, optional(cluster_id), optional(attribute_id) }
 --- where cluster_id is required for an attribute_id to be handled.
 --- @return string component
-function utils.endpoint_to_component(device, opts)
-  if type(opts) == "number" then
-    opts = { endpoint_id = opts }
+function utils.endpoint_to_component(device, ep_info)
+  if type(ep_info) == "number" then
+    ep_info = { endpoint_id = ep_info }
   end
   for component, map_info in pairs(device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do
-    if type(map_info) == "number" and map_info == opts.endpoint_id then
+    if type(map_info) == "number" and map_info == ep_info.endpoint_id then
       return component
-    elseif type(map_info) == "table" and map_info.endpoint_id == opts.endpoint_id
-      and (not map_info.cluster_id or (map_info.cluster_id == opts.cluster_id
-      and (not map_info.attribute_ids or utils.tbl_contains(map_info.attribute_ids, opts.attribute_id)))) then
+    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id
+      and (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
+      and (not map_info.attribute_ids or utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))) then
         return component
     end
   end
