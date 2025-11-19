@@ -18,10 +18,6 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
-if version.api < 16 then
-  clusters.Descriptor = require "embedded_clusters.Descriptor"
-end
-
 local AttributeHandlers = {}
 
 -- [[ ON OFF CLUSTER ATTRIBUTES ]] --
