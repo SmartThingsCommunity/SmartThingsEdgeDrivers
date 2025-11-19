@@ -45,6 +45,14 @@ function utils.set_field_for_endpoint(device, field, endpoint, value, additional
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
 end
 
+function utils.remove_field_value(device, field_name, value)
+  local new_table = device:get_field(field_name)
+  if type(new_table) == "table" then
+    new_table[value] = nil -- remove value from table
+  end
+  device:set_field(field_name, new_table)
+end
+
 function utils.mired_to_kelvin(value, minOrMax)
   if value == 0 then -- shouldn't happen, but has
     value = 1
@@ -249,7 +257,7 @@ function utils.emit_event_for_endpoint(device, ep_info, event)
 end
 
 function utils.find_child(parent_device, ep_id)
-  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.PRIMARY_ASSOCIATED_EP, ep_id) or ep_id
+  local primary_ep_key = utils.get_field_for_endpoint(parent_device, fields.ASSIGNED_CHILD_KEY, ep_id) or ep_id
   return parent_device:get_child_by_parent_assigned_key(string.format("%d", primary_ep_key))
 end
 
@@ -260,7 +268,7 @@ function utils.get_endpoint_info(device, endpoint_id)
   return {}
 end
 
-function utils.ep_supports_cluster(ep_info, cluster_id, opts)
+function utils.find_cluster_for_ep(ep_info, cluster_id, opts)
   opts = opts or {}
   local clus_has_features = function(cluster, checked_feature)
     return (cluster.feature_map & checked_feature) == checked_feature
@@ -271,7 +279,7 @@ function utils.ep_supports_cluster(ep_info, cluster_id, opts)
       and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
       or (opts.cluster_type == cluster.cluster_type))
       or (cluster_id == nil)) then
-        return true
+        return cluster
     end
   end
 end
@@ -298,7 +306,7 @@ end
 function utils.create_multi_press_values_list(size, supportsHeld)
   local list = {"pushed", "double"}
   if supportsHeld then table.insert(list, "held") end
-  -- add multi press values of 3 or greater to the listq
+  -- add multi press values of 3 or greater to the list
   for i=3, size do
     table.insert(list, string.format("pushed_%dx", i))
   end
@@ -317,7 +325,7 @@ function utils.detect_matter_thing(device)
   return true
 end
 
-function utils.report_power_consumption_to_st_energy(device, total_imported_energy_wh, endpoint_id)
+function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_imported_energy_wh)
   local current_time = os.time()
   local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
 
@@ -340,62 +348,57 @@ function utils.report_power_consumption_to_st_energy(device, total_imported_ener
   }))
 end
 
+function utils.set_fields_for_electrical_sensor_endpoint(device, electrical_ep_info, associated_endpoint_ids)
+  local tags = ""
+  if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalPowerMeasurement.ID) then tags = tags.."-power" end
+  if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalEnergyMeasurement.ID) then tags = tags.."-energy-powerConsumption" end
+  if associated_endpoint_ids ~= {} then
+    table.sort(associated_endpoint_ids)
+    local primary_associated_ep_id = type(associated_endpoint_ids[1]) == "table" and associated_endpoint_ids[1].value or associated_endpoint_ids[1]
+    -- map the required electrical tags for this electrical sensor EP with the first associated EP ID, used later during profling.
+    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags)
+    utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_ep_info.endpoint_id, primary_associated_ep_id, { persist = true })
+  else
+    return false
+  end
+end
+
 function utils.handle_electrical_sensor_info(device)
-  local el_dt_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR)
-  local electrical_sensor_eps = {}
-  local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  for _, ep in ipairs(device.endpoints) do
-    if utils.tbl_contains(el_dt_eps, ep.endpoint_id) then
-      local el_ep_info = { endpoint_id = ep.endpoint_id }
-      for _, cluster in ipairs(ep.clusters) do
-        el_ep_info[cluster.cluster_id] = cluster.feature_map -- key the cluster's feature map on each supported cluster id
-      end
-      table.insert(electrical_sensor_eps, el_ep_info)
-      -- these read requests will ONLY be sent if the device supports the TREE_TOPOLOGY or SET_TOPOLOGY features, respectively
-      parts_list_req:merge(clusters.Descriptor.attributes.PartsList:read(device, ep.endpoint_id)) -- TREE read
-      available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id)) -- SET read
-    end
+  local electrical_sensor_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR)
+  if #electrical_sensor_ep_ids == 0 then
+    -- no Electrical Sensor EPs are supported. Set profiling data to false and return
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, {persist=true})
+    return
   end
 
-  local electrical_ep = electrical_sensor_eps[1] or {}
-
-  local electrical_ep_has_feature = function(feature)
-    return clusters.PowerTopology.are_features_supported(feature, electrical_ep[clusters.PowerTopology.ID] or 0)
+  local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- SET read
+  local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- TREE read
+  local electrical_sensor_eps_info = {}
+  for _, ep_id in ipairs(electrical_sensor_ep_ids) do
+    table.insert(electrical_sensor_eps_info, utils.get_endpoint_info(device, ep_id))
+    parts_list_req:merge(clusters.Descriptor.attributes.PartsList:read(device, ep_id))
+    available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep_id))
   end
 
-  if electrical_ep_has_feature(clusters.PowerTopology.types.Feature.SET_TOPOLOGY) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
+  -- check the feature map for the first (or only) Electrical Sensor EP
+  local power_topology_cluster_info = utils.find_cluster_for_ep(electrical_sensor_eps_info[1], clusters.PowerTopology.ID)
+  local power_topology_feature_map = power_topology_cluster_info.feature_map or 0
+  if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, power_topology_feature_map) then
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps_info) -- assume any other stored EPs also have a SET topology
     device:send(available_eps_req)
     return
-  end
-
-  if electrical_ep_has_feature(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a TREE topology
+  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, power_topology_feature_map) then
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps_info) -- assume any other stored EPs also have a TREE topology
     device:send(parts_list_req)
     return
-  end
-
-  if electrical_ep_has_feature(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY) then
-    -- ElectricalSensor EP has a NODE topology, so this is the ONLY Electrical Sensor EP
+  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, power_topology_feature_map) then
+    -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
     device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
-    -- associate this EP's electrical tags with the first OnOff EP. These are not necessarily the same EP.
-    local tags = ""
-    if electrical_ep[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
-    if electrical_ep[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
-    local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-    table.sort(switch_eps)
-    if switch_eps[1] then
-      utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, electrical_ep.endpoint_id, switch_eps[1], { persist = true })
-      utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, switch_eps[1], tags)
-    else
+    if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps_info[1], device:get_endpoints(clusters.OnOff.ID)) == false then
       device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
     end
     return
   end
-
-  -- no Electrical Sensor EPs are supported
-  device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, {persist=true})
 end
 
 function utils.lazy_load(sub_driver_name)

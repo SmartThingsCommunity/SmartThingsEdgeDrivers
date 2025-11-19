@@ -277,10 +277,6 @@ end
 
 function AttributeHandlers.energy_imported_factory(is_periodic_report)
   return function(driver, device, ib, response)
-    local state_device = switch_utils.find_child(device, ib.endpoint_id) or device
-    local energy_meter_latest_state = state_device:get_latest_state(
-      "main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME, 0 -- 0 as the default if state is nil
-    )
     if version.api < 11 then
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
     end
@@ -289,10 +285,14 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
       if is_periodic_report then
         -- handle this report only if cumulative reports are not supported
         if device:get_field(fields.CUMULATIVE_REPORTS_SUPPORTED) then return end
+        local state_device = switch_utils.find_child(device, ib.endpoint_id) or device
+        local energy_meter_latest_state = state_device:get_latest_state(
+          "main", capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME, 0 -- 0 as the default if state is nil
+        )
         energy_imported_wh = energy_imported_wh + energy_meter_latest_state
       end
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
-      switch_utils.report_power_consumption_to_st_energy(device, energy_imported_wh, ib.endpoint_id)
+      switch_utils.report_power_consumption_to_st_energy(device, ib.endpoint_id, energy_imported_wh)
     else
       device.log.warn("Received data from the energy imported attribute does not include a numerical energy value")
     end
@@ -302,27 +302,21 @@ end
 
 -- [[ POWER TOPOLOGY CLUSTER ATTRIBUTES ]] --
 
+--- AvailableEndpoints: This attribute SHALL indicate the list of endpoints capable of
+--- providing power to and/or consuming power from the endpoint hosting this server.
+---
+--- In the case there are multiple endpoints supporting the PowerTopology cluster with
+--- SET feature, all AvailableEndpoints responses must be handled before profiling.
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
-  for i, ep_info in pairs(set_topology_eps or {}) do
-    if ib.endpoint_id == ep_info.endpoint_id then -- find the currently reporting EP from the saved list
-      set_topology_eps[i] = nil -- since it was seen, remove it from the list
-      local tags = ""
-      if ep_info[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
-      if ep_info[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
-      if ib.data.elements ~= {} then
-        table.sort(ib.data.elements)
-        local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
-        switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
-        switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
-        break
-      end
+  for i, set_ep_info in pairs(set_topology_eps or {}) do
+    if ib.endpoint_id == set_ep_info.endpoint_id then
+      switch_utils.remove_field_value(device, fields.ELECTRICAL_SENSOR_EPS, i) -- ep found, remove from table
+      switch_utils.set_fields_for_electrical_sensor_endpoint(device, set_ep_info, ib.data.elements)
+      break
     end
   end
-
-  if #set_topology_eps ~= 0 then -- AKA we have not handled all reporting SET EPs
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, set_topology_eps) -- permanently remove deleted EP data
-  else
+  if #set_topology_eps == 0 then -- in other words, all AvailableEndpoints attribute responses have been handled
     device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
     device_cfg.match_profile(driver, device)
   end
@@ -333,25 +327,14 @@ end
 
 function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
-  for i, ep_info in pairs(tree_topology_eps or {}) do
-    if ep_info.endpoint_id == ib.endpoint_id then
-      tree_topology_eps[i] = nil -- seen, remove from list
-      local tags = ""
-      if ep_info[clusters.ElectricalPowerMeasurement.ID] then tags = tags.."-power" end
-      if ep_info[clusters.ElectricalEnergyMeasurement.ID] then tags = tags.."-energy-powerConsumption" end
-      if ib.data.elements ~= {} then
-        table.sort(ib.data.elements)
-        local primary_available_ep = ib.data.elements[1].value -- for consistency, associate data with first listed EP
-        switch_utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_available_ep, tags)
-        switch_utils.set_field_for_endpoint(device, fields.PRIMARY_ASSOCIATED_EP, ib.endpoint_id, primary_available_ep, { persist = true })
-        break
-      end
+  for i, tree_ep_info in pairs(tree_topology_eps or {}) do
+    if ib.endpoint_id == tree_ep_info.endpoint_id then
+      switch_utils.remove_field_value(device, fields.ELECTRICAL_SENSOR_EPS, i) -- ep found, remove from table
+      switch_utils.set_fields_for_electrical_sensor_endpoint(device, tree_ep_info, ib.data.elements)
+      break
     end
   end
-
-  if #tree_topology_eps ~= 0 then -- AKA we have not handled all reporting TREE EPs
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, tree_topology_eps) -- permanently remove deleted ep
-  else
+  if #tree_topology_eps == 0 then -- in other words, all PartsList attribute responses for TREE Electrical Sensor EPs have been handled
     device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, {persist=true})
     device_cfg.match_profile(driver, device)
   end

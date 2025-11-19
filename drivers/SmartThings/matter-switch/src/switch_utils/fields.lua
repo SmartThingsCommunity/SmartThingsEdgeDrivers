@@ -79,7 +79,13 @@ SwitchFields.device_type_profile_map = {
 -- button devices that require component mapping.
 SwitchFields.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 SwitchFields.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
-SwitchFields.PRIMARY_ASSOCIATED_EP = "__PRIMARY_ASSOCIATED_EP"
+
+--- If the ASSIGNED_CHILD_KEY field is populated for an endpoint, it should be
+--- used as the key in the get_child_by_parent_assigned_key() function. This allows
+--- multiple endpoints to associate with the same child device, though right now child
+--- devices are keyed using only one endpoint id.
+SwitchFields.ASSIGNED_CHILD_KEY = "__ASSIGNED_CHILD_KEY"
+
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
 SwitchFields.COLOR_TEMP_MIN = "__color_temp_min"
@@ -133,8 +139,14 @@ SwitchFields.switch_category_vendor_overrides = {
     {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
 }
 
+--- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
+--- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__ELECTRICAL_SENSOR_EPS"
+
+--- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
+--- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
 SwitchFields.ELECTRICAL_TAGS = "__ELECTRICAL_TAGS"
+
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__POWER_TOPOLOGY",
 }

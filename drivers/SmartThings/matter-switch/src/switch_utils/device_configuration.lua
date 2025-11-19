@@ -31,6 +31,7 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
 
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
   if static_electrical_tags ~= nil then
+    -- profiles like 'light-binary' and 'plug-binary' should drop the '-binary' and become 'light-power', 'plug-energy-powerConsumption', etc.
     generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
   end
 
@@ -74,11 +75,11 @@ end
 function SwitchDeviceConfiguration.set_device_control_options(device)
   for _, ep_info in ipairs(device.endpoints) do
     -- before the Matter 1.3 lua libs update (HUB FW 54), OptionsBitmap was defined as LevelControlOptions
-    if switch_utils.ep_supports_cluster(ep_info, clusters.LevelControl.ID) then
+    if switch_utils.find_cluster_for_ep(ep_info, clusters.LevelControl.ID) then
       device:send(clusters.LevelControl.attributes.Options:write(device, ep_info.endpoint_id, clusters.LevelControl.types.LevelControlOptions.EXECUTE_IF_OFF))
     end
     -- before the Matter 1.4 lua libs update (HUB FW 56), there was no OptionsBitmap type defined
-    if switch_utils.ep_supports_cluster(ep_info, clusters.ColorControl.ID) then
+    if switch_utils.find_cluster_for_ep(ep_info, clusters.ColorControl.ID) then
       local excute_if_off_bit = clusters.ColorControl.types.OptionsBitmap and clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF or 0x0001
       device:send(clusters.ColorControl.attributes.Options:write(device, ep_info.endpoint_id, excute_if_off_bit))
     end
