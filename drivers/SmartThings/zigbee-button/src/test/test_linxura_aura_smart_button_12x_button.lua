@@ -25,13 +25,13 @@ local button_attr = capabilities.button.button
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
-      profile = t_utils.get_profile_definition("four-buttons-without-main-button.yml"),
+      profile = t_utils.get_profile_definition("twelve-buttons-without-main-button.yml"),
       zigbee_endpoints = {
         [1] = {
           id = 1,
           manufacturer = "Linxura",
           model = "Aura Smart Button",
-          server_clusters = {0x0500, 0x0000}
+          server_clusters = {0x0001, 0x0500, 0x0000}
         }
       }
     }
@@ -72,7 +72,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Test cases for Buttons Pushed",
     function()
-      for var = 0, 3 do
+      for var = 0, 11 do
         test.socket.zigbee:__queue_receive({
             mock_device.id,
             ZoneStatusAttribute:build_test_attr_report(mock_device, 1 + var * 6)
@@ -88,7 +88,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Test cases for Buttons Double",
     function()
-        for var = 0, 3 do
+        for var = 0, 11 do
           test.socket.zigbee:__queue_receive({
               mock_device.id,
               ZoneStatusAttribute:build_test_attr_report(mock_device, 3 + var * 6)
@@ -105,7 +105,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
     "Test cases for Buttons Held",
     function()
-        for var = 0, 3 do
+        for var = 0, 11 do
           test.socket.zigbee:__queue_receive({
               mock_device.id,
               ZoneStatusAttribute:build_test_attr_report(mock_device, 5 + var * 6)
