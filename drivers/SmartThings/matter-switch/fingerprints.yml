@@ -25,6 +25,31 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2004
     deviceProfileName: 3-button-battery-temperature-humidity
+  - id: "4447/4105"
+    deviceLabel: Aqara Light Switch H2 EU (4 Buttons 2 Channel)
+    vendorId: 0x115F
+    productId: 0x1009
+    deviceProfileName: 4-button
+  - id: "4447/4104"
+    deviceLabel: Aqara Light Switch H2 EU (2 Buttons 1 Channel)
+    vendorId: 0x115F
+    productId: 0x1008
+    deviceProfileName: 2-button
+  - id: "4447/4099"
+    deviceLabel: Aqara Light Switch H2 US (2 Buttons 1 Channel)
+    vendorId: 0x115F
+    productId: 0x1003
+    deviceProfileName: 2-button
+  - id: "4447/4100"
+    deviceLabel: Aqara Light Switch H2 US (2 Buttons 2 Channel)
+    vendorId: 0x115F
+    productId: 0x1004
+    deviceProfileName: 2-button
+  - id: "4447/4101"
+    deviceLabel: Aqara Light Switch H2 US (4 Buttons 3 Channel)
+    vendorId: 0x115F
+    productId: 0x1005
+    deviceProfileName: 4-button
 #AiDot
   - id: "Linkind/Smart/Light/Bulb/A19/RGBTW"
     deviceLabel: Linkind Smart Light Bulb A19 RGBTW
