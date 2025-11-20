@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -27,9 +16,7 @@ local mock_simple_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_simple_device)end
 
 test.set_test_init_function(test_init)
 
@@ -177,23 +164,23 @@ test.register_coroutine_test(
     end
 )
 
-test.register_coroutine_test(
-    "health check coroutine",
-    function()
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "health check coroutine",
+--     function()
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(10000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_simple_device.id, OnOff.attributes.OnOff:read(mock_simple_device) })
-      test.socket.zigbee:__expect_send({ mock_simple_device.id, Level.attributes.CurrentLevel:read(mock_simple_device) })
-      test.wait_for_events()
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_simple_device)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--       test.mock_time.advance_time(10000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_simple_device.id, OnOff.attributes.OnOff:read(mock_simple_device) })
+--       test.socket.zigbee:__expect_send({ mock_simple_device.id, Level.attributes.CurrentLevel:read(mock_simple_device) })
+--       test.wait_for_events()
+--     end,
+--     {
+--       test_init = function()
+--         test.mock_device.add_test_device(mock_simple_device)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
 test.run_registered_tests()

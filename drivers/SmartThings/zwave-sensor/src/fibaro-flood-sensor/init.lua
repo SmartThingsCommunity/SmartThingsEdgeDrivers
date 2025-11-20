@@ -22,7 +22,6 @@ local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 
 --- @type st.zwave.CommandClass.SensorBinary
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 --- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 
 local preferences = require "preferences"
 local configurations = require "configurations"
@@ -31,7 +30,10 @@ local FIBARO_MFR_ID = 0x010F
 local FIBARO_FLOOD_PROD_TYPES = { 0x0000, 0x0B00 }
 
 local function can_handle_fibaro_flood_sensor(opts, driver, device, ...)
-  return device:id_match(FIBARO_MFR_ID, FIBARO_FLOOD_PROD_TYPES, nil)
+  if device:id_match(FIBARO_MFR_ID, FIBARO_FLOOD_PROD_TYPES, nil) then
+    local subdriver = require("fibaro-flood-sensor")
+    return true, subdriver
+  else return false end
 end
 
 
@@ -70,14 +72,6 @@ local function sensor_binary_report_handler(self, device, cmd)
   device:emit_event(event)
 end
 
-local function sensor_multilevel_report_handler(self, device, cmd)
-  if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
-    local scale = 'C'
-    if (cmd.args.scale == SensorMultilevel.scale.temperature.FAHRENHEIT) then scale = 'F' end
-    device:emit_event(capabilities.temperatureMeasurement.temperature({value = cmd.args.sensor_value, unit = scale}))
-  end
-end
-
 local function do_configure(driver, device)
   configurations.initial_configuration(driver, device)
   -- The flood sensor can be hardwired, so update any preferences
@@ -98,9 +92,6 @@ local fibaro_flood_sensor = {
     [cc.SENSOR_BINARY] = {
       [SensorBinary.REPORT] = sensor_binary_report_handler
     },
-    [cc.SENSOR_MULTILEVEL] = {
-      [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
-    }
   },
   lifecycle_handlers = {
     doConfigure = do_configure

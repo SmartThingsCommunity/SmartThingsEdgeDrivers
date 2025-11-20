@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 
@@ -57,8 +46,6 @@ end
 local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_on_init(mock_device)})
   test.mock_device.add_test_device(mock_device)
-  -- don't check the battery for this device because we are using the catch-all "sensor.yml" profile just for testing
-  mock_device:set_field("__battery_checked", 1, {persist = true})
   test.set_rpc_version(3)
 end
 test.set_test_init_function(test_init)

@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -51,9 +40,7 @@ local mock_device = test.mock_device.build_test_zigbee_device({ profile = zigbee
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   mock_device:set_field("_configuration_version", 1, {persist = true})
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -204,6 +191,14 @@ test.register_message_test(
         channel = "capability",
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+      },
+      {
+        channel = "devices",
+        direction = "send",
+        message = {
+          "register_native_capability_attr_handler",
+          { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
+        }
       }
     }
 )
@@ -342,7 +337,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 1, 3600, 5)
+                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -356,7 +351,7 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
-                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 1, 3600, 5)
+                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
@@ -387,32 +382,32 @@ test.register_coroutine_test(
     end
 )
 
-test.register_coroutine_test(
-    "health check coroutine",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.wait_for_events()
+-- test.register_coroutine_test(
+--     "health check coroutine",
+--     function()
+--       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+--       test.wait_for_events()
 
-      test.mock_time.advance_time(10000)
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ActivePower:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
+--       test.mock_time.advance_time(10000)
+--       test.socket.zigbee:__set_channel_ordering("relaxed")
+--       test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurement.attributes.ActivePower:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
+--       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
 
-    end,
-    {
-      test_init = function()
-        mock_device:set_field("_configuration_version", 1, {persist = true})
-        test.mock_device.add_test_device(mock_device)
-        test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-      end
-    }
-)
+--     end,
+--     {
+--       test_init = function()
+--         mock_device:set_field("_configuration_version", 1, {persist = true})
+--         test.mock_device.add_test_device(mock_device)
+--         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--       end
+--     }
+-- )
 
 test.register_coroutine_test(
     "configuration version below 1",
@@ -554,6 +549,7 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 556)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
+    mock_device:expect_native_attr_handler_registration("colorTemperature", "colorTemperature")
   end
 )
 

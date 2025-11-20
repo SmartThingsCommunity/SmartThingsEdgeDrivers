@@ -44,8 +44,9 @@ local battery_table = {
 }
 
 local function can_handle(opts, driver, device, ...)
+  local endpoint = device.zigbee_endpoints[1] or device.zigbee_endpoints["1"]
   if (device:get_manufacturer() == SMARTSENSE_MFR and device:get_model() == SMARTSENSE_MODEL) or
-    device.zigbee_endpoints[1].profileId == SMARTSENSE_PROFILE_ID then
+    endpoint.profile_id == SMARTSENSE_PROFILE_ID then
     return true
   end
   return false

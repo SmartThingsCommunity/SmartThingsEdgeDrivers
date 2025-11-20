@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -53,6 +42,7 @@ local subscribed_attributes = {
 }
 
 local function test_init()
+  test.mock_device.add_test_device(mock_device)
   local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
   for i, cluster in ipairs(subscribed_attributes) do
     if i > 1 then
@@ -60,8 +50,6 @@ local function test_init()
     end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 end
 test.set_test_init_function(test_init)
 

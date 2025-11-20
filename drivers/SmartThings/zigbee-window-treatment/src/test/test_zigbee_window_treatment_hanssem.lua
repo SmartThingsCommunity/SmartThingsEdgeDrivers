@@ -44,7 +44,12 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
 end
 
 test.set_test_init_function(test_init)
@@ -83,6 +88,7 @@ end
 test.register_coroutine_test(
   "Device Added ",
   function()
+    SeqNum = 0
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
@@ -101,6 +107,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Open handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x00")
@@ -142,6 +149,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Close handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x64")
@@ -184,6 +192,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Pause handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x64")
@@ -238,6 +247,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Set Level handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x64")
@@ -280,7 +290,14 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Preset position handler",
   function()
-    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({preferences = {presetPosition = 30}}))
+    SeqNum = 0
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadePreset", component = "main", command = "setPresetPosition", args = {30}}
+      }
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadePreset.position(30)))
     test.wait_for_events()
 
     test.socket.zigbee:__queue_receive({
@@ -325,6 +342,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Information changed : Reverse",
   function()
+    SeqNum = 0
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.zigbee:__queue_receive({
       mock_device.id,

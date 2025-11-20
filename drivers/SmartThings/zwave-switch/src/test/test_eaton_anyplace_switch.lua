@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -45,6 +34,7 @@ test.set_test_init_function(test_init)
 test.register_message_test(
   "Basic SET 0x00 should be handled as switch off",
   {
+    -- The initial switch event should be send during the device's first time onboarding
     {
       channel = "device_lifecycle",
       direction = "receive",
@@ -64,6 +54,22 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    },
+    -- Avoid sending the initial switch event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = {mock_device.id, "added"}
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({value=0x00})) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
   }
 )
@@ -71,6 +77,7 @@ test.register_message_test(
 test.register_message_test(
   "Basic SET 0xFF should be handled as switch on",
   {
+    -- The initial switch event should be send during the device's first time onboarding
     {
       channel = "device_lifecycle",
       direction = "receive",
@@ -80,6 +87,22 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({value=0xFF})) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    },
+    -- Avoid sending the initial switch event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = {mock_device.id, "added"}
     },
     {
       channel = "zwave",

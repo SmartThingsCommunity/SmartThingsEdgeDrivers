@@ -1,33 +1,17 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local device_lib = require "st.device"
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local configurations = require "configurations"
+local switch_utils = require "switch_utils"
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
-
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.switch.n1acn1",   children = 1, child_profile = "" },
-  { mfr = "LUMI", model = "lumi.switch.n2acn1",   children = 2, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.n3acn1",   children = 3, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.b1laus01", children = 1, child_profile = "" },
-  { mfr = "LUMI", model = "lumi.switch.b2laus01", children = 2, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.l2aeu1",   children = 2, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.n2aeu1",   children = 2, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.b2nacn01", children = 2, child_profile = "aqara-switch-child" },
-  { mfr = "LUMI", model = "lumi.switch.b3n01",    children = 3, child_profile = "aqara-switch-child" }
-}
-
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
+local FINGERPRINTS = require("aqara.multi-switch.fingerprints")
 
 local function get_children_amount(device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
@@ -89,7 +73,7 @@ local function device_added(driver, device)
   end
   device:emit_event(capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.button.pushed({ state_change = false }))
+  switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local function device_init(self, device)
@@ -105,7 +89,7 @@ local aqara_multi_switch_handler = {
     init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.multi-switch.can_handle"),
 }
 
 return aqara_multi_switch_handler

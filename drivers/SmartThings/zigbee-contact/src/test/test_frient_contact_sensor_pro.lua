@@ -199,6 +199,14 @@ test.register_message_test(
                 channel = "capability",
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
+            },
+            {
+            channel = "devices",
+            direction = "send",
+            message = {
+                "register_native_capability_attr_handler",
+                { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+            }
             }
         }
 )
@@ -235,42 +243,42 @@ test.register_message_test(
         }
 )
 
-test.register_coroutine_test(
-        "Health check should check all relevant attributes",
-        function()
-            test.wait_for_events()
+-- test.register_coroutine_test(
+--         "Health check should check all relevant attributes",
+--         function()
+--             test.wait_for_events()
 
-            test.mock_time.advance_time(50000) -- battery is 21600 for max reporting interval
-            test.socket.zigbee:__set_channel_ordering("relaxed")
+--             test.mock_time.advance_time(50000) -- battery is 21600 for max reporting interval
+--             test.socket.zigbee:__set_channel_ordering("relaxed")
 
-            test.socket.zigbee:__expect_send(
-                    {
-                        mock_device.id,
-                        PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-                    }
-            )
+--             test.socket.zigbee:__expect_send(
+--                     {
+--                         mock_device.id,
+--                         PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+--                     }
+--             )
 
-            test.socket.zigbee:__expect_send(
-                    {
-                        mock_device.id,
-                        TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
-                    }
-            )
+--             test.socket.zigbee:__expect_send(
+--                     {
+--                         mock_device.id,
+--                         TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
+--                     }
+--             )
 
-            test.socket.zigbee:__expect_send(
-                    {
-                        mock_device.id,
-                        IASZone.attributes.ZoneStatus:read(mock_device)
-                    }
-            )
-        end,
-        {
-            test_init = function()
-                test.mock_device.add_test_device(mock_device)
-                test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
-            end
-        }
-)
+--             test.socket.zigbee:__expect_send(
+--                     {
+--                         mock_device.id,
+--                         IASZone.attributes.ZoneStatus:read(mock_device)
+--                     }
+--             )
+--         end,
+--         {
+--             test_init = function()
+--                 test.mock_device.add_test_device(mock_device)
+--                 test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
+--             end
+--         }
+-- )
 
 test.register_message_test(
         "Refresh should read all necessary attributes",

@@ -25,6 +25,10 @@ local SUPPORTED_ALARM_VALUES = { "damaged", "forcedOpeningAttempt", "unableToLoc
 local SERIAL_NUM_TX = "serial_num_tx"
 local SERIAL_NUM_RX = "serial_num_rx"
 local SEQ_NUM = "seq_num"
+local THRESHOLD_BATTERY = {
+  ["aqara.lock.akr011"] = { low = 47, dryout = 28 },  -- K100
+  ["aqara.lock.akr001"] = { low = 47, dryout = 31 }   -- L100
+}
 
 local function my_secret_data_handler(driver, device, secret_info)
   if secret_info.secret_kind ~= "aqara" then return end
@@ -75,16 +79,19 @@ local function device_init(self, device)
   device:emit_event(capabilities.lock.supportedUnlockDirections({ "fromInside", "fromOutside" },
     { visibility = { displayed = false } }))
   device:emit_event(capabilities.battery.type("AA"))
+  device:emit_event(capabilities.batteryLevel.type("AA"))
   local battery_quantity = 8
   if device:get_model() == "aqara.lock.akr001" then
     battery_quantity = 6
   end
   device:emit_event(capabilities.battery.quantity(battery_quantity))
+  device:emit_event(capabilities.batteryLevel.quantity(battery_quantity))
 end
 
 local function device_added(self, device)
   remoteControlShow(device)
   device:emit_event(Battery.battery(100))
+  device:emit_event(capabilities.batteryLevel.battery("normal"))
   device:emit_event(LockAlarm.alarm.clear({ visibility = { displayed = false } }))
   device:emit_event(antiLockStatus.antiLockStatus("unknown", { visibility = { displayed = false } }))
   device:emit_event(Lock.lock.locked())
@@ -158,8 +165,18 @@ local function event_door_handler(driver, device, evt_name, evt_value)
   end
 end
 
+local function calc_battery_level(model, level)
+  local batteryLevel = "normal"
+  if level < THRESHOLD_BATTERY[model].dryout then
+    batteryLevel = "critical"
+  elseif level < THRESHOLD_BATTERY[model].low then
+    batteryLevel = "warning"
+  end
+  return batteryLevel
+end
 local function event_battery_handler(driver, device, evt_name, evt_value)
   device:emit_event(Battery.battery(evt_value))
+  device:emit_event(capabilities.batteryLevel.battery(calc_battery_level(device:get_model(), evt_value)))
 end
 
 local function event_abnormal_status_handler(driver, device, evt_name, evt_value)
@@ -325,7 +342,8 @@ local aqara_locks_handler = {
   },
   secret_data_handlers = {
     [security.SECRET_KIND_AQARA] = my_secret_data_handler
-  }
+  },
+  health_check = false,
 }
 
 local aqara_locks_driver = ZigbeeDriver("aqara_locks_k100", aqara_locks_handler)

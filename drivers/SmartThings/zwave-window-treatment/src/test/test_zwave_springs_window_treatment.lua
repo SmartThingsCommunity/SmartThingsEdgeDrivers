@@ -18,6 +18,7 @@ local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
 local t_utils = require "integration_test.utils"
+local capabilities = require "st.capabilities"
 
 -- supported comand classes: SWITCH_MULTILEVEL
 local window_shade_switch_multilevel_endpoints = {
@@ -38,6 +39,9 @@ local mock_springs_window_fashion_shade = test.mock_device.build_test_zwave_devi
 
 local function test_init()
   test.mock_device.add_test_device(mock_springs_window_fashion_shade)
+  test.socket.capability:__expect_send(
+    mock_springs_window_fashion_shade:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition"}, {visibility = {displayed=false}}))
+  )
 end
 test.set_test_init_function(test_init)
 
@@ -48,7 +52,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive(
           {
             mock_springs_window_fashion_shade.id,
-            { capability = "windowShadePreset", command = "presetPosition", args = {} }
+            { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
           }
       )
       test.socket.zwave:__expect_send(

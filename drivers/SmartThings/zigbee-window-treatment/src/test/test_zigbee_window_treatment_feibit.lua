@@ -38,7 +38,12 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
 end
 
 test.set_test_init_function(test_init)
@@ -223,9 +228,10 @@ test.register_coroutine_test(
         { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
       }
     )
+    -- newly joined devices will ignore the preference
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(30/100 * 254))
+      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(50/100 * 254))
     })
   end
 )
@@ -259,9 +265,10 @@ test.register_coroutine_test(
         { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
       }
     )
+    -- newly joined devices will ignore the preference
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(100/100 * 254))
+      Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(50/100 * 254))
     })
   end
 )
@@ -269,7 +276,16 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "windowShadePreset capability should be handled with preset value = 1 ",
   function()
-    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({preferences = {presetPosition = 1}}))
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({preferences = {presetPosition = 10}}))
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadePreset", component = "main", command = "setPresetPosition", args = {1} }
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadePreset.position(1))
+    )
     test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
@@ -287,7 +303,16 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "windowShadePreset capability should be handled with a positive preset value of < 1",
   function()
-    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({preferences = {presetPosition = 0}}))
+    test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed({preferences = {presetPosition = 1}}))
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadePreset", component = "main", command = "setPresetPosition", args = {0} }
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadePreset.position(0))
+    )
     test.wait_for_events()
     test.socket.capability:__queue_receive(
       {

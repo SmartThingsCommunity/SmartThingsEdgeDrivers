@@ -42,9 +42,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
@@ -131,6 +129,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    -- The initial button pushed event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(
@@ -152,7 +151,25 @@ test.register_coroutine_test(
         attribute_id = "button", state = { value = "pushed" }
       }
     })
-
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+    })
+    -- Avoid sending the initial button pushed event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "held" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
+      )
+    )
     test.socket.zigbee:__expect_send({
       mock_device.id,
       PowerConfiguration.attributes.BatteryVoltage:read(mock_device)

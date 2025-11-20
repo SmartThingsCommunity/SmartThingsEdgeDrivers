@@ -37,7 +37,8 @@ local ILLUMINANCE_ENDPOINT = 0x27
 
 local FRIENT_DEVICE_FINGERPRINTS = {
   { mfr = "frient A/S", model = "MOSZB-140"},
-  { mfr = "frient A/S", model = "MOSZB-141"}
+  { mfr = "frient A/S", model = "MOSZB-141"},
+  { mfr = "frient A/S", model = "MOSZB-153"}
 }
 
 local function can_handle_frient_motion_sensor(opts, driver, device)
@@ -108,24 +109,17 @@ local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(BATTERY_MIN_VOLTAGE, BATTERY_MAX_VOLTAGE)(driver, device)
 
   local attribute
-  attribute = CONFIGURATIONS[OCCUPANCY_ENDPOINT]
-  -- binding is directly triggered for specific endpoint in do_configure
-  device:add_monitored_attribute(attribute)
-
   if device:supports_capability_by_id(capabilities.temperatureMeasurement.ID) then
     attribute = CONFIGURATIONS[TEMPERATURE_ENDPOINT]
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
   if device:supports_capability_by_id(capabilities.illuminanceMeasurement.ID) then
     attribute = CONFIGURATIONS[ILLUMINANCE_ENDPOINT]
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
   if device:supports_capability_by_id(capabilities.tamperAlert.ID) then
     attribute = CONFIGURATIONS[TAMPER_ENDPOINT]
     device:add_configured_attribute(attribute)
-    device:add_monitored_attribute(attribute)
   end
 end
 

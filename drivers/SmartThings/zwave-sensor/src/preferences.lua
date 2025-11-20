@@ -148,7 +148,20 @@ local devices = {
       ledLowBrightness = {parameter_number = 82, size = 2},
       ledHighBrightness = {parameter_number = 83, size = 2}
     }
-  }
+  },
+  SHELLY_WAVE_MOTION_SENSOR = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0460,
+      product_types = 0x0100,
+      product_ids = {0x0082}
+    },
+    PARAMETERS = {
+      ledOpnClsChangeStat = {parameter_number = 157, size = 1},
+      sensitivity = {parameter_number = 158, size = 1},
+      blindTime = {parameter_number = 159, size = 2},
+      motionNotdetRepT = {parameter_number = 160, size = 2},
+    },
+  },
 }
 local preferences = {}
 

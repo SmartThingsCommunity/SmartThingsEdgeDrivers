@@ -21,6 +21,7 @@ local SinglePrecisionFloat = require "st.zigbee.data_types".SinglePrecisionFloat
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
 local shadeRotateState = capabilities["stse.shadeRotateState"]
@@ -39,9 +40,15 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local PREF_ATTRIBUTE_ID = 0x0401
+local SHADE_STATE_ATTRIBUTE_ID = 0x0404
 
 local PREF_REVERSE_OFF = "\x00\x02\x00\x00\x00\x00\x00"
 local PREF_REVERSE_ON = "\x00\x02\x00\x01\x00\x00\x00"
+
+local MULTISTATE_CLUSTER_ID = 0x0013
+local MULTISTATE_ATTRIBUTE_ID = 0x0055
+local ROTATE_UP_VALUE = 0x0004
+local ROTATE_DOWN_VALUE = 0x0005
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -60,15 +67,14 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(mock_device)end
 
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
   "Handle added lifecycle",
   function()
+    -- The initial window shade event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -79,6 +85,28 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({visibility = { displayed = false }}))
+    )
+
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
+        ,
+        data_types.Uint8,
+        1) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
+        data_types.CharString,
+        PREF_REVERSE_OFF) })
+    -- Avoid sending the initial window shade event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.notInitialized())
@@ -191,24 +219,52 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Window shade open cmd handler",
   function()
+    local attr_report_data = {
+      { PREF_ATTRIBUTE_ID, data_types.CharString.ID, "\x00\x00\x01\x00\x00\x00\x00" }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      initializedStateWithGuide.initializedStateWithGuide.initialized()))
+    test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
         { capability = "windowShade", component = "main", command = "open", args = {} }
       }
     )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+    })
   end
 )
 
 test.register_coroutine_test(
   "Window shade close cmd handler",
   function()
+    local attr_report_data = {
+      { PREF_ATTRIBUTE_ID, data_types.CharString.ID, "\x00\x00\x01\x00\x00\x00\x00" }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      initializedStateWithGuide.initializedStateWithGuide.initialized()))
+    test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
         { capability = "windowShade", component = "main", command = "close", args = {} }
       }
     )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+    })
   end
 )
 
@@ -274,6 +330,8 @@ test.register_coroutine_test(
     }
     updates.preferences["stse.reverseRollerShadeDir"] = true
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
+    test.mock_time.advance_time(1)
+
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
@@ -314,5 +372,106 @@ test.register_coroutine_test(
     })
   end
 )
+
+test.register_coroutine_test(
+  "SetShadeLevel command handler",
+  function()
+    local attr_report_data = {
+      { PREF_ATTRIBUTE_ID, data_types.CharString.ID, "\x00\x00\x01\x00\x00\x00\x00" }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      initializedStateWithGuide.initializedStateWithGuide.initialized()))
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 50 }}
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
+    })
+  end
+)
+
+
+test.register_coroutine_test(
+  "PREF_ATTRIBUTE_ID attribute handler - notInitialized",
+  function()
+    local attr_report_data = {
+      { PREF_ATTRIBUTE_ID, data_types.CharString.ID, "\x00\x00\x00\x00\x00\x00\x00" }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      initializedStateWithGuide.initializedStateWithGuide.notInitialized()))
+  end
+)
+
+test.register_coroutine_test(
+  "SHADE_STATE_ATTRIBUTE_ID attribute handler",
+  function()
+    local attr_report_data = {
+      { SHADE_STATE_ATTRIBUTE_ID, data_types.Uint8.ID, 0 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      AnalogOutput.attributes.PresentValue:read(mock_device)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Handle sensitivity adjustment capability",
+  function()
+    local attr_report_data = {
+      { PREF_ATTRIBUTE_ID, data_types.CharString.ID, "\x00\x00\x01\x00\x00\x00\x00" }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, Basic.ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      initializedStateWithGuide.initializedStateWithGuide.initialized()))
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({ mock_device.id,
+    { capability = "stse.shadeRotateState", component = "main", command = "setRotateState", args = {"rotateUp"} }})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      shadeRotateState.rotateState.idle({state_change = true, visibility = { displayed = false }}) ))
+
+      local message = cluster_base.write_manufacturer_specific_attribute(mock_device, MULTISTATE_CLUSTER_ID,
+        MULTISTATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint16, ROTATE_UP_VALUE)
+      message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
+
+    test.socket.zigbee:__expect_send({ mock_device.id, message })
+
+    test.socket.capability:__queue_receive({ mock_device.id,
+    { capability = "stse.shadeRotateState", component = "main", command = "setRotateState", args = {"rotateDown"} }})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      shadeRotateState.rotateState.idle({state_change = true, visibility = { displayed = false }}) ))
+
+      local message = cluster_base.write_manufacturer_specific_attribute(mock_device, MULTISTATE_CLUSTER_ID,
+        MULTISTATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint16, ROTATE_DOWN_VALUE)
+      message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
+
+    test.socket.zigbee:__expect_send({ mock_device.id, message })
+  end
+)
+
 
 test.run_registered_tests()

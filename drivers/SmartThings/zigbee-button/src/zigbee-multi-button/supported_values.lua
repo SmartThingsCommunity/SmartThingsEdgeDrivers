@@ -32,6 +32,7 @@ local devices = {
   BUTTON_PUSH_HELD_8 = {
     MATCHING_MATRIX = {
       { mfr = "ROBB smarrt", model = "ROB_200-007-0" },
+      { mfr = "zunzunbee", model = "SSWZ8T" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held" },
     NUMBER_OF_BUTTONS = 8
@@ -90,21 +91,24 @@ local devices = {
   BUTTON_PUSH_HELD_DOUBLE_1 = {
     MATCHING_MATRIX = {
       { mfr = "ShinaSystem", model = "BSM-300Z" },
-      { mfr = "ShinaSystem", model = "SBM300ZB1" }
+      { mfr = "ShinaSystem", model = "SBM300ZB1" },
+      { mfr = "ShinaSystem", model = "SBM300ZC1" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 1
   },
   BUTTON_PUSH_HELD_DOUBLE_2 = {
     MATCHING_MATRIX = {
-      { mfr = "ShinaSystem", model = "SBM300ZB2" }
+      { mfr = "ShinaSystem", model = "SBM300ZB2" },
+      { mfr = "ShinaSystem", model = "SBM300ZC2" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 2
   },
   BUTTON_PUSH_HELD_DOUBLE_3 = {
     MATCHING_MATRIX = {
-      { mfr = "ShinaSystem", model = "SBM300ZB3" }
+      { mfr = "ShinaSystem", model = "SBM300ZB3" },
+      { mfr = "ShinaSystem", model = "SBM300ZC3" }
     },
     SUPPORTED_BUTTON_VALUES = { "pushed", "held", "double" },
     NUMBER_OF_BUTTONS = 3
@@ -112,6 +116,8 @@ local devices = {
   BUTTON_PUSH_HELD_DOUBLE_4 = {
     MATCHING_MATRIX = {
       { mfr = "ShinaSystem", model = "MSM-300Z" },
+      { mfr = "ShinaSystem", model = "SBM300ZC4" },
+      { mfr = "ShinaSystem", model = "SQM300ZC4" },
       { mfr = "Linxura", model = "Smart Controller" },
       { mfr = "Linxura", model = "Aura Smart Button" }
     },

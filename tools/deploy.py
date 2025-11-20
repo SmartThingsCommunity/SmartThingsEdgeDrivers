@@ -5,26 +5,28 @@ ENVIRONMENT = os.environ.get('ENVIRONMENT')
 CHANGED_DRIVERS = os.environ.get('CHANGED_DRIVERS')
 # configurable from Jenkins to override and manually set the drivers to be uploaded
 DRIVERS_OVERRIDE = os.environ.get('DRIVERS_OVERRIDE') or "[]"
+DRY_RUN = os.environ.get("DRY_RUN") == True or os.environ.get("DRY_RUN") == "True"
 print(BRANCH)
 print(ENVIRONMENT)
 print(CHANGED_DRIVERS)
-branch_environment = "{}_{}_".format(BRANCH, ENVIRONMENT)
-ENVIRONMENT_URL = os.environ.get(ENVIRONMENT+'_ENVIRONMENT_URL')
+ENVIRONMENT_URL = os.environ.get('ENVIRONMENT_URL')
 if not ENVIRONMENT_URL:
   print("No environment url specified, aborting.")
   exit(0)
 
 UPLOAD_URL = ENVIRONMENT_URL+"/drivers/package"
-CHANNEL_ID = os.environ.get(branch_environment+'CHANNEL_ID')
+CHANNEL_ID = os.environ.get(BRANCH+'_CHANNEL_ID')
 if not CHANNEL_ID:
-  print("No channel id specified, aborting.")
+  print("No channel id specified for "+BRANCH+", aborting.")
   exit(0)
 
 UPDATE_URL = ENVIRONMENT_URL+"/channels/"+CHANNEL_ID+"/drivers/bulk"
-TOKEN = os.environ.get(ENVIRONMENT+'_TOKEN')
+TOKEN = os.environ.get('TOKEN')
 DRIVERID = "driverId"
 VERSION = "version"
 PACKAGEKEY = "packageKey"
+
+FAILURE_FILE = "failures.log"
 
 BOSE_APPKEY = os.environ.get("BOSE_AUDIONOTIFICATION_APPKEY")
 
@@ -79,6 +81,9 @@ if response.status_code != 200:
   print("Failed to retrieve channel's current drivers")
   print("Error code: "+str(response.status_code))
   print("Error response: "+response.text)
+  # if we cant get the existing drivers in the channel the bulk upload will
+  # unassign drivers from the channel. Exit to fail the deploy with a fail status
+  exit(1)
 else:
   response_json = json.loads(response.text)["items"]
   for driver in response_json:
@@ -88,13 +93,20 @@ else:
       headers = {
         "Accept": "application/vnd.smartthings+json;v=20200810",
         "Authorization": "Bearer "+TOKEN,
-        "X-ST-LOG-LEVEL": "DEBUG"
+        "X-ST-LOG-LEVEL": "DEBUG",
+        "X-ST-CORRELATION": "driver-deployment-"+BRANCH+"-"+ENVIRONMENT+"-"+str(time.time())
       },
       json = {
         DRIVERID: driver[DRIVERID],
         "driverVersion": driver[VERSION]
       }
     )
+    if driver_info_response.status_code != 200:
+      print("Failed to retrieve detailed driver info for {driver}")
+      print("Error code: " + str(driver_info_response.status_code))
+      print("Error response: "+ driver_info_response.text)
+      exit(1)
+
     driver_info_response_json = json.loads(driver_info_response.text)["items"][0]
     if PACKAGEKEY in driver_info_response_json:
       packageKey = driver_info_response_json[PACKAGEKEY]
@@ -138,7 +150,7 @@ for partner in partners:
           print(error.stderr)
         retries += 1
       if retries >= 5:
-        print("5 zip failires, skipping "+package_key+" and continuing.")
+        print("5 zip failures, skipping "+package_key+" and continuing.")
         continue
       with open(driver+".zip", 'rb') as driver_package:
         data = driver_package.read()
@@ -160,6 +172,11 @@ for partner in partners:
             if response.status_code == 500 or response.status_code == 429:
               retries = retries + 1
               if retries > 3:
+                with open("../../"+FAILURE_FILE, 'a') as f: # go up to the root directory to output, since we've changed dirs to the partner directory
+                  f.write("Failed to upload driver to "+ENVIRONMENT+": "+driver)
+                  f.write("Error code: "+str(response.status_code))
+                  f.write("Error response: "+response.text)
+                  f.write('\n')
                 break # give up
               if response.status_code == 429:
                 time.sleep(10)
@@ -178,23 +195,27 @@ for package_key, driver_info in uploaded_drivers.items():
   print("Uploading package: {} driver id: {} version: {}".format(package_key, driver_info[DRIVERID], driver_info[VERSION]))
   driver_updates.append({DRIVERID: driver_info[DRIVERID], VERSION: driver_info[VERSION]})
 
-response = requests.put(
-  UPDATE_URL,
-  headers={
-    "Accept": "application/vnd.smartthings+json;v=20200810",
-    "Authorization": "Bearer "+TOKEN,
-    "Content-Type": "application/json",
-    "X-ST-LOG-LEVEL": "DEBUG"
-  },
-  data=json.dumps(driver_updates)
-)
-if response.status_code != 204:
-  print("Failed to bulk update drivers")
-  print("Error code: "+str(response.status_code))
-  print("Error response: "+response.text)
-  exit(1)
+if DRY_RUN:
+  print("Dry Run, skipping bulk upload to " + UPDATE_URL)
+else:
+  response = requests.put(
+    UPDATE_URL,
+    headers={
+      "Accept": "application/vnd.smartthings+json;v=20200810",
+      "Authorization": "Bearer "+TOKEN,
+      "Content-Type": "application/json",
+      "X-ST-LOG-LEVEL": "DEBUG",
+      "X-ST-CORRELATION": "driver-deployment-"+BRANCH+"-"+ENVIRONMENT+"-"+str(time.time())
+    },
+    data=json.dumps(driver_updates)
+  )
+  if response.status_code != 204:
+    print("Failed to bulk update drivers")
+    print("Error code: "+str(response.status_code))
+    print("Error response: "+response.text)
+    exit(1)
 
 print("Update drivers: ")
 print(drivers_updated)
-print("\nDrivers currently deplpyed: ")
+print("\nDrivers currently deployed: ")
 print(uploaded_drivers.keys())

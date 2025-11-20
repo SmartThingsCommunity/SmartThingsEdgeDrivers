@@ -149,6 +149,11 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: WISZB-121
     deviceProfileName: contact-battery-profile
+  - id: "frient A/S/WISZB-131"
+    deviceLabel: frient Entry Sensor 2 Pro
+    manufacturer: frient A/S
+    model: WISZB-131
+    deviceProfileName: frient-contact-battery-temperature
   - id: "Compacta/ZBWDS"
     deviceLabel: Smartenit Open/Closed Sensor
     manufacturer: Compacta
@@ -194,6 +199,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RVS01031Z
     deviceProfileName: thirdreality-multi-sensor
+  - id: "Aug. Winkhaus SE/FM.V.ZB"
+    deviceLabel: Funkkontakt FM.V.ZB
+    manufacturer: Aug. Winkhaus SE
+    model: FM.V.ZB
+    deviceProfileName: contact-battery-profile
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"

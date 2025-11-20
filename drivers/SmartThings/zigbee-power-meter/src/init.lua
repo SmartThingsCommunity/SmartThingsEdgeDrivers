@@ -18,6 +18,9 @@ local defaults = require "st.zigbee.defaults"
 local zigbee_constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local SimpleMetering = clusters.SimpleMetering
+local ElectricalMeasurement = clusters.ElectricalMeasurement
+local zcl_global_commands = require "st.zigbee.zcl.global_commands"
+local configurations = require "configurations"
 
 local do_configure = function(self, device)
   device:refresh()
@@ -49,15 +52,27 @@ local zigbee_power_meter_driver_template = {
     capabilities.energyMeter,
     capabilities.powerConsumptionReport,
   },
+  zigbee_handlers = {
+    global = {
+      [SimpleMetering.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurations.handle_reporting_config_response
+      },
+     [ElectricalMeasurement.ID] = {
+        [zcl_global_commands.CONFIGURE_REPORTING_RESPONSE_ID] = configurations.handle_reporting_config_response
+      }
+    }
+  },
+  current_config_version = 1,
   sub_drivers = {
     require("ezex"),
     require("frient"),
     require("shinasystems"),
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
-  }
+  },
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_power_meter_driver_template, zigbee_power_meter_driver_template.supported_capabilities)

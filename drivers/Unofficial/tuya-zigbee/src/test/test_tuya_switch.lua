@@ -95,9 +95,7 @@ local function test_init()
   test.mock_device.add_test_device(second_mock_child_device)
   test.mock_device.add_test_device(third_mock_child_device)
   test.mock_device.add_test_device(fourth_mock_child_device)
-  test.mock_device.add_test_device(fifth_mock_child_device)
-  zigbee_test_utils.init_noop_health_check_timer()
-end
+  test.mock_device.add_test_device(fifth_mock_child_device)end
 
 test.set_test_init_function(test_init)
 
@@ -254,7 +252,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x02', tuya_utils.DP_TYPE_BOOL, '\x01', 1) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x02', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
   }
 )
@@ -270,7 +268,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x03', tuya_utils.DP_TYPE_BOOL, '\x01', 2) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x03', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
   }
 )
@@ -286,7 +284,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x04', tuya_utils.DP_TYPE_BOOL, '\x01', 3) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x04', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
   }
 )
@@ -302,7 +300,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x05', tuya_utils.DP_TYPE_BOOL, '\x01', 4) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x05', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
   }
 )
@@ -318,7 +316,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x06', tuya_utils.DP_TYPE_BOOL, '\x01', 5) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x06', tuya_utils.DP_TYPE_BOOL, '\x01', 0) }
     }
   }
 )
@@ -334,7 +332,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x01', tuya_utils.DP_TYPE_BOOL, '\x00', 6) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x01', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
   }
 )
@@ -350,7 +348,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x02', tuya_utils.DP_TYPE_BOOL, '\x00', 7) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x02', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
   }
 )
@@ -366,7 +364,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x03', tuya_utils.DP_TYPE_BOOL, '\x00', 8) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x03', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
   }
 )
@@ -382,7 +380,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x04', tuya_utils.DP_TYPE_BOOL, '\x00', 9) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x04', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
   }
 )
@@ -398,7 +396,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x05', tuya_utils.DP_TYPE_BOOL, '\x00', 10) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x05', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
   }
 )
@@ -414,7 +412,7 @@ test.register_message_test(
     {
       channel = "zigbee",
       direction = "send",
-      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x06', tuya_utils.DP_TYPE_BOOL, '\x00', 11) }
+      message = { mock_parent_device.id, tuya_utils.build_send_tuya_command(mock_parent_device, '\x06', tuya_utils.DP_TYPE_BOOL, '\x00', 0) }
     }
   }
 )

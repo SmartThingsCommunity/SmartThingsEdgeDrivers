@@ -40,7 +40,12 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   test.mock_device.add_test_device(mock_simple_device)
-  zigbee_test_utils.init_noop_health_check_timer()
+  test.socket.capability:__expect_send(
+    mock_simple_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+  )
+  test.socket.capability:__expect_send(
+    mock_simple_device:generate_test_message("main", capabilities.windowShadePreset.position(50, {visibility = {displayed=false}}))
+  )
 end
 
 test.set_test_init_function(test_init)
@@ -90,6 +95,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    -- The initial window shade event should be send during the device's first time onboarding
     test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added" })
     test.socket.capability:__expect_send(
       mock_simple_device:generate_test_message(
@@ -109,6 +115,22 @@ test.register_coroutine_test(
         capabilities.windowShade.windowShade.closed()
       )
     )
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+    )
+    test.wait_for_events()
+    -- Avoid sending the initial window shade event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
+    test.socket.device_lifecycle:__queue_receive({ mock_simple_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message(
+        "main",
+        capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}})
+      )
+    )
+
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed=false}}))
+    )
   end
 )
 
@@ -123,7 +145,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x00', 2) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x00', 0) }
       },
       {
         channel = "capability",
@@ -144,7 +166,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x02', 3) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x02', 0) }
       },
       {
         channel = "capability",
@@ -165,7 +187,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x01', 4) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x01', 0) }
       }
     }
 )
@@ -181,7 +203,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x3c', 5) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x3c', 0) }
       }
     }
 )
@@ -197,7 +219,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x32', 6) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x32', 0) }
       }
     }
 )

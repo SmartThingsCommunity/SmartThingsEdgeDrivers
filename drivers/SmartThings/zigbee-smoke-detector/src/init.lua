@@ -22,7 +22,8 @@ local zigbee_smoke_driver_template = {
     capabilities.smokeDetector,
     capabilities.battery,
     capabilities.alarm,
-    capabilities.temperatureMeasurement
+    capabilities.temperatureMeasurement,
+    capabilities.temperatureAlarm
   },
   sub_drivers = {
     require("frient"),
@@ -30,6 +31,7 @@ local zigbee_smoke_driver_template = {
     require("aqara")
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
+  health_check = false,
 }
 
 defaults.register_for_default_handlers(zigbee_smoke_driver_template,

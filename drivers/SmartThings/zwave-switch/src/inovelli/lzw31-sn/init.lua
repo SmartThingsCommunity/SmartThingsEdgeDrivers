@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.SwitchMultilevel
@@ -21,10 +10,6 @@ local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 --- @type st.device
 local st_device = require "st.device"
-
-local INOVELLI_LZW31_SN_FINGERPRINTS = {
-  { mfr = 0x031E, prod = 0x0001, model = 0x0001 }, -- Inovelli LZW31-SN
-}
 
 local supported_button_values = {
     ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
@@ -73,26 +58,17 @@ local function device_added(driver, device)
     end
   end
 
-local function can_handle_lzw31_sn(opts, driver, device, ...)
-  for _, fingerprint in ipairs(INOVELLI_LZW31_SN_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
-
 local lzw31_sn = {
   NAME = "Inovelli LZW31-SN Z-Wave Dimmer",
   lifecycle_handlers = {
     added = device_added,
   },
-  can_handle = can_handle_lzw31_sn,
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = refresh_handler
     }
-  }
+  },
+  can_handle = require("inovelli.lzw31-sn.can_handle")
 }
 
 return lzw31_sn
