@@ -178,60 +178,40 @@ function utils.component_to_endpoint(device, component)
   return utils.find_default_endpoint(device)
 end
 
---- An extension of the library function endpoint_to_component, to support a mapping scheme
---- that includes cluster and attribute id's so that we can use multiple components for a
---- single endpoint.
+--- An extension of the library function endpoint_to_component, used to support a mapping scheme
+--- that optionally includes cluster and attribute ids so that multiple components can be mapped
+--- to a single endpoint.
 ---
 --- @param device any a Matter device object
---- @param opts number|table either is an ep_id or a table { endpoint_id, capability_id }
+--- @param ep_info number|table either an ep_id or a table { endpoint_id, optional(cluster_id), optional(attribute_id) }
+--- where cluster_id is required for an attribute_id to be handled.
 --- @return string component
-function utils.endpoint_to_component(device, opts)
-  local ep_info = {}
-  if type(opts) == "number" then
-    ep_info.endpoint_id = opts
-  elseif type(opts) == "table" then
-    if opts.endpoint_info then
-      ep_info = opts.endpoint_info
-    else
-      ep_info = {
-        endpoint_id = opts.endpoint_id,
-        cluster_id = opts.cluster_id,
-        attribute_id = opts.attribute_id
-      }
-    end
+function utils.endpoint_to_component(device, ep_info)
+  if type(ep_info) == "number" then
+    ep_info = { endpoint_id = ep_info }
   end
   for component, map_info in pairs(device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do
     if type(map_info) == "number" and map_info == ep_info.endpoint_id then
       return component
-    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id then
-      if (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
-        and utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))
-        and (not opts.capability_id or utils.tbl_contains(map_info.capability_ids, opts.capability_id)) then
+    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id
+      and (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
+      and (not map_info.attribute_ids or utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))) then
         return component
-      end
     end
   end
   return "main"
 end
 
---- An extension of the library function emit_event_for_endpoint, to support devices with
---- multiple components defined for the same endpoint, since they can't be easily
---- differentiated based on a simple endpoint id to component mapping, but we can extend
---- this mapping to include the cluster and attribute id's so that we know which component
---- to route events to.
+--- An extension of the library function emit_event_for_endpoint, used to support devices with
+--- multiple components mapped to the same endpoint. This is handled by extending the parameters to optionally
+--- include a cluster id and attribute id for more specific routing
 ---
 --- @param device any a Matter device object
---- @param ep_info number|table endpoint_id or ib (includes endpoint_id, cluster_id, attribute_id)
+--- @param ep_info number|table endpoint_id or an ib (the ib data includes endpoint_id, cluster_id, and attribute_id fields)
 --- @param event any a capability event object
 function utils.emit_event_for_endpoint(device, ep_info, event)
   if type(ep_info) == "number" then
     ep_info = { endpoint_id = ep_info }
-  elseif type(ep_info) == "table" then
-    ep_info = {
-      endpoint_id = ep_info.endpoint_id,
-      cluster_id = ep_info.cluster_id,
-      attribute_id = ep_info.attribute_id
-    }
   end
   if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
     local child = utils.find_child(device, ep_info.endpoint_id)
@@ -240,8 +220,7 @@ function utils.emit_event_for_endpoint(device, ep_info, event)
       return
     end
   end
-  local opts = { endpoint_info = ep_info, capability_id = event.capability.ID }
-  local comp_id = utils.endpoint_to_component(device, opts)
+  local comp_id = utils.endpoint_to_component(device, ep_info)
   local comp = device.profile.components[comp_id]
   device:emit_component_event(comp, event)
 end
