@@ -369,13 +369,13 @@ local function is_button_value_supported(device, component, value)
   if value == nil then
     return true -- If no value to check, assume supported
   end
-  
+
   local supported_values_state = device:get_latest_state(
     component.id,
     capabilities.button.ID,
     capabilities.button.supportedButtonValues.NAME
   )
-  
+
   -- Check multiple possible structures for supportedButtonValues
   -- In SmartThings Edge, get_latest_state returns a state object
   -- For supportedButtonValues, the array could be in: state.value, or state itself IS the array
@@ -389,17 +389,17 @@ local function is_button_value_supported(device, component, value)
     elseif type(supported_values_state) == "table" and supported_values_state[1] ~= nil then
       supported_values = supported_values_state
     end
-    
+  
     -- Check .state.value structure (nested structure)
     if supported_values == nil and supported_values_state.state ~= nil and supported_values_state.state.value ~= nil then
       supported_values = supported_values_state.state.value
     end
   end
-  
+
   if supported_values == nil then
     return true -- If no supported values set, assume all are supported (backward compatibility)
   end
-  
+
   -- Check if the value is in the supported values array
   if type(supported_values) == "table" then
     for _, supported_value in ipairs(supported_values) do
@@ -408,7 +408,7 @@ local function is_button_value_supported(device, component, value)
       end
     end
   end
-  
+
   return false
 end
 
