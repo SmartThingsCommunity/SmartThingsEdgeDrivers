@@ -276,7 +276,7 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
     end
     if ib.data.elements.energy then
-      local energy_imported_wh = ib.data.elements.energy.value / 1000 -- convert received milliwatt to watt
+      local energy_imported_wh = ib.data.elements.energy.value / 1000 -- convert received milliwatt-hour to watt-hour
       if is_periodic_report then
         -- handle this report only if cumulative reports are not supported
         if device:get_field(fields.CUMULATIVE_REPORTS_SUPPORTED) then return end
@@ -306,8 +306,12 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, set_ep_info in pairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
-      switch_utils.remove_field_value(device, fields.ELECTRICAL_SENSOR_EPS, i) -- ep found, remove from table
-      switch_utils.set_fields_for_electrical_sensor_endpoint(device, set_ep_info, ib.data.elements)
+      switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i) -- ep found, remove from table
+      local available_endpoints_ids = {}
+      for _, element in pairs(ib.data.elements) do
+        table.insert(available_endpoints_ids, element.value)
+      end
+      switch_utils.set_fields_for_electrical_sensor_endpoint(device, set_ep_info, available_endpoints_ids)
       break
     end
   end
@@ -324,8 +328,12 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, tree_ep_info in pairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then
-      switch_utils.remove_field_value(device, fields.ELECTRICAL_SENSOR_EPS, i) -- ep found, remove from table
-      switch_utils.set_fields_for_electrical_sensor_endpoint(device, tree_ep_info, ib.data.elements)
+      switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i) -- ep found, remove from table
+      local associated_endpoints_ids = {}
+      for _, element in pairs(ib.data.elements) do
+        table.insert(associated_endpoints_ids, element.value)
+      end
+      switch_utils.set_fields_for_electrical_sensor_endpoint(device, tree_ep_info, associated_endpoints_ids)
       break
     end
   end

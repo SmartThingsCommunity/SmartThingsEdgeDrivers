@@ -45,10 +45,10 @@ function utils.set_field_for_endpoint(device, field, endpoint, value, additional
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
 end
 
-function utils.remove_field_value(device, field_name, value)
+function utils.remove_field_index(device, field_name, index)
   local new_table = device:get_field(field_name)
   if type(new_table) == "table" then
-    new_table[value] = nil -- remove value from table
+    new_table[index] = nil -- remove value associated with index from table
   end
   device:set_field(field_name, new_table)
 end
@@ -348,18 +348,27 @@ function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_
   }))
 end
 
+--- sets fields for handling EPs with the Electrical Sensor device type
+---   
+--- @param device table a Matter device object
+--- @param electrical_ep_info table an EP object that includes an Electrical Sensor device type
+--- @param associated_endpoint_ids table EP IDs that are associated with the Electrical Sensor EP
+--- @return boolean
 function utils.set_fields_for_electrical_sensor_endpoint(device, electrical_ep_info, associated_endpoint_ids)
-  local tags = ""
-  if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalPowerMeasurement.ID) then tags = tags.."-power" end
-  if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalEnergyMeasurement.ID) then tags = tags.."-energy-powerConsumption" end
-  if associated_endpoint_ids ~= {} then
+  if #associated_endpoint_ids == 0 then
+    return false
+  else
+    local tags = ""
+    if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalPowerMeasurement.ID) then tags = tags.."-power" end
+    if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalEnergyMeasurement.ID) then tags = tags.."-energy-powerConsumption" end
+    -- note: using the lowest valued EP ID here is arbitrary (not spec defined) and is done to create internal consistency
+    -- Ex. for the NODE topology, electrical capabilities will then be associated with the default (aka lowest ID'd) OnOff EP
     table.sort(associated_endpoint_ids)
-    local primary_associated_ep_id = type(associated_endpoint_ids[1]) == "table" and associated_endpoint_ids[1].value or associated_endpoint_ids[1]
+    local primary_associated_ep_id = associated_endpoint_ids[1]
     -- map the required electrical tags for this electrical sensor EP with the first associated EP ID, used later during profling.
     utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags)
     utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_ep_info.endpoint_id, primary_associated_ep_id, { persist = true })
-  else
-    return false
+    return true
   end
 end
 
@@ -381,7 +390,7 @@ function utils.handle_electrical_sensor_info(device)
   end
 
   -- check the feature map for the first (or only) Electrical Sensor EP
-  local power_topology_cluster_info = utils.find_cluster_for_ep(electrical_sensor_eps_info[1], clusters.PowerTopology.ID)
+  local power_topology_cluster_info = utils.find_cluster_for_ep(electrical_sensor_eps_info[1], clusters.PowerTopology.ID) or 0
   local power_topology_feature_map = power_topology_cluster_info.feature_map or 0
   if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, power_topology_feature_map) then
     device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps_info) -- assume any other stored EPs also have a SET topology
