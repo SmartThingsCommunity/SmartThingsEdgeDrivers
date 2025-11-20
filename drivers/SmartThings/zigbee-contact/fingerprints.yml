@@ -199,6 +199,16 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RVS01031Z
     deviceProfileName: thirdreality-multi-sensor
+  - id: "SONOFF/SNZB-04P"
+    deviceLabel: SONOFF Contact Sensor
+    manufacturer: eWeLink
+    model: SNZB-04P
+    deviceProfileName: contact-battery-tamper  
+  - id: "SONOFF/SNZB-04PR2"
+    deviceLabel: SONOFF Contact Sensor
+    manufacturer: SONOFF
+    model: SNZB-04PR2
+    deviceProfileName: contact-battery-tamper 
   - id: "Aug. Winkhaus SE/FM.V.ZB"
     deviceLabel: Funkkontakt FM.V.ZB
     manufacturer: Aug. Winkhaus SE
