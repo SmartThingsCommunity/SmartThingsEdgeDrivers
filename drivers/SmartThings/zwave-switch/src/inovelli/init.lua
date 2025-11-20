@@ -389,7 +389,7 @@ local function is_button_value_supported(device, component, value)
     elseif type(supported_values_state) == "table" and supported_values_state[1] ~= nil then
       supported_values = supported_values_state
     end
-  
+
     -- Check .state.value structure (nested structure)
     if supported_values == nil and supported_values_state.state ~= nil and supported_values_state.state.value ~= nil then
       supported_values = supported_values_state.state.value
