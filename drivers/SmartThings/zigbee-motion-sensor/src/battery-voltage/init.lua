@@ -14,30 +14,13 @@
 
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 
-local DEVICES_REPORTING_BATTERY_VOLTAGE = {
-  { mfr = "Bosch", model = "RFPR-ZB" },
-  { mfr = "Bosch", model = "RFDL-ZB-MS" },
-  { mfr = "Ecolink", model = "PIRZB1-ECO" },
-  { mfr = "ADUROLIGHT", model = "VMS_ADUROLIGHT" },
-  { mfr = "AduroSmart Eria", model = "VMS_ADUROLIGHT" }
-}
-
-local can_handle_battery_voltage = function(opts, driver, device, ...)
-  for _, fingerprint in ipairs(DEVICES_REPORTING_BATTERY_VOLTAGE) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 
 local battery_voltage_motion = {
   NAME = "Battery Voltage Motion Sensor",
   lifecycle_handlers = {
     init = battery_defaults.build_linear_voltage_init(2.1, 3.0)
   },
-  can_handle = can_handle_battery_voltage
+  can_handle = require("battery-voltage.can_handle"),
 }
 
 return battery_voltage_motion

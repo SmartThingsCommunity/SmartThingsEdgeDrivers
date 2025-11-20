@@ -17,20 +17,7 @@ local zcl_clusters = require "st.zigbee.zcl.clusters"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local OccupancySensing = zcl_clusters.OccupancySensing
 
-local ZIGBEE_NYCE_MOTION_SENSOR_FINGERPRINTS = {
-  { mfr = "NYCE", model = "3041" },
-  { mfr = "NYCE", model = "3043" },
-  { mfr = "NYCE", model = "3045" }
-}
 
-local is_zigbee_nyce_motion_sensor = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_NYCE_MOTION_SENSOR_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
-  end
-  return false
-end
 
 local function occupancy_attr_handler(driver, device, occupancy, zb_rx)
   device:emit_event(
@@ -49,7 +36,7 @@ local nyce_motion_handler = {
       }
     }
   },
-  can_handle = is_zigbee_nyce_motion_sensor
+  can_handle = require("nyce.can_handle"),
 }
 
 return nyce_motion_handler

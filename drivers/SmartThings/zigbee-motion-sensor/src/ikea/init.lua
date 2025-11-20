@@ -26,9 +26,6 @@ local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
 local Groups = clusters.Groups
 
-local IKEA_MOTION_SENSOR_FINGERPRINTS = {
-    { mfr = "IKEA of Sweden", model = "TRADFRI motion sensor" }
-}
 
 local MOTION_RESET_TIMER = "motionResetTimer"
 local ENTRIES_READ = "ENTRIES_READ"
@@ -48,14 +45,6 @@ local function on_with_timed_off_command_handler(driver, device, zb_rx)
   device:set_field(MOTION_RESET_TIMER, motion_reset_timer)
 end
 
-local is_ikea_motion = function(opts, driver, device)
-  for _, fingerprint in ipairs(IKEA_MOTION_SENSOR_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function zdo_binding_table_handler(driver, device, zb_rx)
   for _, binding_table in pairs(zb_rx.body.zdo_body.binding_table_entries) do
@@ -141,7 +130,7 @@ local ikea_motion_sensor = {
     added = device_added,
     doConfigure = do_configure
   },
-  can_handle = is_ikea_motion
+  can_handle = require("ikea.can_handle"),
 }
 
 return ikea_motion_sensor

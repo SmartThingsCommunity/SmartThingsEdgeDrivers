@@ -17,6 +17,7 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+local lazy_load_if_possible = require "lazy_load_subdriver"
 
 local temperature_measurement_defaults = {
   MIN_TEMP = "MIN_TEMP",
@@ -110,23 +111,23 @@ local zigbee_motion_driver = {
     added = added_handler
   },
   sub_drivers = {
-    require("aqara"),
-    require("aurora"),
-    require("ikea"),
-    require("iris"),
-    require("gatorsystem"),
-    require("motion_timeout"),
-    require("nyce"),
-    require("zigbee-plugin-motion-sensor"),
-    require("compacta"),
-    require("frient"),
-    require("samjin"),
-    require("battery-voltage"),
-    require("centralite"),
-    require("smartthings"),
-    require("smartsense"),
-    require("thirdreality"),
-    require("sengled")
+    lazy_load_if_possible("aqara"),
+    lazy_load_if_possible("aurora"),
+    lazy_load_if_possible("ikea"),
+    lazy_load_if_possible("iris"),
+    lazy_load_if_possible("gatorsystem"),
+    lazy_load_if_possible("motion_timeout"),
+    lazy_load_if_possible("nyce"),
+    lazy_load_if_possible("zigbee-plugin-motion-sensor"),
+    lazy_load_if_possible("compacta"),
+    lazy_load_if_possible("frient"),
+    lazy_load_if_possible("samjin"),
+    lazy_load_if_possible("battery-voltage"),
+    lazy_load_if_possible("centralite"),
+    lazy_load_if_possible("smartthings"),
+    lazy_load_if_possible("smartsense"),
+    lazy_load_if_possible("thirdreality"),
+    lazy_load_if_possible("sengled"),
   },
   additional_zcl_profiles = {
     [0xFC01] = true

@@ -24,9 +24,7 @@ local aurora_motion_driver = {
   lifecycle_handlers = {
     added = added_handler,
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "Aurora" and device:get_model() == "MotionSensor51AU"
-  end
+  can_handle = require("aurora.can_handle"),
 }
 
 return aurora_motion_driver
