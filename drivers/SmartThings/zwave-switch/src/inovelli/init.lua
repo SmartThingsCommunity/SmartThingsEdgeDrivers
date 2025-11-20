@@ -47,6 +47,15 @@ local LED_COLOR_CONTROL_PARAMETER_NUMBER = 13
 local LED_BAR_COMPONENT_NAME = "LEDColorConfiguration"
 local LED_GENERIC_SATURATION = 100
 
+-- TODO: Remove after transition period - supportedButtonValues initialization
+-- This table defines the supported button values for each button component.
+-- Used to initialize supportedButtonValues on device_added and update devices with old values.
+local supported_button_values = {
+  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button3"] = {"pushed"}
+}
+
 local INOVELLI_FINGERPRINTS = {
   { mfr = 0x031E, prod = 0x0017, model = 0x0001 }, -- Inovelli VZW32-SN
   { mfr = 0x031E, prod = 0x0001, model = 0x0001 }, -- Inovelli LZW31SN
@@ -315,7 +324,6 @@ end
 
 local function switch_set_on_off_handler(value)
   return function(driver, device, command)
-
     if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
       device:send(Basic:Set({ value = value }))
       device.thread:call_with_delay(3, function(d)
@@ -359,6 +367,68 @@ local map_key_attribute_to_capability = {
   [CentralScene.key_attributes.KEY_PRESSED_5_TIMES] = capabilities.button.button.pushed_5x,
 }
 
+-- Map key attributes to their button value strings for support checking
+-- TODO: This mapping and the support check below can likely be removed after a transition period.
+-- Once users have interacted with their devices and the supportedButtonValues gets properly
+-- set during device initialization, the driver will know which values are supported and
+-- won't attempt to emit unsupported events. This code is a temporary safeguard to prevent
+-- errors during the transition period.
+local map_key_attribute_to_value = {
+  [CentralScene.key_attributes.KEY_RELEASED] = "held",
+  [CentralScene.key_attributes.KEY_HELD_DOWN] = "down_hold",
+}
+
+-- TODO: Remove after transition period - button value support checking
+-- Helper function to check if a button value is supported.
+-- This function can likely be removed after a transition period once devices have
+-- their supportedButtonValues properly set. See comment above map_key_attribute_to_value.
+local function is_button_value_supported(device, component, value)
+  if value == nil then
+    return true -- If no value to check, assume supported
+  end
+  
+  local supported_values_state = device:get_latest_state(
+    component.id,
+    capabilities.button.ID,
+    capabilities.button.supportedButtonValues.NAME
+  )
+  
+  -- Check multiple possible structures for supportedButtonValues
+  -- In SmartThings Edge, get_latest_state returns a state object
+  -- For supportedButtonValues, the array could be in: state.value, or state itself IS the array
+  local supported_values = nil
+  if supported_values_state ~= nil then
+    -- First check .value property (most common structure)
+    if supported_values_state.value ~= nil then
+      supported_values = supported_values_state.value
+    -- Check if state itself is an array (the state IS the array)
+    -- Check if index 1 exists - if it does and .value doesn't exist, the state itself is the array
+    elseif type(supported_values_state) == "table" and supported_values_state[1] ~= nil then
+      supported_values = supported_values_state
+    end
+    
+    -- Check .state.value structure (nested structure)
+    if supported_values == nil and supported_values_state.state ~= nil and supported_values_state.state.value ~= nil then
+      supported_values = supported_values_state.state.value
+    end
+  end
+  
+  if supported_values == nil then
+    return true -- If no supported values set, assume all are supported (backward compatibility)
+  end
+  
+  -- Check if the value is in the supported values array
+  if type(supported_values) == "table" then
+    for _, supported_value in ipairs(supported_values) do
+      if supported_value == value then
+        return true
+      end
+    end
+  end
+  
+  return false
+end
+
 local function central_scene_notification_handler(self, device, cmd)
   if ( cmd.args.scene_number ~= nil and cmd.args.scene_number ~= 0 ) then
     local button_number = cmd.args.scene_number
@@ -374,9 +444,33 @@ local function central_scene_notification_handler(self, device, cmd)
 
     if event ~= nil then
       -- device reports scene notifications from endpoint 0 (main) but central scene events have to be emitted for button components: 1,2,3
-      local comp = device.profile.components[button_to_component(button_number)]
+      local component_name = button_to_component(button_number)
+      local comp = device.profile.components[component_name]
       if comp ~= nil then
-        device:emit_component_event(comp, event)
+        -- TODO: Remove after transition period - button value support checking
+        -- Check if held or down_hold are supported before emitting.
+        -- This support check can likely be removed after a transition period once devices
+        -- have their supportedButtonValues properly set. The driver will then only emit events
+        -- for values that are actually supported, preventing errors. See comment above map_key_attribute_to_value.
+        local button_value = map_key_attribute_to_value[cmd.args.key_attributes]
+        local is_supported = is_button_value_supported(device, comp, button_value)
+        if button_value == nil or is_supported then
+          device:emit_component_event(comp, event)
+        else
+          -- TODO: Remove after transition period - supportedButtonValues update for old devices
+          -- Update supportedButtonValues for devices with old values from previous driver versions.
+          -- After updating, emit the event since the value is now supported.
+          if supported_button_values[comp.id] ~= nil then
+            device:emit_component_event(
+              comp,
+              capabilities.button.supportedButtonValues(
+                supported_button_values[comp.id],
+                { visibility = { displayed = false } }
+              )
+            )
+            device:emit_component_event(comp, event)
+          end
+        end
       end
     end
   end
