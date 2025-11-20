@@ -122,7 +122,7 @@ local driver_template = {
   },
   sub_drivers = {
     lazy_load_if_possible("eaton-accessory-dimmer"),
-    lazy_load_if_possible("inovelli-LED"),
+    lazy_load_if_possible("inovelli"),
     lazy_load_if_possible("dawon-smart-plug"),
     lazy_load_if_possible("inovelli-2-channel-smart-plug"),
     lazy_load_if_possible("zwave-dual-switch"),
