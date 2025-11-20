@@ -4,10 +4,22 @@
 local MatterDriver = require "st.matter.driver"
 local fields = require "switch_utils.fields"
 local st_utils = require "st.utils"
+local version = require "version"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
+local im = require "st.matter.interaction_model"
 local log = require "log"
-local version = require "version"
+
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
+
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
 
 local utils = {}
 
@@ -31,6 +43,14 @@ end
 
 function utils.set_field_for_endpoint(device, field, endpoint, value, additional_params)
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
+end
+
+function utils.remove_field_index(device, field_name, index)
+  local new_table = device:get_field(field_name)
+  if type(new_table) == "table" then
+    new_table[index] = nil -- remove value associated with index from table
+  end
+  device:set_field(field_name, new_table)
 end
 
 function utils.mired_to_kelvin(value, minOrMax)
@@ -246,8 +266,9 @@ function utils.emit_event_for_endpoint(device, ep_info, event)
   device:emit_component_event(comp, event)
 end
 
-function utils.find_child(parent, ep_id)
-  return parent:get_child_by_parent_assigned_key(string.format("%d", ep_id))
+function utils.find_child(parent_device, ep_id)
+  local assigned_key = utils.get_field_for_endpoint(parent_device, fields.ASSIGNED_CHILD_KEY, ep_id) or ep_id
+  return parent_device:get_child_by_parent_assigned_key(string.format("%d", assigned_key))
 end
 
 function utils.get_endpoint_info(device, endpoint_id)
@@ -257,7 +278,7 @@ function utils.get_endpoint_info(device, endpoint_id)
   return {}
 end
 
-function utils.ep_supports_cluster(ep_info, cluster_id, opts)
+function utils.find_cluster_for_ep(ep_info, cluster_id, opts)
   opts = opts or {}
   local clus_has_features = function(cluster, checked_feature)
     return (cluster.feature_map & checked_feature) == checked_feature
@@ -268,7 +289,7 @@ function utils.ep_supports_cluster(ep_info, cluster_id, opts)
       and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
       or (opts.cluster_type == cluster.cluster_type))
       or (cluster_id == nil)) then
-        return true
+        return cluster
     end
   end
 end
@@ -307,15 +328,14 @@ function utils.detect_bridge(device)
 end
 
 function utils.detect_matter_thing(device)
-  for _, capability in ipairs(fields.supported_capabilities) do
-    if device:supports_capability(capability) then
-      return false
-    end
+  -- every profile except for matter-thing supports at least 2 capabilities (refresh, firmwareUpdate)
+  for i, _ in pairs(device.profile.components.main.capabilities) do
+    if i > 1 then return false end
   end
-  return device:supports_capability(capabilities.refresh)
+  return true
 end
 
-function utils.report_power_consumption_to_st_energy(device, latest_total_imported_energy_wh)
+function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_imported_energy_wh)
   local current_time = os.time()
   local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
 
@@ -323,34 +343,80 @@ function utils.report_power_consumption_to_st_energy(device, latest_total_import
   if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
     return
   end
-
   device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
 
-  -- Calculate the energy delta between reports
-  local energy_delta_wh = 0.0
-  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
-    capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if previous_imported_report and previous_imported_report.energy then
-    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
+  local state_device = utils.find_child(device, endpoint_id) or device
+  local previous_imported_report = state_device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+    capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
+  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
+  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
+  device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
+    start = epoch_to_iso8601(last_time),
+    ["end"] = epoch_to_iso8601(current_time - 1),
+    deltaEnergy = total_imported_energy_wh - previous_imported_report.energy,
+    energy = total_imported_energy_wh
+  }))
+end
+
+--- sets fields for handling EPs with the Electrical Sensor device type
+---
+--- @param device table a Matter device object
+--- @param electrical_ep_info table an EP object that includes an Electrical Sensor device type
+--- @param associated_endpoint_ids table EP IDs that are associated with the Electrical Sensor EP
+--- @return boolean
+function utils.set_fields_for_electrical_sensor_endpoint(device, electrical_ep_info, associated_endpoint_ids)
+  if #associated_endpoint_ids == 0 then
+    return false
+  else
+    local tags = ""
+    if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalPowerMeasurement.ID) then tags = tags.."-power" end
+    if utils.find_cluster_for_ep(electrical_ep_info, clusters.ElectricalEnergyMeasurement.ID) then tags = tags.."-energy-powerConsumption" end
+    -- note: using the lowest valued EP ID here is arbitrary (not spec defined) and is done to create internal consistency
+    -- Ex. for the NODE topology, electrical capabilities will then be associated with the default (aka lowest ID'd) OnOff EP
+    table.sort(associated_endpoint_ids)
+    local primary_associated_ep_id = associated_endpoint_ids[1]
+    -- map the required electrical tags for this electrical sensor EP with the first associated EP ID, used later during profling.
+    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags)
+    utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_ep_info.endpoint_id, primary_associated_ep_id, { persist = true })
+    return true
+  end
+end
+
+function utils.handle_electrical_sensor_info(device)
+  local electrical_sensor_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR)
+  if #electrical_sensor_ep_ids == 0 then
+    -- no Electrical Sensor EPs are supported. Set profiling data to false and return
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, {persist=true})
+    return
   end
 
-  local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
+  local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- SET read
+  local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- TREE read
+  local electrical_sensor_eps_info = {}
+  for _, ep_id in ipairs(electrical_sensor_ep_ids) do
+    table.insert(electrical_sensor_eps_info, utils.get_endpoint_info(device, ep_id))
+    parts_list_req:merge(clusters.Descriptor.attributes.PartsList:read(device, ep_id))
+    available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep_id))
+  end
 
-  -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
-  if not device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT) then
-    device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-      start = epoch_to_iso8601(last_time),
-      ["end"] = epoch_to_iso8601(current_time - 1),
-      deltaEnergy = energy_delta_wh,
-      energy = latest_total_imported_energy_wh
-    }))
-  else
-    device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT),capabilities.powerConsumptionReport.powerConsumption({
-      start = epoch_to_iso8601(last_time),
-      ["end"] = epoch_to_iso8601(current_time - 1),
-      deltaEnergy = energy_delta_wh,
-      energy = latest_total_imported_energy_wh
-    }))
+  -- check the feature map for the first (or only) Electrical Sensor EP
+  local power_topology_cluster_info = utils.find_cluster_for_ep(electrical_sensor_eps_info[1], clusters.PowerTopology.ID) or 0
+  local power_topology_feature_map = power_topology_cluster_info.feature_map or 0
+  if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, power_topology_feature_map) then
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps_info) -- assume any other stored EPs also have a SET topology
+    device:send(available_eps_req)
+    return
+  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, power_topology_feature_map) then
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps_info) -- assume any other stored EPs also have a TREE topology
+    device:send(parts_list_req)
+    return
+  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, power_topology_feature_map) then
+    -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
+    if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps_info[1], device:get_endpoints(clusters.OnOff.ID)) == false then
+      device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
+    end
+    return
   end
 end
 
