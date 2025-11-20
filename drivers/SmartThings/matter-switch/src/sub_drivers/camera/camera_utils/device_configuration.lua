@@ -49,15 +49,19 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   local microphone_component_capabilities = {}
   local doorbell_component_capabilities = {}
 
+  local function has_server_cluster_type(cluster)
+    return cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH"
+  end
+
   local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
   if #camera_endpoints > 0 then
-    if #device:get_endpoints(clusters.WebRTCTransportProvider.ID, {cluster_type = "SERVER"}) > 0 and
+    if #device:get_endpoints(clusters.WebRTCTransportProvider.ID) > 0 and
       #device:get_endpoints(clusters.WebRTCTransportRequestor.ID, {cluster_type = "CLIENT"}) > 0 then
       table.insert(main_component_capabilities, capabilities.webrtc.ID)
     end
     local camera_ep = switch_utils.get_endpoint_info(device, camera_endpoints[1])
     for _, ep_cluster in pairs(camera_ep.clusters or {}) do
-      if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID then
+      if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID and has_server_cluster_type(ep_cluster) then
         local clus_has_feature = function(feature_bitmap)
           return clusters.CameraAvStreamManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
         end
@@ -92,7 +96,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.NIGHT_VISION) then
           table.insert(main_component_capabilities, capabilities.nightVision.ID)
         end
-      elseif ep_cluster.cluster_id == clusters.CameraAvSettingsUserLevelManagement.ID then
+      elseif ep_cluster.cluster_id == clusters.CameraAvSettingsUserLevelManagement.ID and has_server_cluster_type(ep_cluster) then
         local clus_has_feature = function(feature_bitmap)
           return clusters.CameraAvSettingsUserLevelManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
         end
@@ -102,9 +106,9 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
           table.insert(main_component_capabilities, capabilities.mechanicalPanTiltZoom.ID)
         end
         table.insert(main_component_capabilities, capabilities.videoStreamSettings.ID)
-      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID then
+      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
-      elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID then
+      elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.motionSensor.ID)
       end
     end
