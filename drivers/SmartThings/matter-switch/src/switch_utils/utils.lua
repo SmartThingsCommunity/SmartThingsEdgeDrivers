@@ -349,7 +349,7 @@ function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_
 end
 
 --- sets fields for handling EPs with the Electrical Sensor device type
----   
+---
 --- @param device table a Matter device object
 --- @param electrical_ep_info table an EP object that includes an Electrical Sensor device type
 --- @param associated_endpoint_ids table EP IDs that are associated with the Electrical Sensor EP
