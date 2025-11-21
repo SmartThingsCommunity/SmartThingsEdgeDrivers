@@ -258,7 +258,7 @@ end
 
 -- Test button1 pushed
 test.register_message_test(
-  "Button1 pushed should emit button event",
+  "Button1 pushed should emit button event and update supportedButtonValues",
   {
     {
       channel = "zigbee",
@@ -268,14 +268,28 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_inovelli_vzm30_sn:generate_test_message(
+        "button1",
+        capabilities.button.supportedButtonValues(
+          supported_button_values["button1"],
+          { visibility = { displayed = false } }
+        )
+      )
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_inovelli_vzm30_sn:generate_test_message("button1", capabilities.button.button.pushed({ state_change = true }))
     }
+  },
+  {
+    inner_block_ordering = "relaxed"
   }
 )
 
 -- Test button2 pressed 4 times
 test.register_message_test(
-  "Button2 pressed 4 times should emit button event",
+  "Button2 pressed 4 times should emit button event and update supportedButtonValues",
   {
     {
       channel = "zigbee",
@@ -285,9 +299,58 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_inovelli_vzm30_sn:generate_test_message(
+        "button2",
+        capabilities.button.supportedButtonValues(
+          supported_button_values["button2"],
+          { visibility = { displayed = false } }
+        )
+      )
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_inovelli_vzm30_sn:generate_test_message("button2", capabilities.button.button.pushed_4x({ state_change = true }))
     }
+  },
+  {
+    inner_block_ordering = "relaxed"
   }
+)
+
+-- Test consecutive button events - supportedButtonValues should only be sent on first event
+test.register_coroutine_test(
+  "Consecutive button events should only send supportedButtonValues on first event",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    
+    -- First button event: button1 pushed - should send supportedButtonValues + button event
+    test.socket.zigbee:__queue_receive({
+      mock_inovelli_vzm30_sn.id,
+      build_inovelli_button_message(mock_inovelli_vzm30_sn, 0x01, 0x00)
+    })
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm30_sn:generate_test_message(
+        "button1",
+        capabilities.button.supportedButtonValues(
+          supported_button_values["button1"],
+          { visibility = { displayed = false } }
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm30_sn:generate_test_message("button1", capabilities.button.button.pushed({ state_change = true }))
+    )
+    
+    -- Second button event: button1 pushed_2x - should only send button event, NOT supportedButtonValues
+    test.socket.zigbee:__queue_receive({
+      mock_inovelli_vzm30_sn.id,
+      build_inovelli_button_message(mock_inovelli_vzm30_sn, 0x01, 0x03)
+    })
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm30_sn:generate_test_message("button1", capabilities.button.button.pushed_2x({ state_change = true }))
+    )
+  end
 )
 
 -- Test temperature measurement

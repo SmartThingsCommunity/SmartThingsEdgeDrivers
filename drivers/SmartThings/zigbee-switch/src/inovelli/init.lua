@@ -132,9 +132,55 @@ local function scene_handler(driver, device, zb_rx)
   local capability_attribute = map_key_attribute_to_capability[bytes:byte(2)]
   local additional_fields = { state_change = true }
   local event = capability_attribute and capability_attribute(additional_fields) or nil
-  local comp = device.profile.components[button_to_component(button_number)]
+  local comp_name = button_to_component(button_number)
+  local comp = device.profile.components[comp_name]
   if comp ~= nil and event ~= nil then
-    device:emit_component_event(comp, event)
+    -- Check if the event is in the supportedButtonValues before emitting
+    -- This ensures backward compatibility with devices installed with previous driver versions
+    local expected_values = inovelli_common.supported_button_values[comp_name]
+    local supportedEvents = device:get_latest_state(
+      comp_name,
+      capabilities.button.ID,
+      capabilities.button.supportedButtonValues.NAME,
+      {capabilities.button.button.pushed.NAME} -- default fallback for older devices
+    )
+    
+    -- Check if supportedButtonValues needs to be updated
+    -- This handles devices installed with previous driver versions that don't have
+    -- the updated supportedButtonValues attribute. If the current value only contains
+    -- "pushed" (the fallback), update it to the full list.
+    local needs_update = false
+    if expected_values then
+      -- Check if current supportedEvents is exactly the fallback (only "pushed")
+      -- This indicates the state was never set and we're using the fallback value
+      if #supportedEvents == 1 and supportedEvents[1] == capabilities.button.button.pushed.NAME then
+        needs_update = true
+      end
+      
+      if needs_update then
+        device:emit_component_event(
+          comp,
+          capabilities.button.supportedButtonValues(
+            expected_values,
+            { visibility = { displayed = false } }
+          )
+        )
+        supportedEvents = expected_values -- Update local reference for event check
+      end
+    end
+    
+    -- Check if the event is supported
+    local event_supported = false
+    for _, event_name in pairs(supportedEvents) do
+      if event.value.value == event_name then
+        event_supported = true
+        break
+      end
+    end
+    
+    if event_supported then
+      device:emit_component_event(comp, event)
+    end
   end
 end
 

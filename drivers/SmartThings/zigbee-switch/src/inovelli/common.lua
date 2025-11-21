@@ -9,7 +9,7 @@ local capabilities = require "st.capabilities"
 
 local M = {}
 
-local supported_button_values = {
+M.supported_button_values = {
   ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
   ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
   ["button3"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
@@ -58,7 +58,7 @@ function M.base_device_configure(driver, device, private_cluster_id, mfg_code)
       device:emit_component_event(
         component,
         capabilities.button.supportedButtonValues(
-          supported_button_values[component.id],
+          M.supported_button_values[component.id],
           { visibility = { displayed = false } }
         )
       )
