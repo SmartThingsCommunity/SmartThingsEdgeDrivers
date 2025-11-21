@@ -253,7 +253,7 @@ test.register_coroutine_test(
   "Consecutive button events should only send supportedButtonValues on first event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    
+
     -- First button event: button1 pushed - should send supportedButtonValues + button event
     test.socket.zigbee:__queue_receive({
       mock_inovelli_vzm31_sn.id,
@@ -271,7 +271,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm31_sn:generate_test_message("button1", capabilities.button.button.pushed({ state_change = true }))
     )
-    
+
     -- Second button event: button1 pushed_2x - should only send button event, NOT supportedButtonValues
     test.socket.zigbee:__queue_receive({
       mock_inovelli_vzm31_sn.id,
