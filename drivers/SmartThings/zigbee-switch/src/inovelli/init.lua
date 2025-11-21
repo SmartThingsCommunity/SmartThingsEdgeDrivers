@@ -144,7 +144,7 @@ local function scene_handler(driver, device, zb_rx)
       capabilities.button.supportedButtonValues.NAME,
       {capabilities.button.button.pushed.NAME} -- default fallback for older devices
     )
-    
+
     -- Check if supportedButtonValues needs to be updated
     -- This handles devices installed with previous driver versions that don't have
     -- the updated supportedButtonValues attribute. If the current value only contains
@@ -156,7 +156,7 @@ local function scene_handler(driver, device, zb_rx)
       if #supportedEvents == 1 and supportedEvents[1] == capabilities.button.button.pushed.NAME then
         needs_update = true
       end
-      
+  
       if needs_update then
         device:emit_component_event(
           comp,
@@ -168,7 +168,7 @@ local function scene_handler(driver, device, zb_rx)
         supportedEvents = expected_values -- Update local reference for event check
       end
     end
-    
+
     -- Check if the event is supported
     local event_supported = false
     for _, event_name in pairs(supportedEvents) do
@@ -177,7 +177,7 @@ local function scene_handler(driver, device, zb_rx)
         break
       end
     end
-    
+
     if event_supported then
       device:emit_component_event(comp, event)
     end
