@@ -156,7 +156,7 @@ local function scene_handler(driver, device, zb_rx)
       if #supportedEvents == 1 and supportedEvents[1] == capabilities.button.button.pushed.NAME then
         needs_update = true
       end
-  
+
       if needs_update then
         device:emit_component_event(
           comp,
