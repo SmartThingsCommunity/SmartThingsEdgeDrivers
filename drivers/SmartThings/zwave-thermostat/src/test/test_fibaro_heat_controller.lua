@@ -38,7 +38,7 @@ local thermostat_endpoints = {
 
 local mock_device = test.mock_device.build_test_zwave_device(
   {
-    profile = t_utils.get_profile_definition("base-radiator-thermostat.yml"),
+    profile = t_utils.get_profile_definition("fibaro-heat-controller.yml"),
     zwave_endpoints = thermostat_endpoints,
     zwave_manufacturer_id = 0x010F,
     zwave_product_id = 0x1000,
@@ -56,10 +56,23 @@ local mock_device_extended = test.mock_device.build_test_zwave_device(
   }
 )
 
+local mock_device_old_profile = test.mock_device.build_test_zwave_device(
+  {
+    profile = t_utils.get_profile_definition("base-radiator-thermostat.yml"),
+    zwave_endpoints = thermostat_endpoints,
+    zwave_manufacturer_id = 0x010F,
+    zwave_product_id = 0x1000,
+    zwave_product_type = 0x1301,
+  }
+)
+
 local function test_init()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_device_extended)
+  test.mock_device.add_test_device(mock_device_old_profile)
+  mock_device_old_profile:expect_metadata_update({profile = "fibaro-heat-controller"})
 end
+
 test.set_test_init_function(test_init)
 
 test.register_message_test(
@@ -292,6 +305,24 @@ test.register_message_test(
       }
     }
 )
+
+test.register_coroutine_test( "device should receive changes from regulator behaviour setting change",
+function()
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(
+            {
+                preferences = {
+                    regulatorBehaviour = 64,
+                }
+            }
+    ))
+    test.socket.zwave:__expect_send(
+            zw_test_utilities.zwave_test_build_send_command(
+                    mock_device,
+                    Configuration:Set({parameter_number = 2, size = 4, configuration_value = 64})
+            )
+    )
+end)
 
 test.register_coroutine_test(
     "Device should be polled after receiving ApplicationBusy command",

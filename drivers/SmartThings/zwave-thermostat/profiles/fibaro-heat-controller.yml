@@ -1,8 +1,8 @@
-name: fibaro-heat-extra-sensor
+name: fibaro-heat-controller
 components:
 - id: main
   capabilities:
-  - id: thermostatMode
+  - id: temperatureMeasurement
     version: 1
   - id: thermostatHeatingSetpoint
     version: 1
@@ -10,20 +10,14 @@ components:
       values:
         - key: "heatingSetpoint.value"
           range: [ 10, 30 ]
+  - id: thermostatMode
+    version: 1
   - id: battery
     version: 1
   - id: refresh
     version: 1
   categories:
   - name: Thermostat
-- id: extraTemperatureSensor
-  capabilities:
-  - id: temperatureMeasurement
-    version: 1
-  - id: battery
-    version: 1
-  categories:
-    - name: GenericSensor
 preferences:
   - name: "regulatorBehaviour"
     title: "Regulator Behaviour"
