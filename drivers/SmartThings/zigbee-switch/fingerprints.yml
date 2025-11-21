@@ -2359,6 +2359,11 @@ zigbeeManufacturer:
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
   # Inovelli
+  - id: "Inovelli/VZM30-SN"
+    deviceLabel: "Inovelli On/Off Blue Series"
+    manufacturer: Inovelli
+    model: VZM30-SN
+    deviceProfileName: inovelli-vzm30-sn
   - id: "Inovelli/VZM31-SN"
     deviceLabel: "Inovelli 2-in-1 Blue Series"
     manufacturer: Inovelli
