@@ -3,7 +3,7 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
-local dkjson = require 'dkjson'
+local json = require "st.json"
 
 -- This test attempts to add a zwave device to this zigbee switch driver
 -- Once the monkey-patch is removed with hubcore 59 is released with:
@@ -29,7 +29,7 @@ test.register_coroutine_test("zwave_device_handled", function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({provisioning_state = "PROVISIONED"})
     test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", dkjson.encode(mock_device.raw_st_data) })
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", json.encode(mock_device.raw_st_data) })
     test.wait_for_events()
   end,
   nil

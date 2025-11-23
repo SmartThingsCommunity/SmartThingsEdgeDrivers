@@ -5,7 +5,7 @@
 local base64 = require "st.base64"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local dkjson = require 'dkjson'
+local json = require "st.json"
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local utils = require "st.utils"
@@ -42,7 +42,7 @@ test.register_coroutine_test(
 
       local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
       device_info_copy.preferences.ledIntensity = 10
-      local device_info_json = dkjson.encode(device_info_copy)
+      local device_info_json = json.encode(device_info_copy)
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
       test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
@@ -65,7 +65,7 @@ test.register_coroutine_test(
 
       local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
       device_info_copy.preferences.ledIntensity = 0
-      local device_info_json = dkjson.encode(device_info_copy)
+      local device_info_json = json.encode(device_info_copy)
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
       test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
@@ -88,7 +88,7 @@ test.register_coroutine_test(
 
       local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
       device_info_copy.preferences.ledIntensity = 70
-      local device_info_json = dkjson.encode(device_info_copy)
+      local device_info_json = json.encode(device_info_copy)
       test.wait_for_events()
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
       test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_attribute(mock_device,
