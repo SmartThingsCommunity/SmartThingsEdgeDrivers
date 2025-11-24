@@ -17,11 +17,14 @@ function IkeaScrollUtils.subscribe(device)
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
   for _, ep_press in ipairs(scroll_fields.ENDPOINTS_PRESS) do
     for _, switch_event in ipairs(scroll_fields.switch_press_subscribed_events) do
-      print("##", ep_press)
       local ib = im.InteractionInfoBlock(ep_press, clusters.Switch.ID, nil, switch_event)
       subscribe_request:with_info_block(ib)
     end
   end
+  local ib = im.InteractionInfoBlock(
+    scroll_fields.ENDPOINT_POWER_SOURCE, clusters.PowerSource.ID, clusters.PowerSource.attributes.BatPercentRemaining.ID
+  )
+  subscribe_request:with_info_block(ib)
   device:send(subscribe_request)
 end
 
