@@ -23,11 +23,6 @@ local cooling_setpoint_defaults = require "st.zwave.defaults.thermostatCoolingSe
 local constants = require "st.zwave.constants"
 local utils = require "st.utils"
 
-local CT100_THERMOSTAT_FINGERPRINTS = {
-  { manufacturerId = 0x0098, productType = 0x6401, productId = 0x0107 }, -- 2Gig CT100 Programmable Thermostat
-  { manufacturerId = 0x0098, productType = 0x6501, productId = 0x000C }, -- Iris Thermostat
-}
-
 -- This old device uses separate endpoints to get values of temp and humidity
 -- DTH actually uses the old mutliInstance encap, but multichannel should be back-compat
 local TEMPERATURE_ENDPOINT = 1
@@ -63,16 +58,6 @@ local function set_setpoint_factory(setpoint_type)
       device:send(ThermostatOperatingState:Get({}))
     end)
   end
-end
-
-local function can_handle_ct100_thermostat(opts, driver, device)
-  for _, fingerprint in ipairs(CT100_THERMOSTAT_FINGERPRINTS) do
-    if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-
-  return false
 end
 
 local function thermostat_mode_report_handler(self, device, cmd)

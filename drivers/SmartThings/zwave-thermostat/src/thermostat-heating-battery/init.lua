@@ -32,11 +32,6 @@ local CLAMP = {
     CELSIUS_MAX = 28
 }
 
-local DANFOSS_LC13_THERMOSTAT_FINGERPRINTS = {
-    { manufacturerId = 0x0002, productType = 0x0005, productId = 0x0003 }, -- Danfoss LC13 Thermostat
-    { manufacturerId = 0x0002, productType = 0x0005, productId = 0x0004 } -- Danfoss LC13 Thermostat
-}
-
 local WEEK = {6, 0, 1, 2, 3, 4, 5}
 
 --[[ Danfoss LC13 (Living Connect)
@@ -51,16 +46,6 @@ Note: https://idency.com/products/idencyhome/smarthome/sensors/danfoss-z-wave-li
     Note: The Danfoss Z-Wave Living Connect Thermostat cannot report its local temperature
     to the Z-Wave network, it only allows a one-way communication to change its setpoint.
 --]]
-
-local function can_handle_thermostat_heating_battery(opts, driver, device, cmd, ...)
-    for _, fingerprint in ipairs(DANFOSS_LC13_THERMOSTAT_FINGERPRINTS) do
-        if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-            return true
-        end
-    end
-
-    return false
-end
 
 local function adjust_temperature_if_exceeded_min_max_limit (degree, scale)
     if scale == ThermostatSetpoint.scale.CELSIUS then

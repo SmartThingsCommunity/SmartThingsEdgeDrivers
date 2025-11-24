@@ -19,8 +19,6 @@ local LATEST_WAKEUP = "latest_wakeup"
 local CACHED_SETPOINT = "cached_setpoint"
 local POPP_WAKEUP_INTERVAL = 600 --seconds
 
-local POPP_THERMOSTAT_FINGERPRINT = {mfr = 0x0002, prod = 0x0115, model = 0xA010}
-
 local function get_latest_wakeup_timestamp(device)
   return device:get_field(LATEST_WAKEUP)
 end
@@ -36,10 +34,6 @@ local function seconds_since_latest_wakeup(device)
   else
     return 0
   end
-end
-
-local function can_handle_popp_radiator_thermostat(opts, driver, device, ...)
-  return device:id_match(POPP_THERMOSTAT_FINGERPRINT.mfr, POPP_THERMOSTAT_FINGERPRINT.prod, POPP_THERMOSTAT_FINGERPRINT.model)
 end
 
 -- POPP is a sleepy device, therefore it won't accept setpoint commands rightaway.

@@ -3,7 +3,9 @@
 
 local function can_handle(opts, driver, device, cmd, ...)
   local version = require "version"
-  return version.api == 6 and
+  local DANFOSS_LC13_THERMOSTAT_FPS = require "apiv6_bugfix.fingerprints"
+  
+  if version.api == 6 and
     cmd.cmd_class == cc.WAKE_UP and
     cmd.cmd_id == WakeUp.NOTIFICATION and not
     (device:id_match(DANFOSS_LC13_THERMOSTAT_FPS[1].manufacturerId,
@@ -11,7 +13,11 @@ local function can_handle(opts, driver, device, cmd, ...)
       DANFOSS_LC13_THERMOSTAT_FPS[1].productId) or
     device:id_match(DANFOSS_LC13_THERMOSTAT_FPS[2].manufacturerId,
       DANFOSS_LC13_THERMOSTAT_FPS[2].productType,
-      DANFOSS_LC13_THERMOSTAT_FPS[2].productId))
+      DANFOSS_LC13_THERMOSTAT_FPS[2].productId)) then
+    return true, require "apiv6_bugfix"
+      else
+    return false
+  end
 end
 
 return can_handle

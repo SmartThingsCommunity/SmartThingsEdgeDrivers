@@ -14,12 +14,6 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ver
 --- @type st.zwave.CommandClass.ThermostatSetpoint
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({version=1})
 
-local AEOTEC_THERMOSTAT_FINGERPRINT = {mfr = 0x0371, prod = 0x0002, model = 0x0015}
-
-local function can_handle_aeotec_radiator_thermostat(opts, driver, device, ...)
-  return device:id_match(AEOTEC_THERMOSTAT_FINGERPRINT.mfr, AEOTEC_THERMOSTAT_FINGERPRINT.prod, AEOTEC_THERMOSTAT_FINGERPRINT.model)
-end
-
 local function thermostat_mode_report_handler(self, device, cmd)
   local event = nil
   if (cmd.args.mode == ThermostatMode.mode.OFF) then
