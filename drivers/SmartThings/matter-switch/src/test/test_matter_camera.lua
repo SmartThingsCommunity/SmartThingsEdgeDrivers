@@ -156,6 +156,7 @@ local function update_device_profile()
       {
         "main",
         {
+          "webrtc",
           "videoCapture2",
           "cameraViewportSettings",
           "localMediaStorage",
@@ -167,7 +168,6 @@ local function update_device_profile()
           "mechanicalPanTiltZoom",
           "videoStreamSettings",
           "zoneManagement",
-          "webrtc",
           "motionSensor",
           "sounds",
         }
