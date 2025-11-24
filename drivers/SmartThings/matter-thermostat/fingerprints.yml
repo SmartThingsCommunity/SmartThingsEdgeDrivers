@@ -16,6 +16,12 @@ matterManufacturer:
     vendorId: 0x1209
     productId: 0x3012
     deviceProfileName: thermostat-heating-only-nostate
+  #Cync
+  - id: "4921/121"
+    deviceLabel: Cync Fan Switch
+    vendorId: 0x1339
+    productId: 0x0079
+    deviceProfileName: fan-generic
   #Eve
   - id: "4874/79"
     deviceLabel: Eve Thermo
