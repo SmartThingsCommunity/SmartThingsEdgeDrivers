@@ -136,6 +136,7 @@ local function ikea_scroll_subscribe()
       subscribe_request:merge(event:subscribe(mock_ikea_scroll, ep_press))
     end
   end
+  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_ikea_scroll, 0))
   return subscribe_request
 end
 
