@@ -137,6 +137,11 @@ matterManufacturer:
     vendorId: 0x1209
     productId: 0x3016
     deviceProfileName: plug-power-energy-powerConsumption
+  - id: 4617/12309
+    deviceLabel: "Door/window contact II [M]"
+    vendorId: 0x1209
+    productId: 0x3015
+    deviceProfileName: contact-button-battery
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001

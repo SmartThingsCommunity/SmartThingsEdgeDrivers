@@ -298,7 +298,6 @@ local matter_driver_template = {
   sub_drivers = {
     require("sub_drivers.air_quality_sensor"),
     require("sub_drivers.smoke_co_alarm"),
-    require("sub_drivers.bosch_button_contact")
   }
 }
 
