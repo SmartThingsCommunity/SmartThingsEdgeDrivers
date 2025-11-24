@@ -75,6 +75,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1533, 0x0010}, -- eufy, FamiLock S3
   {0x1533, 0x0011}, -- eufy, FamiLock E34
   {0x1533, 0x0012}, -- eufy, FamiLock E35
+  {0x1533, 0x0016}, -- eufy, FamiLock E32
   {0x135D, 0x00B1}, -- Nuki, Smart Lock Pro
   {0x135D, 0x00B2}, -- Nuki, Smart Lock
   {0x135D, 0x00C1}, -- Nuki, Smart Lock
