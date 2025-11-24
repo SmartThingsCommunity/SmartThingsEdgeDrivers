@@ -25,7 +25,7 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   -- per spec, the Switch device types support OnOff as CLIENT, though some vendors break spec and support it as SERVER.
   local primary_dt_id = switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.LIGHT)
     or switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.SWITCH)
-    or ep_info.device_types[1] and ep_info.device_types[1].device_type_id
+    or switch_utils.find_primary_device_type(ep_info)
 
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
