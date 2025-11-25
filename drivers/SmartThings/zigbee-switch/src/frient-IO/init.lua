@@ -111,7 +111,7 @@ local function write_basic_input_polarity_attr(device, ep_id, payload)
         value):to_endpoint(ep_id))
 end
 
-local function ensure_child_devices(device)
+local function ensure_child_devices(driver, device)
     if device.parent_assigned_child_key ~= nil then
         return
     end
@@ -119,7 +119,7 @@ local function ensure_child_devices(device)
     for _, info in pairs(OUTPUT_INFO) do
         local child = device:get_child_by_parent_assigned_key(info.key)
         if child == nil then
-            child = device.driver:try_create_device({
+            driver:try_create_device({
                 type = "EDGE_CHILD",
                 parent_device_id = device.id,
                 parent_assigned_child_key = info.key,
@@ -127,7 +127,7 @@ local function ensure_child_devices(device)
                 label = string.format("%s %s", device.label, info.label_suffix),
                 vendor_provided_label = info.label_suffix
             })
-            child = child and device:get_child_by_parent_assigned_key(info.key)
+            child = device:get_child_by_parent_assigned_key(info.key)
         end
         if child then
             child:set_field("endpoint", info.endpoint, { persist = true })
@@ -201,8 +201,27 @@ local function emit_switch_event_for_endpoint(device, endpoint, event)
     device:emit_event_for_endpoint(endpoint, event)
 end
 
+local function register_native_switch_handler(device, endpoint)
+    local field_key = string.format("frient_io_native_%02X", endpoint)
+    local info = OUTPUT_BY_ENDPOINT[endpoint]
+    if info ~= nil then
+        local child = device:get_child_by_parent_assigned_key(info.key)
+        if child and not child:get_field(field_key) then
+            child:register_native_capability_attr_handler("switch", "switch")
+            child:set_field(field_key, true)
+        end
+        return
+    end
+
+    if not device:get_field(field_key) then
+        device:register_native_capability_attr_handler("switch", "switch")
+        device:set_field(field_key, true)
+    end
+end
+
 local function on_off_attr_handler(driver, device, value, zb_message)
     local endpoint = zb_message.address_header.src_endpoint.value
+    register_native_switch_handler(device, endpoint)
     emit_switch_event_for_endpoint(device, endpoint, value.value and Switch.switch.on() or Switch.switch.off())
 end
 
@@ -285,7 +304,7 @@ local function init_handler(self, device)
         return
     end
 
-    ensure_child_devices(device)
+    ensure_child_devices(self, device)
 
     local on1, off1 = get_output_timing(device, "1")
     device:send(write_client_manufacturer_specific_attribute(device, BasicInput.ID,
@@ -350,6 +369,10 @@ local function init_handler(self, device)
     device:send(device.preferences.controlOutput24
         and build_bind_request(device, BasicInput.ID, ZIGBEE_ENDPOINTS.INPUT_4, ZIGBEE_ENDPOINTS.OUTPUT_2)
         or build_unbind_request(device, BasicInput.ID, ZIGBEE_ENDPOINTS.INPUT_4, ZIGBEE_ENDPOINTS.OUTPUT_2))
+end
+
+local function added_handler(self, device)
+    ensure_child_devices(self, device)
 end
 
 local function configure_handler(self, device)
@@ -460,6 +483,7 @@ end
 
 local function present_value_attr_handler(driver, device, value, zb_message)
     local ep_id = zb_message.address_header.src_endpoint
+    register_native_switch_handler(device, ep_id.value)
     device:emit_event_for_endpoint(ep_id, value.value and Switch.switch.on() or Switch.switch.off())
 end
 
@@ -572,6 +596,7 @@ local frient_bridge_handler = {
         }
     },
     lifecycle_handlers = {
+        added = added_handler,
         init = init_handler,
         doConfigure = configure_handler,
         infoChanged = info_changed_handler
