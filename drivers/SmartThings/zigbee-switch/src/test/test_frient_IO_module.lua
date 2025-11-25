@@ -70,6 +70,7 @@ local function build_client_mfg_write(device, endpoint, attr_id, value)
 		value
 	)
 	msg.body.zcl_header.frame_ctrl:set_direction_client()
+	msg.tx_options = data_types.Uint16(0)
 	return msg:to_endpoint(endpoint)
 end
 
@@ -79,12 +80,14 @@ local function build_basic_input_polarity_write(device, endpoint, enabled)
 		BasicInput.attributes.Polarity.base_type,
 		"payload"
 	)
-	return cluster_base.write_attribute(
+	local msg = cluster_base.write_attribute(
 		device,
 		data_types.ClusterId(BasicInput.ID),
 		data_types.AttributeId(BasicInput.attributes.Polarity.ID),
 		polarity_value
-	):to_endpoint(endpoint)
+	)
+	msg.tx_options = data_types.Uint16(0)
+	return msg:to_endpoint(endpoint)
 end
 
 local function build_bind(device, src_ep, dest_ep)
@@ -105,7 +108,9 @@ local function build_bind(device, src_ep, dest_ep)
 		dest_ep
 	)
 	local message_body = zdo_messages.ZdoMessageBody({ zdo_body = bind_body })
-	return messages.ZigbeeMessageTx({ address_header = addr_header, body = message_body })
+	local msg = messages.ZigbeeMessageTx({ address_header = addr_header, body = message_body })
+	msg.tx_options = data_types.Uint16(0)
+	return msg
 end
 
 local function build_unbind(device, src_ep, dest_ep)
@@ -126,7 +131,9 @@ local function build_unbind(device, src_ep, dest_ep)
 		dest_ep
 	)
 	local message_body = zdo_messages.ZdoMessageBody({ zdo_body = unbind_body })
-	return messages.ZigbeeMessageTx({ address_header = addr_header, body = message_body })
+	local msg = messages.ZigbeeMessageTx({ address_header = addr_header, body = message_body })
+	msg.tx_options = data_types.Uint16(0)
+	return msg
 end
 
 local function build_default_response_msg(device, endpoint, command_id)
@@ -249,8 +256,12 @@ local function reset_preferences()
 end
 
 local function register_initial_config_expectations()
-	test.socket.zigbee:__set_channel_ordering("relaxed")
-	test.socket.devices:__set_channel_ordering("relaxed")
+	if test.socket.zigbee and test.socket.zigbee.__set_channel_ordering then
+		test.socket.zigbee:__set_channel_ordering("relaxed")
+	end
+	if test.socket.devices and test.socket.devices.__set_channel_ordering then
+		test.socket.devices:__set_channel_ordering("relaxed")
+	end
 
 	local on1, off1 = build_output_timing(mock_parent_device, mock_output_child_1, "1")
 	local on2, off2 = build_output_timing(mock_parent_device, mock_output_child_2, "2")
@@ -277,6 +288,8 @@ end
 local function expect_init_sequence()
 	register_initial_config_expectations()
 	test.socket.device_lifecycle:__queue_receive({ mock_parent_device.id, "init" })
+	test.socket.device_lifecycle:__queue_receive({ mock_output_child_1.id, "init" })
+	test.socket.device_lifecycle:__queue_receive({ mock_output_child_2.id, "init" })
 end
 
 local function expect_switch_registration(device)
@@ -294,6 +307,7 @@ local function test_init()
 	test.mock_device.add_test_device(mock_output_child_1)
 	test.mock_device.add_test_device(mock_output_child_2)
 	zigbee_test_utils.init_noop_health_check_timer()
+	register_initial_config_expectations()
 end
 
 test.set_test_init_function(test_init)
@@ -350,7 +364,9 @@ test.register_coroutine_test(
 			mock_parent_device,
 			data_types.ClusterId(OnOff.ID),
 			data_types.AttributeId(OnOff.attributes.OnOff.ID)
-		):to_endpoint(ZIGBEE_ENDPOINTS.OUTPUT_1)
+		)
+		read_msg.tx_options = data_types.Uint16(0)
+		read_msg = read_msg:to_endpoint(ZIGBEE_ENDPOINTS.OUTPUT_1)
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, read_msg })
 
 		local off_response = build_default_response_msg(mock_parent_device, ZIGBEE_ENDPOINTS.OUTPUT_1, OnOff.server.commands.Off.ID)
