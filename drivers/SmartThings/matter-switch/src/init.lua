@@ -40,6 +40,7 @@ end
 
 function SwitchLifecycleHandlers.do_configure(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+    switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
   end
 end
@@ -296,6 +297,7 @@ local matter_driver_template = {
   supported_capabilities = fields.supported_capabilities,
   sub_drivers = {
     require("sub_drivers.aqara_cube"),
+    switch_utils.lazy_load("sub_drivers.camera"),
     require("sub_drivers.eve_energy"),
     require("sub_drivers.third_reality_mk1")
   }

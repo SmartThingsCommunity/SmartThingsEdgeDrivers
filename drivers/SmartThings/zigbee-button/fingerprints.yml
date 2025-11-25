@@ -24,6 +24,16 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.remote.b286acn03
     deviceProfileName: aqara-double-buttons
+  - id: "LUMI/lumi.remote.b18ac1"
+    deviceLabel: Aqara Wireless Remote Switch H1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b18ac1
+    deviceProfileName: aqara-single-button-mode
+  - id: "LUMI/lumi.remote.b28ac1"
+    deviceLabel: Aqara Wireless Remote Switch H1 (Double Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b28ac1
+    deviceProfileName: aqara-double-buttons-mode
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN
