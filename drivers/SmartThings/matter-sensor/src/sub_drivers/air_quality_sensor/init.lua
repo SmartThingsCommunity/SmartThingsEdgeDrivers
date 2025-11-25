@@ -1,13 +1,14 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local log = require "log"
+local version = require "version"
+local st_utils = require "st.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local utils = require "st.utils"
-local version = require "version"
-local log = require "log"
-
-local fields = require "sub_drivers.air_quality_sensor.fields"
+local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
+local aqs_utils = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.utils"
+local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
 
 -- Include driver-side definitions when lua libs api version is < 10
 if version.api < 10 then
@@ -24,43 +25,6 @@ if version.api < 10 then
   clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "embedded_clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
-
--- SUBDRIVER UTILS --
-
-local air_quality_sensor_utils = {}
-
-function air_quality_sensor_utils.is_matter_air_quality_sensor(opts, driver, device)
-    for _, ep in ipairs(device.endpoints) do
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == fields.AIR_QUALITY_SENSOR_DEVICE_TYPE_ID then
-          return true
-        end
-      end
-    end
-
-    return false
-  end
-
-function air_quality_sensor_utils.supports_capability_by_id_modular(device, capability, component)
-  if not device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
-    device.log.warn_with({hub_logs = true}, "Device has overriden supports_capability_by_id, but does not have supported capabilities set.")
-    return false
-  end
-  for _, component_capabilities in ipairs(device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES)) do
-    local comp_id = component_capabilities[1]
-    local capability_ids = component_capabilities[2]
-    if (component == nil) or (component == comp_id) then
-        for _, cap in ipairs(capability_ids) do
-          if cap == capability then
-            return true
-          end
-        end
-    end
-  end
-  return false
-end
-
-
 -- AIR QUALITY SENSOR LIFECYCLE HANDLERS --
 
 local AirQualitySensorLifecycleHandlers = {}
@@ -70,11 +34,16 @@ function AirQualitySensorLifecycleHandlers.do_configure(driver, device)
   for _, cluster in ipairs(fields.units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
+  -- If a device only supports the airQualityHealthConcern capability, no profile update will end up occurring,
+  -- so this logic will never end up being run in the ensuing infoChanged event. This catches that edge case
+  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
+  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aqs_eps[1])
+
   if version.api >= 14 and version.rpc >= 8 then
-    local modular_device_cfg = require "sub_drivers.air_quality_sensor.device_configuration"
+    local modular_device_cfg = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.device_configuration"
     modular_device_cfg.match_profile(device)
   else
-    local legacy_device_cfg = require "sub_drivers.air_quality_sensor.legacy_device_configuration"
+    local legacy_device_cfg = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.legacy_device_configuration"
     legacy_device_cfg.match_profile(device)
   end
 end
@@ -84,11 +53,16 @@ function AirQualitySensorLifecycleHandlers.driver_switched(driver, device)
   for _, cluster in ipairs(fields.units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
+  -- If a device only supports the airQualityHealthConcern capability, no profile update will end up occurring,
+  -- so this logic will never end up being run in the ensuing infoChanged event. This catches that edge case
+  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
+  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aqs_eps[1])
+
   if version.api >= 14 and version.rpc >= 8 then
-    local modular_device_cfg = require "sub_drivers.air_quality_sensor.device_configuration"
+    local modular_device_cfg = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.device_configuration"
     modular_device_cfg.match_profile(device)
   else
-    local legacy_device_cfg = require "sub_drivers.air_quality_sensor.legacy_device_configuration"
+    local legacy_device_cfg = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.legacy_device_configuration"
     legacy_device_cfg.match_profile(device)
   end
 end
@@ -97,7 +71,7 @@ function AirQualitySensorLifecycleHandlers.device_init(driver, device)
   if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) and (version.api < 15 or version.rpc < 9) then
     -- assume that device is using a modular profile on 0.57 FW, override supports_capability_by_id
     -- library function to utilize optional capabilities
-    device:extend_device("supports_capability_by_id", air_quality_sensor_utils.supports_capability_by_id_modular)
+    device:extend_device("supports_capability_by_id", aqs_utils.supports_capability_by_id_modular)
   end
   device:subscribe()
 end
@@ -106,9 +80,10 @@ function AirQualitySensorLifecycleHandlers.info_changed(driver, device, event, a
   if device.profile.id ~= args.old_st_store.profile.id then
     if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
       --re-up subscription with new capabilities using the modular supports_capability override
-       device:extend_device("supports_capability_by_id", air_quality_sensor_utils.supports_capability_by_id_modular)
+       device:extend_device("supports_capability_by_id", aqs_utils.supports_capability_by_id_modular)
     end
     device:subscribe()
+    aqs_utils.set_supported_health_concern_values(device)
   end
 end
 
@@ -183,7 +158,7 @@ function sub_driver_handlers.air_quality_handler(driver, device, ib, response)
 end
 
 function sub_driver_handlers.pressure_measured_value_handler(driver, device, ib, response)
-  local pressure = utils.round(ib.data.value / 10.0)
+  local pressure = st_utils.round(ib.data.value / 10.0)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.atmosphericPressureMeasurement.atmosphericPressure(pressure))
 end
 
@@ -258,7 +233,7 @@ local matter_air_quality_sensor_handler = {
       }
     }
   },
-  can_handle = air_quality_sensor_utils.is_matter_air_quality_sensor
+  can_handle = aqs_utils.is_matter_air_quality_sensor
 }
 
 return matter_air_quality_sensor_handler

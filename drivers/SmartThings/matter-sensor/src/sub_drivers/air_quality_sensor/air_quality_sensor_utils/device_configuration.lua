@@ -1,11 +1,11 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local version = require "version"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
-local fields = require "sub_drivers.air_quality_sensor.fields"
-local version = require "version"
+local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
 
 local DeviceConfiguration = {}
 
@@ -16,7 +16,7 @@ function DeviceConfiguration.supported_level_measurements(device)
     local cluster = fields.CONCENTRATION_MEASUREMENT_MAP[cap][2]
     -- capability describes either a HealthConcern or Measurement/Sensor
     if (cap_id:match("HealthConcern$")) then
-      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION }) or {}
       if #attr_eps > 0 then
         table.insert(level_caps, cap_id)
       end

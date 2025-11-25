@@ -3,39 +3,12 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
-local fields = require "sub_drivers.air_quality_sensor.fields"
 local sensor_utils = require "sensor_utils.utils"
+local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
+local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
+local aqs_utils = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.utils"
 
 local LegacyDeviceConfiguration = {}
-
-local function set_supported_health_concern_values(device, setter_function, cluster, cluster_ep)
-  -- read_datatype_value works since all the healthConcern capabilities' datatypes are equivalent to the one in airQualityHealthConcern
-  local read_datatype_value = capabilities.airQualityHealthConcern.airQualityHealthConcern
-  local supported_values = {read_datatype_value.unknown.NAME, read_datatype_value.good.NAME, read_datatype_value.unhealthy.NAME}
-  if cluster == clusters.AirQuality then
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.FAIR }) > 0 then
-      table.insert(supported_values, 3, read_datatype_value.moderate.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MODERATE }) > 0 then
-      table.insert(supported_values, 4, read_datatype_value.slightlyUnhealthy.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.VERY_POOR }) > 0 then
-      table.insert(supported_values, read_datatype_value.veryUnhealthy.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.EXTREMELY_POOR }) > 0 then
-      table.insert(supported_values, read_datatype_value.hazardous.NAME)
-    end
-  else -- ConcentrationMeasurement clusters
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MEDIUM_LEVEL }) > 0 then
-      table.insert(supported_values, 3, read_datatype_value.moderate.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.CRITICAL_LEVEL }) > 0 then
-      table.insert(supported_values, read_datatype_value.hazardous.NAME)
-    end
-  end
-  device:emit_event_for_endpoint(cluster_ep, setter_function(supported_values, { visibility = { displayed = false }}))
-end
 
 function LegacyDeviceConfiguration.create_level_measurement_profile(device)
   local meas_name, level_name = "", ""
@@ -44,10 +17,10 @@ function LegacyDeviceConfiguration.create_level_measurement_profile(device)
     local cluster = fields.CONCENTRATION_MEASUREMENT_MAP[cap][2]
     -- capability describes either a HealthConcern or Measurement/Sensor
     if (cap_id:match("HealthConcern$")) then
-      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION }) or {}
       if #attr_eps > 0 then
         level_name = level_name .. fields.CONCENTRATION_MEASUREMENT_MAP[cap][1]
-        set_supported_health_concern_values(device, fields.CONCENTRATION_MEASUREMENT_MAP[cap][3], cluster, attr_eps[1])
+        aqs_utils.set_supported_health_concern_values_helper(device, fields.CONCENTRATION_MEASUREMENT_MAP[cap][3], cluster, attr_eps[1])
       end
     elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
@@ -65,8 +38,8 @@ function LegacyDeviceConfiguration.match_profile(device)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
   local profile_name = "aqs"
-  local aq_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
-  set_supported_health_concern_values(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aq_eps[1])
+  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
+  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aqs_eps[1])
 
   if #temp_eps > 0 then
     profile_name = profile_name .. "-temp"

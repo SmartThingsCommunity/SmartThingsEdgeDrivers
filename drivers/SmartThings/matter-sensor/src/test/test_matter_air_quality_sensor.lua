@@ -476,6 +476,7 @@ local function test_aqs_device_type_do_configure(generic_mock_device, expected_p
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.capability:__expect_send(generic_mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
+  test.socket.capability:__expect_send(generic_mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
   if expected_supported_values_setters ~= nil then
     expected_supported_values_setters()
   end

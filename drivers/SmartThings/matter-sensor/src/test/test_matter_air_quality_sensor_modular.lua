@@ -4,8 +4,6 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 
 local clusters = require "st.matter.clusters"
 
@@ -30,7 +28,7 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
-        {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER", feature_map = 3},
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.CarbonMonoxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 3},
@@ -70,7 +68,7 @@ local mock_device_common = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
-        {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER", feature_map = 3},
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.CarbonDioxideConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 1},
@@ -219,7 +217,7 @@ end
 test.set_test_init_function(test_init)
 
 -- run the profile configuration tests
-local function test_aqs_device_type_update_modular_profile(generic_mock_device, expected_metadata, subscribe_request)
+local function test_aqs_device_type_update_modular_profile(generic_mock_device, expected_metadata, subscribe_request, expected_supported_values_setters)
   test.socket.device_lifecycle:__queue_receive({generic_mock_device.id, "doConfigure"})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
@@ -231,13 +229,17 @@ local function test_aqs_device_type_update_modular_profile(generic_mock_device, 
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
+  test.socket.capability:__expect_send(generic_mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
   generic_mock_device:expect_metadata_update(expected_metadata)
   generic_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  local device_info_copy = utils.deep_copy(generic_mock_device.raw_st_data)
-  device_info_copy.profile.id = "aqs-modular"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ generic_mock_device.id, "infoChanged", device_info_json })
+  local updated_device_profile = t_utils.get_profile_definition("aqs-modular.yml",
+    {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.socket.device_lifecycle:__queue_receive(generic_mock_device:generate_info_changed({ profile = updated_device_profile }))
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
+  if expected_supported_values_setters ~= nil then
+    expected_supported_values_setters()
+  end
 end
 
 local expected_metadata_all = {
@@ -276,7 +278,20 @@ local expected_metadata_all = {
 test.register_coroutine_test(
   "Device with modular profile should enable correct optional capabilities - all clusters",
   function()
-    test_aqs_device_type_update_modular_profile(mock_device, expected_metadata_all, subscribe_request_all)
+    local expected_supported_values_setters = function()
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.supportedNitrogenDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.ozoneHealthConcern.supportedOzoneValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.formaldehydeHealthConcern.supportedFormaldehydeValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.veryFineDustHealthConcern.supportedVeryFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.supportedFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.dustHealthConcern.supportedDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.radonHealthConcern.supportedRadonValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tvocHealthConcern.supportedTvocValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    end
+    test_aqs_device_type_update_modular_profile(mock_device, expected_metadata_all, subscribe_request_all, expected_supported_values_setters)
   end
 )
 
@@ -299,7 +314,10 @@ local expected_metadata_common = {
 test.register_coroutine_test(
   "Device with modular profile should enable correct optional capabilities - common clusters",
   function()
-    test_aqs_device_type_update_modular_profile(mock_device_common, expected_metadata_common, subscribe_request_common)
+    local expected_supported_values_setters = function()
+      test.socket.capability:__expect_send(mock_device_common:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
+    end
+    test_aqs_device_type_update_modular_profile(mock_device_common, expected_metadata_common, subscribe_request_common, expected_supported_values_setters)
   end,
   { test_init = test_init_common }
 )

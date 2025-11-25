@@ -1,10 +1,10 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local capabilities = require "st.capabilities"
-local clusters = require "st.matter.clusters"
-local utils = require "st.utils"
 local version = require "version"
+local utils = require "st.utils"
+local clusters = require "st.matter.clusters"
+local capabilities = require "st.capabilities"
 
 -- Include driver-side definitions when lua libs api version is < 10
 if version.api < 10 then
