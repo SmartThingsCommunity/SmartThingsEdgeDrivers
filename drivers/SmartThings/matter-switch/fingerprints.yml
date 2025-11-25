@@ -809,11 +809,6 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00BA
     deviceProfileName: light-color-level
-  - id: "5155/163"
-    deviceLabel: LIFX Supercolor (A19)
-    vendorId: 0x1423
-    productId: 0x00A3
-    deviceProfileName: light-color-level
   - id: "5155/144"
     deviceLabel: LIFX String
     vendorId: 0x1423
