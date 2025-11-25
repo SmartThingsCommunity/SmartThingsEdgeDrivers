@@ -824,11 +824,6 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00D8
     deviceProfileName: light-color-level
-  - id: "5155/191"
-    deviceLabel: LIFX Everyday A19
-    vendorId: 0x1423
-    productId: 0x00BF
-    deviceProfileName: light-color-level
   - id: "5155/225"
     deviceLabel: LIFX PAR38
     vendorId: 0x1423
