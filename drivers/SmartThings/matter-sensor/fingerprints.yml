@@ -132,7 +132,7 @@ matterManufacturer:
     deviceLabel: Smart Presence Sensor (Thread)
     vendorId: 0x1345
     productId: 0x4202
-    deviceProfileName: motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   # Neo
   - id: "4991/1122"
     deviceLabel: Door Sensor
