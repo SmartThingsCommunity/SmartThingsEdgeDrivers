@@ -14,7 +14,7 @@ matterManufacturer:
     deviceLabel: Presence Multi-Sensor FP300
     vendorId: 0x115F
     productId: 0x2005
-    deviceProfileName: motion-illuminance-temperature-humidity-batteryLevel
+    deviceProfileName: presence-illuminance-temperature-humidity-battery
   #Bosch
   - id: 4617/12309
     deviceLabel: "Door/window contact II [M]"
