@@ -294,13 +294,6 @@ end
 
 function AttributeHandlers.energy_imported_factory(is_cumulative_report)
   return function(driver, device, ib, response)
-    -- workaround: ignore devices supporting Eve's private energy cluster AND the ElectricalEnergyMeasurement cluster
-    local EVE_MANUFACTURER_ID, EVE_PRIVATE_CLUSTER_ID = 0x130A, 0x130AFC01
-    local eve_private_energy_eps = device:get_endpoints(EVE_PRIVATE_CLUSTER_ID)
-    if device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and #eve_private_energy_eps > 0 then
-      return
-    end
-
     if is_cumulative_report then
       AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
     elseif device:get_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED) then

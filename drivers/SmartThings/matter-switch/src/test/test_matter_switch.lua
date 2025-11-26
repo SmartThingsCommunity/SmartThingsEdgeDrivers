@@ -200,7 +200,7 @@ local function test_init_color_temp()
       subscribe_request:merge(cluster:subscribe(mock_device_color_temp))
     end
   end
-  test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
+
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "added" })
   test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
 
@@ -208,7 +208,16 @@ local function test_init_color_temp()
   test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_color_temp.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_color_temp, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
+  test.socket.matter:__expect_send({
+    mock_device_color_temp.id,
+    clusters.ColorControl.attributes.Options:write(mock_device_color_temp, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_color_temp:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
 end
 
 local function test_init_extended_color()
@@ -221,13 +230,21 @@ local function test_init_extended_color()
   end
   test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "added" })
-  test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "init" })
   test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_extended_color.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_extended_color, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
+  test.socket.matter:__expect_send({
+    mock_device_extended_color.id,
+    clusters.ColorControl.attributes.Options:write(mock_device_extended_color, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
   mock_device_extended_color:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
 end
 
 test.register_message_test(

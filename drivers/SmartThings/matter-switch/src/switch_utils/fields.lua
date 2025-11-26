@@ -36,7 +36,11 @@ SwitchFields.CURRENT_HUESAT_ATTR_MAX = 254
 
 SwitchFields.DEVICE_TYPE_ID = {
   AGGREGATOR = 0x000E,
+  BRIDGED_NODE = 0x0013,
+  CAMERA = 0x0142,
+  CHIME = 0x0146,
   DIMMABLE_PLUG_IN_UNIT = 0x010B,
+  DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
   GENERIC_SWITCH = 0x000F,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
@@ -177,24 +181,38 @@ SwitchFields.OPTIONS_OVERRIDE = 0x01
 
 
 SwitchFields.supported_capabilities = {
+  capabilities.audioMute,
+  capabilities.audioRecording,
+  capabilities.audioVolume,
   capabilities.battery,
   capabilities.batteryLevel,
   capabilities.button,
+  capabilities.cameraPrivacyMode,
+  capabilities.cameraViewportSettings,
   capabilities.colorControl,
   capabilities.colorTemperature,
   capabilities.energyMeter,
   capabilities.fanMode,
   capabilities.fanSpeedPercent,
+  capabilities.hdr,
   capabilities.illuminanceMeasurement,
+  capabilities.imageControl,
   capabilities.level,
+  capabilities.localMediaStorage,
+  capabilities.mechanicalPanTiltZoom,
   capabilities.motionSensor,
+  capabilities.nightVision,
   capabilities.powerMeter,
   capabilities.powerConsumptionReport,
   capabilities.relativeHumidityMeasurement,
+  capabilities.sounds,
   capabilities.switch,
   capabilities.switchLevel,
   capabilities.temperatureMeasurement,
   capabilities.valve,
+  capabilities.videoStreamSettings,
+  capabilities.webrtc,
+  capabilities.zoneManagement
 }
 
 SwitchFields.device_type_attribute_map = {

@@ -20,7 +20,8 @@ local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 
 local FRIENT_TEMP_HUMUDITY_SENSOR_FINGERPRINTS = {
   { mfr = "frient A/S", model = "HMSZB-110" },
-  { mfr = "frient A/S", model = "HMSZB-120" }
+  { mfr = "frient A/S", model = "HMSZB-120" },
+  { mfr = "frient A/S", model = "AQSZB-110" }
 }
 
 local function can_handle_frient_sensor(opts, driver, device)
@@ -72,6 +73,9 @@ local frient_sensor = {
     init = device_init,
     doConfigure = do_configure,
     infoChanged = info_changed
+  },
+  sub_drivers = {
+    require("frient-sensor/air-quality")
   },
   can_handle = can_handle_frient_sensor
 }
