@@ -26,37 +26,37 @@ local function refresh_handler(driver, device)
 end
 
 local function device_added(driver, device)
-    if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
-      device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
-      for _, component in pairs(device.profile.components) do
-        if component.id ~= "main" and component.id ~= LED_BAR_COMPONENT_NAME then
-          device:emit_component_event(
-            component,
-            capabilities.button.supportedButtonValues(
-              supported_button_values[component.id],
-              { visibility = { displayed = false } }
-            )
+  if device.network_type ~= st_device.NETWORK_TYPE_CHILD then
+    device:send(Association:Set({grouping_identifier = 1, node_ids = {driver.environment_info.hub_zwave_id}}))
+    for _, component in pairs(device.profile.components) do
+      if component.id ~= "main" and component.id ~= LED_BAR_COMPONENT_NAME then
+        device:emit_component_event(
+          component,
+          capabilities.button.supportedButtonValues(
+            supported_button_values[component.id],
+            { visibility = { displayed = false } }
           )
-          device:emit_component_event(
-            component,
-            capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
-          )
-        end
+        )
+        device:emit_component_event(
+          component,
+          capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
+        )
       end
-      refresh_handler(driver, device)
-      local ledBarComponent = device.profile.components[LED_BAR_COMPONENT_NAME]
-      if ledBarComponent ~= nil then
-        device:emit_component_event(ledBarComponent, capabilities.colorControl.hue(1))
-        device:emit_component_event(ledBarComponent, capabilities.colorControl.saturation(1))
-      end
-    else
-      device:emit_event(capabilities.colorControl.hue(1))
-      device:emit_event(capabilities.colorControl.saturation(1))
-      device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
-      device:emit_event(capabilities.switchLevel.level(100))
-      device:emit_event(capabilities.switch.switch("off"))
     end
+    refresh_handler(driver, device)
+    local ledBarComponent = device.profile.components[LED_BAR_COMPONENT_NAME]
+    if ledBarComponent ~= nil then
+      device:emit_component_event(ledBarComponent, capabilities.colorControl.hue(1))
+      device:emit_component_event(ledBarComponent, capabilities.colorControl.saturation(1))
+    end
+  else
+    device:emit_event(capabilities.colorControl.hue(1))
+    device:emit_event(capabilities.colorControl.saturation(1))
+    device:emit_event(capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} }))
+    device:emit_event(capabilities.switchLevel.level(100))
+    device:emit_event(capabilities.switch.switch("off"))
   end
+end
 
 local lzw31_sn = {
   NAME = "Inovelli LZW31-SN Z-Wave Dimmer",
