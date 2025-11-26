@@ -4,7 +4,6 @@
 local version = require "version"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
 local aqs_utils = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.utils"
 local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
 local attribute_handlers = require "sub_drivers.air_quality_sensor.air_quality_sensor_handlers.attribute_handlers"
@@ -33,11 +32,6 @@ function AirQualitySensorLifecycleHandlers.do_configure(driver, device)
   for _, cluster in ipairs(fields.units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
-  -- If a device only supports the airQualityHealthConcern capability, no profile update will end up occurring,
-  -- so this logic will never end up being run in the ensuing infoChanged event. This catches that edge case
-  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
-  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aqs_eps[1])
-
   if version.api >= 14 and version.rpc >= 8 then
     local modular_device_cfg = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.device_configuration"
     modular_device_cfg.match_profile(device)
@@ -52,11 +46,6 @@ function AirQualitySensorLifecycleHandlers.driver_switched(driver, device)
   for _, cluster in ipairs(fields.units_required) do
     device:send(cluster.attributes.MeasurementUnit:read(device))
   end
-  -- If a device only supports the airQualityHealthConcern capability, no profile update will end up occurring,
-  -- so this logic will never end up being run in the ensuing infoChanged event. This catches that edge case
-  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
-  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aqs_eps[1])
-
   if version.api >= 14 and version.rpc >= 8 then
     local modular_device_cfg = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.device_configuration"
     modular_device_cfg.match_profile(device)
@@ -72,6 +61,7 @@ function AirQualitySensorLifecycleHandlers.device_init(driver, device)
     -- library function to utilize optional capabilities
     device:extend_device("supports_capability_by_id", aqs_utils.supports_capability_by_id_modular)
   end
+  aqs_utils.set_supported_health_concern_values(device)
   device:subscribe()
 end
 
@@ -81,8 +71,8 @@ function AirQualitySensorLifecycleHandlers.info_changed(driver, device, event, a
       --re-up subscription with new capabilities using the modular supports_capability override
        device:extend_device("supports_capability_by_id", aqs_utils.supports_capability_by_id_modular)
     end
-    device:subscribe()
     aqs_utils.set_supported_health_concern_values(device)
+    device:subscribe()
   end
 end
 

@@ -40,47 +40,51 @@ function AirQualitySensorUtils.supports_capability_by_id_modular(device, capabil
   return false
 end
 
-function AirQualitySensorUtils.set_supported_health_concern_values_helper(device, setter_function, cluster, cluster_ep)
-  -- read_datatype_value works since all the healthConcern capabilities' datatypes are equivalent to the one in airQualityHealthConcern
-  local read_datatype_value = capabilities.airQualityHealthConcern.airQualityHealthConcern
-  local supported_values = {read_datatype_value.unknown.NAME, read_datatype_value.good.NAME, read_datatype_value.unhealthy.NAME}
-  if cluster == clusters.AirQuality then
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.FAIR }) > 0 then
-      table.insert(supported_values, 3, read_datatype_value.moderate.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MODERATE }) > 0 then
-      table.insert(supported_values, 4, read_datatype_value.slightlyUnhealthy.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.VERY_POOR }) > 0 then
-      table.insert(supported_values, read_datatype_value.veryUnhealthy.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.EXTREMELY_POOR }) > 0 then
-      table.insert(supported_values, read_datatype_value.hazardous.NAME)
-    end
-  else -- ConcentrationMeasurement clusters
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MEDIUM_LEVEL }) > 0 then
-      table.insert(supported_values, 3, read_datatype_value.moderate.NAME)
-    end
-    if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.CRITICAL_LEVEL }) > 0 then
-      table.insert(supported_values, read_datatype_value.hazardous.NAME)
-    end
+local function get_supported_health_concern_values_for_air_quality(device)
+  local health_concern_datatype = capabilities.airQualityHealthConcern.airQualityHealthConcern
+  local supported_values = {health_concern_datatype.unknown.NAME, health_concern_datatype.good.NAME, health_concern_datatype.unhealthy.NAME}
+  if #embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID, { feature_bitmap = clusters.AirQuality.types.Feature.FAIR }) > 0 then
+    table.insert(supported_values, 3, health_concern_datatype.moderate.NAME)
   end
-  device:emit_event_for_endpoint(cluster_ep, setter_function(supported_values, { visibility = { displayed = false }}))
+  if #embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID, { feature_bitmap = clusters.AirQuality.types.Feature.MODERATE }) > 0 then
+    table.insert(supported_values, 4, health_concern_datatype.slightlyUnhealthy.NAME)
+  end
+  if #embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID, { feature_bitmap = clusters.AirQuality.types.Feature.VERY_POOR }) > 0 then
+    table.insert(supported_values, health_concern_datatype.veryUnhealthy.NAME)
+  end
+  if #embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID, { feature_bitmap = clusters.AirQuality.types.Feature.EXTREMELY_POOR }) > 0 then
+    table.insert(supported_values, health_concern_datatype.hazardous.NAME)
+  end
+  return supported_values
+end
+
+local function get_supported_health_concern_values_for_concentration_cluster(device, cluster)
+  -- note: health_concern_datatype is generic since all the healthConcern capabilities' datatypes are equivalent to those in airQualityHealthConcern
+  local health_concern_datatype = capabilities.airQualityHealthConcern.airQualityHealthConcern
+  local supported_values = {health_concern_datatype.unknown.NAME, health_concern_datatype.good.NAME, health_concern_datatype.unhealthy.NAME}
+  if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MEDIUM_LEVEL }) > 0 then
+    table.insert(supported_values, 3, health_concern_datatype.moderate.NAME)
+  end
+  if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.CRITICAL_LEVEL }) > 0 then
+    table.insert(supported_values, health_concern_datatype.hazardous.NAME)
+  end
+  return supported_values
 end
 
 function AirQualitySensorUtils.set_supported_health_concern_values(device)
-  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
-  AirQualitySensorUtils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aqs_eps[1])
+  -- handle AQ Health Concern, since this is a mandatory capability
+  local supported_aqs_values = get_supported_health_concern_values_for_air_quality(device)
+  local aqs_ep_ids = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
+  device:emit_event_for_endpoint(aqs_ep_ids[1], capabilities.airQualityHealthConcern.supportedAirQualityValues(supported_aqs_values, { visibility = { displayed = false }}))
 
-  for _, cap in ipairs(fields.CONCENTRATION_MEASUREMENT_PROFILE_ORDERING) do
-    local cap_id  = cap.ID
-    local cluster = fields.CONCENTRATION_MEASUREMENT_MAP[cap][2]
-    -- capability describes either a HealthConcern or Measurement/Sensor
-    if (cap_id:match("HealthConcern$")) then
-      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION }) or {}
-      if #attr_eps > 0 then
-        AirQualitySensorUtils.set_supported_health_concern_values_helper(device, fields.CONCENTRATION_MEASUREMENT_MAP[cap][3], cluster, attr_eps[1])
-      end
+  for _, capability in ipairs(fields.CONCENTRATION_MEASUREMENT_PROFILE_ORDERING) do
+    -- all of these capabilities are optional, and capabilities stored in this field are for either a HealthConcern or a Measurement/Sensor
+    if device:supports_capability_by_id(capability.ID) and capability.ID:match("HealthConcern$") then
+      local cluster_info = fields.CONCENTRATION_MEASUREMENT_MAP[capability][2]
+      local supported_values_setter = fields.CONCENTRATION_MEASUREMENT_MAP[capability][3]
+      local supported_values = get_supported_health_concern_values_for_concentration_cluster(device, cluster_info)
+      local cluster_ep_ids = embedded_cluster_utils.get_endpoints(device, cluster_info.ID, { feature_bitmap = cluster_info.types.Feature.LEVEL_INDICATION }) or {} -- cluster associated with the supported capability
+      device:emit_event_for_endpoint(cluster_ep_ids[1], supported_values_setter(supported_values, { visibility = { displayed = false }}))
     end
   end
 end

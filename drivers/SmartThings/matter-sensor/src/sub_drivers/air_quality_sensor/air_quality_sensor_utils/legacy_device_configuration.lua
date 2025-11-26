@@ -1,12 +1,10 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local sensor_utils = require "sensor_utils.utils"
 local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
 local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
-local aqs_utils = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.utils"
 
 local LegacyDeviceConfiguration = {}
 
@@ -20,7 +18,6 @@ function LegacyDeviceConfiguration.create_level_measurement_profile(device)
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
       if #attr_eps > 0 then
         level_name = level_name .. fields.CONCENTRATION_MEASUREMENT_MAP[cap][1]
-        aqs_utils.set_supported_health_concern_values_helper(device, fields.CONCENTRATION_MEASUREMENT_MAP[cap][3], cluster, attr_eps[1])
       end
     elseif (cap_id:match("Measurement$") or cap_id:match("Sensor$")) then
       local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.NUMERIC_MEASUREMENT })
@@ -38,8 +35,6 @@ function LegacyDeviceConfiguration.match_profile(device)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
   local profile_name = "aqs"
-  local aq_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
-  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aq_eps[1])
 
   if #temp_eps > 0 then
     profile_name = profile_name .. "-temp"
