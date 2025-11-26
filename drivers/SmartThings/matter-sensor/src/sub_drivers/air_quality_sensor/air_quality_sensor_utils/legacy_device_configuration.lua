@@ -17,7 +17,7 @@ function LegacyDeviceConfiguration.create_level_measurement_profile(device)
     local cluster = fields.CONCENTRATION_MEASUREMENT_MAP[cap][2]
     -- capability describes either a HealthConcern or Measurement/Sensor
     if (cap_id:match("HealthConcern$")) then
-      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION }) or {}
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
       if #attr_eps > 0 then
         level_name = level_name .. fields.CONCENTRATION_MEASUREMENT_MAP[cap][1]
         aqs_utils.set_supported_health_concern_values_helper(device, fields.CONCENTRATION_MEASUREMENT_MAP[cap][3], cluster, attr_eps[1])
@@ -38,8 +38,8 @@ function LegacyDeviceConfiguration.match_profile(device)
   local humidity_eps = embedded_cluster_utils.get_endpoints(device, clusters.RelativeHumidityMeasurement.ID)
 
   local profile_name = "aqs"
-  local aqs_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID) or {}
-  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aqs_eps[1])
+  local aq_eps = embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID)
+  aqs_utils.set_supported_health_concern_values_helper(device, capabilities.airQualityHealthConcern.supportedAirQualityValues, clusters.AirQuality, aq_eps[1])
 
   if #temp_eps > 0 then
     profile_name = profile_name .. "-temp"

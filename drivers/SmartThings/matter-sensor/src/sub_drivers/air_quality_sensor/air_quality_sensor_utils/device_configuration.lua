@@ -16,7 +16,7 @@ function DeviceConfiguration.supported_level_measurements(device)
     local cluster = fields.CONCENTRATION_MEASUREMENT_MAP[cap][2]
     -- capability describes either a HealthConcern or Measurement/Sensor
     if (cap_id:match("HealthConcern$")) then
-      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION }) or {}
+      local attr_eps = embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.LEVEL_INDICATION })
       if #attr_eps > 0 then
         table.insert(level_caps, cap_id)
       end
