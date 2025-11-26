@@ -42,9 +42,9 @@ end
 
 local function battery_level_handler(driver, device, value, _zb_rx)
   if type(value.value) == "number" then
-  local number = value.value/2
-  local integer_result = math.floor(number)
-  device:emit_event(capabilities.battery.battery(integer_result))
+    local number = value.value/2
+    local integer_result = math.floor(number)
+    device:emit_event(capabilities.battery.battery(integer_result))
   else
       log.error("Invalid battery level value received: " .. tostring(value.value))
   end
