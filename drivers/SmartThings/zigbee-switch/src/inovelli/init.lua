@@ -30,8 +30,6 @@ local base_preference_map = {
   parameter2 = {parameter_number = 2, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter3 = {parameter_number = 3, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter4 = {parameter_number = 4, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
-  parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
-  parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter15 = {parameter_number = 15, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter95 = {parameter_number = 95, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   parameter96 = {parameter_number = 96, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
@@ -41,12 +39,20 @@ local base_preference_map = {
 
 -- Model-specific overrides/additions
 local model_preference_overrides = {
+  ["VZM30-SN"] = {
+    parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
+    parameter22 = {parameter_number = 22, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+  },
   ["VZM31-SN"] = {
+    parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+    parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter11 = {parameter_number = 11, size = data_types.Boolean, cluster = PRIVATE_CLUSTER_ID},
     parameter17 = {parameter_number = 17, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter22 = {parameter_number = 22, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
   },
   ["VZM32-SN"] = {
+    parameter9 = {parameter_number = 9, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
+    parameter10 = {parameter_number = 10, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter34 = {parameter_number = 34, size = data_types.Uint8, cluster = PRIVATE_CLUSTER_ID},
     parameter101 = {parameter_number = 101, size = data_types.Int16, cluster = PRIVATE_CLUSTER_MMWAVE_ID},
     parameter102 = {parameter_number = 102, size = data_types.Int16, cluster = PRIVATE_CLUSTER_MMWAVE_ID},
@@ -126,9 +132,55 @@ local function scene_handler(driver, device, zb_rx)
   local capability_attribute = map_key_attribute_to_capability[bytes:byte(2)]
   local additional_fields = { state_change = true }
   local event = capability_attribute and capability_attribute(additional_fields) or nil
-  local comp = device.profile.components[button_to_component(button_number)]
+  local comp_name = button_to_component(button_number)
+  local comp = device.profile.components[comp_name]
   if comp ~= nil and event ~= nil then
-    device:emit_component_event(comp, event)
+    -- Check if the event is in the supportedButtonValues before emitting
+    -- This ensures backward compatibility with devices installed with previous driver versions
+    local expected_values = inovelli_common.supported_button_values[comp_name]
+    local supportedEvents = device:get_latest_state(
+      comp_name,
+      capabilities.button.ID,
+      capabilities.button.supportedButtonValues.NAME,
+      {capabilities.button.button.pushed.NAME} -- default fallback for older devices
+    )
+
+    -- Check if supportedButtonValues needs to be updated
+    -- This handles devices installed with previous driver versions that don't have
+    -- the updated supportedButtonValues attribute. If the current value only contains
+    -- "pushed" (the fallback), update it to the full list.
+    local needs_update = false
+    if expected_values then
+      -- Check if current supportedEvents is exactly the fallback (only "pushed")
+      -- This indicates the state was never set and we're using the fallback value
+      if #supportedEvents == 1 and supportedEvents[1] == capabilities.button.button.pushed.NAME then
+        needs_update = true
+      end
+
+      if needs_update then
+        device:emit_component_event(
+          comp,
+          capabilities.button.supportedButtonValues(
+            expected_values,
+            { visibility = { displayed = false } }
+          )
+        )
+        supportedEvents = expected_values -- Update local reference for event check
+      end
+    end
+
+    -- Check if the event is supported
+    local event_supported = false
+    for _, event_name in pairs(supportedEvents) do
+      if event.value.value == event_name then
+        event_supported = true
+        break
+      end
+    end
+
+    if event_supported then
+      device:emit_component_event(comp, event)
+    end
   end
 end
 
@@ -198,18 +250,6 @@ local function device_configure(driver, device)
   else
     device:configure()
   end
-end
-
-local function energy_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 100
-  device:emit_event(capabilities.energyMeter.energy({value = raw_value, unit = "kWh" }))
-end
-
-local function power_meter_handler(driver, device, value, zb_rx)
-  local raw_value = value.value
-  raw_value = raw_value / 10
-  device:emit_event(capabilities.powerMeter.power({value = raw_value, unit = "W" }))
 end
 
 local function huePercentToValue(value)
@@ -328,7 +368,7 @@ local function handle_resetEnergyMeter(self, device)
 end
 
 local inovelli = {
-  NAME = "inovelli combined handler",
+  NAME = "Inovelli Zigbee Switch",
   lifecycle_handlers = {
     doConfigure = device_configure,
     infoChanged = info_changed,
@@ -336,13 +376,6 @@ local inovelli = {
   },
   zigbee_handlers = {
     attr = {
-      [clusters.SimpleMetering.ID] = {
-        [clusters.SimpleMetering.attributes.InstantaneousDemand.ID] = power_meter_handler,
-        [clusters.SimpleMetering.attributes.CurrentSummationDelivered.ID] = energy_meter_handler
-      },
-      [clusters.ElectricalMeasurement.ID] = {
-        [clusters.ElectricalMeasurement.attributes.ActivePower.ID] = power_meter_handler
-      },
       [OccupancySensing.ID] = {
         [OccupancySensing.attributes.Occupancy.ID] = occupancy_attr_handler
       },
