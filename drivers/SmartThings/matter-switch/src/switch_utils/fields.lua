@@ -119,7 +119,7 @@ SwitchFields.vendor_overrides = {
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
   },
   [0x1209] = { -- Bosch
-    [0x3013] = {target_profile = "light-level-motion-illuminance-battery-temp"}
+    [0x3013] = {target_profile = "light-level-battery-illuminance-motion-temperature"}
   }
 }
 
