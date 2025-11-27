@@ -1,4 +1,4 @@
-name: light-level-motion-illuminance-battery-temp
+name: light-level-battery-illuminance-motion-temperature
 components:
   - id: main
     capabilities:
@@ -8,12 +8,6 @@ components:
         version: 1
       - id: illuminanceMeasurement
         version: 1
-      - id: battery
-        version: 1
-      - id: firmwareUpdate
-        version: 1
-      - id: refresh
-        version: 1
       - id: switch
         version: 1
       - id: switchLevel
@@ -22,6 +16,12 @@ components:
           values:
             - key: "level.value"
               range: [1, 100]
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
     categories:
       - name: MotionSensor
 preferences:

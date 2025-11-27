@@ -193,7 +193,7 @@ function DeviceConfiguration.match_profile(driver, device)
     if generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
     elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
-      updated_profile = "light-level-motion"
+      updated_profile = switch_utils.get_product_override_field(device, "target_profile") or "light-level-motion"
     elseif generic_profile("plug-binary") or generic_profile("plug-level") then
       if switch_utils.check_switch_category_vendor_overrides(device) then
         updated_profile = string.gsub(updated_profile, "plug", "switch")
