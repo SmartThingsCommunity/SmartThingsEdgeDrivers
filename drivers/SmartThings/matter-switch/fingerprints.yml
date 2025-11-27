@@ -186,7 +186,7 @@ matterManufacturer:
     deviceLabel: "Motion Detector II [+M]"
     vendorId: 0x1209
     productId: 0x3013
-    deviceProfileName:  light-level-motion-illuminance-battery-temp
+    deviceProfileName:  light-level-battery-illuminance-motion-temperature
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001

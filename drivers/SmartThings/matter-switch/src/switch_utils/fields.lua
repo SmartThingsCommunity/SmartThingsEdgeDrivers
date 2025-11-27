@@ -106,7 +106,7 @@ SwitchFields.vendor_overrides = {
     [0x8000] = { is_ikea_scroll = true }
   },
   [0x1209] = { -- Bosch
-    [0x3013] = {target_profile = "light-level-motion-illuminance-battery-temp"}
+    [0x3013] = {target_profile = "light-level-battery-illuminance-motion-temperature"}
   }
 }
 
