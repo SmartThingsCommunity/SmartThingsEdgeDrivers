@@ -4,5 +4,6 @@
 local lazy_load = require "lazy_load_subdriver"
 
 return {
-    lazy_load("inovelli-LED.inovelli-lzw31sn"),
+    lazy_load("inovelli.lzw31-sn"),
+    lazy_load("inovelli.vzw32-sn")
 }

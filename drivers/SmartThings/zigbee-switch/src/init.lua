@@ -66,6 +66,8 @@ local zigbee_switch_driver_template = {
     capabilities.energyMeter,
     capabilities.motionSensor,
     capabilities.illuminanceMeasurement,
+    capabilities.relativeHumidityMeasurement,
+    capabilities.temperatureMeasurement,
   },
   sub_drivers = {
     lazy_load_if_possible("non_zigbee_devices"),

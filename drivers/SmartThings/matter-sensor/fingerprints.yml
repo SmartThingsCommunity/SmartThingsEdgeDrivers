@@ -14,7 +14,7 @@ matterManufacturer:
     deviceLabel: Presence Multi-Sensor FP300
     vendorId: 0x115F
     productId: 0x2005
-    deviceProfileName: motion-illuminance-temperature-humidity-batteryLevel
+    deviceProfileName: presence-illuminance-temperature-humidity-battery
   #Bosch
   - id: 4617/12309
     deviceLabel: "Door/window contact II [M]"
@@ -128,6 +128,11 @@ matterManufacturer:
     vendorId: 0x1345
     productId: 0x4201
     deviceProfileName: motion-illuminance
+  - id: "4933/16898"
+    deviceLabel: Smart Presence Sensor (Thread)
+    vendorId: 0x1345
+    productId: 0x4202
+    deviceProfileName: motion-illuminance-battery
   # Neo
   - id: "4991/1122"
     deviceLabel: Door Sensor
