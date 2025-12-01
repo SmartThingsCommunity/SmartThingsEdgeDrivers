@@ -169,6 +169,16 @@ local function build_output_timing(device, child, suffix)
 	return to_deciseconds(on_pref), to_deciseconds(off_pref)
 end
 
+local function copy_table(source)
+	local result = {}
+	for key, value in pairs(source) do
+		result[key] = value
+	end
+	return result
+end
+
+local parent_preference_state = {}
+
 local mock_parent_device = test.mock_device.build_test_zigbee_device({
 	profile = t_utils.get_profile_definition("switch-4inputs-2outputs.yml"),
 	fingerprinted_endpoint_id = ZIGBEE_ENDPOINTS.INPUT_1,
@@ -253,6 +263,53 @@ local function reset_preferences()
 	mock_output_child_1.preferences.configOffWaitTime = 6
 	mock_output_child_2.preferences.configOnTime = 0
 	mock_output_child_2.preferences.configOffWaitTime = 0
+
+	parent_preference_state = copy_table(mock_parent_device.preferences)
+
+	local field_keys = {
+		"frient_io_native_70",
+		"frient_io_native_71",
+		"frient_io_native_72",
+		"frient_io_native_73",
+		"frient_io_native_74",
+		"frient_io_native_75",
+	}
+
+	for _, key in ipairs(field_keys) do
+		mock_parent_device:set_field(key, nil, { persist = true })
+	end
+
+	mock_output_child_1:set_field("frient_io_native_74", nil, { persist = true })
+	mock_output_child_2:set_field("frient_io_native_75", nil, { persist = true })
+end
+
+local function queue_child_info_changed(child, preferences)
+	local raw = rawget(child, "raw_st_data")
+	if raw and raw.preferences then
+		for key, value in pairs(preferences) do
+			raw.preferences[key] = value
+		end
+	end
+	test.socket.device_lifecycle:__queue_receive(child:generate_info_changed({ preferences = preferences }))
+end
+
+local function queue_parent_info_changed(preferences)
+	local full_preferences = copy_table(parent_preference_state)
+	for key, value in pairs(preferences) do
+		full_preferences[key] = value
+	end
+	parent_preference_state = copy_table(full_preferences)
+
+	local raw = rawget(mock_parent_device, "raw_st_data")
+	if raw and raw.preferences then
+		for key, value in pairs(full_preferences) do
+			raw.preferences[key] = value
+		end
+	end
+
+	test.socket.device_lifecycle:__queue_receive(
+		mock_parent_device:generate_info_changed({ preferences = full_preferences })
+	)
 end
 
 local function register_initial_config_expectations()
@@ -273,8 +330,7 @@ local function register_initial_config_expectations()
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_client_mfg_write(mock_parent_device, ZIGBEE_ENDPOINTS.OUTPUT_2, OFF_WAIT_ATTR, off2) })
 	end
 
-	-- Device init issues two identical writes per output (once during child discovery and once post child sync)
-	enqueue_output_timing_writes()
+	-- Device init issues one set of manufacturer-specific writes per output during startup
 	enqueue_output_timing_writes()
 
 	for _, endpoint in ipairs(INPUT_ENDPOINTS) do
@@ -286,10 +342,7 @@ local function register_initial_config_expectations()
 end
 
 local function expect_init_sequence()
-	register_initial_config_expectations()
-	test.socket.device_lifecycle:__queue_receive({ mock_parent_device.id, "init" })
-	test.socket.device_lifecycle:__queue_receive({ mock_output_child_1.id, "init" })
-	test.socket.device_lifecycle:__queue_receive({ mock_output_child_2.id, "init" })
+	-- Initialization expectations are registered during test setup; lifecycle events fire as part of driver startup.
 end
 
 local function expect_switch_registration(device)
@@ -303,6 +356,7 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
 	reset_preferences()
+	register_initial_config_expectations()
 	test.mock_device.add_test_device(mock_parent_device)
 	test.mock_device.add_test_device(mock_output_child_1)
 	test.mock_device.add_test_device(mock_output_child_2)
@@ -339,9 +393,15 @@ test.register_coroutine_test(
 			BasicInput.attributes.PresentValue:build_test_attr_report(mock_parent_device, true):from_endpoint(ZIGBEE_ENDPOINTS.INPUT_3),
 		})
 		test.socket.capability:__expect_send(mock_parent_device:generate_test_message("input3", Switch.switch.on()))
-		expect_switch_registration(mock_parent_device)
 
 		test.wait_for_events()
+
+		local child1_native = mock_output_child_1:get_field("frient_io_native_74")
+		assert(child1_native, "expected Output 1 child to register native switch handler")
+		local child2_native = mock_output_child_2:get_field("frient_io_native_75")
+		assert(child2_native, "expected Output 2 child to register native switch handler")
+		local parent_native = mock_parent_device:get_field("frient_io_native_72")
+		assert(parent_native, "expected parent device to register native switch handler for input 3")
 	end
 )
 
@@ -356,7 +416,6 @@ test.register_coroutine_test(
 		local on_response = build_default_response_msg(mock_parent_device, ZIGBEE_ENDPOINTS.OUTPUT_1, OnOff.server.commands.On.ID)
 		test.socket.zigbee:__queue_receive({ mock_parent_device.id, on_response })
 		test.socket.capability:__expect_send(mock_output_child_1:generate_test_message("main", Switch.switch.on()))
-		expect_switch_registration(mock_output_child_1)
 
 		local timed_response = build_default_response_msg(mock_parent_device, ZIGBEE_ENDPOINTS.OUTPUT_1, OnOff.server.commands.OnWithTimedOff.ID)
 		test.socket.zigbee:__queue_receive({ mock_parent_device.id, timed_response })
@@ -446,11 +505,7 @@ test.register_coroutine_test(
 		test.wait_for_events()
 		test.socket.zigbee:__set_channel_ordering("relaxed")
 
-		mock_output_child_1.preferences.configOnTime = 12
-		mock_output_child_1.preferences.configOffWaitTime = 13
-		test.socket.device_lifecycle:__queue_receive(
-			mock_output_child_1:generate_info_changed({ preferences = { configOnTime = 12, configOffWaitTime = 13 } })
-		)
+		queue_child_info_changed(mock_output_child_1, { configOnTime = 12, configOffWaitTime = 13 })
 		test.socket.zigbee:__expect_send({
 			mock_parent_device.id,
 			build_client_mfg_write(mock_parent_device, ZIGBEE_ENDPOINTS.OUTPUT_1, ON_TIME_ATTR, to_deciseconds(12)),
@@ -471,18 +526,11 @@ test.register_coroutine_test(
 		test.wait_for_events()
 		test.socket.zigbee:__set_channel_ordering("relaxed")
 
-		mock_parent_device.preferences.reversePolarity1 = true
-		mock_parent_device.preferences.controlOutput11 = true
-		mock_parent_device.preferences.controlOutput21 = true
-		test.socket.device_lifecycle:__queue_receive(
-			mock_parent_device:generate_info_changed({
-				preferences = {
-					reversePolarity1 = true,
-					controlOutput11 = true,
-					controlOutput21 = true,
-				},
-			})
-		)
+		queue_parent_info_changed({
+			reversePolarity1 = true,
+			controlOutput11 = true,
+			controlOutput21 = true,
+		})
 		test.socket.zigbee:__expect_send({
 			mock_parent_device.id,
 			build_basic_input_polarity_write(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_1, true),
@@ -490,32 +538,27 @@ test.register_coroutine_test(
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_bind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_1, ZIGBEE_ENDPOINTS.OUTPUT_1) })
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_bind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_1, ZIGBEE_ENDPOINTS.OUTPUT_2) })
 
-		mock_parent_device.preferences.controlOutput11 = false
-		test.socket.device_lifecycle:__queue_receive(
-			mock_parent_device:generate_info_changed({ preferences = { controlOutput11 = false } })
-		)
+		queue_parent_info_changed({
+			reversePolarity1 = true,
+			controlOutput11 = false,
+			controlOutput21 = true,
+		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_unbind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_1, ZIGBEE_ENDPOINTS.OUTPUT_1) })
 
-		mock_parent_device.preferences.reversePolarity3 = true
-		mock_parent_device.preferences.controlOutput23 = true
-		test.socket.device_lifecycle:__queue_receive(
-			mock_parent_device:generate_info_changed({
-				preferences = {
-					reversePolarity3 = true,
-					controlOutput23 = true,
-				},
-			})
-		)
+		queue_parent_info_changed({
+			reversePolarity3 = true,
+			controlOutput23 = true,
+		})
 		test.socket.zigbee:__expect_send({
 			mock_parent_device.id,
 			build_basic_input_polarity_write(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_3, true),
 		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_bind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_3, ZIGBEE_ENDPOINTS.OUTPUT_2) })
 
-		mock_parent_device.preferences.controlOutput23 = false
-		test.socket.device_lifecycle:__queue_receive(
-			mock_parent_device:generate_info_changed({ preferences = { controlOutput23 = false } })
-		)
+		queue_parent_info_changed({
+			reversePolarity3 = true,
+			controlOutput23 = false,
+		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_unbind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_3, ZIGBEE_ENDPOINTS.OUTPUT_2) })
 
 		test.wait_for_events()
