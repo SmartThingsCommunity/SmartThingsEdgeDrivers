@@ -285,18 +285,28 @@ function utils.matter_handler(driver, device, response_block)
   device.log.info(string.format("Fallback handler for %s", response_block))
 end
 
--- get a list of endpoints for a specified device type.
+-- get a list of endpoints for a specified device type or list of device types
 function utils.get_endpoints_by_device_type(device, device_type_id, opts)
   opts = opts or {}
   local dt_eps = {}
+
+  local function insert_ep(ep)
+    if opts.with_info then
+      table.insert(dt_eps, ep)
+    else
+      table.insert(dt_eps, ep.endpoint_id)
+    end
+  end
+
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == device_type_id then
-        if opts.with_info then
-          table.insert(dt_eps, ep)
-        else
-          table.insert(dt_eps, ep.endpoint_id)
+      if type(device_type_id) == "table" then
+        if utils.tbl_contains(device_type_id, dt.device_type_id) then
+          insert_ep(ep)
+          break
         end
+      elseif dt.device_type_id == device_type_id then
+        insert_ep(ep)
         break
       end
     end
