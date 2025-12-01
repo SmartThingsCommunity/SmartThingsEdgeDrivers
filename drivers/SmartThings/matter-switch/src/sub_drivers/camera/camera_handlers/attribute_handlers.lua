@@ -396,15 +396,13 @@ end
 function CameraAttributeHandlers.camera_av_stream_management_attribute_list_handler(driver, device, ib, response)
   if not ib.data.elements then return end
   local status_light_enabled_present, status_light_brightness_present = false, false
-  local attribute_ids, capability_ids = {}, {}
+  local attribute_ids = {}
   for _, attr in ipairs(ib.data.elements) do
     if attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID then
       status_light_enabled_present = true
-      table.insert(capability_ids, capabilities.switch.ID)
       table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
     elseif attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID then
       status_light_brightness_present = true
-      table.insert(capability_ids, capabilities.mode.ID)
       table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
     end
   end
@@ -413,7 +411,6 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
     endpoint_id = ib.endpoint_id,
     cluster_id = ib.cluster_id,
     attribute_ids = attribute_ids,
-    capability_ids = capability_ids
   }
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
   camera_cfg.match_profile(device, status_light_enabled_present, status_light_brightness_present)

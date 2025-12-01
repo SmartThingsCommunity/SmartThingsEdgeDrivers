@@ -52,7 +52,7 @@ local function device_configure(driver, device)
 end
 
 local vzm32_sn = {
-  NAME = "inovelli vzm32-sn device-specific",
+  NAME = "Inovelli VZM32-SN mmWave Dimmer",
   can_handle = require("inovelli.vzm32-sn.can_handle"),
   lifecycle_handlers = {
     added = device_added,
