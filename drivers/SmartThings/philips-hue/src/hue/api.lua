@@ -132,7 +132,7 @@ function PhilipsHueApi.new_bridge_manager(base_url, api_key, socket_builder)
     true
   ))
   local control_tx, control_rx = channel.new()
-  control_rx:settimeout(30)
+  control_rx:settimeout(45)
   local self = setmetatable(
     {
       headers = { [APPLICATION_KEY_HEADER] = api_key or "" },
@@ -217,7 +217,7 @@ end
 ---@return ...
 local function do_get(instance, path)
   local reply_tx, reply_rx = channel.new()
-  reply_rx:settimeout(10)
+  reply_rx:settimeout(45)
   local msg = ControlMessageBuilders.Get(path, reply_tx);
   try_send(instance, msg)
   local recv, err = reply_rx:receive()
@@ -236,7 +236,7 @@ end
 ---@return ...
 local function do_put(instance, path, payload)
   local reply_tx, reply_rx = channel.new()
-  reply_rx:settimeout(10)
+  reply_rx:settimeout(45)
   local msg = ControlMessageBuilders.Put(path, payload, reply_tx);
   try_send(instance, msg)
   local recv, err = reply_rx:receive()
@@ -255,7 +255,7 @@ end
 ---@return ...
 function PhilipsHueApi.get_bridge_info(bridge_ip, socket_builder)
   local tx, rx = channel.new()
-  rx:settimeout(10)
+  rx:settimeout(45)
   cosock.spawn(
     function()
       tx:send(table.pack(process_rest_response(RestClient.one_shot_get("https://" .. bridge_ip .. "/api/config", nil,
@@ -278,7 +278,7 @@ end
 ---@return ...
 function PhilipsHueApi.request_api_key(bridge_ip, socket_builder)
   local tx, rx = channel.new()
-  rx:settimeout(10)
+  rx:settimeout(45)
   cosock.spawn(
     function()
       local body = json.encode { devicetype = "smartthings_edge_driver#" .. bridge_ip, generateclientkey = true }

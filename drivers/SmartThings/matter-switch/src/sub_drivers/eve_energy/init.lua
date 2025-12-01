@@ -8,9 +8,11 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
-local utils = require "st.utils"
+local st_utils = require "st.utils"
 local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
+local switch_utils = require "switch_utils.utils"
+local fields = require "switch_utils.fields"
 
 local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
@@ -37,9 +39,11 @@ local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in s
 -------------------------------------------------------------------------------------
 
 local function is_eve_energy_products(opts, driver, device)
-  -- this sub driver does not support child devices
+  -- this sub driver does NOT support child devices, and ONLY supports Eve devices
+  -- that do NOT support the Electrical Sensor device type
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-      device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
+      device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID and
+      #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR) == 0 then
     return true
   end
 
@@ -326,7 +330,7 @@ end
 local function watt_accumulated_attr_handler(driver, device, ib, zb_rx)
   if ib.data.value then
     local totalConsumptionRawValue = ib.data.value
-    local totalConsumptionWh = utils.round(1000 * totalConsumptionRawValue)
+    local totalConsumptionWh = st_utils.round(1000 * totalConsumptionRawValue)
     updateEnergyMeter(device, totalConsumptionWh)
     report_power_consumption_to_st_energy(device, totalConsumptionWh)
   end
