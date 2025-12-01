@@ -307,7 +307,7 @@ local function test_init()
 	test.mock_device.add_test_device(mock_output_child_1)
 	test.mock_device.add_test_device(mock_output_child_2)
 	zigbee_test_utils.init_noop_health_check_timer()
-	register_initial_config_expectations()
+	--register_initial_config_expectations()
 end
 
 test.set_test_init_function(test_init)

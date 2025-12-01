@@ -6,7 +6,7 @@ components:
         version: 1
 preferences:
   - title: "Output: On Time"
-    name: configOnTime1
+    name: configOnTime
     required: true
     preferenceType: integer
     definition:
@@ -14,7 +14,7 @@ preferences:
       maximum: 6553
       default: 0
   - title: "Output: Off Wait Time"
-    name: configOffWaitTime1
+    name: configOffWaitTime
     required: true
     preferenceType: integer
     definition:

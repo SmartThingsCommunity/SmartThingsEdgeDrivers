@@ -207,6 +207,7 @@ local function register_native_switch_handler(device, endpoint)
     if info ~= nil then
         local child = device:get_child_by_parent_assigned_key(info.key)
         if child and not child:get_field(field_key) then
+            log.debug(string.format("register_native_switch_handler: registering native attr handler for child %s on endpoint 0x%02X", child.id, endpoint))
             child:register_native_capability_attr_handler("switch", "switch")
             child:set_field(field_key, true)
         end
@@ -214,6 +215,7 @@ local function register_native_switch_handler(device, endpoint)
     end
 
     if not device:get_field(field_key) then
+        log.debug(string.format("register_native_switch_handler: registering native attr handler for parent %s on endpoint 0x%02X", device.id, endpoint))
         device:register_native_capability_attr_handler("switch", "switch")
         device:set_field(field_key, true)
     end
