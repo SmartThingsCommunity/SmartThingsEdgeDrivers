@@ -131,6 +131,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1001
     deviceProfileName: light-color-level-fan
+  - id: "5014/4214"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1076
+    deviceProfileName: light-color-level
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
