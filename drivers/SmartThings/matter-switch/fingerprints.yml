@@ -2865,6 +2865,26 @@ matterManufacturer:
     vendorId: 0x100b
     productId: 0x228F
     deviceProfileName: light-color-level-2200K-6500K
+  - id: "4107/8954"
+    deviceLabel: WiZ Gradient Light Bars
+    vendorId: 0x100B
+    productId: 0x22FA
+    deviceProfileName: light-color-level
+  - id: "4107/8953"
+    deviceLabel: WiZ Gradient Light Bars
+    vendorId: 0x100B
+    productId: 0x22F9
+    deviceProfileName: light-color-level
+  - id: "4107/8949"
+    deviceLabel: WiZ Gradient Floor lamp
+    vendorId: 0x100B
+    productId: 0x22F5
+    deviceProfileName: light-color-level
+  - id: "4107/8948"
+    deviceLabel: WiZ Gradient Floor lamp
+    vendorId: 0x100B
+    productId: 0x22F4
+    deviceProfileName: light-color-level
 #Zemismart
   - id: "5020/61154"
     deviceLabel: Zemismart Inline Module
