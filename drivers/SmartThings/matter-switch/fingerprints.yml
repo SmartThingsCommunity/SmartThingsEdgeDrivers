@@ -940,6 +940,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x092F
     deviceProfileName: light-color-level
+  - id: "4489/2715"
+    deviceLabel: SMART MAT B40 TW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0A9B
+    deviceProfileName: light-level-colorTemperature
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
