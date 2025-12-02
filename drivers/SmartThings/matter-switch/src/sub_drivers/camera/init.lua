@@ -42,7 +42,7 @@ end
 function CameraLifecycleHandlers.info_changed(driver, device, event, args)
   if camera_utils.profile_changed(device.profile.components, args.old_st_store.profile.components) then
     camera_cfg.initialize_camera_capabilities(device)
-    if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
+    if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.DOORBELL) > 0 then
       button_cfg.configure_buttons(device)
     end
     device:subscribe()
