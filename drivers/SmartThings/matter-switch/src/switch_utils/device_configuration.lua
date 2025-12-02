@@ -178,9 +178,18 @@ function DeviceConfiguration.match_profile(driver, device)
   end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
+    local fan_control_supported = #device:get_endpoints(clusters.FanControl.ID) > 0
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
-    if generic_profile("plug-binary") or generic_profile("plug-level") then
+    if (generic_profile("plug-binary") or generic_profile("light-binary")) and fan_control_supported then
+      updated_profile = "switch-fan"
+    elseif generic_profile("light-level") and fan_control_supported then
+      updated_profile = "light-level-fan"
+    elseif generic_profile("light-color-level") and fan_control_supported then
+      updated_profile = "light-color-level-fan"
+    elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
+      updated_profile = "light-level-motion"
+    elseif generic_profile("plug-binary") or generic_profile("plug-level") then
       if switch_utils.check_switch_category_vendor_overrides(device) then
         updated_profile = string.gsub(updated_profile, "plug", "switch")
       else
@@ -189,10 +198,6 @@ function DeviceConfiguration.match_profile(driver, device)
         if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
         if electrical_tags ~= "" then updated_profile = string.gsub(updated_profile, "-binary", "") .. electrical_tags end
       end
-    elseif generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
-      updated_profile = "light-color-level-fan"
-    elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
-      updated_profile = "light-level-motion"
     elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
