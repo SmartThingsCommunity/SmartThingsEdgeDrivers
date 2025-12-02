@@ -12,7 +12,6 @@ copyright_header="""-- Copyright $year SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0"""
 
 # Get changed files that are Added or Modified
-# files=$(find drivers/SmartThings/zigbee-motion-sensor/src/ -type f -follow -print)
 files=$(git diff --staged --name-only --diff-filter=AM)
 
 fail=0
