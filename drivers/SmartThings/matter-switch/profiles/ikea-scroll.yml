@@ -1,19 +1,15 @@
 name: ikea-scroll
 components:
   - id: main
+    label: Group 1
     capabilities:
+      - id: button
+        version: 1
       - id: battery
         version: 1
       - id: firmwareUpdate
         version: 1
       - id: refresh
-        version: 1
-    categories:
-    - name: RemoteController
-  - id: group1
-    label: Group 1
-    capabilities:
-      - id: button
         version: 1
     categories:
     - name: RemoteController
