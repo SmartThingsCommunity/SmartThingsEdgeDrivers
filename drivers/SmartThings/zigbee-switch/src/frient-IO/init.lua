@@ -42,10 +42,6 @@ local COMPONENTS = {
     OUTPUT_2 = "output2"
 }
 
-local ZIGBEE_BRIDGE_FINGERPRINTS = {
-    { manufacturer = "frient A/S", model = "IOMZB-110" }
-}
-
 local ZIGBEE_ENDPOINTS = {
     INPUT_1 = 0x70,
     INPUT_2 = 0x71,
@@ -594,14 +590,7 @@ local frient_bridge_handler = {
         doConfigure = configure_handler,
         infoChanged = info_changed_handler
     },
-    can_handle = function(opts, driver, device, ...)
-        for _, fingerprint in ipairs(ZIGBEE_BRIDGE_FINGERPRINTS) do
-            if device:get_manufacturer() == fingerprint.manufacturer and device:get_model() == fingerprint.model then
-                local subdriver = require("frient-IO")
-                return true, subdriver
-            end
-        end
-    end
+    can_handle = require("frient-IO.can_handle"),
 }
 
 return frient_bridge_handler
