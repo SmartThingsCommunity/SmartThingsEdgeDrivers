@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 #
+# Copyright 2025 SmartThings, Inc.
+# Licensed under the Apache License, Version 2.0
+#
 # pre-commit
 #
 # - Copy to .git/hooks/pre-commit
 # - Ensure executable
 
 set -e
-
-year=$(date +%Y)
-copyright_header="""-- Copyright $year SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0"""
 
 # Get changed files that are Added or Modified
 files=$(git diff --staged --name-only --diff-filter=AM)
@@ -22,10 +21,9 @@ for file in $files; do
             # Skip if not a regular file
             [ -f "$file" ] || continue
 
-            # Check if file is non-empty and does NOT contain the current year copyright header
-            header_text=$(head -n 3 $file)
-            if [ -s "$file" ] && [[ "$header_text" != "$copyright_header" ]]; then
-                echo "$file: Incorrect copyright header"
+            # Check if file is non-empty and does NOT contain the copyright header
+            if [ -s "$file" ] && [[ ! $(grep $file -P -e "-{2,} Copyright \d{4} SmartThings") ]]; then
+                echo "$file: SmartThings Copyright missing from file"
                 fail=1
             fi
 
