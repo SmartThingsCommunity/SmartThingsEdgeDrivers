@@ -537,6 +537,7 @@ test.register_coroutine_test(
 		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_bind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_1, ZIGBEE_ENDPOINTS.OUTPUT_1) })
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_bind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_1, ZIGBEE_ENDPOINTS.OUTPUT_2) })
+		test.wait_for_events()
 
 		queue_parent_info_changed({
 			reversePolarity1 = true,
@@ -544,6 +545,7 @@ test.register_coroutine_test(
 			controlOutput21 = true,
 		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_unbind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_1, ZIGBEE_ENDPOINTS.OUTPUT_1) })
+		test.wait_for_events()
 
 		queue_parent_info_changed({
 			reversePolarity3 = true,
@@ -554,13 +556,13 @@ test.register_coroutine_test(
 			build_basic_input_polarity_write(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_3, true),
 		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_bind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_3, ZIGBEE_ENDPOINTS.OUTPUT_2) })
+		test.wait_for_events()
 
 		queue_parent_info_changed({
 			reversePolarity3 = true,
 			controlOutput23 = false,
 		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_unbind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_3, ZIGBEE_ENDPOINTS.OUTPUT_2) })
-
 		test.wait_for_events()
 	end
 )
