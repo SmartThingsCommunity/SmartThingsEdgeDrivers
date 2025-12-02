@@ -12,9 +12,6 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local log   = require "log"
-local utils = require "st.utils"
-
 -- Zigbee Spec Utils
 local constants = require "st.zigbee.constants"
 local messages = require "st.zigbee.messages"
@@ -24,13 +21,11 @@ local unbind_request = require "frient-IO.unbind_request"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local zcl_global_commands = require "st.zigbee.zcl.global_commands"
-local switch_defaults = require "st.zigbee.defaults.switch_defaults"
 local Status = require "st.zigbee.generated.types.ZclStatus"
 
 local clusters = require "st.zigbee.zcl.clusters"
 local BasicInput = clusters.BasicInput
 local OnOff = clusters.OnOff
-local OnOffControl = OnOff.types.OnOffControl
 -- Capabilities
 local capabilities = require "st.capabilities"
 local Switch = capabilities.switch
@@ -207,7 +202,6 @@ local function register_native_switch_handler(device, endpoint)
     if info ~= nil then
         local child = device:get_child_by_parent_assigned_key(info.key)
         if child and not child:get_field(field_key) then
-            log.debug(string.format("register_native_switch_handler: registering native attr handler for child %s on endpoint 0x%02X", child.id, endpoint))
             child:register_native_capability_attr_handler("switch", "switch")
             child:set_field(field_key, true)
         end
@@ -215,7 +209,6 @@ local function register_native_switch_handler(device, endpoint)
     end
 
     if not device:get_field(field_key) then
-        log.debug(string.format("register_native_switch_handler: registering native attr handler for parent %s on endpoint 0x%02X", device.id, endpoint))
         device:register_native_capability_attr_handler("switch", "switch")
         device:set_field(field_key, true)
     end
@@ -529,7 +522,6 @@ local function switch_on_handler(driver, device, command)
     end
     num = command.component:match("input(%d)")
     if num then
-        log.debug("switch_on_handler", utils.stringify_table(command, "command", false))
         local component = device.profile.components[command.component]
         local value = device:get_latest_state(command.component, Switch.ID, Switch.switch.NAME)
         if value == "on" then
@@ -559,7 +551,6 @@ local function switch_off_handler(driver, device, command)
     end
     num = command.component:match("input(%d)")
     if num then
-        log.debug("switch_on_handler", utils.stringify_table(command, "command", false))
         local component = device.profile.components[command.component]
         local value = device:get_latest_state(command.component, Switch.ID, Switch.switch.NAME)
         if value == "on" then
