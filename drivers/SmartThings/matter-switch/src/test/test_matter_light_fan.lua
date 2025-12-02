@@ -112,8 +112,6 @@ local CLUSTER_SUBSCRIBE_LIST ={
 
 local SWITCH_CLUSTER_SUBSCRIBE_LIST ={
   clusters.OnOff.attributes.OnOff,
-  clusters.FanControl.attributes.FanModeSequence,
-  clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.PercentCurrent,
 }
 
