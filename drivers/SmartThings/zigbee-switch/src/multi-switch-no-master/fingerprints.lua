@@ -42,5 +42,6 @@ return {
   { model = "E220-KR3N0Z0-HA", children = 2 },
   { model = "E220-KR4N0Z0-HA", children = 3 },
   { model = "E220-KR5N0Z0-HA", children = 4 },
-  { model = "E220-KR6N0Z0-HA", children = 5 }
+  { model = "E220-KR6N0Z0-HA", children = 5 },
+  { mfr = "JNL", model = "Y-K003-001", children = 2 }
 }

@@ -1,11 +1,13 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local MatterDriver = require "st.matter.driver"
 local fields = require "switch_utils.fields"
 local st_utils = require "st.utils"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 local log = require "log"
+local version = require "version"
 
 local utils = {}
 
@@ -91,23 +93,33 @@ function utils.device_type_supports_button_switch_combination(device, endpoint_i
   return utils.tbl_contains(dimmable_eps, endpoint_id)
 end
 
--- Some devices report multiple device types which are a subset of
--- a superset device type (Ex. Dimmable Light is a superset of On/Off Light).
--- We should map to the largest superset device type supported.
--- This can be done by matching to the device type with the highest ID
+--- Some devices report multiple device types which are a subset of a superset
+--- device type (Ex. Dimmable Light is a superset of On/Off Light). We should map
+--- to the largest superset device type supported.
+--- This can be done by matching to the device type with the highest ID
+--- note: that superset device types have a higher ID than those of their subset
+--- is heuristic and could therefore break in the future, were the spec expanded
 function utils.find_max_subset_device_type(ep, device_type_set)
   if ep.endpoint_id == 0 then return end -- EP-scoped device types not permitted on Root Node
-  local primary_dt_id = ep.device_types[1] and ep.device_types[1].device_type_id
-  if utils.tbl_contains(device_type_set, primary_dt_id) then
-    for _, dt in ipairs(ep.device_types) do
-      -- only device types in the subset should be considered.
-      if utils.tbl_contains(device_type_set, dt.device_type_id) then
-        primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
-      end
+  local primary_dt_id = -1
+  for _, dt in ipairs(ep.device_types) do
+    -- only device types in the subset should be considered.
+    if utils.tbl_contains(device_type_set, dt.device_type_id) then
+      primary_dt_id = math.max(primary_dt_id, dt.device_type_id)
     end
-    return primary_dt_id
   end
-  return nil
+  return (primary_dt_id > 0) and primary_dt_id or nil
+end
+
+--- Lights and Switches are Device Types that have Superset-style functionality
+--- For all other device types, this function should be used to identify the primary device type
+function utils.find_primary_device_type(ep_info)
+  for _, dt in ipairs(ep_info.device_types) do
+    if dt.device_type_id ~= fields.DEVICE_TYPE_ID.BRIDGED_NODE then
+      -- if this is not a bridged node, return the first device type seen
+      return dt.device_type_id
+    end
+  end
 end
 
 --- find_default_endpoint is a helper function to handle situations where
@@ -166,14 +178,51 @@ function utils.component_to_endpoint(device, component)
   return utils.find_default_endpoint(device)
 end
 
-function utils.endpoint_to_component(device, ep)
-  local map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  for component, endpoint in pairs(map) do
-    if endpoint == ep then
+--- An extension of the library function endpoint_to_component, used to support a mapping scheme
+--- that optionally includes cluster and attribute ids so that multiple components can be mapped
+--- to a single endpoint.
+---
+--- @param device any a Matter device object
+--- @param ep_info number|table either an ep_id or a table { endpoint_id, optional(cluster_id), optional(attribute_id) }
+--- where cluster_id is required for an attribute_id to be handled.
+--- @return string component
+function utils.endpoint_to_component(device, ep_info)
+  if type(ep_info) == "number" then
+    ep_info = { endpoint_id = ep_info }
+  end
+  for component, map_info in pairs(device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do
+    if type(map_info) == "number" and map_info == ep_info.endpoint_id then
       return component
+    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id
+      and (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
+      and (not map_info.attribute_ids or utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))) then
+        return component
     end
   end
   return "main"
+end
+
+--- An extension of the library function emit_event_for_endpoint, used to support devices with
+--- multiple components mapped to the same endpoint. This is handled by extending the parameters to optionally
+--- include a cluster id and attribute id for more specific routing
+---
+--- @param device any a Matter device object
+--- @param ep_info number|table endpoint_id or an ib (the ib data includes endpoint_id, cluster_id, and attribute_id fields)
+--- @param event any a capability event object
+function utils.emit_event_for_endpoint(device, ep_info, event)
+  if type(ep_info) == "number" then
+    ep_info = { endpoint_id = ep_info }
+  end
+  if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
+    local child = utils.find_child(device, ep_info.endpoint_id)
+    if child ~= nil then
+      child:emit_event(event)
+      return
+    end
+  end
+  local comp_id = utils.endpoint_to_component(device, ep_info)
+  local comp = device.profile.components[comp_id]
+  device:emit_component_event(comp, event)
 end
 
 function utils.find_child(parent, ep_id)
@@ -185,6 +234,22 @@ function utils.get_endpoint_info(device, endpoint_id)
     if ep.endpoint_id == endpoint_id then return ep end
   end
   return {}
+end
+
+function utils.ep_supports_cluster(ep_info, cluster_id, opts)
+  opts = opts or {}
+  local clus_has_features = function(cluster, checked_feature)
+    return (cluster.feature_map & checked_feature) == checked_feature
+  end
+  for _, cluster in ipairs(ep_info.clusters) do
+    if ((cluster.cluster_id == cluster_id)
+      and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
+      and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
+      or (opts.cluster_type == cluster.cluster_type))
+      or (cluster_id == nil)) then
+        return true
+    end
+  end
 end
 
 -- Fallback handler for responses that dont have their own handler
@@ -265,6 +330,12 @@ function utils.report_power_consumption_to_st_energy(device, latest_total_import
       deltaEnergy = energy_delta_wh,
       energy = latest_total_imported_energy_wh
     }))
+  end
+end
+
+function utils.lazy_load(sub_driver_name)
+  if version.api >= 16 then
+    return MatterDriver.lazy_load_sub_driver_v2(sub_driver_name)
   end
 end
 

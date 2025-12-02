@@ -25,7 +25,7 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   -- per spec, the Switch device types support OnOff as CLIENT, though some vendors break spec and support it as SERVER.
   local primary_dt_id = switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.LIGHT)
     or switch_utils.find_max_subset_device_type(ep_info, fields.DEVICE_TYPE_ID.SWITCH)
-    or ep_info.device_types[1] and ep_info.device_types[1].device_type_id
+    or switch_utils.find_primary_device_type(ep_info)
 
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
@@ -70,6 +70,21 @@ function SwitchDeviceConfiguration.create_child_devices(driver, device, server_o
   -- Persist so that the find_child function is always set on each driver init.
   device:set_field(fields.IS_PARENT_CHILD_DEVICE, true, {persist = true})
   device:set_find_child(switch_utils.find_child)
+end
+
+-- Per the spec, these attributes are "meant to be changed only during commissioning."
+function SwitchDeviceConfiguration.set_device_control_options(device)
+  for _, ep_info in ipairs(device.endpoints) do
+    -- before the Matter 1.3 lua libs update (HUB FW 54), OptionsBitmap was defined as LevelControlOptions
+    if switch_utils.ep_supports_cluster(ep_info, clusters.LevelControl.ID) then
+      device:send(clusters.LevelControl.attributes.Options:write(device, ep_info.endpoint_id, clusters.LevelControl.types.LevelControlOptions.EXECUTE_IF_OFF))
+    end
+    -- before the Matter 1.4 lua libs update (HUB FW 56), there was no OptionsBitmap type defined
+    if switch_utils.ep_supports_cluster(ep_info, clusters.ColorControl.ID) then
+      local excute_if_off_bit = clusters.ColorControl.types.OptionsBitmap and clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF or 0x0001
+      device:send(clusters.ColorControl.attributes.Options:write(device, ep_info.endpoint_id, excute_if_off_bit))
+    end
+  end
 end
 
 function ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, num_button_eps)

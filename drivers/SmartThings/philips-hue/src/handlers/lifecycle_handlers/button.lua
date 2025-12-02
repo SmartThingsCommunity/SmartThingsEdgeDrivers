@@ -119,6 +119,25 @@ function ButtonLifecycleHandlers.init(driver, device)
   if not hue_id_to_device[device_button_resource_id] then
     hue_id_to_device[device_button_resource_id] = device
   end
+
+  local maybe_idx_map = device:get_field(Fields.BUTTON_INDEX_MAP)
+  local svc_rids_for_device = driver.services_for_device_rid[hue_device_id] or {}
+
+  if not svc_rids_for_device[device_button_resource_id] then
+    svc_rids_for_device[device_button_resource_id] = HueDeviceTypes.BUTTON
+  end
+
+  for resource_id, _ in pairs(maybe_idx_map or {}) do
+    if not hue_id_to_device[resource_id] then
+      hue_id_to_device[resource_id] = device
+    end
+
+    if not svc_rids_for_device[resource_id] then
+      svc_rids_for_device[resource_id] = HueDeviceTypes.BUTTON
+    end
+  end
+  driver.services_for_device_rid[hue_device_id] = svc_rids_for_device
+
   local button_info, err
   button_info = Discovery.device_state_disco_cache[device_button_resource_id]
   if not button_info then
