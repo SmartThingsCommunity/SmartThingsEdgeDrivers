@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -25,19 +25,13 @@ local WAVE_DOOR_WINDOW_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x0460, prod = 0x0100, productId = 0x0081 }  -- Wave Door/Window sensor
 }
 
---- Determine whether the passed device is Wave Door/Window sensor
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device proper, else false
-local function can_handle_wave_door_window_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(WAVE_DOOR_WINDOW_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
+local function can_handle_wave_door_window_sensor(opts, driver, device, cmd, ...)
+  if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
+    local subdriver = require("shelly-wave-door-window-sensor")
+    return true, subdriver
+  else
+    return false
   end
-  return false
-end
 end
 
 local function notification_report_handler(driver, device, cmd)
@@ -47,11 +41,11 @@ local function notification_report_handler(driver, device, cmd)
     if cmd.args.event == Notification.event.home_security.ACCESS_CONTROL then
       event = cmd.args.notification_status == 0 and capabilities.contactSensor.contact.closed() or capabilities.contactSensor.contact.open()
     elseif notificationType == Notification.notification_type.ACCESS_CONTROL then
-        if event == Notification.event.access_control.WINDOW_DOOR_IS_OPEN then
-         device:emit_event(capabilities.contactSensor.contact.open())
-        elseif event == Notification.event.access_control.WINDOW_DOOR_IS_CLOSED then
-         device:emit_event(capabilities.contactSensor.contact.closed())
-        end
+      if event == Notification.event.access_control.WINDOW_DOOR_IS_OPEN then
+        device:emit_event(capabilities.contactSensor.contact.open())
+      elseif event == Notification.event.access_control.WINDOW_DOOR_IS_CLOSED then
+        device:emit_event(capabilities.contactSensor.contact.closed())
+      end
     end
   end
   if (event ~= nil) then
