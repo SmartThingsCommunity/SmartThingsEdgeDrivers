@@ -22,7 +22,7 @@ for file in $files; do
             [ -f "$file" ] || continue
 
             # Check if file is non-empty and does NOT contain the copyright header
-            if [ -s "$file" ] && [[ ! $(grep $file -P -e "-{2,} Copyright \d{4} SmartThings") ]]; then
+            if [ -s "$file" ] && [[ ! $(grep $file -P -e "-{2,} Copyright \d{4}(?:-\d{4})? SmartThings") ]]; then
                 echo "$file: SmartThings Copyright missing from file"
                 fail=1
             fi
