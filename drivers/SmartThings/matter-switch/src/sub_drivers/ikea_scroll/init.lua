@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local switch_utils = require "switch_utils.utils"
-local button_cfg = require "switch_utils.device_configuration".ButtonCfg
 local scroll_utils = require "sub_drivers.ikea_scroll.scroll_utils.utils"
 local scroll_cfg = require "sub_drivers.ikea_scroll.scroll_utils.device_configuration"
 
@@ -28,7 +27,7 @@ end
 
 function IkeaScrollLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
-    button_cfg.configure_buttons(device)
+    scroll_cfg.configure_buttons(device)
     device:subscribe()
   end
 end
