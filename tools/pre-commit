@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# pre-commit
+#
+# - Copy to .git/hooks/pre-commit
+# - Ensure executable
+
+set -e
+
+year=$(date +%Y)
+copyright_header="""-- Copyright $year SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0"""
+
+# Get changed files that are Added or Modified
+# files=$(find drivers/SmartThings/zigbee-motion-sensor/src/ -type f -follow -print)
+files=$(git diff --staged --name-only --diff-filter=AM)
+
+fail=0
+for file in $files; do
+    # Only process .lua files
+    case "$file" in
+        *.lua)
+            # Skip if not a regular file
+            [ -f "$file" ] || continue
+
+            # Check if file is non-empty and does NOT contain the current year copyright header
+            header_text=$(head -n 3 $file)
+            if [ -s "$file" ] && [[ "$header_text" != "$copyright_header" ]]; then
+                echo "$file: Incorrect copyright header"
+                fail=1
+            fi
+
+            # Check if file is non-empty and does NOT end with a newline
+            if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then
+                echo "$file: Missing newline at end of file"
+                fail=1
+            fi
+            ;;
+    esac
+done
+
+exit $fail
