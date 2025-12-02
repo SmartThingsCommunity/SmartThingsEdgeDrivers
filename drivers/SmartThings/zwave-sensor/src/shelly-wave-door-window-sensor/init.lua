@@ -20,8 +20,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 --- @type st.utils
-local utils = require "st.utils"
-local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 
 local WAVE_DOOR_WINDOW_SENSOR_FINGERPRINTS = {
   { manufacturerId = 0x0460, prod = 0x0100, productId = 0x0081 }  -- Wave Door/Window sensor
@@ -40,16 +38,11 @@ local function can_handle_wave_door_window_sensor(opts, driver, device, ...)
   end
   return false
 end
+end
 
---- Handler for notification report command class
----
---- @param self st.zwave.Driver
---- @param device st.zwave.Device
---- @param cmd st.zwave.CommandClass.Notification.Report
-local function notification_report_handler(self, device, cmd)
+local function notification_report_handler(driver, device, cmd)
   local notificationType = cmd.args.notification_type
   local event = cmd.args.event
-   
   if cmd.args.notification_type == Notification.notification_type.ACCESS_CONTROL then
     if cmd.args.event == Notification.event.home_security.ACCESS_CONTROL then
       event = cmd.args.notification_status == 0 and capabilities.contactSensor.contact.closed() or capabilities.contactSensor.contact.open()
@@ -66,28 +59,12 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
---- Handler for multilevel sensor report command class
---- @param self st.zwave.Driver
---- @param device st.zwave.Device
---- @param cmd st.zwave.CommandClass.SensorMultilevel.Report
-local function sensor_multilevel_report_handler(self, device, cmd)
-  if cmd.args.sensor_type == SensorMultilevel.sensor_type.LUMINANCE then
-    device:emit_event(capabilities.illuminanceMeasurement.illuminance({value = cmd.args.sensor_value, unit = "lux"}))
-  elseif cmd.args.sensor_type == SensorMultilevel.sensor_type.DIRECTION then
-      device:emit_event(capabilities.relativeHumidityMeasurement.humidity({value = cmd.args.sensor_value, unit = "%"}))
-  end
-end
-
 local wave_door_window_sensor = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
-    },
-    [cc.SENSOR_MULTILEVEL] = {
-      [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
     }
   },
-  
   NAME = "shelly wave door window sensor",
   can_handle = can_handle_wave_door_window_sensor
 }
