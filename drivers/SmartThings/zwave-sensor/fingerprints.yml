@@ -554,7 +554,6 @@ zwaveManufacturer:
     productType: 0x0100
     productId: 0x0081
     deviceProfileName: shelly-wave-door-window-sensor
-
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor
