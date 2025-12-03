@@ -417,40 +417,44 @@ test.register_coroutine_test(
       clusters.Switch.server.events.ShortRelease,
       clusters.Switch.server.events.MultiPressComplete,
     }
-    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_mcd_unsupported_switch_device_type)
-    for i, cluster in ipairs(cluster_subscribe_list) do
-      if i > 1 then
-        subscribe_request:merge(cluster:subscribe(mock_device_mcd_unsupported_switch_device_type))
-      end
+    local unsup_mock_device = mock_device_mcd_unsupported_switch_device_type
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
+    for _, cluster in ipairs(cluster_subscribe_list) do
+      subscribe_request:merge(cluster:subscribe(unsup_mock_device))
     end
-    test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "added" })
-    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-    -- init results in subscription interaction
-    test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "init" })
-    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-    -- doConfigure sets the provisioning state to provisioned
-    mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ profile = "2-button" })
-    mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    mock_device_mcd_unsupported_switch_device_type:expect_device_create({
+    test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "doConfigure" })
+    unsup_mock_device:expect_device_create({
       type = "EDGE_CHILD",
       label = "Matter Switch 1",
       profile = "switch-binary",
-      parent_device_id = mock_device_mcd_unsupported_switch_device_type.id,
+      parent_device_id = unsup_mock_device.id,
       parent_assigned_child_key = string.format("%d", 7)
     })
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "doConfigure" })
+    unsup_mock_device:expect_metadata_update({ profile = "2-button" })
+    unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
 
-    -- simulate the profile change update taking affect and the device info changing
-    local device_info_copy = utils.deep_copy(mock_device_mcd_unsupported_switch_device_type.raw_st_data)
-    device_info_copy.profile.id = "5-buttons-battery"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "infoChanged", device_info_json })
-    test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
+    local updated_device_profile = t_utils.get_profile_definition("2-button.yml")
+    test.socket.device_lifecycle:__queue_receive(unsup_mock_device:generate_info_changed({ profile = updated_device_profile }))
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
+    for i, cluster in ipairs(cluster_subscribe_list) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(unsup_mock_device))
+      end
+    end
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
+
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
+
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
     end,
   { test_init = test_init_mcd_unsupported_switch_device_type }
 )

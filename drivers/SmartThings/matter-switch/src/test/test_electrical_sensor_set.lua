@@ -5,11 +5,13 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
+local uint32 = require "st.matter.data_types.Uint32"
 local version = require "version"
 
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -33,6 +35,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 14, },
         { cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", feature_map = 0, },
+        { cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", feature_map = 4, }, -- SET_TOPOLOGY
       },
       device_types = {
         { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
@@ -47,7 +50,27 @@ local mock_device = test.mock_device.build_test_matter_device({
       device_types = {
         { device_type_id = 0x010B, device_type_revision = 1 }, -- Dimmable Plug In Unit
       }
-    }
+    },
+    {
+      endpoint_id = 3,
+      clusters = {
+        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 14, },
+        { cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", feature_map = 4, }, -- SET_TOPOLOGY
+      },
+      device_types = {
+        { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
+      }
+    },
+    {
+      endpoint_id = 4,
+      clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+        { cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
+      },
+      device_types = {
+        { device_type_id = 0x010B, device_type_revision = 1 }, -- Dimmable Plug In Unit
+      }
+    },
   },
 })
 
@@ -71,28 +94,22 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
         { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 10, },
+        { cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", feature_map = 4, } -- SET_TOPOLOGY
       },
       device_types = {
-        { device_type_id = 0x0510, device_type_revision = 1 } -- Electrical Sensor
+        { device_type_id = 0x010A, device_type_revision = 1 }, -- OnOff Plug
+        { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
       }
     },
-    {
-      endpoint_id = 2,
-      clusters = {
-        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
-      },
-      device_types = {
-        { device_type_id = 0x010A, device_type_revision = 1 }, -- On Off Plug In Unit
-      }
-    }
   },
 })
 
 local subscribed_attributes_periodic = {
   clusters.OnOff.attributes.OnOff,
-  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
 }
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
@@ -145,14 +162,19 @@ local periodic_report_val_23 = {
 }
 
 local function test_init()
+  test.mock_device.add_test_device(mock_device)
   local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
   for i, cluster in ipairs(subscribed_attributes) do
       if i > 1 then
           subscribe_request:merge(cluster:subscribe(mock_device))
       end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  local read_req = clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device.id, 1)
+  read_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device.id, 3))
+  test.socket.matter:__expect_send({ mock_device.id, read_req })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device)
+  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 end
 test.set_test_init_function(test_init)
 
@@ -164,10 +186,12 @@ local function test_init_periodic()
         subscribe_request:merge(cluster:subscribe(mock_device_periodic))
     end
   end
-  test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "added" })
+  local read_req = clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device_periodic.id, 1)
+  test.socket.matter:__expect_send({ mock_device_periodic.id, read_req })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
 end
 
@@ -323,26 +347,26 @@ test.register_coroutine_test(
     end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Periodic Energy as subordinate to Cumulative Energy measurement should not generate any messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+  function()
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+          mock_device, 1, periodic_report_val_23
+        )
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+          mock_device, 1, periodic_report_val_23
+        )
       }
-    },
-  }
+    )
+  end
 )
 
 test.register_coroutine_test(
@@ -407,10 +431,22 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Test profile change on init for Electrical Sensor device type",
   function()
+
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 2, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
-    mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
+    test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 4, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device, 1, {uint32(2)})})
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device, 3, {uint32(4)})})
+    mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
+    mock_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "nil 2",
+      profile = "plug-level-energy-powerConsumption",
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", 4)
+    })
   end,
   { test_init = test_init }
 )
@@ -419,8 +455,10 @@ test.register_coroutine_test(
   "Test profile change on init for only Periodic Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "doConfigure" })
-    mock_device_periodic:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
     mock_device_periodic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device_periodic.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device_periodic, 1, {uint32(1)})})
+    mock_device_periodic:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
   end,
   { test_init = test_init_periodic }
 )

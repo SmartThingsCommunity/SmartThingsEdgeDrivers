@@ -73,18 +73,20 @@ SwitchFields.device_type_profile_map = {
   [SwitchFields.DEVICE_TYPE_ID.MOUNTED_DIMMABLE_LOAD_CONTROL] = "switch-level",
 }
 
-
-SwitchFields.CONVERSION_CONST_MILLIWATT_TO_WATT = 1000 -- A milliwatt is 1/1000th of a watt
-
-
 -- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
 -- devices that were joined to this driver as MCD devices before the transition
 -- to join switch devices as parent-child. This value will exist in the device
 -- table for devices that joined prior to this transition, and is also used for
 -- button devices that require component mapping.
 SwitchFields.COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
-SwitchFields.ENERGY_MANAGEMENT_ENDPOINT = "__energy_management_endpoint"
 SwitchFields.IS_PARENT_CHILD_DEVICE = "__is_parent_child_device"
+
+--- If the ASSIGNED_CHILD_KEY field is populated for an endpoint, it should be
+--- used as the key in the get_child_by_parent_assigned_key() function. This allows
+--- multiple endpoints to associate with the same child device, though right now child
+--- devices are keyed using only one endpoint id.
+SwitchFields.ASSIGNED_CHILD_KEY = "__assigned_child_key"
+
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_KELVIN = "__colorTemp_bound_received_kelvin"
 SwitchFields.COLOR_TEMP_BOUND_RECEIVED_MIRED = "__colorTemp_bound_received_mired"
 SwitchFields.COLOR_TEMP_MIN = "__color_temp_min"
@@ -96,28 +98,24 @@ SwitchFields.COLOR_MODE = "__color_mode"
 
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
-  { current_field_name = "__switch_intialized", updated_field_name = nil }
+  { current_field_name = "__switch_intialized", updated_field_name = nil },
+  { current_field_name = "__energy_management_endpoint", updated_field_name = nil },
+  { current_field_name = "__total_imported_energy", updated_field_name = nil },
 }
 
-SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
-SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
-
-
 SwitchFields.vendor_overrides = {
-  [0x1321] = {
+  [0x1321] = { -- SONOFF_MANUFACTURER_ID
     [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
     [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
   [0x115F] = { -- AQARA_MANUFACTURER_ID
-    [0x1003] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    [0x1004] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    [0x1005] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 4 Buttons(Generic Switch), 3 Channels(On/Off Light)
-    [0x1008] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 2 Buttons(Generic Switch), 1 Channel(On/Off Light)
-    [0x1009] = { target_profile = "light-power-energy-powerConsumption", ep_id = 1 },       -- 4 Buttons(Generic Switch), 2 Channels(On/Off Light)
-    [0x1006] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 3 Buttons(Generic Switch), 1 Channels(Dimmable Light)
-    [0x100A] = { ignore_combo_switch_button = true, target_profile = "light-level-power-energy-powerConsumption", ep_id = 1 }, -- 1 Buttons(Generic Switch), 1 Channels(Dimmable Light)
+    [0x1006] = { ignore_combo_switch_button = true }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
+    [0x100A] = { ignore_combo_switch_button = true }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
-  }
+  },
+  [0x117C] = { -- IKEA_MANUFACTURER_ID
+    [0x8000] = { is_ikea_scroll = true }
+  },
 }
 
 SwitchFields.switch_category_vendor_overrides = {
@@ -145,8 +143,19 @@ SwitchFields.switch_category_vendor_overrides = {
     {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
 }
 
-SwitchFields.CUMULATIVE_REPORTS_NOT_SUPPORTED = "__cumulative_reports_not_supported"
-SwitchFields.TOTAL_IMPORTED_ENERGY = "__total_imported_energy"
+--- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
+--- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
+SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
+
+--- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
+--- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
+SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
+
+SwitchFields.profiling_data = {
+  POWER_TOPOLOGY = "__power_topology",
+}
+
+SwitchFields.CUMULATIVE_REPORTS_SUPPORTED = "__cumulative_reports_supported"
 SwitchFields.LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
 SwitchFields.MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds
 
