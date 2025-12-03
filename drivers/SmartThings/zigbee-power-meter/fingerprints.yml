@@ -72,7 +72,7 @@ zigbeeManufacturer:
     deviceLabel: Chameleon CT Clamp
     manufacturer: Chameleon Technology
     model: CT101xxxx
-    deviceProfileName: ct-clamp
+    deviceProfileName: power-energy-battery-temperature
 zigbeeGeneric:
   - id: "genericMeter"
     deviceLabel: Zigbee Meter
