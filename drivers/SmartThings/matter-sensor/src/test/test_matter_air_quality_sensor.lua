@@ -231,7 +231,7 @@ local mock_device_tvoc = test.mock_device.build_test_matter_device({
 -- create test_init functions
 local function initialize_mock_device(generic_mock_device, generic_subscribed_attributes, expected_supported_values_setters)
   test.mock_device.add_test_device(generic_mock_device)
-  test.socket.capability:__expect_send(generic_mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
+  test.socket.capability:__expect_send(generic_mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy",}, {visibility={displayed=false}})))
   if expected_supported_values_setters ~= nil then
     expected_supported_values_setters()
   end

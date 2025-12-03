@@ -86,7 +86,7 @@ local function test_init_all()
   test.mock_device.add_test_device(mock_device_all)
   test.socket.device_lifecycle:__queue_receive({ mock_device_all.id, "init" })
   test.socket.capability:__expect_send(mock_device_all:generate_test_message("main",
-    capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"},
+    capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"},
     {visibility={displayed=false}}))
   )
   -- on device create, a generic AQS device will be profiled as aqs, thus only subscribing to one attribute
@@ -99,7 +99,7 @@ local function test_init_common()
   test.socket.device_lifecycle:__queue_receive({ mock_device_common.id, "added" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_common.id, "init" })
   test.socket.capability:__expect_send(mock_device_common:generate_test_message("main",
-    capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"},
+    capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"},
     {visibility={displayed=false}}))
   )
   -- on device create, a generic AQS device will be profiled as aqs, thus only subscribing to one attribute
@@ -304,7 +304,7 @@ test.register_coroutine_test(
       profile="aqs-modular-temp-humidity",
     }
     local expected_supported_values_setters = function()
-      test.socket.capability:__expect_send(mock_device_all:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device_all:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"}, {visibility={displayed=false}})))
       test.socket.capability:__expect_send(mock_device_all:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
       test.socket.capability:__expect_send(mock_device_all:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
       test.socket.capability:__expect_send(mock_device_all:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.supportedNitrogenDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
@@ -341,7 +341,7 @@ test.register_coroutine_test(
       profile="aqs-modular-temp-humidity",
     }
     local expected_supported_values_setters = function()
-      test.socket.capability:__expect_send(mock_device_common:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device_common:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"}, {visibility={displayed=false}})))
     end
     local subscribe_request_common = get_subscribe_request_common()
     test_aqs_device_type_update_modular_profile(mock_device_common, expected_metadata_common, subscribe_request_common, expected_supported_values_setters)

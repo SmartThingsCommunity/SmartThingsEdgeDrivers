@@ -44,10 +44,10 @@ local function get_supported_health_concern_values_for_air_quality(device)
   local health_concern_datatype = capabilities.airQualityHealthConcern.airQualityHealthConcern
   local supported_values = {health_concern_datatype.unknown.NAME, health_concern_datatype.good.NAME, health_concern_datatype.unhealthy.NAME}
   if #embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID, { feature_bitmap = clusters.AirQuality.types.Feature.FAIR }) > 0 then
-    table.insert(supported_values, 3, health_concern_datatype.moderate.NAME)
+    table.insert(supported_values, health_concern_datatype.moderate.NAME)
   end
   if #embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID, { feature_bitmap = clusters.AirQuality.types.Feature.MODERATE }) > 0 then
-    table.insert(supported_values, 4, health_concern_datatype.slightlyUnhealthy.NAME)
+    table.insert(supported_values, health_concern_datatype.slightlyUnhealthy.NAME)
   end
   if #embedded_cluster_utils.get_endpoints(device, clusters.AirQuality.ID, { feature_bitmap = clusters.AirQuality.types.Feature.VERY_POOR }) > 0 then
     table.insert(supported_values, health_concern_datatype.veryUnhealthy.NAME)
@@ -63,7 +63,7 @@ local function get_supported_health_concern_values_for_concentration_cluster(dev
   local health_concern_datatype = capabilities.airQualityHealthConcern.airQualityHealthConcern
   local supported_values = {health_concern_datatype.unknown.NAME, health_concern_datatype.good.NAME, health_concern_datatype.unhealthy.NAME}
   if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.MEDIUM_LEVEL }) > 0 then
-    table.insert(supported_values, 3, health_concern_datatype.moderate.NAME)
+    table.insert(supported_values, health_concern_datatype.moderate.NAME)
   end
   if #embedded_cluster_utils.get_endpoints(device, cluster.ID, { feature_bitmap = cluster.types.Feature.CRITICAL_LEVEL }) > 0 then
     table.insert(supported_values, health_concern_datatype.hazardous.NAME)
