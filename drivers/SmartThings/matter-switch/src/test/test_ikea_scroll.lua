@@ -185,7 +185,7 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
-        {
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -201,7 +201,7 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group2",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
-        {
+    {
       channel = "matter",
       direction = "receive",
       message = {
