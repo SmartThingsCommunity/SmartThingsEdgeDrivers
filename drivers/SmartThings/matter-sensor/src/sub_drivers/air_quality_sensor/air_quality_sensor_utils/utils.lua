@@ -40,6 +40,20 @@ function AirQualitySensorUtils.supports_capability_by_id_modular(device, capabil
   return false
 end
 
+function AirQualitySensorUtils.unit_conversion(device, value, from_unit, to_unit)
+  local conversion_function = fields.conversion_tables[from_unit][to_unit]
+  if conversion_function == nil then
+    device.log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", fields.unit_strings[from_unit], fields.unit_strings[to_unit]))
+    return 1
+  end
+
+  if value == nil then
+    device.log.info_with( {hub_logs = true} , "unit conversion value is nil")
+    return 1
+  end
+  return conversion_function(value)
+end
+
 local function get_supported_health_concern_values_for_air_quality(device)
   local health_concern_datatype = capabilities.airQualityHealthConcern.airQualityHealthConcern
   local supported_values = {health_concern_datatype.unknown.NAME, health_concern_datatype.good.NAME, health_concern_datatype.unhealthy.NAME}
