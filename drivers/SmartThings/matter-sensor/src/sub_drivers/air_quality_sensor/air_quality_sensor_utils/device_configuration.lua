@@ -1,11 +1,11 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local version = require "version"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
-local fields = require "sub_drivers.air_quality_sensor.fields"
-local version = require "version"
+local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
 
 local DeviceConfiguration = {}
 
