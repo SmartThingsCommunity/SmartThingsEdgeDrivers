@@ -2,8 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
-local cluster_base = require "st.zigbee.cluster_base"
-local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local log = require "log"
 
