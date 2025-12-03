@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ local IaswdLevel = IASWD.types.IaswdLevel
 local capabilities = require "st.capabilities"
 local alarm = capabilities.alarm
 local switch = capabilities.switch
-
+local mode = capabilities.mode
+local battery = capabilities.battery
+local refresh = capabilities.refresh
 -- Constants
 local ALARM_COMMAND = "alarmCommand"
 local ALARM_LAST_DURATION = "lastDuration"
@@ -157,7 +159,10 @@ end
 local zigbee_siren_driver_template = {
   supported_capabilities = {
     alarm,
-    switch
+    switch,
+    mode,
+    battery,
+    refresh
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   zigbee_handlers = {
