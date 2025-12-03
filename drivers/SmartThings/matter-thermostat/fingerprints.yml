@@ -50,6 +50,11 @@ matterManufacturer:
     vendorId: 0x1206
     productId: 0x0001
     deviceProfileName: thermostat-nostate-nobattery
+  - id: "4614/17"
+    deviceLabel: LUX TQX Smart Thermostat
+    vendorId: 0x1206
+    productId: 0x0011
+    deviceProfileName: thermostat-humidity-nostate-nobattery
   #Meross
   - id: "4933/57345"
     deviceLabel: Smart Wi-Fi Thermostat

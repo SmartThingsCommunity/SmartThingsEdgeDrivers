@@ -270,6 +270,7 @@ test.register_coroutine_test(
     local attr_report_data = {
       { PRIVATE_ATTRIBUTE_ID_ALIVE, data_types.OctetString.ID, "\x01\x21\xB8\x0B\x03\x28\x19\x04\x21\xA8\x13\x05\x21\x45\x08\x06\x24\x07\x00\x00\x00\x00\x08\x21\x15\x01\x0A\x21\xF5\x65\x0C\x20\x01\x64\x20\x01\x66\x20\x03\x67\x20\x01\x68\x21\xA8\x00" }
     }
+    test.wait_for_events()
     test.socket.zigbee:__queue_receive({
       mock_device_h1_double_rocker.id,
       zigbee_test_utils.build_attribute_report(mock_device_h1_double_rocker, PRIVATE_CLUSTER_ID, attr_report_data,
