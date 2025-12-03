@@ -1,4 +1,4 @@
-name: ct-clamp
+name: power-energy-battery-temperature
 components:
 - id: main
   capabilities:
