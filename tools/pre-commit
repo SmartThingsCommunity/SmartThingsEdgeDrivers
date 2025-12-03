@@ -5,7 +5,8 @@
 #
 # pre-commit
 #
-# - Copy to .git/hooks/pre-commit
+# - Soft link into .git/hooks/pre-commit
+#   - $ ln -s tools/pre-commit .git/hooks/pre-commit
 # - Ensure executable
 
 set -e
