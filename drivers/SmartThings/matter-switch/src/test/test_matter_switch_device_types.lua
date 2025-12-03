@@ -92,6 +92,35 @@ local mock_device_dimmer = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_switch_vendor_override = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  manufacturer_info = {
+    vendor_id = 0x109B,
+    product_id = 0x1001,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 1} -- OnOff PlugIn Unit
+      }
+    }
+  }
+})
+
+
 local mock_device_color_dimmer = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("matter-thing.yml"),
   manufacturer_info = {
@@ -485,6 +514,18 @@ local function test_init_color_dimmer()
   mock_device_color_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
+local function test_init_switch_vendor_override()
+  test.mock_device.add_test_device(mock_device_switch_vendor_override)
+  local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_switch_vendor_override)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "added" })
+  test.socket.matter:__expect_send({mock_device_switch_vendor_override.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "init" })
+  test.socket.matter:__expect_send({mock_device_switch_vendor_override.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "doConfigure" })
+  mock_device_switch_vendor_override:expect_metadata_update({ profile = "switch-binary" })
+  mock_device_switch_vendor_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
 local function test_init_mounted_on_off_control()
   test.mock_device.add_test_device(mock_device_mounted_on_off_control)
   local cluster_subscribe_list = {
@@ -675,6 +716,13 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_onoff_client }
+)
+
+test.register_coroutine_test(
+  "Test init for device with requiring the switch category as a vendor override",
+  function()
+  end,
+  { test_init = test_init_switch_vendor_override }
 )
 
 test.register_coroutine_test(
