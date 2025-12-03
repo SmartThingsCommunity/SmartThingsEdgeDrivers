@@ -194,6 +194,10 @@ function DeviceConfiguration.match_profile(driver, device)
       updated_profile = "light-color-level-fan"
     elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
+    elseif generic_profile("plug-binary") or generic_profile("plug-level") then
+      if switch_utils.check_switch_category_vendor_overrides(device) then
+        updated_profile = string.gsub(updated_profile, "plug", "switch")
+      end
     elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
