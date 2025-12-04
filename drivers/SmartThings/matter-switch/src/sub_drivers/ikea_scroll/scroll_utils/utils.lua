@@ -3,14 +3,9 @@
 
 local im = require "st.matter.interaction_model"
 local clusters = require "st.matter.clusters"
-local switch_utils = require "switch_utils.utils"
 local scroll_fields = require "sub_drivers.ikea_scroll.scroll_utils.fields"
 
 local IkeaScrollUtils = {}
-
-function IkeaScrollUtils.is_ikea_scroll(opts, driver, device)
-  return switch_utils.get_product_override_field(device, "is_ikea_scroll")
-end
 
 -- override subscribe function to prevent subscribing to additional events from the main driver
 function IkeaScrollUtils.subscribe(device)

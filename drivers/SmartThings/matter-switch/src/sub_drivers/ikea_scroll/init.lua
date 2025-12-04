@@ -44,7 +44,7 @@ local ikea_scroll_handler = {
     infoChanged = IkeaScrollLifecycleHandlers.info_changed,
     init = IkeaScrollLifecycleHandlers.device_init,
   },
-  can_handle = scroll_utils.is_ikea_scroll
+  can_handle = require("sub_drivers.ikea_scroll.can_handle")
 }
 
 return ikea_scroll_handler

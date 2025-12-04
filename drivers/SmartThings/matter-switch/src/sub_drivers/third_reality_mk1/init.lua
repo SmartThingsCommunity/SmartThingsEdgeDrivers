@@ -3,27 +3,13 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local device_lib = require "st.device"
 local im = require "st.matter.interaction_model"
-local log = require "log"
 
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 
 -------------------------------------------------------------------------------------
 -- Third Reality MK1 specifics
 -------------------------------------------------------------------------------------
-
-local THIRD_REALITY_MK1_FINGERPRINT = { vendor_id = 0x1407, product_id = 0x1388 }
-
-local function is_third_reality_mk1(opts, driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-     device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
-     device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
-    log.info("Using Third Reality MK1 sub driver")
-    return true
-  end
-  return false
-end
 
 local function endpoint_to_component(device, ep)
   local map = device:get_field(COMPONENT_TO_ENDPOINT_MAP) or {}
@@ -121,7 +107,7 @@ local third_reality_mk1_handler = {
   supported_capabilities = {
     capabilities.button
   },
-  can_handle = is_third_reality_mk1
+  can_handle = require("sub_drivers.third_reality_mk1.can_handle")
 }
 
 return third_reality_mk1_handler
