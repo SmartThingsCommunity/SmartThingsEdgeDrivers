@@ -201,6 +201,7 @@ function DeviceConfiguration.match_modular_profile_thermostat(device)
 
   if #fan_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
   end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
