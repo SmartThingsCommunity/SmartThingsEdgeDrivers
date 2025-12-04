@@ -367,22 +367,20 @@ function AttributeHandlers.fan_mode_sequence_handler(driver, device, ib, respons
 
   -- remove 'off' as a supported fan mode for thermostat device types, unless the
   -- device previously had 'off' as a supported fan mode to avoid breaking routines
-  if thermostat_utils.get_device_type(device) == fields.THERMOSTAT_DEVICE_TYPE_ID then
+  if thermostat_utils.get_device_type(device) == fields.THERMOSTAT_DEVICE_TYPE_ID and
+    device:supports_capability_by_id(capabilities.fanMode.ID) then
     local prev_supported_fan_modes = device:get_latest_state(
       device:endpoint_to_component(ib.endpoint_id),
       supported_fan_modes_capability.ID,
       supported_fan_modes_attribute.NAME
     ) or {}
-    if not thermostat_utils.tbl_contains(prev_supported_fan_modes, "off") then
-      local off_mode_present, off_mode_idx = thermostat_utils.tbl_contains(supported_fan_modes, "off")
-      if off_mode_present then
-        table.remove(supported_fan_modes, off_mode_idx)
-      end
+    -- per the definitions set above, the first index always contains "off"
+    if prev_supported_fan_modes[1] ~= "off" then
+      table.remove(supported_fan_modes, 1)
     end
   end
 
-  local event = supported_fan_modes_attribute(supported_fan_modes, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
+  device:emit_event_for_endpoint(ib.endpoint_id, supported_fan_modes_attribute(supported_fan_modes, {visibility = {displayed = false}}))
 end
 
 function AttributeHandlers.percent_current_handler(driver, device, ib, response)

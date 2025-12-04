@@ -10,9 +10,9 @@ local ThermostatUtils = {}
 
 function ThermostatUtils.tbl_contains(array, value)
   if value == nil then return false end
-  for index, element in pairs(array or {}) do
+  for _, element in pairs(array or {}) do
     if element == value then
-      return true, index
+      return true
     end
   end
   return false
