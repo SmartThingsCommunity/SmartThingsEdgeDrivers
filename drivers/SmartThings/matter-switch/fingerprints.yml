@@ -3109,119 +3109,119 @@ matterGeneric:
   - id: "matter/bridge"
     deviceLabel: Matter Bridge
     deviceTypes:
-      - id: "0x000"E # Aggregator
+      - id: 0x000E # Aggregator
     deviceProfileName: matter-bridge
   - id: "matter/on-off/light"
     deviceLabel: Matter OnOff Light
     deviceTypes:
-      - id: "0x0100" # OnOff Light
+      - id: 0x0100 # OnOff Light
     deviceProfileName: light-binary
   - id: "matter/dimmable/light"
     deviceLabel: Matter Dimmable Light
     deviceTypes:
-      - id: "0x0101" # Dimmable Light
+      - id: 0x0101 # Dimmable Light
     deviceProfileName: light-level
   - id: "matter/dimmable/light/2"
     deviceLabel: Matter Dimmable Light
     deviceTypes:
-      - id: "0x0100" # OnOff Light
-      - id: "0x0101" # Dimmable Light
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
     deviceProfileName: light-level
   - id: "matter/colorTemperature/light"
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
-      - id: "0x010"C # Color Temperature Light
+      - id: 0x010C # Color Temperature Light
     deviceProfileName: light-level-colorTemperature
   - id: "matter/colorTemperature/light/2"
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
-      - id: "0x0100" # OnOff Light
-      - id: "0x0101" # Dimmable Light
-      - id: "0x010"C # Color Temperature Light
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+      - id: 0x010C # Color Temperature Light
     deviceProfileName: light-level-colorTemperature
   - id: "matter/colorTemperature/light/3"
     deviceLabel: Matter Color Temperature Light
     deviceTypes:
-      - id: "0x0100" # OnOff Light
-      - id: "0x010"C # Color Temperature Light
+      - id: 0x0100 # OnOff Light
+      - id: 0x010C # Color Temperature Light
     deviceProfileName: light-level-colorTemperature
   - id: "matter/color/light"
     deviceLabel: Matter Color Light
     deviceTypes:
-      - id: "0x010"D # Extended Color Light
+      - id: 0x010D # Extended Color Light
     deviceProfileName: light-color-level
   - id: "matter/color/temp/light"
     deviceLabel: Matter Color Light
     deviceTypes:
-      - id: "0x010"C # Color Temperature Light
-      - id: "0x010"D # Extended Color Light
+      - id: 0x010C # Color Temperature Light
+      - id: 0x010D # Extended Color Light
     deviceProfileName: light-color-level
   - id: "matter/color/temp/light/2"
     deviceLabel: Matter Color Light
     deviceTypes:
-      - id: "0x0100" # OnOff Light
-      - id: "0x0101" # Dimmable Light
-      - id: "0x010"C # Color Temperature Light
-      - id: "0x010"D # Extended Color Light
+      - id: 0x0100 # OnOff Light
+      - id: 0x0101 # Dimmable Light
+      - id: 0x010C # Color Temperature Light
+      - id: 0x010D # Extended Color Light
     deviceProfileName: light-color-level
   - id: "matter/on-off/plug"
     deviceLabel: Matter OnOff Plug
     deviceTypes:
-      - id: "0x010"A # On Off Plug-in Unit
+      - id: 0x010A # On Off Plug-in Unit
     deviceProfileName: plug-binary
   - id: "matter/dimmable/plug"
     deviceLabel: Matter Dimmable Plug
     deviceTypes:
-      - id: "0x010"B # Dimmable Plug-in Unit
+      - id: 0x010B # Dimmable Plug-in Unit
     deviceProfileName: plug-level
   - id: "matter/on-off/plug/electrical-sensor"
     deviceLabel: Matter OnOff Plug
     deviceTypes:
-      - id: "0x010"A # On Off Plug-in Unit
-      - id: "0x0510" # Electrical Sensor
+      - id: 0x010A # On Off Plug-in Unit
+      - id: 0x0510 # Electrical Sensor
     deviceProfileName: plug-power-energy-powerConsumption
   - id: "matter/mounted/on-off/control"
     deviceLabel: Matter Mounted OnOff Control
     deviceTypes:
-      - id: "0x010"F # Mounted On/Off Control
+      - id: 0x010F # Mounted On/Off Control
     deviceProfileName: switch-binary
   - id: "matter/mounted/dimmable/load/control"
     deviceLabel: Matter Mounted Dimmable Load Control
     deviceTypes:
-      - id: "0x0110" # Mounted Dimmable Load Control
+      - id: 0x0110 # Mounted Dimmable Load Control
     deviceProfileName: switch-level
   - id: "matter/water-valve"
     deviceLabel: Matter Water Valve
     deviceTypes:
-      - id: "0x0042" # Water Valve
+      - id: 0x0042 # Water Valve
     deviceProfileName: water-valve
   - id: "button"
     deviceLabel: Matter Button
     deviceTypes:
-      - id: "0x000"F
+      - id: 0x000F
     deviceProfileName: button-battery # err on the side of buttons having batteries, it'll get fixed in the driver
   - id: "matter/dimmable/light/button"
     deviceLabel: Matter Dimmable Light/Button
     deviceTypes:
-      - id: "0x0101" # Dimmable Light
-      - id: "0x000"F # Generic Switch
+      - id: 0x0101 # Dimmable Light
+      - id: 0x000F # Generic Switch
     deviceProfileName: light-level-button
   - id: "matter/color/light/fan"
     deviceLabel: Matter Color Light Fan
     deviceTypes:
-      - id: "0x010"D # Extended Color Light
-      - id: "0x002"B # Fan
+      - id: 0x010D # Extended Color Light
+      - id: 0x002B # Fan
     deviceProfileName: light-color-level-fan
   - id: "matter/dimmable/light/motion"
     deviceLabel: Matter Dimmable Light Occupancy Sensor
     deviceTypes:
-      - id: "0x0101" # Dimmable Light
-      - id: "0x0107" # Occupancy Sensor
+      - id: 0x0101 # Dimmable Light
+      - id: 0x0107 # Occupancy Sensor
     deviceProfileName: light-level-motion
   - id: "matter/camera"
     deviceLabel: Matter Camera
     deviceTypes:
-      - id: "0x0142" # Camera
+      - id: 0x0142 # Camera
     deviceProfileName: camera
 
 matterThing:
