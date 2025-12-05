@@ -287,7 +287,7 @@ function grouped_utils.queue_group_scan(driver, bridge_device)
   if queue == nil then
     local tx, rx = cosock.channel.new()
     -- Set timeout to 30 seconds to allow for other queued scans to come in.
-    rx:settimeout(30)
+    rx:settimeout(45)
     cosock.spawn(function()
       while true do
         -- The goal here is to timeout on the receive. If we receive a message then another request

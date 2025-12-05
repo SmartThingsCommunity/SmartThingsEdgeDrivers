@@ -29,7 +29,7 @@ local battery_support = {
 }
 local REVERSE_POLARITY = "__reverse_polarity"
 local PRESET_LEVEL_KEY = "__preset_level_key"
-local PRESET_LEVEL = 50
+local DEFAULT_PRESET_LEVEL = 50
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -78,7 +78,7 @@ local function device_init(driver, device)
     device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed = false}}))
     local preset_position = device:get_field(PRESET_LEVEL_KEY) or
       (device.preferences ~= nil and device.preferences.presetPosition) or
-      PRESET_LEVEL
+      DEFAULT_PRESET_LEVEL
     device:emit_event(capabilities.windowShadePreset.position(preset_position, {visibility = {displayed = false}}))
     device:set_field(PRESET_LEVEL_KEY, preset_position, {persist = true})
   end
@@ -131,25 +131,14 @@ local function device_removed(driver, device) log.info("device removed") end
 
 -- capability handlers
 local function handle_preset(driver, device, cmd)
+  local lift_value = device:get_latest_state(
+    "main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME
+  ) or DEFAULT_PRESET_LEVEL
+  local hundredths_lift_percent = (100 - lift_value) * 100
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local lift_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT})
-  local tilt_eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT})
-  if #lift_eps > 0 then
-    local lift_value = device:get_latest_state(
-      "main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME
-    ) or PRESET_LEVEL
-    local hundredths_lift_percent = (100 - lift_value) * 100
-    local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
-      device, endpoint_id, hundredths_lift_percent
-    )
-    device:send(req)
-  end
-  if #tilt_eps > 0 then
-    local req = clusters.WindowCovering.server.commands.GoToTiltPercentage(
-      device, endpoint_id, PRESET_LEVEL * 100
-    )
-    device:send(req)
-  end
+  device:send(clusters.WindowCovering.server.commands.GoToLiftPercentage(
+    device, endpoint_id, hundredths_lift_percent
+  ))
 end
 
 local function handle_set_preset(driver, device, cmd)

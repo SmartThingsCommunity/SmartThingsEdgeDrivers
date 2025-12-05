@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
@@ -10,13 +13,15 @@ local button_attr = capabilities.button.button
 -- Mock a 5-button device using endpoints non-consecutive endpoints
 local mock_device = test.mock_device.build_test_matter_device(
   {
-    profile = t_utils.get_profile_definition("5-button-battery.yml"), -- on a real device we would switch to this, rather than fingerprint to it
+    profile = t_utils.get_profile_definition("5-button-battery.yml"),
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     endpoints = {
     {
       endpoint_id = 0,
       clusters = {},
-      device_types = {}
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode
+      }
     },
     {
       endpoint_id = 10,

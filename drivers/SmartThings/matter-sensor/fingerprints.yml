@@ -10,6 +10,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
+  - id: "4447/8197"
+    deviceLabel: Presence Multi-Sensor FP300
+    vendorId: 0x115F
+    productId: 0x2005
+    deviceProfileName: presence-illuminance-temperature-humidity-battery
   #Bosch
   - id: 4617/12309
     deviceLabel: "Door/window contact II [M]"
@@ -74,6 +79,11 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1008
     deviceProfileName: leak-battery
+  - id: "4619/4192"
+    deviceLabel: Smart Humidity&Temperature Sensor
+    vendorId: 0x120B
+    productId: 0x1060
+    deviceProfileName: temperature-humidity-battery
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -118,6 +128,11 @@ matterManufacturer:
     vendorId: 0x1345
     productId: 0x4201
     deviceProfileName: motion-illuminance
+  - id: "4933/16898"
+    deviceLabel: Smart Presence Sensor (Thread)
+    vendorId: 0x1345
+    productId: 0x4202
+    deviceProfileName: motion-illuminance-battery
   # Neo
   - id: "4991/1122"
     deviceLabel: Door Sensor
@@ -277,6 +292,13 @@ matterGeneric:
     deviceTypes:
       - id: 0x0076 # Smoke CO Alarm
     deviceProfileName: smoke-co
+  - id: "matter/smoke-temp-humidity/sensor"
+    deviceLabel: Matter Smoke/Temp/Humidity Sensor
+    deviceTypes:
+      - id: 0x0076 # Smoke CO Alarm
+      - id: 0x0307 # Humidity Sensor
+      - id: 0x0302 # Temperature Sensor
+    deviceProfileName: smoke-temp-humidity-battery
   - id: "matter/rain/sensor"
     deviceLabel: Matter Rain Sensor
     deviceTypes:

@@ -116,6 +116,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.light.acn004
     deviceProfileName: aqara-light
+  - id: "LUMI/lumi.light.cwacn1"
+    deviceLabel: Aqara Smart Dimmer Controller T1 (0-10v)
+    manufacturer: LUMI
+    model: lumi.light.cwacn1
+    deviceProfileName: aqara-light
   - id: "Aqara/lumi.light.acn014"
     deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
     manufacturer: Aqara
@@ -2359,11 +2364,21 @@ zigbeeManufacturer:
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
   # Inovelli
+  - id: "Inovelli/VZM30-SN"
+    deviceLabel: "Inovelli On/Off Blue Series"
+    manufacturer: Inovelli
+    model: VZM30-SN
+    deviceProfileName: inovelli-vzm30-sn
   - id: "Inovelli/VZM31-SN"
     deviceLabel: "Inovelli 2-in-1 Blue Series"
     manufacturer: Inovelli
     model: VZM31-SN
     deviceProfileName: inovelli-vzm31-sn
+  - id: "Inovelli/VZM32-SN"
+    deviceLabel: "Inovelli mmWave Dimmer Blue Series"
+    manufacturer: Inovelli
+    model: VZM32-SN
+    deviceProfileName: inovelli-vzm32-sn
   - id: "LAISIAO/BATH"
     deviceLabel: Laisiao Bathroom Heater
     manufacturer: LAISIAO
@@ -2374,6 +2389,21 @@ zigbeeManufacturer:
     deviceLabel: Zigbee Multifunction Relay Switch
     manufacturer: NodOn
     model: SIN-4-1-20
+    deviceProfileName: basic-switch
+  - id: "NodOn/SIN-4-2-20"
+    deviceLabel: Zigbee ON/OFF Lighting Relay Switch
+    manufacturer: NodOn
+    model: SIN-4-2-20
+    deviceProfileName: switch-level
+  - id: "NodOn/SIN-4-1-21"
+    deviceLabel: Zigbee Multifunction Relay Switch with Metering
+    manufacturer: NodOn
+    model: SIN-4-1-21
+    deviceProfileName: switch-power-energy
+  - id: "JNL/Y-K003-001"
+    deviceLabel: Yanmi Switch (3 Way) 1
+    manufacturer: JNL
+    model: Y-K003-001
     deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"

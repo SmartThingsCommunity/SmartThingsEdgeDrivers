@@ -145,7 +145,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x00', 2) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x00', 0) }
       },
       {
         channel = "capability",
@@ -166,7 +166,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x02', 3) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x02', 0) }
       },
       {
         channel = "capability",
@@ -187,7 +187,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x01', 4) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x01', tuya_utils.DP_TYPE_ENUM, '\x01', 0) }
       }
     }
 )
@@ -203,7 +203,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x3c', 5) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x3c', 0) }
       }
     }
 )
@@ -219,7 +219,7 @@ test.register_message_test(
       {
         channel = "zigbee",
         direction = "send",
-        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x32', 6) }
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x32', 0) }
       }
     }
 )

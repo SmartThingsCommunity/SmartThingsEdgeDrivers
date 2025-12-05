@@ -16,6 +16,12 @@ matterManufacturer:
     vendorId: 0x1209
     productId: 0x3012
     deviceProfileName: thermostat-heating-only-nostate
+  #Cync
+  - id: "4921/121"
+    deviceLabel: Cync Fan Switch
+    vendorId: 0x1339
+    productId: 0x0079
+    deviceProfileName: fan-generic
   #Eve
   - id: "4874/79"
     deviceLabel: Eve Thermo
@@ -44,6 +50,11 @@ matterManufacturer:
     vendorId: 0x1206
     productId: 0x0001
     deviceProfileName: thermostat-nostate-nobattery
+  - id: "4614/17"
+    deviceLabel: LUX TQX Smart Thermostat
+    vendorId: 0x1206
+    productId: 0x0011
+    deviceProfileName: thermostat-humidity-nostate-nobattery
   #Meross
   - id: "4933/57345"
     deviceLabel: Smart Wi-Fi Thermostat
