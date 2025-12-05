@@ -284,6 +284,11 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
           device, ib, capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME
         ) or 0
         energy_imported_wh = energy_imported_wh + energy_meter_latest_state
+      else
+        -- the field containing the offset may be associated with a child device
+        local field_device = switch_utils.find_child(device, ib.endpoint_id) or device
+        local energy_meter_offset = field_device:get_field(fields.ENERGY_METER_OFFSET) or 0.0
+        energy_imported_wh = energy_imported_wh - energy_meter_offset
       end
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
       switch_utils.report_power_consumption_to_st_energy(device, ib.endpoint_id, energy_imported_wh)
