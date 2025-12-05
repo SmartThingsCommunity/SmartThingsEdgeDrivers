@@ -190,7 +190,9 @@ function DeviceConfiguration.match_profile(driver, device)
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
-    if generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+    if (generic_profile("plug-binary") or generic_profile("light-binary")) and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+      updated_profile = "switch-fan"
+    elseif generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
     elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
