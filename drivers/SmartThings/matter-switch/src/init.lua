@@ -274,6 +274,9 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = capability_handlers.handle_set_color_temperature,
     },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = capability_handlers.handle_reset_energy_meter,
+    },
     [capabilities.fanMode.ID] = {
       [capabilities.fanMode.commands.setFanMode.NAME] = capability_handlers.handle_set_fan_mode
     },
