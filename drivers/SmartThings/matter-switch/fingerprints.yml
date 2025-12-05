@@ -950,6 +950,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0A9B
     deviceProfileName: light-level-colorTemperature
+  - id: 4489/2686
+    deviceLabel: SMART MAT A53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7E
+    deviceProfileName: light-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
