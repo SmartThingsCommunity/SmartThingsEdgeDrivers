@@ -646,6 +646,16 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1007
     deviceProfileName: 3-button
+  - id: "4251/4113"
+    deviceLabel: "Decora Smart Wi-Fi (3rd Gen) 15A Switch"
+    vendorId: 0x109B
+    productId: 0x1011
+    deviceProfileName: switch-binary
+  - id: "4251/4112"
+    deviceLabel: "Decora Smart Wi-Fi (3rd Gen) 600W Dimmer"
+    vendorId: 0x109B
+    productId: 0x1010
+    deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
