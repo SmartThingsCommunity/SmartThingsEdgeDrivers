@@ -56,6 +56,11 @@ matterManufacturer:
     vendorId: 0x1533
     productId: 0x0016
     deviceProfileName: lock-user-pin-battery
+  - id: 5427/20
+    deviceLabel: eufy FamiLock E40
+    vendorId: 0x1533
+    productId: 0x0014
+    deviceProfileName: lock-user-pin-battery
   #Kwikset
   - id: "5153/66"
     deviceLabel: Kwikset Halo Select Plus
