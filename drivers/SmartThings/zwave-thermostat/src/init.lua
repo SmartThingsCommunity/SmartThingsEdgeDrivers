@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.Driver
@@ -115,16 +105,7 @@ local driver_template = {
   lifecycle_handlers = {
     added = device_added
   },
-  sub_drivers = {
-    require("aeotec-radiator-thermostat"),
-    require("popp-radiator-thermostat"),
-    require("ct100-thermostat"),
-    require("fibaro-heat-controller"),
-    require("stelpro-ki-thermostat"),
-    require("qubino-flush-thermostat"),
-    require("thermostat-heating-battery"),
-    require("apiv6_bugfix"),
-  }
+  sub_drivers = require("sub_drivers"),
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities, {native_capability_attrs_enabled = true})
