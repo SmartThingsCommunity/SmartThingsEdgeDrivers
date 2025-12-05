@@ -23,6 +23,7 @@ local aqara_child2_ep = 2
 local aqara_mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("4-button.yml"),
   manufacturer_info = {vendor_id = 0x115F, product_id = 0x1009, product_name = "Aqara Light Switch H2"},
+  matter_version = {hardware = 1, software = 1},
   label = "Aqara Light Switch",
   device_id = "00000000-1111-2222-3333-000000000001",
   endpoints = {

@@ -23,6 +23,10 @@ local mock_device = test.mock_device.build_test_matter_device({
     vendor_id = 0x0000,
     product_id = 0x0000,
   },
+  matter_version = {
+    hardware = 1,
+    software = 1,
+  },
   endpoints = {
     {
       endpoint_id = 0,
@@ -685,6 +689,16 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_parent_child_endpoints_non_sequential }
+)
+
+test.register_coroutine_test(
+  "Test info changed event with matter_version update",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })) -- bump to 2
+    mock_children[child1_ep]:expect_metadata_update({ profile = "light-level" })
+    mock_children[child2_ep]:expect_metadata_update({ profile = "light-color-level" })
+    mock_device:expect_metadata_update({ profile = "light-binary" })
+  end
 )
 
 test.run_registered_tests()
