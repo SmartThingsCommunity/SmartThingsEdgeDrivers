@@ -19,19 +19,16 @@ local cc = require "st.zwave.CommandClass"
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.SensorMultilevel
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
---- @type st.utils
 
-local WAVE_DOOR_WINDOW_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x0460, prod = 0x0100, productId = 0x0081 }  -- Wave Door/Window sensor
-}
+local SHELLY_MFR = 0x0460
+local SHELLY_PRODUCT_TYPE = 0x0100
+local SHELLY_PRODUCT_ID = 0x0081
 
-local function can_handle_wave_door_window_sensor(opts, driver, device, cmd, ...)
-  if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-    local subdriver = require("shelly-wave-door-window-sensor")
-    return true, subdriver
-  else
-    return false
+local function can_handle_wave_door_window_sensor(opts, driver, device, ...)
+  if device:id_match(SHELLY_MFR, SHELLY_PRODUCT_TYPE, SHELLY_PRODUCT_ID) then
+    return true
   end
+  return false
 end
 
 local function notification_report_handler(driver, device, cmd)
