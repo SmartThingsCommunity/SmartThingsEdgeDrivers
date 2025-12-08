@@ -1,34 +1,11 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local constants = require "st.zigbee.constants"
 local configurations = require "configurations"
 
-local ZIGBEE_POWER_METER_FINGERPRINTS = {
-  { model = "ZHEMI101" },
-  { model = "EMIZB-132" },
-}
 
-local is_frient_power_meter = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
-    if device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-
-  return false
-end
 
 local do_configure = function(self, device)
   device:refresh()
@@ -46,7 +23,7 @@ local frient_power_meter_handler = {
     init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
-  can_handle = is_frient_power_meter
+  can_handle = require("frient.can_handle"),
 }
 
 return frient_power_meter_handler

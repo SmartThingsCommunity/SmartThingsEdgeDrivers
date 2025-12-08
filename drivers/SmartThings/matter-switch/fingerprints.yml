@@ -131,6 +131,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1001
     deviceProfileName: light-color-level-fan
+  - id: "5014/4214"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1076
+    deviceProfileName: light-color-level
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
@@ -940,6 +945,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x092F
     deviceProfileName: light-color-level
+  - id: "4489/2715"
+    deviceLabel: SMART MAT B40 TW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0A9B
+    deviceProfileName: light-level-colorTemperature
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
@@ -2855,6 +2865,26 @@ matterManufacturer:
     vendorId: 0x100b
     productId: 0x228F
     deviceProfileName: light-color-level-2200K-6500K
+  - id: "4107/8954"
+    deviceLabel: WiZ Gradient Light Bars
+    vendorId: 0x100B
+    productId: 0x22FA
+    deviceProfileName: light-color-level
+  - id: "4107/8953"
+    deviceLabel: WiZ Gradient Light Bars
+    vendorId: 0x100B
+    productId: 0x22F9
+    deviceProfileName: light-color-level
+  - id: "4107/8949"
+    deviceLabel: WiZ Gradient Floor lamp
+    vendorId: 0x100B
+    productId: 0x22F5
+    deviceProfileName: light-color-level
+  - id: "4107/8948"
+    deviceLabel: WiZ Gradient Floor lamp
+    vendorId: 0x100B
+    productId: 0x22F4
+    deviceProfileName: light-color-level
 #Zemismart
   - id: "5020/61154"
     deviceLabel: Zemismart Inline Module
