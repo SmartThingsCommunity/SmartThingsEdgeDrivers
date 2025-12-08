@@ -17,8 +17,6 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
---- @type st.zwave.CommandClass.SensorMultilevel
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 
 local SHELLY_MFR = 0x0460
 local SHELLY_PRODUCT_TYPE = 0x0100
