@@ -36,10 +36,8 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- refresh child devices to get an initial attribute state for OnOff in case child device
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    print("???1")
     device:send(clusters.OnOff.attributes.OnOff:read(device))
   elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    print("???2")
     switch_utils.handle_electrical_sensor_info(device)
   end
 
