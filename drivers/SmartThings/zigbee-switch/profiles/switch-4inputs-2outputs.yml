@@ -2,6 +2,8 @@ name: switch-4inputs-2outputs
 components:
   - id: main
     capabilities:
+      - id: firmwareUpdate
+        version: 1
       - id: refresh
         version: 1
     categories:
@@ -10,8 +12,6 @@ components:
     label: "Input 1"
     capabilities:
       - id: switch
-        version: 1
-      - id: firmwareUpdate
         version: 1
   - id: input2
     label: "Input 2"
