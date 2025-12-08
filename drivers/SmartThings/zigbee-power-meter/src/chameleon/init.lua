@@ -75,11 +75,6 @@ local function device_init(driver, device)
       device:add_configured_attribute(attribute)
     end
   end
-
-  local batt_level = device:get_latest_state("main", capabilities.battery.ID, capabilities.battery.battery.NAME) or nil
-  if batt_level == nil then
-    device:emit_event(capabilities.battery.battery.normal())
-  end
 end
 
 local function added_handler(self, device)
