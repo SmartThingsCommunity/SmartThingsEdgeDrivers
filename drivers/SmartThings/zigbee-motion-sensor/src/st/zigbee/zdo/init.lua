@@ -1,16 +1,6 @@
--- Copyright 2021 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2021 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local data_types = require "st.zigbee.data_types"
 local utils = require "st.zigbee.utils"
 local zdo_commands = require "st.zigbee.zdo.commands"
@@ -101,7 +91,7 @@ function ZdoMessageBody.deserialize(parent, buf)
     -- binding table entry endpoint_id
     local version = require "version"
     if version.rpc == 8 then
-      buf.buf = buf.buf .. "\01"
+      buf.buf = buf.buf .. ""
       buf:seek(1)
     end
     s.zdo_body = zdo_commands.parse_zdo_command(parent.address_header.cluster.value, buf)

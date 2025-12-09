@@ -274,6 +274,9 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = capability_handlers.handle_set_color_temperature,
     },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = capability_handlers.handle_reset_energy_meter,
+    },
     [capabilities.fanMode.ID] = {
       [capabilities.fanMode.commands.setFanMode.NAME] = capability_handlers.handle_set_fan_mode
     },
@@ -282,6 +285,12 @@ local matter_driver_template = {
     },
     [capabilities.level.ID] = {
       [capabilities.level.commands.setLevel.NAME] = capability_handlers.handle_set_level
+    },
+    [capabilities.statelessColorTemperatureStep.ID] = {
+      [capabilities.statelessColorTemperatureStep.commands.stepColorTemperatureByPercent.NAME] = capability_handlers.handle_step_color_temperature_by_percent,
+    },
+    [capabilities.statelessSwitchLevelStep.ID] = {
+      [capabilities.statelessSwitchLevelStep.commands.stepLevel.NAME] = capability_handlers.handle_step_level,
     },
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.off.NAME] = capability_handlers.handle_switch_off,

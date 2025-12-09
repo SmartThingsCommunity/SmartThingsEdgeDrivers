@@ -155,6 +155,7 @@ SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
 }
 
+SwitchFields.ENERGY_METER_OFFSET = "__energy_meter_offset"
 SwitchFields.CUMULATIVE_REPORTS_SUPPORTED = "__cumulative_reports_supported"
 SwitchFields.LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"
 SwitchFields.MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in seconds

@@ -47,6 +47,17 @@ function CapabilityHandlers.handle_switch_set_level(driver, device, cmd)
 end
 
 
+-- [[ STATELESS SWITCH LEVEL STEP CAPABILITY COMMANDS ]] --
+
+function CapabilityHandlers.handle_step_level(driver, device, cmd)
+  local step_size = math.floor((cmd.args and cmd.args.stepSize or 0)/100.0 * 254)
+  if step_size == 0 then return end
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local step_mode = step_size > 0 and clusters.LevelControl.types.StepMode.UP or clusters.LevelControl.types.StepMode.DOWN
+  device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, math.abs(step_size), fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
+end
+
+
 -- [[ COLOR CONTROL CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_set_color(driver, device, cmd)
@@ -109,6 +120,21 @@ function CapabilityHandlers.handle_set_color_temperature(driver, device, cmd)
 end
 
 
+-- [[ STATELESS COLOR TEMPERATURE STEP CAPABILITY COMMANDS ]] --
+
+function CapabilityHandlers.handle_step_color_temperature_by_percent(driver, device, cmd)
+  local step_percent_change = cmd.args and cmd.args.stepSize or 0
+  if step_percent_change == 0 then return end
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  -- before the Matter 1.3 lua libs update (HUB FW 55), there was no ColorControl StepModeEnum type defined
+  local step_mode = step_percent_change > 0 and (clusters.ColorControl.types.StepModeEnum.DOWN or 3) or (clusters.ColorControl.types.StepModeEnum.UP or 1)
+  local min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or 2200 -- default min mireds
+  local max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or 6500 -- default max mireds
+  local color_change_in_mireds = st_utils.round((max_mireds - min_mireds) * (math.abs(step_percent_change)/100))
+  device:send(clusters.ColorControl.server.commands.StepColorTemperature(device, endpoint_id, step_mode, color_change_in_mireds, fields.TRANSITION_TIME, min_mireds, max_mireds, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
+end
+
+
 -- [[ VALVE CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_valve_open(driver, device, cmd)
@@ -166,6 +192,27 @@ function CapabilityHandlers.handle_fan_speed_set_percent(driver, device, cmd)
   local speed = math.floor(cmd.args.percent)
   local fan_ep = device:get_endpoints(clusters.FanControl.ID)[1]
   device:send(clusters.FanControl.attributes.PercentSetting:write(device, fan_ep, speed))
+end
+
+
+-- [[ ENERGY METER CAPABILITY COMMANDS ]] --
+
+---
+--- If a Cumulative Reporting device, this will store the most recent energy meter reading, and all subsequent reports will have this value subtracted
+--- from the value reported. Matter, like Zigbee and unlike Z-Wave, does not provide a way to reset the value to zero, so this is an attempt at a workaround.
+--- In the case it is a Periodic Reporting device, the reports do not need to be offset, so setting the current energy to 0.0 will do the same thing.
+---
+function CapabilityHandlers.handle_reset_energy_meter(driver, device, cmd)
+  local energy_meter_latest_state = device:get_latest_state(cmd.component, capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) or 0.0
+  if energy_meter_latest_state ~= 0.0 then
+    device:emit_component_event(device.profile.components[cmd.component], capabilities.energyMeter.energy({value = 0.0, unit = "Wh"}))
+    -- note: field containing cumulative reports supported is only set on the parent device
+    local field_device = device:get_parent_device() or device
+    if field_device:get_field(fields.CUMULATIVE_REPORTS_SUPPORTED) then
+      local current_offset = device:get_field(fields.ENERGY_METER_OFFSET) or 0.0
+      device:set_field(fields.ENERGY_METER_OFFSET, current_offset + energy_meter_latest_state, {persist=true})
+    end
+  end
 end
 
 return CapabilityHandlers

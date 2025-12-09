@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
@@ -42,11 +32,6 @@ local CLAMP = {
     CELSIUS_MAX = 28
 }
 
-local DANFOSS_LC13_THERMOSTAT_FINGERPRINTS = {
-    { manufacturerId = 0x0002, productType = 0x0005, productId = 0x0003 }, -- Danfoss LC13 Thermostat
-    { manufacturerId = 0x0002, productType = 0x0005, productId = 0x0004 } -- Danfoss LC13 Thermostat
-}
-
 local WEEK = {6, 0, 1, 2, 3, 4, 5}
 
 --[[ Danfoss LC13 (Living Connect)
@@ -61,16 +46,6 @@ Note: https://idency.com/products/idencyhome/smarthome/sensors/danfoss-z-wave-li
     Note: The Danfoss Z-Wave Living Connect Thermostat cannot report its local temperature
     to the Z-Wave network, it only allows a one-way communication to change its setpoint.
 --]]
-
-local function can_handle_thermostat_heating_battery(opts, driver, device, cmd, ...)
-    for _, fingerprint in ipairs(DANFOSS_LC13_THERMOSTAT_FINGERPRINTS) do
-        if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-            return true
-        end
-    end
-
-    return false
-end
 
 local function adjust_temperature_if_exceeded_min_max_limit (degree, scale)
     if scale == ThermostatSetpoint.scale.CELSIUS then
@@ -283,7 +258,7 @@ local thermostat_heating_battery = {
         init = device_init,
         added = added_handler,
     },
-    can_handle = can_handle_thermostat_heating_battery
+    can_handle = require("thermostat-heating-battery.can_handle"),
 }
 
 return thermostat_heating_battery

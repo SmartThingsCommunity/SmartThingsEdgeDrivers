@@ -122,16 +122,17 @@ local mock_ikea_scroll = test.mock_device.build_test_matter_device({
   }
 })
 
-local ENDPOINTS_PRESS = { 3, 6, 9 }
+local ENDPOINTS_PUSH = { 3, 6, 9 }
 
 -- the ikea scroll subdriver has overriden subscribe behavior
 local function ikea_scroll_subscribe()
   local CLUSTER_SUBSCRIBE_LIST ={
+  clusters.Switch.events.InitialPress,
     clusters.Switch.server.events.LongPress,
     clusters.Switch.server.events.MultiPressComplete,
   }
-  local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_ikea_scroll, ENDPOINTS_PRESS[1])
-  for _, ep_press in ipairs(ENDPOINTS_PRESS) do
+  local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_ikea_scroll, ENDPOINTS_PUSH[1])
+  for _, ep_press in ipairs(ENDPOINTS_PUSH) do
     for _, event in ipairs(CLUSTER_SUBSCRIBE_LIST) do
       subscribe_request:merge(event:subscribe(mock_ikea_scroll, ep_press))
     end
