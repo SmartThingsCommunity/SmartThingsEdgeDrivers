@@ -47,6 +47,17 @@ function CapabilityHandlers.handle_switch_set_level(driver, device, cmd)
 end
 
 
+-- [[ STATELESS SWITCH LEVEL STEP CAPABILITY COMMANDS ]] --
+
+function CapabilityHandlers.handle_step_level(driver, device, cmd)
+  local step_size = cmd.args and cmd.args.stepSize or 0
+  if step_size == 0 then return end
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local step_mode = step_size > 0 and clusters.LevelControl.types.StepModeEnum.UP or clusters.LevelControl.types.StepModeEnum.DOWN
+  device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, math.abs(step_size), fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
+end
+
+
 -- [[ COLOR CONTROL CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_set_color(driver, device, cmd)
@@ -106,6 +117,29 @@ function CapabilityHandlers.handle_set_color_temperature(driver, device, cmd)
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
   device:set_field(fields.MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
   device:send(req)
+end
+
+
+-- [[ STATELESS COLOR TEMPERATURE STEP CAPABILITY COMMANDS ]] --
+
+function CapabilityHandlers.handle_step_color_temperature_by_percent(driver, device, cmd)
+  local step_size = cmd.args and cmd.args.stepSize or 0
+  if step_size == 0 then return end
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local step_mode = step_size > 0 and clusters.LevelControl.types.StepModeEnum.UP or clusters.LevelControl.types.StepModeEnum.DOWN
+  local color_temp_min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or 2200 -- default min mireds
+  local color_temp_max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or 6500 -- default max mireds
+  device:send(clusters.ColorControl.server.commands.StepColorTemperature(
+    device,
+    endpoint_id,
+    step_mode,
+    math.abs(step_size),
+    fields.TRANSITION_TIME,
+    color_temp_min_mireds,
+    color_temp_max_mireds,
+    fields.OPTIONS_MASK,
+    fields.OPTIONS_OVERRIDE
+  ))
 end
 
 
