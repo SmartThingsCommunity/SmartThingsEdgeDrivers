@@ -1,0 +1,87 @@
+{
+  "id": "musictheme49844.filPiloteMode",
+  "version": 1,
+  "dashboard": {
+    "states": [
+      {
+        "label": "{{filPiloteMode.value}}",
+        "alternatives": [
+          {"key": "off", "value": "Off", "type": "inactive"},
+          {"key": "comfort", "value": "Comfort", "type": "active"},
+          {"key": "eco", "value": "Eco", "type": "active"},
+          {"key": "antiFreeze", "value": "Anti-Freeze", "type": "active"},
+          {"key": "comfort1", "value": "Comfort -1°C", "type": "active"},
+          {"key": "comfort2", "value": "Comfort -2°C", "type": "active"}
+        ]
+      }
+    ],
+    "actions": []
+  },
+  "detailView": [
+    {
+      "label": "Mode",
+      "displayType": "list",
+      "list": {
+        "command": {
+          "name": "setFilPiloteMode",
+          "alternatives": [
+            {"key": "off", "value": "Off"},
+            {"key": "comfort", "value": "Comfort"},
+            {"key": "eco", "value": "Eco"},
+            {"key": "antiFreeze", "value": "Anti-Freeze"},
+            {"key": "comfort1", "value": "Comfort -1°C"},
+            {"key": "comfort2", "value": "Comfort -2°C"}
+          ]
+        },
+        "state": {
+          "value": "filPiloteMode.value",
+          "alternatives": [
+            {"key": "off", "value": "Off", "type": "inactive"},
+            {"key": "comfort", "value": "Comfort", "type": "active"},
+            {"key": "eco", "value": "Eco", "type": "active"},
+            {"key": "antiFreeze", "value": "Anti-Freeze", "type": "active"},
+            {"key": "comfort1", "value": "Comfort -1°C", "type": "active"},
+            {"key": "comfort2", "value": "Comfort -2°C", "type": "active"}
+          ]
+        }
+      }
+    }
+  ],
+  "automation": {
+    "conditions": [
+      {
+        "label": "Mode is",
+        "displayType": "list",
+        "list": {
+          "alternatives": [
+            {"key": "off", "value": "Off"},
+            {"key": "comfort", "value": "Comfort"},
+            {"key": "eco", "value": "Eco"},
+            {"key": "antiFreeze", "value": "Anti-Freeze"},
+            {"key": "comfort1", "value": "Comfort -1°C"},
+            {"key": "comfort2", "value": "Comfort -2°C"}
+          ]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "label": "Set mode to",
+        "displayType": "list",
+        "list": {
+          "command": {
+            "name": "setFilPiloteMode",
+            "alternatives": [
+              {"key": "off", "value": "Off"},
+              {"key": "comfort", "value": "Comfort"},
+              {"key": "eco", "value": "Eco"},
+              {"key": "antiFreeze", "value": "Anti-Freeze"},
+              {"key": "comfort1", "value": "Comfort -1°C"},
+              {"key": "comfort2", "value": "Comfort -2°C"}
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
