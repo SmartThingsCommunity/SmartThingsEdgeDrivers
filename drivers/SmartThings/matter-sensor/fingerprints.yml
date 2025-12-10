@@ -99,7 +99,7 @@ matterManufacturer:
     deviceLabel: MYGGSPRAY wrlss mtn sensor
     vendorId: 0x117C
     productId: 0x3000
-    deviceProfileName: matter-motion-battery-illuminance
+    deviceProfileName: motion-illuminance-battery
   - id: "4476/12289"
     deviceLabel: ALPSTUGA Matter air quality sensor smart
     vendorId: 0x117C
