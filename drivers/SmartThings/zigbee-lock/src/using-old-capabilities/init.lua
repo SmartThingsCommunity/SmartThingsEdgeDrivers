@@ -338,6 +338,7 @@ local migrate = function(driver, device, command)
   device:emit_event(LockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(LockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
   device:emit_event(LockUsers.users(lock_users, { visibility = { displayed = false } }))
+  device:emit_event(LockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
   device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
 end
 

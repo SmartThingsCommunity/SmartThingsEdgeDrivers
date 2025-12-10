@@ -25,10 +25,6 @@ local lock_utils =  {
   MIGRATION_COMPLETE = "migrationComplete",
   MIGRATION_RELOAD_SKIPPED = "migrationReloadSkipped",
   CHECKED_CODE_SUPPORT = "checkedCodeSupport",
-  COMMAND_NAME = "commandName",
-  USER_NAME = "userName",
-  USER_INDEX = "userIndex",
-  USER_TYPE = "userType"
 }
 
 lock_utils.get_lock_codes = function(device)

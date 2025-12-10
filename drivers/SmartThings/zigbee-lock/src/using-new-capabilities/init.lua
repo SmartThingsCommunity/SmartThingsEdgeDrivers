@@ -37,59 +37,214 @@ local UserStatusEnum            = LockCluster.types.DrlkUserStatus
 local UserTypeEnum              = LockCluster.types.DrlkUserType
 local ProgrammingEventCodeEnum  = LockCluster.types.ProgramEventCode
 
-local lock_utils = require "lock_utils"
-
 local socket = require "cosock.socket"
-local lock_utils = require "lock_utils"
+local lock_utils = require "new_lock_utils"
 
 local DELAY_LOCK_EVENT = "_delay_lock_event"
 local MAX_DELAY = 10
 
-local INITIAL_CREDENTIAL_INDEX = 1 -- only used to obtain the next available index.
+local reload_all_codes = function(device)
+  -- starts at first user code index then iterates through all lock codes as they come in
+  device:send(LockCluster.attributes.SendPINOverTheAir:write(device, true))
+  if (device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.maxPinCodeLen.NAME) == nil) then
+    device:send(LockCluster.attributes.MaxPINCodeLength:read(device))
+  end
+  if (device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCodes.minPinCodeLen.NAME) == nil) then
+    device:send(LockCluster.attributes.MinPINCodeLength:read(device))
+  end
+  if (device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCodes.pinUsersSupported.NAME) == nil) then
+    device:send(LockCluster.attributes.NumberOfPINUsersSupported:read(device))
+  end
+  if (device:get_field(lock_utils.CHECKING_CODE) == nil) then 
+    device:set_field(lock_utils.CHECKING_CODE, 1) 
+  end
+
+  device:send(LockCluster.server.commands.GetPINCode(device, device:get_field(lock_utils.CHECKING_CODE)))
+end
+
+local do_configure = function(self, device)
+  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
+  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 600, 21600, 1))
+
+  device:send(device_management.build_bind_request(device, LockCluster.ID, self.environment_info.hub_zigbee_eui))
+  device:send(LockCluster.attributes.LockState:configure_reporting(device, 0, 3600, 0))
+
+  device:send(device_management.build_bind_request(device, Alarm.ID, self.environment_info.hub_zigbee_eui))
+  device:send(Alarm.attributes.AlarmCount:configure_reporting(device, 0, 21600, 0))
+
+  device.thread:call_with_delay(2, function(d)
+    reload_all_codes(device)
+  end)
+end
 
 local add_user_handler = function(driver, device, command)
-  local cmdName = "addUser"
-  local userName = command.args.userName
-  local userType = command.args.userType
+  local user_name = command.args.userName
+  local user_type = command.args.userType
+  local status = lock_utils.create_user(device, user_name, user_type, nil)
+  local command_result_info = {
+    commandName = lock_utils.ADD_USER,
+    statusCode = status
+  }
+  
+  if status == lock_utils.STATUS_SUCCESS then
+    local current_users = lock_utils.get_users(device)
+    device:emit_event(capabilities.lockUsers.users(current_users, {visibility = {displayed = false}}))
+  end
 
-  -- Save values to field
-  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
-  device:set_field(lock_utils.USER_INDEX, INITIAL_CREDENTIAL_INDEX, {persist = true})
-  device:set_field(lock_utils.USER_NAME, userName, {persist = true})
-  device:set_field(lock_utils.USER_TYPE, userType, {persist = true})
-
-  -- Send a request to server to get an index. 
-  local ep = device:component_to_endpoint(command.component)
-  device:send(LockCluster.server.commands.GetUser(device, ep, INITIAL_CREDENTIAL_INDEX))
+  device:emit_event(capabilities.lockUsers.commandResult(
+    command_result_info, {state_change = true, visibility = {displayed = false}}
+  ))
 end
 
 local update_user_handler = function(driver, device, command)
--- TODO --
-print("---- PK TODO --- ")
+  local user_name = command.args.userName
+  local user_type = command.args.userType
+  local user_index = tonumber(command.args.userIndex)
+  local current_users = lock_utils.get_users(device)
+
+  local command_result_info = {
+    commandName = lock_utils.UPDATE_USER,
+    statusCode = lock_utils.STATUS_FAILURE
+  }
+
+  for _, user in ipairs(current_users) do
+      if user.userIndex == user_index then
+          -- update user info and the commandResult
+          user.userName = user_name
+          user.userType = user_type
+          device:set_field(lock_utils.LOCK_USERS, current_users)
+          device:emit_event(capabilities.lockUsers.users(current_users, {visibility = {displayed = false}}))
+          command_result_info.statusCode = lock_utils.STATUS_SUCCESS
+          break
+      end
+  end
+
+  device:emit_event(capabilities.lockUsers.commandResult(
+    command_result_info, {state_change = true, visibility = {displayed = false}}
+  ))
+
 end
 
 local delete_user_handler = function(driver, device, command)
--- TODO
+  local user_index = tonumber(command.args.userIndex)
+  local status_code = lock_utils.delete_user(device, user_index)
+  local command_result_info = {
+    commandName = lock_utils.DELETE_USER,
+    statusCode = status_code
+  }
+
+  if status_code == lock_utils.STATUS_SUCCESS then
+    local current_users = lock_utils.get_users(device)
+    device:emit_event(capabilities.lockUsers.users(current_users, {visibility = {displayed = false}}))
+  end
+
+  device:emit_event(capabilities.lockUsers.commandResult(
+    command_result_info, {state_change = true, visibility = {displayed = false}}
+  ))
 end
 
 local delete_all_users_handler = function(driver, device, command)
--- TODO
+  local current_users = lock_utils.get_users(device)
+  local command_result_info = {
+    commandName = lock_utils.DELETE_ALL_USERS,
+    statusCode = lock_utils.STATUS_SUCCESS
+  }
+  current_users = {} -- clear the table
+  device:set_field(lock_utils.LOCK_USERS, current_users)
+  device:emit_event(capabilities.lockUsers.commandResult(
+    command_result_info, {state_change = true, visibility = {displayed = false}}
+  ))
 end
 
 local add_credential_handler = function(driver, device, command)
--- TODO
+  device:set_field(lock_utils.COMMAND_NAME, lock_utils.ADD_CREDENTIAL)
+  local user_index = tonumber(command.args.userIndex)
+  local user_type = command.args.userType
+  local credential_type = command.args.credentialType
+  local credential_data = command.args.credentialData
+  local credential_index = nil
+  local status_code = lock_utils.STATUS_SUCCESS
+  local max_credentials = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.pinUsersSupported.NAME, 0)
+
+  credential_index = lock_utils.get_available_index(lock_utils.get_credentials(device), max_credentials)
+  if credential_index ~= nil then
+    device:set_field(lock_utils.PENDING_CREDENTIAL, {userIndex = user_index, userType = user_type, credentialType = credential_type})
+  else
+    status_code = lock_utils.STATUS_RESOURCE_EXHAUSTED
+  end
+  if status_code == lock_utils.STATUS_SUCCESS then
+    -- set the pin code and then validate it was successful when the GetPINCode response is received.
+    -- the credential creation and events will also be handled in that response.
+    device:send(LockCluster.server.commands.SetPINCode(device,
+            credential_index,
+            UserStatusEnum.OCCUPIED_ENABLED,
+            UserTypeEnum.UNRESTRICTED,
+            credential_data)
+    )
+    device.thread:call_with_delay(4, function(d)
+      device:send(LockCluster.server.commands.GetPINCode(device, credential_index))
+    end)
+  else
+    local command_result_info = {
+      commandName = lock_utils.ADD_CREDENTIAL,
+      statusCode = status_code
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.COMMAND_NAME, nil)
+  end
 end
 
 local update_credential_handler = function(driver, device, command)
--- TODO
+  device:set_field(lock_utils.COMMAND_NAME, lock_utils.UPDATE_CREDENTIAL)
+  
+  local credential_index = command.args.credentialIndex
+  local credential_data = command.args.credentialData
+  local command_result_info = {
+    commandName = lock_utils.UPDATE_CREDENTIAL,
+    statusCode = lock_utils.STATUS_FAILURE
+  }
+  if lock_utils.get_credential(device, credential_index) ~= nil then
+    device:send(LockCluster.server.commands.SetPINCode(device,
+            credential_index,
+            UserStatusEnum.OCCUPIED_ENABLED,
+            UserTypeEnum.UNRESTRICTED,
+            credential_data)
+    )
+    command_result_info.statusCode = lock_utils.STATUS_SUCCESS
+    device.thread:call_with_delay(4, function ()
+      device:send(LockCluster.server.commands.GetPINCode(device, credential_index))
+    end)
+  end
+
+  device:emit_event(capabilities.lockCredentials.commandResult(
+    command_result_info, {state_change = true, visibility = {displayed = false}}
+  ))
 end
 
 local delete_credential_handler = function(driver, device, command)
--- TODO
+  device:set_field(lock_utils.COMMAND_NAME, lock_utils.DELETE_CREDENTIAL)
+  device:send(LockCluster.attributes.SendPINOverTheAir:write(device, true))
+  device:send(LockCluster.server.commands.ClearPINCode(device, command.args.credentialIndex))
+  device.thread:call_with_delay(2, function(d)
+    device:send(LockCluster.server.commands.GetPINCode(device, command.args.credentialIndex))
+  end)
 end
 
 local delete_all_credentials_handler = function(driver, device, command)
--- TODO
+  device:set_field(lock_utils.COMMAND_NAME, lock_utils.DELETE_ALL_CREDENTIALS)
+  local credentials = lock_utils.get_credentials(device)
+  local delay = 0
+  for _, credential in ipairs(credentials) do
+      device.thread:call_with_delay(delay, function ()
+        device:send(LockCluster.server.commands.ClearPINCode(device, credential.credentialIndex))
+      end)
+      device.thread:call_with_delay(delay + 2, function(d)
+        device:send(LockCluster.server.commands.GetPINCode(device, credential.credentialIndex))
+      end)
+      delay = delay + 2
+  end
 end
 
 local max_code_length_handler = function(driver, device, value)
@@ -105,35 +260,46 @@ local max_codes_handler = function(driver, device, value)
 end
 
 local get_pin_response_handler = function(driver, device, zb_mess)
-  local event = LockCodes.codeChanged("", { state_change = true })
-  local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
-  event.data = {codeName = lock_utils.get_code_name(device, code_slot)}
-  if (zb_mess.body.zcl_body.user_status.value == UserStatusEnum.OCCUPIED_ENABLED) then
-    -- Code slot is occupied
-    event.value = code_slot .. lock_utils.get_change_type(device, code_slot)
-    local lock_codes = lock_utils.get_lock_codes(device)
-    lock_codes[code_slot] = event.data.codeName
-    device:emit_event(event)
-    lock_utils.lock_codes_event(device, lock_codes)
-    lock_utils.reset_code_state(device, code_slot)
-  else
-    -- Code slot is unoccupied
-    if (lock_utils.get_lock_codes(device)[code_slot] ~= nil) then
-      -- Code has been deleted
-      lock_utils.lock_codes_event(device, lock_utils.code_deleted(device, code_slot))
+  local credential_index = zb_mess.body.zcl_body.user_id.value
+  local pending_credential = device:get_field(lock_utils.PENDING_CREDENTIAL)
+  local command = device:get_field(lock_utils.COMMAND_NAME)
+  local command_result_info = {
+    commandName = command,
+    statusCode = lock_utils.STATUS_SUCCESS
+  }
+
+  if (zb_mess.body.zcl_body.user_status.value == UserStatusEnum.OCCUPIED_ENABLED) then   
+    if pending_credential ~= nil then
+      -- create credential
+      lock_utils.add_credential(device, pending_credential.userIndex,
+                                pending_credential.userType,
+                                pending_credential.credentialType, 
+                                credential_index)
     else
-      -- Code is unset
-      event.value = code_slot .. " unset"
-      device:emit_event(event)
+      -- update credential 
+      local credential = lock_utils.get_credential(device, credential_index)
+      if credential ~= nil then
+        lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
+      end
+    end
+
+    local credentials = lock_utils.get_credentials(device)
+    device:emit_event(capabilities.lockCredentials.credentials(credentials, {visibility = {displayed = false}}))
+  else
+    if lock_utils.get_credential(device, credential_index) ~= nil then
+      -- Credential has been deleted.
+      lock_utils.delete_credential(device, credential_index)
+      device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device), {visibility = {displayed = false}}))
+    else 
+      -- unset?
     end
   end
 
-  code_slot = tonumber(code_slot)
-  if (code_slot == device:get_field(lock_utils.CHECKING_CODE)) then
-    -- the code we're checking has arrived
-    local last_slot = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME) - 1
-    if (code_slot >= last_slot) then
-      device:emit_event(LockCodes.scanCodes("Complete", { visibility = { displayed = false } }))
+  credential_index = tonumber(credential_index)
+  if (credential_index == device:get_field(lock_utils.CHECKING_CODE)) then
+    -- the credential we're checking has arrived
+    local last_slot = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.pinUsersSupported.NAME)
+    if (credential_index >= last_slot) then
       device:set_field(lock_utils.CHECKING_CODE, nil)
     else
       local checkingCode = device:get_field(lock_utils.CHECKING_CODE) + 1
@@ -141,44 +307,17 @@ local get_pin_response_handler = function(driver, device, zb_mess)
       device:send(LockCluster.server.commands.GetPINCode(device, checkingCode))
     end
   end
+
+  if command ~= nil then
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.COMMAND_NAME, nil)
+  end
 end
 
 local programming_event_handler = function(driver, device, zb_mess)
-  local event = LockCodes.codeChanged("", { state_change = true })
-  local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
-  event.data = {}
-  if (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.MASTER_CODE_CHANGED) then
-    -- Master code changed
-    event.value = "0 set"
-    event.data = {codeName = "Master Code"}
-    device:emit_event(event)
-  elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_DELETED) then
-    if (zb_mess.body.zcl_body.user_id.value == 0xFF) then
-      -- All codes deleted
-      for cs, _ in pairs(lock_utils.get_lock_codes(device)) do
-        lock_utils.code_deleted(device, cs)
-      end
-      lock_utils.lock_codes_event(device, {})
-    else
-      -- One code deleted
-      if (lock_utils.get_lock_codes(device)[code_slot] ~= nil) then
-        lock_utils.lock_codes_event(device, lock_utils.code_deleted(device, code_slot))
-      end
-    end
-  elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_ADDED or
-          zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_CHANGED) then
-    -- Code added or changed
-    local change_type = lock_utils.get_change_type(device, code_slot)
-    local code_name = lock_utils.get_code_name(device, code_slot)
-    event.value = code_slot .. change_type
-    event.data = {codeName = code_name}
-    device:emit_event(event)
-    if (change_type == " set") then
-      local lock_codes = lock_utils.get_lock_codes(device)
-      lock_codes[code_slot] = code_name
-      lock_utils.lock_codes_event(device, lock_codes)
-    end
-  end
+  -- TODO
 end
 
 local lock_operation_event_handler = function(driver, device, zb_rx)
@@ -288,10 +427,13 @@ local new_capabilities_driver = {
         require("using-new-capabilities.yale"),
         require("using-new-capabilities.lock-without-codes")
     },
+    health_check = false,
+    lifecycle_handlers = {
+      doConfigure = do_configure
+    },
     can_handle = function(opts, driver, device, ...)
         local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME, false)
         if lock_codes_migrated then
-            print("--- PK NEW CAPABILITIES --")
             local subdriver = require("using-new-capabilities")
             return true, subdriver
         end
