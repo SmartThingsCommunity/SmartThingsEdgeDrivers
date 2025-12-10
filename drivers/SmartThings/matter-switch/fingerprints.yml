@@ -9,9 +9,8 @@ matterGeneric:
   - id: "matter/color/temp/light"
     deviceLabel: Matter Color Light
     deviceTypes:
-      - id: 0x010C # Color Temperature Light
       - id: 0x010D # Extended Color Light
-    deviceProfileName: light-color-level
+    deviceProfileName: light-color-level-ikea
 
 matterThing:
   - id: SmartThings/MatterThing
