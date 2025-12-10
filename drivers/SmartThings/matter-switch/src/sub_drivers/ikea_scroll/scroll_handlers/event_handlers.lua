@@ -15,13 +15,13 @@ local function rotate_amount_event_helper(device, endpoint_id)
   local knob_latest_state = switch_utils.get_latest_state_for_endpoint(
     device, endpoint_id, capabilities.knob.ID, capabilities.knob.rotateAmount.NAME
   ) or 0
-  scroll_amount = st_utils.clamp_value(scroll_amount + knob_latest_state, -100, 100)
+  scroll_amount = st_utils.clamp_value(scroll_amount + knob_latest_state, 0, 100)
   if scroll_amount ~= knob_latest_state then
     device:emit_event_for_endpoint(endpoint_id, capabilities.knob.rotateAmount(scroll_amount))
   end
 end
 
--- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH
+-- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH, which use the generic handler
 function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, response)
   rotate_amount_event_helper(device, ib.endpoint_id)
 end
