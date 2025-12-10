@@ -6,13 +6,17 @@
 # pre-commit
 #
 # - Soft link into .git/hooks/pre-commit
-#   - $ ln -s tools/pre-commit .git/hooks/pre-commit
+#   - $ ln -s ../../tools/pre-commit .git/hooks/pre-commit
 # - Ensure executable
 
 set -e
 
 # Get changed files that are Added or Modified
-files=$(git diff --staged --name-only --diff-filter=AM)
+if [[ "$1" ]]; then
+    files=$(find $1 -type f -follow -print)
+else
+    files=$(git diff --staged --name-only --diff-filter=AM)
+fi
 
 fail=0
 for file in $files; do
@@ -23,7 +27,7 @@ for file in $files; do
             [ -f "$file" ] || continue
 
             # Check if file is not empty, is a SmartThings driver and has the copyright header
-            if [ -s "$file" ] && [[ "$file" =~ "drivers/SmartThings" ]] 
+            if [ -s "$file" ] && [[ "$file" =~ "drivers/SmartThings" ]] \
                 && [[ ! $(grep $file -P -e "-{2,} Copyright \d{4}(?:-\d{4})? SmartThings") ]]; then
                 echo "$file: SmartThings Copyright missing from file"
                 fail=1
