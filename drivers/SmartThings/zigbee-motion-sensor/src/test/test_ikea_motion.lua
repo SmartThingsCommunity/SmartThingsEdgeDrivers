@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Mock out globals
 local test = require "integration_test"
@@ -133,7 +123,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "ZDO Message handler and adding hub to group",
   function()
-    local binding_table = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x01, 0xB9F2)
+    local binding_table = mgmt_bind_response.BindingTableListRecord("jù¿˛ˇ^œ–", 0x01, 0x0006, 0x01, 0xB9F2)
     local response = mgmt_bind_response.MgmtBindResponse({
       status = 0x00,
       total_binding_table_entry_count = 0x01,
@@ -154,7 +144,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Request all binding table entries and fall back to group 0x0000",
   function()
-    local binding_table_long = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
+    local binding_table_long = mgmt_bind_response.BindingTableListRecord("jù¿˛ˇ^œ–", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
     local response = mgmt_bind_response.MgmtBindResponse({
       status = 0x00,
       total_binding_table_entry_count = 0x02,

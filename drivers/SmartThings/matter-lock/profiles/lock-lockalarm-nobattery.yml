@@ -1,3 +1,4 @@
+# Deprecated: do not use this profile for device fingerprinting.
 name: lock-lockalarm-nobattery
 components:
 - id: main

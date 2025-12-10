@@ -71,6 +71,7 @@ function DeviceConfiguration.match_profile(device)
   end
 
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+  device:set_field(fields.MODULAR_PROFILE_UPDATED, true)
 
   -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
   -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
