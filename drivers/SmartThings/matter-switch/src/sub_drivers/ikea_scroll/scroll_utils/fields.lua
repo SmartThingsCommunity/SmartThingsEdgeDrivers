@@ -32,7 +32,7 @@ IkeaScrollFields.switch_press_subscribed_events = {
 -- MultiPressOngoing subscription to handle step functionality in real-time, and
 -- removes MultiPressComplete subscription due to the real-time handling
 IkeaScrollFields.switch_scroll_subscribed_events = {
-  clusters.Switch.events.InitialPress,
+  clusters.Switch.events.InitialPress.ID,
   clusters.Switch.events.MultiPressOngoing.ID,
 }
 
