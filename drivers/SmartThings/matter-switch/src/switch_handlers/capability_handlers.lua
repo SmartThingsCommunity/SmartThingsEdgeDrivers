@@ -50,17 +50,11 @@ end
 -- [[ STATELESS SWITCH LEVEL STEP CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_step_level(driver, device, cmd)
-  local level = cmd.args and cmd.args.stepSize or 0
-  -- device.log.info_with({hub_logs = true}, st_utils.stringify_table(cmd))
-  -- if level == 0 then return end
+  local step_size = math.floor((cmd.args and cmd.args.stepSize or 0)/100.0 * 254)
+  if step_size == 0 then return end
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  -- local switch_level_latest_state = switch_utils.get_latest_state_for_endpoint(
-  --   device, endpoint_id, capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME
-  -- ) or 0
-  -- local step_mode = step > 0 and clusters.LevelControl.types.StepModeEnum.UP or clusters.LevelControl.types.StepModeEnum.DOWN
-  -- device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, math.abs(step_size), fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
-  level = math.floor(level/100.0 * 254)
-  device:send(clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, nil, 0, 0))
+  local step_mode = step_size > 0 and clusters.LevelControl.types.StepModeEnum.UP or clusters.LevelControl.types.StepModeEnum.DOWN
+  device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, math.abs(step_size), fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
 end
 
 
