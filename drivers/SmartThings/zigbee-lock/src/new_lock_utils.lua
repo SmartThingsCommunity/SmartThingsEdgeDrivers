@@ -18,7 +18,7 @@ local LockCredentials = capabilities.lockCredentials
 local LockUsers = capabilities.lockUsers
 local INITIAL_INDEX = 1
 
-local new_lock_utils =  {
+local new_lock_utils = {
   -- Constants
   ADD_CREDENTIAL = "addCredential",
   ADD_USER = "addUser",
@@ -70,7 +70,7 @@ new_lock_utils.get_available_index = function(current_data, max)
   local used_index = {}
 
   for i, _ in ipairs(current_data) do
-      used_index[i] = true
+    used_index[i] = true
   end
 
   if current_data ~= {} then
@@ -89,7 +89,8 @@ end
 
 new_lock_utils.create_user = function(device, user_name, user_type, user_index)
   local status_code = new_lock_utils.STATUS_SUCCESS
-  local max_users = device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.totalUsersSupported.NAME, 0)
+  local max_users = device:get_latest_state("main", capabilities.lockUsers.ID,
+    capabilities.lockUsers.totalUsersSupported.NAME, 0)
   local current_users = new_lock_utils.get_users(device)
   local available_index = new_lock_utils.get_available_index(current_users, max_users)
 
@@ -101,7 +102,7 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
     if user_index ~= nil then
       available_index = user_index
     end
-    table.insert(current_users, {userIndex = available_index, userType = user_type, userName = user_name})
+    table.insert(current_users, { userIndex = available_index, userType = user_type, userName = user_name })
     device:set_field(new_lock_utils.LOCK_USERS, current_users)
   end
 
@@ -113,12 +114,12 @@ new_lock_utils.delete_user = function(device, user_index)
   local status_code = new_lock_utils.STATUS_FAILURE
 
   for index, user in ipairs(current_users) do
-      if user.userIndex == user_index then
-          table.remove(current_users, index)
-          device:set_field(new_lock_utils.LOCK_USERS, current_users)
-          status_code = new_lock_utils.STATUS_SUCCESS
-          break
-      end
+    if user.userIndex == user_index then
+      table.remove(current_users, index)
+      device:set_field(new_lock_utils.LOCK_USERS, current_users)
+      status_code = new_lock_utils.STATUS_SUCCESS
+      break
+    end
   end
 
   return status_code
@@ -135,22 +136,23 @@ new_lock_utils.add_credential = function(device, user_index, user_type, credenti
   end
 
   local credentials = new_lock_utils.get_credentials(device)
-  table.insert(credentials, {userIndex = user_index, credentialIndex = credential_index, credentialType = credential_type})
+  table.insert(credentials,
+    { userIndex = user_index, credentialIndex = credential_index, credentialType = credential_type })
   device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
   return new_lock_utils.STATUS_SUCCESS
 end
 
-new_lock_utils.delete_credential = function(device, credential_index) 
+new_lock_utils.delete_credential = function(device, credential_index)
   local credentials = new_lock_utils.get_credentials(device)
   local status_code = new_lock_utils.STATUS_FAILURE
 
   for index, credential in ipairs(credentials) do
-      if credential.userIndex == credential_index then
-          table.remove(credentials, index)
-          device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
-          status_code = new_lock_utils.STATUS_SUCCESS
-          break
-      end
+    if credential.userIndex == credential_index then
+      table.remove(credentials, index)
+      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+      status_code = new_lock_utils.STATUS_SUCCESS
+      break
+    end
   end
 
   return status_code
@@ -170,13 +172,13 @@ new_lock_utils.update_credential = function(device, credential_index, user_index
   local status_code = new_lock_utils.STATUS_FAILURE
 
   for _, credential in ipairs(credentials) do
-      if credential.credentialIndex == credential_index then
-        credential.credentialType = credential_type
-        credential.userIndex = user_index
-        device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
-        status_code = new_lock_utils.STATUS_SUCCESS
-        break
-      end
+    if credential.credentialIndex == credential_index then
+      credential.credentialType = credential_type
+      credential.userIndex = user_index
+      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+      status_code = new_lock_utils.STATUS_SUCCESS
+      break
+    end
   end
   return status_code
 end

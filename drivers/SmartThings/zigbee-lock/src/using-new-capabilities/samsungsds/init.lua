@@ -110,11 +110,7 @@ local samsung_sds_driver = {
     init = device_init
   },
   can_handle = function(opts, driver, device, ...)
-    if device:get_manufacturer() == "SAMSUNG SDS" and lock_codes_migrated then
-      local subdriver = require("using-new-capabilities.samsungsds")
-      return true, subdriver
-    end
-    return false
+    return device:get_manufacturer() == "SAMSUNG SDS"
   end
 }
 

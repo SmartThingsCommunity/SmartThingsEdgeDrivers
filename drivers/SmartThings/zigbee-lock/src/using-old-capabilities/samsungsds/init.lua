@@ -113,10 +113,7 @@ local samsung_sds_driver = {
     init = device_init
   },
   can_handle = function(opts, driver, device, ...)
-    if device:get_manufacturer() == "SAMSUNG SDS" then
-      return true
-    end
-    return false
+    return device:get_manufacturer() == "SAMSUNG SDS"
   end
 }
 

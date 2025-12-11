@@ -62,7 +62,7 @@ end
 local get_pin_response_handler = function(driver, device, zb_mess)
   local event = LockCodes.codeChanged("", { state_change = true })
   local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
-  event.data = {codeName = lock_utils.get_code_name(device, code_slot)}
+  event.data = { codeName = lock_utils.get_code_name(device, code_slot) }
   if (zb_mess.body.zcl_body.user_status.value == UserStatusEnum.OCCUPIED_ENABLED) then
     -- Code slot is occupied
     event.value = code_slot .. lock_utils.get_change_type(device, code_slot)
@@ -105,7 +105,7 @@ local programming_event_handler = function(driver, device, zb_mess)
   if (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.MASTER_CODE_CHANGED) then
     -- Master code changed
     event.value = "0 set"
-    event.data = {codeName = "Master Code"}
+    event.data = { codeName = "Master Code" }
     device:emit_event(event)
   elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_DELETED) then
     if (zb_mess.body.zcl_body.user_id.value == 0xFF) then
@@ -121,12 +121,12 @@ local programming_event_handler = function(driver, device, zb_mess)
       end
     end
   elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_ADDED or
-          zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_CHANGED) then
+        zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_CHANGED) then
     -- Code added or changed
     local change_type = lock_utils.get_change_type(device, code_slot)
     local code_name = lock_utils.get_code_name(device, code_slot)
     event.value = code_slot .. change_type
-    event.data = {codeName = code_name}
+    event.data = { codeName = code_name }
     device:emit_event(event)
     if (change_type == " set") then
       local lock_codes = lock_utils.get_lock_codes(device)
@@ -141,7 +141,7 @@ local handle_max_codes = function(driver, device, value)
     -- Here's where we'll end up if we queried a lock whose profile does not have lock codes,
     -- but it gave us a non-zero number of pin users, so we want to switch the profile
     if not device:supports_capability_by_id(LockCodes.ID) then
-      device:try_update_metadata({profile = "base-lock"}) -- switch to a lock with codes
+      device:try_update_metadata({ profile = "base-lock" }) -- switch to a lock with codes
       lock_utils.populate_state_from_data(device) -- if this was a migrated device, try to migrate the lock codes
       if not device:get_field(lock_utils.MIGRATION_COMPLETE) then -- this means we didn't find any pre-migration lock codes
         -- so we'll load them manually
@@ -192,30 +192,30 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
   if (event ~= nil) then
     event["data"] = {}
     if (source ~= 0 and event_code == OperationEventCode.AUTO_LOCK or
-        event_code == OperationEventCode.SCHEDULE_LOCK or
-        event_code == OperationEventCode.SCHEDULE_UNLOCK
-      ) then
+          event_code == OperationEventCode.SCHEDULE_LOCK or
+          event_code == OperationEventCode.SCHEDULE_UNLOCK
+        ) then
       event.data.method = "auto"
     else
       event.data.method = METHOD[source]
     end
     if (source == 0 and device:supports_capability_by_id(capabilities.lockCodes.ID)) then --keypad
       local code_id = zb_rx.body.zcl_body.user_id.value
-      local code_name = "Code "..code_id
+      local code_name = "Code " .. code_id
       local lock_codes = device:get_field("lockCodes")
       if (lock_codes ~= nil and
-          lock_codes[code_id] ~= nil) then
+            lock_codes[code_id] ~= nil) then
         code_name = lock_codes[code_id]
       end
-      event.data = {method = METHOD[0], codeId = code_id .. "", codeName = code_name}
+      event.data = { method = METHOD[0], codeId = code_id .. "", codeName = code_name }
     end
 
     -- if this is an event corresponding to a recently-received attribute report, we
     -- want to set our delay timer for future lock attribute report events
     if device:get_latest_state(
-        device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
-        capabilities.lock.ID,
-        capabilities.lock.lock.ID) == event.value.value then
+          device:get_component_id_for_endpoint(zb_rx.address_header.src_endpoint.value),
+          capabilities.lock.ID,
+          capabilities.lock.lock.ID) == event.value.value then
       local preceding_event_time = device:get_field(DELAY_LOCK_EVENT) or 0
       local time_diff = socket.gettime() - preceding_event_time
       if time_diff < MAX_DELAY then
@@ -235,16 +235,16 @@ local update_codes = function(driver, device, command)
     local code_slot = tonumber(string.gsub(name, "code", ""), 10)
     if (code_slot ~= nil) then
       if (code ~= nil and (code ~= "0" and code ~= "")) then
-        device.thread:call_with_delay(delay, function ()
+        device.thread:call_with_delay(delay, function()
           device:send(LockCluster.server.commands.SetPINCode(device,
-                code_slot,
-                UserStatusEnum.OCCUPIED_ENABLED,
-                UserTypeEnum.UNRESTRICTED,
-                code))
+            code_slot,
+            UserStatusEnum.OCCUPIED_ENABLED,
+            UserTypeEnum.UNRESTRICTED,
+            code))
         end)
         delay = delay + 2
       else
-        device.thread:call_with_delay(delay, function ()
+        device.thread:call_with_delay(delay, function()
           device:send(LockCluster.server.commands.ClearPINCode(device, code_slot))
         end)
         delay = delay + 2
@@ -274,20 +274,20 @@ local set_code = function(driver, device, command)
     driver:inject_capability_command(device, {
       capability = capabilities.lockCodes.ID,
       command = capabilities.lockCodes.commands.nameSlot.NAME,
-      args = {command.args.codeSlot, command.args.codeName}
+      args = { command.args.codeSlot, command.args.codeName }
     })
   else
     device:send(LockCluster.server.commands.SetPINCode(device,
-            command.args.codeSlot,
-            UserStatusEnum.OCCUPIED_ENABLED,
-            UserTypeEnum.UNRESTRICTED,
-            command.args.codePIN)
+      command.args.codeSlot,
+      UserStatusEnum.OCCUPIED_ENABLED,
+      UserTypeEnum.UNRESTRICTED,
+      command.args.codePIN)
     )
     if (command.args.codeName ~= nil) then
       -- wait for confirmation from the lock to commit this to memory
       -- Groovy driver has a lot more info passed here as a description string, may need to be investigated
       local codeState = device:get_field(lock_utils.CODE_STATE) or {}
-      codeState["setName"..command.args.codeSlot] = command.args.codeName
+      codeState["setName" .. command.args.codeSlot] = command.args.codeName
       device:set_field(lock_utils.CODE_STATE, codeState, { persist = true })
     end
 
@@ -319,13 +319,15 @@ local migrate = function(driver, device, command)
 
   table.sort(ordered_codes)
   for index, code_slot in ipairs(ordered_codes) do
-    table.insert(lock_users, {userIndex = index, userType = "guest", userName = lock_codes[code_slot]})
-    table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
+    table.insert(lock_users, { userIndex = index, userType = "guest", userName = lock_codes[code_slot] })
+    table.insert(lock_credentials, { userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin" })
   end
 
   local code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  local min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME, 4)
-  local max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME, 8)
+  local min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID,
+    capabilities.lockCodes.minCodeLength.NAME, 4)
+  local max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID,
+    capabilities.lockCodes.maxCodeLength.NAME, 8)
   local max_codes    = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME, 0)
   if (code_length ~= nil) then
     max_code_len = code_length
@@ -336,7 +338,7 @@ local migrate = function(driver, device, command)
   device:emit_event(LockCredentials.maxPinCodeLen(max_code_len, { visibility = { displayed = false } }))
   device:emit_event(LockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
   device:emit_event(LockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
-  device:emit_event(LockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
+  device:emit_event(LockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
   device:emit_event(LockUsers.users(lock_users, { visibility = { displayed = false } }))
   device:emit_event(LockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
   device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
@@ -367,57 +369,58 @@ local do_configure = function(self, device)
 end
 
 local old_capabilities_driver = {
-    NAME = "Lock Driver Using Old Capabilities",
-    supported_capabilities = {
-      Lock,
-      LockCodes,
-      Battery,
-    },
-    zigbee_handlers = {
-      cluster = {
-        [LockCluster.ID] = {
-          [LockCluster.client.commands.GetPINCodeResponse.ID] = get_pin_response_handler,
-          [LockCluster.client.commands.ProgrammingEventNotification.ID] = programming_event_handler,
-          [LockCluster.client.commands.OperatingEventNotification.ID] = lock_operation_event_handler
-        }
-      },
-      attr = {
-        [LockCluster.ID] = {
-          [LockCluster.attributes.MaxPINCodeLength.ID] = handle_max_code_length,
-          [LockCluster.attributes.MinPINCodeLength.ID] = handle_min_code_length,
-          [LockCluster.attributes.NumberOfPINUsersSupported.ID] = handle_max_codes,
-        }
+  NAME = "Lock Driver Using Old Capabilities",
+  supported_capabilities = {
+    Lock,
+    LockCodes,
+    Battery,
+  },
+  zigbee_handlers = {
+    cluster = {
+      [LockCluster.ID] = {
+        [LockCluster.client.commands.GetPINCodeResponse.ID] = get_pin_response_handler,
+        [LockCluster.client.commands.ProgrammingEventNotification.ID] = programming_event_handler,
+        [LockCluster.client.commands.OperatingEventNotification.ID] = lock_operation_event_handler
       }
     },
-    capability_handlers = {
-      [LockCodes.ID] = {
-        [LockCodes.commands.updateCodes.NAME] = update_codes,
-        [LockCodes.commands.deleteCode.NAME] = delete_code,
-        [LockCodes.commands.reloadAllCodes.NAME] = reload_all_codes,
-        [LockCodes.commands.requestCode.NAME] = request_code,
-        [LockCodes.commands.setCode.NAME] = set_code,
-        [LockCodes.commands.nameSlot.NAME] = name_slot,
-        [LockCodes.commands.migrate.NAME] = migrate,
-      },
+    attr = {
+      [LockCluster.ID] = {
+        [LockCluster.attributes.MaxPINCodeLength.ID] = handle_max_code_length,
+        [LockCluster.attributes.MinPINCodeLength.ID] = handle_min_code_length,
+        [LockCluster.attributes.NumberOfPINUsersSupported.ID] = handle_max_codes,
+      }
+    }
+  },
+  capability_handlers = {
+    [LockCodes.ID] = {
+      [LockCodes.commands.updateCodes.NAME] = update_codes,
+      [LockCodes.commands.deleteCode.NAME] = delete_code,
+      [LockCodes.commands.reloadAllCodes.NAME] = reload_all_codes,
+      [LockCodes.commands.requestCode.NAME] = request_code,
+      [LockCodes.commands.setCode.NAME] = set_code,
+      [LockCodes.commands.nameSlot.NAME] = name_slot,
+      [LockCodes.commands.migrate.NAME] = migrate,
     },
-    sub_drivers = {
-      require("using-old-capabilities.samsungsds"),
-      require("using-old-capabilities.yale"),
-      require("using-old-capabilities.yale-fingerprint-lock"),
-      require("using-old-capabilities.lock-without-codes")
-    },
-    health_check = false,
-    lifecycle_handlers = {
-      doConfigure = do_configure
-    },
-    can_handle = function(opts, driver, device, ...)
-        local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME, false)
-        if not lock_codes_migrated then
-            local subdriver = require("using-old-capabilities")
-            return true, subdriver
-        end
-        return false
+  },
+  sub_drivers = {
+    require("using-old-capabilities.samsungsds"),
+    require("using-old-capabilities.yale"),
+    require("using-old-capabilities.yale-fingerprint-lock"),
+    require("using-old-capabilities.lock-without-codes")
+  },
+  health_check = false,
+  lifecycle_handlers = {
+    doConfigure = do_configure
+  },
+  can_handle = function(opts, driver, device, ...)
+    local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID,
+      capabilities.lockCodes.migrated.NAME, false)
+    if not lock_codes_migrated then
+      local subdriver = require("using-old-capabilities")
+      return true, subdriver
     end
+    return false
+  end
 }
 
 return old_capabilities_driver
