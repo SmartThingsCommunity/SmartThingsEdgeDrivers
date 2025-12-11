@@ -14,6 +14,7 @@ local button_attr = capabilities.button.button
 local aqara_mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("3-button-battery-temperature-humidity.yml"),
   manufacturer_info = {vendor_id = 0x115F, product_id = 0x2004, product_name = "Aqara Climate Sensor W100"},
+  matter_version = {hardware = 1, software = 1},
   label = "Climate Sensor W100",
   device_id = "00000000-1111-2222-3333-000000000001",
   endpoints = {

@@ -15,6 +15,7 @@ local uint32 = require "st.matter.data_types.Uint32"
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("button-battery.yml"),
   manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
   endpoints = {
     {
       endpoint_id = 0,

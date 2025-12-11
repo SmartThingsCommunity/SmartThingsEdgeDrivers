@@ -13,6 +13,7 @@ local CAMERA_EP, FLOODLIGHT_EP, CHIME_EP, DOORBELL_EP = 1, 2, 3, 4
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("camera.yml"),
   manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
   endpoints = {
     {
       endpoint_id = 0,
