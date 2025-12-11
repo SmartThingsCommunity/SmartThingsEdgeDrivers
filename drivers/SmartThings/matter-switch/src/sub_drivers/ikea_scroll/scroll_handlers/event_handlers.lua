@@ -7,21 +7,27 @@ local scroll_fields = require "sub_drivers.ikea_scroll.scroll_utils.fields"
 
 local IkeaScrollEventHandlers = {}
 
-local function rotate_amount_event_helper(device, endpoint_id)
+local function rotate_amount_event_helper(device, endpoint_id, num_presses_to_handle)
   -- to cut down on checks, we can assume that if the endpoint is not in ENDPOINTS_UP_SCROLL, it is in ENDPOINTS_DOWN_SCROLL
   local scroll_direction = switch_utils.tbl_contains(scroll_fields.ENDPOINTS_UP_SCROLL, endpoint_id) and 1 or -1
-  local scroll_amount = scroll_direction * scroll_fields.PER_SCROLL_EVENT_ROTATION
+  local scroll_amount = scroll_direction * scroll_fields.PER_SCROLL_EVENT_ROTATION * num_presses_to_handle
   device:emit_event_for_endpoint(endpoint_id, capabilities.knob.rotateAmount(scroll_amount, {state_change = true}))
 end
 
--- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH. ENDPOINTS_PUSH use the generic handler
+-- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH
 function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, response)
-  rotate_amount_event_helper(device, ib.endpoint_id)
+  device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, 1)
+  rotate_amount_event_helper(device, ib.endpoint_id, 1)
 end
 
 -- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH
 function IkeaScrollEventHandlers.multi_press_ongoing_handler(driver, device, ib, response)
-  rotate_amount_event_helper(device, ib.endpoint_id)
+  local cur_num_presses_counted = ib.data and ib.data.elements and ib.data.elements.current_number_of_presses_counted.value or 0
+  local num_presses_to_handle = cur_num_presses_counted - (device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED) or 0)
+  if num_presses_to_handle > 0 then
+    device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, cur_num_presses_counted)
+    rotate_amount_event_helper(device, ib.endpoint_id, num_presses_to_handle)
+  end
 end
 
 return IkeaScrollEventHandlers

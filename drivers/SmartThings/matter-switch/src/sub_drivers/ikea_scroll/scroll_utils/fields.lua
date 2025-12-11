@@ -21,6 +21,8 @@ IkeaScrollFields.ENDPOINTS_DOWN_SCROLL = {2, 5, 8}
 IkeaScrollFields.MAX_SCROLL_PRESSES = 18
 IkeaScrollFields.PER_SCROLL_EVENT_ROTATION = st_utils.round(1 / IkeaScrollFields.MAX_SCROLL_PRESSES * 100)
 
+IkeaScrollFields.LATEST_NUMBER_OF_PRESSES_COUNTED = "__latest_number_of_presses_counted"
+
 -- Required Events for the ENDPOINTS_PUSH. Remove the default subscription to
 -- InitialPress since this is a MultiPress device and InitialPress will be ignored.
 IkeaScrollFields.switch_press_subscribed_events = {
