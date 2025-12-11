@@ -840,6 +840,156 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00BF
     deviceProfileName: light-color-level
+  - id: "5155/163"
+    deviceLabel: LIFX Supercolor (A19)
+    vendorId: 0x1423
+    productId: 0x00A3
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/118"
+    deviceLabel: LIFX Lightstrip
+    vendorId: 0x1423
+    productId: 0x0076
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/221"
+    deviceLabel: LIFX Spot
+    vendorId: 0x1423
+    productId: 0x00DD
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/144"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x0090
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/216"
+    deviceLabel: LIFX Candle Color (B10)
+    vendorId: 0x1423
+    productId: 0x00D8
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/225"
+    deviceLabel: LIFX PAR38
+    vendorId: 0x1423
+    productId: 0x00E1
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/186"
+    deviceLabel: LIFX Candle Color
+    vendorId: 0x1423
+    productId: 0x00BA
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/202"
+    deviceLabel: LIFX Ceiling 13x26
+    vendorId: 0x1423
+    productId: 0x00CA
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/143"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x008F
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/166"
+    deviceLabel: LIFX Supercolour (BR30)
+    vendorId: 0x1423
+    productId: 0x00A6
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/167"
+    deviceLabel: LIFX Downlight
+    vendorId: 0x1423
+    productId: 0x00A7
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/207"
+    deviceLabel: LIFX Everyday Lightstrip
+    vendorId: 0x1423
+    productId: 0x00CF
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/222"
+    deviceLabel: LIFX Path (Round)
+    vendorId: 0x1423
+    productId: 0x00DE
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/203"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x00CB
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/218"
+    deviceLabel: LIFX Tube
+    vendorId: 0x1423
+    productId: 0x00DA
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/214"
+    deviceLabel: LIFX Permanent Outdoor
+    vendorId: 0x1423
+    productId: 0x00D6
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/117"
+    deviceLabel: LIFX Lightstrip
+    vendorId: 0x1423
+    productId: 0x0075
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/223"
+    deviceLabel: LIFX Downlight (6 Retro Downlight)
+    vendorId: 0x1423
+    productId: 0x00DF
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/224"
+    deviceLabel: LIFX Downlight (90mm Downlight)
+    vendorId: 0x1423
+    productId: 0x00E0
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/204"
+    deviceLabel: LIFX String
+    vendorId: 0x1423
+    productId: 0x00CC
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/206"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x00CE
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/164"
+    deviceLabel: LIFX Supercolor (BR30)
+    vendorId: 0x1423
+    productId: 0x00A4
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/120"
+    deviceLabel: LIFX Beam
+    vendorId: 0x1423
+    productId: 0x0078
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/208"
+    deviceLabel: LIFX Everyday Lightstrip
+    vendorId: 0x1423
+    productId: 0x00D0
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/165"
+    deviceLabel: LIFX Supercolour (A19)
+    vendorId: 0x1423
+    productId: 0x00A5
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/142"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x008E
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/141"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x008D
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/177"
+    deviceLabel: LIFX Ceiling
+    vendorId: 0x1423
+    productId: 0x00B1
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/170"
+    deviceLabel: LIFX Supercolour (A21)
+    vendorId: 0x1423
+    productId: 0x00AA
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/205"
+    deviceLabel: LIFX Neon
+    vendorId: 0x1423
+    productId: 0x00CD
+    deviceProfileName: light-level-colorTemperature
 #LG
   - id: "4142/8784"
     deviceLabel: LG Smart Button (1 Button)
