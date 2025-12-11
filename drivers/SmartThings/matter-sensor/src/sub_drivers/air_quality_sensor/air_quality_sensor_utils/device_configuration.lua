@@ -1,11 +1,11 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local version = require "version"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
-local fields = require "sub_drivers.air_quality_sensor.fields"
-local version = require "version"
+local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.fields"
 
 local DeviceConfiguration = {}
 
@@ -71,6 +71,7 @@ function DeviceConfiguration.match_profile(device)
   end
 
   device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+  device:set_field(fields.MODULAR_PROFILE_UPDATED, true)
 
   -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
   -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
