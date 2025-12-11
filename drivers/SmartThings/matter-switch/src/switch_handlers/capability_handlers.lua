@@ -123,23 +123,14 @@ end
 -- [[ STATELESS COLOR TEMPERATURE STEP CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_step_color_temperature_by_percent(driver, device, cmd)
-  local step_size = cmd.args and cmd.args.stepSize or 0
-  if step_size == 0 then return end
+  local step_percent_change = cmd.args and cmd.args.stepSize or 0
+  if step_percent_change == 0 then return end
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local step_mode = step_size > 0 and clusters.LevelControl.types.StepModeEnum.UP or clusters.LevelControl.types.StepModeEnum.DOWN
-  local color_temp_min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or 2200 -- default min mireds
-  local color_temp_max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or 6500 -- default max mireds
-  device:send(clusters.ColorControl.server.commands.StepColorTemperature(
-    device,
-    endpoint_id,
-    step_mode,
-    math.abs(step_size),
-    fields.TRANSITION_TIME,
-    color_temp_min_mireds,
-    color_temp_max_mireds,
-    fields.OPTIONS_MASK,
-    fields.OPTIONS_OVERRIDE
-  ))
+  local step_mode = step_percent_change > 0 and clusters.ColorControl.types.StepModeEnum.DOWN or clusters.ColorControl.types.StepModeEnum.UP
+  local min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or 2200 -- default min mireds
+  local max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or 6500 -- default max mireds
+  local color_change_in_mireds = st_utils.round((max_mireds - min_mireds) * (math.abs(step_percent_change)/100))
+  device:send(clusters.ColorControl.server.commands.StepColorTemperature(device, endpoint_id, step_mode, color_change_in_mireds, fields.TRANSITION_TIME, min_mireds, max_mireds, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
 end
 
 

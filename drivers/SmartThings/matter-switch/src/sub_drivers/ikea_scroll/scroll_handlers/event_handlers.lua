@@ -1,6 +1,7 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local st_utils = require "st.utils"
 local capabilities = require "st.capabilities"
 local switch_utils = require "switch_utils.utils"
 local scroll_fields = require "sub_drivers.ikea_scroll.scroll_utils.fields"
@@ -10,7 +11,7 @@ local IkeaScrollEventHandlers = {}
 local function rotate_amount_event_helper(device, endpoint_id, num_presses_to_handle)
   -- to cut down on checks, we can assume that if the endpoint is not in ENDPOINTS_UP_SCROLL, it is in ENDPOINTS_DOWN_SCROLL
   local scroll_direction = switch_utils.tbl_contains(scroll_fields.ENDPOINTS_UP_SCROLL, endpoint_id) and 1 or -1
-  local scroll_amount = scroll_direction * scroll_fields.PER_SCROLL_EVENT_ROTATION * num_presses_to_handle
+  local scroll_amount = st_utils.clamp_value(scroll_direction * scroll_fields.PER_SCROLL_EVENT_ROTATION * num_presses_to_handle, -100, 100)
   device:emit_event_for_endpoint(endpoint_id, capabilities.knob.rotateAmount(scroll_amount, {state_change = true}))
 end
 
