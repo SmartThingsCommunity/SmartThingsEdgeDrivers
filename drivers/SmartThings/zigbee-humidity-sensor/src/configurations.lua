@@ -85,6 +85,37 @@ local devices = {
       }
     }
   },
+  SONOFF_HUMIDITY_TEMP_SENSOR = {
+    FINGERPRINTS = {
+      { mfr = "SONOFF", model = "SNZB-02DR2" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = TemperatureMeasurement.ID,
+        attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
+        minimum_interval = 10,
+        maximum_interval = 7200,
+        data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
+        reportable_change = 50
+      },
+      {
+        cluster = PowerConfiguration.ID,
+        attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
+        minimum_interval = 3600,
+        maximum_interval = 7200,
+        data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
+        reportable_change = 16
+      },
+      {
+        cluster = RelativeHumidity.ID,
+        attribute = RelativeHumidity.attributes.MeasuredValue.ID,
+        minimum_interval = 10,
+        maximum_interval = 7200,
+        data_type = RelativeHumidity.attributes.MeasuredValue.base_type,
+        reportable_change = 300
+      }
+    }
+  },
   CENTRALITE_TEMP_SENSOR = {
     FINGERPRINTS = {
       { mfr = "CentraLite", model = "3310-S" },
