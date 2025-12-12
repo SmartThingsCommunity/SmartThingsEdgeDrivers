@@ -42,6 +42,7 @@ SwitchFields.DEVICE_TYPE_ID = {
   DIMMABLE_PLUG_IN_UNIT = 0x010B,
   DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
+  FAN = 0x002B,
   GENERIC_SWITCH = 0x000F,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
@@ -150,6 +151,8 @@ SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
 --- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
+
+SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
