@@ -508,11 +508,11 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6099
     deviceProfileName: light-color-level
-  - id: "4999/28871"
-    deviceLabel: Govee Christmas String Lights 2 (Green Wire) 164ft/50m
-    vendorId: 0x1387
-    productId: 0x70C7
-    deviceProfileName: light-color-level
+  # - id: "4999/28871"
+  #   deviceLabel: Govee Christmas String Lights 2 (Green Wire) 164ft/50m
+  #   vendorId: 0x1387
+  #   productId: 0x70C7
+  #   deviceProfileName: light-color-level
   - id: "4999/28873"
     deviceLabel: Govee Christmas String Lights 2 (Green Wire)  328ft/100m
     vendorId: 0x1387
@@ -568,11 +568,11 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6010
     deviceProfileName: light-color-level
-  - id: "4999/28869"
-    deviceLabel: Govee Christmas String Lights 2 (Clear Wire) 99ft/30m
-    vendorId: 0x1387
-    productId: 0x70C5
-    deviceProfileName: light-color-level
+  # - id: "4999/28869"
+  #   deviceLabel: Govee Christmas String Lights 2 (Clear Wire) 99ft/30m
+  #   vendorId: 0x1387
+  #   productId: 0x70C5
+  #   deviceProfileName: light-color-level
   - id: "4999/24607"
     deviceLabel: Govee Recessed Downlight 2 (6 inch)
     vendorId: 0x1387
@@ -618,11 +618,11 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x607C
     deviceProfileName: light-color-level
-  - id: "4999/26116"
-    deviceLabel: Govee HDMI 2.1 Sync Box 2 55-65
-    vendorId: 0x1387
-    productId: 0x6604
-    deviceProfileName: light-color-level
+  # - id: "4999/26116"
+  #   deviceLabel: Govee HDMI 2.1 Sync Box 2 55-65
+  #   vendorId: 0x1387
+  #   productId: 0x6604
+  #   deviceProfileName: light-color-level
   - id: "4999/24694"
     deviceLabel: Govee Floor Lamp Basic
     vendorId: 0x1387
@@ -653,11 +653,11 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6020
     deviceProfileName: light-color-level
-  - id: "4999/28868"
-    deviceLabel: Govee Christmas String Lights 2 (Green Wire)  66ft/20m
-    vendorId: 0x1387
-    productId: 0x70C4
-    deviceProfileName: light-color-level
+  # - id: "4999/28868"
+  #   deviceLabel: Govee Christmas String Lights 2 (Green Wire)  66ft/20m
+  #   vendorId: 0x1387
+  #   productId: 0x70C4
+  #   deviceProfileName: light-color-level
   - id: "4999/25046"
     deviceLabel: Govee Neon Rope Light 2 32.8ft/10m
     vendorId: 0x1387
@@ -713,11 +713,11 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x66A0
     deviceProfileName: light-color-level
-  - id: "4999/26272"
-    deviceLabel: Govee TV Backlight 3 Pro 75-85
-    vendorId: 0x1387
-    productId: 0x66A0
-    deviceProfileName: light-color-level
+  # - id: "4999/26272"
+  #   deviceLabel: Govee TV Backlight 3 Pro 75-85
+  #   vendorId: 0x1387
+  #   productId: 0x66A0
+  #   deviceProfileName: light-color-level
   - id: "4999/28854"
     deviceLabel: Govee Curtain Lights Pro
     vendorId: 0x1387
