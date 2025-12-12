@@ -105,12 +105,12 @@ local update_user_handler = function(driver, device, command)
     statusCode = lock_utils.STATUS_FAILURE
   }
 
-  for _, user in ipairs(current_users) do
+  for _, user in pairs(current_users) do
     if user.userIndex == user_index then
       -- update user info and the commandResult
       user.userName = user_name
       user.userType = user_type
-      device:set_field(lock_utils.LOCK_USERS, current_users)
+      device:set_field(lock_utils.LOCK_USERS, current_users, { persist = true })
       device:emit_event(capabilities.lockUsers.users(current_users, { visibility = { displayed = false } }))
       command_result_info.statusCode = lock_utils.STATUS_SUCCESS
       break
@@ -147,7 +147,7 @@ local delete_all_users_handler = function(driver, device, command)
     statusCode = lock_utils.STATUS_SUCCESS
   }
   current_users = {} -- clear the table
-  device:set_field(lock_utils.LOCK_USERS, current_users)
+  device:set_field(lock_utils.LOCK_USERS, current_users, { persist = true })
   device:emit_event(capabilities.lockUsers.commandResult(
     command_result_info, { state_change = true, visibility = { displayed = false } }
   ))
@@ -164,7 +164,7 @@ local add_credential_handler = function(driver, device, command)
   local max_credentials = device:get_latest_state("main", capabilities.lockCredentials.ID,
     capabilities.lockCredentials.pinUsersSupported.NAME, 0)
 
-  credential_index = lock_utils.get_available_index(lock_utils.get_credentials(device), max_credentials)
+  credential_index = lock_utils.get_available_credential_index(lock_utils.get_credentials(device), max_credentials)
   if credential_index ~= nil then
     device:set_field(lock_utils.PENDING_CREDENTIAL,
       { userIndex = user_index, userType = user_type, credentialType = credential_type })
@@ -355,7 +355,7 @@ local programming_event_handler = function(driver, device, zb_mess)
       local max_users = device:get_latest_state("main", capabilities.lockUsers.ID,
         capabilities.lockUsers.totalUsersSupported.NAME, 0)
 
-      local user_index = lock_utils.get_available_index(lock_utils.get_users, max_users)
+      local user_index = lock_utils.get_available_user_index(lock_utils.get_users, max_users)
       lock_utils.add_credential(device, user_index,
         "guest",
         lock_utils.CREDENTIAL_TYPE,

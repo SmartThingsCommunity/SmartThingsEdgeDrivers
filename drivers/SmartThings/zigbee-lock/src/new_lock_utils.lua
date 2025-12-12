@@ -65,7 +65,16 @@ new_lock_utils.get_credentials = function(device)
   return credentials ~= nil and credentials or {}
 end
 
-new_lock_utils.get_available_index = function(current_data, max)
+new_lock_utils.get_available_user_index = function(current_data, max)
+  for index = 1, max do
+    if current_data["user"..index] == nil then
+      return index
+    end
+  end
+  return nil
+end
+
+new_lock_utils.get_available_credential_index = function(current_data, max)
   local available_index = nil
   local used_index = {}
 
@@ -92,7 +101,7 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
   local max_users = device:get_latest_state("main", capabilities.lockUsers.ID,
     capabilities.lockUsers.totalUsersSupported.NAME, 0)
   local current_users = new_lock_utils.get_users(device)
-  local available_index = new_lock_utils.get_available_index(current_users, max_users)
+  local available_index = new_lock_utils.get_available_user_index(current_users, max_users)
 
   if max_users == 0 or available_index == nil then
     -- Can't add any users - update commandResult statusCode
@@ -102,8 +111,9 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
     if user_index ~= nil then
       available_index = user_index
     end
-    table.insert(current_users, { userIndex = available_index, userType = user_type, userName = user_name })
-    device:set_field(new_lock_utils.LOCK_USERS, current_users)
+    
+    current_users["user"..available_index] = { userIndex = available_index, userType = user_type, userName = user_name }
+    device:set_field(new_lock_utils.LOCK_USERS, current_users, { persist = true })
   end
 
   return status_code
@@ -113,7 +123,7 @@ new_lock_utils.delete_user = function(device, user_index, deleted_by_credential_
   local current_users = new_lock_utils.get_users(device)
   local status_code = new_lock_utils.STATUS_FAILURE
 
-  for index, user in ipairs(current_users) do
+  for index, user in pairs(current_users) do
     if user.userIndex == user_index then
       -- also delete associated credential if this isn't being call by a credential deletion.
       if not deleted_by_credential_deletion then
@@ -125,7 +135,8 @@ new_lock_utils.delete_user = function(device, user_index, deleted_by_credential_
           end
         end
       end
-      table.remove(current_users, index)
+      -- table.remove(current_users, index)
+      current_users[index] = nil
       device:set_field(new_lock_utils.LOCK_USERS, current_users)
       status_code = new_lock_utils.STATUS_SUCCESS
       break

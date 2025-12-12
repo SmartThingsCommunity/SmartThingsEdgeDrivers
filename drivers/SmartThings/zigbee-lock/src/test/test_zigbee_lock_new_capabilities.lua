@@ -86,7 +86,7 @@ local function add_default_users()
             },
         })
         -- add to the user list that is now expected
-        table.insert(user_list, { userIndex = i, userType = "guest", userName = "TestUser" .. i })
+        user_list["user"..i] = {userIndex = i, userType = "guest", userName = "TestUser" .. i }
 
         test.socket.capability:__expect_send(
             mock_device:generate_test_message(
@@ -219,18 +219,15 @@ test.register_coroutine_test(
             },
         })
 
+        local users = {}
+        users["user" .. 1] = { userIndex = 1, userName = "TestUser1", userType = "guest" }
+        users["user" .. 2] = { userIndex = 2, userName = "ChangeUserName", userType = "guest" }
+        users["user" .. 3] = { userIndex = 3, userName = "TestUser3", userType = "guest" }
+        users["user" .. 4] = { userIndex = 4, userName = "TestUser4", userType = "guest" }
         test.socket.capability:__expect_send(
             mock_device:generate_test_message(
                 "main",
-                capabilities.lockUsers.users(
-                    {
-                        { userIndex = 1, userName = "TestUser1",  userType = "guest" },
-                        { userIndex = 2, userName = "ChangeUserName", userType = "guest" },
-                        { userIndex = 3, userName = "TestUser3",  userType = "guest" },
-                        { userIndex = 4, userName = "TestUser4",  userType = "guest" }
-                    },
-                    { visibility = { displayed = false } }
-                )
+                capabilities.lockUsers.users(users, { visibility = { displayed = false } })
             )
         )
         test.socket.capability:__expect_send(
@@ -281,17 +278,16 @@ test.register_coroutine_test(
                 args = { "3" }
             },
         })
+        
+        local users = {}
+        users["user" .. 1] = { userIndex = 1, userName = "TestUser1", userType = "guest" }
+        users["user" .. 2] = { userIndex = 2, userName = "TestUser2", userType = "guest" }
+        users["user" .. 4] = { userIndex = 4, userName = "TestUser4", userType = "guest" }
+
         test.socket.capability:__expect_send(
             mock_device:generate_test_message(
                 "main",
-                capabilities.lockUsers.users(
-                    {
-                        { userIndex = 1, userName = "TestUser1", userType = "guest" },
-                        { userIndex = 2, userName = "TestUser2", userType = "guest" },
-                        { userIndex = 4, userName = "TestUser4", userType = "guest" }
-                    },
-                    { visibility = { displayed = false } }
-                )
+                capabilities.lockUsers.users(users, { visibility = { displayed = false } })
             )
         )
         test.socket.capability:__expect_send(
