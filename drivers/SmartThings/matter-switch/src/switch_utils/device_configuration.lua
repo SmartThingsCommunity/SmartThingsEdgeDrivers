@@ -232,7 +232,7 @@ function DeviceConfiguration.match_profile(driver, device)
   if profiling_data_still_required(device) then return end
 
   local default_endpoint_id = switch_utils.find_default_endpoint(device)
-  local optional_component_capabilities = {}
+  local optional_component_capabilities
   local updated_profile
 
   if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID) > 0 then
