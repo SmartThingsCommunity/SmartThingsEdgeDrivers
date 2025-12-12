@@ -40,3 +40,4 @@ zigbeeGeneric:
       server:
         - 0x0702 #Simple Metering
     deviceProfileName: power-meter
+    
