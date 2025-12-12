@@ -375,6 +375,13 @@ zwaveManufacturer:
     productType: 0x0005
     productId: 0x0001
     deviceProfileName: lock-battery
+  # ULTRALOQ
+  - id: "1106/4/2"
+    deviceLabel: ULTRALOQ Bolt Z-Wave Smart Deadbolt
+    manufacturerId: 0x0452
+    productId: 0x0002
+    productType: 0x0004
+    deviceProfileName: base-lock
 zwaveGeneric:
   - id: "GenericZwaveLock"
     deviceLabel: Door Lock

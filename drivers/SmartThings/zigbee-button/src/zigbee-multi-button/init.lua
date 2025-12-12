@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local supported_values = require "zigbee-multi-button.supported_values"
+local button_utils = require "button_utils"
 
 local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "CentraLite", model = "3450-L" },
@@ -78,7 +79,7 @@ local function added_handler(self, device)
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } }))
     end
   end
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local zigbee_multi_button = {

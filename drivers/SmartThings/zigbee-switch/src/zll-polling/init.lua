@@ -1,30 +1,8 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local device_lib = require "st.device"
-local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
-
-local function zll_profile(opts, driver, device, zb_rx, ...)
-  local endpoint = device.zigbee_endpoints[device.fingerprinted_endpoint_id] or device.zigbee_endpoints[tostring(device.fingerprinted_endpoint_id)]
-  if (endpoint.profile_id == constants.ZLL_PROFILE_ID) then
-    local subdriver = require("zll-polling")
-    return true, subdriver
-  else
-    return false
-  end
-end
 
 local function set_up_zll_polling(driver, device)
   local INFREQUENT_POLL_COUNTER = "_infrequent_poll_counter"
@@ -57,7 +35,7 @@ local ZLL_polling = {
   lifecycle_handlers = {
     init = set_up_zll_polling
   },
-  can_handle = zll_profile
+  can_handle = require("zll-polling.can_handle"),
 }
 
 return ZLL_polling

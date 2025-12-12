@@ -58,6 +58,11 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: HT-EF-3.0
     deviceProfileName: humidity-temp-battery
+  - id: frient/AQSZB-110
+    deviceLabel: Air Quality Sensor
+    manufacturer: frient A/S
+    model: AQSZB-110
+    deviceProfileName: frient-airquality-humidity-temperature-battery
   - id: frient/HMSZB-110
     deviceLabel: frient Humidity Sensor
     manufacturer: frient A/S
@@ -88,13 +93,18 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSM0147Z
     deviceProfileName: humidity-temp-battery
+  - id: "NodOn/STPH-4-1-00"
+    deviceLabel: Zigbee Temperature and Humidity Sensor
+    manufacturer: NodOn
+    model: STPH-4-1-00
+    deviceProfileName: humidity-temp-battery
 zigbeeGeneric:
   - id: "HumidityTempGeneric"
     deviceLabel: Multipurpose Sensor
     deviceIdentifiers:
       - 0x0302
-    clusters: 
-      server: 
+    clusters:
+      server:
         - 0x0402 # Temperature Measurement Cluster
         - 0x0405 # Relative Humidity Measurement Cluster
     deviceProfileName: humidity-temperature

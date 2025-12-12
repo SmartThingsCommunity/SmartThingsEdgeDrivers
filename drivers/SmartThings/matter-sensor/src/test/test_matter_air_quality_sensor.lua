@@ -1,16 +1,5 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -19,17 +8,23 @@ local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 
 local clusters = require "st.matter.clusters"
 
-clusters.AirQuality = require "AirQuality"
-clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
-clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
-clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
-clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
-clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
-clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
-clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
-clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
-clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+local version = require "version"
+
+-- Include driver-side definitions when lua libs api version is < 10
+if version.api < 10 then
+  clusters.AirQuality = require "embedded_clusters.AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "embedded_clusters.CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "embedded_clusters.FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "embedded_clusters.NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "embedded_clusters.OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "embedded_clusters.Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "embedded_clusters.Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "embedded_clusters.Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "embedded_clusters.RadonConcentrationMeasurement"
+  clusters.SmokeCoAlarm = require "embedded_clusters.SmokeCoAlarm"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "embedded_clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("aqs-temp-humidity-all-level-all-meas.yml"),
@@ -145,7 +140,7 @@ local mock_device_level = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_co = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("aqs-temp-humidity-all-level-all-meas.yml"),
+  profile = t_utils.get_profile_definition("aqs.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -174,7 +169,7 @@ local mock_device_co = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_co2 = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("aqs-temp-humidity-all-level-all-meas.yml"),
+  profile = t_utils.get_profile_definition("aqs.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -234,7 +229,12 @@ local mock_device_tvoc = test.mock_device.build_test_matter_device({
 })
 
 -- create test_init functions
-local function initialize_mock_device(generic_mock_device, generic_subscribed_attributes)
+local function initialize_mock_device(generic_mock_device, generic_subscribed_attributes, expected_supported_values_setters)
+  test.mock_device.add_test_device(generic_mock_device)
+  test.socket.capability:__expect_send(generic_mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy",}, {visibility={displayed=false}})))
+  if expected_supported_values_setters ~= nil then
+    expected_supported_values_setters()
+  end
   local subscribe_request = nil
   for _, attributes in pairs(generic_subscribed_attributes) do
     for _, attribute in ipairs(attributes) do
@@ -246,7 +246,6 @@ local function initialize_mock_device(generic_mock_device, generic_subscribed_at
     end
   end
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
-  test.mock_device.add_test_device(generic_mock_device)
 end
 
 -- TODO add tests for configuration using modular profiles
@@ -334,7 +333,19 @@ local function test_init()
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
     },
   }
-  initialize_mock_device(mock_device, subscribed_attributes)
+  local expected_supported_values_setters = function()
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.supportedNitrogenDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.ozoneHealthConcern.supportedOzoneValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.formaldehydeHealthConcern.supportedFormaldehydeValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.veryFineDustHealthConcern.supportedVeryFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.supportedFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.dustHealthConcern.supportedDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.radonHealthConcern.supportedRadonValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tvocHealthConcern.supportedTvocValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    end
+  initialize_mock_device(mock_device, subscribed_attributes, expected_supported_values_setters)
 end
 test.set_test_init_function(test_init)
 
@@ -411,7 +422,19 @@ local function test_init_level()
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue,
     }
   }
-  initialize_mock_device(mock_device_level, subscribed_attributes)
+  local expected_supported_values_setters = function()
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.supportedNitrogenDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.ozoneHealthConcern.supportedOzoneValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.formaldehydeHealthConcern.supportedFormaldehydeValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.veryFineDustHealthConcern.supportedVeryFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.fineDustHealthConcern.supportedFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.dustHealthConcern.supportedDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.radonHealthConcern.supportedRadonValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+    test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.tvocHealthConcern.supportedTvocValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
+  end
+  initialize_mock_device(mock_device_level, subscribed_attributes, expected_supported_values_setters)
 end
 
 local function test_init_tvoc()
@@ -440,26 +463,12 @@ local function test_init_co_co2()
     [capabilities.airQualityHealthConcern.ID] = {
       clusters.AirQuality.attributes.AirQuality
     },
-    [capabilities.carbonMonoxideMeasurement.ID] = {
-      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasuredValue,
-      clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit,
-    },
-    [capabilities.carbonMonoxideHealthConcern.ID] = {
-      clusters.CarbonMonoxideConcentrationMeasurement.attributes.LevelValue,
-    },
   }
 
   local attr_co2 = {
     [capabilities.airQualityHealthConcern.ID] = {
       clusters.AirQuality.attributes.AirQuality
-    },
-    [capabilities.carbonDioxideMeasurement.ID] = {
-      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasuredValue,
-      clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit,
-    },
-    [capabilities.carbonDioxideHealthConcern.ID] = {
-      clusters.CarbonDioxideConcentrationMeasurement.attributes.LevelValue,
-    },
+    }
   }
 
   initialize_mock_device(mock_device_co, attr_co)
@@ -468,7 +477,7 @@ end
 
 
 -- run the profile configuration tests
-local function test_aqs_device_type_do_configure(generic_mock_device, expected_profile, expected_supported_values_setters)
+local function test_aqs_device_type_do_configure(generic_mock_device, expected_profile)
   test.socket.device_lifecycle:__queue_receive({generic_mock_device.id, "doConfigure"})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.CarbonMonoxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.CarbonDioxideConcentrationMeasurement.attributes.MeasurementUnit:read()})
@@ -480,10 +489,6 @@ local function test_aqs_device_type_do_configure(generic_mock_device, expected_p
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.Pm10ConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit:read()})
   test.socket.matter:__expect_send({generic_mock_device.id, clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit:read()})
-  test.socket.capability:__expect_send(generic_mock_device:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "moderate", "slightlyUnhealthy", "unhealthy"}, {visibility={displayed=false}})))
-  if expected_supported_values_setters ~= nil then
-    expected_supported_values_setters()
-  end
   generic_mock_device:expect_metadata_update({ profile = expected_profile })
   generic_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
@@ -491,19 +496,7 @@ end
 test.register_coroutine_test(
   "Configure should read units from device and profile change as needed",
   function()
-    local expected_supported_values_setters = function()
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.supportedNitrogenDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.ozoneHealthConcern.supportedOzoneValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.formaldehydeHealthConcern.supportedFormaldehydeValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.veryFineDustHealthConcern.supportedVeryFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fineDustHealthConcern.supportedFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.dustHealthConcern.supportedDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.radonHealthConcern.supportedRadonValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tvocHealthConcern.supportedTvocValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-    end
-    test_aqs_device_type_do_configure(mock_device, "aqs-temp-humidity-all-level-all-meas", expected_supported_values_setters)
+    test_aqs_device_type_do_configure(mock_device, "aqs-temp-humidity-all-level-all-meas")
   end
 )
 
@@ -518,19 +511,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Configure should read units from device and profile change as needed",
   function()
-    local expected_supported_values_setters = function()
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.nitrogenDioxideHealthConcern.supportedNitrogenDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.ozoneHealthConcern.supportedOzoneValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.formaldehydeHealthConcern.supportedFormaldehydeValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.veryFineDustHealthConcern.supportedVeryFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.fineDustHealthConcern.supportedFineDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.dustHealthConcern.supportedDustValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.radonHealthConcern.supportedRadonValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-      test.socket.capability:__expect_send(mock_device_level:generate_test_message("main", capabilities.tvocHealthConcern.supportedTvocValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-    end
-    test_aqs_device_type_do_configure(mock_device_level, "aqs-temp-humidity-all-level", expected_supported_values_setters)
+    test_aqs_device_type_do_configure(mock_device_level, "aqs-temp-humidity-all-level")
   end,
   { test_init = test_init_level }
 )
@@ -538,14 +519,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Configure should not catch co2, only co in the first check",
   function()
-    local expected_supported_co_values = function()
-      test.socket.capability:__expect_send(mock_device_co:generate_test_message("main", capabilities.carbonMonoxideHealthConcern.supportedCarbonMonoxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-    end
-    local expected_supported_co2_values = function()
-      test.socket.capability:__expect_send(mock_device_co2:generate_test_message("main", capabilities.carbonDioxideHealthConcern.supportedCarbonDioxideValues({"unknown", "good", "unhealthy"}, {visibility={displayed=false}})))
-    end
-    test_aqs_device_type_do_configure(mock_device_co, "aqs-temp-humidity-all-meas", expected_supported_co_values)
-    test_aqs_device_type_do_configure(mock_device_co2, "aqs-temp-humidity-co2-pm25-tvoc-meas", expected_supported_co2_values)
+    test_aqs_device_type_do_configure(mock_device_co, "aqs-temp-humidity-all-meas")
+    test_aqs_device_type_do_configure(mock_device_co2, "aqs-temp-humidity-co2-pm25-tvoc-meas")
   end,
   { test_init = test_init_co_co2 }
 )

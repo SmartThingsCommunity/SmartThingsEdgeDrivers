@@ -1,22 +1,9 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -25,19 +12,19 @@ local version = require "version"
 test.disable_startup_messages()
 
 if version.api < 10 then
-  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
-  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
-  clusters.AirQuality = require "AirQuality"
-  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
-  clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
-  clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
-  clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
-  clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
-  clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
-  clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
-  clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
-  clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+  clusters.HepaFilterMonitoring = require "embedded_clusters.HepaFilterMonitoring"
+  clusters.ActivatedCarbonFilterMonitoring = require "embedded_clusters.ActivatedCarbonFilterMonitoring"
+  clusters.AirQuality = require "embedded_clusters.AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "embedded_clusters.CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "embedded_clusters.FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "embedded_clusters.NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "embedded_clusters.OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "embedded_clusters.Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "embedded_clusters.Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "embedded_clusters.Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "embedded_clusters.RadonConcentrationMeasurement"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "embedded_clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
 local mock_device_basic = test.mock_device.build_test_matter_device({
@@ -317,19 +304,15 @@ test.register_coroutine_test(
   "Test profile change on init for basic Air Purifier device",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "doConfigure" })
-    test.socket.matter:__queue_receive({
-      mock_device_basic.id,
-      clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_basic, 1, {uint32(0)})
-    })
     mock_device_basic:expect_metadata_update(expected_update_metadata)
     mock_device_basic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
     test.wait_for_events()
 
-    local device_info_copy = utils.deep_copy(mock_device_basic.raw_st_data)
-    device_info_copy.profile.id = "air-purifier-modular"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "infoChanged", device_info_json })
+    local updated_device_profile = t_utils.get_profile_definition("air-purifier-modular.yml",
+      {enabled_optional_capabilities = expected_update_metadata.optional_component_capabilities}
+    )
+    test.socket.device_lifecycle:__queue_receive(mock_device_basic:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device_basic.id, subscribe_request})
   end,
   { test_init = test_init_basic }
@@ -400,10 +383,10 @@ test.register_coroutine_test(
 
     test.wait_for_events()
 
-    local device_info_copy = utils.deep_copy(mock_device_ap_thermo_aqs.raw_st_data)
-    device_info_copy.profile.id = "air-purifier-modular"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "infoChanged", device_info_json })
+    local updated_device_profile = t_utils.get_profile_definition("air-purifier-modular.yml",
+      {enabled_optional_capabilities = expected_update_metadata.optional_component_capabilities}
+    )
+    test.socket.device_lifecycle:__queue_receive(mock_device_ap_thermo_aqs:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, subscribe_request})
   end,
   { test_init = test_init_ap_thermo_aqs_preconfigured }

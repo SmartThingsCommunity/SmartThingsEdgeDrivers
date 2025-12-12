@@ -1,21 +1,11 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local data_types = require "st.matter.data_types"
+local fields = require "switch_utils.fields"
 
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
@@ -63,6 +53,89 @@ local mock_device = test.mock_device.build_test_matter_device({
     }
   }
 })
+
+local mock_device_electrical_sensor = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
+  manufacturer_info = {
+    vendor_id = 0x130A,
+    product_id = 0x0050,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {
+          cluster_id = clusters.OnOff.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0, --u32 bitmap
+        },
+        {
+          cluster_id = PRIVATE_CLUSTER_ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0, --u32 bitmap
+        }
+      },
+      device_types = {
+        { device_type_id = 0x010A, device_type_revision = 1 } -- On/Off Plug
+      }
+    },
+    {
+      endpoint_id = 2,
+      clusters = {
+        {
+          cluster_id = clusters.ElectricalEnergyMeasurement.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY,
+        },
+        {
+          cluster_id = clusters.PowerTopology.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = clusters.PowerTopology.types.Feature.NODE_TOPOLOGY,
+        }
+      },
+      device_types = {
+        { device_type_id = fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR, device_type_revision = 1 }
+      }
+    }
+  }
+})
+
+local function test_init_electrical_sensor()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_electrical_sensor)
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  }
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_electrical_sensor)
+  for i, clus in ipairs(cluster_subscribe_list) do
+    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_electrical_sensor)) end
+  end
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "added" })
+  test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "init" })
+  test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "doConfigure" })
+  mock_device_electrical_sensor:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
+  mock_device_electrical_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
 
 local function test_init()
   local cluster_subscribe_list = {
@@ -163,9 +236,6 @@ test.register_coroutine_test(
 
     local poll_timer = mock_device:get_field("RECURRING_POLL_TIMER")
     assert(poll_timer ~= nil, "poll_timer should exist")
-
-    local report_poll_timer = mock_device:get_field("RECURRING_REPORT_POLL_TIMER")
-    assert(report_poll_timer ~= nil, "report_poll_timer should exist")
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
     test.wait_for_events()
@@ -291,6 +361,15 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 50000, unit = "Wh" }))
     )
 
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:00:00Z",
+        ["end"] = "1970-01-01T16:39:59Z",
+        deltaEnergy = 0.0,
+        energy = 50000,
+      }))
+    )
+
     test.wait_for_events()
   end
 )
@@ -315,16 +394,6 @@ test.register_coroutine_test(
     local data = data_types.validate_or_build_type(timeDiff, data_types.Uint32)
     test.socket.matter:__expect_send({ mock_device.id,
       cluster_base.write(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT, nil, data) })
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({
-          energy = 0,
-          deltaEnergy = 0,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "2001-01-01T00:00:00Z"
-        }))
-    )
 
     test.wait_for_events()
   end
@@ -368,23 +437,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0, unit = "W" }))
     )
-
-    test.wait_for_events()
-    -- after 15 minutes, the device should still report power consumption even when off
-    test.mock_time.advance_time(60 * 15) -- Ensure that the timer created in create_poll_schedule triggers
-
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.powerConsumptionReport.powerConsumption({
-          energy = 0,
-          deltaEnergy = 0.0,
-          start = "1970-01-01T00:00:00Z",
-          ["end"] = "1970-01-01T00:14:59Z"
-        }))
-    )
-
-    test.wait_for_events()
   end,
   {
     test_init = function()
@@ -404,6 +456,96 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
   }
+)
+
+local cumulative_report_val_19 = {
+  energy = 19000,
+  start_timestamp = 0,
+  end_timestamp = 0,
+  start_systime = 0,
+  end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
+}
+
+local cumulative_report_val_29 = {
+  energy = 29000,
+  start_timestamp = 0,
+  end_timestamp = 0,
+  start_systime = 0,
+  end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
+}
+
+local cumulative_report_val_39 = {
+  energy = 39000,
+  start_timestamp = 0,
+  end_timestamp = 0,
+  start_systime = 0,
+  end_systime = 0,
+  apparent_energy = 0,
+  reactive_energy = 0
+}
+
+test.register_coroutine_test(
+  "Cumulative Energy measurement should generate correct messages",
+    function()
+      local mock_device = mock_device_electrical_sensor
+
+      test.mock_time.advance_time(901) -- move time 15 minutes past 0 (this can be assumed to be true in practice in all cases)
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+            mock_device, 1, cumulative_report_val_19
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+          start = "1970-01-01T00:00:00Z",
+          ["end"] = "1970-01-01T00:15:00Z",
+          deltaEnergy = 0.0,
+          energy = 19.0
+        }))
+      )
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+            mock_device, 1, cumulative_report_val_29
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 29.0, unit = "Wh" }))
+      )
+      test.wait_for_events()
+      test.mock_time.advance_time(1500)
+      test.socket.matter:__queue_receive(
+        {
+          mock_device.id,
+          clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+            mock_device, 1, cumulative_report_val_39
+          )
+        }
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 39.0, unit = "Wh" }))
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+          start = "1970-01-01T00:15:01Z",
+          ["end"] = "1970-01-01T00:40:00Z",
+          deltaEnergy = 20.0,
+          energy = 39.0
+        }))
+      )
+    end, { test_init = test_init_electrical_sensor }
 )
 
 test.run_registered_tests()

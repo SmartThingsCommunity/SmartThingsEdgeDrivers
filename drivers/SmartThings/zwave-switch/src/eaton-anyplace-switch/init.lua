@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -18,19 +7,7 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 
-local EATON_ANYPLACE_SWITCH_FINGERPRINTS = {
-  { manufacturerId = 0x001A, productType = 0x4243, productId = 0x0000 } -- Eaton Anyplace Switch
-}
-
-local function can_handle_eaton_anyplace_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(EATON_ANYPLACE_SWITCH_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      local subdriver = require("eaton-anyplace-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
+local switch_utils = require "switch_utils"
 
 local function basic_set_handler(self, device, cmd)
   if cmd.args.value == 0xFF then
@@ -46,7 +23,7 @@ local function basic_get_handler(self, device, cmd)
 end
 
 local function device_added(driver, device)
-  device:emit_event(capabilities.switch.switch.off())
+  switch_utils.emit_event_if_latest_state_missing(device, "main", capabilities.switch, capabilities.switch.switch.NAME, capabilities.switch.switch.off())
 end
 
 local function switch_on_handler(driver, device)
@@ -74,7 +51,7 @@ local eaton_anyplace_switch = {
   lifecycle_handlers = {
     added = device_added
   },
-  can_handle = can_handle_eaton_anyplace_switch
+  can_handle = require("eaton-anyplace-switch.can_handle")
 }
 
 return eaton_anyplace_switch

@@ -22,6 +22,7 @@ local mgmt_bind_req = require "st.zigbee.zdo.mgmt_bind_request"
 local utils = require 'st.utils'
 local zdo_messages = require "st.zigbee.zdo"
 local supported_values = require "zigbee-multi-button.supported_values"
+local button_utils = require "button_utils"
 
 local OnOff = clusters.OnOff
 local PowerConfiguration = clusters.PowerConfiguration
@@ -80,8 +81,8 @@ local function added_handler(self, device)
     device:emit_component_event(component, capabilities.button.numberOfButtons({value = number_of_buttons}))
   end
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
-end
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
+  end
 
 local function zdo_binding_table_handler(driver, device, zb_rx)
   for _, binding_table in pairs(zb_rx.body.zdo_body.binding_table_entries) do

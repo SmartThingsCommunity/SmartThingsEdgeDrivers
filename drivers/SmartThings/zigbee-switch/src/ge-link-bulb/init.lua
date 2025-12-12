@@ -1,41 +1,10 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 
 local Level = clusters.Level
-
-local GE_LINK_BULB_FINGERPRINTS = {
-  ["GE_Appliances"] = {
-    ["ZLL Light"] = true,
-  },
-  ["GE"] = {
-    ["Daylight"] = true,
-    ["SoftWhite"] = true
-  }
-}
-
-local function can_handle_ge_link_bulb(opts, driver, device)
-  local can_handle = (GE_LINK_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()]
-  if can_handle then
-    local subdriver = require("ge-link-bulb")
-    return true, subdriver
-  else
-    return false
-  end
-end
 
 local function info_changed(driver, device, event, args)
   local command
@@ -81,7 +50,7 @@ local ge_link_bulb = {
       [capabilities.switchLevel.commands.setLevel.NAME] = set_level_handler
     }
   },
-  can_handle = can_handle_ge_link_bulb
+  can_handle = require("ge-link-bulb.can_handle"),
 }
 
 return ge_link_bulb

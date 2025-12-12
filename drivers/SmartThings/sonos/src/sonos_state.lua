@@ -10,8 +10,8 @@ local SonosConnection = require "api.sonos_connection"
 --- @class SonosHousehold
 --- Information on an entire Sonos system ("household"), such as its current groups, list of players, etc.
 --- @field public id HouseholdId
---- @field public groups table<GroupId,SonosGroupObject> All of the current groups in the system
---- @field public players table<PlayerId,{player: SonosPlayerObject}> All of the current players in the system
+--- @field public groups table<GroupId,SonosGroupInfo> All of the current groups in the system
+--- @field public players table<PlayerId,{player: SonosPlayerInfo, device: SonosDeviceInfo?}> All of the current players in the system
 --- @field public bonded_players table<PlayerId,boolean> PlayerID's in this map that map to true are non-primary bonded players, and not controllable.
 --- @field public player_to_group table<PlayerId,GroupId> quick lookup from Player ID -> Group ID
 --- @field public st_devices table<PlayerId,string> Player ID -> ST Device Record UUID information for the household
@@ -77,7 +77,7 @@ end
 local _STATE = {
   ---@type Households
   households = make_households_table(),
-  ---@type table<string, {sonos_device_id: PlayerId, player: SonosPlayerObject, group: SonosGroupObject, household: SonosHousehold}>
+  ---@type table<string, {sonos_device_id: PlayerId, player: SonosPlayerInfo, group: SonosGroupInfo, household: SonosHousehold, sonos_device: SonosDeviceInfo?}>
   device_record_map = {},
 }
 
@@ -85,14 +85,15 @@ local _STATE = {
 --- @class SonosState
 local SonosState = {}
 SonosState.__index = SonosState
+SonosState.EMPTY_HOUSEHOLD = _STATE.households:get_or_init("__EMPTY")
 
 ---@param device SonosDevice
----@param info { ssdp_info: SonosSSDPInfo, discovery_info: SonosDiscoveryInfo }
+---@param info SpeakerDiscoveryInfo
 function SonosState:associate_device_record(device, info)
-  local household_id = info.ssdp_info.household_id
-  local group_id = info.ssdp_info.group_id
-  -- This is the device id even if the device is a secondary in a bonded set
-  local player_id = info.discovery_info.playerId
+  local household_id = info.household_id
+  local group_id = info.group_id
+  -- This is the device id even if the device is a seondary in a bonded set
+  local player_id = info.player_id
 
   local household = _STATE.households[household_id]
   if not household then
@@ -120,7 +121,9 @@ function SonosState:associate_device_record(device, info)
     return
   end
 
-  local player = (household.players[player_id] or {}).player
+  local player_tbl = household.players[player_id]
+  local player = (player_tbl or {}).player
+  local sonos_device = (player_tbl or {}).device
 
   if not player then
     log.error(
@@ -134,30 +137,31 @@ function SonosState:associate_device_record(device, info)
 
   household.st_devices[player_id] = device.id
 
-  _STATE.device_record_map[device.id] =
-    { sonos_device_id = player_id, group = group, player = player, household = household }
+  _STATE.device_record_map[device.id] = {
+    sonos_device_id = player_id,
+    group = group,
+    player = player,
+    household = household,
+    sonos_device = sonos_device,
+  }
 
   local bonded = household.bonded_players[player_id] and true or false
 
-  local sw_gen_changed = utils.update_field_if_changed(
-    device,
-    PlayerFields.SW_GEN,
-    info.discovery_info.device.swGen,
-    { persist = true }
-  )
+  local sw_gen_changed =
+    utils.update_field_if_changed(device, PlayerFields.SW_GEN, info.sw_gen, { persist = true })
 
   if sw_gen_changed then
-    CapEventHandlers.handle_sw_gen(device, info.discovery_info.device.swGen)
+    CapEventHandlers.handle_sw_gen(device, info.sw_gen)
   end
 
-  device:set_field(PlayerFields.REST_URL, info.discovery_info.restUrl, { persist = true })
+  device:set_field(PlayerFields.REST_URL, info.rest_url:build(), { persist = true })
 
   local sonos_conn = device:get_field(PlayerFields.CONNECTION)
   local connected = sonos_conn ~= nil
   local websocket_url_changed = utils.update_field_if_changed(
     device,
     PlayerFields.WSS_URL,
-    info.ssdp_info.wss_url,
+    info.wss_url:build(),
     { persist = true }
   )
 
@@ -176,12 +180,8 @@ function SonosState:associate_device_record(device, info)
     { persist = true }
   )
 
-  local player_id_changed = utils.update_field_if_changed(
-    device,
-    PlayerFields.PLAYER_ID,
-    player_id,
-    { persist = true }
-  )
+  local player_id_changed =
+    utils.update_field_if_changed(device, PlayerFields.PLAYER_ID, player_id, { persist = true })
 
   local need_refresh = connected
     and (websocket_url_changed or household_id_changed or player_id_changed)
@@ -206,7 +206,7 @@ function SonosState:associate_device_record(device, info)
 end
 
 ---@param household SonosHousehold
----@param group SonosGroupObject
+---@param group SonosGroupInfo
 ---@param device SonosDevice
 function SonosState:update_device_record_group_info(household, group, device)
   local player_id = device:get_field(PlayerFields.PLAYER_ID)
@@ -221,10 +221,10 @@ function SonosState:update_device_record_group_info(household, group, device)
       and player_id
       and group
       and group.id
-      and group.coordinatorId
-    ) and player_id == group.coordinatorId
+      and group.coordinator_id
+    ) and player_id == group.coordinator_id
   then
-    local player_ids_list = (household.groups[group.id] or {}).playerIds or {}
+    local player_ids_list = (household.groups[group.id] or {}).player_ids or {}
     if #player_ids_list > 1 then
       group_role = "primary"
     else
@@ -249,11 +249,11 @@ function SonosState:update_device_record_group_info(household, group, device)
   field_changed = utils.update_field_if_changed(
     device,
     PlayerFields.COORDINATOR_ID,
-    group.coordinatorId,
+    group.coordinator_id,
     { persist = true }
   )
   if not bonded and field_changed then
-    CapEventHandlers.handle_group_coordinator_update(device, group.coordinatorId)
+    CapEventHandlers.handle_group_coordinator_update(device, group.coordinator_id)
   end
 
   if bonded then
@@ -306,9 +306,21 @@ function SonosState:update_device_record_from_state(household_id, device)
   self:update_device_record_group_info(household, current_mapping.group, device)
 end
 
--- Helper function for when updating household info
+--- Helper function for when updating household info
+---@param driver SonosDriver
+---@param player SonosPlayerObject
+---@param household SonosHousehold
+---@param known_bonded_players table<PlayerId,boolean>
+---@param sonos_device_id PlayerId
 local function update_device_info(driver, player, household, known_bonded_players, sonos_device_id)
-  household.players[sonos_device_id] = { player = player }
+  ---@type SonosDeviceInfo
+  local device_info = { id = sonos_device_id, primary_device_id = player.id }
+  ---@type SonosPlayerInfo
+  local player_info = { id = player.id, websocket_url = player.websocketUrl }
+  household.players[sonos_device_id] = {
+    player = player_info,
+    device = device_info,
+  }
   local previously_bonded = known_bonded_players[sonos_device_id] and true or false
   local currently_bonded
   local group_id
@@ -328,8 +340,8 @@ local function update_device_info(driver, player, household, known_bonded_player
     _STATE.device_record_map[maybe_device_id] = _STATE.device_record_map[maybe_device_id] or {}
     _STATE.device_record_map[maybe_device_id].household = household
     _STATE.device_record_map[maybe_device_id].group = household.groups[group_id]
-    _STATE.device_record_map[maybe_device_id].player = player
-    _STATE.device_record_map[maybe_device_id].sonos_device_id = sonos_device_id
+    _STATE.device_record_map[maybe_device_id].player = player_info
+    _STATE.device_record_map[maybe_device_id].sonos_device = device_info
     if previously_bonded ~= currently_bonded then
       local target_device = driver:get_device_info(maybe_device_id)
       if target_device then
@@ -350,9 +362,10 @@ function SonosState:update_household_info(id, groups_event, driver)
 
   local groups, players = groups_event.groups, groups_event.players
 
-  for _, group in ipairs(groups) do
-    household.groups[group.id] = group
-    for _, playerId in ipairs(group.playerIds) do
+  for _, group in ipairs(groups or {}) do
+    household.groups[group.id] =
+      { id = group.id, coordinator_id = group.coordinatorId, player_ids = group.playerIds }
+    for _, playerId in ipairs(group.playerIds or {}) do
       household.player_to_group[playerId] = group.id
     end
   end
@@ -360,15 +373,15 @@ function SonosState:update_household_info(id, groups_event, driver)
   -- Iterate through the players and track all the devices associated with them
   -- for bonded set tracking.
   local log_devices_error = false
-  for _, player in ipairs(players) do
+  for _, player in ipairs(players or {}) do
     -- Prefer devices because deviceIds is deprecated but all we care about is
     -- the ID so either way is fine.
-    if player.devices then
-      for _, device in ipairs(player.devices) do
+    if type(player.devices) == "table" then
+      for _, device in ipairs(player.devices or {}) do
         update_device_info(driver, player, household, known_bonded_players, device.id)
       end
-    elseif player.deviceIds then
-      for _, device_id in ipairs(player.deviceIds) do
+    elseif type(player.deviceIds) == "table" then
+      for _, device_id in ipairs(player.deviceIds or {}) do
         update_device_info(driver, player, household, known_bonded_players, device_id)
       end
     else
@@ -378,7 +391,10 @@ function SonosState:update_household_info(id, groups_event, driver)
     end
   end
   if log_devices_error then
-    log.warn_with( { hub_logs = true}, "Group event contained neither devices nor deviceIds in player")
+    log.warn_with(
+      { hub_logs = true },
+      "Group event contained neither devices nor deviceIds in player"
+    )
   end
 
   household.id = id
@@ -474,7 +490,7 @@ function SonosState:get_coordinator_for_group(household_id, group_id)
     return
   end
 
-  return group.coordinatorId
+  return group.coordinator_id
 end
 
 --- @param device SonosDevice
@@ -583,7 +599,7 @@ function SonosState:get_coordinator_for_device(device)
       )
   end
 
-  return household_id, group.coordinatorId, nil
+  return household_id, group.coordinator_id, nil
 end
 
 ---@return SonosState

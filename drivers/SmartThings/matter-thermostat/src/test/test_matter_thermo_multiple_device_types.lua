@@ -1,23 +1,10 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local dkjson = require "dkjson"
 local uint32 = require "st.matter.data_types.Uint32"
-local utils = require "st.utils"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
@@ -196,10 +183,10 @@ local function test_thermostat_device_type_update_modular_profile(generic_mock_d
 
   test.wait_for_events()
 
-  local device_info_copy = utils.deep_copy(generic_mock_device.raw_st_data)
-  device_info_copy.profile.id = "thermostat-modular"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ generic_mock_device.id, "infoChanged", device_info_json })
+  local updated_device_profile = t_utils.get_profile_definition("thermostat-modular.yml",
+    {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.socket.device_lifecycle:__queue_receive(generic_mock_device:generate_info_changed({ profile = updated_device_profile }))
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
 end
 

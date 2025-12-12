@@ -1,34 +1,14 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
-local log = require "log"
+local configurations = require "configurations"
 
-local ZIGBEE_POWER_METER_FINGERPRINTS = {
-  { mfr = "BITUO TECHNIK", model = "SPM01-E0" },
-  { mfr = "BITUO TECHNIK", model = "SPM01X" },
-  { mfr = "BITUO TECHNIK", model = "SDM02-E0" },
-  { mfr = "BITUO TECHNIK", model = "SDM02X" },
-  { mfr = "BITUO TECHNIK", model = "SPM02-E0" },
-  { mfr = "BITUO TECHNIK", model = "SPM02X" },
-  { mfr = "BITUO TECHNIK", model = "SDM01W" },
-  { mfr = "BITUO TECHNIK", model = "SDM01B" },
-}
 
 local PHASE_A_CONFIGURATION = {
   {
@@ -125,15 +105,6 @@ local PHASE_C_CONFIGURATION = {
   }
 }
 
-local is_bituo_power_meter = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
-    if device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function energy_handler(driver, device, value, zb_rx)
   local multiplier = 1
   local divisor = 100
@@ -208,14 +179,12 @@ local device_init = function(self, device)
     device:add_monitored_attribute(attribute)
   end
   if string.find(device:get_model(), "SDM02") or string.find(device:get_model(), "SPM02") or string.find(device:get_model(), "SDM01W") then
-    log.debug("2 phase")
     for _, attribute in ipairs(PHASE_B_CONFIGURATION) do
       device:add_configured_attribute(attribute)
       device:add_monitored_attribute(attribute)
     end
   end
   if string.find(device:get_model(), "SPM02") or string.find(device:get_model(), "SDM01W") then
-    log.debug("3 phase")
     for _, attribute in ipairs(PHASE_C_CONFIGURATION) do
       device:add_configured_attribute(attribute)
       device:add_monitored_attribute(attribute)
@@ -226,7 +195,7 @@ end
 local bituo_power_meter_handler = {
   NAME = "bituo power meter handler",
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
   zigbee_handlers = {
@@ -256,7 +225,7 @@ local bituo_power_meter_handler = {
       [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = resetEnergyMeter,
     },
   },
-  can_handle = is_bituo_power_meter
+  can_handle = require("bituo.can_handle"),
 }
 
 return bituo_power_meter_handler

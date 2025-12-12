@@ -79,4 +79,10 @@ button_utils.build_button_handler = function(button_name, pressed_type)
   end
 end
 
+button_utils.emit_event_if_latest_state_missing = function(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 return button_utils

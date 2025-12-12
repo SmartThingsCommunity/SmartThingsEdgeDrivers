@@ -4,6 +4,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local FrameCtrl = require "st.zigbee.zcl.frame_ctrl"
 local data_types = require "st.zigbee.data_types"
 local aqara_utils = require "aqara/aqara_utils"
+local window_treatment_utils = require "window_treatment_utils"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -93,8 +94,8 @@ end
 
 local function device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({ "open", "close", "pause" }, {visibility = {displayed = false}}))
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(0))
-  device:emit_event(capabilities.windowShade.windowShade.closed())
+  window_treatment_utils.emit_event_if_latest_state_missing(device, "main", capabilities.windowShadeLevel, capabilities.windowShadeLevel.shadeLevel.NAME, capabilities.windowShadeLevel.shadeLevel(0))
+  window_treatment_utils.emit_event_if_latest_state_missing(device, "main", capabilities.windowShade, capabilities.windowShade.windowShade.NAME, capabilities.windowShade.windowShade.closed())
   device:emit_event(initializedStateWithGuide.initializedStateWithGuide.notInitialized())
   device:emit_event(shadeRotateState.rotateState.idle({ visibility = { displayed = false }}))
 

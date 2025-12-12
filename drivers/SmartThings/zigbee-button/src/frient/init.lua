@@ -17,6 +17,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local capabilities = require "st.capabilities"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local data_types = require "st.zigbee.data_types"
+local button_utils = require "button_utils"
 local BasicInput = zcl_clusters.BasicInput
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local OnOff = zcl_clusters.OnOff
@@ -163,7 +164,7 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local function do_configure(driver, device, event, args)

@@ -1,35 +1,21 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local SimpleMetering = clusters.SimpleMetering
 local ElectricalMeasurement = clusters.ElectricalMeasurement
+local configurations = require "configurations"
 
-local ZIGBEE_POWER_METER_FINGERPRINTS = {
-  { model = "PMM-300Z1" },
-  { model = "PMM-300Z2" },
-  { model = "PMM-300Z3" }
-}
 
 local POWERMETER_CONFIGURATION_V2 = {
   {
     cluster = SimpleMetering.ID,
     attribute = SimpleMetering.attributes.CurrentSummationDelivered.ID,
     minimum_interval = 5,
-    maximum_interval = 300,
+    maximum_interval = 450, -- Since the 15 minute report below depends on this report we make this 7.5 minutes
     data_type = SimpleMetering.attributes.CurrentSummationDelivered.base_type,
     reportable_change = 1
   },
@@ -37,29 +23,20 @@ local POWERMETER_CONFIGURATION_V2 = {
     cluster = SimpleMetering.ID,
     attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
     minimum_interval = 5,
-    maximum_interval = 300,
+    maximum_interval = 3600,
     data_type = SimpleMetering.attributes.InstantaneousDemand.base_type,
-    reportable_change = 1
+    reportable_change = 5
   },
   { -- reporting : no
     cluster = ElectricalMeasurement.ID,
     attribute = ElectricalMeasurement.attributes.ActivePower.ID,
-    minimum_interval = 0,
+    minimum_interval = 5,
     maximum_interval = 65535,
     data_type = ElectricalMeasurement.attributes.ActivePower.base_type,
-    reportable_change = 1
+    reportable_change = 5
   }
 }
 
-local is_shinasystems_power_meter = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
-    if device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-
-  return false
-end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
   local multiplier = device:get_field(constants.SIMPLE_METERING_MULTIPLIER_KEY) or 1
@@ -124,10 +101,10 @@ local shinasystems_power_meter_handler = {
     }
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurations.power_reconfig_wrapper(device_init),
     doConfigure = do_configure,
   },
-  can_handle = is_shinasystems_power_meter
+  can_handle = require("shinasystems.can_handle"),
 }
 
 return shinasystems_power_meter_handler

@@ -33,6 +33,8 @@ local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
+local MODULAR_PROFILE_UPDATED = "__MODULAR_PROFILE_UPDATED"
+
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
   [DoorLock.types.DlStatus.FAILURE] = "failure",
@@ -73,6 +75,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1533, 0x0010}, -- eufy, FamiLock S3
   {0x1533, 0x0011}, -- eufy, FamiLock E34
   {0x1533, 0x0012}, -- eufy, FamiLock E35
+  {0x1533, 0x0016}, -- eufy, FamiLock E32
   {0x135D, 0x00B1}, -- Nuki, Smart Lock Pro
   {0x135D, 0x00B2}, -- Nuki, Smart Lock
   {0x135D, 0x00C1}, -- Nuki, Smart Lock
@@ -80,7 +83,8 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x135D, 0x00B0}, -- Nuki, Smart Lock
   {0x15F2, 0x0001}, -- Viomi, AiSafety Smart Lock E100
   {0x158B, 0x0001}, -- Deasino, DS-MT01
-  {0x10E1, 0x2002}  -- VDA
+  {0x10E1, 0x2002}, -- VDA
+  {0x1421, 0x0042}, -- Kwikset Halo Select Plus
 }
 
 local battery_support = {
@@ -248,6 +252,7 @@ local function match_profile_modular(driver, device)
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
+  device:set_field(MODULAR_PROFILE_UPDATED, true)
 end
 
 local function match_profile_switch(driver, device)
@@ -286,9 +291,10 @@ local function match_profile_switch(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id then
+  if device.profile.id == args.old_st_store.profile.id and not device:get_field(MODULAR_PROFILE_UPDATED) then
     return
   end
+  device:set_field(MODULAR_PROFILE_UPDATED, nil)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do

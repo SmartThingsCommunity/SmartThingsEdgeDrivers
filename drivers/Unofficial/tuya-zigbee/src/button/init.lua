@@ -17,6 +17,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local OnOff = clusters.OnOff
 local device_management = require "st.zigbee.device_management"
 local PRESENT_ATTRIBUTE_ID = 0x00fd
+local tuya_utils = require "tuya_utils"
 
 local FINGERPRINTS = {
   { mfr = "_TZ3000_ja5osu5g", model = "TS004F"},
@@ -36,7 +37,7 @@ end
 local function added_handler(self, device)
   device:emit_event(capabilities.button.supportedButtonValues({"pushed","held","double"}, {visibility = { displayed = false }}))
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
-  device:emit_event(capabilities.button.button.pushed({state_change = false}))
+  tuya_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
 end
 
 local tuya_private_cluster_button_handler = function(driver, device, zb_rx)

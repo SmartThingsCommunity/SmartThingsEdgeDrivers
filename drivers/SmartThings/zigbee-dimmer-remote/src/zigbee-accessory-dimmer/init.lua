@@ -122,11 +122,17 @@ local switch_level_set_level_command_handler = function(driver, device, command)
 end
 
 local device_added = function(self, device)
-  generate_switch_onoff_event(device, "on")
-  generate_switch_level_event(device, 100)
+  if device:get_latest_state("main", capabilities.switch.ID, capabilities.switch.switch.NAME) == nil then
+    generate_switch_onoff_event(device, "on")
+  end
+  if device:get_latest_state("main", capabilities.switchLevel.ID, capabilities.switchLevel.level.NAME) == nil then
+    generate_switch_level_event(device, DEFAULT_LEVEL)
+  end
   device:emit_event(capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.supportedButtonValues({"pushed", "held"}, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.button.button.pushed({state_change = true}))
+  if device:get_latest_state("main", capabilities.button.ID, capabilities.button.button.NAME) == nil then
+    device:emit_event(capabilities.button.button.pushed({state_change = true}))
+  end
 end
 
 local do_configure = function(self, device)
@@ -142,7 +148,6 @@ local is_zigbee_accessory_dimmer = function(opts, driver, device)
             return true
         end
     end
-
     return false
 end
 

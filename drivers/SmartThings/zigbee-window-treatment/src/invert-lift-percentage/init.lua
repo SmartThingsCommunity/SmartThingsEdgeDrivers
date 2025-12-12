@@ -14,6 +14,7 @@
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+local window_shade_utils = require "window_shade_utils"
 
 local WindowCovering = zcl_clusters.WindowCovering
 
@@ -75,9 +76,8 @@ local function window_shade_level_cmd(driver, device, command)
 end
 
 local function window_shade_preset_cmd(driver, device, command)
-  if device.preferences ~= nil and device.preferences.presetPosition ~= nil then
-    set_shade_level(device, device.preferences.presetPosition, command)
-  end
+  local level = window_shade_utils.get_preset_level(device, command.component)
+  set_shade_level(device, level, command)
 end
 
 local ikea_window_treatment = {

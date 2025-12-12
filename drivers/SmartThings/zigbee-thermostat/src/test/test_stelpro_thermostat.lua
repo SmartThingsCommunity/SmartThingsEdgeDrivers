@@ -474,4 +474,39 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Handle added lifecycle",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    )
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.LocalTemperature:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.PIHeatingDemand:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ThermostatUserInterfaceConfiguration.attributes.TemperatureDisplayMode:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      RelativeHumidity.attributes.MeasuredValue:read(mock_device)
+    })
+  end
+)
+
 test.run_registered_tests()
