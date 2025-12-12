@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local cc = require "st.zwave.CommandClass"
 local capabilities = require "st.capabilities"
@@ -23,27 +12,6 @@ local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 2 })
 local preferencesMap = require "preferences"
 
 local FIBARO_DOOR_WINDOW_SENSOR_WAKEUP_INTERVAL = 21600 --seconds
-
-local FIBARO_DOOR_WINDOW_SENSOR_FINGERPRINTS = {
-  { manufacturerId = 0x010F, prod = 0x0700, productId = 0x1000 }, -- Fibaro Open/Closed Sensor (FGK-10x) / Europe
-  { manufacturerId = 0x010F, prod = 0x0700, productId = 0x2000 }, -- Fibaro Open/Closed Sensor (FGK-10x) / NA
-  { manufacturerId = 0x010F, prod = 0x0702, productId = 0x1000 }, -- Fibaro Open/Closed Sensor 2 (FGDW-002) / Europe
-  { manufacturerId = 0x010F, prod = 0x0702, productId = 0x2000 }, -- Fibaro Open/Closed Sensor 2 (FGDW-002) / NA
-  { manufacturerId = 0x010F, prod = 0x0702, productId = 0x3000 }, -- Fibaro Open/Closed Sensor 2 (FGDW-002) / ANZ
-  { manufacturerId = 0x010F, prod = 0x0701, productId = 0x2001 }, -- Fibaro Open/Closed Sensor with temperature (FGK-10X) / NA
-  { manufacturerId = 0x010F, prod = 0x0701, productId = 0x1001 }, -- Fibaro Open/Closed Sensor
-  { manufacturerId = 0x010F, prod = 0x0501, productId = 0x1002 }  -- Fibaro Open/Closed Sensor
-}
-
-local function can_handle_fibaro_door_window_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FIBARO_DOOR_WINDOW_SENSOR_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.prod, fingerprint.productId) then
-      local subdriver = require("fibaro-door-window-sensor")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function parameterNumberToParameterName(preferences,parameterNumber)
   for id, parameter in pairs(preferences) do
@@ -154,11 +122,8 @@ local fibaro_door_window_sensor = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
-  sub_drivers = {
-    require("fibaro-door-window-sensor/fibaro-door-window-sensor-1"),
-    require("fibaro-door-window-sensor/fibaro-door-window-sensor-2")
-  },
-  can_handle = can_handle_fibaro_door_window_sensor
+  sub_drivers = require("fibaro-door-window-sensor.sub_drivers"),
+  can_handle = require("fibaro-door-window-sensor.can_handle"),
 }
 
 return fibaro_door_window_sensor
