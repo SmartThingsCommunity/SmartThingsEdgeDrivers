@@ -109,12 +109,22 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
   return status_code
 end
 
-new_lock_utils.delete_user = function(device, user_index)
+new_lock_utils.delete_user = function(device, user_index, deleted_by_credential_deletion)
   local current_users = new_lock_utils.get_users(device)
   local status_code = new_lock_utils.STATUS_FAILURE
 
   for index, user in ipairs(current_users) do
     if user.userIndex == user_index then
+      -- also delete associated credential if this isn't being call by a credential deletion.
+      if not deleted_by_credential_deletion then
+        -- find associated credential.
+        for _, credential in ipairs(new_lock_utils.get_credentials(device)) do
+          if credential.userIndex == user_index then
+            new_lock_utils.delete_credential(device, credential.credentialIndex, true)
+            break
+          end
+        end
+      end
       table.remove(current_users, index)
       device:set_field(new_lock_utils.LOCK_USERS, current_users)
       status_code = new_lock_utils.STATUS_SUCCESS
@@ -142,12 +152,16 @@ new_lock_utils.add_credential = function(device, user_index, user_type, credenti
   return new_lock_utils.STATUS_SUCCESS
 end
 
-new_lock_utils.delete_credential = function(device, credential_index)
+new_lock_utils.delete_credential = function(device, credential_index, deleted_by_user_deletion)
   local credentials = new_lock_utils.get_credentials(device)
   local status_code = new_lock_utils.STATUS_FAILURE
 
   for index, credential in ipairs(credentials) do
-    if credential.userIndex == credential_index then
+    if credential.credentialIndex == credential_index then
+      -- also delete associated user if this isn't being called by a user deletion.
+      if not deleted_by_user_deletion then
+        new_lock_utils.delete_user(device, credential.userIndex, true)
+      end
       table.remove(credentials, index)
       device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
       status_code = new_lock_utils.STATUS_SUCCESS
