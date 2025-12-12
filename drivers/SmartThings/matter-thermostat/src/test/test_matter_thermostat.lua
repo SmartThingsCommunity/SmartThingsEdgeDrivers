@@ -320,8 +320,6 @@ test.register_message_test(
   }
 )
 
---   test.socket.matter:__expect_send({mock_device_auto.id, clusters.Thermostat.attributes.MinSetpointDeadBand:read(mock_device_auto)})
-
 test.register_message_test(
   "Thermostat mode reports should generate correct messages",
   {
