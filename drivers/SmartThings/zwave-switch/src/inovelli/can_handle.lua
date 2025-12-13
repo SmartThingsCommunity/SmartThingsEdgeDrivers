@@ -3,6 +3,7 @@
 
 local INOVELLI_FINGERPRINTS = {
   { mfr = 0x031E, prod = 0x0017, model = 0x0001 }, -- Inovelli VZW32-SN
+  { mfr = 0x031E, prod = 0x0015, model = 0x0001 }, -- Inovelli VZW31-SN
   { mfr = 0x031E, prod = 0x0001, model = 0x0001 }, -- Inovelli LZW31SN
   { mfr = 0x031E, prod = 0x0003, model = 0x0001 }, -- Inovelli LZW31
 }
