@@ -59,7 +59,8 @@ function SwitchLifecycleHandlers.driver_switched(driver, device)
 end
 
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
-  if device.profile.id ~= args.old_st_store.profile.id then
+  if device.profile.id ~= args.old_st_store.profile.id or device:get_field(fields.MODULAR_PROFILE_UPDATED) then
+    device:set_field(fields.MODULAR_PROFILE_UPDATED, nil)
     device:subscribe()
     local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
     if #button_eps > 0 and device.network_type == device_lib.NETWORK_TYPE_MATTER then
