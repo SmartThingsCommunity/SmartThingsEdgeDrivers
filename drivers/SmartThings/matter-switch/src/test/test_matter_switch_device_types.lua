@@ -439,14 +439,8 @@ local mock_device_light_level_motion = test.mock_device.build_test_matter_device
 
 local function test_init_parent_child_switch_types()
   test.mock_device.add_test_device(mock_device_parent_child_switch_types)
-  local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_child_switch_types)
-
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "added" })
-  test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
-
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "init" })
-  test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
-
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "doConfigure" })
   test.socket.matter:__expect_send({
     mock_device_parent_child_switch_types.id,
@@ -483,13 +477,10 @@ end
 
 local function test_init_parent_client_child_server()
   test.mock_device.add_test_device(mock_device_parent_client_child_server)
-  local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_client_child_server)
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_client_child_server.id, "added" })
-  test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_client_child_server.id, "init" })
-  test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_client_child_server.id, "doConfigure" })
   mock_device_parent_client_child_server:expect_metadata_update({ profile = "switch-binary" })
@@ -597,25 +588,9 @@ end
 local function test_init_parent_child_different_types()
   test.mock_device.add_test_device(mock_device_parent_child_different_types)
   local cluster_subscribe_list = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY,
-    clusters.ColorControl.attributes.ColorMode,
+    clusters.OnOff.attributes.OnOff
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_different_types)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_parent_child_different_types))
-    end
-  end
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "added" })
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 

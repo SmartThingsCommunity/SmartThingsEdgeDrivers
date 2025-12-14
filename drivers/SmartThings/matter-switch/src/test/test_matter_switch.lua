@@ -126,6 +126,7 @@ local cluster_subscribe_list = {
   clusters.ColorControl.attributes.ColorTemperatureMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+  clusters.ColorControl.attributes.ColorMode,
 }
 
 local function set_color_mode(device, endpoint, color_mode)
