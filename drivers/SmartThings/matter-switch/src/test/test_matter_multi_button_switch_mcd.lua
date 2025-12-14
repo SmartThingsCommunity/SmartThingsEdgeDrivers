@@ -103,7 +103,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local mock_device_mcd_unsupported_switch_device_type = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  profile = t_utils.get_profile_definition("matter-thing.yml"),
+  profile = t_utils.get_profile_definition("button.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -178,6 +178,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.ColorControl.attributes.CurrentSaturation,
   clusters.ColorControl.attributes.CurrentX,
   clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
   clusters.Switch.server.events.InitialPress,
   clusters.Switch.server.events.LongPress,
   clusters.Switch.server.events.ShortRelease,
@@ -230,20 +231,6 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, mock_device_ep5, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, mock_device_ep5, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-
-  -- simulate the profile change update taking affect and the device info changing
-  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
-  device_info_copy.profile.id = "5-buttons-battery"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  expect_configure_buttons()
-
-  test.socket.matter:__expect_send({mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device)})
-  test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
-  test.socket.device_lifecycle:__queue_receive({ mock_child.id, "init" })
-  mock_child:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
 end
 
 -- All messages queued and expectations set are done before the driver is actually run
@@ -409,15 +396,15 @@ test.register_message_test(
 test.register_coroutine_test(
   "Test MCD configuration not including switch for unsupported switch device type, create child device instead",
   function()
+    local unsup_mock_device = mock_device_mcd_unsupported_switch_device_type
     -- added sets a bunch of fields on the device, and calls init
     local cluster_subscribe_list = {
-      clusters.OnOff.attributes.OnOff,
+      -- clusters.OnOff.attributes.OnOff,
       clusters.Switch.server.events.InitialPress,
       clusters.Switch.server.events.LongPress,
       clusters.Switch.server.events.ShortRelease,
       clusters.Switch.server.events.MultiPressComplete,
     }
-    local unsup_mock_device = mock_device_mcd_unsupported_switch_device_type
     local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
     for _, cluster in ipairs(cluster_subscribe_list) do
       subscribe_request:merge(cluster:subscribe(unsup_mock_device))
@@ -436,12 +423,23 @@ test.register_coroutine_test(
       parent_device_id = unsup_mock_device.id,
       parent_assigned_child_key = string.format("%d", 7)
     })
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
     unsup_mock_device:expect_metadata_update({ profile = "2-button" })
     unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
     test.wait_for_events()
 
     local updated_device_profile = t_utils.get_profile_definition("2-button.yml")
     test.socket.device_lifecycle:__queue_receive(unsup_mock_device:generate_info_changed({ profile = updated_device_profile }))
+
+    local cluster_subscribe_list = {
+      -- clusters.OnOff.attributes.OnOff,
+      clusters.Switch.server.events.InitialPress,
+      clusters.Switch.server.events.LongPress,
+      clusters.Switch.server.events.ShortRelease,
+      clusters.Switch.server.events.MultiPressComplete,
+    }
     local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
     for i, cluster in ipairs(cluster_subscribe_list) do
       if i > 1 then
@@ -472,6 +470,29 @@ test.register_coroutine_test(
       parent_device_id = mock_device.id,
       parent_assigned_child_key = string.format("%d", mock_device_ep5)
     })
+  end
+)
+
+test.register_coroutine_test(
+  "Test infoChanged event",
+  function ()
+    -- simulate the profile change update taking affect and the device info changing
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
+    end
+    local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
+    device_info_copy.profile.id = "5-buttons-battery"
+    local device_info_json = dkjson.encode(device_info_copy)
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    expect_configure_buttons()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
+    test.socket.matter:__expect_send({mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device)})
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "init" })
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    mock_child:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
   end
 )
 
