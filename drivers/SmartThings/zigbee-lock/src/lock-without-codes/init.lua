@@ -58,6 +58,8 @@ end
 
 local function do_configure(driver, device)
   device:configure()
+  device:send(DoorLock.attributes.LockState:read(device))
+  device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:read(device))
 end
 
 local function handle_lock_door(driver, device, zb_rx)
