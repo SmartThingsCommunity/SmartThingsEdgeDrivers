@@ -16,6 +16,11 @@ local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 
+local do_configure = function(self, device)
+  device:configure()
+  device:refresh()
+end
+
 local zigbee_illuminance_driver = {
   supported_capabilities = {
     capabilities.illuminanceMeasurement,
@@ -23,6 +28,9 @@ local zigbee_illuminance_driver = {
   },
   sub_drivers = {
     require("aqara")
+  },
+  lifecycle_handlers = {
+    doConfigure = do_configure,
   },
   health_check = false,
 }
