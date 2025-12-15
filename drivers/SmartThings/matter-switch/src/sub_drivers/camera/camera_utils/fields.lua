@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.matter.clusters"
-local switch_fields = require "switch_utils.fields"
 
 local CameraFields = {}
 
@@ -45,39 +44,5 @@ CameraFields.ABS_ZOOM_MAX = 100
 CameraFields.ABS_ZOOM_MIN = 1
 CameraFields.ABS_VOL_MAX = 254.0
 CameraFields.ABS_VOL_MIN = 0.0
-
-CameraFields.device_type_attribute_map = {
-  [switch_fields.DEVICE_TYPE_ID.LIGHT.ON_OFF] = {
-    clusters.OnOff.attributes.OnOff
-  },
-  [switch_fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [switch_fields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
-  },
-  [switch_fields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
-  }
-}
 
 return CameraFields

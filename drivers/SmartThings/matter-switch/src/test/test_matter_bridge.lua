@@ -59,10 +59,6 @@ local mock_bridge = test.mock_device.build_test_matter_device({
   }
 })
 
-local cluster_subscribe_list = {
-  clusters.OnOff.attributes.OnOff
-}
-
 local function test_init_mock_bridge()
   test.mock_device.add_test_device(mock_bridge)
 end
