@@ -1,22 +1,13 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 local constants = require "st.zigbee.constants"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
+local lazy_load_if_possible = require "lazy_load_subdriver"
 
 local temperature_measurement_defaults = {
   MIN_TEMP = "MIN_TEMP",
@@ -110,23 +101,23 @@ local zigbee_motion_driver = {
     added = added_handler
   },
   sub_drivers = {
-    require("aqara"),
-    require("aurora"),
-    require("ikea"),
-    require("iris"),
-    require("gatorsystem"),
-    require("motion_timeout"),
-    require("nyce"),
-    require("zigbee-plugin-motion-sensor"),
-    require("compacta"),
-    require("frient"),
-    require("samjin"),
-    require("battery-voltage"),
-    require("centralite"),
-    require("smartthings"),
-    require("smartsense"),
-    require("thirdreality"),
-    require("sengled")
+    lazy_load_if_possible("aqara"),
+    lazy_load_if_possible("aurora"),
+    lazy_load_if_possible("ikea"),
+    lazy_load_if_possible("iris"),
+    lazy_load_if_possible("gatorsystem"),
+    lazy_load_if_possible("motion_timeout"),
+    lazy_load_if_possible("nyce"),
+    lazy_load_if_possible("zigbee-plugin-motion-sensor"),
+    lazy_load_if_possible("compacta"),
+    lazy_load_if_possible("frient"),
+    lazy_load_if_possible("samjin"),
+    lazy_load_if_possible("battery-voltage"),
+    lazy_load_if_possible("centralite"),
+    lazy_load_if_possible("smartthings"),
+    lazy_load_if_possible("smartsense"),
+    lazy_load_if_possible("thirdreality"),
+    lazy_load_if_possible("sengled"),
   },
   additional_zcl_profiles = {
     [0xFC01] = true
