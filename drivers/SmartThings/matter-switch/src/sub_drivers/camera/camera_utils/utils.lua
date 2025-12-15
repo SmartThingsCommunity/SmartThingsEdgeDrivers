@@ -264,11 +264,9 @@ function CameraUtils.subscribe(device)
     for _, ep in ipairs(device.endpoints or {}) do
       local id = 0
       for _, dt in ipairs(ep.device_types or {}) do
-        if dt.device_type_id ~= fields.DEVICE_TYPE_ID.GENERIC_SWITCH then
-          id = math.max(id, dt.device_type_id)
-        end
+        id = math.max(id, dt.device_type_id)
       end
-      for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
+      for _, attr in pairs(camera_fields.device_type_attribute_map[id] or {}) do
         device:add_subscribed_attribute(attr)
       end
     end
