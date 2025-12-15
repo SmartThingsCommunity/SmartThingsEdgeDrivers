@@ -577,7 +577,7 @@ matterManufacturer:
     deviceLabel: BILRESA scroll wheel
     vendorId: 0x117C
     productId: 0x8000
-    deviceProfileName: 2-button-battery
+    deviceProfileName: ikea-scroll
   - id: "4476/32769"
     deviceLabel: BILRESA dual button
     vendorId: 0x117C
