@@ -5,11 +5,13 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
+local uint32 = require "st.matter.data_types.Uint32"
 local version = require "version"
 
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -33,6 +35,7 @@ local mock_device = test.mock_device.build_test_matter_device({
       clusters = {
         { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 14, },
         { cluster_id = clusters.ElectricalPowerMeasurement.ID, cluster_type = "SERVER", feature_map = 0, },
+        { cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", feature_map = 4, }, -- SET_TOPOLOGY
       },
       device_types = {
         { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
@@ -47,7 +50,27 @@ local mock_device = test.mock_device.build_test_matter_device({
       device_types = {
         { device_type_id = 0x010B, device_type_revision = 1 }, -- Dimmable Plug In Unit
       }
-    }
+    },
+    {
+      endpoint_id = 3,
+      clusters = {
+        { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 14, },
+        { cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", feature_map = 4, }, -- SET_TOPOLOGY
+      },
+      device_types = {
+        { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
+      }
+    },
+    {
+      endpoint_id = 4,
+      clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
+        { cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
+      },
+      device_types = {
+        { device_type_id = 0x010B, device_type_revision = 1 }, -- Dimmable Plug In Unit
+      }
+    },
   },
 })
 
@@ -71,28 +94,22 @@ local mock_device_periodic = test.mock_device.build_test_matter_device({
     {
       endpoint_id = 1,
       clusters = {
+        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
         { cluster_id = clusters.ElectricalEnergyMeasurement.ID, cluster_type = "SERVER", feature_map = 10, },
+        { cluster_id = clusters.PowerTopology.ID, cluster_type = "SERVER", feature_map = 4, } -- SET_TOPOLOGY
       },
       device_types = {
-        { device_type_id = 0x0510, device_type_revision = 1 } -- Electrical Sensor
+        { device_type_id = 0x010A, device_type_revision = 1 }, -- OnOff Plug
+        { device_type_id = 0x0510, device_type_revision = 1 }, -- Electrical Sensor
       }
     },
-    {
-      endpoint_id = 2,
-      clusters = {
-        { cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0, },
-      },
-      device_types = {
-        { device_type_id = 0x010A, device_type_revision = 1 }, -- On Off Plug In Unit
-      }
-    }
   },
 })
 
 local subscribed_attributes_periodic = {
   clusters.OnOff.attributes.OnOff,
-  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
+  clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
 }
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
@@ -144,15 +161,29 @@ local periodic_report_val_23 = {
   reactive_energy = 0
 }
 
+local mock_child = test.mock_device.build_test_child_device({
+  profile = t_utils.get_profile_definition("plug-level-energy-powerConsumption.yml"),
+  device_network_id = string.format("%s:%d", mock_device.id, 4),
+  parent_device_id = mock_device.id,
+  parent_assigned_child_key = string.format("%d", 4)
+})
+
 local function test_init()
+  test.mock_device.add_test_device(mock_device)
+  test.mock_device.add_test_device(mock_child)
+
   local subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
   for i, cluster in ipairs(subscribed_attributes) do
       if i > 1 then
           subscribe_request:merge(cluster:subscribe(mock_device))
       end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  local read_req = clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device.id, 1)
+  read_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device.id, 3))
+  test.socket.matter:__expect_send({ mock_device.id, read_req })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device)
+  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 end
 test.set_test_init_function(test_init)
 
@@ -164,10 +195,12 @@ local function test_init_periodic()
         subscribe_request:merge(cluster:subscribe(mock_device_periodic))
     end
   end
-  test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "added" })
+  local read_req = clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device_periodic.id, 1)
+  test.socket.matter:__expect_send({ mock_device_periodic.id, read_req })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "init" })
+  test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
 end
 
@@ -323,26 +356,26 @@ test.register_coroutine_test(
     end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Periodic Energy as subordinate to Cumulative Energy measurement should not generate any messages",
-  {
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+  function()
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+          mock_device, 1, periodic_report_val_23
+        )
       }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
+    )
+    test.socket.matter:__queue_receive(
+      {
         mock_device.id,
-        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(mock_device, 1, periodic_report_val_23)
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+          mock_device, 1, periodic_report_val_23
+        )
       }
-    },
-  }
+    )
+  end
 )
 
 test.register_coroutine_test(
@@ -409,8 +442,19 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 2, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
-    mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
+    test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 4, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device, 1, {uint32(2)})})
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device, 3, {uint32(4)})})
+    mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
+    mock_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "nil 2",
+      profile = "plug-level-energy-powerConsumption",
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", 4)
+    })
   end,
   { test_init = test_init }
 )
@@ -419,8 +463,193 @@ test.register_coroutine_test(
   "Test profile change on init for only Periodic Electrical Sensor device type",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "doConfigure" })
-    mock_device_periodic:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
     mock_device_periodic:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device_periodic.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device_periodic, 1, {uint32(1)})})
+    mock_device_periodic:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
+  end,
+  { test_init = test_init_periodic }
+)
+
+test.register_coroutine_test(
+  "Test resetEnergyMeter command on parent and child for CumulativeEnergyImported",
+  function()
+
+    test.mock_time.advance_time(901) -- move time 15 minutes past 0 (this can be assumed to be true in practice in all cases)
+
+    -- this block needs to run to set the requisite fields. It is tested on its own elsewhere
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 2, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+    test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, 4, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device, 1, {uint32(2)})})
+    test.socket.matter:__queue_receive({ mock_device.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device, 3, {uint32(4)})})
+    mock_device:expect_metadata_update({ profile = "plug-level-power-energy-powerConsumption" })
+    mock_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "nil 2",
+      profile = "plug-level-energy-powerConsumption",
+      parent_device_id = mock_device.id,
+      parent_assigned_child_key = string.format("%d", 4)
+    })
+    -- end of block
+
+    -- Initial Parent Energy Report
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+          mock_device, 1, cumulative_report_val_19
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:00:00Z",
+        ["end"] = "1970-01-01T00:15:00Z",
+        deltaEnergy = 0.0,
+        energy = 19.0
+      }))
+    )
+
+    -- Initial Child Energy Report
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+          mock_device, 3, cumulative_report_val_19
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_child:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
+    )
+    -- no powerConsumptionReport will be emitted now, since it has not been 15 minutes since the previous report (even though it was the parent).
+
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1500)
+
+
+    -- Parent call to resetEnergyMeter
+    test.socket.capability:__queue_receive({mock_device.id, { capability = "energyMeter", component = "main", command = "resetEnergyMeter", args = {}}})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+    )
+    -- Child call to resetEnergyMeter
+    test.socket.capability:__queue_receive({mock_child.id, { capability = "energyMeter", component = "main", command = "resetEnergyMeter", args = {}}})
+    test.socket.capability:__expect_send(
+      mock_child:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+    )
+
+    test.wait_for_events()
+
+    -- Second Child Energy Report
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+          mock_device, 3, cumulative_report_val_39
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_child:generate_test_message("main", capabilities.energyMeter.energy({ value = 20.0, unit = "Wh" }))
+    )
+    test.socket.capability:__expect_send(
+      mock_child:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:15:01Z",
+        ["end"] = "1970-01-01T00:40:00Z",
+        deltaEnergy = 0.0,
+        energy = 20.0
+      }))
+    )
+
+    -- Second Parent Energy Report
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.CumulativeEnergyImported:build_test_report_data(
+          mock_device, 1, cumulative_report_val_39
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 20.0, unit = "Wh" }))
+    )
+    -- no powerConsumptionReport will be emitted now, since it has not been 15 minutes since the previous report (even though it was the child).
+  end,
+  { test_init = test_init }
+)
+
+test.register_coroutine_test(
+  "Test resetEnergyMeter command on device for PeriodicEnergyImported",
+    function()
+    test.mock_time.advance_time(901) -- move time 15 minutes past 0 (this can be assumed to be true in practice in all cases)
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_periodic.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+          mock_device_periodic, 1, periodic_report_val_23
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 23.0, unit="Wh"}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:00:00Z",
+        ["end"] = "1970-01-01T00:15:00Z",
+        deltaEnergy = 0.0,
+        energy = 23.0
+      }))
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_periodic.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+          mock_device_periodic, 1, periodic_report_val_23
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 46.0, unit="Wh"}))
+    )
+
+    test.wait_for_events()
+    test.mock_time.advance_time(2000)
+
+    test.socket.capability:__queue_receive({mock_device_periodic.id, { capability = "energyMeter", component = "main", command = "resetEnergyMeter", args = {}}})
+    test.socket.capability:__expect_send(
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
+    )
+
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_periodic.id,
+        clusters.ElectricalEnergyMeasurement.server.attributes.PeriodicEnergyImported:build_test_report_data(
+          mock_device_periodic, 1, cumulative_report_val_19
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_periodic:generate_test_message("main", capabilities.energyMeter.energy({value = 19.0, unit="Wh"}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:15:01Z",
+        ["end"] = "1970-01-01T00:48:20Z",
+        deltaEnergy = -4.0,
+        energy = 19.0
+      }))
+    )
   end,
   { test_init = test_init_periodic }
 )
