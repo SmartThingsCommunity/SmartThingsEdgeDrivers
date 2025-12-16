@@ -24,6 +24,7 @@ local new_lock_utils = {
   ADD_USER = "addUser",
   COMMAND_NAME = "commandName",
   CREDENTIAL_TYPE = "pin",
+  CHECKING_CODE = "checkingCode",
   DELETE_ALL_CREDENTIALS = "deleteAllCredentials",
   DELETE_ALL_USERS = "deleteAllUsers",
   DELETE_CREDENTIAL = "deleteCredential",
@@ -60,15 +61,29 @@ new_lock_utils.get_user = function(device, user_index)
   return nil
 end
 
+new_lock_utils.get_available_user_index = function(current_data, max)
+  if current_data == nil and max ~= 0 then
+    return INITIAL_INDEX
+  elseif current_data ~= nil then
+    for index = 1, max do
+      if current_data["user" .. index] == nil then
+        return index
+      end
+    end
+  end
+
+  return nil
+end
+
 new_lock_utils.get_credentials = function(device)
   local credentials = device:get_field(new_lock_utils.LOCK_CREDENTIALS)
   return credentials ~= nil and credentials or {}
 end
 
-new_lock_utils.get_available_user_index = function(current_data, max)
-  for index = 1, max do
-    if current_data["user"..index] == nil then
-      return index
+new_lock_utils.get_credential = function(device, credential_index)
+  for _, credential in ipairs(new_lock_utils.get_credentials(device)) do
+    if credential.credentialIndex == credential_index then
+      return credential
     end
   end
   return nil
@@ -111,7 +126,6 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
     if user_index ~= nil then
       available_index = user_index
     end
-    
     current_users["user"..available_index] = { userIndex = available_index, userType = user_type, userName = user_name }
     device:set_field(new_lock_utils.LOCK_USERS, current_users, { persist = true })
   end
@@ -167,7 +181,7 @@ new_lock_utils.delete_credential = function(device, credential_index, deleted_by
   local credentials = new_lock_utils.get_credentials(device)
   local status_code = new_lock_utils.STATUS_FAILURE
 
-  for index, credential in ipairs(credentials) do
+  for index, credential in pairs(credentials) do
     if credential.credentialIndex == credential_index then
       -- also delete associated user if this isn't being called by a user deletion.
       if not deleted_by_user_deletion then
@@ -181,15 +195,6 @@ new_lock_utils.delete_credential = function(device, credential_index, deleted_by
   end
 
   return status_code
-end
-
-new_lock_utils.get_credential = function(device, credential_index)
-  for _, credential in ipairs(new_lock_utils.get_credentials(device)) do
-    if credential.credentialIndex == credential_index then
-      return credential
-    end
-  end
-  return nil
 end
 
 new_lock_utils.update_credential = function(device, credential_index, user_index, credential_type)

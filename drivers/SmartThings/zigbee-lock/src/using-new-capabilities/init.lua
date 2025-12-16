@@ -60,7 +60,7 @@ local reload_all_codes = function(device)
   device:send(LockCluster.server.commands.GetPINCode(device, device:get_field(lock_utils.CHECKING_CODE)))
 end
 
-local do_configure = function(self, device)
+local init = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
   device:send(PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(device, 600, 21600, 1))
 
@@ -70,9 +70,9 @@ local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, Alarm.ID, self.environment_info.hub_zigbee_eui))
   device:send(Alarm.attributes.AlarmCount:configure_reporting(device, 0, 21600, 0))
 
-  device.thread:call_with_delay(2, function(d)
-    reload_all_codes(device)
-  end)
+  -- device.thread:call_with_delay(2, function(d)
+  --   reload_all_codes(device)
+  -- end)
 end
 
 local add_user_handler = function(driver, device, command)
@@ -292,6 +292,8 @@ local get_pin_response_handler = function(driver, device, zb_mess)
       if credential ~= nil then
         lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
       end
+    else
+      -- something
     end
 
     local credentials = lock_utils.get_credentials(device)
@@ -303,7 +305,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
       device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
         { visibility = { displayed = false } }))
     else
-      -- unset?
+      -- unset
     end
   end
 
@@ -329,12 +331,13 @@ local get_pin_response_handler = function(driver, device, zb_mess)
 end
 
 local programming_event_handler = function(driver, device, zb_mess)
-  local credential_index = tostring(zb_mess.body.zcl_body.user_id.value)
+  local credential_index = tonumber(zb_mess.body.zcl_body.user_id.value)
   if (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.MASTER_CODE_CHANGED) then
     -- Master code changed
     -- todo? 
+    -- event updateCredential
   elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_DELETED) then
-    if (zb_mess.body.zcl_body.user_id.value == 0xFF) then
+    if (zb_mess.body.zcl_body.user_id.value == 0xFFFF) then
       -- All credentials deleted
       for _, credential in pairs(lock_utils.get_credentials(device)) do
         lock_utils.delete_credential(device, credential.credentialIndex, false)
@@ -343,7 +346,7 @@ local programming_event_handler = function(driver, device, zb_mess)
         { visibility = { displayed = false } }))
     else
       -- One credential deleted
-      if (lock_utils.get_credential(credential_index) ~= nil) then
+      if (lock_utils.get_credential(device, credential_index) ~= nil) then
         lock_utils.delete_credential(device, credential_index, false)
         device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
           { visibility = { displayed = false } }))
@@ -355,7 +358,7 @@ local programming_event_handler = function(driver, device, zb_mess)
       local max_users = device:get_latest_state("main", capabilities.lockUsers.ID,
         capabilities.lockUsers.totalUsersSupported.NAME, 0)
 
-      local user_index = lock_utils.get_available_user_index(lock_utils.get_users, max_users)
+      local user_index = lock_utils.get_available_user_index(lock_utils.get_users(device), max_users)
       lock_utils.add_credential(device, user_index,
         "guest",
         lock_utils.CREDENTIAL_TYPE,
@@ -404,7 +407,7 @@ local lock_operation_event_handler = function(driver, device, zb_rx)
     if (source == 0 and device:supports_capability_by_id(capabilities.lockUsers.ID)) then --keypad
       local code_id = zb_rx.body.zcl_body.user_id.value
       local code_name = "Code " .. code_id
-      local user = device:get_user(device, code_id)
+      local user = lock_utils.get_user(device, code_id)
       if user ~= nil then
         code_name = user.userName
       end
@@ -470,12 +473,12 @@ local new_capabilities_driver = {
   sub_drivers = {
     require("using-new-capabilities.samsungsds"),
     require("using-new-capabilities.yale-fingerprint-lock"),
-    require("using-new-capabilities.yale"),
+    -- require("using-new-capabilities.yale"),
     require("using-new-capabilities.lock-without-codes")
   },
   health_check = false,
   lifecycle_handlers = {
-    doConfigure = do_configure
+    init = init
   },
   can_handle = function(opts, driver, device, ...)
     local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID,
