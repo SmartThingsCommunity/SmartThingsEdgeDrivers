@@ -9,7 +9,7 @@ local version = require "version"
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device_ep1 = 1
 local mock_device_ep2 = 2
@@ -178,7 +178,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep1, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
