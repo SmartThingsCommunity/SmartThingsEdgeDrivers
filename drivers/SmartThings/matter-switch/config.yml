@@ -1,5 +1,5 @@
-name: 'Matter Switch Scroll'
-packageKey: 'matter-switch-scroll'
+name: 'Matter Switch'
+packageKey: 'matter-switch'
 permissions:
   matter: {}
 description: "SmartThings driver for Matter switch devices"
