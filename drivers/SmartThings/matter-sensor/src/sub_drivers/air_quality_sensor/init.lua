@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local version = require "version"
@@ -148,7 +148,7 @@ local matter_air_quality_sensor_handler = {
       }
     }
   },
-  can_handle = aqs_utils.is_matter_air_quality_sensor
+  can_handle = require("sub_drivers.air_quality_sensor.can_handle")
 }
 
 return matter_air_quality_sensor_handler
