@@ -25,8 +25,6 @@ function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, respo
     device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, 1)
     rotate_amount_event_helper(device, ib.endpoint_id, 1)
   end
-
-  generic_event_handlers.initial_press_handler(driver, device. ib, response)
 end
 
 -- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH
