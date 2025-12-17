@@ -20,6 +20,7 @@ local LockCodes = capabilities.lockCodes
 local lock_utils =  {
   -- Constants
   LOCK_CODES      = "lockCodes",
+  LOCK_USERS      = "lockUsers",
   CHECKING_CODE   = "checkingCode",
   CODE_STATE      = "codeState",
   MIGRATION_COMPLETE = "migrationComplete",

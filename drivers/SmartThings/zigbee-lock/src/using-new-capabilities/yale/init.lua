@@ -19,73 +19,57 @@ local LockCluster             = clusters.DoorLock
 -- Capabilities
 local capabilities              = require "st.capabilities"
 local LockCredentials           = capabilities.lockCredentials
+local log                       = require "log"
 
 -- Enums
 local UserStatusEnum            = LockCluster.types.DrlkUserStatus
 local UserTypeEnum              = LockCluster.types.DrlkUserType
+local ProgrammingEventCodeEnum  = LockCluster.types.ProgramEventCode
 
-local lock_utils = (require "lock_utils")
+local SHIFT_INDEX_CHECK = 256
 
-local get_pin_response_handler = function(driver, device, zb_mess)
-  local event = LockCredentials.codeChanged("", { state_change = true })
-  local code_slot = tostring(zb_mess.body.zcl_body.user_id.value)
-  local localCode = device:get_field(lock_utils.CODE_STATE)
-  if localCode ~= nil then localCode = localCode["setCode"..code_slot] end
-  local code_name = lock_utils.get_code_name(device, code_slot)
-  local lock_codes = lock_utils.get_lock_codes(device)
-  event.data = {codeName = code_name}
-  if (zb_mess.body.zcl_body.user_status.value == UserStatusEnum.OCCUPIED_ENABLED) then
-    -- Code slot is occupied
-    if (localCode ~= nil) then
-      local serverCode = zb_mess.body.zcl_body.code.value
-      if (localCode == serverCode) then
-        event.value = code_slot .. lock_utils.get_change_type(device, code_slot)
-        device:emit_event(event)
-        lock_codes[code_slot] = code_name
-        lock_utils.lock_codes_event(device, lock_codes)
-      else
-        event.value = code_slot .. " failed"
-        event.data = nil
-        device:emit_event(event)
-      end
-      lock_utils.reset_code_state(device, code_slot)
-    else
-      event.value = code_slot .. lock_utils.get_change_type(device, code_slot)
-      device:emit_event(event)
-      lock_codes[code_slot] = code_name
-      lock_utils.lock_codes_event(device, lock_codes)
-    end
-  else
-    -- Code slot is unoccupied
-    if (localCode ~= nil) then
-      -- Code slot found empty during creation of a user code
-      event.value = code_slot .. " failed"
-      event.data = nil
-      device:emit_event(event)
-      event.value = code_slot .. " is not set"
-      device:emit_event(event)
-      lock_utils.reset_code_state(device, code_slot)
-    elseif (lock_codes[code_slot] ~= nil) then
-      -- Code has been deleted
-      lock_utils.lock_codes_event(device, (lock_utils.code_deleted(device, code_slot)))
-    else
-      -- Code is unset
-      event.value = code_slot .. " unset"
-      device:emit_event(event)
-    end
+local lock_utils = (require "new_lock_utils")
+
+local programming_event_handler = function(driver, device, zb_mess)
+  local credential_index = tonumber(zb_mess.body.zcl_body.user_id.value)
+
+  if credential_index >= SHIFT_INDEX_CHECK then
+    -- Index is wonky, shift it to get proper value
+    credential_index = tonumber(zb_mess.body.zcl_body.user_id.value) >> 8
   end
 
-  code_slot = tonumber(code_slot)
-  if (code_slot == device:get_field(lock_utils.CHECKING_CODE)) then
-    -- the code we're checking has arrived
-    local defaultMaxCodes = 8
-    if (code_slot >= defaultMaxCodes) then
-      device:emit_event(LockCodes.scanCodes("Complete", { visibility = { displayed = false } }))
-      device:set_field(lock_utils.CHECKING_CODE, nil)
+  if (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.MASTER_CODE_CHANGED) then
+    -- Master code updated
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      {commandName = lock_utils.UPDATE_CREDENTIAL, statusCode = lock_utils.STATUS_SUCCESS},
+      { state_change = true, visibility = { displayed = false } }
+    ))
+  elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_DELETED) then
+    if (zb_mess.body.zcl_body.user_id.value == 0xFFFF) then
+      -- All credentials deleted
+      for _, credential in pairs(lock_utils.get_credentials(device)) do
+        lock_utils.delete_credential(device, credential.credentialIndex)
+      end
+      device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
+        { visibility = { displayed = false } }))
     else
-      local checkingCode = device:get_field(lock_utils.CHECKING_CODE) + 1
-      device:set_field(lock_utils.CHECKING_CODE, checkingCode)
-      device:send(LockCluster.server.commands.GetPINCode(device, checkingCode))
+      -- One credential deleted
+      if (lock_utils.get_credential(device, credential_index) ~= nil) then
+        lock_utils.delete_credential(device, credential_index)
+        device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
+          { visibility = { displayed = false } }))
+      end
+    end
+  elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_ADDED or
+      zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_CHANGED) then
+    if lock_utils.get_credential(device, credential_index) == nil then
+      local user_index = lock_utils.get_available_user_index(device)
+      lock_utils.add_credential(device, user_index,
+        "guest",
+        lock_utils.CREDENTIAL_TYPE,
+        credential_index)
+      device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
+        { visibility = { displayed = false } }))
     end
   end
 end
@@ -95,7 +79,7 @@ local yale_door_lock_driver = {
   zigbee_handlers = {
     cluster = {
       [LockCluster.ID] = {
-        [LockCluster.client.commands.GetPINCodeResponse.ID] = get_pin_response_handler,
+        [LockCluster.client.commands.ProgrammingEventNotification.ID] = programming_event_handler,
       }
     }
   },

@@ -61,12 +61,15 @@ new_lock_utils.get_user = function(device, user_index)
   return nil
 end
 
-new_lock_utils.get_available_user_index = function(current_data, max)
-  if current_data == nil and max ~= 0 then
+new_lock_utils.get_available_user_index = function(device)
+  local max_users = device:get_latest_state("main", capabilities.lockUsers.ID,
+    capabilities.lockUsers.totalUsersSupported.NAME, 0)
+  local current_users = new_lock_utils.get_users(device)
+  if current_users == nil and max_users ~= 0 then
     return INITIAL_INDEX
-  elseif current_data ~= nil then
-    for index = 1, max do
-      if current_data["user" .. index] == nil then
+  elseif current_users ~= nil then
+    for index = 1, max_users do
+      if current_users["user" .. index] == nil then
         return index
       end
     end
@@ -89,15 +92,28 @@ new_lock_utils.get_credential = function(device, credential_index)
   return nil
 end
 
-new_lock_utils.get_available_credential_index = function(current_data, max)
+new_lock_utils.get_credential_by_user_index = function(device, user_index)
+  for _, credential in ipairs(new_lock_utils.get_credentials(device)) do
+    if credential.userIndex == user_index then
+      return credential
+    end
+  end
+
+  return nil
+end
+
+new_lock_utils.get_available_credential_index = function(device)
+  local max = device:get_latest_state("main", capabilities.lockCredentials.ID,
+    capabilities.lockCredentials.pinUsersSupported.NAME, 0)
+  local current_credentials = new_lock_utils.get_credentials(device)
   local available_index = nil
   local used_index = {}
 
-  for i, _ in ipairs(current_data) do
+  for i, _ in ipairs(current_credentials) do
     used_index[i] = true
   end
 
-  if current_data ~= {} then
+  if current_credentials ~= {} then
     for index = 1, max do
       if used_index[index] == nil then
         available_index = index
@@ -113,18 +129,18 @@ end
 
 new_lock_utils.create_user = function(device, user_name, user_type, user_index)
   local status_code = new_lock_utils.STATUS_SUCCESS
-  local max_users = device:get_latest_state("main", capabilities.lockUsers.ID,
-    capabilities.lockUsers.totalUsersSupported.NAME, 0)
-  local current_users = new_lock_utils.get_users(device)
-  local available_index = new_lock_utils.get_available_user_index(current_users, max_users)
-
-  if max_users == 0 or available_index == nil then
+  local available_index = new_lock_utils.get_available_user_index(device)
+  if available_index == nil then
     -- Can't add any users - update commandResult statusCode
     status_code = new_lock_utils.STATUS_RESOURCE_EXHAUSTED
   else
+    local current_users = new_lock_utils.get_users(device)
     -- use the passed in index if it's set
     if user_index ~= nil then
       available_index = user_index
+    end
+    if user_name == nil then
+      user_name = "USER_" .. available_index
     end
     current_users["user"..available_index] = { userIndex = available_index, userType = user_type, userName = user_name }
     device:set_field(new_lock_utils.LOCK_USERS, current_users, { persist = true })
@@ -133,23 +149,12 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
   return status_code
 end
 
-new_lock_utils.delete_user = function(device, user_index, deleted_by_credential_deletion)
+new_lock_utils.delete_user = function(device, user_index)
   local current_users = new_lock_utils.get_users(device)
   local status_code = new_lock_utils.STATUS_FAILURE
 
   for index, user in pairs(current_users) do
     if user.userIndex == user_index then
-      -- also delete associated credential if this isn't being call by a credential deletion.
-      if not deleted_by_credential_deletion then
-        -- find associated credential.
-        for _, credential in ipairs(new_lock_utils.get_credentials(device)) do
-          if credential.userIndex == user_index then
-            new_lock_utils.delete_credential(device, credential.credentialIndex, true)
-            break
-          end
-        end
-      end
-      -- table.remove(current_users, index)
       current_users[index] = nil
       device:set_field(new_lock_utils.LOCK_USERS, current_users)
       status_code = new_lock_utils.STATUS_SUCCESS
@@ -162,12 +167,16 @@ end
 
 new_lock_utils.add_credential = function(device, user_index, user_type, credential_type, credential_index)
   -- need to also create a user if one does not exist at the user index.
-  if new_lock_utils.get_user(device, user_index) == nil then
-    local user_name = "USER_" .. user_index
-    local status = new_lock_utils.create_user(device, user_name, user_type, user_index)
-    if status ~= new_lock_utils.STATUS_SUCCESS then
-      return status
-    end
+  local status = new_lock_utils.STATUS_SUCCESS
+  if user_index == 0 then
+    user_index = new_lock_utils.get_available_user_index(device)
+    status = new_lock_utils.create_user(device, nil, user_type, user_index)
+  elseif new_lock_utils.get_user(device, tonumber(user_index)) == nil then
+    status = new_lock_utils.create_user(device, nil, user_type, user_index)
+  end
+
+  if status ~= new_lock_utils.STATUS_SUCCESS then
+    return status
   end
 
   local credentials = new_lock_utils.get_credentials(device)
@@ -177,16 +186,13 @@ new_lock_utils.add_credential = function(device, user_index, user_type, credenti
   return new_lock_utils.STATUS_SUCCESS
 end
 
-new_lock_utils.delete_credential = function(device, credential_index, deleted_by_user_deletion)
+new_lock_utils.delete_credential = function(device, credential_index)
   local credentials = new_lock_utils.get_credentials(device)
   local status_code = new_lock_utils.STATUS_FAILURE
 
   for index, credential in pairs(credentials) do
     if credential.credentialIndex == credential_index then
-      -- also delete associated user if this isn't being called by a user deletion.
-      if not deleted_by_user_deletion then
-        new_lock_utils.delete_user(device, credential.userIndex, true)
-      end
+      new_lock_utils.delete_user(device, credential.userIndex)
       table.remove(credentials, index)
       device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
       status_code = new_lock_utils.STATUS_SUCCESS
