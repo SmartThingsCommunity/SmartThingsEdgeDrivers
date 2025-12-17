@@ -17,7 +17,7 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Battery = (require "st.zwave.CommandClass.Battery")({ version=1 })
-local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version=1 })
+local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version=3 })
 local SceneActivation = (require "st.zwave.CommandClass.SceneActivation")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
@@ -719,6 +719,28 @@ test.register_coroutine_test(
         Battery:Get({})
       )
     )
+
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({
+        mock_fibaro_keyfob_button.id,
+        CentralScene:Notification(
+          {
+            key_attributes = CentralScene.key_attributes.KEY_PRESSED_3_TIMES, scene_number=1, sequence_number=8, slow_refresh=true
+          }
+        )
+      })
+      test.socket.capability:__expect_send(
+        mock_fibaro_keyfob_button:generate_test_message(
+          "main",
+          capabilities.button.button.pushed_3x({ state_change = true })
+        )
+      )
+      test.socket.capability:__expect_send(
+        mock_fibaro_keyfob_button:generate_test_message(
+          "button1",
+          capabilities.button.button.pushed_3x({ state_change = true })
+        )
+      )
   end
 )
 
