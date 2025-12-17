@@ -5,8 +5,6 @@ components:
     capabilities:
       - id: button
         version: 1
-      - id: knob
-        version: 1
       - id: battery
         version: 1
       - id: firmwareUpdate
@@ -20,16 +18,12 @@ components:
     capabilities:
       - id: button
         version: 1
-      - id: knob
-        version: 1
     categories:
     - name: RemoteController
   - id: group3
     label: Group 3
     capabilities:
       - id: button
-        version: 1
-      - id: knob
         version: 1
     categories:
     - name: RemoteController
