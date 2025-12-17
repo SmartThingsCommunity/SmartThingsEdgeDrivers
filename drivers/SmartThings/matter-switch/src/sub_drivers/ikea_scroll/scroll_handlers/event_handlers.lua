@@ -16,7 +16,6 @@ local function rotate_amount_event_helper(device, endpoint_id, num_presses_to_ha
   device:emit_event_for_endpoint(endpoint_id, capabilities.knob.rotateAmount(scroll_amount, {state_change = true}))
 end
 
--- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH
 function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, response)
   -- use the generic handler logic for the push endpoints. Else, use custom logic.
   if switch_utils.tbl_contains(ib.endpoint_id, scroll_fields.ENDPOINTS_PUSH) then
