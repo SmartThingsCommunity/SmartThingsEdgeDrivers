@@ -1,0 +1,24 @@
+name: Knob
+status: proposed
+attributes:
+  rotateAmount:
+    schema:
+      $ref: RelativeStep
+  heldRotateAmount:
+    schema:
+      $ref: RelativeStep
+  supportedAttributes:
+    schema:
+      type: object
+      additionalProperties: false
+      properties:
+        value:
+          type: array
+          items:
+            type: string
+            enum:
+              - rotateAmount
+              - heldRotateAmount
+commands: {}
+id: knob
+version: 1

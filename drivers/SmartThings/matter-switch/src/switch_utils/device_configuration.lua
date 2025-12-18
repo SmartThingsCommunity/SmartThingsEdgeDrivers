@@ -201,7 +201,8 @@ function DeviceConfiguration.match_profile(driver, device)
     elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
-      return
+
+      -- for testing, remove return
     end
   end
 
