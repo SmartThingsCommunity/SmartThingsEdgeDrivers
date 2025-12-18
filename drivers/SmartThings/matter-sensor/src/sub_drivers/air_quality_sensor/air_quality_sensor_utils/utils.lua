@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -8,18 +8,6 @@ local fields = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.
 
 
 local AirQualitySensorUtils = {}
-
-function AirQualitySensorUtils.is_matter_air_quality_sensor(opts, driver, device)
-    for _, ep in ipairs(device.endpoints) do
-      for _, dt in ipairs(ep.device_types) do
-        if dt.device_type_id == fields.AIR_QUALITY_SENSOR_DEVICE_TYPE_ID then
-          return true
-        end
-      end
-    end
-
-    return false
-  end
 
 function AirQualitySensorUtils.supports_capability_by_id_modular(device, capability, component)
   if not device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
