@@ -1,41 +1,18 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=3 })
 local window_preset_defaults = require "window_preset_defaults"
 
-local IBLINDS_WINDOW_TREATMENT_FINGERPRINTS = {
-  {mfr = 0x0287, prod = 0x0003, model = 0x000D}, -- iBlinds Window Treatment v1 / v2
-  {mfr = 0x0287, prod = 0x0004, model = 0x0071}, -- iBlinds Window Treatment v3
-  {mfr = 0x0287, prod = 0x0004, model = 0x0072}  -- iBlinds Window Treatment v3.1
-}
 
 --- Determine whether the passed device is iblinds window treatment
 ---
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @return boolean true if the device is iblinds window treatment, else false
-local function can_handle_iblinds_window_treatment(opts, driver, device, ...)
-  for _, fingerprint in ipairs(IBLINDS_WINDOW_TREATMENT_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local capability_handlers = {}
 
@@ -91,11 +68,9 @@ local iblinds_window_treatment = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = capability_handlers.preset_position
     }
   },
-  sub_drivers = {
-    require("iblinds-window-treatment.v3")
-  },
+  sub_drivers = require("iblinds-window-treatment.sub_drivers"),
   NAME = "iBlinds window treatment",
-  can_handle = can_handle_iblinds_window_treatment
+  can_handle = require("iblinds-window-treatment.can_handle"),
 }
 
 return iblinds_window_treatment
