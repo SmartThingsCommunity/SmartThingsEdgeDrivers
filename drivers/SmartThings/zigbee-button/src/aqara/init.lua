@@ -1,16 +1,6 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -34,14 +24,7 @@ local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
 local PRESENT_ATTRIBUTE_ID = 0x0055
 
 local COMP_LIST = { "button1", "button2", "all" }
-local AQARA_REMOTE_SWITCH = {
-  ["lumi.remote.b1acn02"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2032", quantity = 1 },   -- Aqara Wireless Mini Switch T1
-  ["lumi.remote.acn003"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2032", quantity = 1 },    -- Aqara Wireless Remote Switch E1 (Single Rocker)
-  ["lumi.remote.b186acn03"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2032", quantity = 1 }, -- Aqara Wireless Remote Switch T1 (Single Rocker)
-  ["lumi.remote.b286acn03"] = { mfr = "LUMI", btn_cnt = 3, type = "CR2032", quantity = 1 }, -- Aqara Wireless Remote Switch T1 (Double Rocker)
-  ["lumi.remote.b18ac1"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2450", quantity = 1 },    -- Aqara Wireless Remote Switch H1 (Single Rocker)
-  ["lumi.remote.b28ac1"] = { mfr = "LUMI", btn_cnt = 3, type = "CR2450", quantity = 1 }     -- Aqara Wireless Remote Switch H1 (Double Rocker)
-}
+local FINGERPRINTS = require "aqara.fingerprints"
 
 local configuration = {
   {
@@ -65,7 +48,7 @@ local configuration = {
 local function present_value_attr_handler(driver, device, value, zb_rx)
   if value.value < 0xFF then
     local end_point = zb_rx.address_header.src_endpoint.value
-    local btn_evt_cnt = AQARA_REMOTE_SWITCH[device:get_model()].btn_cnt or 1
+    local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
     local evt = capabilities.button.button.held({ state_change = true })
     if value.value == 1 then
       evt = capabilities.button.button.pushed({ state_change = true })
@@ -110,7 +93,7 @@ local function battery_level_handler(driver, device, value, zb_rx)
 end
 
 local function mode_switching_handler(driver, device, value, zb_rx)
-  local btn_evt_cnt = AQARA_REMOTE_SWITCH[device:get_model()].btn_cnt or 1
+  local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
   local allow = device.preferences[MODE_CHANGE] or false
   if allow then
     local mode = device:get_field(MODE) or 1
@@ -139,14 +122,6 @@ local function mode_switching_handler(driver, device, value, zb_rx)
   end
 end
 
-local is_aqara_products = function(opts, driver, device)
-  local isAqaraProducts = false
-  if AQARA_REMOTE_SWITCH[device:get_model()] and AQARA_REMOTE_SWITCH[device:get_model()].mfr == device:get_manufacturer() then
-    isAqaraProducts = true
-  end
-  return isAqaraProducts
-end
-
 local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
   if configuration ~= nil then
@@ -157,11 +132,11 @@ local function device_init(driver, device)
 end
 
 local function added_handler(self, device)
-  local btn_evt_cnt = AQARA_REMOTE_SWITCH[device:get_model()].btn_cnt or 1
+  local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
   local mode = device:get_field(MODE) or 0
   local model = device:get_model()
-  local type = AQARA_REMOTE_SWITCH[device:get_model()].type or "CR2032"
-  local quantity = AQARA_REMOTE_SWITCH[device:get_model()].quantity or 1
+  local type = FINGERPRINTS[device:get_model()].type or "CR2032"
+  local quantity = FINGERPRINTS[device:get_model()].quantity or 1
 
   if mode == 0 then
     if model == "lumi.remote.b18ac1" or model == "lumi.remote.b28ac1" then
@@ -233,7 +208,7 @@ local aqara_wireless_switch_handler = {
       }
     }
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_wireless_switch_handler
