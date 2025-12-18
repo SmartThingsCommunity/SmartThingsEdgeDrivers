@@ -19,9 +19,6 @@ local log = require "log"
 local TemperatureMeasurement = clusters.DeviceTemperatureConfiguration
 local PowerConfiguration = clusters.PowerConfiguration
 
-local ZIGBEE_FINGERPRINT = {
-  {model = "CT101xxxx" }
-}
 
 local configuration = {
   {
@@ -34,14 +31,6 @@ local configuration = {
   }
 }
 
-local is_chameleon_ct_clamp = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_FINGERPRINT) do
-    if device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function temperature_handler(driver, device, value, _zb_rx)
   if type(value.value) == "number" then
@@ -78,7 +67,7 @@ local ct_clamp_battery_temperature_handler = {
     init = device_init,
     added = added_handler
   },
-  can_handle = is_chameleon_ct_clamp
+  can_handle = require("chameleon.can_handle"),
 }
 
 return ct_clamp_battery_temperature_handler
