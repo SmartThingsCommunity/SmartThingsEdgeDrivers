@@ -214,6 +214,10 @@ local function test_init_color_temp()
   })
   test.socket.matter:__expect_send({
     mock_device_color_temp.id,
+    clusters.LevelControl.attributes.OnLevel:write(mock_device_color_temp, 1, 254)
+  })
+  test.socket.matter:__expect_send({
+    mock_device_color_temp.id,
     clusters.ColorControl.attributes.Options:write(mock_device_color_temp, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
   })
   mock_device_color_temp:expect_metadata_update({ provisioning_state = "PROVISIONED" })
@@ -238,6 +242,10 @@ local function test_init_extended_color()
   test.socket.matter:__expect_send({
     mock_device_extended_color.id,
     clusters.LevelControl.attributes.Options:write(mock_device_extended_color, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
+  test.socket.matter:__expect_send({
+    mock_device_extended_color.id,
+    clusters.LevelControl.attributes.OnLevel:write(mock_device_extended_color, 1,254)
   })
   test.socket.matter:__expect_send({
     mock_device_extended_color.id,
