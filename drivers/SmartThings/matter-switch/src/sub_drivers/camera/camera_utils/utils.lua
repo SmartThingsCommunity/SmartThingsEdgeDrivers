@@ -193,7 +193,8 @@ function CameraUtils.subscribe(device)
       clusters.CameraAvStreamManagement.attributes.StatusLightBrightness
     },
     [capabilities.switch.ID] = {
-      clusters.CameraAvStreamManagement.attributes.StatusLightEnabled
+      clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
+      clusters.OnOff.attributes.OnOff
     },
     [capabilities.videoStreamSettings.ID] = {
       clusters.CameraAvStreamManagement.attributes.RateDistortionTradeOffPoints,
@@ -223,8 +224,26 @@ function CameraUtils.subscribe(device)
     },
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
-    }
+    },
+    [capabilities.switchLevel.ID] = {
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.LevelControl.attributes.MaxLevel,
+      clusters.LevelControl.attributes.MinLevel,
+    },
+    [capabilities.colorControl.ID] = {
+      clusters.ColorControl.attributes.ColorMode,
+      clusters.ColorControl.attributes.CurrentHue,
+      clusters.ColorControl.attributes.CurrentSaturation,
+      clusters.ColorControl.attributes.CurrentX,
+      clusters.ColorControl.attributes.CurrentY,
+    },
+    [capabilities.colorTemperature.ID] = {
+      clusters.ColorControl.attributes.ColorTemperatureMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    },
   }
+
   local camera_subscribed_events = {
     [capabilities.zoneManagement.ID] = {
       clusters.ZoneManagement.events.ZoneTriggered,
@@ -238,56 +257,26 @@ function CameraUtils.subscribe(device)
     }
   }
 
-  for capability, attr_list in pairs(camera_subscribed_attributes) do
-    if device:supports_capability_by_id(capability) then
-      for _, attr in pairs(attr_list) do
-        device:add_subscribed_attribute(attr)
-      end
-    end
-  end
-  for capability, event_list in pairs(camera_subscribed_events) do
-    if device:supports_capability_by_id(capability) then
-      for _, event in pairs(event_list) do
-        device:add_subscribed_event(event)
-      end
-    end
-  end
-
-  -- match_profile is called from the CameraAvStreamManagement AttributeList handler,
-  -- so the subscription needs to be added here first
-  if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) > 0 then
-    device:add_subscribed_attribute(clusters.CameraAvStreamManagement.attributes.AttributeList)
-  end
-
-  -- Add subscription for attributes specific to child devices
-  if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
-    for _, ep in ipairs(device.endpoints or {}) do
-      local id = 0
-      for _, dt in ipairs(ep.device_types or {}) do
-        if dt.device_type_id ~= fields.DEVICE_TYPE_ID.GENERIC_SWITCH then
-          id = math.max(id, dt.device_type_id)
-        end
-      end
-      for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-        device:add_subscribed_attribute(attr)
-      end
-    end
-  end
-
   local im = require "st.matter.interaction_model"
-  local subscribed_attributes = device:get_field("__subscribed_attributes") or {}
-  local subscribed_events = device:get_field("__subscribed_events") or {}
+
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
-  for _, attributes in pairs(subscribed_attributes) do
-    for _, ib in pairs(attributes) do
-      subscribe_request:with_info_block(ib)
+  local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
+
+  if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) > 0 then
+    local ib = im.InteractionInfoBlock(nil, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.attributes.AttributeList.ID)
+    subscribe_request:with_info_block(ib)
+  end
+
+  for _, endpoint_info in ipairs(device.endpoints) do
+    local checked_device = switch_utils.find_child(device, endpoint_info.endpoint_id) or device
+    if not devices_seen[checked_device.id] then
+      switch_utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+        camera_subscribed_attributes, camera_subscribed_events
+      )
+      devices_seen[checked_device.id] = true -- only loop through any device once
     end
   end
-  for _, events in pairs(subscribed_events) do
-    for _, ib in pairs(events) do
-      subscribe_request:with_info_block(ib)
-    end
-  end
+
   if #subscribe_request.info_blocks > 0 then
     device:send(subscribe_request)
   end
