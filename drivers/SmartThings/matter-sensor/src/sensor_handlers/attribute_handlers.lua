@@ -69,6 +69,18 @@ function AttributeHandlers.humidity_measured_value_handler(driver, device, ib, r
 end
 
 
+-- [[ SOIL MEASUREMENT CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.soil_moisture_measured_value_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    -- Soil Measurement cluster reports as percentage (0-100), use directly
+    local humidity = measured_value
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(humidity))
+  end
+end
+
+
 -- [[ BOOLEAN STATE CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.boolean_state_value_handler(driver, device, ib, response)

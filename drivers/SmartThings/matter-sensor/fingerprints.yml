@@ -345,3 +345,8 @@ matterGeneric:
     deviceTypes:
       - id: 0x0306 # Flow Sensor
     deviceProfileName: flow-battery
+  - id: "matter/soil/sensor"
+    deviceLabel: Matter Soil Sensor
+    deviceTypes:
+      - id: 0x0045 # Soil Sensor
+    deviceProfileName: soil-sensor

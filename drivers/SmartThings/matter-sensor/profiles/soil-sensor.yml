@@ -1,0 +1,15 @@
+name: soil-sensor
+components:
+- id: main
+  capabilities:
+  - id: relativeHumidityMeasurement
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Sensor
+preferences:
+  - preferenceId: humidityOffset
+    explicit: true
