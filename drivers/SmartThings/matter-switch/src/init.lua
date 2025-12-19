@@ -81,6 +81,18 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       device_cfg.match_profile(driver, device)
     end
   end
+
+  -- instant update of values after offset preference change
+  for name, info in pairs(device.preferences or {}) do
+    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
+      if name == "tempOffset" then
+        device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
+      elseif name == "humidityOffset" then
+        device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
+      end
+    end
+  end
+
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
