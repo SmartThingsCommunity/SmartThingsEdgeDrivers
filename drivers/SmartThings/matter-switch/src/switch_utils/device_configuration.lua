@@ -77,6 +77,7 @@ function SwitchDeviceConfiguration.set_device_control_options(device)
     -- before the Matter 1.3 lua libs update (HUB FW 54), OptionsBitmap was defined as LevelControlOptions
     if switch_utils.find_cluster_on_ep(ep, clusters.LevelControl.ID) then
       device:send(clusters.LevelControl.attributes.Options:write(device, ep.endpoint_id, clusters.LevelControl.types.LevelControlOptions.EXECUTE_IF_OFF))
+      device:send(clusters.LevelControl.attributes.OnLevel:write(device, ep.endpoint_id, 254))
     end
     -- before the Matter 1.4 lua libs update (HUB FW 56), there was no OptionsBitmap type defined
     if switch_utils.find_cluster_on_ep(ep, clusters.ColorControl.ID) then
@@ -193,7 +194,7 @@ function DeviceConfiguration.match_profile(driver, device)
     if generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
     elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
-      updated_profile = "light-level-motion"
+      updated_profile = switch_utils.get_product_override_field(device, "target_profile") or "light-level-motion"
     elseif generic_profile("plug-binary") or generic_profile("plug-level") then
       if switch_utils.check_switch_category_vendor_overrides(device) then
         updated_profile = string.gsub(updated_profile, "plug", "switch")

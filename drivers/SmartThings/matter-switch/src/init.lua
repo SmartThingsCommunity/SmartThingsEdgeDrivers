@@ -66,6 +66,7 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       button_cfg.configure_buttons(device)
     end
   end
+  device:refresh()
 end
 
 function SwitchLifecycleHandlers.device_removed(driver, device)
