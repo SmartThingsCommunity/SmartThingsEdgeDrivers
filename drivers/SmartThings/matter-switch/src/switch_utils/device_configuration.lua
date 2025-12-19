@@ -77,6 +77,7 @@ function SwitchDeviceConfiguration.set_device_control_options(device)
     -- before the Matter 1.3 lua libs update (HUB FW 54), OptionsBitmap was defined as LevelControlOptions
     if switch_utils.find_cluster_on_ep(ep, clusters.LevelControl.ID) then
       device:send(clusters.LevelControl.attributes.Options:write(device, ep.endpoint_id, clusters.LevelControl.types.LevelControlOptions.EXECUTE_IF_OFF))
+      device:send(clusters.LevelControl.attributes.OnLevel:write(device, ep.endpoint_id, 254))
     end
     -- before the Matter 1.4 lua libs update (HUB FW 56), there was no OptionsBitmap type defined
     if switch_utils.find_cluster_on_ep(ep, clusters.ColorControl.ID) then
