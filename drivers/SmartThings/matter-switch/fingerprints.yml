@@ -3599,6 +3599,54 @@ matterGeneric:
     deviceTypes:
       - id: 0x0142 # Camera
     deviceProfileName: camera
+  - id: "matter/on-off/fan/light"
+    deviceLabel: Matter OnOff Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0100 # OnOff Light
+    deviceProfileName: fan-modular    
+  - id: "matter/dimmable/fan/light"
+    deviceLabel: Matter Dimmable Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0101 # Dimmable Light
+    deviceProfileName: fan-modular
+  - id: "matter/colorTemperature/fan/light"
+    deviceLabel: Matter Color Temperature Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: fan-modular
+  - id: "matter/color/fan/light"
+    deviceLabel: Matter Color Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: fan-modular
+  - id: "matter/on-off/fan/plug"
+    deviceLabel: Matter OnOff Fan Plug
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010A # On Off Plug-in Unit
+    deviceProfileName: fan-modular
+  - id: "matter/dimmable/fan/plug"
+    deviceLabel: Matter Dimmable Fan Plug
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010B # Dimmable Plug-in Unit
+    deviceProfileName: fan-modular
+  - id: "matter/mounted/on-off/control/fan"
+    deviceLabel: Matter Mounted OnOff Control Fan
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010F # Mounted On/Off Control
+    deviceProfileName: fan-modular
+  - id: "matter/mounted/dim/load/control/fan"
+    deviceLabel: Matter Mounted Dimmable Load Control Fan
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0110 # Mounted Dimmable Load Control
+    deviceProfileName: fan-modular
 
 matterThing:
   - id: SmartThings/MatterThing
