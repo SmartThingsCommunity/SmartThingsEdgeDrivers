@@ -10,6 +10,8 @@ local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 --- @type st.device
 local st_device = require "st.device"
+local cc = require "st.zwave.CommandClass"
+
 
 local supported_button_values = {
   ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
@@ -51,10 +53,21 @@ local function device_added(driver, device)
   end
 end
 
+local function onoff_level_report_handler(driver, device, cmd)
+  local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
+  device:emit_event(value == 0 and capabilities.switch.switch.off() or capabilities.switch.switch.on())
+  device:emit_event(capabilities.switchLevel.level(value))
+end
+
 local vzw31_sn = {
   NAME = "Inovelli VZW31-SN Dimmer",
   lifecycle_handlers = {
     added = device_added,
+  },
+  zwave_handlers = {
+    [cc.SWITCH_MULTILEVEL] = {
+      [SwitchMultilevel.REPORT] = onoff_level_report_handler
+    }
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {
