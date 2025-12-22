@@ -20,11 +20,12 @@ local LockCodes = capabilities.lockCodes
 local lock_utils =  {
   -- Constants
   LOCK_CODES      = "lockCodes",
+  LOCK_USERS      = "lockUsers",
   CHECKING_CODE   = "checkingCode",
   CODE_STATE      = "codeState",
   MIGRATION_COMPLETE = "migrationComplete",
   MIGRATION_RELOAD_SKIPPED = "migrationReloadSkipped",
-  CHECKED_CODE_SUPPORT = "checkedCodeSupport"
+  CHECKED_CODE_SUPPORT = "checkedCodeSupport",
 }
 
 lock_utils.get_lock_codes = function(device)
