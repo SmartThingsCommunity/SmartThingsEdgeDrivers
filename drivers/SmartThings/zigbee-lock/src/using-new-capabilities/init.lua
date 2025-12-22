@@ -118,8 +118,7 @@ local add_user_handler = function(driver, device, command)
   end
 
   if status == lock_utils.STATUS_SUCCESS then
-    local current_users = lock_utils.get_users(device)
-    device:emit_event(capabilities.lockUsers.users(current_users, {state_chang = true, visibility = { displayed = true } }))
+    lock_utils.send_events(device, lock_utils.LOCK_USERS)
   end
 
   lock_utils.clear_busy_state(device, status)
@@ -142,7 +141,7 @@ local update_user_handler = function(driver, device, command)
       user.userName = user_name
       user.userType = user_type
       device:set_field(lock_utils.LOCK_USERS, current_users)
-      device:emit_event(capabilities.lockUsers.users(current_users, {  state_change = true, visibility = { displayed = true } }))
+      lock_utils.send_events(device, lock_utils.LOCK_USERS)
       status = lock_utils.STATUS_SUCCESS
       break
     end
@@ -175,8 +174,7 @@ local delete_user_handler = function(driver, device, command)
       })
     else
       lock_utils.delete_user(device, user_index)
-      local current_users = lock_utils.get_users(device)
-      device:emit_event(capabilities.lockUsers.users(current_users, {  state_change = true, visibility = { displayed = true } }))
+      lock_utils.send_events(device, lock_utils.LOCK_USERS)
       lock_utils.clear_busy_state(device, status, command.override_busy_check)
     end
   else
@@ -413,10 +411,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   end
 
   if emit_event then
-    device:emit_event(capabilities.lockUsers.users(lock_utils.get_users(device),
-      {  state_change = true, visibility = { displayed = true } }))
-    device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
-      { state_change = true,  visibility = { displayed = true } }))
+    lock_utils.send_events(device)
   end
   
   -- ignore handling the busy state for these commands, they are handled within their own handlers
@@ -466,10 +461,7 @@ local programming_event_handler = function(driver, device, zb_mess)
   end
 
   if emit_events then
-    device:emit_event(capabilities.lockUsers.users(lock_utils.get_users(device),
-      {  state_change = true, visibility = { displayed = true } }))
-    device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
-      {  state_change = true, visibility = { displayed = true } }))
+    lock_utils.send_events(device)
   end
 end
 
