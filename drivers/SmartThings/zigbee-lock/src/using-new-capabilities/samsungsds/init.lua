@@ -20,6 +20,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local PowerConfiguration = clusters.PowerConfiguration
 local DoorLock = clusters.DoorLock
 local Lock = capabilities.lock
+local lock_utils = require "new_lock_utils"
 
 local SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND = 0x1F
 local SAMSUNG_SDS_MFR_CODE = 0x0003
@@ -63,6 +64,7 @@ local function emit_event_if_latest_state_missing(device, component, capability,
 end
 
 local device_added = function(self, device)
+  lock_utils.reload_tables(device)
   emit_event_if_latest_state_missing(device, "main", capabilities.lock, capabilities.lock.lock.NAME, capabilities.lock.lock.unlocked())
   device:emit_event(capabilities.battery.battery(100))
 end
@@ -79,6 +81,7 @@ local device_init = function(driver, device, event)
   battery_init(driver, device, event)
   device:remove_monitored_attribute(clusters.PowerConfiguration.ID, clusters.PowerConfiguration.attributes.BatteryVoltage.ID)
   device:remove_configured_attribute(clusters.PowerConfiguration.ID, clusters.PowerConfiguration.attributes.BatteryVoltage.ID)
+  lock_utils.reload_tables(device)
 end
 
 local samsung_sds_driver = {
