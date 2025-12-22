@@ -36,7 +36,7 @@ local function test_init_new_capabilities()
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
-  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(0, { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
 end
 
@@ -70,7 +70,12 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(30))
+        message = mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(30))
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(30))
       }
     },
     {test_init = test_init_new_capabilities }

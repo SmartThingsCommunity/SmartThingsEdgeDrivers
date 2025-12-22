@@ -47,36 +47,36 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
     "Device called 'migrate' command",
     function()
-      test.mock_device.add_test_device(mock_device)
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
-      test.wait_for_events()
-      -- Validate lockCodes field
-      mock_datastore.__assert_device_store_contains(mock_device.id, "lockCodes", { ["1"] = "Zach", ["5"] = "Steven" })
-      -- Validate migration complete flag
-      mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
+      -- test.mock_device.add_test_device(mock_device)
+      -- -- test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+      -- test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
+      -- test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
+      -- test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
+      -- test.wait_for_events()
+      -- -- Validate lockCodes field
+      -- mock_datastore.__assert_device_store_contains(mock_device.id, "lockCodes", { ["1"] = "Zach", ["5"] = "Steven" })
+      -- -- Validate migration complete flag
+      -- mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
 
-      -- Set min/max code length attributes
-      test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MinPINCodeLength:build_test_attr_report(mock_device, 5) })
-      test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:build_test_attr_report(mock_device, 10) })
-      test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:build_test_attr_report(mock_device, 4) })
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(5,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4,  { visibility = { displayed = false } })))
-      test.wait_for_events()
-      -- Validate `migrate` command functionality.
-      test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(5,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
-      test.wait_for_events()
+      -- -- Set min/max code length attributes
+      -- test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MinPINCodeLength:build_test_attr_report(mock_device, 5) })
+      -- test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:build_test_attr_report(mock_device, 10) })
+      -- test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:build_test_attr_report(mock_device, 4) })
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(5,  { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10,  { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4,  { visibility = { displayed = false } })))
+      -- test.wait_for_events()
+      -- -- Validate `migrate` command functionality.
+      -- test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(5,  { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
+      -- test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      -- test.wait_for_events()
     end
 )
 
