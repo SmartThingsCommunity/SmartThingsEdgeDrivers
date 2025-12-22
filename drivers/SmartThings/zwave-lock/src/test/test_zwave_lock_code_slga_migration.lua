@@ -26,8 +26,9 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local t_utils = require "integration_test.utils"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local utils = require "st.utils"
-local mock_datastore = require "integration_test.mock_env_datastore"
 local json = require "dkjson"
+--- @type st.zwave.constants
+local constants = require "st.zwave.constants"
 
 local SCHLAGE_MANUFACTURER_ID = 0x003B
 local SCHLAGE_PRODUCT_TYPE = 0x0002
@@ -44,19 +45,11 @@ local zwave_lock_endpoints = {
   }
 }
 
-local lockCodes = {
-  ["1"] = "Zach",
-  ["5"] = "Steven"
-}
-
 local mock_device = test.mock_device.build_test_zwave_device(
-    {
-      profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
-      zwave_endpoints = zwave_lock_endpoints,
-      data = {
-        lockCodes = json.encode(utils.deep_copy(lockCodes))
-      }
-    }
+  {
+    profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
+    zwave_endpoints = zwave_lock_endpoints,
+  }
 )
 
 local schlage_mock_device = test.mock_device.build_test_zwave_device(
@@ -66,37 +59,31 @@ local schlage_mock_device = test.mock_device.build_test_zwave_device(
     zwave_manufacturer_id = SCHLAGE_MANUFACTURER_ID,
     zwave_product_type = SCHLAGE_PRODUCT_TYPE,
     zwave_product_id = SCHLAGE_PRODUCT_ID,
-    data = {
-      lockCodes = json.encode(utils.deep_copy(lockCodes))
-    }
   }
 )
 
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
+local function init_code_slot(slot_number, name, device)
+  local lock_codes = device.persistent_store[constants.LOCK_CODES]
+  if lock_codes == nil then
+    lock_codes = {}
+    device.persistent_store[constants.LOCK_CODES] = lock_codes
+  end
+  lock_codes[tostring(slot_number)] = name
+end
+
+local function test_init()
+  test.mock_device.add_test_device(mock_device)
+  test.mock_device.add_test_device(schlage_mock_device)
+end
+test.set_test_init_function(test_init)
+
 test.register_coroutine_test(
     "Device called 'migrate' command",
     function()
-      test.mock_device.add_test_device(mock_device)
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.zwave:__expect_send(
-          zw_test_utils.zwave_test_build_send_command(
-              mock_device,
-              DoorLock:OperationGet({})
-          )
-      )
-      test.socket.zwave:__expect_send(
-          zw_test_utils.zwave_test_build_send_command(
-              mock_device,
-              Battery:Get({})
-          )
-      )
-      test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-      test.wait_for_events()
-      -- Validate lockCodes field
-      mock_datastore.__assert_device_store_contains(mock_device.id, "_lock_codes", { ["1"] = "Zach", ["5"] = "Steven" })
-      -- Validate migration complete flag
-      mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
+      init_code_slot(1, "Zach", mock_device)
+      init_code_slot(5, "Steven", mock_device)
       -- setup codes
       test.socket.zwave:__queue_receive({mock_device.id, UserCode:UsersNumberReport({ supported_users = 4 })   })
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(4,  { visibility = { displayed = false } })))
@@ -108,33 +95,32 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
     end
 )
 
 test.register_coroutine_test(
+  "Migrate new device",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(8,  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+  end
+)
+
+test.register_coroutine_test(
     "Schlage-Lock device called 'migrate' command, validate codeLength is being properly set",
     function()
-      test.mock_device.add_test_device(schlage_mock_device)
-      test.socket.device_lifecycle:__queue_receive({ schlage_mock_device.id, "added" })
-      test.socket.zwave:__expect_send(
-          zw_test_utils.zwave_test_build_send_command(
-              schlage_mock_device,
-              DoorLock:OperationGet({})
-          )
-      )
-      test.socket.zwave:__expect_send(
-          zw_test_utils.zwave_test_build_send_command(
-              schlage_mock_device,
-              Battery:Get({})
-          )
-      )
-      test.wait_for_events()
-      -- Validate lockCodes field
-      mock_datastore.__assert_device_store_contains(schlage_mock_device.id, "_lock_codes", { ["1"] = "Zach", ["5"] = "Steven" })
-      -- Validate migration complete flag
-      mock_datastore.__assert_device_store_contains(schlage_mock_device.id, "migrationComplete", true)
+      init_code_slot(1, "Zach", schlage_mock_device)
+      init_code_slot(5, "Steven", schlage_mock_device)
       -- setup codes
       test.socket.zwave:__queue_receive({schlage_mock_device.id, UserCode:UsersNumberReport({ supported_users = 4 })   })
       test.socket.zwave:__queue_receive({schlage_mock_device.id, Configuration:Report({ parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number, configuration_value = 6 })})
@@ -148,6 +134,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
     end
