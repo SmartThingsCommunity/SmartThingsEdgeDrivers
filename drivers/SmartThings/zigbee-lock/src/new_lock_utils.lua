@@ -220,7 +220,9 @@ new_lock_utils.delete_user = function(device, user_index)
 
   for index, user in pairs(current_users) do
     if user.userIndex == user_index then
-      table.remove(current_users, index)
+      -- table.remove causes issues if we are removing while iterating.
+      -- instead set the value as nil and let `prep_table` handle removing it.
+      current_users[index] = nil
       device:set_field(new_lock_utils.LOCK_USERS, current_users)
       status_code = new_lock_utils.STATUS_SUCCESS
       break
@@ -244,7 +246,9 @@ new_lock_utils.delete_credential = function(device, credential_index)
   for index, credential in pairs(credentials) do
     if credential.credentialIndex == credential_index then
       new_lock_utils.delete_user(device, credential.userIndex)
-      table.remove(credentials, index)
+      -- table.remove causes issues if we are removing while iterating.
+      -- instead set the value as nil and let `prep_table` handle removing it.
+      credentials[index] = nil
       device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
       status_code = new_lock_utils.STATUS_SUCCESS
       break
@@ -268,6 +272,30 @@ new_lock_utils.update_credential = function(device, credential_index, user_index
     end
   end
   return status_code
+end
+
+-- emit_event doesn't like having `nil` values in the table. Remove any if they are present.
+new_lock_utils.prep_table = function(data)
+    local clean_table = {}
+    for _, value in pairs(data) do
+        if value ~= nil then
+            clean_table[#clean_table + 1] = value -- Append to the end of the new array
+        end
+    end
+    return clean_table
+end
+
+new_lock_utils.send_events = function(device, type)
+  if type == nil or type == new_lock_utils.LOCK_USERS then
+    local current_users = new_lock_utils.prep_table(new_lock_utils.get_users(device))
+    device:emit_event(capabilities.lockUsers.users(current_users,
+      {state_change = true, visibility = { displayed = true } }))
+  end
+  if type == nil or type == new_lock_utils.LOCK_CREDENTIALS then
+    local credentials = new_lock_utils.prep_table(new_lock_utils.get_credentials(device))
+    device:emit_event(capabilities.lockCredentials.credentials(credentials,
+      { state_change = true,  visibility = { displayed = true } }))
+  end
 end
 
 return new_lock_utils
