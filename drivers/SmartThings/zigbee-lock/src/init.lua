@@ -79,23 +79,35 @@ local alarm_handler = function(driver, device, zb_mess)
   end
 end
 
-  -- this command should now trigger setting the migrated field and reinjecting the command.
-  -- this is so we can start using the new capbilities from now on.
+-- this command should now trigger setting the migrated field and reinjecting the command.
+-- this is so we can start using the new capbilities from now on.
 local function device_added(driver, device)
-  if device:supports_capability_by_id(LockCodes.ID) then
-    device:emit_event(LockCodes.migrated(true, { state_change = true, visibility = { displayed = true } }))
-    if device.device_added ~= nil then
-      -- make the driver call this command again, it will now be handled in new capabilities.
-      driver.lifecycle_handlers.device_added(driver, device)
+  -- this variable should only be present for test cases trying to test the old capabilities.
+  if device.useOldCapabilityForTesting == nil then
+    if device:supports_capability_by_id(LockCodes.ID) then
+      device:emit_event(LockCodes.migrated(true, { state_change = true, visibility = { displayed = true } }))
+      if device.device_added ~= nil then
+        -- make the driver call this command again, it will now be handled in new capabilities.
+        driver.lifecycle_handlers.device_added(driver, device)
+      end
+    else
+      lock_utils.populate_state_from_data(device)
+      driver:inject_capability_command(device, {
+        capability = capabilities.refresh.ID,
+        command = capabilities.refresh.commands.refresh.NAME,
+        args = {}
+      })
     end
   else
     lock_utils.populate_state_from_data(device)
+
     driver:inject_capability_command(device, {
       capability = capabilities.refresh.ID,
       command = capabilities.refresh.commands.refresh.NAME,
       args = {}
     })
   end
+
 end
 
 local function init(driver, device)

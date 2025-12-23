@@ -34,14 +34,16 @@ local mock_device = test.mock_device.build_test_zigbee_device(
           ["1"] = "Zach",
           ["2"] = "Steven"
         })
-      }
+      },
+      useOldCapabilityForTesting = true
     }
 )
 
 local mock_device_no_data = test.mock_device.build_test_zigbee_device(
     {
       profile = t_utils.get_profile_definition("base-lock.yml"),
-      data = {}
+      data = {},
+      useOldCapabilityForTesting = true
     }
 )
 zigbee_test_utils.prepare_zigbee_env_info()
