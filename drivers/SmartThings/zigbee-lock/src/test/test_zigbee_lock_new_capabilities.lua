@@ -44,11 +44,11 @@ end
 
 local function init_migration()
     test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MinPINCodeLength:build_test_attr_report(
-    mock_device, 4) })
+        mock_device, 4) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = false } })))
     test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:build_test_attr_report(
-    mock_device, 8) })
+        mock_device, 8) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.maxCodeLength(8, { visibility = { displayed = false } })))
     test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported
@@ -88,7 +88,7 @@ local function add_default_users()
             },
         })
         -- add to the user list that is now expected
-        table.insert(user_list, {userIndex = i, userType = "guest", userName = "Guest" .. i })
+        table.insert(user_list, { userIndex = i, userType = "guest", userName = "Guest" .. i })
 
         test.socket.capability:__expect_send(
             mock_device:generate_test_message(
@@ -103,7 +103,7 @@ local function add_default_users()
             mock_device:generate_test_message(
                 "main",
                 capabilities.lockUsers.commandResult(
-                    { commandName = "addUser", statusCode = "success", userIndex = i},
+                    { commandName = "addUser", statusCode = "success", userIndex = i },
                     { state_change = true, visibility = { displayed = true } }
                 )
             )
@@ -114,11 +114,11 @@ end
 local function add_credential(user_index, credential_data)
     test.socket.capability:__queue_receive({
         mock_device.id,
-            {
-                capability = capabilities.lockCredentials.ID,
-                command = "addCredential",
-                args = { user_index, "guest", "pin", credential_data }
-            },
+        {
+            capability = capabilities.lockCredentials.ID,
+            command = "addCredential",
+            args = { user_index, "guest", "pin", credential_data }
+        },
     })
     test.socket.zigbee:__expect_send(
         {
@@ -152,8 +152,10 @@ local function add_credential(user_index, credential_data)
             )
         }
     )
-    table.insert(test_credentials, { userIndex = test_credential_index, credentialIndex = test_credential_index, credentialType = "pin" })
-    table.insert(test_users, {userIndex = test_credential_index, userName = "Guest" .. test_credential_index, userType = "guest"})
+    table.insert(test_credentials,
+        { userIndex = test_credential_index, credentialIndex = test_credential_index, credentialType = "pin" })
+    table.insert(test_users,
+        { userIndex = test_credential_index, userName = "Guest" .. test_credential_index, userType = "guest" })
     test.socket.capability:__expect_send(
         mock_device:generate_test_message(
             "main",
@@ -163,14 +165,16 @@ local function add_credential(user_index, credential_data)
     test.socket.capability:__expect_send(
         mock_device:generate_test_message(
             "main",
-            capabilities.lockCredentials.credentials(test_credentials, { state_change = true, visibility = { displayed = true } })
+            capabilities.lockCredentials.credentials(test_credentials,
+                { state_change = true, visibility = { displayed = true } })
         )
     )
     test.socket.capability:__expect_send(
         mock_device:generate_test_message(
             "main",
             capabilities.lockCredentials.commandResult(
-                { commandName = "addCredential", statusCode = "success", credentialIndex = test_credential_index, userIndex = test_credential_index },
+                { commandName = "addCredential", statusCode = "success", credentialIndex = test_credential_index, userIndex =
+                test_credential_index },
                 { state_change = true, visibility = { displayed = true } }
             )
         )
@@ -229,15 +233,15 @@ test.register_coroutine_test(
         })
 
         local users = {
-            { userIndex = 1, userName = "Guest1", userType = "guest" },
+            { userIndex = 1, userName = "Guest1",         userType = "guest" },
             { userIndex = 2, userName = "ChangeUserName", userType = "guest" },
-            { userIndex = 3, userName = "Guest3", userType = "guest" },
-            { userIndex = 4, userName = "Guest4", userType = "guest" },
+            { userIndex = 3, userName = "Guest3",         userType = "guest" },
+            { userIndex = 4, userName = "Guest4",         userType = "guest" },
         }
         test.socket.capability:__expect_send(
             mock_device:generate_test_message(
                 "main",
-                capabilities.lockUsers.users(users, { state_change=true, visibility = { displayed = true } })
+                capabilities.lockUsers.users(users, { state_change = true, visibility = { displayed = true } })
             )
         )
         test.socket.capability:__expect_send(
@@ -288,7 +292,7 @@ test.register_coroutine_test(
                 args = { "3" }
             },
         })
-        
+
         local users = {
             { userIndex = 1, userName = "Guest1", userType = "guest" },
             { userIndex = 2, userName = "Guest2", userType = "guest" },
@@ -298,7 +302,7 @@ test.register_coroutine_test(
         test.socket.capability:__expect_send(
             mock_device:generate_test_message(
                 "main",
-                capabilities.lockUsers.users(users, { state_change=true, visibility = { displayed = true } })
+                capabilities.lockUsers.users(users, { state_change = true, visibility = { displayed = true } })
             )
         )
         test.socket.capability:__expect_send(
@@ -396,7 +400,7 @@ test.register_coroutine_test(
             }
         )
         test.wait_for_events()
-                test.socket.zigbee:__queue_receive(
+        test.socket.zigbee:__queue_receive(
             {
                 mock_device.id,
                 DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
@@ -477,14 +481,14 @@ test.register_coroutine_test(
             {
                 capability = capabilities.lockCredentials.ID,
                 command = "deleteCredential",
-                args = { "1", "pin"}
+                args = { "1", "pin" }
             },
         })
         test.socket.zigbee:__expect_send({
-            mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true) 
+            mock_device.id, DoorLock.attributes.SendPINOverTheAir:write(mock_device, true)
         })
         test.socket.zigbee:__expect_send({
-            mock_device.id, DoorLock.server.commands.ClearPINCode(mock_device, 1) 
+            mock_device.id, DoorLock.server.commands.ClearPINCode(mock_device, 1)
         })
         test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
         test.mock_time.advance_time(2)
@@ -495,7 +499,7 @@ test.register_coroutine_test(
             }
         )
         test.wait_for_events()
-        test.socket.zigbee:__queue_receive({ 
+        test.socket.zigbee:__queue_receive({
             mock_device.id,
             DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
                 mock_device,
@@ -558,20 +562,20 @@ test.register_coroutine_test(
                 args = {}
             },
         })
-        
+
         test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
         test.socket.zigbee:__expect_send({
-            mock_device.id, DoorLock.server.commands.ClearPINCode(mock_device, 1) 
+            mock_device.id, DoorLock.server.commands.ClearPINCode(mock_device, 1)
         })
 
         test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
         test.socket.zigbee:__expect_send({
-                mock_device.id,DoorLock.server.commands.GetPINCode(mock_device, 1)
+            mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1)
         })
 
         test.wait_for_events()
         test.mock_time.advance_time(2)
-        test.socket.zigbee:__queue_receive({ 
+        test.socket.zigbee:__queue_receive({
             mock_device.id,
             DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
                 mock_device,

@@ -13,9 +13,7 @@
 -- limitations under the License.
 
 -- Zigbee Driver utilities
-local defaults          = require "st.zigbee.defaults"
 local device_management = require "st.zigbee.device_management"
-local ZigbeeDriver      = require "st.zigbee"
 
 -- Zigbee Spec Utils
 local clusters                = require "st.zigbee.zcl.clusters"

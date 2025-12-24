@@ -13,9 +13,7 @@
 -- limitations under the License.
 
 -- Zigbee Driver utilities
-local defaults          = require "st.zigbee.defaults"
 local device_management = require "st.zigbee.device_management"
-local ZigbeeDriver      = require "st.zigbee"
 local log               = require "log"
 local utils             = require "st.utils"
 
@@ -155,9 +153,8 @@ local delete_user_handler = function(driver, device, command)
     return
   end
   local status = lock_utils.STATUS_SUCCESS
-  local user_index = tonumber(command.args.userIndex)  
+  local user_index = tonumber(command.args.userIndex)
   if lock_utils.get_user(device, user_index) ~= nil then
-
     if command.override_busy_check == nil then
       device:set_field(lock_utils.ACTIVE_CREDENTIAL, { userIndex = user_index })
     end
@@ -261,7 +258,6 @@ local update_credential_handler = function(driver, device, command)
   end
   local credential_index = tonumber(command.args.credentialIndex)
   local credential_data = command.args.credentialData
-  local status = lock_utils.STATUS_SUCCESS
   local credential = lock_utils.get_credential(device, credential_index)
 
   if credential ~= nil then
@@ -277,8 +273,7 @@ local update_credential_handler = function(driver, device, command)
       device:send(LockCluster.server.commands.GetPINCode(device, credential_index))
     end)
   else
-    status = lock_utils.STATUS_FAILURE
-    lock_utils.clear_busy_state(device, status)
+    lock_utils.clear_busy_state(device, lock_utils.STATUS_FAILURE)
   end
 end
 
@@ -288,7 +283,6 @@ local delete_credential_handler = function(driver, device, command)
   end
 
   local credential_index = tonumber(command.args.credentialIndex)
-  local status = lock_utils.STATUS_SUCCESS
   local credential = lock_utils.get_credential(device, credential_index)
   if credential ~= nil then
     if command.override_busy_check == nil then
@@ -302,8 +296,7 @@ local delete_credential_handler = function(driver, device, command)
       device:send(LockCluster.server.commands.GetPINCode(device, credential_index))
     end)
   else
-    status = lock_utils.STATUS_FAILURE
-    lock_utils.clear_busy_state(device, status, command.override_busy_check)
+    lock_utils.clear_busy_state(device, lock_utils.STATUS_FAILURE, command.override_busy_check)
   end
 end
 
@@ -354,7 +347,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
     if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
       -- create credential if not already present.
       if lock_utils.get_credential(device, credential_index) == nil then
-        lock_utils.add_credential(device, 
+        lock_utils.add_credential(device,
           active_credential.userIndex,
           active_credential.credentialType,
           credential_index)
@@ -384,7 +377,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
       end
     end
   elseif zb_mess.body.zcl_body.user_status.value == UserStatusEnum.AVAILABLE and command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
-    -- tried to add a code that already is in use. 
+    -- tried to add a code that already is in use.
     -- remove the created user if one got made. There is no associated credential.
     status = lock_utils.STATUS_DUPLICATE
     lock_utils.delete_user(device, active_credential.userIndex)
@@ -413,7 +406,6 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   if emit_event then
     lock_utils.send_events(device)
   end
-  
   -- ignore handling the busy state for these commands, they are handled within their own handlers
   if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
     lock_utils.clear_busy_state(device, status)
@@ -467,7 +459,7 @@ end
 
 -- REMOVE THIS AFTER DONE WITH TESTING
 local migrate = function(driver, device, value)
-  log.error_with({ hub_logs = true }, "\n--- PK -- CURRENT USERS ---- \n" .. 
+  log.error_with({ hub_logs = true }, "\n--- PK -- CURRENT USERS ---- \n" ..
   "\n" ..utils.stringify_table(lock_utils.get_users(device)).."\n" ..
   "\n--- PK -- CURRENT CREDENTIALS ---- \n" ..
   "\n" ..utils.stringify_table(lock_utils.get_credentials(device)).."\n" ..

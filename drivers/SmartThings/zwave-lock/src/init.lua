@@ -72,8 +72,8 @@ local driver_template = {
     }
   },
   sub_drivers = {
-    require("using-new-capabilities"),
-    require("using-old-capabilities"),
+    lazy_load_if_possible("using-old-capabilities"),
+    lazy_load_if_possible("using-new-capabilities"),
   }
 }
 

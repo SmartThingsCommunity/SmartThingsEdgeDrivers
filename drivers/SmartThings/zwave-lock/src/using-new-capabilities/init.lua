@@ -23,8 +23,19 @@ end
 
 -- Lifecycle handlers
 local added_handler = function(driver, device)
+  lock_utils.reload_tables(device)
+  device.thread:call_with_delay(2, function ()
+    reload_all_codes(device)
+  end)
   -- read user/credential metadata
   -- reload all codes
+  local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+  local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+  device:send(DoorLock:OperationGet({}))
+  device:send(Battery:Get({}))
+  if (device:supports_capability(capabilities.tamperAlert)) then
+    device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end
 end
 
 local init = function(driver, device)
@@ -86,7 +97,7 @@ local delete_user_handler = function(driver, device, command)
     return
   end
   local status = lock_utils.STATUS_SUCCESS
-  local user_index = tonumber(command.args.userIndex)  
+  local user_index = tonumber(command.args.userIndex)
   if lock_utils.get_user(device, user_index) ~= nil then
 
     if command.override_busy_check == nil then
@@ -191,7 +202,6 @@ local update_credential_handler = function(driver, device, command)
   end
   local credential_index = tonumber(command.args.credentialIndex)
   local credential_data = command.args.credentialData
-  local status = lock_utils.STATUS_SUCCESS
   local credential = lock_utils.get_credential(device, credential_index)
 
   if credential ~= nil then
@@ -203,8 +213,7 @@ local update_credential_handler = function(driver, device, command)
       user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}))
     -- clearing busy state handled in user_code_report_handler
   else
-    status = lock_utils.STATUS_FAILURE
-    lock_utils.clear_busy_state(device, status)
+    lock_utils.clear_busy_state(device, lock_utils.STATUS_FAILURE)
   end
 end
 
@@ -214,7 +223,6 @@ local delete_credential_handler = function(driver, device, command)
   end
 
   local credential_index = tonumber(command.args.credentialIndex)
-  local status = lock_utils.STATUS_SUCCESS
   local credential = lock_utils.get_credential(device, credential_index)
   if credential ~= nil then
     if command.override_busy_check == nil then
@@ -227,8 +235,7 @@ local delete_credential_handler = function(driver, device, command)
     }))
     -- clearing busy state handled in user_code_report_handler
   else
-    status = lock_utils.STATUS_FAILURE
-    lock_utils.clear_busy_state(device, status, command.override_busy_check)
+    lock_utils.clear_busy_state(device, lock_utils.STATUS_FAILURE, command.override_busy_check)
   end
 end
 
@@ -259,9 +266,11 @@ local user_code_report_handler = function(driver, device, cmd)
   local credential_index = cmd.args.user_identifier
   local command = device:get_field(lock_utils.COMMAND_NAME)
   local user_id_status = cmd.args.user_id_status
+  local emit_events = false
+
   if (user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
       (user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code)) then
-    -- credential exists on lock, add the credential if it doesn't exist in our table. 
+    -- credential exists on lock, add the credential if it doesn't exist in our table.
     if lock_utils.get_credential(device, credential_index) == nil and command == nil then
       local user_index = lock_utils.get_available_user_index(device)
       if user_index ~= nil then
@@ -278,11 +287,8 @@ local user_code_report_handler = function(driver, device, cmd)
     if lock_utils.get_credential(device, credential_index) ~= nil then
       -- Credential has been deleted.
       lock_utils.delete_credential(device, credential_index)
-      emit_event = true
+      emit_events = true
     end
-  end
-  if emit_event then
-    lock_utils.send_events(device)
   end
 
   -- checking code handler
@@ -293,12 +299,16 @@ local user_code_report_handler = function(driver, device, cmd)
     local last_slot = 8 -- remove this once testing is done
     if (credential_index >= last_slot) then
       device:set_field(lock_utils.CHECKING_CODE, nil)
-      emit_event = true
+      emit_events = true
     else
       local checkingCode = device:get_field(lock_utils.CHECKING_CODE) + 1
       device:set_field(lock_utils.CHECKING_CODE, checkingCode)
       device:send(UserCode:Get({user_identifier = checkingCode}))
     end
+  end
+
+  if emit_events then
+    lock_utils.send_events(device)
   end
 end
 
@@ -327,7 +337,7 @@ local notification_report_handler = function(driver, device, cmd)
       if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
       -- create credential if not already present.
         if lock_utils.get_credential(device, credential_index) == nil then
-          lock_utils.add_credential(device, 
+          lock_utils.add_credential(device,
             active_credential.userIndex,
             active_credential.credentialType,
             credential_index)
@@ -378,7 +388,7 @@ local notification_report_handler = function(driver, device, cmd)
     if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
       lock_utils.clear_busy_state(device, status)
     end
-    
+
     ------------ LOCK OPERATION EVENTS ------------
     if (event >= access_control_event.MANUAL_LOCK_OPERATION and event <= access_control_event.LOCK_JAMMED) then
       local event_to_send
@@ -473,7 +483,7 @@ end
 
 -- REMOVE THIS AFTER DONE WITH TESTING
 local migrate = function(driver, device, value)
-  log.error_with({ hub_logs = true }, "\n--- PK -- CURRENT USERS ---- \n" .. 
+  log.error_with({ hub_logs = true }, "\n--- PK -- CURRENT USERS ---- \n" ..
   "\n" ..utils.stringify_table(lock_utils.get_users(device)).."\n" ..
   "\n--- PK -- CURRENT CREDENTIALS ---- \n" ..
   "\n" ..utils.stringify_table(lock_utils.get_credentials(device)).."\n" ..
@@ -481,6 +491,13 @@ local migrate = function(driver, device, value)
 end
 
 local zwave_lock = {
+  supported_capabilities = {
+    capabilities.lock,
+    capabilities.lockUsers,
+    capabilities.lockCredentials,
+    capabilities.battery,
+    capabilities.tamperAlert
+  },
   lifecycle_handlers = {
     added = added_handler,
     init = init,

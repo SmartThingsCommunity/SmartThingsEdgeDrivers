@@ -15,20 +15,11 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
-local json = require "dkjson"
---- @type st.zwave.constants
-local constants = require "st.zwave.constants"
---- @type st.zwave.CommandClass.DoorLock
-local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.UserCode
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
---- @type st.zwave.CommandClass.Alarm
-local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local t_utils = require "integration_test.utils"
-local zw_test_utils = require "integration_test.zwave_test_utils"
 local access_control_event = Notification.event.access_control
 
 
@@ -117,11 +108,11 @@ local function test_init()
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(8,  { visibility = { displayed = false } })))
-  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { state_change = true, visibility = { displayed = true } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(8, { visibility = { displayed = false } })))
-  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
-  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { state_change = true, visibility = { displayed = true } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { state_change = true, visibility = { displayed = true } })))
 
   -- reset these globals
   test_credential_index = 1
@@ -387,7 +378,7 @@ test.register_coroutine_test(
     -- add credential
     add_credential(0)
 
-    -- update the credential 
+    -- update the credential
     test.socket.capability:__queue_receive({mock_device.id,
       {
         capability = capabilities.lockCredentials.ID,
@@ -510,7 +501,6 @@ test.register_coroutine_test(
         args = {}
       },
     })
-    
 
     test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
     test.timer.__create_and_queue_test_time_advance_timer(0.5, "oneshot")

@@ -18,13 +18,9 @@ local LockCluster             = clusters.DoorLock
 
 -- Capabilities
 local capabilities              = require "st.capabilities"
-local LockCredentials           = capabilities.lockCredentials
-local log                       = require "log"
-local utils                      = require "st.utils"
 
 -- Enums
 local UserStatusEnum            = LockCluster.types.DrlkUserStatus
-local UserTypeEnum              = LockCluster.types.DrlkUserType
 local ProgrammingEventCodeEnum  = LockCluster.types.ProgramEventCode
 
 local SHIFT_INDEX_CHECK = 256
@@ -43,7 +39,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
     if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
       -- create credential if not already present.
       if lock_utils.get_credential(device, credential_index) == nil then
-        lock_utils.add_credential(device, 
+        lock_utils.add_credential(device,
           active_credential.userIndex,
           active_credential.credentialType,
           credential_index)
@@ -74,7 +70,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
       end
     end
   elseif zb_mess.body.zcl_body.user_status.value == UserStatusEnum.AVAILABLE and command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
-    -- tried to add a code that already is in use. 
+    -- tried to add a code that already is in use.
     -- remove the created user if one got made. There is no associated credential.
     status = lock_utils.STATUS_DUPLICATE
     lock_utils.delete_user(device, active_credential.userIndex)
@@ -105,7 +101,7 @@ local get_pin_response_handler = function(driver, device, zb_mess)
     device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
       { state_change = true,  visibility = { displayed = true } }))
   end
-  
+
   -- ignore handling the busy state for these commands, they are handled within their own handlers
   if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
     lock_utils.clear_busy_state(device, status)

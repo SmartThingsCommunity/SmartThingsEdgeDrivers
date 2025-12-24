@@ -14,27 +14,18 @@
 
 -- Zigbee Driver utilities
 local defaults          = require "st.zigbee.defaults"
-local device_management = require "st.zigbee.device_management"
 local ZigbeeDriver      = require "st.zigbee"
 
 -- Zigbee Spec Utils
 local clusters                = require "st.zigbee.zcl.clusters"
 local Alarm                   = clusters.Alarms
 local LockCluster             = clusters.DoorLock
-local PowerConfiguration      = clusters.PowerConfiguration
 
 -- Capabilities
 local capabilities              = require "st.capabilities"
 local Battery                   = capabilities.battery
 local Lock                      = capabilities.lock
 local LockCodes                 = capabilities.lockCodes
-local LockCredentials           = capabilities.lockCredentials
-local LockUsers                 = capabilities.lockUsers
-
--- Enums
-local UserStatusEnum            = LockCluster.types.DrlkUserStatus
-local UserTypeEnum              = LockCluster.types.DrlkUserType
-local ProgrammingEventCodeEnum  = LockCluster.types.ProgramEventCode
 
 local socket = require "cosock.socket"
 local lock_utils = require "lock_utils"

@@ -16,17 +16,10 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
---- @type st.zwave.CommandClass.DoorLock
-local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
---- @type st.zwave.CommandClass.Battery
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.UserCode
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local t_utils = require "integration_test.utils"
-local zw_test_utils = require "integration_test.zwave_test_utils"
-local utils = require "st.utils"
-local json = require "dkjson"
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
 
@@ -93,11 +86,11 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { state_change = true, visibility = { displayed = true } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { state_change = true, visibility = { displayed = true } })))
+      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { state_change = true, visibility = { displayed = true } })))
     end
 )
 
@@ -108,11 +101,11 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(8,  { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { state_change=true, visibility = { displayed = true } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(8, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { state_change = true, visibility = { displayed = true } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { state_change = true, visibility = { displayed = true } })))
   end
 )
 
@@ -132,11 +125,11 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(6,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(6,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { state_change = true, visibility = { displayed = true } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { state_change = true, visibility = { displayed = true } })))
+      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { state_change = true, visibility = { displayed = true } })))
     end
 )
 

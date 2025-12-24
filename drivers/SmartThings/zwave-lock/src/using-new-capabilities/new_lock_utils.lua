@@ -11,9 +11,7 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local utils = require "st.utils"
 local capabilities = require "st.capabilities"
-local json = require "st.json"
 local INITIAL_INDEX = 1
 
 local new_lock_utils = {
@@ -38,6 +36,7 @@ local new_lock_utils = {
   STATUS_OCCUPIED = "occupied",
   STATUS_RESOURCE_EXHAUSTED = "resourceExhausted",
   STATUS_SUCCESS = "success",
+  TABLES_LOADED = "tablesLoaded",
   UPDATE_CREDENTIAL = "updateCredential",
   UPDATE_USER = "updateUser",
   USER_INDEX = "userIndex",
@@ -51,7 +50,7 @@ new_lock_utils.busy_check_and_set = function (device, command, override_busy_che
   if override_busy_check then
     -- the function was called by an injected command.
     return false
-  end  
+  end
 
   local c_time = os.time()
   local busy_state = device:get_field(new_lock_utils.BUSY) or false
@@ -108,7 +107,7 @@ new_lock_utils.clear_busy_state = function(device, status, override_busy_check)
       ))
     end
   end
-  
+
   device:set_field(new_lock_utils.ACTIVE_CREDENTIAL, nil)
   device:set_field(new_lock_utils.COMMAND_NAME, nil)
   device:set_field(new_lock_utils.BUSY, false)
@@ -117,11 +116,21 @@ end
 new_lock_utils.reload_tables = function(device)
   local users = device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.users.NAME, {})
   local credentials = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.credentials.NAME, {})
-  device:set_field(new_lock_utils.LOCK_USERS, users)
-  device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+  if next(users) ~= nil then
+    device:set_field(new_lock_utils.LOCK_USERS, users)
+  end
+  if next(credentials) ~= nil then
+    device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+  end
+
+  device:set_field(new_lock_utils.TABLES_LOADED, true)
 end
 
 new_lock_utils.get_users = function(device)
+  if not device:get_field(new_lock_utils.TABLES_LOADED) then
+    new_lock_utils.reload_tables(device)
+  end
+
   local users = device:get_field(new_lock_utils.LOCK_USERS)
   return users ~= nil and users or {}
 end
@@ -159,6 +168,10 @@ new_lock_utils.get_available_user_index = function(device)
 end
 
 new_lock_utils.get_credentials = function(device)
+  if not device:get_field(new_lock_utils.TABLES_LOADED) then
+    new_lock_utils.reload_tables(device)
+  end
+
   local credentials = device:get_field(new_lock_utils.LOCK_CREDENTIALS)
   return credentials ~= nil and credentials or {}
 end
