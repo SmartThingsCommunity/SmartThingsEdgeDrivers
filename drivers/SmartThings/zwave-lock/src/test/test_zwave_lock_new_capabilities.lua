@@ -29,6 +29,8 @@ local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local t_utils = require "integration_test.utils"
 local zw_test_utils = require "integration_test.zwave_test_utils"
+local access_control_event = Notification.event.access_control
+
 
 -- supported comand classes
 local zwave_lock_endpoints = {
@@ -41,6 +43,9 @@ local zwave_lock_endpoints = {
     }
   }
 }
+local test_credential_index = 1
+local test_credentials = {}
+local test_users = {}
 
 local mock_device = test.mock_device.build_test_zwave_device(
     {
@@ -48,6 +53,62 @@ local mock_device = test.mock_device.build_test_zwave_device(
       zwave_endpoints = zwave_lock_endpoints
     }
 )
+
+-- if user_index is 0 it creates a new user.
+local function add_credential(user_index)
+  test.socket.capability:__queue_receive({mock_device.id,
+    {
+      capability = capabilities.lockCredentials.ID,
+      command = "addCredential",
+      args = { user_index, "guest", "pin", "123" .. test_credential_index }
+    },
+  })
+  test.socket.zwave:__expect_send(
+    UserCode:Set({
+      user_identifier = test_credential_index,
+      user_code = "123" .. test_credential_index,
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
+    }):build_test_tx(mock_device.id)
+  )
+  test.wait_for_events()
+
+  local payload = "\x70\x01\x00\xFF\x06\x0E\x00\x00"
+  payload = payload:sub(1, 1) .. string.char(test_credential_index) .. payload:sub(3)
+  test.socket.zwave:__queue_receive({mock_device.id,
+    Notification:Report({
+      notification_type = Notification.notification_type.ACCESS_CONTROL,
+      event = access_control_event.NEW_USER_CODE_ADDED,
+      payload = payload
+    })
+  })
+  table.insert(test_users, { userIndex = test_credential_index, userName = "Guest" .. test_credential_index, userType = "guest" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.lockUsers.users(test_users,
+      { state_change = true, visibility = { displayed = true } })
+    )
+  )
+  table.insert(test_credentials, { userIndex = test_credential_index, credentialIndex = test_credential_index, credentialType = "pin" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.lockCredentials.credentials(test_credentials,
+      { state_change = true, visibility = { displayed = true } })
+    )
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.lockCredentials.commandResult(
+        { commandName = "addCredential", statusCode = "success", credentialIndex = test_credential_index, userIndex = test_credential_index },
+        { state_change = true, visibility = { displayed = true } }
+      )
+    )
+  )
+  test.wait_for_events()
+  test_credential_index = test_credential_index + 1
+end
 
 -- start with a migrated blank device
 local function test_init()
@@ -61,6 +122,11 @@ local function test_init()
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(8, { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+
+  -- reset these globals
+  test_credential_index = 1
+  test_credentials = {}
+  test_users = {}
 end
 
 test.set_test_init_function(test_init)
@@ -82,7 +148,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.users(
           {{userIndex = 1, userType = "guest", userName = "TestUser 1" }},
-          { visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -91,7 +157,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.commandResult(
           { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -108,7 +174,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.users(
           {{userIndex = 1, userType = "guest", userName = "TestUser 1" }, {userIndex = 2, userType = "guest", userName = "TestUser 2" }},
-          { visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -117,7 +183,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.commandResult(
           { commandName = "addUser", statusCode = "success", userIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -127,120 +193,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Add credential should succeed",
   function()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 1, "guest", "pin", "1234" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {{userIndex = 1, userType = "guest", userName = "Code 1" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 1,
-        user_code = "1234",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.wait_for_events()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 2, "guest", "pin", "3456" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {
-            {userIndex = 1, userType = "guest", userName = "Code 1" },
-            {userIndex = 2, userType = "guest", userName = "Code 2" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 2,
-        user_code = "3456",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 2,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({
-          { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
-          { userIndex = 2, credentialIndex = 2, credentialType = "pin" }
-        }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
+    -- these all should succeed
+    add_credential(0)
+    add_credential(0)
+    add_credential(0)
   end
 )
 
@@ -252,15 +208,15 @@ test.register_coroutine_test(
       {
         capability = capabilities.lockUsers.ID,
         command = "addUser",
-        args = { "TestUser 1", "guest" }
+        args = { "Guest1", "guest" }
       },
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
         capabilities.lockUsers.users(
-          {{userIndex = 1, userType = "guest", userName = "TestUser 1" }},
-          { visibility = { displayed = false } }
+          {{userIndex = 1, userType = "guest", userName = "Guest1" }},
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -269,47 +225,14 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.commandResult(
           { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
     test.wait_for_events()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 1, "guest", "pin", "1234" }
-      },
-    })
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 1,
-        user_code = "1234",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
+
+    -- add credential with the new users index (1).
+    add_credential(1)
   end
 )
 
@@ -329,7 +252,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.users(
           {{userIndex = 1, userType = "guest", userName = "TestUser 1" }},
-          { visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -338,7 +261,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.commandResult(
           { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -355,7 +278,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.users(
           {{userIndex = 1, userType = "guest", userName = "TestUser 1" }, {userIndex = 2, userType = "guest", userName = "TestUser 2" }},
-          { visibility = { displayed = false } }
+          { state_change = true,  visibility = { displayed = true } }
         )
       )
     )
@@ -364,7 +287,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.commandResult(
           { commandName = "addUser", statusCode = "success", userIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -382,7 +305,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.users(
           {{userIndex = 1, userType = "guest", userName = "new name" }, {userIndex = 2, userType = "guest", userName = "TestUser 2" }},
-          { visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -391,7 +314,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.commandResult(
           { commandName = "updateUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -401,61 +324,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Delete user should succeed",
   function()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 1, "guest", "pin", "1234" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {{userIndex = 1, userType = "guest", userName = "Code 1" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 1,
-        user_code = "1234",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.wait_for_events()
+    -- add credential
+    add_credential(0)
+
+    -- delete the user which should also delete the credential
     test.socket.capability:__queue_receive({
       mock_device.id,
       {
@@ -470,39 +342,30 @@ test.register_coroutine_test(
         user_id_status = UserCode.user_id_status.AVAILABLE
       }):build_test_tx(mock_device.id)
     )
-    test.timer.__create_and_queue_test_time_advance_timer(4.2, "oneshot")
     test.wait_for_events()
 
-    test.mock_time.advance_time(4.2)
-    test.socket.zwave:__expect_send(UserCode:Get( {user_identifier = 1}):build_test_tx(mock_device.id))
     test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.AVAILABLE
+      Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = access_control_event.SINGLE_USER_CODE_DELETED,
+        payload = "\x21\x01\x00\xFF\x06\x0D\x00\x00" -- delete payload
       })
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "deleteCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
         capabilities.lockUsers.users(
           {},
-          { visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials(
+        {},
+        { state_change = true, visibility = { displayed = true } })
       )
     )
     test.socket.capability:__expect_send(
@@ -510,71 +373,21 @@ test.register_coroutine_test(
         "main",
         capabilities.lockUsers.commandResult(
           { commandName = "deleteUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
+    test.wait_for_events()
   end
 )
 
 test.register_coroutine_test(
   "Update credential should succeed",
   function()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 1, "guest", "pin", "1234" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {{userIndex = 1, userType = "guest", userName = "Code 1" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 1,
-        user_code = "1234",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.wait_for_events()
+    -- add credential
+    add_credential(0)
+
+    -- update the credential 
     test.socket.capability:__queue_receive({mock_device.id,
       {
         capability = capabilities.lockCredentials.ID,
@@ -590,24 +403,32 @@ test.register_coroutine_test(
       }):build_test_tx(mock_device.id)
     )
     test.wait_for_events()
+
     test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
+      Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = access_control_event.NEW_USER_CODE_ADDED,
+        payload = "\x70\x01\x00\xFF\x06\x0E\x00\x00" -- update payload
       })
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
+        capabilities.lockUsers.users({{ userIndex = 1, userName = "Guest1", userType = "guest" }}, { state_change = true, visibility = { displayed = true } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { state_change = true, visibility = { displayed = true } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
         capabilities.lockCredentials.commandResult(
-          { commandName = "updateCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
+          { commandName = "updateCredential", statusCode = "success", credentialIndex = 1, userIndex = 1 },
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
@@ -617,61 +438,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Delete credential should succeed",
   function()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 1, "guest", "pin", "1234" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {{userIndex = 1, userType = "guest", userName = "Code 1" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 1,
-        user_code = "1234",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.wait_for_events()
+    -- add the credential
+    add_credential(0)
+
+    -- -- delete the credential
     test.socket.capability:__queue_receive({mock_device.id,
       {
         capability = capabilities.lockCredentials.ID,
@@ -686,166 +456,53 @@ test.register_coroutine_test(
       }):build_test_tx(mock_device.id)
     )
     test.wait_for_events()
+
     test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.AVAILABLE
+      Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = access_control_event.SINGLE_USER_CODE_DELETED,
+        payload = "\x21\x01\x00\xFF\x06\x0D\x00\x00" -- delete payload
       })
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })
+        capabilities.lockUsers.users(
+          {},
+          { state_change = true, visibility = { displayed = true } }
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials(
+        {},
+        { state_change = true, visibility = { displayed = true } })
       )
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
         capabilities.lockCredentials.commandResult(
-          { commandName = "deleteCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
+          { commandName = "deleteCredential", statusCode = "success", credentialIndex = 1, userIndex = 1, },
+          { state_change = true, visibility = { displayed = true } }
         )
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "deleteUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
+    test.wait_for_events()
   end
 )
 
 test.register_coroutine_test(
   "Delete all users should succeed",
   function()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 1, "guest", "pin", "1234" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {{userIndex = 1, userType = "guest", userName = "Code 1" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 1,
-        user_code = "1234",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.wait_for_events()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 2, "guest", "pin", "3456" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {
-            {userIndex = 1, userType = "guest", userName = "Code 1" },
-            {userIndex = 2, userType = "guest", userName = "Code 2" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 2,
-        user_code = "3456",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 2,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({
-          { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
-          { userIndex = 2, credentialIndex = 2, credentialType = "pin" }
-        }, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 2 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.wait_for_events()
+    -- add credential
+    add_credential(0)
+    -- add second credential
+    add_credential(0)
+
+    -- delete all users. This should also delete the two associated credentials
     test.socket.capability:__queue_receive({mock_device.id,
       {
         capability = capabilities.lockUsers.ID,
@@ -853,36 +510,8 @@ test.register_coroutine_test(
         args = {}
       },
     })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users({}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "deleteAllUsers", statusCode = "success" },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "deleteAllCredentials", statusCode = "success" },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
+    
+
     test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
     test.timer.__create_and_queue_test_time_advance_timer(0.5, "oneshot")
     test.mock_time.advance_time(0)
@@ -900,67 +529,56 @@ test.register_coroutine_test(
         user_id_status = UserCode.user_id_status.AVAILABLE
       }):build_test_tx(mock_device.id)
     )
+    test.wait_for_events()
+
+    test.socket.zwave:__queue_receive({mock_device.id,
+      Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = access_control_event.SINGLE_USER_CODE_DELETED,
+        payload = "\x21\x01\x00\xFF\x06\x0D\x00\x00" -- delete payload
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 2, userName = "Guest2", userType = "guest" }
+          },
+          { state_change = true, visibility = { displayed = true } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials(
+        {
+          { userIndex = 2, credentialIndex = 2, credentialType = "pin" }
+        },
+        { state_change = true, visibility = { displayed = true } })
+      )
+    )
+
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.commandResult(
+          { commandName = "deleteAllUsers", statusCode = "success"},
+          { state_change = true, visibility = { displayed = true } }
+        )
+      )
+    )
+    test.wait_for_events()
   end
 )
 
 test.register_coroutine_test(
   "The lock reporting unlock via code should include the code number",
   function()
-    test.socket.capability:__queue_receive({mock_device.id,
-      {
-        capability = capabilities.lockCredentials.ID,
-        command = "addCredential",
-        args = { 1, "guest", "pin", "1234" }
-      },
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.users(
-          {{userIndex = 1, userType = "guest", userName = "Code 1" }},
-          { visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "addUser", statusCode = "success", userIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Set({
-        user_identifier = 1,
-        user_code = "1234",
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      }):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id,
-      UserCode:Report({
-        user_identifier = 1,
-        user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }}, { visibility = { displayed = false } })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.commandResult(
-          { commandName = "addCredential", statusCode = "success", credentialIndex = 1 },
-          { state_change = true, visibility = { displayed = false } }
-        )
-      )
-    )
-    test.wait_for_events()
+    -- add credential
+    add_credential(0)
+    -- send unlock
     test.socket.zwave:__queue_receive(
       {
         mock_device.id,
