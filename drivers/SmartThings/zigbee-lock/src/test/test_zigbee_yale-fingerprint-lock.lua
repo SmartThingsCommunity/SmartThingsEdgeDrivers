@@ -27,7 +27,18 @@ zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)end
 
-test.set_test_init_function(test_init)
+local function test_init_new_capabilities()
+  test.mock_device.add_test_device(mock_device)
+  test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(8,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(0,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(0, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+end
 
 test.register_message_test(
     "Max user code number report should be handled",
@@ -43,7 +54,31 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(30))
       }
-    }
+    },
+    {test_init = test_init }
+)
+
+test.register_message_test(
+    "Max user code number report should be handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:build_test_attr_report(mock_device,
+                                                                                                           16) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(30))
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(30))
+      }
+    },
+    {test_init = test_init_new_capabilities }
 )
 
 test.run_registered_tests()
