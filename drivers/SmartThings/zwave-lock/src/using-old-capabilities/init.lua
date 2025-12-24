@@ -147,9 +147,7 @@ local using_old_capabilities = {
   },
   capability_handlers = {
     [capabilities.lockCodes.ID] = {
-      [capabilities.lockCodes.commands.updateCodes.NAME] = update_codes
-    },
-    [capabilities.lockCodes.ID] = {
+      [capabilities.lockCodes.commands.updateCodes.NAME] = update_codes,
       [capabilities.lockCodes.commands.migrate.NAME] = migrate
     },
   },
