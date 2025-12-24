@@ -38,6 +38,7 @@ local new_lock_utils = {
   STATUS_OCCUPIED = "occupied",
   STATUS_RESOURCE_EXHAUSTED = "resourceExhausted",
   STATUS_SUCCESS = "success",
+  TABLES_LOADED = "tablesLoaded",
   UPDATE_CREDENTIAL = "updateCredential",
   UPDATE_USER = "updateUser",
   USER_INDEX = "userIndex",
@@ -119,9 +120,14 @@ new_lock_utils.reload_tables = function(device)
   local credentials = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.credentials.NAME, {})
   device:set_field(new_lock_utils.LOCK_USERS, users)
   device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+  device:set_field(new_lock_utils.TABLES_LOADED, true)
 end
 
 new_lock_utils.get_users = function(device)
+  if not device:get_field(new_lock_utils.TABLES_LOADED) then
+    new_lock_utils.reload_tables(device)
+  end
+
   local users = device:get_field(new_lock_utils.LOCK_USERS)
   return users ~= nil and users or {}
 end
@@ -159,6 +165,10 @@ new_lock_utils.get_available_user_index = function(device)
 end
 
 new_lock_utils.get_credentials = function(device)
+  if not device:get_field(new_lock_utils.TABLES_LOADED) then
+    new_lock_utils.reload_tables(device)
+  end
+
   local credentials = device:get_field(new_lock_utils.LOCK_CREDENTIALS)
   return credentials ~= nil and credentials or {}
 end

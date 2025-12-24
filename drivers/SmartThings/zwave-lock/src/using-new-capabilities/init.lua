@@ -23,8 +23,19 @@ end
 
 -- Lifecycle handlers
 local added_handler = function(driver, device)
+  lock_utils.reload_tables(device)
+  device.thread:call_with_delay(2, function ()
+    reload_all_codes(device)
+  end)
   -- read user/credential metadata
   -- reload all codes
+  local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+  local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+  device:send(DoorLock:OperationGet({}))
+  device:send(Battery:Get({}))
+  if (device:supports_capability(capabilities.tamperAlert)) then
+    device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end
 end
 
 local init = function(driver, device)
@@ -481,6 +492,13 @@ local migrate = function(driver, device, value)
 end
 
 local zwave_lock = {
+  supported_capabilities = {
+    capabilities.lock,
+    capabilities.lockUsers,
+    capabilities.lockCredentials,
+    capabilities.battery,
+    capabilities.tamperAlert
+  },
   lifecycle_handlers = {
     added = added_handler,
     init = init,
