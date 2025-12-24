@@ -95,7 +95,7 @@ local function add_default_users()
                 "main",
                 capabilities.lockUsers.users(
                     user_list,
-                    { visibility = { displayed = true } }
+                    { state_change = true, visibility = { displayed = true } }
                 )
             )
         )
@@ -112,13 +112,13 @@ local function add_default_users()
 end
 
 local function add_credential(user_index, credential_data)
-test.socket.capability:__queue_receive({
-    mock_device.id,
-        {
-            capability = capabilities.lockCredentials.ID,
-            command = "addCredential",
-            args = { user_index, "guest", "pin", credential_data }
-        },
+    test.socket.capability:__queue_receive({
+        mock_device.id,
+            {
+                capability = capabilities.lockCredentials.ID,
+                command = "addCredential",
+                args = { user_index, "guest", "pin", credential_data }
+            },
     })
     test.socket.zigbee:__expect_send(
         {
