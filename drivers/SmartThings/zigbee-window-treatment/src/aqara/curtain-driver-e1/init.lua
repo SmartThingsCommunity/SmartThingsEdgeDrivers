@@ -29,10 +29,10 @@ local PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID = 0x0427
 local PRIVATE_CURTAIN_LOCKING_STATUS_ATTRIBUTE_ID = 0x0428
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
-local reverseCurtainDirection = capabilities["stse.reverseCurtainDirection"]
+local reverseCurtainDirection = "stse.reverseCurtainDirection"
 local hookLockState = capabilities["stse.hookLockState"]
 local chargingState = capabilities["stse.chargingState"]
-local softTouch = capabilities["stse.softTouch"]
+local softTouch = "stse.softTouch"
 local hookUnlockCommandName = "hookUnlock"
 local hookLockCommandName = "hookLock"
 
@@ -82,12 +82,12 @@ end
 
 local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection.ID]
-    local softTouchPrefValue = device.preferences[softTouch.ID]
+    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection]
+    local softTouchPrefValue = device.preferences[softTouch]
 
     -- reverse direction
     if reverseCurtainDirectionPrefValue ~= nil and
-        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection.ID] then
+        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection] then
       local raw_value = reverseCurtainDirectionPrefValue and 0x01 or 0x00
         device:send(aqara_utils.custom_write_attribute(device, WindowCovering.ID, WindowCovering.attributes.Mode.ID,
           data_types.Bitmap8, raw_value, nil))
@@ -95,7 +95,7 @@ local function device_info_changed(driver, device, event, args)
 
     -- soft touch
     if softTouchPrefValue ~= nil and
-        softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
+        softTouchPrefValue ~= args.old_st_store.preferences[softTouch] then
       device:send(cluster_base.write_manufacturer_specific_attribute(device,
         aqara_utils.PRIVATE_CLUSTER_ID, PRIVATE_CURTAIN_MANUAL_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Boolean, (not softTouchPrefValue)))
     end
