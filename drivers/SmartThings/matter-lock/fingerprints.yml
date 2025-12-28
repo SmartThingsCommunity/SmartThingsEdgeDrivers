@@ -15,6 +15,12 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2807
     deviceProfileName: lock-battery
+  #Bold
+  - id: "5519/4097"
+    deviceLabel: Bold Smart Lock
+    vendorId: 0x158F
+    productId: 0x1001
+    deviceProfileName: base-lock
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
