@@ -1,5 +1,6 @@
 name: Stateless Color Temperature Step
 status: proposed
+attributes: {}
 commands:
   stepColorTemperatureByPercent:
     arguments:

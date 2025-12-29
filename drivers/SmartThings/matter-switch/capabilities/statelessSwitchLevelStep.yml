@@ -1,5 +1,6 @@
 name: Stateless Switch Level Step
 status: proposed
+attributes: {}
 commands:
   stepLevel:
     arguments:
