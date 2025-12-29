@@ -123,17 +123,27 @@ local mock_ikea_scroll = test.mock_device.build_test_matter_device({
 })
 
 local ENDPOINTS_PUSH = { 3, 6, 9 }
+local ENDPOINTS_SCROLL = {1, 2, 4, 5, 7, 8}
 
 -- the ikea scroll subdriver has overriden subscribe behavior
 local function ikea_scroll_subscribe()
-  local CLUSTER_SUBSCRIBE_LIST ={
-  clusters.Switch.events.InitialPress,
+  local CLUSTER_SUBSCRIBE_LIST_PUSH ={
+    clusters.Switch.events.InitialPress,
     clusters.Switch.server.events.LongPress,
     clusters.Switch.server.events.MultiPressComplete,
   }
-  local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_ikea_scroll, ENDPOINTS_PUSH[1])
+  local CLUSTER_SUBSCRIBE_LIST_SCROLL = {
+    clusters.Switch.events.InitialPress,
+    clusters.Switch.server.events.MultiPressOngoing,
+  }
+  local subscribe_request = CLUSTER_SUBSCRIBE_LIST_PUSH[1]:subscribe(mock_ikea_scroll, ENDPOINTS_PUSH[1])
   for _, ep_press in ipairs(ENDPOINTS_PUSH) do
-    for _, event in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+    for _, event in ipairs(CLUSTER_SUBSCRIBE_LIST_PUSH) do
+      subscribe_request:merge(event:subscribe(mock_ikea_scroll, ep_press))
+    end
+  end
+  for _, ep_press in ipairs(ENDPOINTS_SCROLL) do
+    for _, event in ipairs(CLUSTER_SUBSCRIBE_LIST_SCROLL) do
       subscribe_request:merge(event:subscribe(mock_ikea_scroll, ep_press))
     end
   end
@@ -145,10 +155,13 @@ local function expect_configure_buttons()
   local button_attr = capabilities.button.button
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 3)})
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("main", button_attr.pushed({state_change = false})))
+  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("main", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 6)})
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group2", button_attr.pushed({state_change = false})))
+  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group2", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 9)})
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group3", button_attr.pushed({state_change = false})))
+  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group3", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
 end
 
 local function test_init()
