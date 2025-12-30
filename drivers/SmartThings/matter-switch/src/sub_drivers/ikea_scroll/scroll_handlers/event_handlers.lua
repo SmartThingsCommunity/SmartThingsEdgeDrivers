@@ -18,8 +18,8 @@ end
 
 function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, response)
   -- use the generic handler logic for the push endpoints. Else, use custom logic.
-  if switch_utils.tbl_contains(ib.endpoint_id, scroll_fields.ENDPOINTS_PUSH) then
-    generic_event_handlers.initial_press_handler(driver, device. ib, response)
+  if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
+    generic_event_handlers.initial_press_handler(driver, device, ib, response)
   else
     device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, 1)
     rotate_amount_event_helper(device, ib.endpoint_id, 1)
