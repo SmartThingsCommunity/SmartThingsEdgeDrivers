@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
-local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 
@@ -33,32 +32,10 @@ local cluster_subscribe_list = {
   clusters.LevelControl.attributes.CurrentLevel,
   clusters.LevelControl.attributes.MaxLevel,
   clusters.LevelControl.attributes.MinLevel,
-  clusters.ColorControl.attributes.CurrentHue,
-  clusters.ColorControl.attributes.CurrentSaturation,
-  clusters.ColorControl.attributes.CurrentX,
-  clusters.ColorControl.attributes.CurrentY,
-  clusters.ColorControl.attributes.ColorMode,
   clusters.ColorControl.attributes.ColorTemperatureMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
   clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
 }
-
-local function set_color_mode(device, endpoint, color_mode)
-  test.socket.matter:__queue_receive({
-    device.id,
-    clusters.ColorControl.attributes.ColorMode:build_test_report_data(
-      device, endpoint, color_mode)
-  })
-  local read_req
-  if color_mode == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
-    read_req = clusters.ColorControl.attributes.CurrentHue:read()
-    read_req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  else -- color_mode = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
-    read_req = clusters.ColorControl.attributes.CurrentX:read()
-    read_req:merge(clusters.ColorControl.attributes.CurrentY:read())
-  end
-  test.socket.matter:__expect_send({device.id, read_req})
-end
 
 local function test_init()
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_color_temp)
@@ -69,9 +46,10 @@ local function test_init()
   end
   test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_color_temp)
-  set_color_mode(mock_device_color_temp, 1, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION)
 end
 test.set_test_init_function(test_init)
+
+local fields = require "switch_utils.fields"
 
 test.register_message_test(
   "Color Temperature Step Command Test",
@@ -79,35 +57,54 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "receive",
-      message = { mock_device_color_temp:generate_test_message("main", capabilities.statelessColorTemperatureStep.stepColorTemperatureByPercent(25)) }
+      message = {
+        mock_device_color_temp.id,
+        { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } }
+      }
     },
     {
       channel = "matter",
       direction = "send",
-      message = mock_device_color_temp:generate_test_message("matter", clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 1075, 10, 2200, 6500, 0, 0))
+      message = {
+        mock_device_color_temp.id,
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 187, fields.TRANSITION_TIME, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+      },
     },
     {
       channel = "capability",
       direction = "receive",
-      message = { mock_device_color_temp:generate_test_message("main", capabilities.statelessColorTemperatureStep.stepColorTemperatureByPercent(-50)) }
+      message = {
+        mock_device_color_temp.id,
+        { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 90 } }
+      }
     },
     {
       channel = "matter",
       direction = "send",
-      message = mock_device_color_temp:generate_test_message("matter", clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 2150, 10, 2200, 6500, 0, 0))
+      message = {
+        mock_device_color_temp.id,
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 841, fields.TRANSITION_TIME, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+      },
     },
     {
       channel = "capability",
       direction = "receive",
-      message = { mock_device_color_temp:generate_test_message("main", capabilities.statelessColorTemperatureStep.stepColorTemperatureByPercent(100)) }
+      message = {
+        mock_device_color_temp.id,
+        { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { -50 } }
+      }
     },
     {
       channel = "matter",
       direction = "send",
-      message = mock_device_color_temp:generate_test_message("matter", clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 4300, 10, 2200, 6500, 0, 0))
+      message = {
+        mock_device_color_temp.id,
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 467, fields.TRANSITION_TIME, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+      },
     }
   }
 )
+
 
 test.register_message_test(
   "Level Step Command Test",
@@ -115,32 +112,50 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "receive",
-      message = { mock_device_color_temp:generate_test_message("main", capabilities.statelessSwitchLevelStep.stepLevel(25)) }
+      message = {
+        mock_device_color_temp.id,
+        { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } }
+      }
     },
     {
       channel = "matter",
       direction = "send",
-      message = mock_device_color_temp:generate_test_message("matter", clusters.LevelControl.server.commands.StepLevel(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 1075, 10, 254))
+      message = {
+        mock_device_color_temp.id,
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 63, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+      },
     },
     {
       channel = "capability",
       direction = "receive",
-      message = { mock_device_color_temp:generate_test_message("main", capabilities.statelessSwitchLevelStep.stepLevel(-50)) }
+      message = {
+        mock_device_color_temp.id,
+        { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { -50 } }
+      }
     },
     {
       channel = "matter",
       direction = "send",
-      message = mock_device_color_temp:generate_test_message("matter", clusters.LevelControl.server.commands.StepLevel(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.DOWN, 2150, 10, 254))
+      message = {
+        mock_device_color_temp.id,
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.DOWN, 127, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+      },
     },
     {
       channel = "capability",
       direction = "receive",
-      message = { mock_device_color_temp:generate_test_message("main", capabilities.statelessSwitchLevelStep.stepLevel(100)) }
+      message = {
+        mock_device_color_temp.id,
+        { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 100 } }
+      }
     },
     {
       channel = "matter",
       direction = "send",
-      message = mock_device_color_temp:generate_test_message("matter", clusters.LevelControl.server.commands.StepLevel(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 4300, 10, 254))
+      message = {
+        mock_device_color_temp.id,
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 254, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+      },
     }
   }
 )
