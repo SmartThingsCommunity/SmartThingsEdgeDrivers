@@ -62,7 +62,9 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
           return clusters.CameraAvStreamManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
-          table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
+          if switch_utils.find_cluster_on_ep(camera_ep, clusters.PushAvStreamTransport.ID, "SERVER") then
+            table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
+          end
           table.insert(main_component_capabilities, capabilities.cameraViewportSettings.ID)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE) then
