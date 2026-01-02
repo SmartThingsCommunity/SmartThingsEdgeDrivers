@@ -50,7 +50,9 @@ local lock_utils = {
   ENDPOINT_KEY_INDEX = "endpointKeyIndex",
   ENDPOINT_KEY_TYPE = "endpointKeyType",
   DEVICE_KEY_ID = "deviceKeyId",
-  COMMAND_REQUEST_ID = "commandRequestId"
+  COMMAND_REQUEST_ID = "commandRequestId",
+  MODULAR_PROFILE_UPDATED = "modularProfileUpdated",
+  ALIRO_READER_CONFIG_UPDATED = "aliroReaderConfigUpdated"
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"

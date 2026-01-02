@@ -18,6 +18,7 @@ local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local utils = require "st.utils"
 local lock_utils = require "lock_utils"
+local security = require "st.security"
 
 local version = require "version"
 if version.api < 10 then
@@ -26,14 +27,18 @@ end
 
 local DoorLock = clusters.DoorLock
 local PowerSource = clusters.PowerSource
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = 0x0101}
 
 local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
-
-local MODULAR_PROFILE_UPDATED = "__MODULAR_PROFILE_UPDATED"
+local PRIV_KEY_START = 15
+local PRIV_KEY_END = 78
+local PUB_KEY_START = 115
+local PUB_KEY_END = 242
+local PUB_KEY_PREFIX = "04"
 
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
@@ -194,6 +199,9 @@ local function device_init(driver, device)
       end
     end
   end
+  if device.manufacturer_info.vendor_id == 0x135D then
+    device:add_subscribed_attribute(DoorLockFeatureMapAttr)
+  end
   device:subscribe()
  end
 
@@ -207,10 +215,118 @@ local function device_added(driver, device)
   end
 end
 
+-- This function check busy_state and if busy_state is false, set it to true(current time)
+local function is_busy_state_set(device)
+  local c_time = os.time()
+  local busy_state = device:get_field(lock_utils.BUSY_STATE) or false
+  if busy_state == false or c_time - busy_state > 10 then
+    device:set_field(lock_utils.BUSY_STATE, c_time, {persist = true})
+    return false
+  else
+    return true
+  end
+end
+
+local function hex_string_to_octet_string(hex_string)
+  if hex_string == nil then
+    return nil
+  end
+  local octet_string = ""
+  for i = 1, #hex_string, 2 do
+      local hex = hex_string:sub(i, i + 1)
+      octet_string = octet_string .. string.char(tonumber(hex, 16))
+  end
+  return octet_string
+end
+
+local function create_group_id_resolving_key()
+  math.randomseed(os.time())
+  local result = string.format("%02x", math.random(0, 255))
+  for i = 1, 15 do
+    result = result .. string.format("%02x", math.random(0, 255))
+  end
+  return result
+end
+
+local function generate_keypair(device)
+  local request_opts = {
+    key_algorithm = {
+      type = "ec",
+      curve = "prime256v1"
+    },
+    signature_algorithm = "sha256",
+    return_formats = {
+      pem = true,
+      der = true
+    },
+    subject = {
+      common_name = "reader config"
+    },
+    validity_days = 36500,
+    x509_extensions = {
+      key_usage = {
+        critical = true,
+        digital_signature = true
+      },
+      certificate_policies = {
+        critical = true,
+        policy_2030_5_self_signed_client = true
+      }
+    }
+  }
+  local status = security.generate_self_signed_cert(request_opts)
+  local privKey = string.sub(utils.bytes_to_hex_string(status.key_der), PRIV_KEY_START, PRIV_KEY_END)
+  local pubKey = PUB_KEY_PREFIX .. string.sub(utils.bytes_to_hex_string(status.key_der), PUB_KEY_START, PUB_KEY_END)
+
+  return privKey, pubKey
+end
+
+local function set_reader_config(device)
+  local cmdName = "setReaderConfig"
+  local groupId = create_group_id_resolving_key()
+  local groupResolvingKey = nil
+  local aliro_ble_uwb_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.ALIROBLEUWB})
+  if #aliro_ble_uwb_eps > 0 then
+    groupResolvingKey = create_group_id_resolving_key()
+  end
+  local privKey, pubKey = generate_keypair(device)
+
+  -- Check busy state
+  if is_busy_state_set(device) then
+    local command_result_info = {
+      commandName = cmdName,
+      statusCode = "busy"
+    }
+    device:emit_event(capabilities.lockAliro.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    return
+  end
+
+  -- Save values to field
+  device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
+  device:set_field(lock_utils.VERIFICATION_KEY, pubKey, {persist = true})
+  device:set_field(lock_utils.GROUP_ID, groupId, {persist = true})
+  device:set_field(lock_utils.GROUP_RESOLVING_KEY, groupResolvingKey, {persist = true})
+
+  -- Send command
+  local ep = find_default_endpoint(device, clusters.DoorLock.ID)
+  device:send(
+    DoorLock.server.commands.SetAliroReaderConfig(
+      device, ep,
+      hex_string_to_octet_string(privKey),
+      hex_string_to_octet_string(pubKey),
+      hex_string_to_octet_string(groupId),
+      hex_string_to_octet_string(groupResolvingKey)
+    )
+  )
+end
+
 local function match_profile_modular(driver, device)
   local enabled_optional_component_capability_pairs = {}
   local main_component_capabilities = {}
   local modular_profile_name = "lock-modular"
+  local is_support_aliro = false
   for _, device_ep in pairs(device.endpoints) do
     for _, ep_cluster in pairs(device_ep.clusters) do
       if ep_cluster.cluster_id == DoorLock.ID then
@@ -237,6 +353,7 @@ local function match_profile_modular(driver, device)
         end
         if clus_has_feature(DoorLock.types.Feature.ALIRO_PROVISIONING) then
           table.insert(main_component_capabilities, capabilities.lockAliro.ID)
+          is_support_aliro = true
         end
         break
       end
@@ -252,7 +369,12 @@ local function match_profile_modular(driver, device)
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
-  device:set_field(MODULAR_PROFILE_UPDATED, true)
+  device:set_field(lock_utils.MODULAR_PROFILE_UPDATED, true)
+
+  local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
+  if is_support_aliro == true and reader_config_updated ~= true then
+    set_reader_config(device)
+  end
 end
 
 local function match_profile_switch(driver, device)
@@ -291,10 +413,10 @@ local function match_profile_switch(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id and not device:get_field(MODULAR_PROFILE_UPDATED) then
+  if device.profile.id == args.old_st_store.profile.id and not device:get_field(lock_utils.MODULAR_PROFILE_UPDATED) then
     return
   end
-  device:set_field(MODULAR_PROFILE_UPDATED, nil)
+  device:set_field(lock_utils.MODULAR_PROFILE_UPDATED, nil)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
@@ -339,18 +461,6 @@ end
 
 local function driver_switched(driver, device)
   match_profile(driver, device)
-end
-
--- This function check busy_state and if busy_state is false, set it to true(current time)
-local function is_busy_state_set(device)
-  local c_time = os.time()
-  local busy_state = device:get_field(lock_utils.BUSY_STATE) or false
-  if busy_state == false or c_time - busy_state > 10 then
-    device:set_field(lock_utils.BUSY_STATE, c_time, {persist = true})
-    return false
-  else
-    return true
-  end
 end
 
 -- Matter Handler
@@ -526,21 +636,6 @@ local function max_year_schedule_of_user_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockSchedules.yearDaySchedulesPerUser(ib.data.value, {visibility = {displayed = false}}))
 end
 
-----------------
--- Aliro Util --
-----------------
-local function hex_string_to_octet_string(hex_string)
-  if hex_string == nil then
-    return nil
-  end
-  local octet_string = ""
-  for i = 1, #hex_string, 2 do
-      local hex = hex_string:sub(i, i + 1)
-      octet_string = octet_string .. string.char(tonumber(hex, 16))
-  end
-  return octet_string
-end
-
 -----------------------------------
 -- Aliro Reader Verification Key --
 -----------------------------------
@@ -631,6 +726,23 @@ local function max_aliro_endpoint_key_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.lockAliro.maxEndpointKeys(ib.data.value, {visibility = {displayed = false}}))
   end
+end
+
+---------------------------------------------
+-- Feature Map of Door Lock --
+---------------------------------------------
+local function door_lock_feature_map_handler(driver, device, ib, response)
+  for _, device_ep in pairs(device.endpoints) do
+    for _, ep_cluster in pairs(device_ep.clusters) do
+      if ep_cluster.cluster_id == DoorLock.ID then
+        if ep_cluster.feature_map == ib.data.value then
+          return
+        end
+        ep_cluster.feature_map = ib.data.value
+      end
+    end
+  end
+  match_profile(driver, device)
 end
 
 ---------------------------------
@@ -2542,6 +2654,20 @@ local function handle_set_reader_config(driver, device, command)
     return
   end
 
+  local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
+  if reader_config_updated == true then
+    -- Update commandResult
+    local command_result_info = {
+      commandName = cmdName,
+      statusCode = "success"
+    }
+    device:emit_event(capabilities.lockAliro.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    return
+  end
+
   -- Save values to field
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.VERIFICATION_KEY, verificationKey, {persist = true})
@@ -2564,43 +2690,12 @@ end
 local function set_aliro_reader_config_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
-  local verificationKey = device:get_field(lock_utils.VERIFICATION_KEY)
-  local groupId = device:get_field(lock_utils.GROUP_ID)
-  local groupResolvingKey = device:get_field(lock_utils.GROUP_RESOLVING_KEY)
-
-  local status = "success"
-  if ib.status == DoorLock.types.DlStatus.FAILURE then
-    status = "failure"
+  local status = "failure"
+  if ib.status == DoorLock.types.DlStatus.SUCCESS then
+    status = "success"
+    device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, true)
   elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
     status = "invalidCommand"
-  elseif ib.status == DoorLock.types.DlStatus.SUCCESS then
-    if verificationKey ~= nil then
-      device:emit_event(capabilities.lockAliro.readerVerificationKey(
-        verificationKey,
-        {
-          state_change = true,
-          visibility = {displayed = false}
-        }
-      ))
-    end
-    if groupId ~= nil then
-      device:emit_event(capabilities.lockAliro.readerGroupIdentifier(
-        groupId,
-        {
-          state_change = true,
-          visibility = {displayed = false}
-        }
-      ))
-    end
-    if groupResolvingKey ~= nil then
-      device:emit_event(capabilities.lockAliro.groupResolvingKey(
-        groupResolvingKey,
-        {
-          state_change = true,
-          visibility = {displayed = false}
-        }
-      ))
-    end
   end
 
   -- Update commandResult
@@ -2896,6 +2991,7 @@ local new_matter_lock_handler = {
         [DoorLock.attributes.AliroBLEAdvertisingVersion.ID] = aliro_ble_advertising_version_handler,
         [DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported.ID] = max_aliro_credential_issuer_key_handler,
         [DoorLock.attributes.NumberOfAliroEndpointKeysSupported.ID] = max_aliro_endpoint_key_handler,
+        [DoorLockFeatureMapAttr.ID] = door_lock_feature_map_handler,
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.AttributeList.ID] = handle_power_source_attribute_list,
