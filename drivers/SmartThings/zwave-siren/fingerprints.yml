@@ -6,7 +6,7 @@ zwaveManufacturer:
     productId: 0x0003
     deviceProfileName: multifunctional-siren
   - id: "Zooz/ZSE50"
-    deviceLabel: Zooz ZSE50 Siren & Chime
+    deviceLabel: Zooz ZSE50 Siren and Chime
     manufacturerId: 0x027A
     productType: 0x0004
     productId: 0x0369
