@@ -20,6 +20,7 @@ local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
+local ValveDeviceConfiguration = {}
 
 function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
@@ -73,7 +74,6 @@ function FanDeviceConfiguration.assign_profile_for_fan_ep(device, server_fan_ep_
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   return "fan-modular", optional_supported_component_capabilities
 end
-
 
 function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_onoff_ep_id, is_child_device)
   local ep_info = switch_utils.get_endpoint_info(device, server_onoff_ep_id)
@@ -187,6 +187,48 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
   end
 end
 
+function ValveDeviceConfiguration.assign_profile_for_valve_ep(device, valve_ep_id)
+  local profile = "water-valve"
+
+  for _, ep in ipairs(device.endpoints) do
+    if ep.endpoint_id == valve_ep_id then
+      if switch_utils.find_cluster_on_ep(ep, clusters.ValveConfigurationAndControl.ID) then
+        for _, cluster in ipairs(ep.clusters) do
+          if cluster.cluster_id == clusters.ValveConfigurationAndControl.ID and
+            cluster.feature_map and (cluster.feature_map & clusters.ValveConfigurationAndControl.types.Feature.LEVEL) ~= 0 then
+            profile = profile .. "-level"
+            break
+          end
+        end
+      end
+      break
+    end
+  end
+
+  return profile
+end
+
+function ValveDeviceConfiguration.create_child_devices(driver, device, valve_ep_ids, default_endpoint_id)
+  for device_num, ep_id in ipairs(valve_ep_ids) do
+    local label_and_name = string.format("%s Valve %d", device.label, device_num)
+    local child_profile = ValveDeviceConfiguration.assign_profile_for_valve_ep(device, ep_id)
+    driver:try_create_device(
+      {
+        type = "EDGE_CHILD",
+        label = label_and_name,
+        profile = child_profile,
+        parent_device_id = device.id,
+        parent_assigned_child_key = string.format("%d", ep_id),
+        vendor_provided_label = label_and_name
+      }
+    )
+  end
+
+  -- Persist so that the find_child function is always set on each driver init.
+  device:set_field(fields.IS_PARENT_CHILD_DEVICE, true, {persist = true})
+  device:set_find_child(switch_utils.find_child)
+end
+
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
@@ -206,7 +248,61 @@ function DeviceConfiguration.match_profile(driver, device)
   local optional_component_capabilities
   local updated_profile
 
-  if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID) > 0 then
+  local is_irrigation_system = false
+  for _, ep in ipairs(device.endpoints) do
+    for _, dt in ipairs(ep.device_types) do
+      if dt.device_type_id == fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM then
+        is_irrigation_system = true
+        break
+      end
+    end
+  end
+
+  local valve_ep_ids = device:get_endpoints(clusters.ValveConfigurationAndControl.ID)
+
+  if is_irrigation_system then
+    updated_profile = "irrigation-system"
+    if version.api >= 14 and version.rpc >= 8 then
+      local main_component_capabilities = {}
+      local optional_supported_component_capabilities = {}
+      local MAIN_COMPONENT_IDX, CAPABILITIES_LIST_IDX = 1, 2
+
+      table.sort(valve_ep_ids)
+      local main_valve_ep = switch_utils.get_endpoint_info(device, valve_ep_ids[1])
+      for _, cluster in ipairs(main_valve_ep.clusters) do
+        if cluster.cluster_id == clusters.ValveConfigurationAndControl.ID and
+          cluster.feature_map and (cluster.feature_map & clusters.ValveConfigurationAndControl.types.Feature.LEVEL) ~= 0 then
+          table.insert(main_component_capabilities, capabilities.level.ID)
+        elseif cluster.cluster_id == clusters.OperationalState.ID then
+          table.insert(main_component_capabilities, capabilities.operationalState.ID)
+        elseif cluster.cluster_id == clusters.FlowMeasurement.ID then
+          table.insert(main_component_capabilities, capabilities.flowSensor.ID)
+        end
+      end
+
+      table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+
+      device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+
+      -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
+      -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
+      if version.api < 15 or version.rpc < 9 then
+        -- add mandatory capabilities for subscription
+        local total_supported_capabilities = optional_supported_component_capabilities
+        table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
+        table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
+
+        device:set_field(fields.SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
+      end
+    else
+      device:try_update_metadata({profile = profile_name})
+    end
+
+    if #valve_ep_ids > 1 then
+      table.remove(valve_ep_ids, 1) -- the first valve ep is accounted for in the main irrigation system profile
+      ValveDeviceConfiguration.create_child_devices(driver, device, valve_ep_ids, default_endpoint_id)
+    end
+  elseif #valve_ep_ids > 0 then
     updated_profile = "water-valve"
     if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
       {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
@@ -256,5 +352,6 @@ end
 return {
   DeviceCfg = DeviceConfiguration,
   SwitchCfg = SwitchDeviceConfiguration,
-  ButtonCfg = ButtonDeviceConfiguration
+  ButtonCfg = ButtonDeviceConfiguration,
+  ValveCfg = ValveDeviceConfiguration
 }

@@ -30,9 +30,11 @@ SwitchFields.DEVICE_TYPE_ID = {
   ELECTRICAL_SENSOR = 0x0510,
   FAN = 0x002B,
   GENERIC_SWITCH = 0x000F,
+  IRRIGATION_SYSTEM = 0x0040,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
+  WATER_VALVE = 0x0042,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -82,6 +84,11 @@ SwitchFields.LEVEL_BOUND_RECEIVED = "__level_bound_received"
 SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
+SwitchFields.FLOW_BOUND_RECEIVED = "__flow_bound_received"
+SwitchFields.FLOW_MIN = "__flow_min"
+SwitchFields.FLOW_MAX = "__flow_max"
+
+SwitchFields.SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
 
 SwitchFields.SUBSCRIBED_ATTRIBUTES_KEY = "__subscribed_attributes"
 
@@ -132,6 +139,11 @@ SwitchFields.switch_category_vendor_overrides = {
     {0x0004},
   [0x139C] = -- Zemismart
     {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
+}
+
+SwitchFields.operational_state_command_map = {
+  [clusters.OperationalState.commands.Pause.ID] = "pause",
+  [clusters.OperationalState.commands.Resume.ID] = "resume"
 }
 
 --- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
