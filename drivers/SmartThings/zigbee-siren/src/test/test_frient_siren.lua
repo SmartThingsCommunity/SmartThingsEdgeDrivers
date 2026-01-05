@@ -39,7 +39,6 @@ local ALARM_DEFAULT_MAX_DURATION = 0x00F0
 local ALARM_DURATION_TEST_VALUE = 5
 local DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR = 0x8000
 local DEVELCO_MANUFACTURER_CODE = 0x1015
-local IASZONE_ENDPOINT = 0x2B
 
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
