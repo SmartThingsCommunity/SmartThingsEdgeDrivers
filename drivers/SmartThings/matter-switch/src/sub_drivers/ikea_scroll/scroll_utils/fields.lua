@@ -18,9 +18,13 @@ IkeaScrollFields.ENDPOINTS_UP_SCROLL = {1, 4, 7}
 -- Generic Switch Endpoints used for Down Scroll functionality
 IkeaScrollFields.ENDPOINTS_DOWN_SCROLL = {2, 5, 8}
 
+-- Maximum number of presses at a time
 IkeaScrollFields.MAX_SCROLL_PRESSES = 18
+
+-- Amount to rotate per scroll event
 IkeaScrollFields.PER_SCROLL_EVENT_ROTATION = st_utils.round(1 / IkeaScrollFields.MAX_SCROLL_PRESSES * 100)
 
+-- Field to track the latest number of presses counted during a single scroll event sequence
 IkeaScrollFields.LATEST_NUMBER_OF_PRESSES_COUNTED = "__latest_number_of_presses_counted"
 
 -- Required Events for the ENDPOINTS_PUSH.
@@ -37,6 +41,5 @@ IkeaScrollFields.switch_scroll_subscribed_events = {
   clusters.Switch.events.InitialPress.ID,
   clusters.Switch.events.MultiPressOngoing.ID,
 }
-
 
 return IkeaScrollFields

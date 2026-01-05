@@ -7,8 +7,7 @@ local scroll_fields = require "sub_drivers.ikea_scroll.scroll_utils.fields"
 
 local IkeaScrollUtils = {}
 
--- override subscribe function to prevent subscribing to additional events from the main driver
--- and to subscribe to extra events for particular endpoints
+-- override subscribe function in the main driver
 function IkeaScrollUtils.subscribe(device)
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
   for _, ep_push in ipairs(scroll_fields.ENDPOINTS_PUSH) do
