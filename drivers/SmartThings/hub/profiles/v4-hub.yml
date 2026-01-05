@@ -20,6 +20,8 @@ components:
         version: 1
       - id: sec.appliedHubGroupMemberState
         version: 1
+      - id: samsungim.nearbydetection
+        version: 1
     categories:
       - name: Hub
         categoryType: manufacturer
