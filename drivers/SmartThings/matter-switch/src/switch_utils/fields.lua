@@ -97,6 +97,9 @@ SwitchFields.LEVEL_BOUND_RECEIVED = "__level_bound_received"
 SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
+SwitchFields.FLOW_BOUND_RECEIVED = "__flow_bound_received"
+SwitchFields.FLOW_MIN = "__flow_min"
+SwitchFields.FLOW_MAX = "__flow_max"
 
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
@@ -191,6 +194,8 @@ SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
 SwitchFields.OPTIONS_MASK = 0x01
 SwitchFields.OPTIONS_OVERRIDE = 0x01
 
+SwitchFields.SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
+
 
 SwitchFields.supported_capabilities = {
   capabilities.audioMute,
@@ -206,6 +211,7 @@ SwitchFields.supported_capabilities = {
   capabilities.energyMeter,
   capabilities.fanMode,
   capabilities.fanSpeedPercent,
+  capabilities.flowSensor,
   capabilities.hdr,
   capabilities.illuminanceMeasurement,
   capabilities.imageControl,
@@ -214,6 +220,7 @@ SwitchFields.supported_capabilities = {
   capabilities.mechanicalPanTiltZoom,
   capabilities.motionSensor,
   capabilities.nightVision,
+  capabilities.operationalState,
   capabilities.powerMeter,
   capabilities.powerConsumptionReport,
   capabilities.relativeHumidityMeasurement,
@@ -306,6 +313,11 @@ SwitchFields.device_type_attribute_map = {
     clusters.ValveConfigurationAndControl.attributes.CurrentState,
     clusters.ValveConfigurationAndControl.attributes.CurrentLevel
   }
+}
+
+SwitchFields.operational_state_command_map = {
+  [clusters.OperationalState.commands.Pause.ID] = "pause",
+  [clusters.OperationalState.commands.Resume.ID] = "resume"
 }
 
 return SwitchFields

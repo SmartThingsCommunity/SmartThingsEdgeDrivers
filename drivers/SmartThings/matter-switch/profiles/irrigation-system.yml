@@ -4,6 +4,19 @@ components:
   capabilities:
     - id: valve
       version: 1
+    - id: level
+      version: 1
+      config:
+        values:
+          - key: "level.value"
+            range: [0, 100]
+      optional: true
+    - id: flowSensor
+      version: 1
+      optional: true
+    - id: operationalState
+      version: 1
+      optional: true
     - id: firmwareUpdate
       version: 1
     - id: refresh

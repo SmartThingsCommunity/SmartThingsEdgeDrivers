@@ -189,4 +189,21 @@ function CapabilityHandlers.handle_reset_energy_meter(driver, device, cmd)
   end
 end
 
+
+-- [[ OPERATIONAL STATE CAPABILITY COMMANDS ]] --
+
+function CapabilityHandlers.handle_operational_state_resume(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  device:send(clusters.OperationalState.server.commands.Resume(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
+end
+
+function CapabilityHandlers.handle_operational_state_pause(driver, device, cmd)
+  local endpoint_id = device:component_to_endpoint(cmd.component)
+  device:send(clusters.OperationalState.server.commands.Pause(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
+  device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
+end
+
 return CapabilityHandlers

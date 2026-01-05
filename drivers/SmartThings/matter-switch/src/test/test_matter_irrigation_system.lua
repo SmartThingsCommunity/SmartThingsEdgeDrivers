@@ -23,7 +23,7 @@ local endpoints = {
 -- Mock device representing an irrigation system with 3 valve endpoints
 local mock_irrigation_system = test.mock_device.build_test_matter_device({
   label = "Matter Irrigation System",
-  profile = t_utils.get_profile_definition("irrigation-system-level.yml"),
+  profile = t_utils.get_profile_definition("irrigation-system.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -96,7 +96,7 @@ local mock_children = {}
 for i, endpoint in ipairs(mock_irrigation_system.endpoints) do
   if endpoint.endpoint_id == 3 or endpoint.endpoint_id == 4 then
     local child_data = {
-      profile = t_utils.get_profile_definition("irrigation-system-level.yml"),
+      profile = t_utils.get_profile_definition("irrigation-system.yml"),
       device_network_id = string.format("%s:%d", mock_irrigation_system.id, endpoint.endpoint_id),
       parent_device_id = mock_irrigation_system.id,
       parent_assigned_child_key = string.format("%d", endpoint.endpoint_id)
@@ -128,14 +128,14 @@ local function test_init()
     mock_irrigation_system:expect_device_create({
       type = "EDGE_CHILD",
       label = string.format("Matter Irrigation System Valve %d", i - 2),
-      profile = "irrigation-system-level",
+      profile = "water-valve-level",
       parent_device_id = mock_irrigation_system.id,
       parent_assigned_child_key = string.format("%d", i)
     })
   end
   test.socket.matter:__expect_send({mock_irrigation_system.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_irrigation_system.id, "doConfigure" })
-  mock_irrigation_system:expect_metadata_update({ profile = "irrigation-system-level" })
+  mock_irrigation_system:expect_metadata_update({ profile = "irrigation-system" })
   mock_irrigation_system:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 test.set_test_init_function(test_init)
