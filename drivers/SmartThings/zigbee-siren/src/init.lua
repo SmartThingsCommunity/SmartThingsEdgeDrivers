@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings
+-- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -83,13 +83,13 @@ local send_siren_command = function(device, warning_mode, warning_siren_level, s
   siren_configuration:set_siren_level(warning_siren_level)
 
   device:send(
-      IASWD.server.commands.StartWarning(
-          device,
-          siren_configuration,
-          data_types.Uint16(warning_duration),
-          data_types.Uint8(duty_cycle),
-          data_types.Enum8(strobe_level)
-      )
+          IASWD.server.commands.StartWarning(
+                  device,
+                  siren_configuration,
+                  data_types.Uint16(warning_duration),
+                  data_types.Uint8(duty_cycle),
+                  data_types.Enum8(strobe_level)
+          )
   )
 end
 

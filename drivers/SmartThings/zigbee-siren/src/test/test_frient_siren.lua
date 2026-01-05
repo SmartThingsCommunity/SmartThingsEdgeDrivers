@@ -39,6 +39,7 @@ local ALARM_DEFAULT_MAX_DURATION = 0x00F0
 local ALARM_DURATION_TEST_VALUE = 5
 local DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR = 0x8000
 local DEVELCO_MANUFACTURER_CODE = 0x1015
+local IASZONE_ENDPOINT = 0x2B
 
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -129,7 +130,7 @@ local function get_siren_commands_old_fw(warningMode, sirenLevel)
     })
 end
 
-local function get_siren_OFF_commands()
+local function get_siren_OFF_commands(duration)
     local expectedSirenOFFConfiguration = SirenConfiguration(0x00)
     expectedSirenOFFConfiguration:set_warning_mode(WarningMode.STOP)
     expectedSirenOFFConfiguration:set_siren_level(IaswdLevel.LOW_LEVEL)
@@ -139,7 +140,7 @@ local function get_siren_OFF_commands()
         IASWD.server.commands.StartWarning(
                 mock_device,
                 expectedSirenOFFConfiguration,
-                data_types.Uint16(ALARM_DURATION_TEST_VALUE),
+                data_types.Uint16(duration and duration or ALARM_DURATION_TEST_VALUE),
                 data_types.Uint8(0x00),
                 data_types.Enum8(0x00)
         )
@@ -486,7 +487,6 @@ test.register_coroutine_test(
             test.socket.capability:__expect_send(
                     mock_device:generate_test_message("WarningDuration", capabilities.mode.mode("5 seconds"))
             )
-
             test.wait_for_events()
             -- Test siren with update configuration
             test.socket.capability:__queue_receive({
@@ -583,6 +583,82 @@ test.register_coroutine_test(
             )
             -- Expect the OFF command
             get_siren_OFF_commands()
+        end
+)
+
+test.register_coroutine_test(
+        "SirenVoice mode 'Fire' and SirenVolume mode 'LOW' should be handled - when maxWarningDuration is shorted then selected mode",
+        function()
+            local expectedWarningDuration = 7
+            set_new_firmware_and_defaults()
+            test.socket.capability:__set_channel_ordering("relaxed")
+            test.socket.zigbee:__set_channel_ordering("relaxed")
+            test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+            test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+            test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+            test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+            test.timer.__create_and_queue_test_time_advance_timer(expectedWarningDuration, "oneshot")
+
+            test.socket.device_lifecycle():__queue_receive(mock_device:generate_info_changed(
+                    {
+                        preferences = {
+                            maxWarningDuration = expectedWarningDuration
+                        }
+                    }
+            ))
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASWD.attributes.MaxDuration:write(
+                        mock_device,
+                        expectedWarningDuration
+                )
+            })
+
+            test.wait_for_events()
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "mode", component = "SirenVoice", command = "setMode", args = {"Fire"} }
+            })
+            test.mock_time.advance_time(2)
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("SirenVoice", capabilities.mode.mode("Fire"))
+            )
+
+            test.wait_for_events()
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "mode", component = "SirenVolume", command = "setMode", args = {"Low"} }
+            })
+            test.mock_time.advance_time(2)
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("SirenVolume", capabilities.mode.mode("Low"))
+            )
+
+            test.wait_for_events()
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "mode", component = "WarningDuration", command = "setMode", args = {"50 seconds"} }
+            })
+            test.mock_time.advance_time(2)
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("WarningDuration", capabilities.mode.mode("50 seconds"))
+            )
+
+            test.wait_for_events()
+            -- Test siren with update configuration
+            test.socket.capability:__queue_receive({
+                mock_device.id,
+                { capability = "alarm", component = "main", command = "siren", args = {} }
+            })
+            test.mock_time.advance_time(1)
+            -- Expect the command with given configuration
+            get_siren_commands_new_fw(WarningMode.FIRE,IaswdLevel.LOW_LEVEL, expectedWarningDuration)
+
+            test.mock_time.advance_time(expectedWarningDuration)
+            -- stop the siren
+            -- Expect the OFF command
+            get_siren_OFF_commands(expectedWarningDuration)
         end
 )
 

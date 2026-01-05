@@ -39,8 +39,8 @@ components:
       - id: mode
         version: 1
 preferences:
-  - title: "Alarm duration (s)"
-    name: warningDuration
+  - title: "Max alarm duration (s)"
+    name: maxWarningDuration
     description: "After how many seconds should the alarm turn off"
     required: false
     preferenceType: integer
@@ -51,4 +51,3 @@ preferences:
 metadata:
   mnmn: SmartThings
   vid: SmartThings-smartthings-frient_Siren_Tamper
-
