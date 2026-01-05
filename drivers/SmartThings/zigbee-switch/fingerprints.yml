@@ -116,6 +116,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.light.acn004
     deviceProfileName: aqara-light
+  - id: "LUMI/lumi.light.cwacn1"
+    deviceLabel: Aqara Smart Dimmer Controller T1 (0-10v)
+    manufacturer: LUMI
+    model: lumi.light.cwacn1
+    deviceProfileName: aqara-light
   - id: "Aqara/lumi.light.acn014"
     deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
     manufacturer: Aqara
@@ -2359,6 +2364,11 @@ zigbeeManufacturer:
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
   # Inovelli
+  - id: "Inovelli/VZM30-SN"
+    deviceLabel: "Inovelli On/Off Blue Series"
+    manufacturer: Inovelli
+    model: VZM30-SN
+    deviceProfileName: inovelli-vzm30-sn
   - id: "Inovelli/VZM31-SN"
     deviceLabel: "Inovelli 2-in-1 Blue Series"
     manufacturer: Inovelli
@@ -2390,10 +2400,21 @@ zigbeeManufacturer:
     manufacturer: NodOn
     model: SIN-4-1-21
     deviceProfileName: switch-power-energy
+  #Yanmi
   - id: "JNL/Y-K003-001"
     deviceLabel: Yanmi Switch (3 Way) 1
     manufacturer: JNL
     model: Y-K003-001
+    deviceProfileName: basic-switch
+  - id: "JNL/Y-K001-001"
+    deviceLabel: Yanmi Switch (1 Way) 
+    manufacturer: JNL
+    model: Y-K001-001
+    deviceProfileName: basic-switch  
+  - id: "JNL/Y-K002-001"
+    deviceLabel: Yanmi Switch (2 Way) 1
+    manufacturer: JNL
+    model: Y-K002-001
     deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"

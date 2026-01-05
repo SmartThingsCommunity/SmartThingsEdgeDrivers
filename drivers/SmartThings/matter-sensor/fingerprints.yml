@@ -10,6 +10,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2003
     deviceProfileName: motion-illuminance-battery
+  - id: "4447/8197"
+    deviceLabel: Presence Multi-Sensor FP300
+    vendorId: 0x115F
+    productId: 0x2005
+    deviceProfileName: presence-illuminance-temperature-humidity-battery
   #Bosch
   - id: 4617/12309
     deviceLabel: "Door/window contact II [M]"
@@ -79,6 +84,32 @@ matterManufacturer:
     vendorId: 0x120B
     productId: 0x1060
     deviceProfileName: temperature-humidity-battery
+  # Ikea
+  - id: "4476/32773"
+    deviceLabel: TIMMERFLOTTE temp/hmd sensor
+    vendorId: 0x117C
+    productId: 0x8005
+    deviceProfileName: temperature-humidity-battery
+  - id: "4476/32774"
+    deviceLabel: KLIPPBOK Matter water leak sensor smart
+    vendorId: 0x117C
+    productId: 0x8006
+    deviceProfileName: leak-battery
+  - id: "4476/12288"
+    deviceLabel: MYGGSPRAY wrlss mtn sensor
+    vendorId: 0x117C
+    productId: 0x3000
+    deviceProfileName: motion-illuminance-battery
+  - id: "4476/12289"
+    deviceLabel: ALPSTUGA Matter air quality sensor smart
+    vendorId: 0x117C
+    productId: 0x3001
+    deviceProfileName: aqs-modular-temp-humidity
+  - id: "4476/32775"
+    deviceLabel: MYGGBETT Matter door/window sensor smart
+    vendorId: 0x117C
+    productId: 0x8007
+    deviceProfileName: contact-battery
   # Legrand
   - id: "Legrand/Netatmo/Smart-2-in-1-Sensor"
     deviceLabel: Netatmo Smart 2-in-1 Sensor
@@ -123,6 +154,11 @@ matterManufacturer:
     vendorId: 0x1345
     productId: 0x4201
     deviceProfileName: motion-illuminance
+  - id: "4933/16898"
+    deviceLabel: Smart Presence Sensor (Thread)
+    vendorId: 0x1345
+    productId: 0x4202
+    deviceProfileName: motion-illuminance-battery
   # Neo
   - id: "4991/1122"
     deviceLabel: Door Sensor

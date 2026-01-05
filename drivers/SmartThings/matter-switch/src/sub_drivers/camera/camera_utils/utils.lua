@@ -35,10 +35,6 @@ function CameraUtils.update_camera_component_map(device)
           clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel.ID,
           clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel.ID,
         },
-        capability_ids = {
-          capabilities.audioMute.ID,
-          capabilities.audioVolume.ID,
-        }
       }
     end
     if CameraUtils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
@@ -51,10 +47,6 @@ function CameraUtils.update_camera_component_map(device)
           clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel.ID,
           clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel.ID,
         },
-        capability_ids = {
-          capabilities.audioMute.ID,
-          capabilities.audioVolume.ID,
-        }
       }
     end
     device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})

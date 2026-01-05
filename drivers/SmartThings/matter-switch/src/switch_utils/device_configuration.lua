@@ -29,10 +29,13 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
 
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
-  if is_child_device and (
-    server_onoff_ep_id == switch_utils.get_product_override_field(device, "ep_id") or
-    generic_profile == switch_utils.get_product_override_field(device, "initial_profile")
-  ) then
+  local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
+  if static_electrical_tags ~= nil then
+    -- profiles like 'light-binary' and 'plug-binary' should drop the '-binary' and become 'light-power', 'plug-energy-powerConsumption', etc.
+    generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
+  end
+
+  if is_child_device and generic_profile == switch_utils.get_product_override_field(device, "initial_profile") then
     generic_profile = switch_utils.get_product_override_field(device, "target_profile") or generic_profile
   end
 
@@ -45,25 +48,21 @@ function SwitchDeviceConfiguration.create_child_devices(driver, device, server_o
    return
   end
 
-  local device_num = 0
   table.sort(server_onoff_ep_ids)
-  for idx, ep_id in ipairs(server_onoff_ep_ids) do
-    device_num = device_num + 1
+  for device_num, ep_id in ipairs(server_onoff_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
-      local name = string.format("%s %d", device.label, device_num)
+      local label_and_name = string.format("%s %d", device.label, device_num)
       local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
-      driver:try_create_device({
-        type = "EDGE_CHILD",
-        label = name,
-        profile = child_profile,
-        parent_device_id = device.id,
-        parent_assigned_child_key = string.format("%d", ep_id),
-        vendor_provided_label = name
-      })
-      if idx == 1 and string.find(child_profile, "energy") then
-        -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-        device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep_id, {persist = true})
-      end
+      driver:try_create_device(
+        {
+          type = "EDGE_CHILD",
+          label = label_and_name,
+          profile = child_profile,
+          parent_device_id = device.id,
+          parent_assigned_child_key = string.format("%d", ep_id),
+          vendor_provided_label = label_and_name
+        }
+      )
     end
   end
 
@@ -74,15 +73,15 @@ end
 
 -- Per the spec, these attributes are "meant to be changed only during commissioning."
 function SwitchDeviceConfiguration.set_device_control_options(device)
-  for _, ep_info in ipairs(device.endpoints) do
+  for _, ep in ipairs(device.endpoints) do
     -- before the Matter 1.3 lua libs update (HUB FW 54), OptionsBitmap was defined as LevelControlOptions
-    if switch_utils.ep_supports_cluster(ep_info, clusters.LevelControl.ID) then
-      device:send(clusters.LevelControl.attributes.Options:write(device, ep_info.endpoint_id, clusters.LevelControl.types.LevelControlOptions.EXECUTE_IF_OFF))
+    if switch_utils.find_cluster_on_ep(ep, clusters.LevelControl.ID) then
+      device:send(clusters.LevelControl.attributes.Options:write(device, ep.endpoint_id, clusters.LevelControl.types.LevelControlOptions.EXECUTE_IF_OFF))
     end
     -- before the Matter 1.4 lua libs update (HUB FW 56), there was no OptionsBitmap type defined
-    if switch_utils.ep_supports_cluster(ep_info, clusters.ColorControl.ID) then
+    if switch_utils.find_cluster_on_ep(ep, clusters.ColorControl.ID) then
       local excute_if_off_bit = clusters.ColorControl.types.OptionsBitmap and clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF or 0x0001
-      device:send(clusters.ColorControl.attributes.Options:write(device, ep_info.endpoint_id, excute_if_off_bit))
+      device:send(clusters.ColorControl.attributes.Options:write(device, ep.endpoint_id, excute_if_off_bit))
     end
   end
 end
@@ -160,9 +159,20 @@ end
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
+local function profiling_data_still_required(device)
+  for _, field in pairs(fields.profiling_data) do
+    if device:get_field(field) == nil then
+      return true -- data still required if a field is nil
+    end
+  end
+  return false
+end
+
 function DeviceConfiguration.match_profile(driver, device)
+  if profiling_data_still_required(device) then return end
+
   local default_endpoint_id = switch_utils.find_default_endpoint(device)
-  local updated_profile = nil
+  local updated_profile
 
   if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID) > 0 then
     updated_profile = "water-valve"
@@ -180,19 +190,14 @@ function DeviceConfiguration.match_profile(driver, device)
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
-    if generic_profile("plug-binary") or generic_profile("plug-level") then
-      if switch_utils.check_switch_category_vendor_overrides(device) then
-        updated_profile = string.gsub(updated_profile, "plug", "switch")
-      else
-        local electrical_tags = ""
-        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalPowerMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-power" end
-        if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID) > 0 then electrical_tags = electrical_tags .. "-energy-powerConsumption" end
-        if electrical_tags ~= "" then updated_profile = string.gsub(updated_profile, "-binary", "") .. electrical_tags end
-      end
-    elseif generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
+    if generic_profile("light-color-level") and #device:get_endpoints(clusters.FanControl.ID) > 0 then
       updated_profile = "light-color-level-fan"
     elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
+    elseif generic_profile("plug-binary") or generic_profile("plug-level") then
+      if switch_utils.check_switch_category_vendor_overrides(device) then
+        updated_profile = string.gsub(updated_profile, "plug", "switch")
+      end
     elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
