@@ -101,7 +101,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     end
     device:subscribe()
 
-    -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
+    -- device energy reporting must be handled cumulatively, periodically, or by both simultaneously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
     if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then

@@ -43,9 +43,11 @@ SwitchFields.DEVICE_TYPE_ID = {
   DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
   GENERIC_SWITCH = 0x000F,
+  IRRIGATION_SYSTEM = 0x0040,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
+  WATER_VALVE = 0x0042,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -148,7 +150,7 @@ SwitchFields.switch_category_vendor_overrides = {
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
---- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
+--- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 
 SwitchFields.profiling_data = {
@@ -299,6 +301,10 @@ SwitchFields.device_type_attribute_map = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+  },
+  [SwitchFields.DEVICE_TYPE_ID.WATER_VALVE] = {
+    clusters.ValveConfigurationAndControl.attributes.CurrentState,
+    clusters.ValveConfigurationAndControl.attributes.CurrentLevel
   }
 }
 

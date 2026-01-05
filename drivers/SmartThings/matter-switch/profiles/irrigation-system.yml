@@ -1,0 +1,13 @@
+name: irrigation-system
+components:
+- id: main
+  capabilities:
+    - id: valve
+      version: 1
+    - id: firmwareUpdate
+      version: 1
+    - id: refresh
+      version: 1
+  categories:
+  - name: IrrigationSystem
+
