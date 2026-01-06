@@ -121,27 +121,69 @@ function CameraUtils.profile_changed(synced_components, prev_components)
 end
 
 function CameraUtils.optional_capabilities_list_changed(optional_capabilities, prev_component_list)
+  -- Build a normalized structure from prev_component_list: {component_name = {cap1, cap2, ...}}
   local prev_optional_capabilities = {}
-  for idx, comp in pairs(prev_component_list or {}) do
+  for comp_name, comp in pairs(prev_component_list or {}) do
     local cap_list = {}
     for _, capability in pairs(comp.capabilities or {}) do
       table.insert(cap_list, capability.id)
     end
-    table.insert(prev_optional_capabilities, {idx, cap_list})
+    table.sort(cap_list)
+    prev_optional_capabilities[comp_name] = cap_list
   end
-  if #optional_capabilities ~= #prev_optional_capabilities then
+
+  -- Build a normalized structure from optional_capabilities: {component_name = {cap1, cap2, ...}}
+  local new_optional_capabilities = {}
+  for _, component_entry in pairs(optional_capabilities or {}) do
+    local comp_name = component_entry[1]
+    local cap_list = {}
+    for _, cap_name in pairs(component_entry[2] or {}) do
+      table.insert(cap_list, cap_name)
+    end
+    if comp_name == "main" then
+      table.insert(cap_list, "firmwareUpdate")
+      table.insert(cap_list, "refresh")
+    end
+    table.sort(cap_list)
+    new_optional_capabilities[comp_name] = cap_list
+  end
+
+  -- Compare number of components
+  local prev_count = 0
+  for _ in pairs(prev_optional_capabilities) do
+    prev_count = prev_count + 1
+  end
+  local new_count = 0
+  for _ in pairs(new_optional_capabilities) do
+    new_count = new_count + 1
+  end
+  if prev_count ~= new_count then
     return true
   end
-  for _, capability in pairs(optional_capabilities or {}) do
-    if not switch_utils.tbl_contains(prev_optional_capabilities, capability) then
+
+  -- Check if all components in new_optional_capabilities exist in prev with same capabilities
+  for comp_name, cap_list in pairs(new_optional_capabilities) do
+    local prev_cap_list = prev_optional_capabilities[comp_name]
+    if prev_cap_list == nil then
+      return true
+    end
+    if #cap_list ~= #prev_cap_list then
+      return true
+    end
+    for i, cap in ipairs(cap_list) do
+      if cap ~= prev_cap_list[i] then
+        return true
+      end
+    end
+  end
+
+  -- Check if all components in prev exist in new_optional_capabilities
+  for comp_name, _ in pairs(prev_optional_capabilities) do
+    if new_optional_capabilities[comp_name] == nil then
       return true
     end
   end
-  for _, capability in pairs(prev_optional_capabilities or {}) do
-    if not switch_utils.tbl_contains(optional_capabilities, capability) then
-      return true
-    end
-  end
+
   return false
 end
 
