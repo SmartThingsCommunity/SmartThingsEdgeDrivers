@@ -91,7 +91,7 @@ function AttributeHandlers.current_hue_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
   end
   if type(device.register_native_capability_attr_handler) == "function" then
-    device:register_native_capability_attr_handler("colorControl","hue")
+    device:register_native_capability_attr_handler("colorControl", "hue")
   end
 end
 
@@ -101,7 +101,7 @@ function AttributeHandlers.current_saturation_handler(driver, device, ib, respon
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
   end
   if type(device.register_native_capability_attr_handler) == "function" then
-    device:register_native_capability_attr_handler("colorControl","saturation")
+    device:register_native_capability_attr_handler("colorControl", "saturation")
   end
 end
 
