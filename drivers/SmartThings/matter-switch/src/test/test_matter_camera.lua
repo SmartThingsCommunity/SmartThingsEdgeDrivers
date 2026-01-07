@@ -51,6 +51,10 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_type = "SERVER"
         },
         {
+          cluster_id = clusters.PushAvStreamTransport.ID,
+          cluster_type = "SERVER"
+        },
+        {
           cluster_id = clusters.ZoneManagement.ID,
           feature_map = clusters.ZoneManagement.types.Feature.TWO_DIMENSIONAL_CARTESIAN_ZONE |
             clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY,
