@@ -356,6 +356,14 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
+      }
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -367,7 +375,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(50))
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
+      }
+    },
   }
 )
 

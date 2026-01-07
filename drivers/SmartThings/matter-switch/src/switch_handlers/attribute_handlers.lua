@@ -38,7 +38,10 @@ end
 
 function AttributeHandlers.level_control_current_level_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
-    local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
+    local level = ib.data.value
+    if level > 0 then
+      level = math.max(1, st_utils.round(level / 254.0 * 100))
+    end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
     if type(device.register_native_capability_attr_handler) == "function" then
       device:register_native_capability_attr_handler("switchLevel", "level")
@@ -83,19 +86,23 @@ end
 -- [[ COLOR CONTROL CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.current_hue_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
   end
-  local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "hue")
+  end
 end
 
 function AttributeHandlers.current_saturation_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
   end
-  local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "saturation")
+  end
 end
 
 function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, response)
