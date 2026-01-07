@@ -1,0 +1,107 @@
+name: switch-4inputs-2outputs
+components:
+  - id: main
+    capabilities:
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+  - id: input1
+    label: "Input 1"
+    capabilities:
+      - id: switch
+        version: 1
+  - id: input2
+    label: "Input 2"
+    capabilities:
+      - id: switch
+        version: 1
+  - id: input3
+    label: "Input 3"
+    capabilities:
+      - id: switch
+        version: 1
+  - id: input4
+    label: "Input 4"
+    capabilities:
+      - id: switch
+        version: 1
+preferences:
+  # Input 1
+  - title: "Input 1: Reverse Polarity"
+    name: reversePolarity1
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 1: Control Output 1"
+    name: controlOutput11
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 1: Control Output 2"
+    name: controlOutput21
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  # Input 2
+  - title: "Input 2: Reverse Polarity"
+    name: reversePolarity2
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 2: Control Output 1"
+    name: controlOutput12
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 2: Control Output 2"
+    name: controlOutput22
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  # Input 3
+  - title: "Input 3: Reverse Polarity"
+    name: reversePolarity3
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 3: Control Output 1"
+    name: controlOutput13
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 3: Control Output 2"
+    name: controlOutput23
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  # Input 4
+  - title: "Input 4: Reverse Polarity"
+    name: reversePolarity4
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 4: Control Output 1"
+    name: controlOutput14
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
+  - title: "Input 4: Control Output 2"
+    name: controlOutput24
+    required: true
+    preferenceType: boolean
+    definition:
+      default: false
