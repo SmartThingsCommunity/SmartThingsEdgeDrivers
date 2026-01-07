@@ -64,22 +64,6 @@ local reload_all_codes = function(device)
   device:send(LockCluster.server.commands.GetPINCode(device, device:get_field(lock_utils.CHECKING_CODE)))
 end
 
-local refresh = function(driver, device, cmd)
-  device:refresh()
-  device:send(LockCluster.attributes.LockState:read(device))
-  device:send(Alarm.attributes.AlarmCount:read(device))
-end
-
-local device_added = function(driver, device)
-  lock_utils.reload_tables(device)
-
-  driver:inject_capability_command(device, {
-    capability = capabilities.refresh.ID,
-    command = capabilities.refresh.commands.refresh.NAME,
-    args = {}
-  })
-end
-
 local init = function(driver, device)
   lock_utils.reload_tables(device)
   device.thread:call_with_delay(2, function(d)
@@ -567,9 +551,6 @@ local new_capabilities_driver = {
       [LockCredentials.commands.deleteCredential.NAME] = delete_credential_handler,
       [LockCredentials.commands.deleteAllCredentials.NAME] = delete_all_credentials_handler,
     },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = refresh
-    },
 
     [capabilities.lockCodes.ID] = { -- REMOVE THIS WHEN DONE WITH TESTING
       [capabilities.lockCodes.commands.migrate.NAME] = migrate,
@@ -583,7 +564,6 @@ local new_capabilities_driver = {
   },
   health_check = false,
   lifecycle_handlers = {
-    added = device_added,
     init = init,
     doConfigure = do_configure
   },

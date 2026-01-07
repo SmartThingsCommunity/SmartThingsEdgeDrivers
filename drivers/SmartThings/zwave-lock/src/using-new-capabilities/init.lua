@@ -1,7 +1,7 @@
 local capabilities = require "st.capabilities"
 local LockUsers = capabilities.lockUsers
 local LockCredentials = capabilities.lockCredentials
-local lock_utils = require "using-new-capabilities.new_lock_utils"
+local lock_utils = require "new_lock_utils"
 local utils = require "st.utils"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
@@ -9,8 +9,8 @@ local cc = require "st.zwave.CommandClass"
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
-local access_control_event = Notification.event.access_control
 local log = require "log"
+local TamperDefaults = require "st.zwave.defaults.tamperAlert"
 
 -- Helper methods
 local reload_all_codes = function(device)
@@ -313,166 +313,16 @@ local user_code_report_handler = function(driver, device, cmd)
 end
 
 local notification_report_handler = function(driver, device, cmd)
-  if (cmd.args.notification_type == Notification.notification_type.ACCESS_CONTROL) then
-    local event = cmd.args.event
-    local credential_index = tonumber(lock_utils.get_code_id_from_notification_event(cmd.args.event_parameter, cmd.args.v1_alarm_level))
-    local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
-    local status = lock_utils.STATUS_SUCCESS
-    local command = device:get_field(lock_utils.COMMAND_NAME)
-    local emit_event = false
+  ------------ USER CODE PROGRAMMING EVENTS ------------
+  lock_utils.base_driver_code_event_handler(driver, device, cmd)
 
-    if (event == access_control_event.ALL_USER_CODES_DELETED) then
-      -- all credentials have been deleted
-      for _, credential in pairs(lock_utils.get_credentials(device)) do
-        lock_utils.delete_credential(device, credential.credentialIndex)
-        emit_event = true
-      end
-    elseif (event == access_control_event.SINGLE_USER_CODE_DELETED) then
-      -- credential has been deleted.
-      if lock_utils.get_credential(device, credential_index) ~= nil then
-        lock_utils.delete_credential(device, credential_index)
-        emit_event = true
-      end
-    elseif (event == access_control_event.NEW_USER_CODE_ADDED) then
-      if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
-      -- create credential if not already present.
-        if lock_utils.get_credential(device, credential_index) == nil then
-          lock_utils.add_credential(device,
-            active_credential.userIndex,
-            active_credential.credentialType,
-            credential_index)
-          emit_event = true
-        end
-      elseif command ~= nil and command.name == lock_utils.UPDATE_CREDENTIAL then
-        -- update credential
-        local credential = lock_utils.get_credential(device, credential_index)
-        if credential ~= nil then
-          lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
-          emit_event = true
-        end
-      else
-        -- out-of-band update. Don't add if already in table.
-        if lock_utils.get_credential(device, credential_index) == nil then
-          local new_user_index = lock_utils.get_available_user_index(device)
-          if new_user_index ~= nil then
-            lock_utils.create_user(device, nil, "guest", new_user_index)
-            lock_utils.add_credential(device,
-              new_user_index,
-              lock_utils.CREDENTIAL_TYPE,
-              credential_index)
-            emit_event = true
-          else
-            status = lock_utils.STATUS_RESOURCE_EXHAUSTED
-          end
-        end
-      end
-    elseif (event == access_control_event.NEW_USER_CODE_NOT_ADDED_DUE_TO_DUPLICATE_CODE) then
-      -- adding credential failed since code already exists.
-      -- remove the created user if one got made. There is no associated credential.
-      status = lock_utils.STATUS_DUPLICATE
-      lock_utils.delete_user(device, active_credential.userIndex)
-    elseif (event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION) then
-      -- master code changed -- should we send an index with this?
-      device:emit_event(capabilities.lockCredentials.commandResult(
-        {commandName = lock_utils.UPDATE_CREDENTIAL, statusCode = lock_utils.STATUS_SUCCESS},
-        { state_change = true, visibility = { displayed = true } }
-      ))
-    end
+  ------------ LOCK OPERATION EVENTS ------------
+  lock_utils.door_operation_event_handler(driver, device, cmd)
 
-    -- handle emitting events if any changes occured.
-    if emit_event then
-      lock_utils.send_events(device)
-    end
-    -- clear the busy state and handle the commandStatus
-    -- ignore handling the busy state for some commands, they are handled within their own handlers
-    if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
-      lock_utils.clear_busy_state(device, status)
-    end
-
-    ------------ LOCK OPERATION EVENTS ------------
-    if (event >= access_control_event.MANUAL_LOCK_OPERATION and event <= access_control_event.LOCK_JAMMED) then
-      local event_to_send
-
-      local METHOD = {
-        KEYPAD = "keypad",
-        MANUAL = "manual",
-        COMMAND = "command",
-        AUTO = "auto"
-      }
-
-      local DELAY_LOCK_EVENT = "_delay_lock_event"
-      local DELAY_LOCK_EVENT_TIMER = "_delay_lock_event_timer"
-      local MAX_DELAY = 10
-
-      if ((event >= access_control_event.MANUAL_LOCK_OPERATION and
-            event <= access_control_event.KEYPAD_UNLOCK_OPERATION) or
-            event == access_control_event.AUTO_LOCK_LOCKED_OPERATION) then
-        -- even event codes are unlocks, odd event codes are locks
-        local events = {[0] = capabilities.lock.lock.unlocked(), [1] = capabilities.lock.lock.locked()}
-        event_to_send = events[event & 1]
-      elseif (event >= access_control_event.MANUAL_NOT_FULLY_LOCKED_OPERATION and
-              event <= access_control_event.LOCK_JAMMED) then
-        event_to_send = capabilities.lock.lock.unknown()
-      end
-
-      if (event_to_send ~= nil) then
-        local method_map = {
-          [access_control_event.MANUAL_UNLOCK_OPERATION] = METHOD.MANUAL,
-          [access_control_event.MANUAL_LOCK_OPERATION] = METHOD.MANUAL,
-          [access_control_event.MANUAL_NOT_FULLY_LOCKED_OPERATION] = METHOD.MANUAL,
-          [access_control_event.RF_LOCK_OPERATION] = METHOD.COMMAND,
-          [access_control_event.RF_UNLOCK_OPERATION] = METHOD.COMMAND,
-          [access_control_event.RF_NOT_FULLY_LOCKED_OPERATION] = METHOD.COMMAND,
-          [access_control_event.KEYPAD_LOCK_OPERATION] = METHOD.KEYPAD,
-          [access_control_event.KEYPAD_UNLOCK_OPERATION] = METHOD.KEYPAD,
-          [access_control_event.AUTO_LOCK_LOCKED_OPERATION] = METHOD.AUTO,
-          [access_control_event.AUTO_LOCK_NOT_FULLY_LOCKED_OPERATION] = METHOD.AUTO
-        }
-
-        event_to_send["data"] = {method = method_map[event]}
-
-        -- SPECIAL CASES:
-        if (event == access_control_event.MANUAL_UNLOCK_OPERATION and cmd.args.event_parameter == 2) then
-          -- functionality from DTH, some locks can distinguish being manually locked via keypad
-          event_to_send.data.method = METHOD.KEYPAD
-        elseif (event == access_control_event.KEYPAD_LOCK_OPERATION or event == access_control_event.KEYPAD_UNLOCK_OPERATION) then
-          local code_id = cmd.args.v1_alarm_level
-          if cmd.args.event_parameter ~= nil and string.len(cmd.args.event_parameter) ~= 0 then
-            local event_params = { cmd.args.event_parameter:byte(1, -1) }
-            code_id = (#event_params == 1) and event_params[1] or event_params[3]
-          end
-          local user_id = nil
-          local credential = lock_utils.get_credential(device, code_id)
-          if (credential ~= nil) then
-            user_id = credential.userIndex
-          end
-          if user_id ~= nil then event_to_send["data"] = { userIndex = user_id, method = event_to_send["data"].method } end
-        end
-
-        -- if this is an event corresponding to a recently-received attribute report, we
-        -- want to set our delay timer for future lock attribute report events
-        if device:get_latest_state(
-          "main",
-          capabilities.lock.ID,
-          capabilities.lock.lock.ID) == event_to_send.value.value then
-          local preceding_event_time = device:get_field(DELAY_LOCK_EVENT) or 0
-          local socket = require "socket"
-          local time_diff = socket.gettime() - preceding_event_time
-          if time_diff < MAX_DELAY then
-            device:set_field(DELAY_LOCK_EVENT, time_diff)
-          end
-        end
-
-        local timer = device:get_field(DELAY_LOCK_EVENT_TIMER)
-        if timer ~= nil then
-          device.thread:cancel_timer(timer)
-          device:set_field(DELAY_LOCK_EVENT_TIMER, nil)
-        end
-
-        device:emit_event(event_to_send)
-      end
-    end
-  end
+  ------------ TAMPER EVENTS ------------
+  -- We have to load and call this manually since we're now overriding notfication handling
+  -- in this driver
+  TamperDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](driver, device, cmd)
 end
 
 local users_number_report_handler = function(driver, device, cmd)

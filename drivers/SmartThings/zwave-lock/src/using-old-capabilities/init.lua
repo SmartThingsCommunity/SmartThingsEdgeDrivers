@@ -133,11 +133,11 @@ local function migrate(driver, device, cmd)
   device:emit_event(capabilities.lockCredentials.minPinCodeLen(min_code_len, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCredentials.maxPinCodeLen(max_code_len, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { state_change = true, visibility = { displayed = true } }))
+  device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockUsers.users(lock_users, { state_change = true, visibility = { displayed = true } }))
-  device:emit_event(capabilities.lockCodes.migrated(true, { state_change = true,  visibility = { displayed = true } }))
+  device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
 end
 
 local using_old_capabilities = {
@@ -164,7 +164,6 @@ local using_old_capabilities = {
     require("using-old-capabilities.keywe-lock"),
   },
   can_handle = function(opts, driver, device, ...)
-    if not device:supports_capability_by_id(capabilities.lockCodes.ID) then return false end
     local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID,
       capabilities.lockCodes.migrated.NAME, false)
     if not lock_codes_migrated then

@@ -32,6 +32,10 @@ local zwave_lock_endpoints = {
   }
 }
 
+local test_credential_index = 1
+local test_credentials = {}
+local test_users = {}
+
 local mock_device = test.mock_device.build_test_zwave_device(
   {
     profile = t_utils.get_profile_definition("base-lock.yml"),
@@ -42,9 +46,25 @@ local mock_device = test.mock_device.build_test_zwave_device(
   }
 )
 
+-- start with a migrated blank device
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+  test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "migrate", args = {} } })
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(8,  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(8, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+
+  -- reset these globals
+  test_credential_index = 1
+  test_credentials = {}
+  test_users = {}
 end
+
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(

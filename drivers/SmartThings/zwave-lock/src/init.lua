@@ -23,9 +23,9 @@ local defaults = require "st.zwave.defaults"
 local lazy_load_if_possible = function(sub_driver_name)
   -- gets the current lua libs api version
   local version = require "version"
-  if version.api >= 16 then
-    return ZwaveDriver.lazy_load_sub_driver_v2(sub_driver_name)
-  elseif version.api >= 9 then
+  -- if version.api >= 16 then
+  --   return ZwaveDriver.lazy_load_sub_driver_v2(sub_driver_name)
+  if version.api >= 9 then
     return ZwaveDriver.lazy_load_sub_driver(require(sub_driver_name))
   else
     return require(sub_driver_name)

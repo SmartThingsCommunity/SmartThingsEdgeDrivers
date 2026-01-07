@@ -29,6 +29,7 @@ local LockCodes                 = capabilities.lockCodes
 
 local socket = require "cosock.socket"
 local lock_utils = require "lock_utils"
+local new_lock_utils = require "new_lock_utils"
 
 local DELAY_LOCK_EVENT = "_delay_lock_event"
 local MAX_DELAY = 10
@@ -77,28 +78,19 @@ local function device_added(driver, device)
   if device.useOldCapabilityForTesting == nil then
     if device:supports_capability_by_id(LockCodes.ID) then
       device:emit_event(LockCodes.migrated(true, { state_change = true, visibility = { displayed = true } }))
-      if device.device_added ~= nil then
-        -- make the driver call this command again, it will now be handled in new capabilities.
-        driver.lifecycle_handlers.device_added(driver, device)
-      end
+      new_lock_utils.reload_tables(device)
     else
       lock_utils.populate_state_from_data(device)
-      driver:inject_capability_command(device, {
-        capability = capabilities.refresh.ID,
-        command = capabilities.refresh.commands.refresh.NAME,
-        args = {}
-      })
     end
   else
     lock_utils.populate_state_from_data(device)
-
-    driver:inject_capability_command(device, {
-      capability = capabilities.refresh.ID,
-      command = capabilities.refresh.commands.refresh.NAME,
-      args = {}
-    })
   end
 
+  driver:inject_capability_command(device, {
+    capability = capabilities.refresh.ID,
+    command = capabilities.refresh.commands.refresh.NAME,
+    args = {}
+  })
 end
 
 local function init(driver, device)

@@ -19,9 +19,7 @@ local cc = require "st.zwave.CommandClass"
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
---- @type st.zwave.defaults.lockCodes
-local lock_code_defaults = require "st.zwave.defaults.lockCodes"
-local json = require "dkjson"
+local lock_utils = require "new_lock_utils"
 
 local METHOD = {
   KEYPAD = "keypad",
@@ -49,24 +47,31 @@ end
 local function alarm_report_handler(driver, device, cmd)
   local alarm_type = cmd.args.alarm_type
   local event = nil
-  local lock_codes = lock_code_defaults.get_lock_codes(device)
-  local code_id = nil
+  local credential_index = nil
   if (cmd.args.alarm_level ~= nil) then
-    code_id = tostring(cmd.args.alarm_level)
+    credential_index = cmd.args.alarm_level
   end
   if (alarm_type == 9 or alarm_type == 17) then
     event = capabilities.lock.lock.unknown()
   elseif (alarm_type == 16 or alarm_type == 19) then
     event = capabilities.lock.lock.unlocked()
-    if (device:supports_capability(capabilities.lockCodes) and code_id ~= nil) then
-      local code_name = lock_code_defaults.get_code_name(device, code_id)
-      event.data = {codeId = code_id, codeName = code_name, method = METHOD.KEYPAD}
+    if (code_id ~= nil) then
+      local user_id = nil
+      local credential = lock_utils.get_credential(device, credential_index)
+      if (credential ~= nil) then
+        user_id = credential.userIndex
+      end
+      event.data = { userIndex = user_id, method = METHOD.KEYPAD}
     end
   elseif (alarm_type == 18) then
     event = capabilities.lock.lock.locked()
-    if (device:supports_capability(capabilities.lockCodes) and code_id ~= nil) then
-      local code_name = lock_code_defaults.get_code_name(device, code_id)
-      event.data = {codeId = code_id, codeName = code_name, method = METHOD.KEYPAD}
+    if (code_id ~= nil) then
+      local user_id = nil
+      local credential = lock_utils.get_credential(device, credential_index)
+      if (credential ~= nil) then
+        user_id = credential.userIndex
+      end
+      event.data = { userIndex = user_id, method = METHOD.KEYPAD}
     end
   elseif (alarm_type == 21) then
     event = capabilities.lock.lock.locked()
@@ -94,37 +99,62 @@ local function alarm_report_handler(driver, device, cmd)
     event = capabilities.lock.lock.locked()
     event["data"] = {method = METHOD.AUTO}
   elseif (alarm_type == 32) then
-    -- all user codes deleted
-    for code_id, _ in pairs(lock_codes) do
-      lock_code_defaults.code_deleted(device, code_id)
+    -- all credentials have been deleted
+    for _, credential in pairs(lock_utils.get_credentials(device)) do
+      lock_utils.delete_credential(device, credential.credentialIndex)
     end
-    device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
+    lock_utils.send_events(device)
   elseif (alarm_type == 33) then
-    -- user code deleted
-    if (code_id ~= nil) then
-      lock_code_defaults.clear_code_state(device, code_id)
-      if (lock_codes[code_id] ~= nil) then
-        lock_code_defaults.code_deleted(device, code_id)
-        device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_code_defaults.get_lock_codes(device)), { visibility = { displayed = false } }))
-      end
+    -- credential has been deleted.
+    if lock_utils.get_credential(device, credential_index) ~= nil then
+      lock_utils.delete_credential(device, credential_index)
+      lock_utils.send_events(device)
     end
   elseif (alarm_type == 13 or alarm_type == 112) then
-    -- user code changed/set
-    if (code_id ~= nil) then
-      local code_name = lock_code_defaults.get_code_name(device, code_id)
-      local change_type = lock_code_defaults.get_change_type(device, code_id)
-      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. change_type, { state_change = true })
-      code_changed_event["data"] = { codeName = code_name}
-      lock_code_defaults.code_set_event(device, code_id, code_name)
-      lock_code_defaults.clear_code_state(device, code_id)
-      device:emit_event(code_changed_event)
+    local command = device:get_field(lock_utils.COMMAND_NAME)
+    local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
+    if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
+    -- create credential if not already present.
+      if lock_utils.get_credential(device, credential_index) == nil then
+        lock_utils.add_credential(device,
+          active_credential.userIndex,
+          active_credential.credentialType,
+          credential_index)
+        lock_utils.send_events(device)
+      end
+    elseif command ~= nil and command.name == lock_utils.UPDATE_CREDENTIAL then
+      -- update credential
+      local credential = lock_utils.get_credential(device, credential_index)
+      if credential ~= nil then
+        lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
+        lock_utils.send_events(device)
+      end
+    else
+      -- out-of-band update. Don't add if already in table.
+      if lock_utils.get_credential(device, credential_index) == nil then
+        local new_user_index = lock_utils.get_available_user_index(device)
+        if new_user_index ~= nil then
+          lock_utils.create_user(device, nil, "guest", new_user_index)
+          lock_utils.add_credential(device,
+            new_user_index,
+            lock_utils.CREDENTIAL_TYPE,
+            credential_index)
+          lock_utils.send_events(device)
+        else
+          if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
+            lock_utils.clear_busy_state(device, lock_utils.STATUS_RESOURCE_EXHAUSTED)
+          end
+        end
+      end
     end
   elseif (alarm_type == 34 or alarm_type == 113) then
-    -- duplicate lock code
-    if (code_id ~= nil) then
-      local code_changed_event = capabilities.lockCodes.codeChanged(code_id .. lock_code_defaults.CHANGE_TYPE.FAILED, { state_change = true })
-      lock_code_defaults.clear_code_state(device, code_id)
-      device:emit_event(code_changed_event)
+    -- adding credential failed since code already exists.
+    -- remove the created user if one got made. There is no associated credential.
+    local command = device:get_field(lock_utils.COMMAND_NAME)
+    local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
+    lock_utils.delete_user(device, active_credential.userIndex)
+    if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
+      lock_utils.clear_busy_state(device, lock_utils.STATUS_DUPLICATE)
     end
   elseif (alarm_type == 130) then
     -- batteries replaced

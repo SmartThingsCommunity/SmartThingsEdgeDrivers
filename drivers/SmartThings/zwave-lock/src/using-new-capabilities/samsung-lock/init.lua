@@ -16,35 +16,14 @@ local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
 
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
-local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local access_control_event = Notification.event.access_control
 
-local json = require "dkjson"
-local constants = require "st.zwave.constants"
-
-local LockDefaults = require "st.zwave.defaults.lock"
-local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
-local get_lock_codes = LockCodesDefaults.get_lock_codes
-local clear_code_state = LockCodesDefaults.clear_code_state
-local code_deleted = LockCodesDefaults.code_deleted
+local lock_utils = require "new_lock_utils"
 
 local SAMSUNG_MFR = 0x022E
 
 local function can_handle_samsung_lock(opts, self, device, cmd, ...)
   return device.zwave_manufacturer_id == SAMSUNG_MFR
-end
-
-local function get_ongoing_code_set(device)
-  local code_id
-  local code_state = device:get_field(constants.CODE_STATE)
-  if code_state ~= nil then
-    for key, state in pairs(code_state) do
-      if state ~= nil then
-        code_id = key:match("setName(%d)")
-      end
-    end
-  end
-  return code_id
 end
 
 local function notification_report_handler(self, device, cmd)
@@ -53,37 +32,20 @@ local function notification_report_handler(self, device, cmd)
     local event_code = cmd.args.event
     if event_code == access_control_event.AUTO_LOCK_NOT_FULLY_LOCKED_OPERATION then
       event = capabilities.lock.lock.unlocked()
-    elseif event_code == access_control_event.NEW_USER_CODE_ADDED then
-      local code_id = get_ongoing_code_set(device)
-      if code_id ~= nil then
-        device:send(UserCode:Get({user_identifier = code_id}))
-        return
-      end
-    elseif event_code == access_control_event.NEW_USER_CODE_NOT_ADDED_DUE_TO_DUPLICATE_CODE then
-      local code_id = get_ongoing_code_set(device)
-      if code_id ~= nil then
-        event = capabilities.lockCodes.codeChanged(code_id .. " failed", { state_change = true })
-        clear_code_state(device, code_id)
-      end
     elseif event_code == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION then
-      -- Update Master Code in the same way as in defaults...
-      LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
-      -- ...and delete rest of them, as lock does
-      local lock_codes = get_lock_codes(device)
-      for code_id, _ in pairs(lock_codes) do
-        if code_id ~= "0" then
-          code_deleted(device, code_id)
-        end
+      -- All other codes are deleted when the master code is changed
+      for _, credential in pairs(lock_utils.get_credentials(device)) do
+        lock_utils.delete_credential(device, credential.credentialIndex)
       end
-      event = capabilities.lockCodes.lockCodes(json.encode(get_lock_codes(device)), { visibility = { displayed = false } })
+      lock_utils.send_events(device)
     end
   end
 
   if event ~= nil then
     device:emit_event(event)
   else
-    LockDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
-    LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
+    lock_utils.door_operation_event_handler(self, device, cmd)
+    lock_utils.base_driver_code_event_handler(self, device, cmd)
   end
 end
 
@@ -92,7 +54,6 @@ local function do_configure(self, device)
   -- taken directly from DTH
   -- Samsung locks won't allow you to enter the pairing menu when locked, so it must be unlocked
   device:emit_event(capabilities.lock.lock.unlocked())
-  device:emit_event(capabilities.lockCodes.lockCodes(json.encode({["0"] = "Master Code"} ), { visibility = { displayed = false } }))
 end
 
 local samsung_lock = {
