@@ -525,6 +525,14 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.colorControl.hue(50))
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
+      }
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -536,7 +544,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(50))
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
+      }
+    },
   }
 )
 
@@ -591,6 +607,14 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.colorControl.hue(100))
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
+      }
+    },
+    {
       channel = "matter",
       direction = "receive",
       message = {
@@ -602,7 +626,15 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorControl.saturation(100))
-    }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
+      }
+    },
   }
 )
 
@@ -1083,6 +1115,12 @@ test.register_coroutine_test(
         "main", capabilities.colorControl.hue(100)
       )
     )
+    test.socket.devices:__expect_send(
+      {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
+      }
+    )
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -1093,6 +1131,12 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main", capabilities.colorControl.saturation(100)
       )
+    )
+    test.socket.devices:__expect_send(
+      {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
+      }
     )
   end,
   { test_init = test_init_x_y_color_mode }
