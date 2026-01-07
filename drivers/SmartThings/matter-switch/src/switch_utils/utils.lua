@@ -180,8 +180,8 @@ function utils.find_default_endpoint(device)
     return get_first_non_zero_endpoint(momentary_switch_ep_ids)
   end
 
-  -- If both onoff and momentary switch endpoints are present, check the device type on the main switch
-  -- endpoint. If it is not a supported device type, return the first button endpoint as the
+  -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
+  -- endpoint. If it is not a supported device type, return the first momentary switch endpoint as the
   -- default endpoint.
   if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
     local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
