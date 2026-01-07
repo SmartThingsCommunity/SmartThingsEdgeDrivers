@@ -29,6 +29,12 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
 
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
+  -- remove colorTemperature capability from profile if device doesn't support it
+  if generic_profile == "light-color-level" and
+    not switch_utils.find_cluster_on_ep(ep_info, clusters.ColorControl.ID, {feature_bitmap=clusters.ColorControl.types.Feature.COLOR_TEMPERATURE}) then
+    generic_profile = "light-color-level-noTemp"
+  end
+
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
   if static_electrical_tags ~= nil then
     -- profiles like 'light-binary' and 'plug-binary' should drop the '-binary' and become 'light-power', 'plug-energy-powerConsumption', etc.
@@ -194,13 +200,13 @@ function DeviceConfiguration.match_profile(driver, device)
       updated_profile = "light-color-level-fan"
     elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
-    elseif generic_profile("plug-binary") or generic_profile("plug-level") then
-      if switch_utils.check_switch_category_vendor_overrides(device) then
-        updated_profile = string.gsub(updated_profile, "plug", "switch")
-      end
-    elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
-      -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
-      -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
+    elseif switch_utils.check_switch_category_vendor_overrides(device) then
+      -- check whether the overwrite should be over "plug" or "light" based on the current profile
+      local overwrite_category = string.find(updated_profile, "plug") and "plug" or "light"
+      updated_profile = string.gsub(updated_profile, overwrite_category, "switch")
+    elseif switch_utils.check_deprecated_color_temperature_profile_vendor_overrides(device) then
+      -- ignore attempts to dynamically profile certain devices containing the colorTemperature capability
+      -- for now, since these may lose fingerprinted Kelvin ranges when dynamically profiled.
       return
     end
   end

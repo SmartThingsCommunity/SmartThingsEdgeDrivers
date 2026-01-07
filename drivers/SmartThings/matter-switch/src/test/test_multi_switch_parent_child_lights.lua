@@ -259,7 +259,7 @@ local function test_init_parent_child_endpoints_non_sequential()
   test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.matter:__expect_send({unsup_mock_device.id, clusters.ColorControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
 
-  unsup_mock_device:expect_metadata_update({ profile = "light-binary" })
+  unsup_mock_device:expect_metadata_update({ profile = "switch-binary" })
   unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children_non_sequential) do

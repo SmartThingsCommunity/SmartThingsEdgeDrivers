@@ -112,6 +112,29 @@ local mock_device_extended_color = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_extended_color_no_temp = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("light-color-level.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 14},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0100, device_type_revision = 1}, -- On/Off Light
+        {device_type_id = 0x0101, device_type_revision = 1}, -- Dimmable Light
+        {device_type_id = 0x010D, device_type_revision = 1}, -- Extended Color Light
+      }
+    }
+  }
+})
+
 local cluster_subscribe_list = {
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
@@ -216,6 +239,7 @@ local function test_init_color_temp()
     mock_device_color_temp.id,
     clusters.ColorControl.attributes.Options:write(mock_device_color_temp, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
   })
+  mock_device_color_temp:expect_metadata_update({ profile = "light-level-colorTemperature" })
   mock_device_color_temp:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
 end
@@ -243,20 +267,56 @@ local function test_init_extended_color()
     mock_device_extended_color.id,
     clusters.ColorControl.attributes.Options:write(mock_device_extended_color, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
   })
+  mock_device_extended_color:expect_metadata_update({ profile = "light-color-level" })
   mock_device_extended_color:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
 end
 
+local function test_init_extended_color_no_temp()
+  test.mock_device.add_test_device(mock_device_extended_color_no_temp)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_extended_color_no_temp)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      subscribe_request:merge(cluster:subscribe(mock_device_extended_color_no_temp))
+    end
+  end
+  test.socket.matter:__expect_send({mock_device_extended_color_no_temp.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color_no_temp.id, "added" })
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color_no_temp.id, "init" })
+  test.socket.matter:__expect_send({mock_device_extended_color_no_temp.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color_no_temp.id, "doConfigure" })
+  test.socket.matter:__expect_send({
+    mock_device_extended_color_no_temp.id,
+    clusters.LevelControl.attributes.Options:write(mock_device_extended_color_no_temp, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
+  test.socket.matter:__expect_send({
+    mock_device_extended_color_no_temp.id,
+    clusters.ColorControl.attributes.Options:write(mock_device_extended_color_no_temp, 1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+  })
+  mock_device_extended_color_no_temp:expect_metadata_update({ profile = "light-color-level-noTemp" })
+  mock_device_extended_color_no_temp:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.matter:__expect_send({mock_device_extended_color_no_temp.id, subscribe_request})
+end
+
+
 test.register_message_test(
-  "Test that Color Temperature Light device does not switch profiles",
+  "Test that Color Temperature Light device switches profiles",
   {},
   { test_init = test_init_color_temp }
 )
 
 test.register_message_test(
-  "Test that Extended Color Light device does not switch profiles",
+  "Test that Extended Color Light device switches profiles",
   {},
   { test_init = test_init_extended_color }
+)
+
+test.register_message_test(
+  "Test that Extended Color Light device without color temperature switches profiles",
+  {},
+  { test_init = test_init_extended_color_no_temp }
 )
 
 test.register_message_test(

@@ -118,6 +118,9 @@ SwitchFields.vendor_overrides = {
   },
 }
 
+--- A table of vendorIDs and corresponding productIDs indicating devices that require
+--- a non-default Category, specifically "Switch". These overrides are applied during device
+--- onboarding to ensure an accurate display in the SmartThings app.
 SwitchFields.switch_category_vendor_overrides = {
   [0x1432] = -- Elko
     {0x1000},
@@ -141,6 +144,34 @@ SwitchFields.switch_category_vendor_overrides = {
     {0x0004},
   [0x139C] = -- Zemismart
     {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
+}
+
+--- Devices that were certified with profiles defining non-default min/max ColorTemperature values for the driver.
+--- These profiles have since been deprecated in favor of having devices report their own min/max values, but to ensure
+--- backwards compatibility, we override these devices with their current fingerprint at present.
+SwitchFields.deprecated_color_temperature_profile_vendor_overrides = {
+  [0x115a] = -- Nanoleaf
+    {0x0035, 0x0036, 0x0041, 0x0043, 0x0044, 0x0711, 0x0047, 0x0048, 0x0049, 0x004B},
+  [0x1160] = -- Sengled
+    {0x9002},
+  [0x147F] = -- U-Tec
+    {0x0002},
+  [0x1339] = -- GE
+    {0x00B1, 0x0083, 0x00B6, 0x00B5, 0x00AF, 0x00B4, 0x00AE, 0x002C, 0x0029, 0x002A,
+     0x002B, 0x0089, 0x002E, 0x0062, 0x00AB, 0x0061, 0x0068, 0x006E, 0x007B, 0x006D,
+     0x006B, 0x00AD, 0x0069, 0x0065, 0x0015, 0x006C, 0x0016},
+  [0x1168] = -- AiDot
+    {0x03F4, 0x03F3, 0x03F2, 0x0405, 0x03ec, 0x03eb, 0x03ea, 0x03e8, 0x03f8, 0x03F5,
+     0x1000, 0x03EE, 0x03ED, 0x03EF, 0x03f9, 0x03FB, 0x03FC},
+  [0x115F] = -- Aqara
+    {0x1802, 0x1806},
+  [0x1423] = -- Lifx
+    {0x00A1, 0x00A2, 0x00A8, 0x00A9, 0x00AB, 0x00AD, 0x00AE, 0x00AF, 0x00B0, 0x00B2,
+     0x00B3, 0x00B4, 0x00B9, 0x00C9, 0x00DB, 0x00DC, 0x00D5, 0x00D7, 0x00D9, 0x0077},
+  [0x1312] = -- Yeelight
+    {0x0001},
+  [0x1407] = -- ThirdReality
+    {0x1088}
 }
 
 --- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
