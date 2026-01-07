@@ -54,6 +54,7 @@ function CapabilityHandlers.handle_step_level(driver, device, cmd)
   if step_size == 0 then return end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local step_mode = step_size > 0 and clusters.LevelControl.types.StepMode.UP or clusters.LevelControl.types.StepMode.DOWN
+  print("Stepping level by ", math.abs(step_size))
   device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, math.abs(step_size), fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
 end
 
@@ -130,7 +131,8 @@ function CapabilityHandlers.handle_step_color_temperature_by_percent(driver, dev
   local step_mode = step_percent_change > 0 and (clusters.ColorControl.types.StepModeEnum and clusters.ColorControl.types.StepModeEnum.DOWN or 3) or (clusters.ColorControl.types.StepModeEnum and clusters.ColorControl.types.StepModeEnum.UP or 1)
   local min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or fields.COLOR_TEMPERATURE_MIRED_MIN -- default min mireds
   local max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or fields.COLOR_TEMPERATURE_MIRED_MAX -- default max mireds
-  local step_size_in_mireds = (max_mireds - min_mireds) * st_utils.round((math.abs(step_percent_change)/100))
+  local step_size_in_mireds = st_utils.round((max_mireds - min_mireds) * (math.abs(step_percent_change)/100.0))
+  print("Stepping color temperature by ", step_size_in_mireds, " mireds", " with max mireds of ", max_mireds, " and min mireds of ", min_mireds)
   device:send(clusters.ColorControl.server.commands.StepColorTemperature(device, endpoint_id, step_mode, step_size_in_mireds, fields.TRANSITION_TIME, min_mireds, max_mireds, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE))
 end
 
