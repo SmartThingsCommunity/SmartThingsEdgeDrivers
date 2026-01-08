@@ -1,0 +1,18 @@
+name: pressure
+components:
+- id: main
+  capabilities:
+  - id: atmosphericPressureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+    optional: true
+  - id: batteryLevel
+    version: 1
+    optional: true
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GenericSensor

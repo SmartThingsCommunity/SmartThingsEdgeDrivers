@@ -16,17 +16,16 @@ if version.api < 11 then
 end
 
 local DeviceConfiguration = {}
-local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
 
-function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
+function DeviceConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
+  table.sort(server_cluster_ep_ids)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
    return
   end
 
-  table.sort(server_cluster_ep_ids)
   for device_num, ep_id in ipairs(server_cluster_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
       local label_and_name = string.format("%s %d", device.label, device_num)
@@ -206,6 +205,14 @@ function DeviceConfiguration.match_profile(driver, device)
   local optional_component_capabilities
   local updated_profile
 
+  if driver.sub_drivers and driver.sub_drivers.sensor then
+    local sensor_cfg = require("sub_drivers.sensor.switch_sensor_utils.device_configuration")
+    local sensor_profile, sensor_caps = sensor_cfg.configure_sensor_endpoints(driver, device, default_endpoint_id)
+    if sensor_profile then
+      updated_profile, optional_component_capabilities = sensor_profile, sensor_caps
+    end
+  end
+
   if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID) > 0 then
     updated_profile = "water-valve"
     if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
@@ -216,7 +223,7 @@ function DeviceConfiguration.match_profile(driver, device)
 
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
-    ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
+    DeviceConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
   end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then

@@ -25,14 +25,24 @@ SwitchFields.DEVICE_TYPE_ID = {
   BRIDGED_NODE = 0x0013,
   CAMERA = 0x0142,
   CHIME = 0x0146,
+  CONTACT_SENSOR = 0x0015,
   DIMMABLE_PLUG_IN_UNIT = 0x010B,
   DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
   FAN = 0x002B,
+  FLOW_SENSOR = 0x0306,
   GENERIC_SWITCH = 0x000F,
+  HUMIDITY_SENSOR = 0x0307,
+  LIGHT_SENSOR = 0x0106,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
+  OCCUPANCY_SENSOR = 0x0107,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
+  PRESSURE_SENSOR = 0x0305,
+  RAIN_SENSOR = 0x0044,
+  TEMPERATURE_SENSOR = 0x0302,
+  WATER_FREEZE_DETECTOR = 0x0041,
+  WATER_LEAK_DETECTOR = 0x0043,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -147,9 +157,12 @@ SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 
 SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
+SwitchFields.SUPPORTED_SENSITIVITY_LEVELS = "__supported_sensitivity_levels"
+
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
   BATTERY_SUPPORT = "__battery_support",
+  SENSOR_FAULT_SUPPORTED = "__sensor_fault_supported",
 }
 
 SwitchFields.battery_support = {

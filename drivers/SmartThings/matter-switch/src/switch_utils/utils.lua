@@ -33,6 +33,19 @@ function utils.tbl_contains(array, value)
   return false
 end
 
+function utils.enable_optional_capability_on_component(component_capabilities, capability)
+  table.insert(component_capabilities[2], capability)
+end
+
+function utils.insert_battery_on_component(device, component_capabilities)
+  local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
+  if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
+    utils.enable_optional_capability_on_component(component_capabilities, capabilities.battery.ID)
+  elseif battery_support == fields.battery_support.BATTERY_LEVEL then
+    utils.enable_optional_capability_on_component(component_capabilities, capabilities.batteryLevel.ID)
+  end
+end
+
 function utils.convert_huesat_st_to_matter(val)
   return st_utils.clamp_value(math.floor((val * 0xFE) / 100.0 + 0.5), fields.CURRENT_HUESAT_ATTR_MIN, fields.CURRENT_HUESAT_ATTR_MAX)
 end
@@ -162,7 +175,7 @@ function utils.find_default_endpoint(device)
         return ep
       end
     end
-    return nil
+    return device.MATTER_DEFAULT_ENDPOINT
   end
 
   -- Return the first fan endpoint as the default endpoint if any is found
@@ -414,6 +427,43 @@ function utils.handle_electrical_sensor_info(device)
       device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
     end
     return
+  end
+end
+
+function utils.handle_boolean_state_configuration_info(device)
+  local sensitivity_ep_ids = device:get_endpoints(device,
+    clusters.BooleanStateConfiguration.ID,
+    {feature_bitmap = clusters.BooleanStateConfiguration.types.Feature.SENSITIVITY_LEVEL})
+  for _, endpoint_id in ipairs(sensitivity_ep_ids or {}) do
+    device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, endpoint_id))
+  end
+end
+
+function utils.handle_sensitivity_preference_update(device, previous_preference_state)
+  -- get the EP ID and preference ID, based on unique capability used per device type
+  local endpoint_id, sensitivity_preference_id
+  if device:supports_capability(capabilities.temperatureAlarm) then -- WATER_FREEZE_DETECTOR
+    endpoint_id = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_FREEZE_DETECTOR)[1]
+    sensitivity_preference_id = "freezeSensitivity"
+  elseif device:supports_capability(capabilities.rainSensor) then -- RAIN_SENSOR
+    endpoint_id = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.RAIN_SENSOR)[1]
+    sensitivity_preference_id = "rainSensitivity"
+  elseif device:supports_capability(capabilities.waterSensor) then -- WATER_LEAK_DETECTOR
+    endpoint_id = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_LEAK_DETECTOR)[1]
+    sensitivity_preference_id = "leakSensitivity"
+  end
+
+  -- if the preference has changed, write the new sensitivity level to the appropriate EP
+  if endpoint_id and (device.preferences.sensitivity_preference_id ~= previous_preference_state.sensitivity_preference_id) then
+    if device.preferences[sensitivity_preference_id] == "2" then -- high
+      local max_sensitivity_level = utils.get_field_for_endpoint(device, fields.SUPPORTED_SENSITIVITY_LEVELS, endpoint_id) - 1
+      device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, endpoint_id, max_sensitivity_level))
+    elseif device.preferences[sensitivity_preference_id] == "1" then -- medium
+      local medium_sensitivity_level = math.floor((utils.get_field_for_endpoint(device, fields.SUPPORTED_SENSITIVITY_LEVELS, endpoint_id) + 1) / 2)
+      device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, endpoint_id, medium_sensitivity_level))
+    elseif device.preferences[sensitivity_preference_id] == "0" then -- low
+      device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, endpoint_id, 0))
+    end
   end
 end
 
