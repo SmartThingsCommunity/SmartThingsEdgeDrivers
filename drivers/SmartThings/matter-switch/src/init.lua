@@ -67,7 +67,7 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
         device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
       )
     elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
-      switch_utils.update_subscriptions(device:get_parent_device()) -- parent device required to scan through EPs and update subscriptions      
+      switch_utils.update_subscriptions(device:get_parent_device()) -- parent device required to scan through EPs and update subscriptions
     end
   end
 
