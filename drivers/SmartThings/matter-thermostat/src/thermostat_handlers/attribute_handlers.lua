@@ -329,7 +329,7 @@ function AttributeHandlers.fan_mode_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.fan_mode_sequence_handler(driver, device, ib, response)
-  local supported_fan_modes, supported_fan_modes_attribute, supported_fan_modes_capability
+  local supported_fan_modes, supported_fan_modes_attribute
   if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
     supported_fan_modes = { "off", "low", "medium", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
@@ -345,14 +345,11 @@ function AttributeHandlers.fan_mode_sequence_handler(driver, device, ib, respons
   end
 
   if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
-    supported_fan_modes_capability = capabilities.airPurifierFanMode
-    supported_fan_modes_attribute = supported_fan_modes_capability.supportedAirPurifierFanModes
+    supported_fan_modes_attribute = capabilities.airPurifierFanMode.supportedAirPurifierFanModes
   elseif device:supports_capability_by_id(capabilities.airConditionerFanMode.ID) then
-    supported_fan_modes_capability = capabilities.airConditionerFanMode
-    supported_fan_modes_attribute = supported_fan_modes_capability.supportedAcFanModes
+    supported_fan_modes_attribute = capabilities.airConditionerFanMode.supportedAcFanModes
   elseif device:supports_capability_by_id(capabilities.thermostatFanMode.ID) then
-    supported_fan_modes_capability = capabilities.thermostatFanMode
-    supported_fan_modes_attribute = supported_fan_modes_capability.supportedThermostatFanModes
+    supported_fan_modes_attribute = capabilities.thermostatFanMode.supportedThermostatFanModes
     -- Our thermostat fan mode control is not granular enough to handle all of the supported modes
     if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
       ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
@@ -361,23 +358,14 @@ function AttributeHandlers.fan_mode_sequence_handler(driver, device, ib, respons
       supported_fan_modes = { "on" }
     end
   else
-    supported_fan_modes_capability = capabilities.fanMode
-    supported_fan_modes_attribute = supported_fan_modes_capability.supportedFanModes
+    supported_fan_modes_attribute = capabilities.fanMode.supportedFanModes
   end
 
-  -- remove 'off' as a supported fan mode for thermostat device types, unless the
-  -- device previously had 'off' as a supported fan mode to avoid breaking routines
+  -- remove 'off' as a supported fan mode for thermostat device types
   if thermostat_utils.get_device_type(device) == fields.THERMOSTAT_DEVICE_TYPE_ID and
     device:supports_capability_by_id(capabilities.fanMode.ID) then
-    local prev_supported_fan_modes = device:get_latest_state(
-      device:endpoint_to_component(ib.endpoint_id),
-      supported_fan_modes_capability.ID,
-      supported_fan_modes_attribute.NAME
-    ) or {}
     -- per the definitions set above, the first index always contains "off"
-    if prev_supported_fan_modes[1] ~= "off" then
-      table.remove(supported_fan_modes, 1)
-    end
+    table.remove(supported_fan_modes, 1)
   end
 
   device:emit_event_for_endpoint(ib.endpoint_id, supported_fan_modes_attribute(supported_fan_modes, {visibility = {displayed = false}}))
