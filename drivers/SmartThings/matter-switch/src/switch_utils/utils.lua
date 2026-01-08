@@ -162,7 +162,7 @@ function utils.find_default_endpoint(device)
         return ep
       end
     end
-    return nil
+    return device.MATTER_DEFAULT_ENDPOINT
   end
 
   -- Return the first fan endpoint as the default endpoint if any is found
@@ -442,7 +442,7 @@ end
 --- @param events_seen table a list of events that have already been checked
 --- @param subscribed_attributes table key-value pairs mapping capability ids to subscribed attributes
 --- @param subscribed_events table key-value pairs mapping capability ids to subscribed events
-function utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
+local function populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
  for _, component in pairs(checked_device.st_store.profile.components) do
     for _, capability in pairs(component.capabilities) do
       if not capabilities_seen[capability.id] then
@@ -450,23 +450,82 @@ function utils.populate_subscribe_request_for_device(checked_device, subscribe_r
           local cluster_id = attr.cluster or attr._cluster.ID
           local attr_id = attr.ID or attr.attribute
           if not attributes_seen[cluster_id] or not attributes_seen[cluster_id][attr_id] then
-            local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
-            subscribe_request:with_info_block(ib)
-            attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
-            attributes_seen[cluster_id][attr_id] = ib
+            local parent_device = checked_device:get_parent_device() or checked_device
+            local supporting_eps = parent_device:get_endpoints(cluster_id, { attribute_id = nil })
+            if #supporting_eps == 0 then
+              log.warn_with({ hub_logs = true }, string.format("Device does not support cluster 0x%04X not adding subscribed attribute", cluster_id))
+            else
+              local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+              subscribe_request:with_info_block(ib)
+              attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
+              attributes_seen[cluster_id][attr_id] = ib
+            end
           end
         end
         for _, event in ipairs(subscribed_events[capability.id] or {}) do
           local cluster_id = event.cluster or event._cluster.ID
           local event_id = event.ID or event.event
           if not events_seen[cluster_id] or not events_seen[cluster_id][event_id] then
-            local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
-            subscribe_request:with_info_block(ib)
-            events_seen[cluster_id] = events_seen[cluster_id] or {}
-            events_seen[cluster_id][event_id] = ib
+            local parent_device = checked_device:get_parent_device() or checked_device
+            local supporting_eps = parent_device:get_endpoints(cluster_id, { event_id = nil })
+            if #supporting_eps == 0 then
+              log.warn_with({ hub_logs = true }, string.format("Device does not support cluster 0x%04X, not adding subscribed event", cluster_id))
+            else
+              local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
+              subscribe_request:with_info_block(ib)
+              events_seen[cluster_id] = events_seen[cluster_id] or {}
+              events_seen[cluster_id][event_id] = ib
+            end
           end
         end
         capabilities_seen[capability.id] = true -- only loop through any capability once
+      end
+    end
+  end
+end
+
+--- aggregate the subscribed_attributes and subscribed_events tables with capability-subscription tables found in sub-drivers
+---
+--- @param device any a Matter device object
+--- @param checked_device any a Matter device object, either a parent or child device, so not necessarily the same as device
+--- @param subscribe_request any a subscribe request that will be appended to as needed for the device
+--- @param subscribed_attributes any table key-value pairs mapping capability ids to subscribed attributes, which will be appended to as needed for the device
+--- @param subscribed_events any table key-value pairs mapping capability ids to subscribed events, which will be appended to as needed for the device
+local function aggregate_sub_driver_subscriptions(device, checked_device, subscribe_request, subscribed_attributes, subscribed_events)
+  for _, sub_driver in ipairs(device.driver.sub_drivers) do
+    if sub_driver.can_handle({}, device.driver, checked_device) then
+      local sub_driver_subscriptions = require(string.format("%s%s", sub_driver.NAME, ".utils.subscriptions"))
+      for capability, cluster_attributes in pairs(sub_driver_subscriptions.subscribed_attributes or {}) do
+        if subscribed_attributes[capability] then
+          for _, attr in pairs(cluster_attributes or {}) do
+            if not utils.tbl_contains(subscribed_attributes[capability], attr) then
+              table.insert(subscribed_attributes[capability], attr)
+            end
+          end
+        else
+          subscribed_attributes[capability] = cluster_attributes
+        end
+      end
+      for capability, cluster_events in pairs(sub_driver_subscriptions.subscribed_events or {}) do
+        if subscribed_events[capability] then
+          for _, event in pairs(cluster_events or {}) do
+            if not utils.tbl_contains(subscribed_events[capability], event) then
+              table.insert(subscribed_events[capability], event)
+            end
+          end
+        else
+          subscribed_events[capability] = cluster_events
+        end
+      end
+      for condition_fn, cluster_attributes in pairs(sub_driver_subscriptions.conditional_subscriptions or {}) do
+        if condition_fn(checked_device) then
+          for _, cluster_attribute in pairs(cluster_attributes or {}) do
+            local cluster_id = cluster_attribute.cluster or cluster_attribute._cluster.ID
+            local attr_id = cluster_attribute.ID or cluster_attribute.attribute
+            local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+            subscribe_request:with_info_block(ib)
+          end
+        end
       end
     end
   end
@@ -482,8 +541,10 @@ function utils.subscribe(device)
   for _, endpoint_info in ipairs(device.endpoints) do
     local checked_device = utils.find_child(device, endpoint_info.endpoint_id) or device
     if not devices_seen[checked_device.id] then
-      utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
-        device.driver.subscribed_attributes, device.driver.subscribed_events
+      local subscribed_attributes, subscribed_events = device.driver.subscribed_attributes, device.driver.subscribed_events
+      aggregate_sub_driver_subscriptions(device, checked_device, subscribe_request, subscribed_attributes, subscribed_events)
+      populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+        subscribed_attributes, subscribed_events
       )
       devices_seen[checked_device.id] = true -- only loop through any device once
     end

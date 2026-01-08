@@ -5,15 +5,15 @@
 -- Matter Camera Sub Driver
 -------------------------------------------------------------------------------------
 
-local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+local attribute_handlers = require "sub_drivers.camera.handlers.attribute_handlers"
 local button_cfg = require("switch_utils.device_configuration").ButtonCfg
-local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
-local camera_fields = require "sub_drivers.camera.camera_utils.fields"
-local camera_utils = require "sub_drivers.camera.camera_utils.utils"
+local camera_cfg = require "sub_drivers.camera.utils.device_configuration"
+local camera_fields = require "sub_drivers.camera.utils.fields"
+local camera_utils = require "sub_drivers.camera.utils.utils"
 local capabilities = require "st.capabilities"
-local capability_handlers = require "sub_drivers.camera.camera_handlers.capability_handlers"
+local capability_handlers = require "sub_drivers.camera.handlers.capability_handlers"
 local clusters = require "st.matter.clusters"
-local event_handlers = require "sub_drivers.camera.camera_handlers.event_handlers"
+local event_handlers = require "sub_drivers.camera.handlers.event_handlers"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 
@@ -26,7 +26,10 @@ function CameraLifecycleHandlers.device_init(driver, device)
   if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
     device:set_find_child(switch_utils.find_child)
   end
-  device:extend_device("subscribe", camera_utils.subscribe)
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+  end
+  device:extend_device("subscribe", switch_utils.subscribe)
   device:subscribe()
 end
 

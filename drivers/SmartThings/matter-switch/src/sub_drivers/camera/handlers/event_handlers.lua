@@ -1,7 +1,7 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local camera_fields = require "sub_drivers.camera.camera_utils.fields"
+local camera_fields = require "sub_drivers.camera.utils.fields"
 local capabilities = require "st.capabilities"
 local switch_utils = require "switch_utils.utils"
 

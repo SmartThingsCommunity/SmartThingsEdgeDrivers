@@ -25,14 +25,24 @@ SwitchFields.DEVICE_TYPE_ID = {
   BRIDGED_NODE = 0x0013,
   CAMERA = 0x0142,
   CHIME = 0x0146,
+  CONTACT_SENSOR = 0x0015,
   DIMMABLE_PLUG_IN_UNIT = 0x010B,
   DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
   FAN = 0x002B,
+  FLOW_SENSOR = 0x0306,
   GENERIC_SWITCH = 0x000F,
+  HUMIDITY_SENSOR = 0x0307,
+  LIGHT_SENSOR = 0x0106,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
+  OCCUPANCY_SENSOR = 0x0107,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
+  PRESSURE_SENSOR = 0x0305,
+  RAIN_SENSOR = 0x0044,
+  TEMPERATURE_SENSOR = 0x0302,
+  WATER_FREEZE_DETECTOR = 0x0041,
+  WATER_LEAK_DETECTOR = 0x0043,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -181,10 +191,6 @@ SwitchFields.IGNORE_NEXT_MPC = "__ignore_next_mpc"
 SwitchFields.EMULATE_HELD = "__emulate_held" -- for non-MSR (MomentarySwitchRelease) devices we can emulate this on the software side
 SwitchFields.SUPPORTS_MULTI_PRESS = "__multi_button" -- for MSM devices (MomentarySwitchMultiPress), create an event on receipt of MultiPressComplete
 SwitchFields.INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS (MomentarySwitch), but not MSR (MomentarySwitchRelease)
-
-SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
-SwitchFields.TEMP_MIN = "__temp_min"
-SwitchFields.TEMP_MAX = "__temp_max"
 
 SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
 -- When sent with a command, these options mask and override bitmaps cause the command

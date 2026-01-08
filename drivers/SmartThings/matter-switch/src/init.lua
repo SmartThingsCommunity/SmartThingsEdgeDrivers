@@ -82,7 +82,6 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
     end
   end
 
-  -- instant update of values after offset preference change
   for name, info in pairs(device.preferences or {}) do
     if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
       if name == "tempOffset" then
@@ -92,7 +91,6 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       end
     end
   end
-
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
@@ -159,16 +157,10 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = attribute_handlers.fan_mode_sequence_handler,
         [clusters.FanControl.attributes.PercentCurrent.ID] = attribute_handlers.percent_current_handler
       },
-      [clusters.IlluminanceMeasurement.ID] = {
-        [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.illuminance_measured_value_handler
-      },
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = attribute_handlers.level_control_current_level_handler,
         [clusters.LevelControl.attributes.MaxLevel.ID] = attribute_handlers.level_bounds_handler_factory(fields.LEVEL_MAX),
         [clusters.LevelControl.attributes.MinLevel.ID] = attribute_handlers.level_bounds_handler_factory(fields.LEVEL_MIN),
-      },
-      [clusters.OccupancySensing.ID] = {
-        [clusters.OccupancySensing.attributes.Occupancy.ID] = attribute_handlers.occupancy_handler,
       },
       [clusters.OnOff.ID] = {
         [clusters.OnOff.attributes.OnOff.ID] = attribute_handlers.on_off_attr_handler,
@@ -181,16 +173,8 @@ local matter_driver_template = {
       [clusters.PowerTopology.ID] = {
         [clusters.PowerTopology.attributes.AvailableEndpoints.ID] = attribute_handlers.available_endpoints_handler,
       },
-      [clusters.RelativeHumidityMeasurement.ID] = {
-        [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.relative_humidity_measured_value_handler
-      },
       [clusters.Switch.ID] = {
         [clusters.Switch.attributes.MultiPressMax.ID] = attribute_handlers.multi_press_max_handler
-      },
-      [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MAX),
-        [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
-        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
       },
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = attribute_handlers.valve_configuration_current_level_handler,
@@ -237,12 +221,6 @@ local matter_driver_template = {
     [capabilities.fanSpeedPercent.ID] = {
       clusters.FanControl.attributes.PercentCurrent
     },
-    [capabilities.illuminanceMeasurement.ID] = {
-      clusters.IlluminanceMeasurement.attributes.MeasuredValue
-    },
-    [capabilities.motionSensor.ID] = {
-      clusters.OccupancySensing.attributes.Occupancy
-    },
     [capabilities.level.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentLevel
     },
@@ -252,18 +230,10 @@ local matter_driver_template = {
     [capabilities.powerMeter.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.ActivePower
     },
-    [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
-    },
     [capabilities.switchLevel.ID] = {
       clusters.LevelControl.attributes.CurrentLevel,
       clusters.LevelControl.attributes.MaxLevel,
       clusters.LevelControl.attributes.MinLevel,
-    },
-    [capabilities.temperatureMeasurement.ID] = {
-      clusters.TemperatureMeasurement.attributes.MeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
-      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
     },
     [capabilities.valve.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentState
@@ -349,7 +319,8 @@ local matter_driver_template = {
     switch_utils.lazy_load("sub_drivers.camera"),
     switch_utils.lazy_load_if_possible("sub_drivers.eve_energy"),
     switch_utils.lazy_load_if_possible("sub_drivers.ikea_scroll"),
-    switch_utils.lazy_load_if_possible("sub_drivers.third_reality_mk1")
+    switch_utils.lazy_load_if_possible("sub_drivers.third_reality_mk1"),
+    switch_utils.lazy_load_if_possible("sub_drivers.sensor"),
   }
 }
 
