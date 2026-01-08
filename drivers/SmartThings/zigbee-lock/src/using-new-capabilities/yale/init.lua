@@ -173,7 +173,7 @@ local yale_door_lock_driver = {
     }
   },
 
-  sub_drivers = { require("using-new-capabilities.yale.yale-bad-battery-reporter") },
+  sub_drivers = { require("using-new-capabilities.yale.sub_drivers") },
   can_handle = require("using-new-capabilities.yale.can_handle")
 }
 

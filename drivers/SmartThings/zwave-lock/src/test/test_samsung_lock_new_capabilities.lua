@@ -24,8 +24,15 @@ local mock_device = test.mock_device.build_test_zwave_device(
   }
 )
 
+-- start with a migrated blank device
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+end
+
+test.set_test_init_function(test_init)
+
+local function added()
+  test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
 
@@ -36,8 +43,41 @@ local function test_init()
     Battery:Get({}):build_test_tx(mock_device.id)
   )
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = {displayed = false}})))
+  test.wait_for_events()
+  test.mock_time.advance_time(2)
+  test.socket.zwave:__expect_send(
+    UserCode:UsersNumberGet({}):build_test_tx(mock_device.id)
+  )
+  for i = 1, 8 do
+    test.socket.zwave:__expect_send(
+      UserCode:Get({user_identifier = i}):build_test_tx(mock_device.id)
+    )
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({
+      user_identifier = i,
+      user_id_status = UserCode.user_id_status.AVAILABLE
+    })})
+  end
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.lockUsers.users(
+        { },
+        { state_change = true, visibility = { displayed = true } }
+      )
+    )
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.lockCredentials.credentials(
+        { },
+        { state_change = true, visibility = { displayed = true } }
+      )
+    )
+  )
+  test.wait_for_events()
 end
-test.set_test_init_function(test_init)
 
 local function init_code_slot(slot_number, name, device)
   local credentials = device.transient_store[lock_utils.LOCK_CREDENTIALS]
@@ -57,6 +97,7 @@ end
 test.register_coroutine_test(
   "When the device is added an unlocked event should be sent",
   function()
+    added()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
@@ -68,6 +109,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Setting a user code name should be handled",
   function()
+    added()
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "guest", "pin", "1234"} } })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -128,6 +170,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Notification about correctly added code should be handled",
   function()
+    added()
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "guest", "pin", "1234"} } })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -157,6 +200,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "All user codes should be reported as deleted upon changing Master Code",
   function()
+    added()
     init_code_slot(1, "Code 1", mock_device)
     init_code_slot(2, "Code 2", mock_device)
     init_code_slot(3, "Code 3", mock_device)

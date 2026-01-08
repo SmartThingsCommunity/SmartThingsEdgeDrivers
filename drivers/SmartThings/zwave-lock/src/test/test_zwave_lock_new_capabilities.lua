@@ -12,6 +12,8 @@ local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+--- @type st.zwave.CommandClass.Alarm
+local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local t_utils = require "integration_test.utils"
 local access_control_event = Notification.event.access_control
 
@@ -98,6 +100,15 @@ end
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 
+  -- reset these globals
+  test_credential_index = 1
+  test_credentials = {}
+  test_users = {}
+end
+
+test.set_test_init_function(test_init)
+
+local function added()
   test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
@@ -110,27 +121,46 @@ local function test_init()
   )
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = {displayed = false}})))
-  -- test.wait_for_events()
-  -- test.mock_time.advance_time(2)
-  -- test.socket.zwave:__expect_send(
-  --   UserCode:UsersNumberGet({}):build_test_tx(mock_device.id)
-  -- )
-  -- test.socket.zwave:__expect_send(
-  --   UserCode:Get({user_identifier = 1}):build_test_tx(mock_device.id)
-  -- )
-
-  -- reset these globals
-  test_credential_index = 1
-  test_credentials = {}
-  test_users = {}
+  test.wait_for_events()
+  test.mock_time.advance_time(2)
+  test.socket.zwave:__expect_send(
+    UserCode:UsersNumberGet({}):build_test_tx(mock_device.id)
+  )
+  for i = 1, 8 do
+    test.socket.zwave:__expect_send(
+      UserCode:Get({user_identifier = i}):build_test_tx(mock_device.id)
+    )
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({
+      user_identifier = i,
+      user_id_status = UserCode.user_id_status.AVAILABLE
+    })})
+  end
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.lockUsers.users(
+        { },
+        { state_change = true, visibility = { displayed = true } }
+      )
+    )
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.lockCredentials.credentials(
+        { },
+        { state_change = true, visibility = { displayed = true } }
+      )
+    )
+  )
+  test.wait_for_events()
 end
-
-test.set_test_init_function(test_init)
-
 
 test.register_coroutine_test(
   "Add user should succeed",
-  function ()
+  function()
+    added()
     test.socket.capability:__queue_receive({
       mock_device.id,
       {
@@ -189,6 +219,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Add credential should succeed",
   function()
+    added()
     -- these all should succeed
     add_credential(0)
     add_credential(0)
@@ -198,7 +229,8 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "Add credential for existing user should succeed",
-  function ()
+  function()
+    added()
     test.socket.capability:__queue_receive({
       mock_device.id,
       {
@@ -234,7 +266,8 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "Update user should succeed",
-  function ()
+  function()
+    added()
     test.socket.capability:__queue_receive({
       mock_device.id,
       {
@@ -320,6 +353,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Delete user should succeed",
   function()
+    added()
     -- add credential
     add_credential(0)
 
@@ -380,6 +414,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Update credential should succeed",
   function()
+    added()
     -- add credential
     add_credential(0)
 
@@ -434,6 +469,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Delete credential should succeed",
   function()
+    added()
     -- add the credential
     add_credential(0)
 
@@ -493,6 +529,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Delete all users should succeed",
   function()
+    added()
     -- add credential
     add_credential(0)
     -- add second credential
@@ -571,6 +608,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "The lock reporting unlock via code should include the code number",
   function()
+    added()
     -- add credential
     add_credential(0)
     -- send unlock
@@ -593,44 +631,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "When the device is added it should be set up and start reading codes",
-  function()
-    test.wait_for_events()
-    test.mock_time.advance_time(2)
-    test.socket.zwave:__expect_send(
-      UserCode:UsersNumberGet({}):build_test_tx(mock_device.id)
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Get({user_identifier = 1}):build_test_tx(mock_device.id)
-    )
-    test.wait_for_events()
-    test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({
-      user_identifier = 1,
-      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS
-    })})
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockUsers.users(
-        { {userIndex = 1, userName = "Guest1", userType = "guest"}},
-        { state_change = true, visibility = {displayed = true}}
-      ))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCredentials.credentials(
-        { { userIndex = 1, credentialIndex = 1, credentialType = "pin" } },
-        { state_change = true, visibility = { displayed = true } })
-      )
-    )
-    test.socket.zwave:__expect_send(
-      UserCode:Get({user_identifier = 2}):build_test_tx(mock_device.id)
-    )
-  end
-)
-
-test.register_coroutine_test(
   "Creating a credential should succeed if the lock responds with a user code report",
   function()
+    added()
     test.socket.capability:__queue_receive({mock_device.id,
       {
         capability = capabilities.lockCredentials.ID,
@@ -678,6 +681,49 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
     test_credential_index = test_credential_index + 1
+  end
+)
+
+test.register_coroutine_test(
+  "Lock alarm reporting should be handled",
+  function()
+    added()
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 22, alarm_level = 1})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({data={method="manual"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 9})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unknown()))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 19, alarm_level = 3})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({data={method="keypad"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 18, alarm_level=0})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked({data={method="keypad"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 21, alarm_level = 2})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked({data={method="manual"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 21, alarm_level = 1})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked({data={method="keypad"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 23})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unknown({data={method="command"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 24})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked({data={method="command"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 25})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({data={method="command"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 26})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unknown({data={method="auto"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 27})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked({data={method="auto"}})))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 32})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { state_change = true, visibility = { displayed = true } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { state_change = true, visibility = { displayed = true } })))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 13, alarm_level = 5})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockUsers.users({ { userIndex = 1, userName = "Guest1", userType = "guest"} }, { state_change = true, visibility = { displayed = true } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCredentials.credentials( { {userIndex = 1, credentialIndex = 5, credentialType = "pin" } }, { state_change = true, visibility = { displayed = true } })))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 34, alarm_level = 2})})
+    -- no op because we have no active operation
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 161})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 168})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(1)))
+    test.socket.zwave:__queue_receive({ mock_device.id, Alarm:Report({alarm_type = 169})})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(0)))
   end
 )
 

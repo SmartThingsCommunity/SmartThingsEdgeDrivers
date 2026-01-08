@@ -132,7 +132,7 @@ local function alarm_report_handler(driver, device, cmd)
     -- remove the created user if one got made. There is no associated credential.
     local command = device:get_field(lock_utils.COMMAND_NAME)
     local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
-    lock_utils.delete_user(device, active_credential.userIndex)
+    if active_credential ~= nil then lock_utils.delete_user(device, active_credential.userIndex) end
     if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
       lock_utils.clear_busy_state(device, lock_utils.STATUS_DUPLICATE)
     end

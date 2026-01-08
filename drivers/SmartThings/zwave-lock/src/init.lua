@@ -38,13 +38,7 @@ end
 
 local do_added = function(driver, device)
   -- this variable should only be present for test cases trying to test the old capabilities.
-  if device.useOldCapabilityForTesting == nil then
-    if device:supports_capability_by_id(capabilities.LockCodes.ID) then
-      device:emit_event(capabilities.LockCodes.migrated(true, { visibility = { displayed = false } }))
-      -- make the driver call this command again, it will now be handled in new capabilities.
-      driver.lifecycle_dispatcher:dispatch(driver, device, "added")
-    end
-  else
+  if device.useOldCapabilityForTesting == true then
     -- added handler from using old capabilities
     driver:inject_capability_command(device,
         { capability = capabilities.lockCodes.ID,
@@ -62,6 +56,12 @@ local do_added = function(driver, device)
     device:send(Battery:Get({}))
     if (device:supports_capability(capabilities.tamperAlert)) then
       device:emit_event(capabilities.tamperAlert.tamper.clear())
+    end
+  else
+    if device:supports_capability_by_id(capabilities.lockCodes.ID) then
+      device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+      -- make the driver call this command again, it will now be handled in new capabilities.
+      driver.lifecycle_dispatcher:dispatch(driver, device, "added")
     end
   end
 end
