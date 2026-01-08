@@ -21,6 +21,10 @@ local mock_device = test.mock_device.build_test_matter_device({
     vendor_id = 0x0000,
     product_id = 0x0000,
   },
+  matter_version = {
+    software = 1,
+    hardware = 1,
+  },
   endpoints = {
     {
       endpoint_id = 0,
