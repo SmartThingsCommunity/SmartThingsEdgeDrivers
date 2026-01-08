@@ -607,7 +607,8 @@ local function test_init_parent_child_different_types()
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_different_types)
   for i, cluster in ipairs(cluster_subscribe_list) do

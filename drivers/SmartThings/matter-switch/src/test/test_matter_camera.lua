@@ -316,6 +316,7 @@ local function update_device_profile()
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
     clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
     clusters.OccupancySensing.attributes.Occupancy,
     clusters.Switch.server.events.InitialPress,
     clusters.Switch.server.events.LongPress,
