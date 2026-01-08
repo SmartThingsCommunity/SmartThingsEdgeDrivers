@@ -66,6 +66,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.ColorControl.attributes.CurrentSaturation,
   clusters.ColorControl.attributes.CurrentX,
   clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
   clusters.FanControl.attributes.FanModeSequence,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.PercentCurrent,

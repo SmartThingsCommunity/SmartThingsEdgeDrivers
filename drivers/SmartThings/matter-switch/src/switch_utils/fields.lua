@@ -258,7 +258,8 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode
   },
   [SwitchFields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT] = {
     clusters.OnOff.attributes.OnOff
@@ -289,7 +290,8 @@ SwitchFields.device_type_attribute_map = {
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode
   },
   [SwitchFields.DEVICE_TYPE_ID.GENERIC_SWITCH] = {
     clusters.PowerSource.attributes.BatPercentRemaining,
