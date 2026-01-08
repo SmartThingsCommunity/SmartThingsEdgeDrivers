@@ -85,16 +85,6 @@ local expect_reload_all_codes_messages = function()
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.NumberOfTotalUsersSupported:read(mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1) })
-  test.socket.zigbee:__queue_receive({
-    mock_device.id,
-    DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
-      mock_device,
-      0x01,
-      DoorLockUserType.UNRESTRICTED,
-      DoorLockUserStatus.AVAILABLE,
-      ""
-    )
-  })
 end
 
 test.register_coroutine_test(

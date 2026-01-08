@@ -564,15 +564,7 @@ local new_capabilities_driver = {
     init = init,
     doConfigure = do_configure
   },
-  can_handle = function(opts, driver, device, ...)
-    local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID,
-      capabilities.lockCodes.migrated.NAME, false)
-    if lock_codes_migrated then
-      local subdriver = require("using-new-capabilities")
-      return true, subdriver
-    end
-    return false
-  end
+  can_handle = require("using-new-capabilities.can_handle")
 }
 
 return new_capabilities_driver
