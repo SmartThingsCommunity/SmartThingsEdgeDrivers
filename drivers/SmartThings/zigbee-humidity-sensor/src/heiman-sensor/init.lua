@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
@@ -20,21 +10,7 @@ local RelativeHumidity = clusters.RelativeHumidity
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local PowerConfiguration = clusters.PowerConfiguration
 
-local HEIMAN_TEMP_HUMUDITY_SENSOR_FINGERPRINTS = {
-  { mfr = "Heiman", model = "b467083cfc864f5e826459e5d8ea6079" },
-  { mfr = "HEIMAN", model = "888a434f3cfc47f29ec4a3a03e9fc442" },
-  { mfr = "HEIMAN", model = "HT-EM" },
-  { mfr = "HEIMAN", model = "HT-EF-3.0" }
-}
 
-local function can_handle_heiman_sensor(opts, driver, device)
-  for _, fingerprint in ipairs(HEIMAN_TEMP_HUMUDITY_SENSOR_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function do_refresh(driver, device)
   device:send(RelativeHumidity.attributes.MeasuredValue:read(device):to_endpoint(0x02))
@@ -59,7 +35,7 @@ local heiman_sensor = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh,
     }
   },
-  can_handle = can_handle_heiman_sensor
+  can_handle = require("heiman-sensor.can_handle"),
 }
 
 return heiman_sensor
