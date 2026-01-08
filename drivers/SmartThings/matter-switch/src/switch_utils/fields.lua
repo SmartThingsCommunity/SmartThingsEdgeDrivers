@@ -43,9 +43,11 @@ SwitchFields.DEVICE_TYPE_ID = {
   DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
   GENERIC_SWITCH = 0x000F,
+  IRRIGATION_SYSTEM = 0x0040,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
+  WATER_VALVE = 0x0042,
   LIGHT = {
     ON_OFF = 0x0100,
     DIMMABLE = 0x0101,
@@ -95,6 +97,9 @@ SwitchFields.LEVEL_BOUND_RECEIVED = "__level_bound_received"
 SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
+SwitchFields.FLOW_BOUND_RECEIVED = "__flow_bound_received"
+SwitchFields.FLOW_MIN = "__flow_min"
+SwitchFields.FLOW_MAX = "__flow_max"
 
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
@@ -148,7 +153,7 @@ SwitchFields.switch_category_vendor_overrides = {
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
---- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
+--- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 
 SwitchFields.profiling_data = {
@@ -189,6 +194,8 @@ SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
 SwitchFields.OPTIONS_MASK = 0x01
 SwitchFields.OPTIONS_OVERRIDE = 0x01
 
+SwitchFields.SUPPORTED_COMPONENT_CAPABILITIES = "__supported_component_capabilities"
+
 
 SwitchFields.supported_capabilities = {
   capabilities.audioMute,
@@ -204,6 +211,7 @@ SwitchFields.supported_capabilities = {
   capabilities.energyMeter,
   capabilities.fanMode,
   capabilities.fanSpeedPercent,
+  capabilities.flowSensor,
   capabilities.hdr,
   capabilities.illuminanceMeasurement,
   capabilities.imageControl,
@@ -212,6 +220,7 @@ SwitchFields.supported_capabilities = {
   capabilities.mechanicalPanTiltZoom,
   capabilities.motionSensor,
   capabilities.nightVision,
+  capabilities.operationalState,
   capabilities.powerMeter,
   capabilities.powerConsumptionReport,
   capabilities.relativeHumidityMeasurement,
@@ -299,7 +308,16 @@ SwitchFields.device_type_attribute_map = {
     clusters.ElectricalPowerMeasurement.attributes.ActivePower,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
+  },
+  [SwitchFields.DEVICE_TYPE_ID.WATER_VALVE] = {
+    clusters.ValveConfigurationAndControl.attributes.CurrentState,
+    clusters.ValveConfigurationAndControl.attributes.CurrentLevel
   }
+}
+
+SwitchFields.operational_state_command_map = {
+  [clusters.OperationalState.commands.Pause.ID] = "pause",
+  [clusters.OperationalState.commands.Resume.ID] = "resume"
 }
 
 return SwitchFields
