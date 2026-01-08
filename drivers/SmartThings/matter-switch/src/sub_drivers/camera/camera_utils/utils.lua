@@ -120,68 +120,44 @@ function CameraUtils.profile_changed(synced_components, prev_components)
   return false
 end
 
-function CameraUtils.optional_capabilities_list_changed(optional_capabilities, prev_component_list)
-  -- Build a normalized structure from prev_component_list: {component_name = {cap1, cap2, ...}}
-  local prev_optional_capabilities = {}
-  for comp_name, comp in pairs(prev_component_list or {}) do
-    local cap_list = {}
-    for _, capability in pairs(comp.capabilities or {}) do
-      table.insert(cap_list, capability.id)
+local function has_component_capability_differences(source_list, target_list)
+  for _, source_component_capabilities in pairs(source_list) do
+    local component_index
+    for target_component_idx, target_component_capabilities in pairs(target_list) do
+      if target_component_capabilities[1] == source_component_capabilities[1] then
+        component_index = target_component_idx
+        break
+      end
     end
-    table.sort(cap_list)
-    prev_optional_capabilities[comp_name] = cap_list
-  end
-
-  -- Build a normalized structure from optional_capabilities: {component_name = {cap1, cap2, ...}}
-  local new_optional_capabilities = {}
-  for _, component_entry in pairs(optional_capabilities or {}) do
-    local comp_name = component_entry[1]
-    local cap_list = {}
-    for _, cap_name in pairs(component_entry[2] or {}) do
-      table.insert(cap_list, cap_name)
-    end
-    if comp_name == "main" then
-      table.insert(cap_list, "firmwareUpdate")
-      table.insert(cap_list, "refresh")
-    end
-    table.sort(cap_list)
-    new_optional_capabilities[comp_name] = cap_list
-  end
-
-  -- Compare number of components
-  local prev_count = 0
-  for _ in pairs(prev_optional_capabilities) do
-    prev_count = prev_count + 1
-  end
-  local new_count = 0
-  for _ in pairs(new_optional_capabilities) do
-    new_count = new_count + 1
-  end
-  if prev_count ~= new_count then
-    return true
-  end
-
-  -- Check if all components in new_optional_capabilities exist in prev with same capabilities
-  for comp_name, cap_list in pairs(new_optional_capabilities) do
-    local prev_cap_list = prev_optional_capabilities[comp_name]
-    if prev_cap_list == nil then
+    if not component_index or not target_list[component_index] or not target_list[component_index][2] then
       return true
     end
-    if #cap_list ~= #prev_cap_list then
-      return true
-    end
-    for i, cap in ipairs(cap_list) do
-      if cap ~= prev_cap_list[i] then
+    for _, capability in ipairs(source_component_capabilities[2]) do
+      if not switch_utils.tbl_contains(target_list[component_index][2], capability) then
         return true
       end
     end
   end
+  return false
+end
 
-  -- Check if all components in prev exist in new_optional_capabilities
-  for comp_name, _ in pairs(prev_optional_capabilities) do
-    if new_optional_capabilities[comp_name] == nil then
-      return true
+function CameraUtils.optional_capabilities_list_changed(new_component_capability_list, previous_component_capability_list)
+  -- Convert previous_component_capability_list into a table with the same structure as new_component_capability_list:
+  --   {{comp1, {cap1, cap2, ...}, {comp2, {cap1, cap2, ...}, ...}
+  local previous_optional_capabilities = {}
+  for component_name, component in pairs(previous_component_capability_list or {}) do
+    local capability_list = {}
+    for _, capability in pairs(component.capabilities or {}) do
+      if capability.id ~= "firmwareUpdate" and capability.id ~= "refresh" then
+        table.insert(capability_list, capability.id)
+      end
     end
+    table.insert(previous_optional_capabilities, {component_name, capability_list})
+  end
+
+  if has_component_capability_differences(new_component_capability_list, previous_optional_capabilities) or
+    has_component_capability_differences(previous_optional_capabilities, new_component_capability_list) then
+    return true
   end
 
   return false
