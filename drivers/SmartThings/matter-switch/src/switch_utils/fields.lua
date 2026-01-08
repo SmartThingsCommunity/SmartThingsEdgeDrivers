@@ -1,6 +1,8 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local st_utils = require "st.utils"
+
 local SwitchFields = {}
 
 SwitchFields.MOST_RECENT_TEMP = "mostRecentTemp"
@@ -13,8 +15,8 @@ SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 -- These values are a "sanity check" to check that values we are getting are reasonable
 local COLOR_TEMPERATURE_KELVIN_MAX = 15000
 local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = math.floor(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN)
-SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = math.floor(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX)
+SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN)
+SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX)
 
 SwitchFields.SWITCH_LEVEL_LIGHTING_MIN = 1
 SwitchFields.CURRENT_HUESAT_ATTR_MIN = 0

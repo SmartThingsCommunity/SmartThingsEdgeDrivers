@@ -7,20 +7,20 @@ components:
     version: 1
   - id: switchLevel
     version: 1
-  - id: statelessSwitchLevelStep
-    version: 1
     config:
       values:
         - key: "level.value"
           range: [1, 100]
-  - id: colorTemperature
+  - id: statelessSwitchLevelStep
     version: 1
-  - id: statelessColorTemperatureStep
+  - id: colorTemperature
     version: 1
     config:
       values:
         - key: "colorTemperature.value"
           range: [ 2200, 6500 ]
+  - id: statelessColorTemperatureStep
+    version: 1
   - id: colorControl
     version: 1
   - id: firmwareUpdate
