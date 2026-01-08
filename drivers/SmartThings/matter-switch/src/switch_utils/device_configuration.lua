@@ -43,7 +43,7 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   return generic_profile or "switch-binary"
 end
 
-function SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id)
+function SwitchDeviceConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id)
   if #server_onoff_ep_ids == 1 and server_onoff_ep_ids[1] == default_endpoint_id then -- no children will be created
    return
   end
@@ -53,16 +53,21 @@ function SwitchDeviceConfiguration.create_child_devices(driver, device, server_o
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
       local label_and_name = string.format("%s %d", device.label, device_num)
       local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
-      driver:try_create_device(
-        {
+      local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
+      if not existing_child_device then
+        driver:try_create_device({
           type = "EDGE_CHILD",
           label = label_and_name,
           profile = child_profile,
           parent_device_id = device.id,
           parent_assigned_child_key = string.format("%d", ep_id),
           vendor_provided_label = label_and_name
-        }
-      )
+        })
+      else
+        existing_child_device:try_update_metadata({
+          profile = child_profile
+        })
+      end
     end
   end
 
@@ -121,13 +126,12 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
 end
 
 
-function ButtonDeviceConfiguration.configure_buttons(device)
-  local ms_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
   local msm_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS})
 
-  for _, ep in ipairs(ms_eps) do
+  for _, ep in ipairs(momentary_switch_ep_ids or {}) do
     if device.profile.components[switch_utils.endpoint_to_component(device, ep)] then
       device.log.info_with({hub_logs=true}, string.format("Configuring Supported Values for generic switch endpoint %d", ep))
       local supportedButtonValues_event
@@ -184,7 +188,7 @@ function DeviceConfiguration.match_profile(driver, device)
 
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
-    SwitchDeviceConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id)
+    SwitchDeviceConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id)
   end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
@@ -206,12 +210,12 @@ function DeviceConfiguration.match_profile(driver, device)
   end
 
   -- initialize the main device card with buttons if applicable
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #button_eps) then
-    ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, #button_eps)
+  local momemtary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #momemtary_switch_ep_ids) then
+    ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, #momemtary_switch_ep_ids)
     -- All button endpoints found will be added as additional components in the profile containing the default_endpoint_id.
-    ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, button_eps)
-    ButtonDeviceConfiguration.configure_buttons(device)
+    ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momemtary_switch_ep_ids)
+    ButtonDeviceConfiguration.configure_buttons(device, momemtary_switch_ep_ids)
     return
   end
 
