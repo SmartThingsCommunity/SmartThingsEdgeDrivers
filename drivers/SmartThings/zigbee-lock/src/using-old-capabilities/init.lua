@@ -401,10 +401,7 @@ local old_capabilities_driver = {
     },
   },
   sub_drivers = {
-    require("using-old-capabilities.samsungsds"),
-    require("using-old-capabilities.yale"),
-    require("using-old-capabilities.yale-fingerprint-lock"),
-    require("using-old-capabilities.lock-without-codes")
+    require("using-old-capabilities.sub_drivers")
   },
   health_check = false,
   lifecycle_handlers = {

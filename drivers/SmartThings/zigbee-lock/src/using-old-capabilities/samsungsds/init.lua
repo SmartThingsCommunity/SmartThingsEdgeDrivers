@@ -112,9 +112,7 @@ local samsung_sds_driver = {
     added = device_added,
     init = device_init
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "SAMSUNG SDS"
-  end
+  can_handle = require("using-old-capabilities.samsungsds.can_handle")
 }
 
 return samsung_sds_driver

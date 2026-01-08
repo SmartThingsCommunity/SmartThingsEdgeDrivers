@@ -557,10 +557,7 @@ local new_capabilities_driver = {
     },
   },
   sub_drivers = {
-    require("using-new-capabilities.samsungsds"),
-    require("using-new-capabilities.yale-fingerprint-lock"),
-    require("using-new-capabilities.yale"),
-    require("using-new-capabilities.lock-without-codes")
+    require("using-new-capabilities.sub_drivers")
   },
   health_check = false,
   lifecycle_handlers = {

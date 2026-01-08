@@ -20,22 +20,6 @@ local LockUsers = capabilities.lockUsers
 
 local YALE_FINGERPRINT_MAX_CODES = 0x1E
 
-local YALE_FINGERPRINT_LOCK = {
-  { mfr = "ASSA ABLOY iRevo", model = "iZBModule01" },
-  { mfr = "ASSA ABLOY iRevo", model = "c700000202" },
-  { mfr = "ASSA ABLOY iRevo", model = "0700000001" },
-  { mfr = "ASSA ABLOY iRevo", model = "06ffff2027" }
-}
-
-local yale_fingerprint_lock_models = function(opts, driver, device)
-  for _, fingerprint in ipairs(YALE_FINGERPRINT_LOCK) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
-  end
-  return false
-end
-
 local handle_max_codes = function(driver, device, value)
   device:emit_event(LockCredentials.pinUsersSupported(YALE_FINGERPRINT_MAX_CODES))
   device:emit_event(LockUsers.totalUsersSupported(YALE_FINGERPRINT_MAX_CODES))
@@ -50,7 +34,7 @@ local yale_fingerprint_lock_driver = {
       }
     }
   },
-  can_handle =  yale_fingerprint_lock_models
+  can_handle =  require("using-new-capabilities.yale-fingerprint-lock.can_handle")
 }
 
 return yale_fingerprint_lock_driver

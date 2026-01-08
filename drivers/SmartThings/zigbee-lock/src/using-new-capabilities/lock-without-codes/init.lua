@@ -19,20 +19,6 @@ local capabilities = require "st.capabilities"
 local DoorLock = clusters.DoorLock
 local PowerConfiguration = clusters.PowerConfiguration
 
-local LOCK_WITHOUT_CODES_FINGERPRINTS = {
-  { model = "E261-KR0B0Z0-HA" },
-  { mfr = "Danalock", model = "V3-BTZB" }
-}
-
-local function can_handle_lock_without_codes(opts, driver, device)
-  for _, fingerprint in ipairs(LOCK_WITHOUT_CODES_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local function device_init(driver, device)
   local configuration = configurationMap.get_device_configuration(device)
   if configuration ~= nil then
@@ -95,7 +81,7 @@ local lock_without_codes = {
       }
     }
   },
-  can_handle = can_handle_lock_without_codes
+  can_handle = require("using-new-capabilities.lock-without-codes.can_handle")
 }
 
 return lock_without_codes

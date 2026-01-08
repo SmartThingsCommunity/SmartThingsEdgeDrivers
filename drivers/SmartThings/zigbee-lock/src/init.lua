@@ -34,18 +34,6 @@ local new_lock_utils = require "new_lock_utils"
 local DELAY_LOCK_EVENT = "_delay_lock_event"
 local MAX_DELAY = 10
 
-local function lazy_load_if_possible(sub_driver_name)
-  -- gets the current lua libs api version
-  local version = require "version"
-
-  -- version 9 will include the lazy loading functions
-  if version.api >= 9 then
-    return ZigbeeDriver.lazy_load_sub_driver(require(sub_driver_name))
-  else
-    return require(sub_driver_name)
-  end
-end
-
 local refresh = function(driver, device, cmd)
   device:refresh()
   device:send(LockCluster.attributes.LockState:read(device))
@@ -159,8 +147,7 @@ local zigbee_lock_driver = {
     }
   },
   sub_drivers = {
-    lazy_load_if_possible("using-old-capabilities"),
-    lazy_load_if_possible("using-new-capabilities"),
+    require("sub_drivers")
   },
   lifecycle_handlers = {
     added = device_added,
