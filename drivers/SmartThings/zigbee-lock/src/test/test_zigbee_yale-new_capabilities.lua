@@ -43,6 +43,8 @@ local function test_init_default()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.lockCodes.migrated(true, { state_change = true, visibility = { displayed = true } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } })))
   test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(
     mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
@@ -54,6 +56,8 @@ local function test_init_add_device()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.lockCodes.migrated(true, { state_change = true, visibility = { displayed = true } })))
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+    capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } })))
   test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(
     mock_device) })
   test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })

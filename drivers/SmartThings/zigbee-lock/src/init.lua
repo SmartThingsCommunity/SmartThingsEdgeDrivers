@@ -66,6 +66,7 @@ local function device_added(driver, device)
   if device.useOldCapabilityForTesting == nil then
     if device:supports_capability_by_id(LockCodes.ID) then
       device:emit_event(LockCodes.migrated(true, { state_change = true, visibility = { displayed = true } }))
+      device:emit_event(capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
       new_lock_utils.reload_tables(device)
     else
       lock_utils.populate_state_from_data(device)
