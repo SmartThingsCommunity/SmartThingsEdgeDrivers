@@ -178,6 +178,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.ColorControl.attributes.CurrentSaturation,
   clusters.ColorControl.attributes.CurrentX,
   clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
   clusters.Switch.server.events.InitialPress,
   clusters.Switch.server.events.LongPress,
   clusters.Switch.server.events.ShortRelease,

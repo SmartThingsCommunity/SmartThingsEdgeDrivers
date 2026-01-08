@@ -151,8 +151,9 @@ function utils.find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
+  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
 
   local get_first_non_zero_endpoint = function(endpoints)
     table.sort(endpoints)
@@ -164,26 +165,31 @@ function utils.find_default_endpoint(device)
     return nil
   end
 
-  -- Return the first switch endpoint as the default endpoint if no button endpoints are present
-  if #button_eps == 0 and #switch_eps > 0 then
-    return get_first_non_zero_endpoint(switch_eps)
+  -- Return the first fan endpoint as the default endpoint if any is found
+  if #fan_endpoint_ids > 0 then
+    return get_first_non_zero_endpoint(fan_endpoint_ids)
   end
 
-  -- Return the first button endpoint as the default endpoint if no switch endpoints are present
-  if #switch_eps == 0 and #button_eps > 0 then
-    return get_first_non_zero_endpoint(button_eps)
+  -- Return the first onoff endpoint as the default endpoint if no momentary switch endpoints are present
+  if #momentary_switch_ep_ids == 0 and #onoff_ep_ids > 0 then
+    return get_first_non_zero_endpoint(onoff_ep_ids)
   end
 
-  -- If both switch and button endpoints are present, check the device type on the main switch
-  -- endpoint. If it is not a supported device type, return the first button endpoint as the
+  -- Return the first momentary switch endpoint as the default endpoint if no onoff endpoints are present
+  if #onoff_ep_ids == 0 and #momentary_switch_ep_ids > 0 then
+    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+  end
+
+  -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
+  -- endpoint. If it is not a supported device type, return the first momentary switch endpoint as the
   -- default endpoint.
-  if #switch_eps > 0 and #button_eps > 0 then
-    local default_endpoint_id = get_first_non_zero_endpoint(switch_eps)
+  if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
+    local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
     if utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
       return default_endpoint_id
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
-      return get_first_non_zero_endpoint(button_eps)
+      return get_first_non_zero_endpoint(momentary_switch_ep_ids)
     end
   end
 
