@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright © 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 return function(opts, driver, device, cmd)

@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -46,7 +35,7 @@ local function alarm_report_handler(driver, device, cmd)
     event = capabilities.lock.lock.unknown()
   elseif (alarm_type == 16 or alarm_type == 19) then
     event = capabilities.lock.lock.unlocked()
-    if (code_id ~= nil) then
+    if (credential_index ~= nil) then
       local user_id = nil
       local credential = lock_utils.get_credential(device, credential_index)
       if (credential ~= nil) then
@@ -56,7 +45,7 @@ local function alarm_report_handler(driver, device, cmd)
     end
   elseif (alarm_type == 18) then
     event = capabilities.lock.lock.locked()
-    if (code_id ~= nil) then
+    if (credential_index ~= nil) then
       local user_id = nil
       local credential = lock_utils.get_credential(device, credential_index)
       if (credential ~= nil) then

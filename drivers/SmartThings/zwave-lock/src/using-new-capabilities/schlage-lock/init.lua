@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -86,6 +75,21 @@ local function user_code_report_handler(self, device, cmd)
   end
 end
 
+local function add_credential_handler(self, device, cmd)
+  local DEFAULT_COMMANDS_DELAY = 4.2
+  local current_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.minPinCodeLen.NAME)
+  local base_handler = function()
+    local new_capabilities = require "using-new-capabilities"
+    new_capabilities.capability_handlers[capabilities.lockCredentials.ID][capabilities.lockCredentials.commands.addCredential.NAME](self, device, cmd)
+  end
+  if current_code_length == nil then
+    device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
+    device.thread:call_with_delay(DEFAULT_COMMANDS_DELAY, base_handler)
+  else
+    base_handler()
+  end
+end
+
 local schlage_lock = {
   zwave_handlers = {
     [cc.USER_CODE] = {
@@ -96,6 +100,11 @@ local schlage_lock = {
     },
     [cc.BASIC] = {
       [Basic.SET] = basic_set_handler
+    }
+  },
+  capability_handlers = {
+    [capabilities.lockCredentials.ID] = {
+      [capabilities.lockCredentials.commands.addCredential.NAME] = add_credential_handler
     }
   },
   lifecycle_handlers = {

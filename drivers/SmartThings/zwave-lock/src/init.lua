@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -47,12 +36,6 @@ local function periodic_codes_state_verification(driver, device)
   end
 end
 
-local init_handler = function(driver, device, event)
-  local constants = require "st.zwave.constants"
-  -- temp fix before this can be changed from being persisted in memory
-  device:set_field(constants.CODE_STATE, nil, { persist = true })
-end
-
 local do_added = function(driver, device)
   -- this variable should only be present for test cases trying to test the old capabilities.
   if device.useOldCapabilityForTesting == nil then
@@ -69,7 +52,7 @@ local do_added = function(driver, device)
           args = {} })
     device.thread:call_with_delay(
         SCAN_CODES_CHECK_INTERVAL,
-        function(d)
+        function()
           periodic_codes_state_verification(driver, device)
         end
     )

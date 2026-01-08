@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -42,6 +31,7 @@ local mock_device = test.mock_device.build_test_zwave_device(
   {
     profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
     zwave_endpoints = zwave_lock_endpoints,
+    useOldCapabilityForTesting = true,
   }
 )
 
@@ -52,6 +42,7 @@ local schlage_mock_device = test.mock_device.build_test_zwave_device(
     zwave_manufacturer_id = SCHLAGE_MANUFACTURER_ID,
     zwave_product_type = SCHLAGE_PRODUCT_TYPE,
     zwave_product_id = SCHLAGE_PRODUCT_ID,
+    useOldCapabilityForTesting = true,
   }
 )
 
@@ -86,11 +77,11 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { state_change = true, visibility = { displayed = true } })))
+      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { state_change = true, visibility = { displayed = true } })))
-      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { state_change = true, visibility = { displayed = true } })))
+      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
     end
 )
 
@@ -101,11 +92,11 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4,  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(10,  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(8,  { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { state_change=true, visibility = { displayed = true } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({}, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(8, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { state_change = true, visibility = { displayed = true } })))
-    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { state_change = true, visibility = { displayed = true } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
   end
 )
 
@@ -125,11 +116,11 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(6,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(6,  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.pinUsersSupported(4,  { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { state_change = true, visibility = { displayed = true } })))
+      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1}, {credentialIndex=5, credentialType="pin", userIndex=2}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCredentials.supportedCredentials({"pin"},  { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
-      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { state_change = true, visibility = { displayed = true } })))
-      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { state_change = true, visibility = { displayed = true } })))
+      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
     end
 )
 
