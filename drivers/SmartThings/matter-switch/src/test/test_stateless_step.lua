@@ -83,7 +83,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 841, fields.TRANSITION_TIME, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 840, fields.TRANSITION_TIME, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
       },
     },
     {
@@ -122,7 +122,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 63, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 64, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.OPTIONS_OVERRIDE)
       },
     },
     {
