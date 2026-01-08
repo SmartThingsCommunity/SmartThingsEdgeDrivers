@@ -384,7 +384,7 @@ new_lock_utils.base_driver_code_event_handler = function(driver, device, cmd)
       -- adding credential failed since code already exists.
       -- remove the created user if one got made. There is no associated credential.
       status = new_lock_utils.STATUS_DUPLICATE
-      new_lock_utils.delete_user(device, active_credential.userIndex)
+      if active_credential ~= nil then new_lock_utils.delete_user(device, active_credential.userIndex) end
     elseif (event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION) then
       -- master code changed -- should we send an index with this?
       device:emit_event(capabilities.lockCredentials.commandResult(

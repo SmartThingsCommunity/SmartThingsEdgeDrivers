@@ -28,12 +28,6 @@ local get_lock_codes = LockCodesDefaults.get_lock_codes
 local clear_code_state = LockCodesDefaults.clear_code_state
 local code_deleted = LockCodesDefaults.code_deleted
 
-local SAMSUNG_MFR = 0x022E
-
-local function can_handle_samsung_lock(opts, self, device, cmd, ...)
-  return device.zwave_manufacturer_id == SAMSUNG_MFR
-end
-
 local function get_ongoing_code_set(device)
   local code_id
   local code_state = device:get_field(constants.CODE_STATE)
@@ -105,7 +99,7 @@ local samsung_lock = {
     doConfigure = do_configure
   },
   NAME = "Samsung Lock",
-  can_handle = can_handle_samsung_lock,
+  can_handle = require("using-old-capabilities.samsung-lock.can_handle"),
 }
 
 return samsung_lock

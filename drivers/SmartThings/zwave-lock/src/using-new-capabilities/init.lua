@@ -14,6 +14,12 @@ local TamperDefaults = require "st.zwave.defaults.tamperAlert"
 
 -- Helper methods
 local reload_all_codes = function(device)
+  local max_codes = device:get_latest_state("main",
+    LockCredentials.ID, LockCredentials.pinUsersSupported.NAME)
+  if (max_codes == nil) then
+    device:send(UserCode:UsersNumberGet({}))
+  end
+
   if (device:get_field(lock_utils.CHECKING_CODE) == nil) then
     device:set_field(lock_utils.CHECKING_CODE, 1)
   end
@@ -36,6 +42,7 @@ local added_handler = function(driver, device)
   if (device:supports_capability(capabilities.tamperAlert)) then
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
+  device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
 end
 
 local init = function(driver, device)
@@ -265,6 +272,7 @@ end
 local user_code_report_handler = function(driver, device, cmd)
   local credential_index = cmd.args.user_identifier
   local command = device:get_field(lock_utils.COMMAND_NAME)
+  local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
   local user_id_status = cmd.args.user_id_status
   local emit_events = false
 
@@ -280,6 +288,20 @@ local user_code_report_handler = function(driver, device, cmd)
           lock_utils.CREDENTIAL_TYPE,
           credential_index)
         emit_events = true
+      end
+    elseif command ~= nil then
+      if command.name == lock_utils.ADD_CREDENTIAL and lock_utils.get_credential(device, credential_index) == nil then
+        lock_utils.add_credential(device,
+          active_credential.userIndex,
+          active_credential.credentialType,
+          credential_index)
+        emit_events = true
+      elseif command.name == lock_utils.UPDATE_CREDENTIAL then
+        local credential = lock_utils.get_credential(device, credential_index)
+        if credential ~= nil then
+          lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
+          emit_events = true
+        end
       end
     end
   elseif user_id_status == UserCode.user_id_status.AVAILABLE then
@@ -309,6 +331,12 @@ local user_code_report_handler = function(driver, device, cmd)
 
   if emit_events then
     lock_utils.send_events(device)
+  end
+
+  -- clear the busy state and handle the commandStatus
+  -- ignore handling the busy state for some commands, they are handled within their own handlers
+  if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
+    lock_utils.clear_busy_state(device, lock_utils.STATUS_SUCCESS)
   end
 end
 
@@ -380,22 +408,10 @@ local zwave_lock = {
     },
   },
   sub_drivers = {
-    require("using-new-capabilities.zwave-alarm-v1-lock"),
-    require("using-new-capabilities.schlage-lock"),
-    require("using-new-capabilities.samsung-lock"),
-    require("using-new-capabilities.keywe-lock"),
+    require("using-new-capabilities.sub_drivers")
   },
   NAME = "Using new capabilities",
-  can_handle = function(opts, driver, device, ...)
-    if not device:supports_capability_by_id(LockUsers.ID) then return false end
-    local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID,
-      capabilities.lockCodes.migrated.NAME, false)
-    if lock_codes_migrated then
-      local subdriver = require("using-new-capabilities")
-      return true, subdriver
-    end
-    return false
-  end
+  can_handle = require("using-new-capabilities.can_handle")
 }
 
 return zwave_lock

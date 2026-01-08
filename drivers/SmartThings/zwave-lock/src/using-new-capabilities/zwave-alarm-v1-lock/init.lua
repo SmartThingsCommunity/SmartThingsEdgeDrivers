@@ -28,15 +28,6 @@ local METHOD = {
   AUTO = "auto"
 }
 
---- Determine whether the passed command is a V1 alarm command
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @return boolean true if the device is smoke co alarm
-local function can_handle_v1_alarm(opts, driver, device, cmd, ...)
-  return opts.dispatcher_class == "ZwaveDispatcher" and cmd ~= nil and cmd.version ~= nil and cmd.version == 1
-end
-
 --- Default handler for alarm command class reports, these were largely OEM-defined
 ---
 --- This converts alarm V1 reports to correct lock events
@@ -189,7 +180,7 @@ local zwave_lock = {
     }
   },
   NAME = "Z-Wave lock alarm V1",
-  can_handle = can_handle_v1_alarm,
+  can_handle = require("using-new-capabilities.zwave-alarm-v1-lock.can_handle")
 }
 
 return zwave_lock

@@ -20,23 +20,67 @@ local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
 
-local lazy_load_if_possible = function(sub_driver_name)
-  -- gets the current lua libs api version
-  local version = require "version"
-  -- if version.api >= 16 then
-  --   return ZwaveDriver.lazy_load_sub_driver_v2(sub_driver_name)
-  if version.api >= 9 then
-    return ZwaveDriver.lazy_load_sub_driver(require(sub_driver_name))
-  else
-    return require(sub_driver_name)
-  end
-end
-
 local do_refresh = function(self, device)
   local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
   local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
   device:send(DoorLock:OperationGet({}))
   device:send(Battery:Get({}))
+end
+
+local SCAN_CODES_CHECK_INTERVAL = 30
+
+local function periodic_codes_state_verification(driver, device)
+  local scan_codes_state = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.scanCodes.NAME)
+  if scan_codes_state == "Scanning" then
+    driver:inject_capability_command(device,
+            { capability = capabilities.lockCodes.ID,
+              command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
+              args = {}
+            }
+    )
+    device.thread:call_with_delay(
+      SCAN_CODES_CHECK_INTERVAL,
+      function(d)
+        periodic_codes_state_verification(driver, device)
+      end
+    )
+  end
+end
+
+local init_handler = function(driver, device, event)
+  local constants = require "st.zwave.constants"
+  -- temp fix before this can be changed from being persisted in memory
+  device:set_field(constants.CODE_STATE, nil, { persist = true })
+end
+
+local do_added = function(driver, device)
+  -- this variable should only be present for test cases trying to test the old capabilities.
+  if device.useOldCapabilityForTesting == nil then
+    if device:supports_capability_by_id(capabilities.LockCodes.ID) then
+      device:emit_event(capabilities.LockCodes.migrated(true, { visibility = { displayed = false } }))
+      -- make the driver call this command again, it will now be handled in new capabilities.
+      driver.lifecycle_dispatcher:dispatch(driver, device, "added")
+    end
+  else
+    -- added handler from using old capabilities
+    driver:inject_capability_command(device,
+        { capability = capabilities.lockCodes.ID,
+          command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
+          args = {} })
+    device.thread:call_with_delay(
+        SCAN_CODES_CHECK_INTERVAL,
+        function(d)
+          periodic_codes_state_verification(driver, device)
+        end
+    )
+    local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+    local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+    device:send(DoorLock:OperationGet({}))
+    device:send(Battery:Get({}))
+    if (device:supports_capability(capabilities.tamperAlert)) then
+      device:emit_event(capabilities.tamperAlert.tamper.clear())
+    end
+  end
 end
 
 local function time_get_handler(driver, device, cmd)
@@ -61,6 +105,9 @@ local driver_template = {
     capabilities.battery,
     capabilities.tamperAlert
   },
+  lifecycle_handlers = {
+    added = do_added
+  },
   capability_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
@@ -72,8 +119,7 @@ local driver_template = {
     }
   },
   sub_drivers = {
-    lazy_load_if_possible("using-old-capabilities"),
-    lazy_load_if_possible("using-new-capabilities"),
+    require("sub_drivers")
   }
 }
 

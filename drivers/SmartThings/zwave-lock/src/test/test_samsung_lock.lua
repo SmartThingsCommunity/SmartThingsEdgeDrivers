@@ -30,7 +30,8 @@ local mock_device = test.mock_device.build_test_zwave_device(
     profile = t_utils.get_profile_definition("base-lock.yml"),
     zwave_manufacturer_id = SAMSUNG_MANUFACTURER_ID,
     zwave_product_type = SAMSUNG_PRODUCT_TYPE,
-    zwave_product_id = SAMSUNG_PRODUCT_ID
+    zwave_product_id = SAMSUNG_PRODUCT_ID,
+    useOldCapabilityForTesting = true,
   }
 )
 

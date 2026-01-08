@@ -24,12 +24,7 @@ local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
 local lock_utils = require "new_lock_utils"
 
-local SCHLAGE_MFR = 0x003B
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
-
-local function can_handle_schlage_lock(opts, self, device, cmd, ...)
-  return device.zwave_manufacturer_id == SCHLAGE_MFR
-end
 
 local function do_configure(self, device)
   device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
@@ -107,7 +102,7 @@ local schlage_lock = {
     doConfigure = do_configure,
   },
   NAME = "Schlage Lock",
-  can_handle = can_handle_schlage_lock,
+  can_handle = require("using-new-capabilities.schlage-lock.can_handle"),
 }
 
 return schlage_lock

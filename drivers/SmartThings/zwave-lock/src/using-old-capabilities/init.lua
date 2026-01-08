@@ -40,30 +40,6 @@ local init_handler = function(driver, device, event)
   device:set_field(constants.CODE_STATE, nil, { persist = true })
 end
 
---- Builds up initial state for the device
----
---- @param self st.zwave.Driver
---- @param device st.zwave.Device
-local function added_handler(self, device)
-  self:inject_capability_command(device,
-      { capability = capabilities.lockCodes.ID,
-        command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-        args = {} })
-  device.thread:call_with_delay(
-      SCAN_CODES_CHECK_INTERVAL,
-      function(d)
-        periodic_codes_state_verification(self, device)
-      end
-  )
-  local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
-  local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
-  device:send(DoorLock:OperationGet({}))
-  device:send(Battery:Get({}))
-  if (device:supports_capability(capabilities.tamperAlert)) then
-    device:emit_event(capabilities.tamperAlert.tamper.clear())
-  end
-end
-
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param cmd table
@@ -149,7 +125,6 @@ local using_old_capabilities = {
   },
   lifecycle_handlers = {
     init = init_handler,
-    added = added_handler,
   },
   capability_handlers = {
     [capabilities.lockCodes.ID] = {
@@ -158,20 +133,9 @@ local using_old_capabilities = {
     },
   },
   sub_drivers = {
-    require("using-old-capabilities.zwave-alarm-v1-lock"),
-    require("using-old-capabilities.schlage-lock"),
-    require("using-old-capabilities.samsung-lock"),
-    require("using-old-capabilities.keywe-lock"),
+    require("using-old-capabilities.sub_drivers")
   },
-  can_handle = function(opts, driver, device, ...)
-    local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID,
-      capabilities.lockCodes.migrated.NAME, false)
-    if not lock_codes_migrated then
-      local subdriver = require("using-old-capabilities")
-      return true, subdriver
-    end
-    return false
-  end,
+  can_handle = require("using-old-capabilities.can_handle"),
   NAME = "Using old capabilities"
 }
 

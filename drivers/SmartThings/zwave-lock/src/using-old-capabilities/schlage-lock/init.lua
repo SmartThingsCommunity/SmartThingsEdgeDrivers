@@ -27,14 +27,9 @@ local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 
-local SCHLAGE_MFR = 0x003B
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
 local DEFAULT_COMMANDS_DELAY = 4.2 -- seconds
-
-local function can_handle_schlage_lock(opts, self, device, cmd, ...)
-  return device.zwave_manufacturer_id == SCHLAGE_MFR
-end
 
 local function set_code_length(self, device, cmd)
   local length = cmd.args.length
@@ -187,7 +182,7 @@ local schlage_lock = {
     doConfigure = do_configure,
   },
   NAME = "Schlage Lock",
-  can_handle = can_handle_schlage_lock,
+  can_handle = require("using-old-capabilities.schlage-lock.can_handle"),
 }
 
 return schlage_lock

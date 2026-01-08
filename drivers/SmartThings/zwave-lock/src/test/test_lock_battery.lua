@@ -52,7 +52,8 @@ local mock_device = test.mock_device.build_test_zwave_device(
     zwave_endpoints = zwave_lock_endpoints,
     zwave_manufacturer_id = DANALOCK_MANUFACTURER_ID,
     zwave_product_type = DANALOCK_PRODUCT_TYPE,
-    zwave_product_id = DANALOCK_PRODUCT_ID
+    zwave_product_id = DANALOCK_PRODUCT_ID,
+    useOldCapabilityForTesting = true,
   }
 )
 

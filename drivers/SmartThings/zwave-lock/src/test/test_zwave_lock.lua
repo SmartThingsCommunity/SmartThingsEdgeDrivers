@@ -43,10 +43,11 @@ local zwave_lock_endpoints = {
 }
 
 local mock_device = test.mock_device.build_test_zwave_device(
-    {
-      profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
-      zwave_endpoints = zwave_lock_endpoints
-    }
+  {
+    profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
+    zwave_endpoints = zwave_lock_endpoints,
+    useOldCapabilityForTesting = true,
+  }
 )
 
 local function test_init()
