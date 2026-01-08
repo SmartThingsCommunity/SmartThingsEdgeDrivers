@@ -4,6 +4,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local st_utils = require "st.utils"
 
 local clusters = require "st.matter.clusters"
 local TRANSITION_TIME = 0
@@ -221,7 +222,7 @@ test.register_message_test(
 			direction = "send",
 			message = {
 				mock_device.id,
-				clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 1, math.floor(20/100.0 * 254), 20, 0 ,0)
+				clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 1, st_utils.round(20/100.0 * 254), 20, 0 ,0)
 			}
 		},
 		{

@@ -7,6 +7,7 @@ local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
 local version = require "version"
+local st_utils = require "st.utils"
 
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
@@ -678,7 +679,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 2, math.floor(20/100.0 * 254), 20, 0 ,0)
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 2, st_utils.round(20/100.0 * 254), 20, 0 ,0)
       }
     },
     {

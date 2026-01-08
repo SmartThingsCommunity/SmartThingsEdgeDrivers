@@ -42,7 +42,7 @@ function CapabilityHandlers.handle_switch_set_level(driver, device, cmd)
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level/100.0 * 254)
+  local level = st_utils.round(cmd.args.level/100.0 * 254)
   device:send(clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate, 0, 0))
 end
 
