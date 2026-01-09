@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local cc = require "st.zwave.CommandClass"
 local capabilities = require "st.capabilities"
@@ -19,12 +9,6 @@ local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({version=1})
 local preferencesMap = require "preferences"
-
-local YALE_MFR = 0x0129
-
-local function can_handle_yale_siren(opts, self, device, ...)
-  return device.zwave_manufacturer_id == YALE_MFR
-end
 
 local function siren_set_helper(device, value)
   device:send(Basic:Set({value = value}))
@@ -98,7 +82,7 @@ end
 
 local yale_siren = {
   NAME = "yale-siren",
-  can_handle = can_handle_yale_siren,
+  can_handle = require("yale-siren.can_handle"),
   capability_handlers = {
     [capabilities.alarm.ID] = {
       [capabilities.alarm.commands.both.NAME] = siren_on,
