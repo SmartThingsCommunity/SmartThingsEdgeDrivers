@@ -54,6 +54,7 @@ end
 
 function SwitchLifecycleHandlers.driver_switched(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+    switch_utils.handle_electrical_sensor_info(device) -- field settings required for proper setup when switching drivers
     device_cfg.match_profile(driver, device)
   end
 end
