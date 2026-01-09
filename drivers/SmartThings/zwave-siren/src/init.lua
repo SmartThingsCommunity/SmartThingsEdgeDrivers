@@ -90,10 +90,14 @@ local driver_template = {
     capabilities.tamperAlert,
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement,
-    capabilities.chime
+    capabilities.chime,
+    capabilities.powerSource,
+    capabilities.audioVolume,
+    capabilities.firmwareUpdate,
   },
   sub_drivers = {
     require("multifunctional-siren"),
+    require("zooz-zse50"),
     require("zwave-sound-sensor"),
     require("ecolink-wireless-siren"),
     require("philio-sound-siren"),

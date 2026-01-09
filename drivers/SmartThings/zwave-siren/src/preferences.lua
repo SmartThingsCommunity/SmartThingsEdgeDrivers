@@ -56,7 +56,32 @@ local devices = {
     PARAMETERS = {
       alarmLength = {parameter_number = 1, size = 2}
     }
-  }
+  },
+  ZOOZ_ZSE50_SIREN = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0x0004,
+      product_ids = 0x0369
+    },
+    PARAMETERS = {
+      playbackMode = { parameter_number = 1, size = 1 },
+      playbackDuration = { parameter_number = 2, size = 2 },
+      playbackLoop = { parameter_number = 3, size = 1 },
+      playbackTone = { parameter_number = 4, size = 1 },
+      playbackVolume = { parameter_number = 5, size = 1 },
+      ledMode = { parameter_number = 6, size = 1 },
+      ledColor = { parameter_number = 7, size = 1 },
+      lowBattery = { parameter_number = 8, size = 1 },
+      ledBatteryMode = { parameter_number = 9, size = 1 },
+      btnToneSelection = { parameter_number = 10, size = 1 },
+      btnVolSelection = { parameter_number = 11, size = 1 },
+      basicSetGrp2 = { parameter_number = 12, size = 1 }, --Not Used
+      systemVolume = { parameter_number = 13, size = 1 },
+      ledBrightness = { parameter_number = 14, size = 1 },
+      batteryFrequency = { parameter_number = 15, size = 1 },
+      batteryThreshold = { parameter_number = 16, size = 1 }
+    }
+  },
 }
 
 local preferences = {}
@@ -80,4 +105,5 @@ preferences.to_numeric_value = function(new_value)
   end
   return numeric
 end
+
 return preferences
