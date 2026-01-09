@@ -433,27 +433,63 @@ function utils.lazy_load_if_possible(sub_driver_name)
   end
 end
 
-function utils.update_subscriptions(device)
-  local default_endpoint_id = utils.find_default_endpoint(device)
-  -- ensure subscription to all endpoint attributes- including those mapped to child devices
-  for idx, ep in ipairs(device.endpoints) do
-    if ep.endpoint_id ~= default_endpoint_id then
-      local id = 0
-      for _, dt in ipairs(ep.device_types) do
-        id = math.max(id, dt.device_type_id)
-      end
-      for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-        if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
-           attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-           attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-          device:add_subscribed_event(attr)
-        else
-          device:add_subscribed_attribute(attr)
+--- helper for the switch subscribe override, which adds to a subscribed request for a checked device
+---
+--- @param checked_device any a Matter device object, either a parent or child device, so not necessarily the same as device
+--- @param subscribe_request table a subscribe request that will be appended to as needed for the device
+--- @param capabilities_seen table a list of capabilities that have already been checked by previously handled devices
+--- @param attributes_seen table a list of attributes that have already been checked
+--- @param events_seen table a list of events that have already been checked
+--- @param subscribed_attributes table key-value pairs mapping capability ids to subscribed attributes
+--- @param subscribed_events table key-value pairs mapping capability ids to subscribed events
+function utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
+ for _, component in pairs(checked_device.st_store.profile.components) do
+    for _, capability in pairs(component.capabilities) do
+      if not capabilities_seen[capability.id] then
+        for _, attr in ipairs(subscribed_attributes[capability.id] or {}) do
+          local cluster_id = attr.cluster or attr._cluster.ID
+          local attr_id = attr.ID or attr.attribute
+          if not attributes_seen[cluster_id..attr_id] then
+            local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+            subscribe_request:with_info_block(ib)
+            attributes_seen[cluster_id..attr_id] = true
+          end
         end
+        for _, event in ipairs(subscribed_events[capability.id] or {}) do
+          local cluster_id = event.cluster or event._cluster.ID
+          local event_id = event.ID or event.event
+          if not events_seen[cluster_id..event_id] then
+            local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
+            subscribe_request:with_info_block(ib)
+            events_seen[cluster_id..event_id] = true
+          end
+        end
+        capabilities_seen[capability.id] = true -- only loop through any capability once
       end
     end
   end
-  device:subscribe()
+end
+
+--- create and send a subscription request by checking all devices, accounting for both parent and child devices
+---
+--- @param device any a Matter device object
+function utils.subscribe(device)
+  local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
+  local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
+
+  for _, endpoint_info in ipairs(device.endpoints) do
+    local checked_device = utils.find_child(device, endpoint_info.endpoint_id) or device
+    if not devices_seen[checked_device.id] then
+      utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+        device.driver.subscribed_attributes, device.driver.subscribed_events
+      )
+      devices_seen[checked_device.id] = true -- only loop through any device once
+    end
+  end
+
+  if #subscribe_request.info_blocks > 0 then
+    device:send(subscribe_request)
+  end
 end
 
 return utils

@@ -55,7 +55,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_electrical_sensor = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
+  profile = t_utils.get_profile_definition("plug-energy-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x130A,
     product_id = 0x0050,

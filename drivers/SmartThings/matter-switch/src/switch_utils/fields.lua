@@ -1,26 +1,12 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local clusters = require "st.matter.clusters"
-local capabilities = require "st.capabilities"
-local version = require "version"
-
--- Include driver-side definitions when lua libs api version is < 11
-if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
-end
-
 local SwitchFields = {}
-
-SwitchFields.HUE_SAT_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
-SwitchFields.X_Y_COLOR_MODE = clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY
 
 SwitchFields.MOST_RECENT_TEMP = "mostRecentTemp"
 SwitchFields.RECEIVED_X = "receivedX"
 SwitchFields.RECEIVED_Y = "receivedY"
 SwitchFields.HUESAT_SUPPORT = "huesatSupport"
-
 
 SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 
@@ -191,120 +177,5 @@ SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
 -- to take effect when the switch/light is off.
 SwitchFields.OPTIONS_MASK = 0x01
 SwitchFields.OPTIONS_OVERRIDE = 0x01
-
-
-SwitchFields.supported_capabilities = {
-  capabilities.audioMute,
-  capabilities.audioRecording,
-  capabilities.audioVolume,
-  capabilities.battery,
-  capabilities.batteryLevel,
-  capabilities.button,
-  capabilities.cameraPrivacyMode,
-  capabilities.cameraViewportSettings,
-  capabilities.colorControl,
-  capabilities.colorTemperature,
-  capabilities.energyMeter,
-  capabilities.fanMode,
-  capabilities.fanSpeedPercent,
-  capabilities.hdr,
-  capabilities.illuminanceMeasurement,
-  capabilities.imageControl,
-  capabilities.level,
-  capabilities.localMediaStorage,
-  capabilities.mechanicalPanTiltZoom,
-  capabilities.motionSensor,
-  capabilities.nightVision,
-  capabilities.powerMeter,
-  capabilities.powerConsumptionReport,
-  capabilities.relativeHumidityMeasurement,
-  capabilities.sounds,
-  capabilities.switch,
-  capabilities.switchLevel,
-  capabilities.temperatureMeasurement,
-  capabilities.valve,
-  capabilities.videoStreamSettings,
-  capabilities.webrtc,
-  capabilities.zoneManagement
-}
-
-SwitchFields.device_type_attribute_map = {
-  [SwitchFields.DEVICE_TYPE_ID.LIGHT.ON_OFF] = {
-    clusters.OnOff.attributes.OnOff
-  },
-  [SwitchFields.DEVICE_TYPE_ID.LIGHT.DIMMABLE] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [SwitchFields.DEVICE_TYPE_ID.LIGHT.COLOR_TEMPERATURE] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds
-  },
-  [SwitchFields.DEVICE_TYPE_ID.LIGHT.EXTENDED_COLOR] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY,
-    clusters.ColorControl.attributes.ColorMode
-  },
-  [SwitchFields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT] = {
-    clusters.OnOff.attributes.OnOff
-  },
-  [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [SwitchFields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT] = {
-    clusters.OnOff.attributes.OnOff
-  },
-  [SwitchFields.DEVICE_TYPE_ID.SWITCH.DIMMER] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel
-  },
-  [SwitchFields.DEVICE_TYPE_ID.SWITCH.COLOR_DIMMER] = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY,
-    clusters.ColorControl.attributes.ColorMode
-  },
-  [SwitchFields.DEVICE_TYPE_ID.GENERIC_SWITCH] = {
-    clusters.PowerSource.attributes.BatPercentRemaining,
-    clusters.Switch.events.InitialPress,
-    clusters.Switch.events.LongPress,
-    clusters.Switch.events.ShortRelease,
-    clusters.Switch.events.MultiPressComplete
-  },
-  [SwitchFields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR] = {
-    clusters.ElectricalPowerMeasurement.attributes.ActivePower,
-    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported
-  }
-}
 
 return SwitchFields
