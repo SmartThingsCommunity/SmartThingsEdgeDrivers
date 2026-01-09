@@ -66,7 +66,7 @@ end
 
 local init = function(driver, device)
   lock_utils.reload_tables(device)
-  device.thread:call_with_delay(2, function(d)
+  device.thread:call_with_delay(10, function(d)
     reload_all_codes(device)
   end)
 end
