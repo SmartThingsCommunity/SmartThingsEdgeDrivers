@@ -1,21 +1,11 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
-local test = require "integration_test"
 local capabilities = require "st.capabilities"
-local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+local st_utils = require "st.utils"
+local t_utils = require "integration_test.utils"
+local test = require "integration_test"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("media-speaker.yml"),
@@ -56,6 +46,8 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device)
   subscribe_request:merge(clusters.LevelControl.attributes.CurrentLevel:subscribe(mock_device))
+  subscribe_request:merge(clusters.LevelControl.attributes.MinLevel:subscribe(mock_device))
+  subscribe_request:merge(clusters.LevelControl.attributes.MaxLevel:subscribe(mock_device))
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -181,7 +173,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, math.floor(20/100.0 * 254), 0, 0, 0)
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, st_utils.round(20/100.0 * 254), 0, 0, 0)
       }
     },
     {
@@ -209,6 +201,57 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Set volume command should send the appropriate commands with given MinLevel and MaxLevel attribute values",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MinLevel:build_test_report_data(mock_device, 1, 50)
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, 1, 200)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "audioVolume", component = "main", command = "setVolume", args = { 60 } }
+      }
+    },
+    {
+      channel = "matter",
+      direction = "send",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, st_utils.round((60 * (200 - 50) / 100.0) + 50), 0, 0, 0) -- 140
+      }
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.LevelControl.attributes.CurrentLevel:build_test_report_data(mock_device, 10, 110)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.audioVolume.volume(st_utils.round(((110 - 50) * 100) / (200 - 50)))) -- 40%
+    }
+  }
+)
+
+test.register_message_test(
   "Volume up/down command should send the appropriate commands",
   {
     {
@@ -224,7 +267,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, math.floor(20/100.0 * 254), 0, 0, 0)
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, st_utils.round(20/100.0 * 254), 0, 0, 0)
       }
     },
     {
@@ -262,7 +305,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, math.floor(25/100.0 * 254), 0, 0, 0)
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, st_utils.round(25/100.0 * 254), 0, 0, 0)
       }
     },
     {
@@ -300,7 +343,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, math.floor(20/100.0 * 254), 0, 0, 0)
+        clusters.LevelControl.server.commands.MoveToLevelWithOnOff(mock_device, 10, st_utils.round(20/100.0 * 254), 0, 0, 0)
       }
     },
     {
@@ -330,6 +373,8 @@ test.register_message_test(
 local function refresh_commands(dev)
   local req = clusters.OnOff.attributes.OnOff:read(dev)
   req:merge(clusters.LevelControl.attributes.CurrentLevel:read(dev))
+  req:merge(clusters.LevelControl.attributes.MinLevel:read(dev))
+  req:merge(clusters.LevelControl.attributes.MaxLevel:read(dev))
   return req
 end
 
