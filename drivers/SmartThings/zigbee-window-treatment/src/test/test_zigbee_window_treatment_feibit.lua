@@ -20,6 +20,7 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
 local Level = clusters.Level
+local WindowCovering = clusters.WindowCovering
 
 local mock_device = test.mock_device.build_test_zigbee_device(
     { profile = t_utils.get_profile_definition("window-treatment-profile.yml"),
@@ -396,6 +397,7 @@ test.register_coroutine_test(
                                               zigbee_test_utils.mock_hub_eui,
                                               Level.ID)
       })
+      test.socket.zigbee:__expect_send({ mock_device.id, WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device) })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
 )

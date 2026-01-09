@@ -79,6 +79,8 @@ test.register_coroutine_test(
                                                                                                                    0,
                                                                                                                    21600,
                                                                                                                    0) })
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
       test.wait_for_events()

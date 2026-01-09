@@ -469,6 +469,9 @@ test.register_coroutine_test(
                                             3
                                           ):to_endpoint(3)
     })
+    test.socket.zigbee:__expect_send({ mock_base_device.id, OnOff.attributes.OnOff:read(mock_base_device) })
+    test.socket.zigbee:__expect_send({ mock_base_device.id, OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(2) })
+    test.socket.zigbee:__expect_send({ mock_base_device.id, OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(3) })
     mock_base_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
