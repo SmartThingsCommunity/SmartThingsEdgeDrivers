@@ -103,6 +103,14 @@ function utils.check_switch_category_vendor_overrides(device)
   end
 end
 
+function utils.check_deprecated_color_temperature_profile_vendor_overrides(device)
+  for _, product_id in ipairs(fields.deprecated_color_temperature_profile_vendor_overrides[device.manufacturer_info.vendor_id] or {}) do
+    if device.manufacturer_info.product_id == product_id then
+      return true
+    end
+  end
+end
+
 --- device_type_supports_button_switch_combination helper function used to check
 --- whether the device type for an endpoint is currently supported by a profile for
 --- combination button/switch devices.
