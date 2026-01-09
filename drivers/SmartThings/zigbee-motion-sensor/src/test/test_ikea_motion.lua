@@ -123,7 +123,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "ZDO Message handler and adding hub to group",
   function()
-    local binding_table = mgmt_bind_response.BindingTableListRecord("jù¿˛ˇ^œ–", 0x01, 0x0006, 0x01, 0xB9F2)
+    local binding_table = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x01, 0xB9F2)
     local response = mgmt_bind_response.MgmtBindResponse({
       status = 0x00,
       total_binding_table_entry_count = 0x01,
@@ -144,7 +144,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Request all binding table entries and fall back to group 0x0000",
   function()
-    local binding_table_long = mgmt_bind_response.BindingTableListRecord("jù¿˛ˇ^œ–", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
+    local binding_table_long = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
     local response = mgmt_bind_response.MgmtBindResponse({
       status = 0x00,
       total_binding_table_entry_count = 0x02,

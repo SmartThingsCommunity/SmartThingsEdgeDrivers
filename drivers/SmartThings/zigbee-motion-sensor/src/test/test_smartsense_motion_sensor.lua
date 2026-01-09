@@ -61,7 +61,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_motion_status_message(mock_device, "|")
+      build_motion_status_message(mock_device, "\x7C")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
@@ -75,7 +75,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_motion_status_message(mock_device, "~")
+      build_motion_status_message(mock_device, "\x7E")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
@@ -89,7 +89,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_motion_status_message(mock_device, "X")
+      build_motion_status_message(mock_device, "\x58")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(70)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
@@ -103,7 +103,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_motion_status_message(mock_device, "Z")
+      build_motion_status_message(mock_device, "\x5A")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(70)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
@@ -117,7 +117,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_motion_status_message(mock_device, "½")
+      build_motion_status_message(mock_device, "\xBD")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
@@ -130,7 +130,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_motion_status_message(mock_device, "¿")
+      build_motion_status_message(mock_device, "\xBF")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
@@ -143,7 +143,7 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      build_motion_status_message(mock_device, "0")
+      build_motion_status_message(mock_device, "\x30")
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
