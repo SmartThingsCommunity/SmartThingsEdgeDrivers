@@ -10,6 +10,8 @@ components:
           values:
             - key: "level.value"
               range: [1, 100]
+      - id: statelessSwitchLevelStep
+        version: 1
       - id: energyMeter
         version: 1
       - id: powerConsumptionReport
