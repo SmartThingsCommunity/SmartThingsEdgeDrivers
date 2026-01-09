@@ -120,43 +120,48 @@ function CameraUtils.profile_changed(synced_components, prev_components)
   return false
 end
 
-local function has_component_capability_differences(source_list, target_list)
-  for _, source_component_capabilities in pairs(source_list) do
-    local component_index
-    for target_component_idx, target_component_capabilities in pairs(target_list) do
-      if target_component_capabilities[1] == source_component_capabilities[1] then
-        component_index = target_component_idx
-        break
-      end
-    end
-    if not component_index or not target_list[component_index] or not target_list[component_index][2] then
-      return true
-    end
-    for _, capability in ipairs(source_component_capabilities[2]) do
-      if not switch_utils.tbl_contains(target_list[component_index][2], capability) then
-        return true
-      end
-    end
-  end
-  return false
-end
-
 function CameraUtils.optional_capabilities_list_changed(new_component_capability_list, previous_component_capability_list)
-  -- Convert previous_component_capability_list into a table with the same structure as new_component_capability_list:
-  --   {{comp1, {cap1, cap2, ...}, {comp2, {cap1, cap2, ...}, ...}
-  local previous_optional_capabilities = {}
+  local previous_capability_map = {}
+  local component_sizes = {}
+
+  local previous_component_count = 0
   for component_name, component in pairs(previous_component_capability_list or {}) do
-    local capability_list = {}
+    previous_capability_map[component_name] = {}
+    component_sizes[component_name] = 0
     for _, capability in pairs(component.capabilities or {}) do
       if capability.id ~= "firmwareUpdate" and capability.id ~= "refresh" then
-        table.insert(capability_list, capability.id)
+        previous_capability_map[component_name][capability.id] = true
+        component_sizes[component_name] = component_sizes[component_name] + 1
       end
     end
-    table.insert(previous_optional_capabilities, {component_name, capability_list})
+    previous_component_count = previous_component_count + 1
   end
 
-  if has_component_capability_differences(new_component_capability_list, previous_optional_capabilities) or
-    has_component_capability_differences(previous_optional_capabilities, new_component_capability_list) then
+  local number_of_components_counted = 0
+  for _, new_component_capabilities in pairs(new_component_capability_list or {}) do
+    local component_name = new_component_capabilities[1]
+    local capability_list = new_component_capabilities[2]
+
+    number_of_components_counted = number_of_components_counted + 1
+
+    if not previous_capability_map[component_name] then
+      return true
+    end
+
+    local capabilities_in_component = 0
+    for _, capability in ipairs(capability_list) do
+      if not previous_capability_map[component_name][capability] then
+        return true
+      end
+      capabilities_in_component = capabilities_in_component + 1
+    end
+
+    if capabilities_in_component ~= component_sizes[component_name] then
+      return true
+    end
+  end
+
+  if number_of_components_counted ~= previous_component_count then
     return true
   end
 
