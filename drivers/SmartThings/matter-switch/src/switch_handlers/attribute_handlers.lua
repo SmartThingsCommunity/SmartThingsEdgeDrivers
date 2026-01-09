@@ -251,6 +251,9 @@ function AttributeHandlers.active_power_handler(driver, device, ib, response)
   if ib.data.value then
     local watt_value = ib.data.value / 1000 -- convert received milliwatt to watt
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+  else
+    -- note: we don't support nullable types, so this handles the Null case for ActivePower
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = 0, unit = "W"}))
   end
   if type(device.register_native_capability_attr_handler) == "function" then
     device:register_native_capability_attr_handler("powerMeter","power")
