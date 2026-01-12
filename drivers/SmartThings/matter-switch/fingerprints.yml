@@ -1411,6 +1411,116 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0A7E
     deviceProfileName: light-level
+  - id: "4489/2725"
+    deviceLabel: SMART MAT PAR16 RGBW GU10
+    vendorId: 0x1189
+    productId: 0x0AA5
+    deviceProfileName: light-color-level
+  - id: "4489/2766"
+    deviceLabel: SMART MAT B40 RGBW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0ACE
+    deviceProfileName: light-color-level
+  - id: "4489/2765"
+    deviceLabel: SMART MAT P40 RGBW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0ACD
+    deviceProfileName: light-color-level
+  - id: "4489/2764"
+    deviceLabel: SMART MAT G95 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0ACC
+    deviceProfileName: light-color-level
+  - id: "4489/2774"
+    deviceLabel: SMART MAT A40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD6
+    deviceProfileName: light-color-level
+  - id: "4489/2775"
+    deviceLabel: SMART MAT E40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD7
+    deviceProfileName: light-color-level
+  - id: "4489/2776"
+    deviceLabel: SMART MAT G40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD8
+    deviceProfileName: light-color-level
+  - id: "4489/2837"
+    deviceLabel: SMART MAT A75 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0B15
+    deviceProfileName: light-color-level
+  - id: "4489/2713"
+    deviceLabel: SMART MAT A60 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0A99
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2711"
+    deviceLabel: SMART MAT A100 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0A97
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2716"
+    deviceLabel: SMART MAT P40 TW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0A9C
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2726"
+    deviceLabel: SMART MAT PAR16 TW 827 GU10
+    vendorId: 0x1189
+    productId: 0x0AA6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2678"
+    deviceLabel: SMART MAT E60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A76
+    deviceProfileName: light-level
+  - id: "4489/2676"
+    deviceLabel: SMART MAT G60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A74
+    deviceProfileName: light-level
+  - id: "4489/2687"
+    deviceLabel: SMART MAT B40 DIM FIL 827 E14
+    vendorId: 0x1189
+    productId: 0x0A7F
+    deviceProfileName: light-level
+  - id: "4489/2685"
+    deviceLabel: SMART MAT E53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7D
+    deviceProfileName: light-level
+  - id: "4489/2684"
+    deviceLabel: SMART MAT G53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7C
+    deviceProfileName: light-level
+  - id: "4489/2681"
+    deviceLabel: SMART MAT A60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A79
+    deviceProfileName: light-level
+  - id: "4489/2682"
+    deviceLabel: SMART MAT P40 DIM FIL 827 E14
+    vendorId: 0x1189
+    productId: 0x0A7A
+    deviceProfileName: light-level
+  - id: "4489/2727"
+    deviceLabel: SMART MAT PAR16 DIM GU10
+    vendorId: 0x1189
+    productId: 0x0AA7
+    deviceProfileName: light-level
+  - id: "4489/2712"
+    deviceLabel: SMART MAT G95 100 TW 827 E27
+    vendorId: 0x1189
+    productId: 0x0A98
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2836"
+    deviceLabel: SMART MAT A75 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0B14
+    deviceProfileName: light-level-colorTemperature
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
@@ -3604,7 +3714,7 @@ matterGeneric:
     deviceTypes:
       - id: 0x002B # Fan
       - id: 0x0100 # OnOff Light
-    deviceProfileName: fan-modular    
+    deviceProfileName: fan-modular
   - id: "matter/dimmable/fan/light"
     deviceLabel: Matter Dimmable Fan Light
     deviceTypes:
