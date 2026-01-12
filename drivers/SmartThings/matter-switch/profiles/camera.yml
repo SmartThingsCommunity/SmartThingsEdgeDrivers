@@ -111,12 +111,37 @@ deviceConfig:
             capability: imageCapture
             version: 1
             value: image.value
+          overlayIcons:
+            - iconUrl: "res://ic_camera_motion_detected"
+              visibleCondition:
+                component: main
+                capability: motionSensor
+                version: 1
+                value: motion.value
+                valueType: string
+                operator: EQUALS
+                operand: "active"
   detailView:
     - component: main
       capability: webrtc
       version: 1
     - component: main
       capability: mechanicalPanTiltZoom
+      version: 1
+    - component: main
+      capability: motionSensor
+      version: 1
+  automation:
+    conditions:
+    - component: main
+      capability: motionSensor
+      version: 1
+    actions:
+    - component: main
+      capability: videoCapture2
+      version: 1
+    - component: main
+      capability: imageCapture
       version: 1
   dpInfo:
     - os: ios

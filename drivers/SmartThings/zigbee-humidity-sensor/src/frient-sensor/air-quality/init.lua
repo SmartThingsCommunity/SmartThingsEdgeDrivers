@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -11,20 +11,6 @@ local PowerConfiguration = zcl_clusters.PowerConfiguration
 local device_management = require "st.zigbee.device_management"
 local cluster_base = require "st.zigbee.cluster_base"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
-local configurationMap = require "configurations"
-
-local FRIENT_AIR_QUALITY_SENSOR_FINGERPRINTS = {
-  { mfr = "frient A/S", model = "AQSZB-110", subdriver = "airquality" }
-}
-
-local function can_handle_frient(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FRIENT_AIR_QUALITY_SENSOR_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model and fingerprint.subdriver == "airquality" then
-      return true
-    end
-  end
-  return false
-end
 
 local Frient_VOCMeasurement = {
   ID = 0xFC03,
@@ -90,6 +76,7 @@ local function temperatureHandler(driver, device, attr_val, zb_rx)
 end
 
 local function device_init(driver, device)
+  local configurationMap = require "configurations"
   battery_defaults.build_linear_voltage_init(2.3, 3.0)(driver, device)
   local configuration = configurationMap.get_device_configuration(device)
   if configuration ~= nil then
@@ -106,6 +93,7 @@ local function device_added(driver, device)
 end
 
 local function do_refresh(driver, device)
+  local FRIENT_AIR_QUALITY_SENSOR_FINGERPRINTS = require "frient-sensor.air-quality.fingerprints"
   for _, fingerprint in ipairs(FRIENT_AIR_QUALITY_SENSOR_FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
       device:send(cluster_base.read_manufacturer_specific_attribute(device, Frient_VOCMeasurement.ID, Frient_VOCMeasurement.attributes.MeasuredValue.ID, Frient_VOCMeasurement.ManufacturerSpecificCode):to_endpoint(0x26))
@@ -153,7 +141,7 @@ local frient_airquality_sensor = {
       },
     }
   },
-  can_handle = can_handle_frient
+  can_handle = require("frient-sensor.air-quality.can_handle")
 }
 
 return frient_airquality_sensor
