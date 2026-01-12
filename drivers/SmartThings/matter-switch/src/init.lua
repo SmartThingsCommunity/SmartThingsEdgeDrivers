@@ -49,6 +49,10 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
+  elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    -- because get_parent_device() may cause race conditions if used in init, an initial child subscribe is handled in doConfigure.
+    -- all future calls to subscribe will be handled by the parent device in init
+    device:subscribe()
   end
 end
 
@@ -68,7 +72,7 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
         device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
       )
     elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
-      switch_utils.update_subscriptions(device:get_parent_device()) -- parent device required to scan through EPs and update subscriptions
+      device:get_parent_device():subscribe() -- parent device required to send subscription requests
     end
   end
 
@@ -87,7 +91,8 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
-    switch_utils.update_subscriptions(device)
+    device:extend_device("subscribe", switch_utils.subscribe)
+    device:subscribe()
 
     -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
@@ -290,7 +295,40 @@ local matter_driver_template = {
       [capabilities.valve.commands.open.NAME] = capability_handlers.handle_valve_open,
     },
   },
-  supported_capabilities = fields.supported_capabilities,
+  supported_capabilities = {
+    capabilities.audioMute,
+    capabilities.audioRecording,
+    capabilities.audioVolume,
+    capabilities.battery,
+    capabilities.batteryLevel,
+    capabilities.button,
+    capabilities.cameraPrivacyMode,
+    capabilities.cameraViewportSettings,
+    capabilities.colorControl,
+    capabilities.colorTemperature,
+    capabilities.energyMeter,
+    capabilities.fanMode,
+    capabilities.fanSpeedPercent,
+    capabilities.hdr,
+    capabilities.illuminanceMeasurement,
+    capabilities.imageControl,
+    capabilities.level,
+    capabilities.localMediaStorage,
+    capabilities.mechanicalPanTiltZoom,
+    capabilities.motionSensor,
+    capabilities.nightVision,
+    capabilities.powerMeter,
+    capabilities.powerConsumptionReport,
+    capabilities.relativeHumidityMeasurement,
+    capabilities.sounds,
+    capabilities.switch,
+    capabilities.switchLevel,
+    capabilities.temperatureMeasurement,
+    capabilities.valve,
+    capabilities.videoStreamSettings,
+    capabilities.webrtc,
+    capabilities.zoneManagement
+  },
   sub_drivers = {
     switch_utils.lazy_load_if_possible("sub_drivers.aqara_cube"),
     switch_utils.lazy_load("sub_drivers.camera"),

@@ -139,7 +139,7 @@ function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, 
 end
 
 function AttributeHandlers.current_x_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local y = device:get_field(fields.RECEIVED_Y)
@@ -157,7 +157,7 @@ function AttributeHandlers.current_x_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.current_y_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local x = device:get_field(fields.RECEIVED_X)
@@ -173,15 +173,17 @@ function AttributeHandlers.current_y_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.color_mode_handler(driver, device, ib, response)
-  if ib.data.value == device:get_field(fields.COLOR_MODE) or (ib.data.value ~= fields.HUE_SAT_COLOR_MODE and ib.data.value ~= fields.X_Y_COLOR_MODE) then
-    return
+  if ib.data.value == device:get_field(fields.COLOR_MODE)
+    or (ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
+    and ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY) then
+      return
   end
   device:set_field(fields.COLOR_MODE, ib.data.value)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == fields.HUE_SAT_COLOR_MODE then
+  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  elseif ib.data.value == fields.X_Y_COLOR_MODE then
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
