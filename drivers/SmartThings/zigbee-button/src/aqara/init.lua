@@ -34,13 +34,13 @@ local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
 local PRESENT_ATTRIBUTE_ID = 0x0055
 
 local COMP_LIST = { "button1", "button2", "all" }
-local FINGERPRINTS = {
-  ["lumi.remote.b1acn02"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.acn003"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b186acn03"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b286acn03"] = { mfr = "LUMI", btn_cnt = 3 },
-  ["lumi.remote.b18ac1"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b28ac1"] = { mfr = "LUMI", btn_cnt = 3 }
+local AQARA_REMOTE_SWITCH = {
+  ["lumi.remote.b1acn02"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2032", quantity = 1 },   -- Aqara Wireless Mini Switch T1
+  ["lumi.remote.acn003"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2032", quantity = 1 },    -- Aqara Wireless Remote Switch E1 (Single Rocker)
+  ["lumi.remote.b186acn03"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2032", quantity = 1 }, -- Aqara Wireless Remote Switch T1 (Single Rocker)
+  ["lumi.remote.b286acn03"] = { mfr = "LUMI", btn_cnt = 3, type = "CR2032", quantity = 1 }, -- Aqara Wireless Remote Switch T1 (Double Rocker)
+  ["lumi.remote.b18ac1"] = { mfr = "LUMI", btn_cnt = 1, type = "CR2450", quantity = 1 },    -- Aqara Wireless Remote Switch H1 (Single Rocker)
+  ["lumi.remote.b28ac1"] = { mfr = "LUMI", btn_cnt = 3, type = "CR2450", quantity = 1 }     -- Aqara Wireless Remote Switch H1 (Double Rocker)
 }
 
 local configuration = {
@@ -65,7 +65,7 @@ local configuration = {
 local function present_value_attr_handler(driver, device, value, zb_rx)
   if value.value < 0xFF then
     local end_point = zb_rx.address_header.src_endpoint.value
-    local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
+    local btn_evt_cnt = AQARA_REMOTE_SWITCH[device:get_model()].btn_cnt or 1
     local evt = capabilities.button.button.held({ state_change = true })
     if value.value == 1 then
       evt = capabilities.button.button.pushed({ state_change = true })
@@ -110,7 +110,7 @@ local function battery_level_handler(driver, device, value, zb_rx)
 end
 
 local function mode_switching_handler(driver, device, value, zb_rx)
-  local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
+  local btn_evt_cnt = AQARA_REMOTE_SWITCH[device:get_model()].btn_cnt or 1
   local allow = device.preferences[MODE_CHANGE] or false
   if allow then
     local mode = device:get_field(MODE) or 1
@@ -141,7 +141,7 @@ end
 
 local is_aqara_products = function(opts, driver, device)
   local isAqaraProducts = false
-  if FINGERPRINTS[device:get_model()] and FINGERPRINTS[device:get_model()].mfr == device:get_manufacturer() then
+  if AQARA_REMOTE_SWITCH[device:get_model()] and AQARA_REMOTE_SWITCH[device:get_model()].mfr == device:get_manufacturer() then
     isAqaraProducts = true
   end
   return isAqaraProducts
@@ -157,9 +157,11 @@ local function device_init(driver, device)
 end
 
 local function added_handler(self, device)
-  local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
+  local btn_evt_cnt = AQARA_REMOTE_SWITCH[device:get_model()].btn_cnt or 1
   local mode = device:get_field(MODE) or 0
   local model = device:get_model()
+  local type = AQARA_REMOTE_SWITCH[device:get_model()].type or "CR2032"
+  local quantity = AQARA_REMOTE_SWITCH[device:get_model()].quantity or 1
 
   if mode == 0 then
     if model == "lumi.remote.b18ac1" or model == "lumi.remote.b28ac1" then
@@ -175,8 +177,8 @@ local function added_handler(self, device)
   button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME,
     capabilities.button.button.pushed({ state_change = false }))
   device:emit_event(capabilities.batteryLevel.battery.normal())
-  device:emit_event(capabilities.batteryLevel.type("CR2032"))
-  device:emit_event(capabilities.batteryLevel.quantity(1))
+  device:emit_event(capabilities.batteryLevel.type(type))
+  device:emit_event(capabilities.batteryLevel.quantity(quantity))
 
   if btn_evt_cnt > 1 then
     for i = 1, btn_evt_cnt do

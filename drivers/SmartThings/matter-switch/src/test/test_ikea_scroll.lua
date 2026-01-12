@@ -127,6 +127,7 @@ local ENDPOINTS_PRESS = { 3, 6, 9 }
 -- the ikea scroll subdriver has overriden subscribe behavior
 local function ikea_scroll_subscribe()
   local CLUSTER_SUBSCRIBE_LIST ={
+  clusters.Switch.events.InitialPress,
     clusters.Switch.server.events.LongPress,
     clusters.Switch.server.events.MultiPressComplete,
   }
