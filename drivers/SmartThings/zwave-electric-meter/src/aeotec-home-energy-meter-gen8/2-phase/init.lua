@@ -22,10 +22,6 @@ local Meter = (require "st.zwave.CommandClass.Meter")({ version=4 })
 local cc = require "st.zwave.CommandClass"
 local utils = require "st.utils"
 
-local AEOTEC_HOME_ENERGY_METER_GEN8_FINGERPRINTS = {
-    { mfr = 0x0371, prod = 0x0103, model = 0x002E } -- HEM Gen8 2 Phase US
-}
-
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
@@ -36,15 +32,6 @@ local HEM8_DEVICES = {
   { profile = 'aeotec-home-energy-meter-gen8-sald-con', name = 'Aeotec Home Energy Meter 8 Settled Consumption', child_key = 'sald-con', endpoints = { 7 } },
   { profile = 'aeotec-home-energy-meter-gen8-sald-pro', name = 'Aeotec Home Energy Meter 8 Settled Production', child_key = 'sald-pro', endpoints = { 8 } }
 }
-
-local function can_handle_aeotec_meter_gen8_2_phase(opts, driver, device, ...)
-  for _, fingerprint in ipairs(AEOTEC_HOME_ENERGY_METER_GEN8_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local function find_hem8_child_device_key_by_endpoint(endpoint)
   for _, child in ipairs(HEM8_DEVICES) do
@@ -189,7 +176,7 @@ local aeotec_home_energy_meter_gen8_2_phase = {
     added = device_added,
     init = device_init
   },
-  can_handle = can_handle_aeotec_meter_gen8_2_phase
+  can_handle = require("aeotec-home-energy-meter-gen8.2-phase.can_handle")
 }
 
 return aeotec_home_energy_meter_gen8_2_phase
