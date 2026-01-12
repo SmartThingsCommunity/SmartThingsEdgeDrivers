@@ -120,28 +120,49 @@ function CameraUtils.profile_changed(synced_components, prev_components)
   return false
 end
 
-function CameraUtils.optional_capabilities_list_changed(optional_capabilities, prev_component_list)
-  local prev_optional_capabilities = {}
-  for idx, comp in pairs(prev_component_list or {}) do
-    local cap_list = {}
-    for _, capability in pairs(comp.capabilities or {}) do
-      table.insert(cap_list, capability.id)
+function CameraUtils.optional_capabilities_list_changed(new_component_capability_list, previous_component_capability_list)
+  local previous_capability_map = {}
+  local component_sizes = {}
+
+  local previous_component_count = 0
+  for component_name, component in pairs(previous_component_capability_list or {}) do
+    previous_capability_map[component_name] = {}
+    component_sizes[component_name] = 0
+    for _, capability in pairs(component.capabilities or {}) do
+      if capability.id ~= "firmwareUpdate" and capability.id ~= "refresh" then
+        previous_capability_map[component_name][capability.id] = true
+        component_sizes[component_name] = component_sizes[component_name] + 1
+      end
     end
-    table.insert(prev_optional_capabilities, {idx, cap_list})
+    previous_component_count = previous_component_count + 1
   end
-  if #optional_capabilities ~= #prev_optional_capabilities then
+
+  local number_of_components_counted = 0
+  for _, new_component_capabilities in pairs(new_component_capability_list or {}) do
+    local component_name = new_component_capabilities[1]
+    local capability_list = new_component_capabilities[2]
+
+    number_of_components_counted = number_of_components_counted + 1
+
+    if previous_capability_map[component_name] == nil then
+      return true
+    end
+
+    for _, capability in ipairs(capability_list) do
+      if previous_capability_map[component_name][capability] == nil then
+        return true
+      end
+    end
+
+    if #capability_list ~= component_sizes[component_name] then
+      return true
+    end
+  end
+
+  if number_of_components_counted ~= previous_component_count then
     return true
   end
-  for _, capability in pairs(optional_capabilities or {}) do
-    if not switch_utils.tbl_contains(prev_optional_capabilities, capability) then
-      return true
-    end
-  end
-  for _, capability in pairs(prev_optional_capabilities or {}) do
-    if not switch_utils.tbl_contains(optional_capabilities, capability) then
-      return true
-    end
-  end
+
   return false
 end
 

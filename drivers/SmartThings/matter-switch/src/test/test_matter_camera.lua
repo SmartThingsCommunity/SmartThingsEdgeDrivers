@@ -5,6 +5,7 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
+local uint32 = require "st.matter.data_types.Uint32"
 
 test.disable_startup_messages()
 
@@ -284,7 +285,6 @@ local expected_metadata = {
 }
 
 local function update_device_profile()
-  local uint32 = require "st.matter.data_types.Uint32"
   test.socket.matter:__queue_receive({
     mock_device.id,
     clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
@@ -292,8 +292,9 @@ local function update_device_profile()
       uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
     })
   })
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
   mock_device:expect_metadata_update(expected_metadata)
+  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+  test.wait_for_events()
   local updated_device_profile = t_utils.get_profile_definition(
     "camera.yml", {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
   )
@@ -1827,6 +1828,60 @@ test.register_coroutine_test(
         1, false, true
       )
     })
+  end
+)
+
+test.register_coroutine_test(
+  "Camera profile should not update for an unchanged Status Light AttributeList report",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+      })
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Camera profile should update for a changed Status Light AttributeList report",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
+      })
+    })
+    local expected_metadata = {
+      optional_component_capabilities = {
+        { "main",
+          { "videoCapture2", "cameraViewportSettings", "localMediaStorage", "audioRecording", "cameraPrivacyMode",
+            "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "videoStreamSettings", "zoneManagement",
+            "webrtc", "motionSensor", "sounds", }
+        },
+        { "statusLed",
+          { "switch" } -- only switch capability remains
+        },
+        { "speaker",
+          { "audioMute", "audioVolume" }
+        },
+        { "microphone",
+          { "audioMute", "audioVolume" }
+        },
+        { "doorbell",
+          { "button" }
+        }
+      },
+      profile = "camera"
+    }
+    mock_device:expect_metadata_update(expected_metadata)
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
   end
 )
 
