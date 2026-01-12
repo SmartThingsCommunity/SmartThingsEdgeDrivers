@@ -21,7 +21,7 @@ local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
 
-function ChildConfiguration.create_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
+function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
    return
   end
@@ -97,39 +97,6 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
 
   -- if no supported device type is found, return switch-binary as a generic "OnOff EP" profile
   return generic_profile or "switch-binary"
-end
-
-function SwitchDeviceConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id)
-  if #server_onoff_ep_ids == 1 and server_onoff_ep_ids[1] == default_endpoint_id then -- no children will be created
-   return
-  end
-
-  table.sort(server_onoff_ep_ids)
-  for device_num, ep_id in ipairs(server_onoff_ep_ids) do
-    if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
-      local label_and_name = string.format("%s %d", device.label, device_num)
-      local child_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, ep_id, true)
-      local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
-      if not existing_child_device then
-        driver:try_create_device({
-          type = "EDGE_CHILD",
-          label = label_and_name,
-          profile = child_profile,
-          parent_device_id = device.id,
-          parent_assigned_child_key = string.format("%d", ep_id),
-          vendor_provided_label = label_and_name
-        })
-      else
-        existing_child_device:try_update_metadata({
-          profile = child_profile
-        })
-      end
-    end
-  end
-
-  -- Persist so that the find_child function is always set on each driver init.
-  device:set_field(fields.IS_PARENT_CHILD_DEVICE, true, {persist = true})
-  device:set_find_child(switch_utils.find_child)
 end
 
 -- Per the spec, these attributes are "meant to be changed only during commissioning."
@@ -245,7 +212,7 @@ function DeviceConfiguration.match_profile(driver, device)
 
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
-    ChildConfiguration.create_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
+    ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
   end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
