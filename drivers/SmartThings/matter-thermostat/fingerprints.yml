@@ -78,6 +78,12 @@ matterManufacturer:
     vendorId: 0x134E
     productId: 0x0002
     deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
+  #Taruie
+  - id: "5151/4101"
+    deviceLabel: TARUIE AC Remote
+    vendorId: 0x141F
+    productId: 0x1005
+    deviceProfileName: thermostat
   #720
   - id: "5482/1"
     deviceLabel: xCREAS Smart Air Purifier Cyclone400
