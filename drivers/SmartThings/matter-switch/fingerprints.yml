@@ -1521,6 +1521,31 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0B14
     deviceProfileName: light-level-colorTemperature
+  - id: "4489/2514"
+    deviceLabel: SMART MAT ORBIS DL 200 TW WT
+    vendorId: 0x1189
+    productId: 0x09D2
+    deviceProfileName: light-color-level
+  - id: "4489/2518"
+    deviceLabel: SMART MAT ORBIS DL 400 TW WT
+    vendorId: 0x1189
+    productId: 0x09D6
+    deviceProfileName: light-color-level
+  - id: "4489/2519"
+    deviceLabel: SMART MAT ORBIS DL SQ400 TW WT
+    vendorId: 0x1189
+    productId: 0x09D7
+    deviceProfileName: light-color-level
+  - id: "4489/2763"
+    deviceLabel: SMART MAT A60 RGBW 827 FR B22D
+    vendorId: 0x1189
+    productId: 0x0ACB
+    deviceProfileName: light-color-level
+  - id: "4489/2756"
+    deviceLabel: SMART MAT A100 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC4
+    deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
