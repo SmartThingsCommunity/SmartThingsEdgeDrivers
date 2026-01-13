@@ -114,8 +114,12 @@ SwitchFields.vendor_overrides = {
     [0x0891] = { target_profile = "switch-binary", initial_profile = "light-binary" },
   },
   [0x1321] = { -- SONOFF_MANUFACTURER_ID
-    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
-    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000C] = { on_children_only = true, target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000D] = { on_children_only = true, target_profile = "switch-binary", initial_profile = "plug-binary" },
+  },
+  [0x1407] = { -- THIRD_REALITY_ID
+    [0x1388] = { is_3r_mk1 = true },
+    [0x1098] = { on_children_only = false, target_profile = "garage-door-binary", initial_profile = "light-binary" },
   },
 }
 
