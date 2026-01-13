@@ -1,13 +1,10 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local device_lib = require "st.device"
+local switch_utils = require "switch_utils.utils"
 
 return function(opts, driver, device)
-  local THIRD_REALITY_MK1_FINGERPRINT = { vendor_id = 0x1407, product_id = 0x1388 }
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-    device.manufacturer_info.vendor_id == THIRD_REALITY_MK1_FINGERPRINT.vendor_id and
-    device.manufacturer_info.product_id == THIRD_REALITY_MK1_FINGERPRINT.product_id then
+  if switch_utils.get_product_override_field(device, "is_3r_mk1") then
     return true, require("sub_drivers.third_reality_mk1")
   end
   return false
