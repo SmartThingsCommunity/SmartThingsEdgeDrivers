@@ -6,7 +6,7 @@ components:
     version: 1
   - id: contactSensor
     version: 1
-    optional: true    
+    optional: true
   - id: temperatureMeasurement
     version: 1
     optional: true
@@ -15,7 +15,7 @@ components:
     optional: true
   - id: illuminanceMeasurement
     version: 1
-    optional: true    
+    optional: true
   - id: battery
     version: 1
     optional: true

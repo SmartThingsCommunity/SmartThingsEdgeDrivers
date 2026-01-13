@@ -89,6 +89,10 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       device_cfg.match_profile(driver, device)
     end
   end
+
+  if device.preferences then
+    switch_utils.handle_sensitivity_preference_update(device, args.old_st_store.preferences)
+  end
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)

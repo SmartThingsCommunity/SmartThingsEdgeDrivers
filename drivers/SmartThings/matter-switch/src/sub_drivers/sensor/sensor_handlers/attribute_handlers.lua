@@ -71,21 +71,13 @@ end
 -- [[ BOOLEAN STATE CLUSTER ATTRIBUTES ]] --
 
 function SensorAttributeHandlers.boolean_state_value_handler(driver, device, ib, response)
-  local name
-  for dt_name, _ in pairs(sensor_fields.BOOLEAN_DEVICE_TYPE_INFO) do
-      local dt_ep_id = device:get_field(dt_name)
-      if ib.endpoint_id == dt_ep_id then
-          name = dt_name
-          break
+  if ib.data and ib.data.value then
+    for device_type_id, _ in pairs(sensor_fields.BOOLEAN_STATE_CAPABILITY_MAP[ib.data.value] or {}) do
+      local endpoint_ids = switch_utils.get_endpoints_by_device_type(device, device_type_id)
+      if switch_utils.tbl_contains(endpoint_ids, ib.endpoint_id) then
+        device:emit_event_for_endpoint(ib.endpoint_id, sensor_fields.BOOLEAN_STATE_CAPABILITY_MAP[ib.data.value][device_type_id])
       end
-  end
-  if name then
-    device:emit_event_for_endpoint(ib.endpoint_id, sensor_fields.BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
-  elseif device:supports_capability(capabilities.contactSensor) then
-    -- The generic case where no device type has been specified but the profile uses this capability.
-      device:emit_event_for_endpoint(ib.endpoint_id, sensor_fields.BOOLEAN_CAP_EVENT_MAP[ib.data.value]["CONTACT_SENSOR"])
-  else
-    device.log.error("No Boolean device type found on an endpoint, BooleanState handler aborted")
+    end
   end
 end
 
@@ -102,11 +94,7 @@ end
 
 function SensorAttributeHandlers.supported_sensitivity_levels_handler(driver, device, ib, response)
   if ib.data.value then
-    for dt_name, info in pairs(sensor_fields.BOOLEAN_DEVICE_TYPE_INFO) do
-      if device:get_field(dt_name) == ib.endpoint_id then
-        device:set_field(info.sensitivity_max, ib.data.value, {persist = true})
-      end
-    end
+    switch_utils.set_field_for_endpoint(device, fields.SUPPORTED_SENSITIVITY_LEVELS, ib.endpoint_id, ib.data.value, {persist = true})
   end
 end
 

@@ -430,23 +430,23 @@ function utils.handle_sensitivity_preference_update(device, previous_preference_
   -- get the EP ID and preference ID, based on unique capability used per device type
   local endpoint_id, sensitivity_preference_id
   if device:supports_capability(capabilities.temperatureAlarm) then -- WATER_FREEZE_DETECTOR
-    endpoint_id = utils.get_endpoints_by_device_type(device, fields.WATER_FREEZE_DETECTOR)[1]
+    endpoint_id = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_FREEZE_DETECTOR)[1]
     sensitivity_preference_id = "freezeSensitivity"
   elseif device:supports_capability(capabilities.rainSensor) then -- RAIN_SENSOR
-    endpoint_id = utils.get_endpoints_by_device_type(device, fields.RAIN_SENSOR)[1]
+    endpoint_id = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.RAIN_SENSOR)[1]
     sensitivity_preference_id = "rainSensitivity"
   elseif device:supports_capability(capabilities.waterSensor) then -- WATER_LEAK_DETECTOR
-    endpoint_id = utils.get_endpoints_by_device_type(device, fields.WATER_LEAK_DETECTOR)[1]
+    endpoint_id = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_LEAK_DETECTOR)[1]
     sensitivity_preference_id = "leakSensitivity"
   end
 
   -- if the preference has changed, write the new sensitivity level to the appropriate EP
-  if endpoint_id and (device.preferences[sensitivity_preference_id] ~= previous_preference_state[sensitivity_preference_id]) then
+  if endpoint_id and (device.preferences.sensitivity_preference_id ~= previous_preference_state.sensitivity_preference_id) then
     if device.preferences[sensitivity_preference_id] == "2" then -- high
-      local max_sensitivity_level = device:get_field(fields.SUPPORTED_SENSITIVITY_LEVELS) - 1
+      local max_sensitivity_level = utils.get_field_for_endpoint(device, fields.SUPPORTED_SENSITIVITY_LEVELS, endpoint_id) - 1
       device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, endpoint_id, max_sensitivity_level))
     elseif device.preferences[sensitivity_preference_id] == "1" then -- medium
-      local medium_sensitivity_level = math.floor((device:get_field(fields.SUPPORTED_SENSITIVITY_LEVELS) + 1) / 2)
+      local medium_sensitivity_level = math.floor((utils.get_field_for_endpoint(device, fields.SUPPORTED_SENSITIVITY_LEVELS, endpoint_id) + 1) / 2)
       device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, endpoint_id, medium_sensitivity_level))
     elseif device.preferences[sensitivity_preference_id] == "0" then -- low
       device:send(clusters.BooleanStateConfiguration.attributes.CurrentSensitivityLevel:write(device, endpoint_id, 0))
