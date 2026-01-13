@@ -38,7 +38,10 @@ end
 
 function AttributeHandlers.level_control_current_level_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
-    local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
+    local level = ib.data.value
+    if level > 0 then
+      level = math.max(1, st_utils.round(level / 254.0 * 100))
+    end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
     if type(device.register_native_capability_attr_handler) == "function" then
       device:register_native_capability_attr_handler("switchLevel", "level")
@@ -83,19 +86,23 @@ end
 -- [[ COLOR CONTROL CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.current_hue_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
   end
-  local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "hue")
+  end
 end
 
 function AttributeHandlers.current_saturation_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
   end
-  local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "saturation")
+  end
 end
 
 function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, response)
@@ -132,7 +139,7 @@ function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, 
 end
 
 function AttributeHandlers.current_x_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local y = device:get_field(fields.RECEIVED_Y)
@@ -150,7 +157,7 @@ function AttributeHandlers.current_x_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.current_y_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local x = device:get_field(fields.RECEIVED_X)
@@ -166,15 +173,17 @@ function AttributeHandlers.current_y_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.color_mode_handler(driver, device, ib, response)
-  if ib.data.value == device:get_field(fields.COLOR_MODE) or (ib.data.value ~= fields.HUE_SAT_COLOR_MODE and ib.data.value ~= fields.X_Y_COLOR_MODE) then
-    return
+  if ib.data.value == device:get_field(fields.COLOR_MODE)
+    or (ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
+    and ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY) then
+      return
   end
   device:set_field(fields.COLOR_MODE, ib.data.value)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == fields.HUE_SAT_COLOR_MODE then
+  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  elseif ib.data.value == fields.X_Y_COLOR_MODE then
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
@@ -284,6 +293,11 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
           device, ib, capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME
         ) or 0
         energy_imported_wh = energy_imported_wh + energy_meter_latest_state
+      else
+        -- the field containing the offset may be associated with a child device
+        local field_device = switch_utils.find_child(device, ib.endpoint_id) or device
+        local energy_meter_offset = field_device:get_field(fields.ENERGY_METER_OFFSET) or 0.0
+        energy_imported_wh = energy_imported_wh - energy_meter_offset
       end
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
       switch_utils.report_power_consumption_to_st_energy(device, ib.endpoint_id, energy_imported_wh)

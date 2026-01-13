@@ -48,7 +48,11 @@ function AttributeHandlers.system_mode_handler(driver, device, ib, response)
     return
   end
 
-  local supported_modes = device:get_latest_state(device:endpoint_to_component(ib.endpoint_id), capabilities.thermostatMode.ID, capabilities.thermostatMode.supportedThermostatModes.NAME) or {}
+  local supported_modes = device:get_latest_state(
+    device:endpoint_to_component(ib.endpoint_id),
+    capabilities.thermostatMode.ID,
+    capabilities.thermostatMode.supportedThermostatModes.NAME
+  ) or {}
   -- check that the given mode was in the supported modes list
   if thermostat_utils.tbl_contains(supported_modes, fields.THERMOSTAT_MODE_MAP[ib.data.value].NAME) then
     device:emit_event_for_endpoint(ib.endpoint_id, fields.THERMOSTAT_MODE_MAP[ib.data.value]())
@@ -325,19 +329,19 @@ function AttributeHandlers.fan_mode_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.fan_mode_sequence_handler(driver, device, ib, response)
-  local supportedFanModes, supported_fan_modes_attribute
+  local supported_fan_modes, supported_fan_modes_attribute
   if ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH then
-    supportedFanModes = { "off", "low", "medium", "high" }
+    supported_fan_modes = { "off", "low", "medium", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH then
-    supportedFanModes = { "off", "low", "high" }
+    supported_fan_modes = { "off", "low", "high" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO then
-    supportedFanModes = { "off", "low", "medium", "high", "auto" }
+    supported_fan_modes = { "off", "low", "medium", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_LOW_HIGH_AUTO then
-    supportedFanModes = { "off", "low", "high", "auto" }
+    supported_fan_modes = { "off", "low", "high", "auto" }
   elseif ib.data.value == clusters.FanControl.attributes.FanModeSequence.OFF_HIGH_AUTO then
-    supportedFanModes = { "off", "high", "auto" }
+    supported_fan_modes = { "off", "high", "auto" }
   else
-    supportedFanModes = { "off", "high" }
+    supported_fan_modes = { "off", "high" }
   end
 
   if device:supports_capability_by_id(capabilities.airPurifierFanMode.ID) then
@@ -349,16 +353,22 @@ function AttributeHandlers.fan_mode_sequence_handler(driver, device, ib, respons
     -- Our thermostat fan mode control is not granular enough to handle all of the supported modes
     if ib.data.value >= clusters.FanControl.attributes.FanModeSequence.OFF_LOW_MED_HIGH_AUTO and
       ib.data.value <= clusters.FanControl.attributes.FanModeSequence.OFF_ON_AUTO then
-      supportedFanModes = { "auto", "on" }
+      supported_fan_modes = { "auto", "on" }
     else
-      supportedFanModes = { "on" }
+      supported_fan_modes = { "on" }
     end
   else
     supported_fan_modes_attribute = capabilities.fanMode.supportedFanModes
   end
 
-  local event = supported_fan_modes_attribute(supportedFanModes, {visibility = {displayed = false}})
-  device:emit_event_for_endpoint(ib.endpoint_id, event)
+  -- remove 'off' as a supported fan mode for thermostat device types
+  if thermostat_utils.get_device_type(device) == fields.THERMOSTAT_DEVICE_TYPE_ID and
+    device:supports_capability_by_id(capabilities.fanMode.ID) then
+    -- per the definitions set above, the first index always contains "off"
+    table.remove(supported_fan_modes, 1)
+  end
+
+  device:emit_event_for_endpoint(ib.endpoint_id, supported_fan_modes_attribute(supported_fan_modes, {visibility = {displayed = false}}))
 end
 
 function AttributeHandlers.percent_current_handler(driver, device, ib, response)

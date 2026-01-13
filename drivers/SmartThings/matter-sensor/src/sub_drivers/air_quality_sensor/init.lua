@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local version = require "version"
@@ -66,11 +66,12 @@ function AirQualitySensorLifecycleHandlers.device_init(driver, device)
 end
 
 function AirQualitySensorLifecycleHandlers.info_changed(driver, device, event, args)
-  if device.profile.id ~= args.old_st_store.profile.id then
+  if device.profile.id ~= args.old_st_store.profile.id or device:get_field(fields.MODULAR_PROFILE_UPDATED) then
     if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
       --re-up subscription with new capabilities using the modular supports_capability override
        device:extend_device("supports_capability_by_id", aqs_utils.supports_capability_by_id_modular)
     end
+    device:set_field(fields.MODULAR_PROFILE_UPDATED, nil)
     aqs_utils.set_supported_health_concern_values(device)
     device:subscribe()
   end
@@ -147,7 +148,7 @@ local matter_air_quality_sensor_handler = {
       }
     }
   },
-  can_handle = aqs_utils.is_matter_air_quality_sensor
+  can_handle = require("sub_drivers.air_quality_sensor.can_handle")
 }
 
 return matter_air_quality_sensor_handler

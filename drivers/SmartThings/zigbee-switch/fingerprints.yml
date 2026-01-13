@@ -2405,10 +2405,21 @@ zigbeeManufacturer:
     manufacturer: NodOn
     model: SIN-4-1-21
     deviceProfileName: switch-power-energy
+  #Yanmi
   - id: "JNL/Y-K003-001"
     deviceLabel: Yanmi Switch (3 Way) 1
     manufacturer: JNL
     model: Y-K003-001
+    deviceProfileName: basic-switch
+  - id: "JNL/Y-K001-001"
+    deviceLabel: Yanmi Switch (1 Way) 
+    manufacturer: JNL
+    model: Y-K001-001
+    deviceProfileName: basic-switch  
+  - id: "JNL/Y-K002-001"
+    deviceLabel: Yanmi Switch (2 Way) 1
+    manufacturer: JNL
+    model: Y-K002-001
     deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
