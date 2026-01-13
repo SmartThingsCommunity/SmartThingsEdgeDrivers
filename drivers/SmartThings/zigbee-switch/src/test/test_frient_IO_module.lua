@@ -17,6 +17,10 @@ local unbind_request = require "frient-IO.unbind_request"
 local default_response = require "st.zigbee.zcl.global_commands.default_response"
 local zcl_messages = require "st.zigbee.zcl"
 local Status = require "st.zigbee.generated.types.ZclStatus"
+local device_management = require "st.zigbee.device_management"
+local configuration_map = require "configurations"
+local switch_defaults = require "st.zigbee.defaults.switch_defaults"
+local mock_devices_api = require "integration_test.mock_devices_api"
 
 local BasicInput = clusters.BasicInput
 local OnOff = clusters.OnOff
@@ -31,15 +35,35 @@ local ZIGBEE_ENDPOINTS = {
 	OUTPUT_2 = 0x75,
 }
 
-local INPUT_ENDPOINTS = {
-	ZIGBEE_ENDPOINTS.INPUT_1,
-	ZIGBEE_ENDPOINTS.INPUT_2,
-	ZIGBEE_ENDPOINTS.INPUT_3,
-	ZIGBEE_ENDPOINTS.INPUT_4,
-}
-local OUTPUT_ENDPOINTS = {
-	ZIGBEE_ENDPOINTS.OUTPUT_1,
-	ZIGBEE_ENDPOINTS.OUTPUT_2,
+local INPUT_CONFIGS = {
+	{
+		endpoint = ZIGBEE_ENDPOINTS.INPUT_1,
+		binds = {
+			ZIGBEE_ENDPOINTS.OUTPUT_1,
+			ZIGBEE_ENDPOINTS.OUTPUT_2,
+		},
+	},
+	{
+		endpoint = ZIGBEE_ENDPOINTS.INPUT_2,
+		binds = {
+			ZIGBEE_ENDPOINTS.OUTPUT_1,
+			ZIGBEE_ENDPOINTS.OUTPUT_2,
+		},
+	},
+	{
+		endpoint = ZIGBEE_ENDPOINTS.INPUT_3,
+		binds = {
+			ZIGBEE_ENDPOINTS.OUTPUT_1,
+			ZIGBEE_ENDPOINTS.OUTPUT_2,
+		},
+	},
+	{
+		endpoint = ZIGBEE_ENDPOINTS.INPUT_4,
+		binds = {
+			ZIGBEE_ENDPOINTS.OUTPUT_1,
+			ZIGBEE_ENDPOINTS.OUTPUT_2,
+		},
+	},
 }
 
 local DEVELCO_MFG_CODE = 0x1015
@@ -223,6 +247,37 @@ local mock_parent_device = test.mock_device.build_test_zigbee_device({
 	},
 })
 
+	function mock_parent_device:get_model()
+		return "IOMZB-110"
+	end
+
+	function mock_parent_device:get_manufacturer()
+		return "frient A/S"
+	end
+
+	function mock_parent_device:supports_server_cluster(cluster_id, endpoint_id)
+		local function endpoint_supports(ep)
+			if not ep or not ep.server_clusters then return false end
+			for _, server_cluster in ipairs(ep.server_clusters) do
+				if server_cluster == cluster_id then
+					return true
+				end
+			end
+			return false
+		end
+
+		if endpoint_id ~= nil then
+			return endpoint_supports(self.zigbee_endpoints[endpoint_id])
+		end
+
+		for _, endpoint in pairs(self.zigbee_endpoints) do
+			if endpoint_supports(endpoint) then
+				return true
+			end
+		end
+		return false
+	end
+
 local mock_output_child_1 = test.mock_device.build_test_child_device({
 	profile = t_utils.get_profile_definition("frient-io-output-switch.yml"),
 	parent_device_id = mock_parent_device.id,
@@ -320,6 +375,65 @@ local function register_initial_config_expectations()
 		test.socket.devices:__set_channel_ordering("relaxed")
 	end
 
+	local function register_device_configure_expectations()
+		local configuration = configuration_map.get_device_configuration(mock_parent_device) or {}
+		local configs_by_cluster = {}
+		local function add_attribute_config(attribute)
+			if attribute.configurable ~= false then
+				configs_by_cluster[attribute.cluster] = configs_by_cluster[attribute.cluster] or {}
+				table.insert(configs_by_cluster[attribute.cluster], attribute)
+			end
+		end
+
+		for _, attribute in ipairs(configuration) do
+			add_attribute_config(attribute)
+		end
+
+		local default_configs = switch_defaults.attribute_configurations or {}
+		for _, attribute in ipairs(default_configs) do
+			add_attribute_config(attribute)
+		end
+
+		local cluster_ids = {}
+		for cluster_id in pairs(configs_by_cluster) do
+			cluster_ids[#cluster_ids + 1] = cluster_id
+		end
+		table.sort(cluster_ids)
+
+		local endpoint_ids = {}
+		for endpoint_id in pairs(mock_parent_device.zigbee_endpoints) do
+			endpoint_ids[#endpoint_ids + 1] = endpoint_id
+		end
+		table.sort(endpoint_ids)
+
+		for _, cluster_id in ipairs(cluster_ids) do
+			local attr_configs = configs_by_cluster[cluster_id]
+			table.sort(attr_configs, function(a, b)
+				return a.attribute < b.attribute
+			end)
+			for _, endpoint_id in ipairs(endpoint_ids) do
+				local endpoint = mock_parent_device.zigbee_endpoints[endpoint_id]
+				if endpoint and mock_parent_device:supports_server_cluster(cluster_id, endpoint.id) then
+					local bind_cmd = device_management.build_bind_request(
+						mock_parent_device,
+						cluster_id,
+						zigbee_test_utils.mock_hub_eui,
+						endpoint.id
+					):to_endpoint(endpoint.id)
+					bind_cmd.tx_options = data_types.Uint16(0)
+					test.socket.zigbee:__expect_send({ mock_parent_device.id, bind_cmd })
+					for _, attr_config in ipairs(attr_configs) do
+						local config_cmd = device_management.attr_config(mock_parent_device, attr_config):to_endpoint(endpoint.id)
+						config_cmd.tx_options = data_types.Uint16(0)
+						test.socket.zigbee:__expect_send({ mock_parent_device.id, config_cmd })
+					end
+				end
+			end
+		end
+	end
+
+	register_device_configure_expectations()
+
 	local on1, off1 = build_output_timing(mock_parent_device, mock_output_child_1, "1")
 	local on2, off2 = build_output_timing(mock_parent_device, mock_output_child_2, "2")
 
@@ -333,16 +447,20 @@ local function register_initial_config_expectations()
 	-- Device init issues one set of manufacturer-specific writes per output during startup
 	enqueue_output_timing_writes()
 
-	for _, endpoint in ipairs(INPUT_ENDPOINTS) do
-		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_basic_input_polarity_write(mock_parent_device, endpoint, false) })
-		for _, output_ep in ipairs(OUTPUT_ENDPOINTS) do
-			test.socket.zigbee:__expect_send({ mock_parent_device.id, build_unbind(mock_parent_device, endpoint, output_ep) })
+	for _, config in ipairs(INPUT_CONFIGS) do
+		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_basic_input_polarity_write(mock_parent_device, config.endpoint, false) })
+		for _, output_ep in ipairs(config.binds) do
+			test.socket.zigbee:__expect_send({ mock_parent_device.id, build_unbind(mock_parent_device, config.endpoint, output_ep) })
 		end
 	end
 end
 
 local function expect_init_sequence()
-	-- Initialization expectations are registered during test setup; lifecycle events fire as part of driver startup.
+	mock_devices_api.__expect_update_device(
+		mock_parent_device.id,
+		{ deviceId = mock_parent_device.id, provisioningState = "PROVISIONED" }
+	)
+	test.socket.device_lifecycle:__queue_receive({ mock_parent_device.id, "doConfigure" })
 end
 
 local function expect_switch_registration(device)
