@@ -91,7 +91,7 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
     generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
   end
 
-  if switch_utils.get_product_override_field(device, "on_children_only") == is_child_device and
+  if not switch_utils.get_product_override_field(device, "on_children_only") or is_child_device and
     generic_profile == switch_utils.get_product_override_field(device, "initial_profile") then
     generic_profile = switch_utils.get_product_override_field(device, "target_profile") or generic_profile
   end
