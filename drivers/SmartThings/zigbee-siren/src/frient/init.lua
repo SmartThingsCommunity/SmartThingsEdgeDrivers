@@ -11,7 +11,6 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local log = require "log"
 local data_types = require "st.zigbee.data_types"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 --ZCL
@@ -107,9 +106,7 @@ local function get_warning_duration(device)
   -- User may select one of predefine modes on the UI or input duration in preferences
   -- every time ALARM_DURATION is updated
   local selected_duration = device:get_field(ALARM_DURATION)
-  log.trace("selected_duration "..selected_duration)
   local current_max_warning_duration = get_current_max_warning_duration(device)
-  log.trace("current_max_warning_duration "..current_max_warning_duration)
 
   local warning_duration
   if selected_duration == nil or selected_duration > current_max_warning_duration then
@@ -117,7 +114,6 @@ local function get_warning_duration(device)
   else
     warning_duration = selected_duration
   end
-  log.trace("warning_duration "..warning_duration)
   return warning_duration
 end
 
@@ -352,8 +348,6 @@ local function siren_mode_handler(driver, device, command)
     if component == "WarningDuration" then
       local warning_duration = WARNING_DURATION_MAP[mode_set] or DEFAULT_MAX_WARNING_DURATION
       device:set_field(ALARM_DURATION, warning_duration, {persist = true})
-      log.trace("siren_mode_handler / mode_set "..mode_set)
-      log.trace("siren_mode_handler / warning_duration "..warning_duration)
     end
   end
 
