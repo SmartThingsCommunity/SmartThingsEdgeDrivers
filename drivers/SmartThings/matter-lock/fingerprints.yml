@@ -15,6 +15,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2807
     deviceProfileName: lock-battery
+  - id: "4447/10346"
+    deviceLabel: Aqara Smart Lock U200 US
+    vendorId: 0x115F
+    productId: 0x286A
+    deviceProfileName: lock-user-pin
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
