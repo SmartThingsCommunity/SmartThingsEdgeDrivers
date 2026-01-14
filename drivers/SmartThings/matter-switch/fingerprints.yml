@@ -166,6 +166,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1096
     deviceProfileName: light-color-level-fan
+  - id: "5014/4247"
+    deviceLabel: OREiN Matter smart  Bathroom Fan
+    vendorId: 0x1396
+    productId: 0x1097
+    deviceProfileName: light-color-level-fan
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
