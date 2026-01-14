@@ -20,7 +20,7 @@ matterManufacturer:
     deviceLabel: Bold Smart Lock
     vendorId: 0x158F
     productId: 0x1001
-    deviceProfileName: base-lock
+    deviceProfileName: lock-modular
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
