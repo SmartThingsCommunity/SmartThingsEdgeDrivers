@@ -19,6 +19,11 @@ zigbeeManufacturer:
     manufacturer: Danfoss
     model: eTRV0100
     deviceProfileName: thermostat-popp-danfoss
+  - id: "NodOn/TRV-4-1-00"
+    deviceLabel: NodOn Thermostatic Radiator Valve
+    manufacturer: NodOn
+    model: TRV-4-1-00
+    deviceProfileName: thermostat-nodon-trv
   - id: "D5X84YU/eT093WRO"
     deviceLabel: POPP Smart Thermostat (Zigbee)
     manufacturer: D5X84YU
