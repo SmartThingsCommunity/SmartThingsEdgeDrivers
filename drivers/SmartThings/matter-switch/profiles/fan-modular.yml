@@ -1,0 +1,17 @@
+name: fan-modular
+components:
+- id: main
+  capabilities:
+  - id: fanMode
+    version: 1
+    optional: true
+  - id: fanSpeedPercent
+    version: 1
+    optional: true
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Fan
+

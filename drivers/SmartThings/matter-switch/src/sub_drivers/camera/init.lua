@@ -39,13 +39,20 @@ function CameraLifecycleHandlers.do_configure(driver, device)
   camera_cfg.initialize_camera_capabilities(device)
 end
 
+function CameraLifecycleHandlers.driver_switched(driver, device)
+  camera_utils.update_camera_component_map(device)
+  if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
+    camera_cfg.match_profile(device, false, false)
+  end
+end
+
 function CameraLifecycleHandlers.info_changed(driver, device, event, args)
   if camera_utils.profile_changed(device.profile.components, args.old_st_store.profile.components) then
     camera_cfg.initialize_camera_capabilities(device)
-    if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
-      button_cfg.configure_buttons(device)
-    end
     device:subscribe()
+    if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
+      button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
+    end
   end
 end
 
@@ -57,7 +64,7 @@ local camera_handler = {
     init = CameraLifecycleHandlers.device_init,
     infoChanged = CameraLifecycleHandlers.info_changed,
     doConfigure = CameraLifecycleHandlers.do_configure,
-    driverSwitched = CameraLifecycleHandlers.do_configure,
+    driverSwitched = CameraLifecycleHandlers.driver_switched,
     added = CameraLifecycleHandlers.added
   },
   matter_handlers = {
