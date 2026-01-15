@@ -27,7 +27,7 @@ local excluded_devices = {
   }
 }
 
-local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)  
+local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)
   -- check only for relevant tamper event first
   if not(opts.dispatcher_class == "ZwaveDispatcher" and
     cmd ~= nil and
