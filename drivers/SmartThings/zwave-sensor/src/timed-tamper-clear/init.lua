@@ -29,7 +29,7 @@ local excluded_devices = {
 
 local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)  
   -- check only for relevant tamper event first
-   if not(opts.dispatcher_class == "ZwaveDispatcher" and
+  if not(opts.dispatcher_class == "ZwaveDispatcher" and
     cmd ~= nil and
     cmd.cmd_class ~= nil and
     cmd.cmd_class == cc.NOTIFICATION and
@@ -47,12 +47,12 @@ local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)
         excluded_device.product_types,
         excluded_device.product_ids
       ) then
-      return false 
+      return false
     end
   end
 
   local subdriver = require("timed-tamper-clear")
-  return true, subdriver      
+  return true, subdriver
 end
 
 -- This behavior is from zwave-door-window-sensor.groovy. We've seen this behavior
