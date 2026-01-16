@@ -102,6 +102,38 @@ function CameraUtils.compute_fps(max_encoded_pixel_rate, width, height, max_fps)
   return math.tointeger(math.floor(fps / fps_step) * fps_step)
 end
 
+function CameraUtils.build_supported_resolutions(device, max_encoded_pixel_rate, max_fps)
+  local resolutions = {}
+  local added_resolutions = {}
+
+  local function add_resolution(width, height)
+    local key = width .. "x" .. height
+    if not added_resolutions[key] then
+      local resolution = { width = width, height = height }
+      resolution.fps = CameraUtils.compute_fps(max_encoded_pixel_rate, width, height, max_fps)
+      table.insert(resolutions, resolution)
+      added_resolutions[key] = true
+    end
+  end
+
+  local min_resolution = device:get_field(camera_fields.MIN_RESOLUTION)
+  if min_resolution then
+    add_resolution(min_resolution.width, min_resolution.height)
+  end
+
+  local trade_off_resolutions = device:get_field(camera_fields.SUPPORTED_RESOLUTIONS)
+  for _, v in pairs(trade_off_resolutions or {}) do
+    add_resolution(v.width, v.height)
+  end
+
+  local max_resolution = device:get_field(camera_fields.MAX_RESOLUTION)
+  if max_resolution then
+    add_resolution(max_resolution.width, max_resolution.height)
+  end
+
+  return resolutions
+end
+
 function CameraUtils.profile_changed(synced_components, prev_components)
   if #synced_components ~= #prev_components then
     return true
