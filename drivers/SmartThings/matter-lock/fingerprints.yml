@@ -62,6 +62,11 @@ matterManufacturer:
     vendorId: 0x1421
     productId: 0x0042
     deviceProfileName: lock-user-pin-battery
+  - id: "5153/129"
+    deviceLabel: Kwikset Aura Reach
+    vendorId: 0x1421
+    productId: 0x0081
+    deviceProfileName: lock-user-pin-battery
   #Level
   - id: "4767/1"
     deviceLabel: Level Lock Plus (Matter)
