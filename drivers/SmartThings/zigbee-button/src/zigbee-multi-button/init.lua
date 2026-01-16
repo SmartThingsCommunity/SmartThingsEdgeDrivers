@@ -51,7 +51,8 @@ local ZIGBEE_MULTI_BUTTON_FINGERPRINTS = {
   { mfr = "Vimar", model = "RemoteControl_v1.0" },
   { mfr = "Linxura", model = "Smart Controller" },
   { mfr = "Linxura", model = "Aura Smart Button" },
-  { mfr = "zunzunbee", model = "SSWZ8T" }
+  { mfr = "zunzunbee", model = "SSWZ8T" },
+  { mfr = "SONOFF", model = "SNZB-01M" }
 }
 
 local function can_handle_zigbee_multi_button(opts, driver, device, ...)
