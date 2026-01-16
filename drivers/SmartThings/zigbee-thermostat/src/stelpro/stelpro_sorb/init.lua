@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -19,20 +8,6 @@ local device_management = require "st.zigbee.device_management"
 local RelativeHumidity = clusters.RelativeHumidity
 local Thermostat = clusters.Thermostat
 local ThermostatUserInterfaceConfiguration = clusters.ThermostatUserInterfaceConfiguration
-
-local STELPRO_THERMOSTAT_FINGERPRINTS = {
-  { mfr = "Stelpro", model = "SORB" },
-  { mfr = "Stelpro", model = "SonomaStyle" }
-}
-
-local is_stelpro_sorb_thermostat = function(opts, driver, device)
-  for _, fingerprint in ipairs(STELPRO_THERMOSTAT_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
-  end
-  return false
-end
 
 local do_refresh = function(self, device)
   local attributes = {
@@ -75,7 +50,7 @@ local stelpro_sorb_thermostat = {
     added = device_added,
     doConfigure = do_configure
   },
-  can_handle = is_stelpro_sorb_thermostat
+  can_handle = require("stelpro.stelpro_sorb.can_handle")
 }
 
 return stelpro_sorb_thermostat

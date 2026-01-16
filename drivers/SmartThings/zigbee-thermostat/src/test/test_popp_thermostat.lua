@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 require "integration_test"
 -- Mock out globals
 local test = require "integration_test"
