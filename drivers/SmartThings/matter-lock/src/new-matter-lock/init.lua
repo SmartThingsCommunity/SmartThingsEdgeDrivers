@@ -65,6 +65,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2801}, -- AQARA, U300
   {0x115f, 0x2807}, -- AQARA, U200 Lite
   {0x115f, 0x2804}, -- AQARA, U400
+  {0x115f, 0x286A}, -- AQARA, U200 US
   {0x147F, 0x0001}, -- U-tec
   {0x147F, 0x0008}, -- Ultraloq, Bolt Smart Matter Door Lock
   {0x144F, 0x4002}, -- Yale, Linus Smart Lock L2
