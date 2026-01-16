@@ -98,6 +98,10 @@ local function device_added(self, device)
   credential_utils.save_data(self)
 end
 
+local function device_driverSwitched(self, device)
+  credential_utils.sync(self, device)
+end
+
 local function toValue(payload, start, length)
   return utils.deserialize_int(string.sub(payload, start, start + length - 1), length, false, false)
 end
@@ -338,7 +342,8 @@ local aqara_locks_handler = {
   },
   lifecycle_handlers = {
     init = device_init,
-    added = device_added
+    added = device_added,
+    driverSwitched = device_driverSwitched
   },
   secret_data_handlers = {
     [security.SECRET_KIND_AQARA] = my_secret_data_handler
