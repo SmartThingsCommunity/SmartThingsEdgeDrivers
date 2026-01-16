@@ -1,4 +1,3 @@
-local log = require "log"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 
@@ -25,9 +24,10 @@ credential_utils.backup_data = function(device)-- Back up data the persistent
 end
 
 credential_utils.sync = function(driver, device)
-  log.warn("credential_utils.sync entry")
   local credentialInfoTable = device:get_field(PERSIST_DATA)
-  device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
+  if credentialInfoTable ~= nil then
+    device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
+  end
 end
 
 credential_utils.save_data = function(driver)

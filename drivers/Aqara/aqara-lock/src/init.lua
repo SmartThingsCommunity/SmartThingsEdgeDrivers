@@ -86,6 +86,7 @@ local function device_init(self, device)
   end
   device:emit_event(capabilities.battery.quantity(battery_quantity))
   device:emit_event(capabilities.batteryLevel.quantity(battery_quantity))
+  credential_utils.sync(self, device)
 end
 
 local function device_added(self, device)
@@ -96,10 +97,6 @@ local function device_added(self, device)
   device:emit_event(antiLockStatus.antiLockStatus("unknown", { visibility = { displayed = false } }))
   device:emit_event(Lock.lock.locked())
   credential_utils.save_data(self)
-end
-
-local function device_driverSwitched(self, device)
-  credential_utils.sync(self, device)
 end
 
 local function toValue(payload, start, length)
@@ -342,8 +339,7 @@ local aqara_locks_handler = {
   },
   lifecycle_handlers = {
     init = device_init,
-    added = device_added,
-    driverSwitched = device_driverSwitched
+    added = device_added
   },
   secret_data_handlers = {
     [security.SECRET_KIND_AQARA] = my_secret_data_handler
