@@ -129,6 +129,22 @@ local devices = {
       }
     }
   },
+  FRIENT_VIBRATION_SENSOR_WISZB_137 = {
+    FINGERPRINTS = {
+      { mfr = "frient A/S", model = "WISZB-137" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = IASZone.ID,
+        attribute = IASZone.attributes.ZoneStatus.ID,
+        minimum_interval = 0,
+        maximum_interval = 3600,
+        data_type = IASZone.attributes.ZoneStatus.base_type,
+        reportable_change = 1,
+        endpoint = 0x2D
+      }
+    }
+  }
 }
 
 local configurations = {}
