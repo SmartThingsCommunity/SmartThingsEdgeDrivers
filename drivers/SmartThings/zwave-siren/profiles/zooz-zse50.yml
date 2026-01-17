@@ -1,0 +1,309 @@
+# Zooz ZSE50 Siren/Chime
+# With deviceConfig - allows setting a tone from routines
+name: zooz-zse50
+components:
+  - id: main
+    capabilities:
+      - id: alarm
+        version: 1
+      - id: chime
+        version: 1
+      - id: mode
+        version: 1
+      - id: powerSource
+        version: 1
+      - id: audioVolume
+        version: 1
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Siren
+### PREFERENCES ###
+preferences:
+  #param 1
+  - name: "playbackMode"
+    title: "Playback Mode"
+    description: "* = Default; Set siren playback mode: once (0), loop for x seconds (1), loop x times (2), loop until cancel (3), no sound (4)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Play once *"
+        1: "Play in loop for set duration"
+        2: "Play in loop for set number"
+        3: "Play in loop until stopped"
+        4: "No sound, LED only"
+      default: 0
+  #param 2
+  - name: "playbackDuration"
+    title: "Playback Duration"
+    description: "Default: 180; Set playback duration for the siren (in seconds) when the siren is in playback mode 1."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 900
+      default: 180
+  #param 3
+  - name: "playbackLoop"
+    title: "Playback Loop Count"
+    description: "Default: 1; Set the number of playback loops for the selected tone when the siren is in playback mode 2."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 99
+      default: 1
+  #param 4
+  - name: "playbackTone"
+    title: "Playback Tone"
+    description: "Set the default tone for the siren playback. Choose the number of the file in the library as value. Check the 'modes' list for the id numbers"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 50
+      default: 1
+  #param 5 - playbackVolume ## Handled with volume command
+  #param 6
+  - name: "ledMode"
+    title: "LED Indicator Mode"
+    description: "* = Default; Set the LED indicator mode for the siren: off (0), strobe (1), police strobe (2), pulse (3), solid on (4). See documentation for details."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "LED always off"
+        1: "LED strobe single color *"
+        2: "LED strobe red and blue"
+        3: "LED pulse single color"
+        4: "LED solid on single color"
+      default: 1
+  #param 7
+  - name: "ledColor"
+    title: "LED Indicator Color"
+    description: "Default: 0; Set the LED indicator color: red (0), yellow (42), green (85), indigo (127), blue (170), purple (212), or white (255). More colors available through custom values corresponding to the color wheel. See advanced documentation for details."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 255
+      default: 0
+  #param 8
+  - name: "lowBattery"
+    title: "Low Battery Report"
+    description: "Which % level should the device report low battery to the hub."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        10: "10% [DEFAULT]"
+        15: "15%"
+        20: "20%"
+        25: "25%"
+        30: "30%"
+        35: "35%"
+        40: "40%"
+      default: 10
+  #param 9
+  - name: "ledBatteryMode"
+    title: "LED In Back-Up Battery Mode"
+    description: "* = Default; Set the LED indicator in back-up battery mode: off (0), regular LED mode (1), pulse white for full battery and red for low battery (2)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "LED off"
+        1: "Regular LED mode *"
+        2: "Pulse white for full, red for low"
+      default: 1
+  #param 10
+  - name: "btnToneSelection"
+    title: "Button Tone Selection"
+    description: "Disable tone selection from physical buttons on the siren (0). When disabled, you'll only be able to program tones using the advanced parameters in the Z-Wave UI. Expert users only, see documentation for details."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Enabled [DEFAULT]"
+      default: 1
+  #param 11
+  - name: "btnVolSelection"
+    title: "Button Volume Selection"
+    description: "Disable volume adjustment from physical buttons on the siren (0). When disabled, you'll only be able to adjust volume using the advanced parameters in the Z-Wave UI. Expert users only, see documentation for details."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Enabled [DEFAULT]"
+      default: 1
+  #param 13
+  - name: "systemVolume"
+    title: "System Message Volume"
+    description: "Default: 50; Set system message volume (0-100, 0 – mute)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 100
+      default: 50
+  #param 14
+  - name: "ledBrightness"
+    title: "LED Indicator Brightness"
+    description: "Default: 5; Choose the LED indicator's brightness level (0 – off, 10 – high brightness)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 10
+      default: 5
+  #param 15
+  - name: "batteryFrequency"
+    title: "Battery Reporting Frequency"
+    description: "Default: 12; Set the reporting interval for battery (1-84 hours)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 84
+      default: 12
+  #param 16
+  - name: "batteryThreshold"
+    title: "Battery Reporting Threshold"
+    description: "Default: 0; Set the threshold for battery reporting in % changes. Set to 0 to disable reporting based on threshold."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 20
+      default: 0
+
+### DEVICE CONFIG ###
+deviceConfig:
+  dashboard:
+    states:
+      - component: main
+        capability: chime
+        version: 1
+    actions:
+      - component: main
+        capability: chime
+        version: 1
+    basicPlus: [ ]
+  detailView:
+    - component: main
+      capability: alarm
+      version: 1
+      values:
+        - key: alarm.value
+          enabledValues:
+            - 'off'
+            - 'both'
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - 'off'
+            - 'both'
+    - component: main
+      capability: chime
+      version: 1
+    - component: main
+      capability: mode
+      version: 1
+    - component: main
+      capability: powerSource
+      version: 1
+      values:
+        - key: powerSource.value
+          enabledValues:
+            - 'battery'
+            - 'mains'
+    - component: main
+      capability: audioVolume
+      version: 1
+    - component: main
+      capability: battery
+      version: 1
+    - component: main
+      capability: refresh
+      version: 1
+  automation:
+    conditions:
+      - component: main
+        capability: alarm
+        version: 1
+        values:
+          - key: alarm.value
+            enabledValues:
+              - 'off'
+              - 'both'
+      - component: main
+        capability: chime
+        version: 1
+      - component: main
+        capability: mode
+        version: 1
+        patch:
+          - op: replace
+            path: /0/displayType
+            value: dynamicList
+          - op: add
+            path: /0/dynamicList
+            value:
+              value: mode.value
+              command: setMode
+              supportedValues:
+                value: supportedArguments.value
+          - op: remove
+            path: /0/list
+      - component: main
+        capability: powerSource
+        version: 1
+        values:
+          - key: powerSource.value
+            enabledValues:
+              - 'battery'
+              - 'mains'
+            step: 1
+      - component: main
+        capability: audioVolume
+        version: 1
+      - component: main
+        capability: battery
+        version: 1
+    actions:
+      - component: main
+        capability: alarm
+        version: 1
+        values:
+          - key: "{{enumCommands}}"
+            enabledValues:
+              - 'off'
+              - 'both'
+      - component: main
+        capability: chime
+        version: 1
+      - component: main
+        capability: mode
+        version: 1
+        patch:
+          - op: replace
+            path: /0/displayType
+            value: dynamicList
+          - op: add
+            path: /0/dynamicList
+            value:
+              value: mode.value
+              command: setMode
+              supportedValues:
+                value: supportedArguments.value
+          - op: remove
+            path: /0/list
+      - component: main
+        capability: audioVolume
+        version: 1
