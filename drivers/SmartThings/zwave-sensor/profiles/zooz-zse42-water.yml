@@ -1,0 +1,52 @@
+name: zooz-zse42-water
+components:
+  - id: main
+    capabilities:
+      - id: waterSensor
+        version: 1
+      - id: battery
+        version: 1
+      - id: refresh
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+    categories:
+      - name: LeakSensor
+preferences:
+  #param 1
+  - name: "ledIndicator"
+    title: "LED Indicator"
+    description: "When enabled the LED indicator will blink continuously when water is detected."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        1: "Enabled *"
+        0: "Disabled"
+      default: 1
+  #param 2
+  - name: "leakAlertClearDelay"
+    title: "Leak Alert Clear Delay"
+    description: "Default = 0; How long the sensor will wait before sending a 'dry' report to your hub after water is no longer detected."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 3600
+      default: 0
+  #param 4
+  - name: "lowBatteryAlert"
+    title: "Low Battery Alert"
+    description: "Battery level threshold for low battery reports."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        10: "10%"
+        15: "15%"
+        20: "20% *"
+        25: "25%"
+        30: "30%"
+        40: "40%"
+        50: "50%"
+      default: 20
