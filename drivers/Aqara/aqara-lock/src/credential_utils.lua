@@ -96,7 +96,7 @@ credential_utils.upsert_credential_info = function(driver, device, command)
   if credential_utils.is_exist_host(device) == false then
     credential_utils.update_remote_control_status(driver, device, true)
   end
-  
+
   device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
   credential_utils.save_data(driver)
   credential_utils.backup_data(device)
