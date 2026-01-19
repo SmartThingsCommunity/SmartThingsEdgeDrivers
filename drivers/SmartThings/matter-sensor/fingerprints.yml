@@ -215,6 +215,11 @@ matterManufacturer:
     vendorId: 0x1596
     productId: 0x0001
     deviceProfileName: smoke-battery
+  - id: "5526/2"
+    deviceLabel: MSC-1
+    vendorId: 0x1596
+    productId: 0x0002
+    deviceProfileName: smoke-co-comeas-battery
   # Siterwell
   - id: "4736/847"
     deviceLabel: Siterwell Door Window Sensor
