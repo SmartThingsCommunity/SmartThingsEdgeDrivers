@@ -171,13 +171,12 @@ local function get_output_timing(device, suffix)
   local info = OUTPUT_INFO[suffix]
   if not info then return 0, 0 end
   local child = device:get_child_by_parent_assigned_key(info.key)
-  if child then
-    local on_time = math.floor((sanitize_timing(child.preferences.configOnTime)) * 10)
-    local off_wait = math.floor((sanitize_timing(child.preferences.configOffWaitTime)) * 10)
-    return on_time, off_wait
-  end
   local on_time = math.floor((sanitize_timing(device.preferences["configOnTime" .. suffix]))*10)
   local off_wait = math.floor((sanitize_timing(device.preferences["configOffWaitTime" .. suffix]))*10)
+  if child then
+    on_time = math.floor((sanitize_timing(child.preferences.configOnTime)) * 10)
+    off_wait = math.floor((sanitize_timing(child.preferences.configOffWaitTime)) * 10)
+  end
   return on_time, off_wait
 end
 
@@ -195,12 +194,7 @@ local function handle_output_command(device, suffix, command_name)
         data_types.Uint16(config_on_time), data_types.Uint16(config_off_wait_time)):to_endpoint(endpoint))
     end
   else
-    if config_on_time == 0 then
-      device:send(OnOff.server.commands.Off(device):to_endpoint(endpoint))
-    else
-      device:send(OnOff.server.commands.OnWithTimedOff(device, data_types.Uint8(0),
-        data_types.Uint16(config_on_time), data_types.Uint16(config_off_wait_time)):to_endpoint(endpoint))
-    end
+    device:send(OnOff.server.commands.Off(device):to_endpoint(endpoint))
   end
 end
 
@@ -437,60 +431,33 @@ local function on_off_default_response_handler(driver, device, zb_rx)
   end
 end
 
-local function switch_on_handler(driver, device, command)
-  local parent = device:get_parent_device()
-  if parent then
-    local info = OUTPUT_BY_KEY[device.parent_assigned_child_key]
-    if info then
-      handle_output_command(parent, info.suffix, "on")
+local function make_switch_handler(command_name)
+  return function(driver, device, command)
+    local parent = device:get_parent_device()
+    if parent then
+      local info = OUTPUT_BY_KEY[device.parent_assigned_child_key]
+      if info then
+        handle_output_command(parent, info.suffix, command_name)
+        return
+      end
+    end
+
+    local num = command.component and command.component:match("output(%d)")
+    if num then
+      handle_output_command(device, num, command_name)
       return
     end
-  end
-
-  local num = command.component and command.component:match("output(%d)")
-  if num then
-    handle_output_command(device, num, "on")
-    return
-  end
-  num = command.component:match("input(%d)")
-  if num then
-    local component = device.profile.components[command.component]
-    local value = device:get_latest_state(command.component, Switch.ID, Switch.switch.NAME)
-    if value == "on" then
-      device:emit_component_event(component,
-        Switch.switch.on({ state_change = true, visibility = { displayed = false } }))
-    elseif value == "off" then
-      device:emit_component_event(component,
-        Switch.switch.off({ state_change = true, visibility = { displayed = false } }))
-    end
-  end
-end
-
-local function switch_off_handler(driver, device, command)
-  local parent = device:get_parent_device()
-  if parent then
-    local info = OUTPUT_BY_KEY[device.parent_assigned_child_key]
-    if info then
-      handle_output_command(parent, info.suffix, "off")
-      return
-    end
-  end
-
-  local num = command.component and command.component:match("output(%d)")
-  if num then
-    handle_output_command(device, num, "off")
-    return
-  end
-  num = command.component:match("input(%d)")
-  if num then
-    local component = device.profile.components[command.component]
-    local value = device:get_latest_state(command.component, Switch.ID, Switch.switch.NAME)
-    if value == "on" then
-      device:emit_component_event(component,
-        Switch.switch.on({ state_change = true, visibility = { displayed = false } }))
-    elseif value == "off" then
-      device:emit_component_event(component,
-        Switch.switch.off({ state_change = true, visibility = { displayed = false } }))
+    num = command.component:match("input(%d)")
+    if num then
+      local component = device.profile.components[command.component]
+      local value = device:get_latest_state(command.component, Switch.ID, Switch.switch.NAME)
+      if value == "on" then
+        device:emit_component_event(component,
+          Switch.switch.on({ state_change = true, visibility = { displayed = false } }))
+      elseif value == "off" then
+        device:emit_component_event(component,
+          Switch.switch.off({ state_change = true, visibility = { displayed = false } }))
+      end
     end
   end
 end
@@ -516,8 +483,8 @@ local frient_bridge_handler = {
   },
   capability_handlers = {
     [Switch.ID] = {
-      [Switch.commands.on.NAME] = switch_on_handler,
-      [Switch.commands.off.NAME] = switch_off_handler
+      [Switch.commands.on.NAME] = make_switch_handler("on"),
+      [Switch.commands.off.NAME] = make_switch_handler("off")
     }
   },
   lifecycle_handlers = {

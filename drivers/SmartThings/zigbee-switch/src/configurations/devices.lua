@@ -114,63 +114,63 @@ local devices = {
     }
   },
   FRIENT_IO_MODULE = {
-        FINGERPRINTS = {
-            { mfr = "frient A/S", model = "IOMZB-110" }
-        },
-        CONFIGURATION = {
-            {
-                cluster = OnOff.ID,
-                attribute = OnOff.attributes.OnTime.ID,
-                minimum_interval = 10,
-                maximum_interval = 600,
-                reportable_change = 1,
-                data_type = OnOff.attributes.OnOff.base_type,
-                configurable = true,
-                monitored = true
-            },
-            {
-                cluster = OnOff.ID,
-                attribute = OnOff.attributes.OffWaitTime.ID,
-                minimum_interval = 10,
-                maximum_interval = 600,
-                reportable_change = 1,
-                data_type = OnOff.attributes.OffWaitTime.base_type,
-                configurable = true,
-                monitored = true
-            },
-            {
-                cluster = BasicInput.ID,
-                attribute = BasicInput.attributes.PresentValue.ID,
-                minimum_interval = 10,
-                maximum_interval = 600,
-                reportable_change = 0,
-                data_type = BasicInput.attributes.PresentValue.base_type,
-                configurable = true,
-                monitored = true
-            },
-            {
-                cluster = BasicInput.ID,
-                attribute = BasicInput.attributes.Polarity.ID,
-                minimum_interval = 10,
-                maximum_interval = 600,
-                reportable_change = 0,
-                data_type = BasicInput.attributes.Polarity.base_type,
-                configurable = true,
-                monitored = true
-            },
-            {
-                cluster = BasicInput.ID,
-                attribute = 0x8000, -- IASActivation
-                minimum_interval = 10,
-                maximum_interval = 600,
-                reportable_change = 0,
-                data_type = data_types.Uint16,
-                mfg_code = 0x1015,
-                configurable = true,
-                monitored = true
-            }
-        }
+    FINGERPRINTS = {
+      { mfr = "frient A/S", model = "IOMZB-110" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = OnOff.ID,
+        attribute = OnOff.attributes.OnTime.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 1,
+        data_type = OnOff.attributes.OnOff.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = OnOff.ID,
+        attribute = OnOff.attributes.OffWaitTime.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 1,
+        data_type = OnOff.attributes.OffWaitTime.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = BasicInput.ID,
+        attribute = BasicInput.attributes.PresentValue.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 0,
+        data_type = BasicInput.attributes.PresentValue.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = BasicInput.ID,
+        attribute = BasicInput.attributes.Polarity.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 0,
+        data_type = BasicInput.attributes.Polarity.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = BasicInput.ID,
+        attribute = 0x8000, -- IASActivation
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 0,
+        data_type = data_types.Uint16,
+        mfg_code = 0x1015,
+        configurable = true,
+        monitored = true
+      }
     }
+  }
 }
 
 return devices

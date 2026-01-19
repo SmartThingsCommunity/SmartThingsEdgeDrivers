@@ -578,13 +578,8 @@ test.register_coroutine_test(
 			mock_output_child_1.id,
 			{ capability = "switch", component = "main", command = "off", args = {} },
 		})
-		local timed_off = OnOff.server.commands.OnWithTimedOff(
-			mock_parent_device,
-			data_types.Uint8(0),
-			data_types.Uint16(on1),
-			data_types.Uint16(off1)
-		):to_endpoint(ZIGBEE_ENDPOINTS.OUTPUT_1)
-		test.socket.zigbee:__expect_send({ mock_parent_device.id, timed_off })
+		local direct_off_output1 = OnOff.server.commands.Off(mock_parent_device):to_endpoint(ZIGBEE_ENDPOINTS.OUTPUT_1)
+		test.socket.zigbee:__expect_send({ mock_parent_device.id, direct_off_output1 })
 
 		test.socket.capability:__queue_receive({
 			mock_output_child_2.id,
