@@ -3,8 +3,9 @@
 
 local log = require "log"
 local capabilities = require "st.capabilities"
-local embedded_cluster_utils = require "thermostat_utils.embedded_cluster_utils"
+local clusters = require "st.matter.clusters"
 local fields = require "thermostat_utils.fields"
+local embedded_cluster_utils = require "thermostat_utils.embedded_cluster_utils"
 
 local ThermostatUtils = {}
 
@@ -83,6 +84,21 @@ function ThermostatUtils.get_endpoints_by_device_type(device, device_type)
   end
   table.sort(endpoints)
   return endpoints
+end
+
+  -- set the supportedThermostatOperatingStates attribute if the thermostatOperatingState capability is supported
+function ThermostatUtils.handle_thermostat_operating_state_info(device)
+  if device:supports_capability(capabilities.thermostatOperatingState) then
+    local supported_operating_modes = { "idle" }
+    if #device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING}) > 0 then
+      table.insert(supported_operating_modes, "heating")
+    end
+    if #device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.COOLING}) > 0 then
+      table.insert(supported_operating_modes, "cooling")
+    end
+    local thermostat_ep_id = device:get_endpoints(clusters.Thermostat.ID)[1]
+    device:emit_event_for_endpoint(thermostat_ep_id, capabilities.thermostatOperatingState.supportedThermostatOperatingStates(supported_operating_modes, {visibility = {displayed = false}}))
+  end
 end
 
 function ThermostatUtils.get_device_type(device)

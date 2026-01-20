@@ -87,6 +87,9 @@ local function initialize_mock_device(generic_mock_device, generic_subscribed_at
       end
     end
   end
+  test.socket.capability:__expect_send(
+    generic_mock_device:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+  )
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
   return subscribe_request
 end
@@ -308,6 +311,9 @@ test.register_coroutine_test(
   "Device with modular profile should enable correct optional capabilities - basic",
   function()
     test_room_ac_device_type_update_modular_profile(mock_device_basic, expected_metadata_basic, subscribe_request_basic, uint32(0x29))
+    test.socket.capability:__expect_send(
+      mock_device_basic:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+    )
   end,
   { test_init = test_init_basic }
 )

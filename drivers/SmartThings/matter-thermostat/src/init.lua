@@ -90,6 +90,7 @@ function ThermostatLifecycleHandlers.device_init(driver, device)
   device:subscribe()
   device:set_component_to_endpoint_fn(thermostat_utils.component_to_endpoint)
   device:set_endpoint_to_component_fn(thermostat_utils.endpoint_to_component)
+  thermostat_utils.handle_thermostat_operating_state_info(device)
   if not device:get_field(fields.setpoint_limit_device_field.MIN_SETPOINT_DEADBAND_CHECKED) then
     local auto_eps = device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.AUTOMODE})
     --Query min setpoint deadband if needed
@@ -100,14 +101,11 @@ function ThermostatLifecycleHandlers.device_init(driver, device)
 
   -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
   -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
-  local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-  if #electrical_energy_measurement_eps > 0 then
-    local cumulative_energy_eps = embedded_cluster_utils.get_endpoints(
+  if #embedded_cluster_utils.get_endpoints(
       device,
       clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}
-    )
-    if #cumulative_energy_eps == 0 then device:set_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = false}) end
+    ) == 0 then device:set_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = false})
   end
 end
 
@@ -119,6 +117,7 @@ function ThermostatLifecycleHandlers.info_changed(driver, device, event, args)
   end
 
   if device.profile.id ~= args.old_st_store.profile.id then
+    thermostat_utils.handle_thermostat_operating_state_info(device)
     device:subscribe()
   end
 end
