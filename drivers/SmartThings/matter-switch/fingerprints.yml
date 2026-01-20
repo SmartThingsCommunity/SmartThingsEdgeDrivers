@@ -1411,6 +1411,411 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0A7E
     deviceProfileName: light-level
+  - id: "4489/2725"
+    deviceLabel: SMART MAT PAR16 RGBW GU10
+    vendorId: 0x1189
+    productId: 0x0AA5
+    deviceProfileName: light-color-level
+  - id: "4489/2766"
+    deviceLabel: SMART MAT B40 RGBW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0ACE
+    deviceProfileName: light-color-level
+  - id: "4489/2765"
+    deviceLabel: SMART MAT P40 RGBW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0ACD
+    deviceProfileName: light-color-level
+  - id: "4489/2764"
+    deviceLabel: SMART MAT G95 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0ACC
+    deviceProfileName: light-color-level
+  - id: "4489/2774"
+    deviceLabel: SMART MAT A40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD6
+    deviceProfileName: light-color-level
+  - id: "4489/2775"
+    deviceLabel: SMART MAT E40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD7
+    deviceProfileName: light-color-level
+  - id: "4489/2776"
+    deviceLabel: SMART MAT G40 FIL RGBW 827 E27
+    vendorId: 0x1189
+    productId: 0x0AD8
+    deviceProfileName: light-color-level
+  - id: "4489/2837"
+    deviceLabel: SMART MAT A75 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0B15
+    deviceProfileName: light-color-level
+  - id: "4489/2713"
+    deviceLabel: SMART MAT A60 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0A99
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2711"
+    deviceLabel: SMART MAT A100 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0A97
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2716"
+    deviceLabel: SMART MAT P40 TW 827 FR E14
+    vendorId: 0x1189
+    productId: 0x0A9C
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2726"
+    deviceLabel: SMART MAT PAR16 TW 827 GU10
+    vendorId: 0x1189
+    productId: 0x0AA6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2678"
+    deviceLabel: SMART MAT E60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A76
+    deviceProfileName: light-level
+  - id: "4489/2676"
+    deviceLabel: SMART MAT G60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A74
+    deviceProfileName: light-level
+  - id: "4489/2687"
+    deviceLabel: SMART MAT B40 DIM FIL 827 E14
+    vendorId: 0x1189
+    productId: 0x0A7F
+    deviceProfileName: light-level
+  - id: "4489/2685"
+    deviceLabel: SMART MAT E53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7D
+    deviceProfileName: light-level
+  - id: "4489/2684"
+    deviceLabel: SMART MAT G53 DIM FILGD 824 E27
+    vendorId: 0x1189
+    productId: 0x0A7C
+    deviceProfileName: light-level
+  - id: "4489/2681"
+    deviceLabel: SMART MAT A60 DIM FIL 827 E27
+    vendorId: 0x1189
+    productId: 0x0A79
+    deviceProfileName: light-level
+  - id: "4489/2682"
+    deviceLabel: SMART MAT P40 DIM FIL 827 E14
+    vendorId: 0x1189
+    productId: 0x0A7A
+    deviceProfileName: light-level
+  - id: "4489/2727"
+    deviceLabel: SMART MAT PAR16 DIM GU10
+    vendorId: 0x1189
+    productId: 0x0AA7
+    deviceProfileName: light-level
+  - id: "4489/2712"
+    deviceLabel: SMART MAT G95 100 TW 827 E27
+    vendorId: 0x1189
+    productId: 0x0A98
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2836"
+    deviceLabel: SMART MAT A75 TW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0B14
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2514"
+    deviceLabel: SMART MAT ORBIS DL 200 TW WT
+    vendorId: 0x1189
+    productId: 0x09D2
+    deviceProfileName: light-color-level
+  - id: "4489/2518"
+    deviceLabel: SMART MAT ORBIS DL 400 TW WT
+    vendorId: 0x1189
+    productId: 0x09D6
+    deviceProfileName: light-color-level
+  - id: "4489/2519"
+    deviceLabel: SMART MAT ORBIS DL SQ400 TW WT
+    vendorId: 0x1189
+    productId: 0x09D7
+    deviceProfileName: light-color-level
+  - id: "4489/2763"
+    deviceLabel: SMART MAT A60 RGBW 827 FR B22D
+    vendorId: 0x1189
+    productId: 0x0ACB
+    deviceProfileName: light-color-level
+  - id: "4489/2756"
+    deviceLabel: SMART MAT A100 RGBW 827 FR E27
+    vendorId: 0x1189
+    productId: 0x0AC4
+    deviceProfileName: light-color-level
+  - id: "4489/3027"
+    deviceLabel: SMART MAT DECORWALLSWAN300X150TW
+    vendorId: 0x1189
+    productId: 0x0BD3
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2994"
+    deviceLabel: SMART MAT PLANON FL 120X30 TW
+    vendorId: 0x1189
+    productId: 0x0BB2
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3032"
+    deviceLabel: SMART WIFI MAT BATH W400 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD8
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3026"
+    deviceLabel: SMART WIFI MAT WAVE300X300IP44TW
+    vendorId: 0x1189
+    productId: 0x0BD2
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2957"
+    deviceLabel: SMART WIFI MAT TRACKSP OSAKA TW
+    vendorId: 0x1189
+    productId: 0x0B8D
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3025"
+    deviceLabel: SMART WIFI MAT CYLINDER 450 TW
+    vendorId: 0x1189
+    productId: 0x0BD1
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2969"
+    deviceLabel: SMART MAT PLANON PLUS 120X30TW
+    vendorId: 0x1189
+    productId: 0x0B99
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3028"
+    deviceLabel: SMART MAT DISC 400 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD4
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2971"
+    deviceLabel: SMART MAT PLANON FL 80X10TW
+    vendorId: 0x1189
+    productId: 0x0B9B
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3014"
+    deviceLabel: SMART MAT PLANONFLSPARK45X45TW
+    vendorId: 0x1189
+    productId: 0x0BC6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3023"
+    deviceLabel: SMART WIFI MAT MAGNET 600X300 TW
+    vendorId: 0x1189
+    productId: 0x0BCF
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3021"
+    deviceLabel: SMART WIFI MAT AQUA280X160IP44TW
+    vendorId: 0x1189
+    productId: 0x0BCD
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3035"
+    deviceLabel: SMART WIFI MAT DUPLO 300 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BDB
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3024"
+    deviceLabel: SMART WIFI MAT DUPLO 580 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD0
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2998"
+    deviceLabel: SMART WIFI MAT DL SLIM 120 TW
+    vendorId: 0x1189
+    productId: 0x0BB6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3020"
+    deviceLabel: SMART MATDECORWALLTWIST230X127TW
+    vendorId: 0x1189
+    productId: 0x0BCC
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3049"
+    deviceLabel: SMART WIFI MAT TRACKSP CIRCLE TW
+    vendorId: 0x1189
+    productId: 0x0BE9
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3029"
+    deviceLabel: SMART WIFI MAT DUPLO 450 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD5
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2991"
+    deviceLabel: SMART MAT PLANON PLUS 60X60 TW
+    vendorId: 0x1189
+    productId: 0x0BAF
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2985"
+    deviceLabel: SMART MAT PLANON PLUS 30X30 TW
+    vendorId: 0x1189
+    productId: 0x0BA9
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3033"
+    deviceLabel: SMART WIFI MAT BATH W300 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BD9
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2999"
+    deviceLabel: SMART WIFI MAT DL SLIM 225 TW
+    vendorId: 0x1189
+    productId: 0x0BB7
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3037"
+    deviceLabel: SMART WIFI MAT MAGNET 300X300 TW
+    vendorId: 0x1189
+    productId: 0x0BDD
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2990"
+    deviceLabel: SMART MAT PLANON PLUS 60X30 TW
+    vendorId: 0x1189
+    productId: 0x0BAE
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3047"
+    deviceLabel: SMART WIFI MAT TRACKSP OSAKA TW
+    vendorId: 0x1189
+    productId: 0x0BE7
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3031"
+    deviceLabel: SMART WIFI MAT MAGNET 600X300 TW
+    vendorId: 0x1189
+    productId: 0x0BD7
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3034"
+    deviceLabel: SMART WIFI MAT DISC 300 IP44 TW
+    vendorId: 0x1189
+    productId: 0x0BDA
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3030"
+    deviceLabel: SMART WIFI MAT MAGNET 450X450 TW
+    vendorId: 0x1189
+    productId: 0x0BD6
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3022"
+    deviceLabel: SMART WIFI MAT AQUA200X200IP44TW
+    vendorId: 0x1189
+    productId: 0x0BCE
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2993"
+    deviceLabel: SMART MAT PLANON FL 30X30 TW
+    vendorId: 0x1189
+    productId: 0x0BB1
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3048"
+    deviceLabel: SMART WIFI MAT TRACKSP CIRCLE TW
+    vendorId: 0x1189
+    productId: 0x0BE8
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2997"
+    deviceLabel: SMART WIFI MAT DL SLIM 85 TW WT
+    vendorId: 0x1189
+    productId: 0x0BB5
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2949"
+    deviceLabel: SMART WIFI MAT SPIRAL 500 TW
+    vendorId: 0x1189
+    productId: 0x0B85
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3036"
+    deviceLabel: SMART WFMTDECORWALLSWAN200X200TW
+    vendorId: 0x1189
+    productId: 0x0BDC
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2995"
+    deviceLabel: SMART MAT PLANON FL 120X10 TW
+    vendorId: 0x1189
+    productId: 0x0BB3
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/2987"
+    deviceLabel: SMART MAT PLANON PLUS 45X45 TW
+    vendorId: 0x1189
+    productId: 0x0BAB
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3018"
+    deviceLabel: SMART WFMTDECORWALLWOOD210X110TW
+    vendorId: 0x1189
+    productId: 0x0BCA
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3019"
+    deviceLabel: SMART MATDECORWALLTWIST230X127TW
+    vendorId: 0x1189
+    productId: 0x0BCB
+    deviceProfileName: light-level-colorTemperature
+  - id: "4489/3055"
+    deviceLabel: SMART WIFI MAT FLOOD 50W RGBW
+    vendorId: 0x1189
+    productId: 0x0BEF
+    deviceProfileName: light-color-level
+  - id: "4489/2970"
+    deviceLabel: SMART MAT PLANON PLUS60X60RGBTW
+    vendorId: 0x1189
+    productId: 0x0B9A
+    deviceProfileName: light-color-level
+  - id: "4489/3057"
+    deviceLabel: SMART WIFI MAT FLOOD 20W RGBW
+    vendorId: 0x1189
+    productId: 0x0BF1
+    deviceProfileName: light-color-level
+  - id: "4489/2973"
+    deviceLabel: SMART MAT PLANON PLUS45X45RGBW
+    vendorId: 0x1189
+    productId: 0x0B9D
+    deviceProfileName: light-color-level
+  - id: "4489/2974"
+    deviceLabel: SMART MAT PLANON PLUS60X30RGBW
+    vendorId: 0x1189
+    productId: 0x0B9E
+    deviceProfileName: light-color-level
+  - id: "4489/3059"
+    deviceLabel: SMART WIFI MAT CLARIA 490RGBTW
+    vendorId: 0x1189
+    productId: 0x0BF3
+    deviceProfileName: light-color-level
+  - id: "4489/3058"
+    deviceLabel: SMART WIFI MAT FLOOD 30W RGBW
+    vendorId: 0x1189
+    productId: 0x0BF2
+    deviceProfileName: light-color-level
+  - id: "4489/2972"
+    deviceLabel: SMART MAT PLANON PLUS60X60RGBW
+    vendorId: 0x1189
+    productId: 0x0B9C
+    deviceProfileName: light-color-level
+  - id: "4489/2984"
+    deviceLabel: SMART MAT PLANON PLUS120X30RGBW
+    vendorId: 0x1189
+    productId: 0x0BA8
+    deviceProfileName: light-color-level
+  - id: "4489/3001"
+    deviceLabel: SMART WIFI MAT SP170 110DEGRGBTW
+    vendorId: 0x1189
+    productId: 0x0BB9
+    deviceProfileName: light-color-level
+  - id: "4489/2992"
+    deviceLabel: SMART MAT PLANON PLUS30X30RGBW
+    vendorId: 0x1189
+    productId: 0x0BB0
+    deviceProfileName: light-color-level
+  - id: "4489/3056"
+    deviceLabel: SMART WIFI MAT FLOOD 10W RGBW
+    vendorId: 0x1189
+    productId: 0x0BF0
+    deviceProfileName: light-color-level
+  - id: "4489/3016"
+    deviceLabel: SMART OUTD MAT BEAMADJWALL RGBTW
+    vendorId: 0x1189
+    productId: 0x0BC8
+    deviceProfileName: light-color-level
+  - id: "4489/3000"
+    deviceLabel: SMART WIFI MAT SP 86 100DEGRGBTW
+    vendorId: 0x1189
+    productId: 0x0BB8
+    deviceProfileName: light-color-level
+  - id: "4489/3003"
+    deviceLabel: SMART WIFI MAT STEA485RD RGBTW
+    vendorId: 0x1189
+    productId: 0x0BBB
+    deviceProfileName: light-color-level
+  - id: "4489/2963"
+    deviceLabel: SMART WIFI MAT FLOOD 100W RGBW
+    vendorId: 0x1189
+    productId: 0x0B93
+    deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
@@ -3587,7 +3992,7 @@ matterGeneric:
     deviceTypes:
       - id: 0x010D # Extended Color Light
       - id: 0x002B # Fan
-    deviceProfileName: light-color-level-fan
+    deviceProfileName: fan-modular
   - id: "matter/dimmable/light/motion"
     deviceLabel: Matter Dimmable Light Occupancy Sensor
     deviceTypes:
@@ -3599,6 +4004,54 @@ matterGeneric:
     deviceTypes:
       - id: 0x0142 # Camera
     deviceProfileName: camera
+  - id: "matter/on-off/fan/light"
+    deviceLabel: Matter OnOff Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0100 # OnOff Light
+    deviceProfileName: fan-modular
+  - id: "matter/dimmable/fan/light"
+    deviceLabel: Matter Dimmable Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0101 # Dimmable Light
+    deviceProfileName: fan-modular
+  - id: "matter/colorTemperature/fan/light"
+    deviceLabel: Matter Color Temperature Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010C # Color Temperature Light
+    deviceProfileName: fan-modular
+  - id: "matter/color/fan/light"
+    deviceLabel: Matter Color Fan Light
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010D # Extended Color Light
+    deviceProfileName: fan-modular
+  - id: "matter/on-off/fan/plug"
+    deviceLabel: Matter OnOff Fan Plug
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010A # On Off Plug-in Unit
+    deviceProfileName: fan-modular
+  - id: "matter/dimmable/fan/plug"
+    deviceLabel: Matter Dimmable Fan Plug
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010B # Dimmable Plug-in Unit
+    deviceProfileName: fan-modular
+  - id: "matter/mounted/on-off/control/fan"
+    deviceLabel: Matter Mounted OnOff Control Fan
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x010F # Mounted On/Off Control
+    deviceProfileName: fan-modular
+  - id: "matter/mounted/dim/load/control/fan"
+    deviceLabel: Matter Mounted Dimmable Load Control Fan
+    deviceTypes:
+      - id: 0x002B # Fan
+      - id: 0x0110 # Mounted Dimmable Load Control
+    deviceProfileName: fan-modular
 
 matterThing:
   - id: SmartThings/MatterThing

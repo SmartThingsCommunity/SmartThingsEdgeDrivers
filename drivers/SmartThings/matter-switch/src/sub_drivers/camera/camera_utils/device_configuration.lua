@@ -62,7 +62,9 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
           return clusters.CameraAvStreamManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
-          table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
+          if switch_utils.find_cluster_on_ep(camera_ep, clusters.PushAvStreamTransport.ID, "SERVER") then
+            table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
+          end
           table.insert(main_component_capabilities, capabilities.cameraViewportSettings.ID)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE) then
@@ -120,7 +122,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   if #doorbell_endpoints > 0 then
     table.insert(doorbell_component_capabilities, capabilities.button.ID)
     CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
-    button_cfg.configure_buttons(device)
+    button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
   end
   if status_light_enabled_present then
     table.insert(status_led_component_capabilities, capabilities.switch.ID)

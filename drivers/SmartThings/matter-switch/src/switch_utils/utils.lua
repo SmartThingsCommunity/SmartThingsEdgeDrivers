@@ -151,8 +151,9 @@ function utils.find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
-  local switch_eps = device:get_endpoints(clusters.OnOff.ID)
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
+  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
 
   local get_first_non_zero_endpoint = function(endpoints)
     table.sort(endpoints)
@@ -164,26 +165,31 @@ function utils.find_default_endpoint(device)
     return nil
   end
 
-  -- Return the first switch endpoint as the default endpoint if no button endpoints are present
-  if #button_eps == 0 and #switch_eps > 0 then
-    return get_first_non_zero_endpoint(switch_eps)
+  -- Return the first fan endpoint as the default endpoint if any is found
+  if #fan_endpoint_ids > 0 then
+    return get_first_non_zero_endpoint(fan_endpoint_ids)
   end
 
-  -- Return the first button endpoint as the default endpoint if no switch endpoints are present
-  if #switch_eps == 0 and #button_eps > 0 then
-    return get_first_non_zero_endpoint(button_eps)
+  -- Return the first onoff endpoint as the default endpoint if no momentary switch endpoints are present
+  if #momentary_switch_ep_ids == 0 and #onoff_ep_ids > 0 then
+    return get_first_non_zero_endpoint(onoff_ep_ids)
   end
 
-  -- If both switch and button endpoints are present, check the device type on the main switch
-  -- endpoint. If it is not a supported device type, return the first button endpoint as the
+  -- Return the first momentary switch endpoint as the default endpoint if no onoff endpoints are present
+  if #onoff_ep_ids == 0 and #momentary_switch_ep_ids > 0 then
+    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+  end
+
+  -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
+  -- endpoint. If it is not a supported device type, return the first momentary switch endpoint as the
   -- default endpoint.
-  if #switch_eps > 0 and #button_eps > 0 then
-    local default_endpoint_id = get_first_non_zero_endpoint(switch_eps)
+  if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
+    local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
     if utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
       return default_endpoint_id
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
-      return get_first_non_zero_endpoint(button_eps)
+      return get_first_non_zero_endpoint(momentary_switch_ep_ids)
     end
   end
 
@@ -424,6 +430,65 @@ function utils.lazy_load_if_possible(sub_driver_name)
     return MatterDriver.lazy_load_sub_driver(require(sub_driver_name))
   else
     return require(sub_driver_name)
+  end
+end
+
+--- helper for the switch subscribe override, which adds to a subscribed request for a checked device
+---
+--- @param checked_device any a Matter device object, either a parent or child device, so not necessarily the same as device
+--- @param subscribe_request table a subscribe request that will be appended to as needed for the device
+--- @param capabilities_seen table a list of capabilities that have already been checked by previously handled devices
+--- @param attributes_seen table a list of attributes that have already been checked
+--- @param events_seen table a list of events that have already been checked
+--- @param subscribed_attributes table key-value pairs mapping capability ids to subscribed attributes
+--- @param subscribed_events table key-value pairs mapping capability ids to subscribed events
+function utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
+ for _, component in pairs(checked_device.st_store.profile.components) do
+    for _, capability in pairs(component.capabilities) do
+      if not capabilities_seen[capability.id] then
+        for _, attr in ipairs(subscribed_attributes[capability.id] or {}) do
+          local cluster_id = attr.cluster or attr._cluster.ID
+          local attr_id = attr.ID or attr.attribute
+          if not attributes_seen[cluster_id..attr_id] then
+            local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+            subscribe_request:with_info_block(ib)
+            attributes_seen[cluster_id..attr_id] = true
+          end
+        end
+        for _, event in ipairs(subscribed_events[capability.id] or {}) do
+          local cluster_id = event.cluster or event._cluster.ID
+          local event_id = event.ID or event.event
+          if not events_seen[cluster_id..event_id] then
+            local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
+            subscribe_request:with_info_block(ib)
+            events_seen[cluster_id..event_id] = true
+          end
+        end
+        capabilities_seen[capability.id] = true -- only loop through any capability once
+      end
+    end
+  end
+end
+
+--- create and send a subscription request by checking all devices, accounting for both parent and child devices
+---
+--- @param device any a Matter device object
+function utils.subscribe(device)
+  local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
+  local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
+
+  for _, endpoint_info in ipairs(device.endpoints) do
+    local checked_device = utils.find_child(device, endpoint_info.endpoint_id) or device
+    if not devices_seen[checked_device.id] then
+      utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+        device.driver.subscribed_attributes, device.driver.subscribed_events
+      )
+      devices_seen[checked_device.id] = true -- only loop through any device once
+    end
+  end
+
+  if #subscribe_request.info_blocks > 0 then
+    device:send(subscribe_request)
   end
 end
 

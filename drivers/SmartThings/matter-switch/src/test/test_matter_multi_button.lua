@@ -15,6 +15,7 @@ local mock_device = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("5-button-battery.yml"),
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+    matter_version = {hardware = 1, sofrware = 1},
     endpoints = {
     {
       endpoint_id = 0,
@@ -92,8 +93,7 @@ local mock_device = test.mock_device.build_test_matter_device(
       }
     },
   },
-}
-)
+})
 
 -- add device for each mock device
 local CLUSTER_SUBSCRIBE_LIST ={

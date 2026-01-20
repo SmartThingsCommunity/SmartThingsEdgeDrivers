@@ -13,6 +13,7 @@ local CAMERA_EP, FLOODLIGHT_EP, CHIME_EP, DOORBELL_EP = 1, 2, 3, 4
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("camera.yml"),
   manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
   endpoints = {
     {
       endpoint_id = 0,
@@ -48,6 +49,10 @@ local mock_device = test.mock_device.build_test_matter_device({
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.PushAvStreamTransport.ID,
           cluster_type = "SERVER"
         },
         {
@@ -117,6 +122,19 @@ local mock_device = test.mock_device.build_test_matter_device({
 local subscribe_request
 local subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.AttributeList,
+  clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
+  clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
+  clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+  clusters.ColorControl.attributes.CurrentHue,
+  clusters.ColorControl.attributes.CurrentSaturation,
+  clusters.ColorControl.attributes.CurrentX,
+  clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
 }
 
 local function test_init()
@@ -148,60 +166,125 @@ end
 
 test.set_test_init_function(test_init)
 
-local function update_device_profile()
-  test.socket.matter:__set_channel_ordering("relaxed")
-  local uint32 = require "st.matter.data_types.Uint32"
-  local expected_metadata = {
-    optional_component_capabilities = {
+local additional_subscribed_attributes = {
+  clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
+  clusters.CameraAvStreamManagement.attributes.ImageRotation,
+  clusters.CameraAvStreamManagement.attributes.NightVision,
+  clusters.CameraAvStreamManagement.attributes.NightVisionIllum,
+  clusters.CameraAvStreamManagement.attributes.ImageFlipHorizontal,
+  clusters.CameraAvStreamManagement.attributes.ImageFlipVertical,
+  clusters.CameraAvStreamManagement.attributes.SoftRecordingPrivacyModeEnabled,
+  clusters.CameraAvStreamManagement.attributes.SoftLivestreamPrivacyModeEnabled,
+  clusters.CameraAvStreamManagement.attributes.HardPrivacyModeOn,
+  clusters.CameraAvStreamManagement.attributes.TwoWayTalkSupport,
+  clusters.CameraAvStreamManagement.attributes.SpeakerMuted,
+  clusters.CameraAvStreamManagement.attributes.MicrophoneMuted,
+  clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel,
+  clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel,
+  clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel,
+  clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel,
+  clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel,
+  clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel,
+  clusters.CameraAvStreamManagement.attributes.StatusLightBrightness,
+  clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
+  clusters.CameraAvStreamManagement.attributes.RateDistortionTradeOffPoints,
+  clusters.CameraAvStreamManagement.attributes.LocalSnapshotRecordingEnabled,
+  clusters.CameraAvStreamManagement.attributes.LocalVideoRecordingEnabled,
+  clusters.CameraAvStreamManagement.attributes.MaxEncodedPixelRate,
+  clusters.CameraAvStreamManagement.attributes.VideoSensorParams,
+  clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams,
+  clusters.CameraAvStreamManagement.attributes.Viewport,
+  clusters.CameraAvStreamManagement.attributes.MinViewportResolution,
+  clusters.CameraAvStreamManagement.attributes.AttributeList,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPosition,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPresets,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.MaxPresets,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.ZoomMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.PanMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.PanMin,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
+  clusters.Chime.attributes.InstalledChimeSounds,
+  clusters.Chime.attributes.SelectedChime,
+  clusters.ZoneManagement.attributes.MaxZones,
+  clusters.ZoneManagement.attributes.Zones,
+  clusters.ZoneManagement.attributes.Triggers,
+  clusters.ZoneManagement.attributes.SensitivityMax,
+  clusters.ZoneManagement.attributes.Sensitivity,
+  clusters.ZoneManagement.events.ZoneTriggered,
+  clusters.ZoneManagement.events.ZoneStopped,
+  clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
+  clusters.ColorControl.attributes.ColorTemperatureMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+  clusters.ColorControl.attributes.CurrentHue,
+  clusters.ColorControl.attributes.CurrentSaturation,
+  clusters.ColorControl.attributes.CurrentX,
+  clusters.ColorControl.attributes.CurrentY,
+  clusters.OccupancySensing.attributes.Occupancy,
+  clusters.Switch.server.events.InitialPress,
+  clusters.Switch.server.events.LongPress,
+  clusters.Switch.server.events.ShortRelease,
+  clusters.Switch.server.events.MultiPressComplete
+}
+
+local expected_metadata = {
+  optional_component_capabilities = {
+    {
+      "main",
       {
-        "main",
-        {
-          "videoCapture2",
-          "cameraViewportSettings",
-          "localMediaStorage",
-          "audioRecording",
-          "cameraPrivacyMode",
-          "imageControl",
-          "hdr",
-          "nightVision",
-          "mechanicalPanTiltZoom",
-          "videoStreamSettings",
-          "zoneManagement",
-          "webrtc",
-          "motionSensor",
-          "sounds",
-        }
-      },
-      {
-        "statusLed",
-        {
-          "switch",
-          "mode"
-        }
-      },
-      {
-        "speaker",
-        {
-          "audioMute",
-          "audioVolume"
-        }
-      },
-      {
-        "microphone",
-        {
-          "audioMute",
-          "audioVolume"
-        }
-      },
-      {
-        "doorbell",
-        {
-          "button"
-        }
+        "videoCapture2",
+        "cameraViewportSettings",
+        "localMediaStorage",
+        "audioRecording",
+        "cameraPrivacyMode",
+        "imageControl",
+        "hdr",
+        "nightVision",
+        "mechanicalPanTiltZoom",
+        "videoStreamSettings",
+        "zoneManagement",
+        "webrtc",
+        "motionSensor",
+        "sounds",
       }
     },
-    profile = "camera"
-  }
+    {
+      "statusLed",
+      {
+        "switch",
+        "mode"
+      }
+    },
+    {
+      "speaker",
+      {
+        "audioMute",
+        "audioVolume"
+      }
+    },
+    {
+      "microphone",
+      {
+        "audioMute",
+        "audioVolume"
+      }
+    },
+    {
+      "doorbell",
+      {
+        "button"
+      }
+    }
+  },
+  profile = "camera"
+}
+
+local function update_device_profile()
+  local uint32 = require "st.matter.data_types.Uint32"
   test.socket.matter:__queue_receive({
     mock_device.id,
     clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
@@ -214,6 +297,7 @@ local function update_device_profile()
   local updated_device_profile = t_utils.get_profile_definition(
     "camera.yml", {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
   )
+  test.wait_for_events()
   test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main", capabilities.webrtc.supportedFeatures(
@@ -253,76 +337,12 @@ local function update_device_profile()
       {"setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode"}
     ))
   )
-  local additional_subscribed_attributes = {
-    clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
-    clusters.CameraAvStreamManagement.attributes.ImageRotation,
-    clusters.CameraAvStreamManagement.attributes.NightVision,
-    clusters.CameraAvStreamManagement.attributes.NightVisionIllum,
-    clusters.CameraAvStreamManagement.attributes.ImageFlipHorizontal,
-    clusters.CameraAvStreamManagement.attributes.ImageFlipVertical,
-    clusters.CameraAvStreamManagement.attributes.SoftRecordingPrivacyModeEnabled,
-    clusters.CameraAvStreamManagement.attributes.SoftLivestreamPrivacyModeEnabled,
-    clusters.CameraAvStreamManagement.attributes.HardPrivacyModeOn,
-    clusters.CameraAvStreamManagement.attributes.TwoWayTalkSupport,
-    clusters.CameraAvStreamManagement.attributes.SpeakerMuted,
-    clusters.CameraAvStreamManagement.attributes.MicrophoneMuted,
-    clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel,
-    clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel,
-    clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel,
-    clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel,
-    clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel,
-    clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel,
-    clusters.CameraAvStreamManagement.attributes.StatusLightBrightness,
-    clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
-    clusters.CameraAvStreamManagement.attributes.RateDistortionTradeOffPoints,
-    clusters.CameraAvStreamManagement.attributes.LocalSnapshotRecordingEnabled,
-    clusters.CameraAvStreamManagement.attributes.LocalVideoRecordingEnabled,
-    clusters.CameraAvStreamManagement.attributes.MaxEncodedPixelRate,
-    clusters.CameraAvStreamManagement.attributes.VideoSensorParams,
-    clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams,
-    clusters.CameraAvStreamManagement.attributes.Viewport,
-    clusters.CameraAvStreamManagement.attributes.MinViewportResolution,
-    clusters.CameraAvStreamManagement.attributes.AttributeList,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPosition,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPresets,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.MaxPresets,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.ZoomMax,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.PanMax,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.PanMin,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
-    clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
-    clusters.Chime.attributes.InstalledChimeSounds,
-    clusters.Chime.attributes.SelectedChime,
-    clusters.ZoneManagement.attributes.MaxZones,
-    clusters.ZoneManagement.attributes.Zones,
-    clusters.ZoneManagement.attributes.Triggers,
-    clusters.ZoneManagement.attributes.SensitivityMax,
-    clusters.ZoneManagement.attributes.Sensitivity,
-    clusters.ZoneManagement.events.ZoneTriggered,
-    clusters.ZoneManagement.events.ZoneStopped,
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY,
-    clusters.OccupancySensing.attributes.Occupancy,
-    clusters.Switch.server.events.InitialPress,
-    clusters.Switch.server.events.LongPress,
-    clusters.Switch.server.events.ShortRelease,
-    clusters.Switch.server.events.MultiPressComplete
-  }
   for _, attr in ipairs(additional_subscribed_attributes) do
     subscribe_request:merge(attr:subscribe(mock_device))
   end
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
   test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
 -- Matter Handler UTs
