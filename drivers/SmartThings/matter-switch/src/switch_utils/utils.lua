@@ -153,7 +153,8 @@ function utils.find_default_endpoint(device)
 
   local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
   local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
+  local fan_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
+  local window_covering_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
 
   local get_first_non_zero_endpoint = function(endpoints)
     table.sort(endpoints)
@@ -166,8 +167,8 @@ function utils.find_default_endpoint(device)
   end
 
   -- Return the first fan endpoint as the default endpoint if any is found
-  if #fan_endpoint_ids > 0 then
-    return get_first_non_zero_endpoint(fan_endpoint_ids)
+  if #fan_ep_ids > 0 then
+    return get_first_non_zero_endpoint(fan_ep_ids)
   end
 
   -- Return the first onoff endpoint as the default endpoint if no momentary switch endpoints are present
@@ -191,6 +192,11 @@ function utils.find_default_endpoint(device)
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
       return get_first_non_zero_endpoint(momentary_switch_ep_ids)
     end
+  end
+
+  -- Return the first window covering endpoint as the default endpoint if any is found
+  if #window_covering_ep_ids > 0 then
+    return get_first_non_zero_endpoint(window_covering_ep_ids)
   end
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))

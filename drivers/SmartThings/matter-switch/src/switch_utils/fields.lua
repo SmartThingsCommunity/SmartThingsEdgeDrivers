@@ -44,6 +44,7 @@ SwitchFields.DEVICE_TYPE_ID = {
     DIMMER = 0x0104,
     COLOR_DIMMER = 0x0105,
   },
+  WINDOW_COVERING = 0x0202,
 }
 
 SwitchFields.device_type_profile_map = {

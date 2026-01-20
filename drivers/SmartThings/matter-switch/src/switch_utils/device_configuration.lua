@@ -20,6 +20,7 @@ local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
+local WindowCoveringDeviceConfiguration = {}
 
 function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
@@ -73,7 +74,6 @@ function FanDeviceConfiguration.assign_profile_for_fan_ep(device, server_fan_ep_
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   return "fan-modular", optional_supported_component_capabilities
 end
-
 
 function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_onoff_ep_id, is_child_device)
   local ep_info = switch_utils.get_endpoint_info(device, server_onoff_ep_id)
@@ -187,6 +187,23 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
   end
 end
 
+function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device)
+  local profile_name = "window-covering"
+  if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) > 0 then
+    profile_name = profile_name .. "-tilt"
+    if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) == 0 then
+      profile_name = profile_name .. "-only"
+    end
+  end
+  local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
+  if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
+    profile_name = profile_name .. "-battery"
+  elseif battery_support == fields.battery_support.BATTERY_LEVEL then
+    profile_name = profile_name .. "-batteryLevel"
+  end
+  device:try_update_metadata({profile = profile_name})
+end
+
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
@@ -239,6 +256,15 @@ function DeviceConfiguration.match_profile(driver, device)
   if #fan_device_type_ep_ids > 0 then
     updated_profile, optional_component_capabilities = FanDeviceConfiguration.assign_profile_for_fan_ep(device, default_endpoint_id)
     device:set_field(fields.MODULAR_PROFILE_UPDATED, true)
+  end
+
+  -- initialize the main device card with window covering if applicable
+  local window_covering_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
+  if switch_utils.tbl_contains(window_covering_ep_ids, default_endpoint_id) then
+    WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device)
+    return
+  elseif #window_covering_ep_ids > 0 then
+    ChildConfiguration.create_or_update_child_devices(driver, device, window_covering_ep_ids, default_endpoint_id, WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep)
   end
 
   -- initialize the main device card with buttons if applicable

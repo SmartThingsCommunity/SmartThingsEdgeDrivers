@@ -102,7 +102,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
     if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then
-        device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false})
+      device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false})
     end
   end
 end
@@ -257,6 +257,16 @@ local matter_driver_template = {
     [capabilities.valve.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentState
     },
+    [capabilities.windowShade.ID] = {
+      clusters.WindowCovering.attributes.OperationalStatus
+    },
+    [capabilities.windowShadeLevel.ID] = {
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths,
+    },
+    [capabilities.windowShadeTiltLevel.ID] = {
+      clusters.WindowCovering.attributes.CurrentPositionTiltPercent100ths,
+    },
   },
   subscribed_events = {
     [capabilities.button.ID] = {
@@ -336,6 +346,7 @@ local matter_driver_template = {
   sub_drivers = {
     switch_utils.lazy_load_if_possible("sub_drivers.aqara_cube"),
     switch_utils.lazy_load("sub_drivers.camera"),
+    switch_utils.lazy_load_if_possible("sub_drivers.closures"),
     switch_utils.lazy_load_if_possible("sub_drivers.eve_energy"),
     switch_utils.lazy_load_if_possible("sub_drivers.ikea_scroll"),
     switch_utils.lazy_load_if_possible("sub_drivers.third_reality_mk1")
