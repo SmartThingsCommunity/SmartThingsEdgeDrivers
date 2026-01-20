@@ -1,25 +1,12 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 --- @type st.zwave.CommandClass
 local cc = (require "st.zwave.CommandClass")
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({version=1})
 
-local FIBARO_ROLLER_SHUTTER_FINGERPRINTS = {
-  {mfr = 0x010F, prod = 0x1D01, model = 0x1000}, -- Fibaro Walli Roller Shutter
-}
 
 -- configuration parameters
 local CALIBRATION_CONFIGURATION = 150
@@ -33,14 +20,6 @@ local CLB_NOT_STARTED = "not_started"
 local CLB_DONE = "done"
 local CLB_PENDING = "pending"
 
-local function can_handle_fibaro_roller_shutter(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FIBARO_ROLLER_SHUTTER_FINGERPRINTS) do
-    if device:id_match( fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local function configuration_report(driver, device, cmd)
   local parameter_number = cmd.args.parameter_number
@@ -79,7 +58,7 @@ local fibaro_roller_shutter = {
     }
   },
   NAME = "fibaro roller shutter",
-  can_handle = can_handle_fibaro_roller_shutter,
+  can_handle = require("window-treatment-venetian.fibaro-roller-shutter.can_handle"),
   lifecycle_handlers = {
     add = device_added
   }
