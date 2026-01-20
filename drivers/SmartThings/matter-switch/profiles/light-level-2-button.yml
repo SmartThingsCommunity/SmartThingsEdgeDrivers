@@ -11,7 +11,7 @@ components:
           - key: "level.value"
             range: [1, 100]
     - id: statelessSwitchLevelStep
-        version: 1
+      version: 1
     - id: firmwareUpdate
       version: 1
     - id: refresh
