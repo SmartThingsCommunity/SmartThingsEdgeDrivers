@@ -41,16 +41,6 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     switch_utils.handle_electrical_sensor_info(device)
   end
 
-  -- For devices supporting BATTERY, add the PowerSource AttributeList to the list of subscribed
-  -- attributes in order to determine whether to use the battery or batteryLevel capability. Note
-  -- that this is only needed one time, since after the profile is updated the subscription will
-  -- be added if a battery capability is present.
-  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
-    device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
-  else
-    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
-  end
-
   -- call device init in case init is not called after added due to device caching
   SwitchLifecycleHandlers.device_init(driver, device)
 end
@@ -204,11 +194,9 @@ local matter_driver_template = {
   },
   subscribed_attributes = {
     [capabilities.battery.ID] = {
-      clusters.PowerSource.attributes.AttributeList,
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
     [capabilities.batteryLevel.ID] = {
-      clusters.PowerSource.attributes.AttributeList,
       clusters.PowerSource.attributes.BatChargeLevel,
     },
     [capabilities.colorControl.ID] = {

@@ -141,7 +141,6 @@ local mock_device_exhausted = test.mock_device.build_test_matter_device(
 
 -- add device for each mock device
 local CLUSTER_SUBSCRIBE_LIST ={
-  clusters.PowerSource.server.attributes.AttributeList,
   clusters.PowerSource.server.attributes.BatPercentRemaining,
   clusters.Switch.server.events.InitialPress,
   clusters.Switch.server.events.LongPress,
