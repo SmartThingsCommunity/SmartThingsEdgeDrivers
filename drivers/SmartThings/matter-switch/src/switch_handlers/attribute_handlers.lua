@@ -388,10 +388,9 @@ function AttributeHandlers.power_source_attribute_list_handler(driver, device, i
     if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_PERCENTAGE, {persist=true})
       break
-    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
-      if device:get_field(fields.profiling_data.BATTERY_SUPPORT) ~= fields.battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
-        device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_LEVEL, {persist=true})
-      end
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID and
+      device:get_field(fields.profiling_data.BATTERY_SUPPORT) ~= fields.battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
+      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_LEVEL, {persist=true})
     end
   end
   if not previous_battery_support or previous_battery_support ~= device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
