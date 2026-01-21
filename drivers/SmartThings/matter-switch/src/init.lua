@@ -41,6 +41,10 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     switch_utils.handle_electrical_sensor_info(device)
   end
 
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+  end
+
   -- call device init in case init is not called after added due to device caching
   SwitchLifecycleHandlers.device_init(driver, device)
 end

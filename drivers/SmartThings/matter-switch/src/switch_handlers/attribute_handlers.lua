@@ -384,7 +384,7 @@ end
 function AttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
   local previous_battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
   device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
-  for _, attr in ipairs(ib.data.elements) do
+  for _, attr in ipairs(ib.data.elements or {}) do
     if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_PERCENTAGE, {persist=true})
       break
@@ -394,11 +394,9 @@ function AttributeHandlers.power_source_attribute_list_handler(driver, device, i
       end
     end
   end
-  device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
-  if previous_battery_support and previous_battery_support == device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
-    return
+  if not previous_battery_support or previous_battery_support ~= device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
+    device_cfg.match_profile(driver, device)
   end
-  device_cfg.match_profile(driver, device)
 end
 
 
