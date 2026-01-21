@@ -86,9 +86,13 @@ function ThermostatUtils.get_endpoints_by_device_type(device, device_type)
   return endpoints
 end
 
-  -- set the supportedThermostatOperatingStates attribute if the thermostatOperatingState capability is supported
+  -- set the supportedThermostatOperatingStates attribute if the thermostatOperatingState capability is supported and it has not been set before
 function ThermostatUtils.handle_thermostat_operating_state_info(device)
-  if device:supports_capability(capabilities.thermostatOperatingState) then
+  local thermostat_operating_state_supported = device:supports_capability(capabilities.thermostatOperatingState)
+  local latest_supported_operating_states = thermostat_operating_state_supported and device:get_latest_state(
+    "main", capabilities.thermostatOperatingState.ID, capabilities.thermostatOperatingState.supportedThermostatOperatingStates.NAME
+  )
+  if thermostat_operating_state_supported and latest_supported_operating_states == nil then
     local supported_operating_modes = { "idle" }
     if #device:get_endpoints(clusters.Thermostat.ID, {feature_bitmap = clusters.Thermostat.types.ThermostatFeature.HEATING}) > 0 then
       table.insert(supported_operating_modes, "heating")
