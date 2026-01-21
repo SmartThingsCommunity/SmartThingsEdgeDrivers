@@ -34,6 +34,7 @@ end
 function ClosureLifecycleHandlers.device_added(driver, device)
   device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}}))
   device:set_field(closure_fields.REVERSE_POLARITY, false, { persist = true })
+  switch_utils.handle_electrical_sensor_info(device)
 end
 
 function ClosureLifecycleHandlers.info_changed(driver, device, event, args)

@@ -201,7 +201,7 @@ function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep
   elseif battery_support == fields.battery_support.BATTERY_LEVEL then
     profile_name = profile_name .. "-batteryLevel"
   end
-  device:try_update_metadata({profile = profile_name})
+  return profile_name
 end
 
 
@@ -258,15 +258,6 @@ function DeviceConfiguration.match_profile(driver, device)
     device:set_field(fields.MODULAR_PROFILE_UPDATED, true)
   end
 
-  -- initialize the main device card with window covering if applicable
-  local window_covering_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
-  if switch_utils.tbl_contains(window_covering_ep_ids, default_endpoint_id) then
-    WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device)
-    return
-  elseif #window_covering_ep_ids > 0 then
-    ChildConfiguration.create_or_update_child_devices(driver, device, window_covering_ep_ids, default_endpoint_id, WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep)
-  end
-
   -- initialize the main device card with buttons if applicable
   local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #momentary_switch_ep_ids) then
@@ -274,6 +265,14 @@ function DeviceConfiguration.match_profile(driver, device)
     -- All button endpoints found will be added as additional components in the profile containing the default_endpoint_id.
     ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momentary_switch_ep_ids)
     ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
+  end
+
+  -- initialize the main device card with window covering if applicable
+  local window_covering_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
+  if switch_utils.tbl_contains(window_covering_ep_ids, default_endpoint_id) then
+    updated_profile = WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device)
+  elseif #window_covering_ep_ids > 0 then
+    ChildConfiguration.create_or_update_child_devices(driver, device, window_covering_ep_ids, default_endpoint_id, WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep)
   end
 
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
