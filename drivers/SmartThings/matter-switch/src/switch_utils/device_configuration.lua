@@ -187,21 +187,27 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
   end
 end
 
-function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device)
-  local profile_name = "window-covering"
-  if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) > 0 then
-    profile_name = profile_name .. "-tilt"
-    if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) == 0 then
-      profile_name = profile_name .. "-only"
-    end
+function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device, server_window_covering_ep_id)
+  local ep_info = switch_utils.get_endpoint_info(device, server_window_covering_ep_id)
+  local window_covering_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.WindowCovering.ID)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+
+  if clusters.WindowCovering.are_features_supported(clusters.WindowCovering.types.Feature.LIFT, window_covering_cluster_info.feature_map) then
+    table.insert(main_component_capabilities, capabilities.windowShadeLevel.ID)
+  end
+  if clusters.WindowCovering.are_features_supported(clusters.WindowCovering.types.Feature.TILT, window_covering_cluster_info.feature_map) then
+    table.insert(main_component_capabilities, capabilities.windowShadeTiltLevel.ID)
   end
   local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
   if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
-    profile_name = profile_name .. "-battery"
+    table.insert(main_component_capabilities, capabilities.battery.ID)
   elseif battery_support == fields.battery_support.BATTERY_LEVEL then
-    profile_name = profile_name .. "-batteryLevel"
+    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
   end
-  return profile_name
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  return "window-covering-modular", optional_supported_component_capabilities
 end
 
 
@@ -272,7 +278,7 @@ function DeviceConfiguration.match_profile(driver, device)
     ChildConfiguration.create_or_update_child_devices(driver, device, window_covering_ep_ids, default_endpoint_id, WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep)
   end
   if switch_utils.tbl_contains(window_covering_ep_ids, default_endpoint_id) then
-    updated_profile = WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device)
+    updated_profile, optional_component_capabilities = WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device, default_endpoint_id)
   end
 
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
