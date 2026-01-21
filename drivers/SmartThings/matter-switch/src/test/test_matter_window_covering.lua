@@ -83,8 +83,6 @@ local function test_init()
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
 end
 
 test.set_test_init_function(test_init)
@@ -737,6 +735,9 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Test that profile is not changed to window-covering-battery when battery percent remaining attribute (attribute ID 12) is not available",
   function()
+    local fields = require "switch_utils.fields"
+    mock_device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
