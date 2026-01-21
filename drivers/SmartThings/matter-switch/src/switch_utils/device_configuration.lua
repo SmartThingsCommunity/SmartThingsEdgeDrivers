@@ -235,7 +235,6 @@ function DeviceConfiguration.match_profile(driver, device)
   if #server_onoff_ep_ids > 0 then
     ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
   end
-
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
@@ -269,10 +268,11 @@ function DeviceConfiguration.match_profile(driver, device)
 
   -- initialize the main device card with window covering if applicable
   local window_covering_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
+  if #window_covering_ep_ids > 0 then
+    ChildConfiguration.create_or_update_child_devices(driver, device, window_covering_ep_ids, default_endpoint_id, WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep)
+  end
   if switch_utils.tbl_contains(window_covering_ep_ids, default_endpoint_id) then
     updated_profile = WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device)
-  elseif #window_covering_ep_ids > 0 then
-    ChildConfiguration.create_or_update_child_devices(driver, device, window_covering_ep_ids, default_endpoint_id, WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep)
   end
 
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
