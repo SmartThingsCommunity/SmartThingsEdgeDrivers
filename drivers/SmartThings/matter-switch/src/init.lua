@@ -41,6 +41,16 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     switch_utils.handle_electrical_sensor_info(device)
   end
 
+  -- For devices supporting BATTERY, add the PowerSource AttributeList to the list of subscribed
+  -- attributes in order to determine whether to use the battery or batteryLevel capability. Note
+  -- that this is only needed one time, since after the profile is updated the subscription will
+  -- be added if a battery capability is present.
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+    device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
+  else
+    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+  end
+
   -- call device init in case init is not called after added due to device caching
   SwitchLifecycleHandlers.device_init(driver, device)
 end
@@ -94,7 +104,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
 
-    -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
+    -- device energy reporting must be handled cumulatively, periodically, or by both simultaneously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
     if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then
@@ -194,9 +204,11 @@ local matter_driver_template = {
   },
   subscribed_attributes = {
     [capabilities.battery.ID] = {
+      clusters.PowerSource.attributes.AttributeList,
       clusters.PowerSource.attributes.BatPercentRemaining,
     },
     [capabilities.batteryLevel.ID] = {
+      clusters.PowerSource.attributes.AttributeList,
       clusters.PowerSource.attributes.BatChargeLevel,
     },
     [capabilities.colorControl.ID] = {

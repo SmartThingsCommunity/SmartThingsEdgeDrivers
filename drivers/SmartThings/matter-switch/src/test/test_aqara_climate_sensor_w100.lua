@@ -113,6 +113,7 @@ local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(aqara_mock_device)
   local cluster_subscribe_list = {
+    clusters.PowerSource.server.attributes.AttributeList,
     clusters.PowerSource.server.attributes.BatPercentRemaining,
     clusters.TemperatureMeasurement.attributes.MeasuredValue,
     clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
@@ -138,23 +139,16 @@ local function test_init()
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })
-  local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
-  test.socket.matter:__expect_send({aqara_mock_device.id, read_attribute_list})
-  configure_buttons()
   aqara_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-
-  local device_info_copy = utils.deep_copy(aqara_mock_device.raw_st_data)
-  device_info_copy.profile.id = "3-button-battery-temperature-humidity"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "infoChanged", device_info_json })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
-  configure_buttons()
 end
 
 test.set_test_init_function(test_init)
 
 local function update_profile()
-  test.socket.matter:__queue_receive({aqara_mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(aqara_mock_device, 6, {uint32(0x0C)})})
+  test.socket.matter:__queue_receive({aqara_mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(
+    aqara_mock_device, 6, {uint32(clusters.PowerSource.attributes.BatPercentRemaining.ID)}
+  )})
+  configure_buttons()
   aqara_mock_device:expect_metadata_update({ profile = "3-button-battery-temperature-humidity" })
 end
 
@@ -466,4 +460,3 @@ test.register_coroutine_test(
 )
 
 test.run_registered_tests()
-
