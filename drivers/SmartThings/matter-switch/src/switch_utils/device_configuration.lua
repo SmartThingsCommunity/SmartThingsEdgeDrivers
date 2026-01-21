@@ -129,6 +129,9 @@ function ButtonDeviceConfiguration.update_button_profile(device, default_endpoin
   elseif battery_support == fields.battery_support.BATTERY_LEVEL then
     profile_name = profile_name .. "-batteryLevel"
   end
+  if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
+    profile_name = "3-button-battery-temperature-humidity"
+  end
   device:try_update_metadata({profile = profile_name})
 end
 

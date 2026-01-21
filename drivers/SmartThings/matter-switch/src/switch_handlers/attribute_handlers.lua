@@ -382,29 +382,20 @@ function AttributeHandlers.bat_charge_level_handler(driver, device, ib, response
 end
 
 function AttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
-  local previous_battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
+  local previous_battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
+  device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
   for _, attr in ipairs(ib.data.elements) do
     if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_PERCENTAGE, {persist=true})
       break
     elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
-      local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
-      if battery_support ~= fields.battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
+      if device:get_field(fields.profiling_data.BATTERY_SUPPORT) ~= fields.battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
         device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_LEVEL, {persist=true})
       end
     end
   end
-  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if #momentary_switch_ep_ids > 0 and switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
-    local default_endpoint_id = switch_utils.find_default_endpoint(device)
-    local button_cfg = require("switch_utils.device_configuration").ButtonCfg
-    button_cfg.update_button_component_map(device, default_endpoint_id, momentary_switch_ep_ids)
-    button_cfg.configure_buttons(device, momentary_switch_ep_ids)
-    device:try_update_metadata({ profile = "3-button-battery-temperature-humidity" }, true)
-    return
-  end
   device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
-  if (device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY) == previous_battery_support then
+  if previous_battery_support and previous_battery_support == device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
     return
   end
   device_cfg.match_profile(driver, device)
