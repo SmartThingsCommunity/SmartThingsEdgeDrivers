@@ -159,7 +159,9 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "Simulate the profile change update taking affect and the device info changing",
   function()
+    test.socket.matter:__set_channel_ordering("relaxed")
     update_profile()
+    test.wait_for_events()
     local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
     device_info_copy.profile.id = "5-buttons-battery"
     local device_info_json = dkjson.encode(device_info_copy)

@@ -1,14 +1,11 @@
 -- Copyright © 2024 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local test = require "integration_test"
-local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
-local uint32 = require "st.matter.data_types.Uint32"
 local clusters = require "st.matter.generated.zap_clusters"
-local button_attr = capabilities.button.button
+local t_utils = require "integration_test.utils"
+local test = require "integration_test"
+local uint32 = require "st.matter.data_types.Uint32"
 
 -- Mock a 3-button device with temperature and humidity sensor
 local aqara_mock_device = test.mock_device.build_test_matter_device({
@@ -100,13 +97,13 @@ local aqara_mock_device = test.mock_device.build_test_matter_device({
 
 local function configure_buttons()
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 3)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", capabilities.button.button.pushed({state_change = false})))
 
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 4)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.button.pushed({state_change = false})))
 
   test.socket.matter:__expect_send({aqara_mock_device.id, clusters.Switch.attributes.MultiPressMax:read(aqara_mock_device, 5)})
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
+  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.button.pushed({state_change = false})))
 end
 
 local function test_init()
@@ -309,7 +306,7 @@ test.register_coroutine_test(
           clusters.Switch.events.MultiPressComplete:build_test_event_report(aqara_mock_device, 4, {new_position = 0, total_number_of_presses_counted = 2, previous_position = 1})
         }
       )
-      test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.double({state_change = true})))
+      test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.button.double({state_change = true})))
     end
 )
 
@@ -329,7 +326,7 @@ test.register_coroutine_test(
         clusters.Switch.events.LongPress:build_test_event_report(aqara_mock_device, 3, {new_position = 1})
       }
     )
-    test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", button_attr.held({state_change = true})))
+    test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button1", capabilities.button.button.held({state_change = true})))
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -355,7 +352,7 @@ test.register_coroutine_test(
         clusters.Switch.events.LongPress:build_test_event_report(aqara_mock_device, 5, {new_position = 1})
       }
     )
-    test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.held({state_change = true})))
+    test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.button.held({state_change = true})))
     test.socket.matter:__queue_receive(
       {
         aqara_mock_device.id,
@@ -376,7 +373,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      aqara_mock_device:generate_test_message("button1", button_attr.double({state_change = true}))
+      aqara_mock_device:generate_test_message("button1", capabilities.button.button.double({state_change = true}))
     )
   end
 )
