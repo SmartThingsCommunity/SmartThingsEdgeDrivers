@@ -31,7 +31,7 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
   for device_num, ep_id in ipairs(server_cluster_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
       local label_and_name = string.format("%s %d", device.label, device_num)
-      local child_profile, _ = assign_profile_fn(device, ep_id, true)
+      local child_profile, optional_component_capabilities = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
         driver:try_create_device({
@@ -44,7 +44,8 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
         })
       else
         existing_child_device:try_update_metadata({
-          profile = child_profile
+          profile = child_profile,
+          optional_component_capabilities = optional_component_capabilities
         })
       end
     end
@@ -199,11 +200,15 @@ function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep
   if clusters.WindowCovering.are_features_supported(clusters.WindowCovering.types.Feature.TILT, window_covering_cluster_info.feature_map) then
     table.insert(main_component_capabilities, capabilities.windowShadeTiltLevel.ID)
   end
-  local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
-  if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
-    table.insert(main_component_capabilities, capabilities.battery.ID)
-  elseif battery_support == fields.battery_support.BATTERY_LEVEL then
-    table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+
+  local power_source_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.PowerSource.ID)
+  if power_source_cluster_info then
+    local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
+    if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
+      table.insert(main_component_capabilities, capabilities.battery.ID)
+    elseif battery_support == fields.battery_support.BATTERY_LEVEL then
+      table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+    end
   end
 
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
@@ -285,7 +290,9 @@ function DeviceConfiguration.match_profile(driver, device)
 end
 
 return {
+  ButtonCfg = ButtonDeviceConfiguration,
+  ChildCfg = ChildConfiguration,
   DeviceCfg = DeviceConfiguration,
   SwitchCfg = SwitchDeviceConfiguration,
-  ButtonCfg = ButtonDeviceConfiguration
+  WindowCoveringCfg = WindowCoveringDeviceConfiguration,
 }

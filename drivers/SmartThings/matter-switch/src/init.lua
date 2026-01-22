@@ -8,9 +8,11 @@ local clusters = require "st.matter.clusters"
 local log = require "log"
 local version = require "version"
 local cfg = require "switch_utils.device_configuration"
+local button_cfg = cfg.ButtonCfg
+local child_cfg = cfg.ChildCfg
 local device_cfg = cfg.DeviceCfg
 local switch_cfg = cfg.SwitchCfg
-local button_cfg = cfg.ButtonCfg
+local window_covering_cfg = cfg.WindowCoveringCfg
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 local attribute_handlers = require "switch_handlers.attribute_handlers"
@@ -54,6 +56,11 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
   elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    local window_covering_ep_ids = switch_utils.get_endpoints_by_device_type(device:get_parent_device(), fields.DEVICE_TYPE_ID.WINDOW_COVERING)
+    if #window_covering_ep_ids > 0 then
+      local default_endpoint_id = switch_utils.find_default_endpoint(device:get_parent_device())
+      child_cfg.create_or_update_child_devices(driver, device:get_parent_device(), window_covering_ep_ids, default_endpoint_id, window_covering_cfg.assign_profile_for_window_covering_ep)
+    end
     -- because get_parent_device() may cause race conditions if used in init, an initial child subscribe is handled in doConfigure.
     -- all future calls to subscribe will be handled by the parent device in init
     device:subscribe()
