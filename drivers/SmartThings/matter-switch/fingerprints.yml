@@ -282,32 +282,32 @@ matterManufacturer:
     deviceLabel: Eve MotionBlinds
     vendorId: 0x130A
     productId: 0x55
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "4874/109"
     deviceLabel: Eve MotionBlinds for Roller Blinds
     vendorId: 0x130A
     productId: 0x006D
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "4874/98"
     deviceLabel: Eve MotionBlinds for Honeycomb Blinds
     vendorId: 0x130A
     productId: 0x0062
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "4874/99"
     deviceLabel: Eve MotionBlinds for Venetian Blinds
     vendorId: 0x130A
     productId: 0x0063
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "4874/100"
     deviceLabel: Eve MotionBlinds for Curtains
     vendorId: 0x130A
     productId: 0x0064
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "4874/96"
     deviceLabel: Eve Shutter Switch
     vendorId: 0x130A
     productId: 0x0060
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
 
 #Ezviz
   - id: "5172/4096"
@@ -789,7 +789,7 @@ matterManufacturer:
     deviceLabel: MSM-1
     vendorId: 0x153B
     productId: 0x3801
-    deviceProfileName: window-covering-tilt
+    deviceProfileName: window-covering-modular
 # Intecular
   - id: "5226/32769"
     deviceLabel: InvisOutlet
@@ -1306,7 +1306,7 @@ matterManufacturer:
     deviceLabel: Wi-Fi Curtain
     vendorId: 0x1365
     productId: 0x1001
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
 #Meross
   - id: "4933/40987"
     deviceLabel: Smart Wi-Fi Switch
@@ -1327,7 +1327,7 @@ matterManufacturer:
     deviceLabel: Smart Wi-Fi Roller Shutter Timer
     vendorId: 0x1345
     productId: 0xF00D
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
 #Nanoleaf
   - id: "Nanoleaf NL53"
     deviceLabel: Essentials BR30
@@ -1931,14 +1931,14 @@ matterManufacturer:
     deviceLabel: SmartWave Motorized Roller Shades 100 Blackout Flex
     vendorId: 0x1500
     productId: 0x2711
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
 
 # SmartWings
   - id: "5231/4097"
     deviceLabel: SmartWings Window Covering
     vendorId: 0x146F
     productId: 0x1001
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
 
 #SONOFF
   - id: "SONOFF MINIR4M"
@@ -2000,107 +2000,107 @@ matterManufacturer:
     deviceLabel: WISTAR WSERD16-B Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0003
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5207/4"
     deviceLabel: WISTAR WSERD24 Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0004
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/5"
     deviceLabel: WISTAR WSERD40-B Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0005
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5207/6"
     deviceLabel: WISTAR WSERD40-L Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0006
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5207/7"
     deviceLabel: WISTAR WSERD40-T Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0007
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/8"
     deviceLabel: WISTAR WSERD50-B Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0008
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5207/9"
     deviceLabel: WISTAR WSERD50-L Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0009
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5207/16"
     deviceLabel: WISTAR WSERD50-T Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0010
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/19"
     deviceLabel: WISTAR WSER60 Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0013
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/17"
     deviceLabel: WISTAR WSER40 Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0011
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/18"
     deviceLabel: WISTAR WSER50 Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0012
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/2"
     deviceLabel: WISTAR WSERD30-B Smart Tubular Motor
     vendorId: 0x1457
     productId: 0x0002
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5207/22"
     deviceLabel: WISTAR WSCMXH Smart Vertical Blind Motor
     vendorId: 0x1457
     productId: 0x0016
-    deviceProfileName: window-covering-tilt
+    deviceProfileName: window-covering-modular
   - id: "5207/23"
     deviceLabel: WISTAR WSCMXF Smart Vertical Blind Motor
     vendorId: 0x1457
     productId: 0x0017
-    deviceProfileName: window-covering-tilt
+    deviceProfileName: window-covering-modular
   - id: "5207/24"
     deviceLabel: WISTAR WSCMXF-LED Smart Vertical Blind Motor
     vendorId: 0x1457
     productId: 0x0018
-    deviceProfileName: window-covering-tilt
+    deviceProfileName: window-covering-modular
   - id: "5207/20"
     deviceLabel: WISTAR WSCMQ Smart Curtain Motor
     vendorId: 0x1457
     productId: 0x0014
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/21"
     deviceLabel: WISTAR WSCMXI Smart Curtain Motor
     vendorId: 0x1457
     productId: 0x0015
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/32"
     deviceLabel: WISTAR WSCMT Smart Curtain Motor
     vendorId: 0x1457
     productId: 0x0020
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/34"
     deviceLabel: WISTAR WSCMXB Smart Curtain Motor
     vendorId: 0x1457
     productId: 0x0022
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/35"
     deviceLabel: WISTAR WSCMXC Smart Curtain Motor
     vendorId: 0x1457
     productId: 0x0023
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5207/38"
     deviceLabel: WISTAR WSCMXJ Smart Curtain Motor
     vendorId: 0x1457
     productId: 0x0026
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
 #WiZ
   - id: "WiZ A19"
     deviceLabel: WiZ A19
@@ -3922,37 +3922,37 @@ matterManufacturer:
     deviceLabel: Smart WindowCovering Series
     vendorId: 0x1523
     productId: 0x041C
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5411/2660"
     deviceLabel: Smart WindowCovering Series
     vendorId: 0x1523
     productId: 0x0A64
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5411/2661"
     deviceLabel: Smart WindowCovering Series
     vendorId: 0x1523
     productId: 0x0A65
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5411/2662"
     deviceLabel: Smart WindowCovering Series
     vendorId: 0x1523
     productId: 0x0A66
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5411/2663"
     deviceLabel: Smart WindowCovering Series
     vendorId: 0x1523
     productId: 0x0A67
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5411/2664"
     deviceLabel: Smart WindowCovering Series
     vendorId: 0x1523
     productId: 0x0A68
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
   - id: "5411/2665"
     deviceLabel: Smart WindowCovering Series
     vendorId: 0x1523
     productId: 0x0A69
-    deviceProfileName: window-covering-battery
+    deviceProfileName: window-covering-modular
 #Zemismart
   - id: "5020/61154"
     deviceLabel: Zemismart Inline Module
@@ -4028,42 +4028,42 @@ matterManufacturer:
     deviceLabel: Zemismart MT01 Slide Curtain
     vendorId: 0x139C
     productId: 0xFFFE
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5020/65376"
     deviceLabel: Zemismart MT25B Roller Motor
     vendorId: 0x139C
     productId: 0xFF60
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5020/65296"
     deviceLabel: Zemismart MT82 Smart Curtain
     vendorId: 0x139C
     productId: 0xFF10
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5020/65301"
     deviceLabel: Zemismart MT25A Thread Roller Motor
     vendorId: 0x139C
     productId: 0xFF15
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5020/64050"
     deviceLabel: Zemismart ZM02 Smart Curtain
     vendorId: 0x139C
     productId: 0xFA32
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5020/64017"
     deviceLabel: Zemismart ZM25C Smart Curtain
     vendorId: 0x139C
     productId: 0xFA11
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5020/64049"
     deviceLabel: Zemismart ZM01 Smart Curtain
     vendorId:  0x139C
     productId: 0xFA31
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
   - id: "5020/64023"
     deviceLabel: Zemismart ZM24A Smart Curtain
     vendorId: 0x139C
     productId: 0xFA17
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
 #Zimi
   - id: "5410/3"
     deviceLabel: Zimi Matter Connect
@@ -4294,11 +4294,11 @@ matterGeneric:
       - id: 0x002B # Fan
       - id: 0x0110 # Mounted Dimmable Load Control
     deviceProfileName: fan-modular
-  - id: "windowcovering"
+  - id: "matter/window/covering"
     deviceLabel: Matter Window Covering
     deviceTypes:
       - id: 0x0202 # Window Covering
-    deviceProfileName: window-covering
+    deviceProfileName: window-covering-modular
 
 matterThing:
   - id: SmartThings/MatterThing
