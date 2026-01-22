@@ -36,24 +36,11 @@ function ClosureLifecycleHandlers.device_added(driver, device)
   switch_utils.handle_electrical_sensor_info(device)
 end
 
-function ClosureLifecycleHandlers.info_changed(driver, device, event, args)
-  if device.profile.id ~= args.old_st_store.profile.id then
-    device:subscribe()
-  elseif args.old_st_store.preferences.reverse ~= device.preferences.reverse then
-    if device.preferences.reverse then
-      device:set_field(closure_fields.REVERSE_POLARITY, true, { persist = true })
-    else
-      device:set_field(closure_fields.REVERSE_POLARITY, false, { persist = true })
-    end
-  end
-end
-
 local closures_handler = {
   NAME = "closures",
   lifecycle_handlers = {
     init = ClosureLifecycleHandlers.device_init,
-    added = ClosureLifecycleHandlers.device_added,
-    infoChanged = ClosureLifecycleHandlers.info_changed
+    added = ClosureLifecycleHandlers.device_added
   },
   matter_handlers = {
     attr = {

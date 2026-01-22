@@ -92,6 +92,16 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       device_cfg.match_profile(driver, device)
     end
   end
+
+  if args.old_st_store.preferences.reverse ~= nil and device.preferences.reverse ~= nil and
+    args.old_st_store.preferences.reverse ~= device.preferences.reverse then
+    local closure_fields = require "sub_drivers.closures.closure_utils.fields"
+    if device.preferences.reverse then
+      device:set_field(closure_fields.REVERSE_POLARITY, true, { persist = true })
+    else
+      device:set_field(closure_fields.REVERSE_POLARITY, false, { persist = true })
+    end
+  end
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
