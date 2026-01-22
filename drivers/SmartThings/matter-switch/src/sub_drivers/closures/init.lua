@@ -28,6 +28,7 @@ function ClosureLifecycleHandlers.device_init(driver, device)
     device:emit_event(capabilities.windowShadePreset.position(preset_position, {visibility = {displayed = false}}))
     device:set_field(closure_fields.PRESET_LEVEL_KEY, preset_position, {persist = true})
   end
+  device:extend_device("subscribe", switch_utils.subscribe)
   device:subscribe()
 end
 

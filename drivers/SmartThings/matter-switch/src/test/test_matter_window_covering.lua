@@ -94,6 +94,7 @@ local function test_init()
   set_preset(mock_device)
 
   subscribe_request = WindowCovering.server.attributes.OperationalStatus:subscribe(mock_device)
+  subscribe_request:merge(clusters.PowerSource.server.attributes.AttributeList:subscribe(mock_device))
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -120,7 +121,8 @@ local CLUSTER_SUBSCRIBE_LIST = {
   WindowCovering.server.attributes.CurrentPositionLiftPercent100ths,
   WindowCovering.server.attributes.CurrentPositionTiltPercent100ths,
   WindowCovering.server.attributes.OperationalStatus,
-  clusters.PowerSource.server.attributes.BatPercentRemaining
+  clusters.PowerSource.server.attributes.AttributeList,
+  clusters.LevelControl.server.attributes.CurrentLevel,
 }
 
 local function update_profile()
@@ -133,16 +135,17 @@ local function update_profile()
     {enabled_optional_capabilities = {{"main", {"windowShadeLevel", "windowShadeTiltLevel"}}}}
   )
   test.socket.device_lifecycle:__queue_receive(mock_child:generate_info_changed({ profile = updated_device_profile }))
+  subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
+  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
+  end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.wait_for_events()
   updated_device_profile = t_utils.get_profile_definition("window-covering-modular.yml",
     {enabled_optional_capabilities = {{"main", {"windowShadeLevel", "windowShadeTiltLevel", "battery"}}}}
   )
   test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
-  subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
-  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
-    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
-  end
+  subscribe_request:merge(clusters.PowerSource.server.attributes.BatPercentRemaining:subscribe(mock_device))
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
@@ -697,6 +700,7 @@ test.register_coroutine_test(
     for i, attr in ipairs(CLUSTER_SUBSCRIBE_LIST) do
       if i > 1 then read_request:merge(attr:read(mock_device)) end
     end
+    read_request:merge(clusters.PowerSource.server.attributes.BatPercentRemaining:read(mock_device))
     test.socket.matter:__expect_send({mock_device.id, read_request})
     test.wait_for_events()
   end
