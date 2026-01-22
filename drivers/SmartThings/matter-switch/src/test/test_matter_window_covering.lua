@@ -122,7 +122,6 @@ local CLUSTER_SUBSCRIBE_LIST = {
   WindowCovering.server.attributes.CurrentPositionLiftPercent100ths,
   WindowCovering.server.attributes.CurrentPositionTiltPercent100ths,
   WindowCovering.server.attributes.OperationalStatus,
-  clusters.PowerSource.server.attributes.AttributeList,
   clusters.LevelControl.server.attributes.CurrentLevel,
 }
 
@@ -140,6 +139,7 @@ local function update_profile()
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
+  subscribe_request:merge(clusters.PowerSource.server.attributes.AttributeList:subscribe(mock_device))
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.wait_for_events()
   updated_device_profile = t_utils.get_profile_definition("window-covering-modular.yml",

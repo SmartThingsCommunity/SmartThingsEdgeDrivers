@@ -449,7 +449,8 @@ end
 --- @param subscribed_attributes table key-value pairs mapping capability ids to subscribed attributes
 --- @param subscribed_events table key-value pairs mapping capability ids to subscribed events
 function utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
- for _, component in pairs(checked_device.st_store.profile.components) do
+  local subscribed_attrs = {}
+  for _, component in pairs(checked_device.st_store.profile.components) do
     for _, capability in pairs(component.capabilities) do
       if not capabilities_seen[capability.id] then
         for _, attr in ipairs(subscribed_attributes[capability.id] or {}) do
@@ -457,6 +458,8 @@ function utils.populate_subscribe_request_for_device(checked_device, subscribe_r
           local attr_id = attr.ID or attr.attribute
           if not attributes_seen[cluster_id..attr_id] then
             local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+            subscribed_attrs[cluster_id] = subscribed_attrs[cluster_id] or {}
+            subscribed_attrs[cluster_id][attr_id] = ib
             subscribe_request:with_info_block(ib)
             attributes_seen[cluster_id..attr_id] = true
           end
@@ -474,6 +477,7 @@ function utils.populate_subscribe_request_for_device(checked_device, subscribe_r
       end
     end
   end
+  checked_device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, subscribed_attrs)
 end
 
 --- create and send a subscription request by checking all devices, accounting for both parent and child devices
