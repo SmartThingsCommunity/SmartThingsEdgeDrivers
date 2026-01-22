@@ -19,8 +19,6 @@ function ClosureLifecycleHandlers.device_init(driver, device)
   device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
   if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
     device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
-    -- These should only ever be nil once (and at the same time) for already-installed devices
-    -- It can be removed after migration is complete
     device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed = false}}))
     local preset_position = device:get_field(closure_fields.PRESET_LEVEL_KEY) or
       (device.preferences ~= nil and device.preferences.presetPosition) or
