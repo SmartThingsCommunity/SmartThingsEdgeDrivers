@@ -64,9 +64,9 @@ local function wakeup_notification(driver, device, cmd)
   call_parent_handler(driver.zwave_handlers[cc.WAKE_UP][WakeUp.NOTIFICATION], driver, device, cmd)
 end
 
-local function device_init(driver, device)
-  --Call main init function
-  driver.lifecycle_handlers.init(driver, device)
+local function added_handler(driver, device)
+  --Call main function
+  driver.lifecycle_handlers.added(driver, device)
   --Extras for this sub_driver
   send_version_get(driver, device)
 end
@@ -76,7 +76,7 @@ local firmware_version = {
   can_handle = can_handle_fw,
 
   lifecycle_handlers = {
-    init = device_init,
+    added = added_handler,
   },
   zwave_handlers = {
     [cc.VERSION] = {
