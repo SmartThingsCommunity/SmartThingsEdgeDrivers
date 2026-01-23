@@ -141,6 +141,16 @@ matterManufacturer:
     vendorId: 0x101D
     productId: 0x8110
     deviceProfileName: lock-user-pin-schedule-battery
+  - id: "5199/16386"
+    deviceLabel: Linus Smart Lock L2
+    vendorId: 0x144F
+    productId: 0x4002
+    deviceProfileName: lock-unlatch-batteryLevel
+  - id: "5199/16387"
+    deviceLabel: Linus Smart Lock L2 Lite
+    vendorId: 0x144F
+    productId: 0x4003
+    deviceProfileName: lock-unlatch-batteryLevel
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
