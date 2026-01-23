@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2026 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({ version = 
 local SoundSwitch = (require "st.zwave.CommandClass.SoundSwitch")({ version = 1 })
 local Version = (require "st.zwave.CommandClass.Version")({ version = 1 })
 
-local ZSE50_DEFAULT_PROFILE = "zooz-zse50"
 local ZSE50_FINGERPRINTS = {
   { manufacturerId = 0x027A, productType = 0x0004, productId = 0x0369 } -- Zooz ZSE50 Siren & Chime
 }
@@ -291,7 +290,6 @@ end
 --- @param device st.zwave.Device
 local function device_init(driver, device)
   device:send(Version:Get({}))
-  device:try_update_metadata({ profile = ZSE50_DEFAULT_PROFILE })
 
   if (device:get_field("TONES_DURATION") == nil or device:get_field("TONE_DEFAULT") == nil) then
     rebuildTones(device)

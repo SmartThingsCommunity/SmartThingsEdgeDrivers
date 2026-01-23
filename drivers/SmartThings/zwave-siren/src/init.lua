@@ -93,7 +93,6 @@ local driver_template = {
     capabilities.chime,
     capabilities.powerSource,
     capabilities.audioVolume,
-    capabilities.firmwareUpdate,
   },
   sub_drivers = {
     require("multifunctional-siren"),
