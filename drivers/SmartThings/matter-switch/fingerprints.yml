@@ -4294,6 +4294,11 @@ matterGeneric:
       - id: 0x002B # Fan
       - id: 0x0110 # Mounted Dimmable Load Control
     deviceProfileName: fan-modular
+  - id: "matter/closure"
+    deviceLabel: Matter Closure
+    deviceTypes:
+      - id: 0x0230 # Closure
+    deviceProfileName: closure-modular
   - id: "matter/window/covering"
     deviceLabel: Matter Window Covering
     deviceTypes:
