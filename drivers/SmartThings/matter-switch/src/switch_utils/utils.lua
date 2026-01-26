@@ -500,6 +500,13 @@ function utils.subscribe(device)
     subscribe_request:with_info_block(ib)
   end
 
+  -- For devices supporting ClosureControl, add the ClosureControl TagList to the list of subscribed
+  -- attributes in order to determine the closure type
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    local ib = im.InteractionInfoBlock(nil, clusters.ClosureControl.ID, clusters.ClosureControl.attributes.TagList.ID)
+    subscribe_request:with_info_block(ib)
+  end
+
   if #subscribe_request.info_blocks > 0 then
     device:send(subscribe_request)
   end

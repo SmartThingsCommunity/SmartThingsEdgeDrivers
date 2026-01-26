@@ -47,6 +47,10 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
   end
 
+  if #device:get_endpoints(clusters.ClosureControl.ID) == 0 then
+    device:set_field(fields.profiling_data.CLOSURE_TAG, fields.closure_tag.NA, {persist = true})
+  end
+
   -- call device init in case init is not called after added due to device caching
   SwitchLifecycleHandlers.device_init(driver, device)
 end

@@ -44,6 +44,9 @@ local closures_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.ClosureControl.ID] = {
+        [clusters.ClosureControl.attributes.OverallCurrentState.ID] = attribute_handlers.overall_current_state_attr_handler,
+      },
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = attribute_handlers.level_attr_handler,
       },

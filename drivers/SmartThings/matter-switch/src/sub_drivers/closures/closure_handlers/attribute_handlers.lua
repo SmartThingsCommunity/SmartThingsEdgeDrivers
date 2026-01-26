@@ -65,4 +65,10 @@ function ClosureAttributeHandlers.level_attr_handler(driver, device, ib, respons
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level))
 end
 
+function ClosureAttributeHandlers.overall_current_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level))
+end
+
 return ClosureAttributeHandlers
