@@ -83,6 +83,8 @@ SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
 
+SwitchFields.SUBSCRIBED_ATTRIBUTES_KEY = "__subscribed_attributes"
+
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
   { current_field_name = "__switch_intialized", updated_field_name = nil },

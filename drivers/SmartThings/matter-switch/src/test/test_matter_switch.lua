@@ -1186,4 +1186,19 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Refresh necessary attributes",
+  function()
+    test.socket.capability:__queue_receive(
+      {mock_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+    )
+    local read_request = cluster_subscribe_list[1]:read(mock_device)
+    for i, attr in ipairs(cluster_subscribe_list) do
+      if i > 1 then read_request:merge(attr:read(mock_device)) end
+    end
+    test.socket.matter:__expect_send({mock_device.id, read_request})
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()
