@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.utils
@@ -26,10 +16,6 @@ local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version=3 })
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version=4 })
 
-local AEOTEC_MFR_ID = 0x0371
-local AEOTEC_LED_BULB_6_PRODUCT_TYPE_US = 0x0103
-local AEOTEC_LED_BULB_6_PRODUCT_TYPE_EU = 0x0003
-local AEOTEC_LED_BULB_6_PRODUCT_ID = 0x0002
 local WARM_WHITE_CONFIG = 0x51
 local COLD_WHITE_CONFIG = 0x52
 
@@ -102,18 +88,6 @@ function capability_handlers.refresh(driver, device)
   device:send(Configuration:Get({ parameter_number=COLD_WHITE_CONFIG }))
 end
 
---- Determine whether the passed device is an Aeotec LED Bulb 6.
----
---- @param driver Driver driver instance
---- @param device Device device isntance
---- @return boolean true if the device is an Aeotec LED Bulb 6, else false
-local function is_aeotec_led_bulb_6(opts, driver, device, ...)
-  return device:id_match(
-    AEOTEC_MFR_ID,
-    { AEOTEC_LED_BULB_6_PRODUCT_TYPE_US, AEOTEC_LED_BULB_6_PRODUCT_TYPE_EU },
-    AEOTEC_LED_BULB_6_PRODUCT_ID)
-end
-
 local aeotec_led_bulb_6 = {
   NAME = "Aeotec LED Bulb 6",
   zwave_handlers = {
@@ -129,7 +103,7 @@ local aeotec_led_bulb_6 = {
       [capabilities.refresh.commands.refresh.NAME] = capability_handlers.refresh
     }
   },
-  can_handle = is_aeotec_led_bulb_6,
+  can_handle = require("aeotec-led-bulb-6.can_handle"),
 }
 
 return aeotec_led_bulb_6

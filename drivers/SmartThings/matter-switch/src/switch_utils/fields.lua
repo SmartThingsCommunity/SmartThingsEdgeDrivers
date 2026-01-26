@@ -116,6 +116,8 @@ SwitchFields.switch_category_vendor_overrides = {
     {0x007D, 0x0074, 0x0075},
   [0x1372] = -- Innovation Matters
     {0x0002},
+  [0x1189] = -- Ledvance
+    {0x0891, 0x0892},
   [0x1021] = -- Legrand
     {0x0005},
   [0x109B] = -- Leviton

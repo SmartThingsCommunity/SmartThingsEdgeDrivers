@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.utils
@@ -26,25 +16,12 @@ local SwitchColor = (require "st.zwave.CommandClass.SwitchColor")({ version = 3 
 --- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 
-local AEON_MULTIWHITE_BULB_FINGERPRINTS = {
-  {mfr = 0x0371, prod = 0x0103, model = 0x0001}, -- Aeon LED Bulb 6 Multi-White US
-  {mfr = 0x0371, prod = 0x0003, model = 0x0001}, -- Aeon LED Bulb 6 Multi-White EU
-  {mfr = 0x0300, prod = 0x0003, model = 0x0004}  -- ilumin Tunable White
-}
 
 local WARM_WHITE_CONFIG = 0x51
 local COLD_WHITE_CONFIG = 0x52
 local SWITCH_COLOR_QUERY_DELAY = 2
 local DEFAULT_COLOR_TEMPERATURE = 2700
 
-local function can_handle_aeon_multiwhite_bulb(opts, driver, device, ...)
-  for _, fingerprint in ipairs(AEON_MULTIWHITE_BULB_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local function onoff_level_report_handler(self, device, cmd)
   local value = cmd.args.target_value and cmd.args.target_value or cmd.args.value
@@ -126,7 +103,7 @@ local aeon_multiwhite_bulb = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = set_color_temperature
     }
   },
-  can_handle = can_handle_aeon_multiwhite_bulb,
+  can_handle = require("aeon-multiwhite-bulb.can_handle"),
   lifecycle_handlers = {
     added = device_added
   }
