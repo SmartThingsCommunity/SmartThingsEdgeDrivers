@@ -175,9 +175,11 @@ SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
 
 SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
--- When sent with a command, these options mask and override bitmaps cause the command
--- to take effect when the switch/light is off.
+
+-- For Level/Color Control cluster commands, this field indicates which bits in the OptionsOverride field are valid. In this case, we specify that the ExecuteIfOff option (bit 1) may be overridden.
 SwitchFields.OPTIONS_MASK = 0x01
-SwitchFields.OPTIONS_OVERRIDE = 0x01
+-- the OptionsOverride field's first bit overrides the ExecuteIfOff option, defining whether the command should take effect when the device is off.
+SwitchFields.HANDLE_COMMAND_IF_OFF = 0x01
+SwitchFields.IGNORE_COMMAND_IF_OFF = 0x00
 
 return SwitchFields
