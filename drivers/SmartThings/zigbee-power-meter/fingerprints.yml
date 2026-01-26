@@ -7,12 +7,22 @@ zigbeeManufacturer:
     deviceLabel: frient Energy Monitor
     manufacturer: Develco
     model: "ZHEMI101"
-    deviceProfileName: power-meter
-  - id: "Develco/EMIZB-132"
+    deviceProfileName: power-energy-consumption-report
+  - id: "frient A/S/EMIZB-132"
     deviceLabel: frient Energy Monitor
-    manufacturer: Develco Products A/S
+    manufacturer: frient A/S
     model: "EMIZB-132"
-    deviceProfileName: power-meter
+    deviceProfileName: power-meter-consumption-report
+  - id: "frient A/S/EMIZB-141"
+    deviceLabel: "frient EMI 2 LED"
+    manufacturer: frient A/S
+    model: "EMIZB-141"
+    deviceProfileName: power-energy-battery-consumption-report
+  - id: "frient A/S/EMIZB-151"
+    deviceLabel: "frient EMI 2 P1"
+    manufacturer: frient A/S
+    model: "EMIZB-151"
+    deviceProfileName: power-energy-current-voltage
   - id: "ShinaSystem/PMM-300Z1"
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
