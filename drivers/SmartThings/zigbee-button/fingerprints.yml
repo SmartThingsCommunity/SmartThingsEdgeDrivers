@@ -220,7 +220,7 @@ zigbeeManufacturer:
     model: WB01
     deviceProfileName: one-button-battery
   - id: eWeLink/SNZB-01P
-    deviceLabel: eWeLink Button
+    deviceLabel: Zigbee Wireless Switch
     manufacturer: eWeLink
     model: SNZB-01P
     deviceProfileName: one-button-battery
