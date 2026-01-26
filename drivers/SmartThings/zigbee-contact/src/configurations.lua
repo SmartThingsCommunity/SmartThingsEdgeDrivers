@@ -37,7 +37,6 @@ local devices = {
   EWELINK_HEIMAN = {
     FINGERPRINTS = {
       { mfr = "eWeLink", model = "DS01" },
-      { mfr = "eWeLink", model = "SNZB-04P" },
       { mfr = "HEIMAN", model = "DoorSensor-N" }
     },
     CONFIGURATION = {
