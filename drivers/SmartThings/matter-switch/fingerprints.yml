@@ -165,9 +165,9 @@ matterManufacturer:
     deviceLabel: OREiN Matter smart Bathroom Fan
     vendorId: 0x1396
     productId: 0x1096
-    deviceProfileName: light-color-level-fan
+    deviceProfileName: fan-modular
   - id: "5014/4247"
-    deviceLabel: OREiN Matter smart  Bathroom Fan
+    deviceLabel: OREiN Matter smart Bathroom Fan
     vendorId: 0x1396
     productId: 0x1097
     deviceProfileName: fan-modular
