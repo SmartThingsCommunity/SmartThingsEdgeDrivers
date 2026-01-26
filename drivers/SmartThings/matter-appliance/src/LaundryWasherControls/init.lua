@@ -1,3 +1,7 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 local LaundryWasherControlsServerAttributes = require "LaundryWasherControls.server.attributes"
 local LaundryWasherControlsTypes = require "LaundryWasherControls.types"
 
