@@ -17,15 +17,12 @@ local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
-local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local utils = require "frient.utils"
 
-local DEVELCO_MANUFACTURER_CODE = 0x1015
 local CurrentSummationReceived = 0x0001
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 

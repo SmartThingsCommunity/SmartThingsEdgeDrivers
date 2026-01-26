@@ -23,7 +23,6 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-local utils = require "frient.utils"
 
 local DEVELCO_MANUFACTURER_CODE = 0x1015
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
