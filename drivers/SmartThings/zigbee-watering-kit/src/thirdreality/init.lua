@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local IASZone = clusters.IASZone
@@ -97,9 +100,7 @@ local thirdreality_device_handler = {
     lifecycle_handlers = {
         added = device_added
     },
-    can_handle = function(opts, driver, device, ...)
-      return device:get_manufacturer() == "Third Reality, Inc" and device:get_model() == "3RWK0148Z"
-    end
+    can_handle = require("thirdreality.can_handle"),
 }
 
 return thirdreality_device_handler
