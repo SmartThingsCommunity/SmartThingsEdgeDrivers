@@ -8,25 +8,24 @@ local credential_utils = {}
 local HOST_COUNT = "__host_count"
 local PERSIST_DATA = "__persist_area"
 
-credential_utils.attrCopy = function(table)
-  local copy = {}
+credential_utils.eventResource = function(table)
+  local credentialResource = {}
   for key, value in pairs(table) do
-        copy[key] = utils.deep_copy(value)
+        credentialResource[key] = value
     end
-    return copy
+    return credentialResource
 end
 
 credential_utils.backup_data = function(device)-- Back up data the persistent
   local credentialInfoTable = utils.deep_copy(device:get_latest_state("main", lockCredentialInfo.ID,
     lockCredentialInfo.credentialInfo.NAME, {}))
-  local backupData = credential_utils.attrCopy(credentialInfoTable)
-  device:set_field(PERSIST_DATA, backupData, { persist = true })
+  device:set_field(PERSIST_DATA, credentialInfoTable, { persist = true })
 end
 
 credential_utils.sync = function(driver, device)
-  local credentialInfoTable = device:get_field(PERSIST_DATA)
-  if credentialInfoTable ~= nil then
-    device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
+  local table = device:get_field(PERSIST_DATA) or nil
+  if table ~= nil then
+    device:emit_event(lockCredentialInfo.credentialInfo(credential_utils.eventResource(table), { visibility = { displayed = false } }))
   end
 end
 
@@ -51,8 +50,8 @@ credential_utils.update_remote_control_status = function(driver, device, added)
   end
 
   device:set_field(HOST_COUNT, host_cnt, { persist = true })
-  credential_utils.save_data(driver)
   credential_utils.backup_data(device)
+  credential_utils.save_data(driver)
 end
 
 credential_utils.sync_all_credential_info = function(driver, device, command)
@@ -62,8 +61,8 @@ credential_utils.sync_all_credential_info = function(driver, device, command)
     end
   end
   device:emit_event(lockCredentialInfo.credentialInfo(command.args.credentialInfo, { visibility = { displayed = false } }))
-  credential_utils.save_data(driver)
   credential_utils.backup_data(device)
+  credential_utils.save_data(driver)
 end
 
 credential_utils.upsert_credential_info = function(driver, device, command)
@@ -98,8 +97,8 @@ credential_utils.upsert_credential_info = function(driver, device, command)
   end
 
   device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
-  credential_utils.save_data(driver)
   credential_utils.backup_data(device)
+  credential_utils.save_data(driver)
 end
 
 credential_utils.delete_user = function(driver, device, command)
@@ -121,8 +120,8 @@ credential_utils.delete_user = function(driver, device, command)
   end
 
   device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
-  credential_utils.save_data(driver)
   credential_utils.backup_data(device)
+  credential_utils.save_data(driver)
 end
 
 credential_utils.delete_credential = function(driver, device, command)
@@ -143,8 +142,8 @@ credential_utils.delete_credential = function(driver, device, command)
   end
 
   device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
-  credential_utils.save_data(driver)
   credential_utils.backup_data(device)
+  credential_utils.save_data(driver)
 end
 
 credential_utils.find_userLabel = function(driver, device, value)
