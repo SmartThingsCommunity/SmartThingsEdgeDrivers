@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -20,14 +10,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local SoundSwitch = (require "st.zwave.CommandClass.SoundSwitch")({version=1})
 local preferencesMap = require "preferences"
 
-local AEOTEC_DOORBELL_SIREN_FINGERPRINTS = {
-  { manufacturerId = 0x0371, productType = 0x0003, productId = 0x00A2}, -- Aeotec Doorbell 6 (EU)
-  { manufacturerId = 0x0371, productType = 0x0103, productId = 0x00A2}, -- Aeotec Doorbell 6 (US)
-  { manufacturerId = 0x0371, productType = 0x0203, productId = 0x00A2}, -- Aeotec Doorbell 6 (AU)
-  { manufacturerId = 0x0371, productType = 0x0003, productId = 0x00A4}, -- Aeotec Siren 6 (EU)
-  { manufacturerId = 0x0371, productType = 0x0103, productId = 0x00A4}, -- Aeotec Siren 6 (US)
-  { manufacturerId = 0x0371, productType = 0x0203, productId = 0x00A4}, -- Aeotec Siren 6 (AU)
-}
 
 local COMPONENT_NAME = "componentName"
 local TONE = "tone"
@@ -51,14 +33,6 @@ local BUTTON_BATTERY_NORMAL = 99
 local DEVICE_PROFILE_CHANGE_IN_PROGRESS = "device_profile_change_in_progress"
 local NEXT_BUTTON_BATTERY_EVENT_DETAILS = "next_button_battery_event_details"
 
-local function can_handle_aeotec_doorbell_siren(opts, driver, device, ...)
-  for _, fingerprint in ipairs(AEOTEC_DOORBELL_SIREN_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 local function querySoundStatus(device)
   for endpoint = 2, NUMBER_OF_SOUND_COMPONENTS do
@@ -316,7 +290,7 @@ end
 
 local aeotec_doorbell_siren = {
   NAME = "aeotec-doorbell-siren",
-  can_handle = can_handle_aeotec_doorbell_siren,
+  can_handle = require("aeotec-doorbell-siren.can_handle"),
 
   lifecycle_handlers = {
     added = device_added,
