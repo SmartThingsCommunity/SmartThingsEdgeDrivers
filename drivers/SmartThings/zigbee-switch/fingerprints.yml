@@ -1715,6 +1715,11 @@ zigbeeManufacturer:
     manufacturer: LEDVANCE
     model: RT TW
     deviceProfileName: color-temp-bulb
+  - id: "LEDVANCE/PLUG COMPACT EU EM T"
+    deviceLabel: SMART+ ZIGBEE COMPACT OUTDOOR PLUG EU
+    manufacturer: LEDVANCE
+    model: PLUG COMPACT EU EM T
+    deviceProfileName: switch-power-energy    
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -2400,21 +2405,10 @@ zigbeeManufacturer:
     manufacturer: NodOn
     model: SIN-4-1-21
     deviceProfileName: switch-power-energy
-  #Yanmi
   - id: "JNL/Y-K003-001"
     deviceLabel: Yanmi Switch (3 Way) 1
     manufacturer: JNL
     model: Y-K003-001
-    deviceProfileName: basic-switch
-  - id: "JNL/Y-K001-001"
-    deviceLabel: Yanmi Switch (1 Way) 
-    manufacturer: JNL
-    model: Y-K001-001
-    deviceProfileName: basic-switch  
-  - id: "JNL/Y-K002-001"
-    deviceLabel: Yanmi Switch (2 Way) 1
-    manufacturer: JNL
-    model: Y-K002-001
     deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
