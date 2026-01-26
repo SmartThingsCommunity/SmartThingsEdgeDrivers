@@ -488,8 +488,9 @@ function SonosConnection.new(driver, device)
             end
 
             local url_ip = lb_utils.force_url_table(coordinator_player.player.websocket_url).host
+            local url_port = lb_utils.force_url_table(coordinator_player.player.websocket_url).port or SonosApi.DEFAULT_SONOS_PORT
             local base_url = lb_utils.force_url_table(
-              string.format("https://%s:%s", url_ip, SonosApi.DEFAULT_SONOS_PORT)
+              string.format("https://%s:%s", url_ip, url_port)
             )
             local _, api_key = driver:check_auth(device)
             local maybe_token = driver:get_oauth_token()
