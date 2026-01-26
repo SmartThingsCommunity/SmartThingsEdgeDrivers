@@ -865,6 +865,18 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send(
                     {
                         mock_device.id,
+                        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+                    }
+            )
+            test.socket.zigbee:__expect_send(
+                    {
+                        mock_device.id,
+                        IASZone.attributes.ZoneStatus:read(mock_device)
+                    }
+            )
+            test.socket.zigbee:__expect_send(
+                    {
+                        mock_device.id,
                         IASZone.attributes.ZoneStatus:read(mock_device)
                     }
             )
@@ -880,6 +892,20 @@ test.register_coroutine_test(
                 mock_device.id,
                 { capability = "refresh", component = "main", command = "refresh", args = {} }
             })
+
+            test.socket.zigbee:__expect_send(
+                    {
+                        mock_device.id,
+                        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+                    }
+            )
+
+            test.socket.zigbee:__expect_send(
+                    {
+                        mock_device.id,
+                        IASZone.attributes.ZoneStatus:read(mock_device)
+                    }
+            )
 
             test.socket.zigbee:__expect_send(
                     {

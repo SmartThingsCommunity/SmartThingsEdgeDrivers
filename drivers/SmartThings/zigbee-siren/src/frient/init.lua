@@ -98,6 +98,8 @@ local MODEL_DEVICE_PROFILE_MAP = {
   ["SIRZB-111"] = "frient-siren-battery-source"
 }
 
+local BATTERY_CONFIG_APPLIED_KEY = "_frient_battery_config_applied"
+
 local function get_current_max_warning_duration(device)
   return device.preferences.maxWarningDuration == nil and DEFAULT_MAX_WARNING_DURATION or device.preferences.maxWarningDuration
 end
@@ -119,15 +121,26 @@ end
 
 local function configure_battery_handling_based_on_fw(driver, device)
   local sw_version = device:get_field(PRIMARY_SW_VERSION)
+  local applied_state = device:get_field(BATTERY_CONFIG_APPLIED_KEY)
 
   if sw_version and sw_version < SIREN_FIXED_ENDIAN_SW_VERSION then
-    -- Old firmware - does not support BatteryPercentageRemaining attribute, use battery defaults (voltage-based)
-    battery_defaults.build_linear_voltage_init(3.3, 4.1)(driver, device)
+    if applied_state ~= "voltage" then
+      -- Old firmware - does not support BatteryPercentageRemaining attribute, use battery defaults (voltage-based)
+      battery_defaults.build_linear_voltage_init(3.3, 4.1)(driver, device)
+      device:set_field(BATTERY_CONFIG_APPLIED_KEY, "voltage", { persist = true })
+      return true
+    end
   else
-    -- New firmware - supports BatteryPercentageRemaining, remove voltage monitoring
-    device:remove_configured_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryVoltage.ID)
-    device:remove_monitored_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryVoltage.ID)
+    if applied_state ~= "percentage" then
+      -- New firmware - supports BatteryPercentageRemaining, remove voltage monitoring
+      device:remove_configured_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryVoltage.ID)
+      device:remove_monitored_attribute(PowerConfiguration.ID, PowerConfiguration.attributes.BatteryVoltage.ID)
+      device:set_field(BATTERY_CONFIG_APPLIED_KEY, "percentage", { persist = true })
+      return true
+    end
   end
+
+  return false
 end
 
 local function device_init(driver, device)
@@ -174,6 +187,7 @@ local function device_added (driver, device)
 end
 
 local function do_refresh(driver, device)
+  device:refresh()
   device:send(IASZone.attributes.ZoneStatus:read(device):to_endpoint(IASZONE_ENDPOINT))
 
   -- Check if we have the software version
@@ -210,7 +224,15 @@ end
 local function primary_sw_version_attr_handler(driver, device, value, zb_rx)
   local primary_sw_version = value.value:gsub('.', function (c) return string.format('%02x', string.byte(c)) end)
   device:set_field(PRIMARY_SW_VERSION, primary_sw_version, {persist = true})
-  configure_battery_handling_based_on_fw(driver, device)
+  local config_changed = configure_battery_handling_based_on_fw(driver, device)
+  if config_changed then
+    device.thread:call_with_delay(1, function()
+      device:configure()
+    end)
+  end
+  device.thread:call_with_delay(config_changed and 2 or 1, function()
+    do_refresh(driver, device)
+  end)
 end
 
 local function generate_event_from_zone_status(driver, device, zone_status, zb_rx)
