@@ -235,7 +235,7 @@ matterManufacturer:
     deviceLabel: eufy Permanent Outdoor Lights S4
     vendorId: 0x1533
     productId: 0x0013
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
 
 #Eve
   - id: "Eve/Energy/US"
@@ -868,7 +868,7 @@ matterManufacturer:
     deviceLabel: M2D Bridge
     vendorId: 0x1372
     productId: 0x0001
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4978/2"
     deviceLabel: IM Pushbutton Module
     vendorId: 0x1372
@@ -1950,107 +1950,107 @@ matterManufacturer:
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x2168
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8580"
     deviceLabel: WiZ P45.E27
     vendorId: 0x100b
     productId: 0x2184
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8628"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x21B4
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8629"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x21B5
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8636"
     deviceLabel: WiZ Multi-color Neon Flex Strip
     vendorId: 0x100b
     productId: 0x21BC
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8643"
     deviceLabel: WiZ ELPAS Bollard
     vendorId: 0x100b
     productId: 0x21C3
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8644"
     deviceLabel: WiZ ELPAS Bollard
     vendorId: 0x100b
     productId: 0x21C4
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8206"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x200E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8599"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x2197
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8600"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x2198
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8604"
     deviceLabel: WiZ G25 Filament
     vendorId: 0x100b
     productId: 0x219C
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8605"
     deviceLabel: WiZ ST19 Filament
     vendorId: 0x100b
     productId: 0x219D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8610"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x21A2
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8609"
     deviceLabel: WiZ G95.E27
     vendorId: 0x100b
     productId: 0x21A1
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8627"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x21B3
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8627"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x21B3
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8796"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x225C
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8457"
     deviceLabel: WiZ A67.E27
     vendorId: 0x100b
     productId: 0x2109
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8551"
     deviceLabel: WiZ A67.E27
     vendorId: 0x100b
     productId: 0x2167
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8542"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x215E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8571"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x217B
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8538"
     deviceLabel: WiZ A.B22 Warm White
     vendorId: 0x100b
@@ -2060,112 +2060,112 @@ matterManufacturer:
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x221D
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8207"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x200F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8611"
     deviceLabel: WiZ A.B22
     vendorId: 0x100b
     productId: 0x21A3
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8612"
     deviceLabel: WiZ A.B22
     vendorId: 0x100b
     productId: 0x21A4
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8608"
     deviceLabel: WiZ G95.E27
     vendorId: 0x100b
     productId: 0x21A0
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8613"
     deviceLabel: WiZ A.E26
     vendorId: 0x100b
     productId: 0x21A5
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8614"
     deviceLabel: WiZ G95.E26
     vendorId: 0x100b
     productId: 0x21A6
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8601"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2199
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8602"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x219A
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8603"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x219B
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8606"
     deviceLabel: WiZ G25 Filament
     vendorId: 0x100b
     productId: 0x219E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8607"
     deviceLabel: WiZ ST19 Filament
     vendorId: 0x100b
     productId: 0x219F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8193"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x2001
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8456"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x2108
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8452"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x2104
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8475"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x211B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8546"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x2162
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8453"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x2105
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8476"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x211C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8547"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x2163
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8548"
     deviceLabel: WiZ A67.E27
     vendorId: 0x100b
     productId: 0x2164
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8477"
     deviceLabel: WiZ A.B22
     vendorId: 0x100b
     productId: 0x211D
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8537"
     deviceLabel: WiZ A.E27 Warm White
     vendorId: 0x100b
@@ -2175,7 +2175,7 @@ matterManufacturer:
     deviceLabel: WiZ G95.E27
     vendorId: 0x100b
     productId: 0x211E
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8535"
     deviceLabel: WiZ GU10 Warm White
     vendorId: 0x100b
@@ -2190,102 +2190,102 @@ matterManufacturer:
     deviceLabel: WiZ P45.E14
     vendorId: 0x100b
     productId: 0x2188
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8581"
     deviceLabel: WiZ P45.E27
     vendorId: 0x100b
     productId: 0x2185
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8722"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2212
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8723"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2213
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8724"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2214
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8725"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2215
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8726"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x2216
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8727"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x2217
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8728"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x2218
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8729"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x2219
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8730"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x221A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8731"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x221B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8732"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x221C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8734"
     deviceLabel: WiZ PS160 Filament
     vendorId: 0x100b
     productId: 0x221E
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8735"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x221F
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8736"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x2220
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8721"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2211
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8737"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x2221
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8195"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x2003
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8451"
     deviceLabel: WiZ A.B22
     vendorId: 0x100b
     productId: 0x2103
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8521"
     deviceLabel: WiZ A.E27 Warm White
     vendorId: 0x100b
@@ -2295,7 +2295,7 @@ matterManufacturer:
     deviceLabel: WiZ G95.E27
     vendorId: 0x100b
     productId: 0x2107
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8519"
     deviceLabel: WiZ GU10 Warm White
     vendorId: 0x100b
@@ -2310,147 +2310,147 @@ matterManufacturer:
     deviceLabel: WiZ P45.E14
     vendorId: 0x100b
     productId: 0x2187
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8582"
     deviceLabel: WiZ A80.E27
     vendorId: 0x100b
     productId: 0x2186
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8638"
     deviceLabel: WiZ String Lights
     vendorId: 0x100b
     productId: 0x21BE
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8639"
     deviceLabel: WiZ String Lights
     vendorId: 0x100b
     productId: 0x21BF
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8201"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x2009
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8203"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x200B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8738"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2222
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8739"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2223
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8740"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2224
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8741"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x2225
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8742"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x2226
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8743"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x2227
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8744"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x2228
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8745"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x2229
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8746"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x222A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8747"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x222B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8748"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x222C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8749"
     deviceLabel: WiZ PS160 Filament
     vendorId: 0x100b
     productId: 0x222D
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8750"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x222E
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8751"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x222F
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8720"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x2210
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8752"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x2230
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8209"
     deviceLabel: WiZ ELPAS Wall
     vendorId: 0x100b
     productId: 0x2011
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8210"
     deviceLabel: WiZ Outdoor Ground Spot
     vendorId: 0x100b
     productId: 0x2012
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8637"
     deviceLabel: WiZ Multi-color Neon Flex Strip
     vendorId: 0x100b
     productId: 0x21BD
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8597"
     deviceLabel: WiZ Spot Light
     vendorId: 0x100b
     productId: 0x2195
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8632"
     deviceLabel: WiZ Spot Light
     vendorId: 0x100b
     productId: 0x21B8
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8598"
     deviceLabel: WiZ Spot Light
     vendorId: 0x100b
     productId: 0x2196
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8454"
     deviceLabel: WiZ A67.E27
     vendorId: 0x100b
     productId: 0x2106
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8522"
     deviceLabel: WiZ A.B22 Warm White
     vendorId: 0x100b
@@ -2460,32 +2460,32 @@ matterManufacturer:
     deviceLabel: WiZ A80.E27
     vendorId: 0x100b
     productId: 0x2183
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8543"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x215F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8215"
     deviceLabel: WiZ Portrait
     vendorId: 0x100b
     productId: 0x2017
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8196"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2004
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8622"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x21AE
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8616"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x21A8
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8213"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
@@ -2495,127 +2495,127 @@ matterManufacturer:
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x2006
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8768"
     deviceLabel: WiZ Mobile
     vendorId: 0x100b
     productId: 0x2240
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8199"
     deviceLabel: WiZ Linear
     vendorId: 0x100b
     productId: 0x2007
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8510"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x213E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8754"
     deviceLabel: WiZ Hero
     vendorId: 0x100b
     productId: 0x2232
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8200"
     deviceLabel: WiZ Hero
     vendorId: 0x100b
     productId: 0x2008
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8757"
     deviceLabel: WiZ Squire
     vendorId: 0x100b
     productId: 0x2235
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8758"
     deviceLabel: WiZ Squire
     vendorId: 0x100b
     productId: 0x2236
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8788"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x2254
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8787"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x2253
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8790"
     deviceLabel: WiZ Linear
     vendorId: 0x100b
     productId: 0x2256
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8615"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x21A7
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8780"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x224C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8782"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x224E
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8772"
     deviceLabel: WiZ Mobile
     vendorId: 0x100b
     productId: 0x2244
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8773"
     deviceLabel: WiZ Mobile
     vendorId: 0x100b
     productId: 0x2245
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8640"
     deviceLabel: WiZ String Lights
     vendorId: 0x100b
     productId: 0x21C0
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8786"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x2252
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8633"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x21B9
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8764"
     deviceLabel: WiZ Pole
     vendorId: 0x100b
     productId: 0x223C
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8771"
     deviceLabel: WiZ Pole
     vendorId: 0x100b
     productId: 0x2243
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8765"
     deviceLabel: WiZ Pole
     vendorId: 0x100b
     productId: 0x223D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8792"
     deviceLabel: WiZ ELPAS Wall
     vendorId: 0x100b
     productId: 0x2258
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8642"
     deviceLabel: WiZ Outdoor Ground Spot
     vendorId: 0x100b
     productId: 0x21C2
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8753"
     deviceLabel: WiZ Hero
     vendorId: 0x100b
     productId: 0x2231
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8214"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
@@ -2630,72 +2630,72 @@ matterManufacturer:
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x21CE
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8655"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x21CF
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8712"
     deviceLabel: WiZ G16.5 Filament
     vendorId: 0x100b
     productId: 0x2208
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8711"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x2207
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8511"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x213F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8813"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x226D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8815"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x226F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8479"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x211F
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8713"
     deviceLabel: WiZ A19 Filament
     vendorId: 0x100b
     productId: 0x2209
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8714"
     deviceLabel: WiZ ST19 Filament
     vendorId: 0x100b
     productId: 0x220A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8762"
     deviceLabel: WiZ Dual Zone
     vendorId: 0x100b
     productId: 0x223A
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8761"
     deviceLabel: WiZ Hero
     vendorId: 0x100b
     productId: 0x2239
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8480"
     deviceLabel: WiZ A60
     vendorId: 0x100b
     productId: 0x2120
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8585"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x2189
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8800"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
@@ -2705,132 +2705,132 @@ matterManufacturer:
     deviceLabel: WiZ Linear
     vendorId: 0x100b
     productId: 0x2255
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8617"
     deviceLabel: WiZ Modular Downlight
     vendorId: 0x100b
     productId: 0x21A9
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8618"
     deviceLabel: WiZ Modular Downlight
     vendorId: 0x100b
     productId: 0x21AA
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8774"
     deviceLabel: WiZ Mobile
     vendorId: 0x100b
     productId: 0x2246
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8635"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x21BB
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8514"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x2142
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8816"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2270
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8499"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2133
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8678"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21E6
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8680"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21E8
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8689"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x21F1
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8691"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x21F3
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8549"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x2165
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8756"
     deviceLabel: WiZ Squire
     vendorId: 0x100b
     productId: 0x2234
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8763"
     deviceLabel: WiZ Squire
     vendorId: 0x100b
     productId: 0x223B
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8506"
     deviceLabel: WiZ Ceiling Light
     vendorId: 0x100b
     productId: 0x213A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8515"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x2143
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8576"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x2180
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8791"
     deviceLabel: WiZ Linear
     vendorId: 0x100b
     productId: 0x2257
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8205"
     deviceLabel: WiZ Modular Downlight
     vendorId: 0x100b
     productId: 0x200D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8766"
     deviceLabel: WiZ Pole
     vendorId: 0x100b
     productId: 0x223E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8769"
     deviceLabel: WiZ Mobile
     vendorId: 0x100b
     productId: 0x2241
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8482"
     deviceLabel: WiZ A67.E26
     vendorId: 0x100b
     productId: 0x2122
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8586"
     deviceLabel: WiZ A67.E26
     vendorId: 0x100b
     productId: 0x218A
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8577"
     deviceLabel: WiZ A60.E26
     vendorId: 0x100b
     productId: 0x2181
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8481"
     deviceLabel: WiZ A60.E26
     vendorId: 0x100b
     productId: 0x2121
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8539"
     deviceLabel: WiZ A60.E26
     vendorId: 0x100b
@@ -2840,112 +2840,112 @@ matterManufacturer:
     deviceLabel: WiZ String Lights
     vendorId: 0x100b
     productId: 0x21C1
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8507"
     deviceLabel: WiZ Ceiling Light
     vendorId: 0x100b
     productId: 0x213B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8781"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x224D
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8803"
     deviceLabel: WiZ A21.E26
     vendorId: 0x100b
     productId: 0x2263
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8804"
     deviceLabel: WiZ A21.E26
     vendorId: 0x100b
     productId: 0x2264
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8807"
     deviceLabel: WiZ A21.E27
     vendorId: 0x100b
     productId: 0x2267
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8808"
     deviceLabel: WiZ A21.E27
     vendorId: 0x100b
     productId: 0x2268
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8801"
     deviceLabel: WiZ Outdoor LED Strip
     vendorId: 0x100b
     productId: 0x2261
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8802"
     deviceLabel: WiZ Outdoor LED Strip
     vendorId: 0x100b
     productId: 0x2262
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8805"
     deviceLabel: WiZ A67.E27
     vendorId: 0x100b
     productId: 0x2265
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8806"
     deviceLabel: WiZ A67.E27
     vendorId: 0x100b
     productId: 0x2266
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8664"
     deviceLabel: WiZ ST19 Filament
     vendorId: 0x100b
     productId: 0x21D8
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8666"
     deviceLabel: WiZ G25 Filament
     vendorId: 0x100b
     productId: 0x21DA
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8818"
     deviceLabel: WiZ Linear
     vendorId: 0x100b
     productId: 0x2272
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8463"
     deviceLabel: WiZ A21
     vendorId: 0x100b
     productId: 0x210F
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8558"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x216E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8675"
     deviceLabel: WiZ G16.5 Filament
     vendorId: 0x100b
     productId: 0x21E3
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8673"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21E1
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8665"
     deviceLabel: WiZ G25 Filament
     vendorId: 0x100b
     productId: 0x21D9
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8648"
     deviceLabel: WiZ R20
     vendorId: 0x100b
     productId: 0x21C8
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8650"
     deviceLabel: WiZ BR40
     vendorId: 0x100b
     productId: 0x21CA
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8212"
     deviceLabel: WiZ PAR30
     vendorId: 0x100b
     productId: 0x2014
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8527"
     deviceLabel: WiZ A21 Warm White
     vendorId: 0x100b
@@ -2960,62 +2960,62 @@ matterManufacturer:
     deviceLabel: WiZ A21
     vendorId: 0x100b
     productId: 0x2100
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8554"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x216A
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8460"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x210C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8555"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x216B
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8592"
     deviceLabel: WiZ PAR38
     vendorId: 0x100b
     productId: 0x2190
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8663"
     deviceLabel: WiZ ST19 Filament
     vendorId: 0x100b
     productId: 0x21D7
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8667"
     deviceLabel: WiZ A15 Filament
     vendorId: 0x100b
     productId: 0x21DB
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8669"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21DD
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8578"
     deviceLabel: WiZ A23
     vendorId: 0x100b
     productId: 0x2182
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8670"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21DE
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8672"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21E0
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8674"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21E2
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8529"
     deviceLabel: WiZ A21 Warm White
     vendorId: 0x100b
@@ -3030,72 +3030,72 @@ matterManufacturer:
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x216D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8591"
     deviceLabel: WiZ PAR38
     vendorId: 0x100b
     productId: 0x218F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8574"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x217E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8202"
     deviceLabel: WiZ A19 Filament
     vendorId: 0x100b
     productId: 0x200A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8653"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x21CD
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8662"
     deviceLabel: WiZ A19 Filament
     vendorId: 0x100b
     productId: 0x21D6
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8809"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x2269
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8811"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x226B
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8810"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x226A
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8812"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x226C
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8509"
     deviceLabel: WiZ LED Strip
     vendorId: 0x100b
     productId: 0x213D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8505"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2139
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8496"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2130
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8492"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x212C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8794"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
@@ -3105,17 +3105,17 @@ matterManufacturer:
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x210A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8553"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x2169
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8459"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x210B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8523"
     deviceLabel: WiZ A19 Warm White
     vendorId: 0x100b
@@ -3140,137 +3140,137 @@ matterManufacturer:
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x2192
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8550"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x2166
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8572"
     deviceLabel: WiZ A.E27
     vendorId: 0x100b
     productId: 0x217C
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8573"
     deviceLabel: WiZ G.E27
     vendorId: 0x100b
     productId: 0x217D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8556"
     deviceLabel: WiZ A21
     vendorId: 0x100b
     productId: 0x216C
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8483"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x2123
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8595"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x2193
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8695"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21F7
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8696"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21F8
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8697"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21F9
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8698"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21FA
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8699"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21FB
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8700"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21FC
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8701"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x21FD
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8702"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x21FE
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8703"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x21FF
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8704"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x2200
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8705"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x2201
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8706"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x2202
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8707"
     deviceLabel: WiZ PS160 Filament
     vendorId: 0x100b
     productId: 0x2203
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8708"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x2204
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8709"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x2205
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8652"
     deviceLabel: WiZ PAR30
     vendorId: 0x100b
     productId: 0x21CC
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8776"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x2248
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8777"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x2249
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8778"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x224A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8779"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
     productId: 0x224B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8793"
     deviceLabel: WiZ Ceiling
     vendorId: 0x100b
@@ -3285,22 +3285,22 @@ matterManufacturer:
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x2000
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8449"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x2101
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8541"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x215D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8450"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x2102
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8516"
     deviceLabel: WiZ A19 Warm White
     vendorId: 0x100b
@@ -3325,22 +3325,22 @@ matterManufacturer:
     deviceLabel: WiZ A.B22
     vendorId: 0x100b
     productId: 0x2160
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8545"
     deviceLabel: WiZ G.E27
     vendorId: 0x100b
     productId: 0x2161
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8559"
     deviceLabel: WiZ A21
     vendorId: 0x100b
     productId: 0x216F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8693"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x21F5
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8532"
     deviceLabel: WiZ GU10 Warm White
     vendorId: 0x100b
@@ -3355,7 +3355,7 @@ matterManufacturer:
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x210D
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8533"
     deviceLabel: WiZ Candle Warm White
     vendorId: 0x100b
@@ -3370,252 +3370,252 @@ matterManufacturer:
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x210E
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8760"
     deviceLabel: WiZ Hero
     vendorId: 0x100b
     productId: 0x2238
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8503"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2137
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8204"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x200C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8596"
     deviceLabel: WiZ A23
     vendorId: 0x100b
     productId: 0x2194
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8619"
     deviceLabel: WiZ Modular Downlight
     vendorId: 0x100b
     productId: 0x21AB
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8620"
     deviceLabel: WiZ Modular Downlight
     vendorId: 0x100b
     productId: 0x21AC
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8621"
     deviceLabel: WiZ Modular Downlight
     vendorId: 0x100b
     productId: 0x21AD
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8588"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x218C
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8590"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x218E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8694"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21F6
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8710"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x2206
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8656"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x21D0
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8645"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x21C5
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8575"
     deviceLabel: WiZ A60
     vendorId: 0x100b
     productId: 0x217F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8589"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x218D
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8587"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x218B
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8494"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x212E
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8495"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x212F
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8497"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2131
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8491"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x212B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8647"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x21C7
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8657"
     deviceLabel: WiZ GU10
     vendorId: 0x100b
     productId: 0x21D1
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8646"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x21C6
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8658"
     deviceLabel: WiZ Candle
     vendorId: 0x100b
     productId: 0x21D2
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8814"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x226E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8649"
     deviceLabel: WiZ R20
     vendorId: 0x100b
     productId: 0x21C9
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8651"
     deviceLabel: WiZ BR40
     vendorId: 0x100b
     productId: 0x21CB
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8668"
     deviceLabel: WiZ A15 Filament
     vendorId: 0x100b
     productId: 0x21DC
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8671"
     deviceLabel: WiZ G16.5 Filament
     vendorId: 0x100b
     productId: 0x21DF
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8676"
     deviceLabel: WiZ G16.5 Filament
     vendorId: 0x100b
     productId: 0x21E4
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8679"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21E7
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8681"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21E9
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8682"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21EA
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8683"
     deviceLabel: WiZ Candle Filament
     vendorId: 0x100b
     productId: 0x21EB
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8684"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x21EC
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8685"
     deviceLabel: WiZ G125 Filament
     vendorId: 0x100b
     productId: 0x21ED
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8686"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x21EE
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8687"
     deviceLabel: WiZ G200 Filament
     vendorId: 0x100b
     productId: 0x21EF
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8688"
     deviceLabel: WiZ G95 Filament
     vendorId: 0x100b
     productId: 0x21F0
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8677"
     deviceLabel: WiZ PS160 Filament
     vendorId: 0x100b
     productId: 0x21E5
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8690"
     deviceLabel: WiZ PS160 Filament
     vendorId: 0x100b
     productId: 0x21F2
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8692"
     deviceLabel: WiZ ST64 Filament
     vendorId: 0x100b
     productId: 0x21F4
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8661"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x21D5
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8829"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x227D
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8830"
     deviceLabel: WiZ A60 Filament
     vendorId: 0x100b
     productId: 0x227E
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8216"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x2018
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8820"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x2274
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8819"
     deviceLabel: WiZ A19
     vendorId: 0x100b
     productId: 0x2273
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8821"
     deviceLabel: WiZ BR30
     vendorId: 0x100b
     productId: 0x2275
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8217"
     deviceLabel: WiZ A19 Warm White
     vendorId: 0x100b
@@ -3660,87 +3660,87 @@ matterManufacturer:
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x227F
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8832"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2280
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8833"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2281
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8834"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2282
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8835"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2283
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8836"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2284
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8837"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2285
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8838"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2286
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8839"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2287
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8840"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2288
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8841"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x2289
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8842"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x228A
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8843"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x228B
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8844"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x228C
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8845"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b
     productId: 0x228D
-    deviceProfileName: light-level-colorTemperature-2200K-6500K
+    deviceProfileName: light-level-colorTemperature
   - id: "4107/8846"
     deviceLabel: WiZ Wall Light Classic
     vendorId: 0x100b
     productId: 0x228E
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8847"
     deviceLabel: WiZ Wall Light Classic
     vendorId: 0x100b
     productId: 0x228F
-    deviceProfileName: light-color-level-2200K-6500K
+    deviceProfileName: light-color-level
   - id: "4107/8954"
     deviceLabel: WiZ Gradient Light Bars
     vendorId: 0x100B
