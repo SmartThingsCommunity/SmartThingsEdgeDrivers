@@ -288,13 +288,13 @@ end
 
 -- emit_event doesn't like having `nil` values in the table. Remove any if they are present.
 new_lock_utils.prep_table = function(data)
-    local clean_table = {}
-    for _, value in pairs(data) do
-        if value ~= nil then
-            clean_table[#clean_table + 1] = value -- Append to the end of the new array
-        end
+  local clean_table = {}
+  for _, value in pairs(data) do
+    if value ~= nil then
+        clean_table[#clean_table + 1] = value -- Append to the end of the new array
     end
-    return clean_table
+  end
+  return clean_table
 end
 
 new_lock_utils.send_events = function(device, type)

@@ -43,7 +43,6 @@ local get_pin_response_handler = function(driver, device, zb_mess)
           active_credential.userIndex,
           active_credential.credentialType,
           credential_index)
-
         emit_event = true
       end
     elseif command ~= nil and command.name == lock_utils.UPDATE_CREDENTIAL then
@@ -96,12 +95,8 @@ local get_pin_response_handler = function(driver, device, zb_mess)
   end
 
   if emit_event then
-    device:emit_event(capabilities.lockUsers.users(lock_utils.get_users(device),
-      {  state_change = true, visibility = { displayed = true } }))
-    device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
-      { state_change = true,  visibility = { displayed = true } }))
+    lock_utils.send_events(device)
   end
-
   -- ignore handling the busy state for these commands, they are handled within their own handlers
   if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
     lock_utils.clear_busy_state(device, status)
@@ -122,13 +117,12 @@ local programming_event_handler = function(driver, device, zb_mess)
     -- Master code updated
     device:emit_event(capabilities.lockCredentials.commandResult(
       {commandName = lock_utils.UPDATE_CREDENTIAL, statusCode = lock_utils.STATUS_SUCCESS},
-      { state_change = true, visibility = { displayed = false } }
+      { state_change = true, visibility = { displayed = true } }
     ))
   elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_DELETED) then
     if (zb_mess.body.zcl_body.user_id.value == 0xFFFF) then
       -- All credentials deleted
-      local current_credentials = lock_utils.get_credentials(device)
-      for _, credential in pairs(current_credentials) do
+      for _, credential in pairs(lock_utils.get_credentials(device)) do
         lock_utils.delete_credential(device, credential.credentialIndex)
         emit_events = true
       end
@@ -140,7 +134,7 @@ local programming_event_handler = function(driver, device, zb_mess)
       end
     end
   elseif (zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_ADDED or
-      zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_CHANGED) then
+        zb_mess.body.zcl_body.program_event_code.value == ProgrammingEventCodeEnum.PIN_CODE_CHANGED) then
     if lock_utils.get_credential(device, credential_index) == nil and command == nil then
       local user_index = lock_utils.get_available_user_index(device)
       if user_index ~= nil then
@@ -155,10 +149,7 @@ local programming_event_handler = function(driver, device, zb_mess)
   end
 
   if emit_events then
-    device:emit_event(capabilities.lockUsers.users(lock_utils.get_users(device),
-      {  state_change = true, visibility = { displayed = true } }))
-    device:emit_event(capabilities.lockCredentials.credentials(lock_utils.get_credentials(device),
-      {  state_change = true, visibility = { displayed = true } }))
+    lock_utils.send_events(device)
   end
 end
 

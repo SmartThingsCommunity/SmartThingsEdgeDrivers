@@ -439,7 +439,7 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main",
         capabilities.lockCredentials.commandResult({ commandName = "updateCredential", statusCode = "success" },
-          { state_change = true, visibility = { displayed = false } }))
+          { state_change = true, visibility = { displayed = true } }))
     }
   }
 )
