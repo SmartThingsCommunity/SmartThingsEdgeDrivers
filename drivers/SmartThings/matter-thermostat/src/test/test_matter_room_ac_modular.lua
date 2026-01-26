@@ -87,6 +87,9 @@ local function initialize_mock_device(generic_mock_device, generic_subscribed_at
       end
     end
   end
+  test.socket.capability:__expect_send(
+    generic_mock_device:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+  )
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
   return subscribe_request
 end
