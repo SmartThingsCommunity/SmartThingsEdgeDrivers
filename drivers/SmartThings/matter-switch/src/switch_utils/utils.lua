@@ -487,9 +487,13 @@ function utils.subscribe(device)
     end
   end
 
-  -- For devices supporting BATTERY, add the PowerSource AttributeList to the list of subscribed
-  -- attributes in order to determine whether to use the battery or batteryLevel capability
-  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0 then
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
+  end
+
+  -- If the type of battery support has not yet be determined, add the PowerSource AttributeList to the list of
+  -- subscribed attributes in order to determine which if any battery capability should be used.
+  if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
     local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
     subscribe_request:with_info_block(ib)
   end

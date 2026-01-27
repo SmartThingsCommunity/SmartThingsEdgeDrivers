@@ -166,7 +166,20 @@ test.register_coroutine_test(
     device_info_copy.profile.id = "5-buttons-battery"
     local device_info_json = dkjson.encode(device_info_copy)
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    -- due to the AttributeList being processed in update_profile, setting profiling_data.BATTERY_SUPPORT,
+    -- subsequent subscriptions will not include AttributeList.
+    local UPDATED_CLUSTER_SUBSCRIBE_LIST = {
+      clusters.PowerSource.server.attributes.BatPercentRemaining,
+      clusters.Switch.server.events.InitialPress,
+      clusters.Switch.server.events.LongPress,
+      clusters.Switch.server.events.ShortRelease,
+      clusters.Switch.server.events.MultiPressComplete,
+    }
+    local updated_subscribe_request = UPDATED_CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
+    for i, clus in ipairs(UPDATED_CLUSTER_SUBSCRIBE_LIST) do
+      if i > 1 then updated_subscribe_request:merge(clus:subscribe(mock_device)) end
+    end
+    test.socket.matter:__expect_send({mock_device.id, updated_subscribe_request})
     expect_configure_buttons()
   end
 )
@@ -197,7 +210,7 @@ test.register_coroutine_test(
       {
         mock_device.id,
         clusters.Switch.events.InitialPress:build_test_event_report(
-          mock_device, 20, {new_position = 1}  --move to position 1?
+          mock_device, 20, {new_position = 1}  --move to position 1
         )
       }
     )
