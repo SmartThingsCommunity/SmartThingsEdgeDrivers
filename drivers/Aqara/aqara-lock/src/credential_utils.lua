@@ -26,6 +26,8 @@ credential_utils.sync = function(driver, device)
   local table = device:get_field(PERSIST_DATA) or nil
   if table ~= nil then
     device:emit_event(lockCredentialInfo.credentialInfo(credential_utils.eventResource(table), { visibility = { displayed = false } }))
+  else
+    credential_utils.backup_data(device)
   end
 end
 
