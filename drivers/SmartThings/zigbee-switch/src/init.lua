@@ -98,7 +98,8 @@ local zigbee_switch_driver_template = {
     lazy_load_if_possible("inovelli"), -- Combined driver for both VZM31-SN and VZM32-SN
     lazy_load_if_possible("laisiao"),
     lazy_load_if_possible("tuya-multi"),
-    lazy_load_if_possible("frient")
+    lazy_load_if_possible("frient"),
+    lazy_load_if_possible("frient-IO")
   },
   zigbee_handlers = {
     global = {
