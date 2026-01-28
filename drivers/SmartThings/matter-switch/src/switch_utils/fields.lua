@@ -83,6 +83,8 @@ SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
 
+SwitchFields.SUBSCRIBED_ATTRIBUTES_KEY = "__subscribed_attributes"
+
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
   { current_field_name = "__switch_intialized", updated_field_name = nil },
@@ -114,6 +116,8 @@ SwitchFields.switch_category_vendor_overrides = {
     {0x007D, 0x0074, 0x0075},
   [0x1372] = -- Innovation Matters
     {0x0002},
+  [0x1189] = -- Ledvance
+    {0x0891, 0x0892},
   [0x1021] = -- Legrand
     {0x0005},
   [0x109B] = -- Leviton
