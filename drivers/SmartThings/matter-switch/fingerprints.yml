@@ -1354,6 +1354,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Netatmo
+  - id: "4129/8"
+    deviceLabel: Netatmo Thermo Hub
+    vendorId: 0x1021
+    productId: 0x0008
+    deviceProfileName: matter-bridge
 #Onvis
   - id: "5181/4097"
     deviceLabel: Onvis Smart Plug S4EU
