@@ -19,6 +19,11 @@ zigbeeManufacturer:
     manufacturer: Danfoss
     model: eTRV0100
     deviceProfileName: thermostat-popp-danfoss
+  - id: "NodOn/IRB-4-1-00"
+    deviceLabel: Zigbee AC Infrared Controller
+    manufacturer: NodOn
+    model: IRB-4-1-00
+    deviceProfileName: base-thermostat
   - id: "D5X84YU/eT093WRO"
     deviceLabel: POPP Smart Thermostat (Zigbee)
     manufacturer: D5X84YU
