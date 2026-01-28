@@ -39,10 +39,9 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     device:send(clusters.OnOff.attributes.OnOff:read(device))
   elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.handle_electrical_sensor_info(device)
-  end
-
-  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
-    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+    end
   end
 
   -- call device init in case init is not called after added due to device caching
