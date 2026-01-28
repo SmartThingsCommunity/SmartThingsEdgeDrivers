@@ -44,6 +44,7 @@ SwitchFields.DEVICE_TYPE_ID = {
     DIMMER = 0x0104,
     COLOR_DIMMER = 0x0105,
   },
+  WINDOW_COVERING = 0x0202,
 }
 
 SwitchFields.device_type_profile_map = {
@@ -82,6 +83,8 @@ SwitchFields.LEVEL_BOUND_RECEIVED = "__level_bound_received"
 SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
+
+SwitchFields.SUBSCRIBED_ATTRIBUTES_KEY = "__subscribed_attributes"
 
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
