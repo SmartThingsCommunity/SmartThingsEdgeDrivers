@@ -39,6 +39,9 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     device:send(clusters.OnOff.attributes.OnOff:read(device))
   elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.handle_electrical_sensor_info(device)
+    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+    end
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -94,7 +97,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
 
-    -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
+    -- device energy reporting must be handled cumulatively, periodically, or by both simultaneously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
     if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then

@@ -139,13 +139,20 @@ SwitchFields.switch_category_vendor_overrides = {
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
---- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
+--- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 
 SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
+  BATTERY_SUPPORT = "__battery_support",
+}
+
+SwitchFields.battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE",
 }
 
 SwitchFields.ENERGY_METER_OFFSET = "__energy_meter_offset"
