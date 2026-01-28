@@ -12,6 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 local capabilities = require "st.capabilities"
+local utils = require "st.utils"
 local INITIAL_INDEX = 1
 
 local new_lock_utils = {
@@ -130,7 +131,7 @@ new_lock_utils.get_users = function(device)
     new_lock_utils.reload_tables(device)
   end
 
-  local users = device:get_field(new_lock_utils.LOCK_USERS)
+  local users = utils.deep_copy(device:get_field(new_lock_utils.LOCK_USERS))
   return users ~= nil and users or {}
 end
 
@@ -171,7 +172,7 @@ new_lock_utils.get_credentials = function(device)
     new_lock_utils.reload_tables(device)
   end
 
-  local credentials = device:get_field(new_lock_utils.LOCK_CREDENTIALS)
+  local credentials = utils.deep_copy(device:get_field(new_lock_utils.LOCK_CREDENTIALS))
   return credentials ~= nil and credentials or {}
 end
 
@@ -223,7 +224,7 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
 
   local current_users = new_lock_utils.get_users(device)
   table.insert(current_users, { userIndex = user_index, userType = user_type, userName = user_name })
-  device:set_field(new_lock_utils.LOCK_USERS, current_users)
+  device:set_field(new_lock_utils.LOCK_USERS, current_users, { persist = true })
 end
 
 new_lock_utils.delete_user = function(device, user_index)
@@ -247,7 +248,7 @@ new_lock_utils.add_credential = function(device, user_index, credential_type, cr
   local credentials = new_lock_utils.get_credentials(device)
   table.insert(credentials,
     { userIndex = user_index, credentialIndex = credential_index, credentialType = credential_type })
-  device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+  device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials, { persist = true })
   return new_lock_utils.STATUS_SUCCESS
 end
 
@@ -278,7 +279,7 @@ new_lock_utils.update_credential = function(device, credential_index, user_index
     if credential.credentialIndex == credential_index then
       credential.credentialType = credential_type
       credential.userIndex = user_index
-      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials, { persist = true })
       status_code = new_lock_utils.STATUS_SUCCESS
       break
     end
@@ -300,11 +301,13 @@ end
 new_lock_utils.send_events = function(device, type)
   if type == nil or type == new_lock_utils.LOCK_USERS then
     local current_users = new_lock_utils.prep_table(new_lock_utils.get_users(device))
+    device:set_field(new_lock_utils.LOCK_USERS, current_users, { persist = true })
     device:emit_event(capabilities.lockUsers.users(current_users,
       {state_change = true, visibility = { displayed = true } }))
   end
   if type == nil or type == new_lock_utils.LOCK_CREDENTIALS then
     local credentials = new_lock_utils.prep_table(new_lock_utils.get_credentials(device))
+    device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials, { persist = true })
     device:emit_event(capabilities.lockCredentials.credentials(credentials,
       { state_change = true,  visibility = { displayed = true } }))
   end

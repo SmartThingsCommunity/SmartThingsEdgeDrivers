@@ -66,7 +66,7 @@ end
 
 local init = function(driver, device)
   lock_utils.reload_tables(device)
-  device.thread:call_with_delay(10, function(d)
+  device.thread:call_with_delay(15, function(d)
     reload_all_codes(device)
   end)
 end
@@ -122,7 +122,7 @@ local update_user_handler = function(driver, device, command)
       device:set_field(lock_utils.ACTIVE_CREDENTIAL, { userIndex = user_index})
       user.userName = user_name
       user.userType = user_type
-      device:set_field(lock_utils.LOCK_USERS, current_users)
+      device:set_field(lock_utils.LOCK_USERS, current_users, { persist = true })
       lock_utils.send_events(device, lock_utils.LOCK_USERS)
       status = lock_utils.STATUS_SUCCESS
       break
