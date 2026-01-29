@@ -35,11 +35,10 @@ IkeaScrollFields.switch_press_subscribed_events = {
 }
 
 -- Required Events for the ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL. Adds a
--- MultiPressOngoing subscription to handle step functionality in real-time, and
--- removes MultiPressComplete subscription due to the real-time handling
+-- MultiPressOngoing subscription to handle step functionality in real-time
 IkeaScrollFields.switch_scroll_subscribed_events = {
-  clusters.Switch.events.InitialPress.ID,
   clusters.Switch.events.MultiPressOngoing.ID,
+  clusters.Switch.events.MultiPressComplete.ID,
 }
 
 return IkeaScrollFields

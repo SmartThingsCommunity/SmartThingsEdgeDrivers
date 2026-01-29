@@ -49,8 +49,8 @@ local ikea_scroll_handler = {
   matter_handlers = {
     event = {
       [clusters.Switch.ID] = {
-        [clusters.Switch.events.InitialPress.ID] = event_handlers.initial_press_handler,
         [clusters.Switch.events.MultiPressOngoing.ID] = event_handlers.multi_press_ongoing_handler,
+        [clusters.Switch.events.MultiPressComplete.ID] = event_handlers.multi_press_complete_handler,
       }
     }
   },

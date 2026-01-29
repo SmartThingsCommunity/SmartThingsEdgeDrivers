@@ -16,16 +16,6 @@ local function rotate_amount_event_helper(device, endpoint_id, num_presses_to_ha
   device:emit_event_for_endpoint(endpoint_id, capabilities.knob.rotateAmount(scroll_amount, {state_change = true}))
 end
 
-function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, response)
-  -- use the generic handler logic for the push endpoints. Else, use custom logic.
-  if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
-    generic_event_handlers.initial_press_handler(driver, device, ib, response)
-  else
-    device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, 1)
-    rotate_amount_event_helper(device, ib.endpoint_id, 1)
-  end
-end
-
 -- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH
 function IkeaScrollEventHandlers.multi_press_ongoing_handler(driver, device, ib, response)
   local cur_num_presses_counted = ib.data and ib.data.elements and ib.data.elements.current_number_of_presses_counted.value or 0
@@ -33,6 +23,19 @@ function IkeaScrollEventHandlers.multi_press_ongoing_handler(driver, device, ib,
   if num_presses_to_handle > 0 then
     device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, cur_num_presses_counted)
     rotate_amount_event_helper(device, ib.endpoint_id, num_presses_to_handle)
+  end
+end
+
+function IkeaScrollEventHandlers.multi_press_complete_handler(driver, device, ib, response)
+  if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
+    generic_event_handlers.multi_press_complete_handler(driver, device, ib, response)
+  elseif device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED) == nil then
+    -- if LATEST_NUMBER_OF_PRESSES_COUNTED is nil, only InitialPress event(s) have been sent
+    -- since the previous MultiPressComplete. Therefore, handle a single press event.
+    rotate_amount_event_helper(device, ib.endpoint_id, 1)
+  else
+    -- reset the LATEST_NUMBER_OF_PRESSES_COUNTED to nil at the end of a MultiPress chain.
+    device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, nil)
   end
 end
 
