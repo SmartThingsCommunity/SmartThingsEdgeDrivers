@@ -11,12 +11,12 @@ local PERSIST_DATA = "__persist_area"
 credential_utils.eventResource = function(table)
   local credentialResource = {}
   for key, value in pairs(table) do
-        credentialResource[key] = value
-    end
-    return credentialResource
+    credentialResource[key] = value
+  end
+  return credentialResource
 end
 
-credential_utils.backup_data = function(device)-- Back up data the persistent
+credential_utils.backup_data = function(device) -- Back up data the persistent
   local credentialInfoTable = utils.deep_copy(device:get_latest_state("main", lockCredentialInfo.ID,
     lockCredentialInfo.credentialInfo.NAME, {}))
   device:set_field(PERSIST_DATA, credentialInfoTable, { persist = true })
@@ -25,7 +25,8 @@ end
 credential_utils.sync = function(driver, device)
   local table = device:get_field(PERSIST_DATA) or nil
   if table ~= nil then
-    device:emit_event(lockCredentialInfo.credentialInfo(credential_utils.eventResource(table), { visibility = { displayed = false } }))
+    device:emit_event(lockCredentialInfo.credentialInfo(credential_utils.eventResource(table),
+    { visibility = { displayed = false } }))
   else
     credential_utils.backup_data(device)
   end
