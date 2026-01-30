@@ -1,8 +1,6 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
-local cluster_base = require "st.zigbee.cluster_base"
-local data_types = require "st.zigbee.data_types"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local remoteControlStatus = capabilities.remoteControlStatus
@@ -17,8 +15,6 @@ local BatteryLevel = capabilities.batteryLevel
 local Lock = capabilities.lock
 
 local PRI_CLU = 0xFCC0
-local PRI_ATTR = 0xFFF3
-local MFG_CODE = 0x115F
 
 local HOST_COUNT = "__host_count"
 local PERSIST_DATA = "__persist_area"
