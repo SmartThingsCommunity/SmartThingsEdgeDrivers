@@ -174,7 +174,8 @@ SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
 
-SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
+SwitchFields.TRANSITION_TIME = 0 -- number of 10ths of a second
+SwitchFields.TRANSITION_TIME_FAST = 3 -- 0.3 seconds
 
 -- For Level/Color Control cluster commands, this field indicates which bits in the OptionsOverride field are valid. In this case, we specify that the ExecuteIfOff option (bit 1) may be overridden.
 SwitchFields.OPTIONS_MASK = 0x01
