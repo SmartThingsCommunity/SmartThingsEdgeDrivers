@@ -11,8 +11,3 @@ fingerprints:
     deviceProfileName: "switch-power-energy"
     id: "LEDVANCE/PLUG COMPACT EU EM T"
     deviceLabel: "SMART ZIGBEE COMPACT OUTDOOR PLUG EU"
-  - manufacturer: "LEDVANCE"
-    model: "PLUG EU EM T"
-    deviceProfileName: "switch-power-energy"
-    id: "LEDVANCE/PLUG COMPACT EU EM T"
-    deviceLabel: "SMART ZIGBEE PLUG EU"
