@@ -133,6 +133,11 @@ zigbeeManufacturer:
     manufacturer: NodOn
     model: SIN-4-RS-20
     deviceProfileName: window-treatment-profile
+  - id: "NodOn/SIN-4-RS-20-PRO"
+    deviceLabel: Zigbee Roller Shutter Relay Switch PRO
+    manufacturer: NodOn
+    model: SIN-4-RS-20-PRO
+    deviceProfileName: window-treatment-profile
   - id: "HOPOsmart/A2230011"
     deviceLabel: HOPOsmart Window Opener A2230011
     manufacturer: HOPOsmart
