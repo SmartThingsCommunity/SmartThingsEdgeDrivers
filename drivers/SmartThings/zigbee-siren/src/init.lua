@@ -32,7 +32,9 @@ local IaswdLevel = IASWD.types.IaswdLevel
 local capabilities = require "st.capabilities"
 local alarm = capabilities.alarm
 local switch = capabilities.switch
-
+local mode = capabilities.mode
+local battery = capabilities.battery
+local refresh = capabilities.refresh
 -- Constants
 local ALARM_COMMAND = "alarmCommand"
 local ALARM_LAST_DURATION = "lastDuration"
@@ -81,13 +83,13 @@ local send_siren_command = function(device, warning_mode, warning_siren_level, s
   siren_configuration:set_siren_level(warning_siren_level)
 
   device:send(
-      IASWD.server.commands.StartWarning(
-          device,
-          siren_configuration,
-          data_types.Uint16(warning_duration),
-          data_types.Uint8(duty_cycle),
-          data_types.Enum8(strobe_level)
-      )
+          IASWD.server.commands.StartWarning(
+                  device,
+                  siren_configuration,
+                  data_types.Uint16(warning_duration),
+                  data_types.Uint8(duty_cycle),
+                  data_types.Enum8(strobe_level)
+          )
   )
 end
 
@@ -157,7 +159,10 @@ end
 local zigbee_siren_driver_template = {
   supported_capabilities = {
     alarm,
-    switch
+    switch,
+    mode,
+    battery,
+    refresh
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   zigbee_handlers = {
