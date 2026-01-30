@@ -1719,6 +1719,11 @@ zigbeeManufacturer:
     deviceLabel: SMART ZIGBEE COMPACT OUTDOOR PLUG EU
     manufacturer: LEDVANCE
     model: PLUG COMPACT EU EM T
+    deviceProfileName: switch-power-energy 
+  - id: "LEDVANCE/PLUG EU EM T"
+    deviceLabel: SMART ZIGBEE PLUG EU
+    manufacturer: LEDVANCE
+    model: PLUG EU EM T
     deviceProfileName: switch-power-energy    
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
