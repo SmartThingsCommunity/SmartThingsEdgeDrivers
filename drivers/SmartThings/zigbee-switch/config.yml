@@ -4,3 +4,10 @@ permissions:
   zigbee: {}
 description: "SmartThings driver for Zigbee switch devices"
 vendorSupportInformation: "https://support.smartthings.com"
+
+fingerprints:
+  - manufacturer: "LEDVANCE"
+    model: "PLUG COMPACT EU EM T"
+    deviceProfileName: "switch-power-energy"
+    id: "LEDVANCE/PLUG COMPACT EU EM T"
+    deviceLabel: "SMART+ ZIGBEE COMPACT OUTDOOR PLUG EU"
