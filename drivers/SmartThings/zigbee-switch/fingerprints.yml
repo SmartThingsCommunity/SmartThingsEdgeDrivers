@@ -1716,7 +1716,7 @@ zigbeeManufacturer:
     model: RT TW
     deviceProfileName: color-temp-bulb
   - id: "LEDVANCE/PLUG COMPACT EU EM T"
-    deviceLabel: SMART+ ZIGBEE COMPACT OUTDOOR PLUG EU
+    deviceLabel: SMART ZIGBEE COMPACT OUTDOOR PLUG EU
     manufacturer: LEDVANCE
     model: PLUG COMPACT EU EM T
     deviceProfileName: switch-power-energy    
