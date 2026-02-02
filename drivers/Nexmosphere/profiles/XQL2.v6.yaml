@@ -1,0 +1,107 @@
+{
+  "id": "550e5fcc-fb6a-46ea-8f44-4f85d188abea",
+  "name": "XQL2.v6",
+  "metadata": {
+    "vid": "004e5cd9-57a5-3367-bbac-f450426a563d",
+    "mnmn": "Nexmosphere"
+  },
+  "migrationStatus": "NOT_MIGRATED",
+  "status": "DEVELOPMENT",
+  "preferences": [
+    {
+      "preferenceId": "DFOI",
+      "name": "dFOI",
+      "title": "Define Field of Interest",
+      "description": "(x, y), Max 10 Corners",
+      "required": false,
+      "explicit": false,
+      "preferenceType": "string",
+      "definition": {
+        "stringType": "text",
+        "default": "(-010,+010), (+010,+010), (+010,-010), (-010,-010)"
+      }
+    },
+    {
+      "preferenceId": "RECALFOI",
+      "name": "reCALFOI",
+      "title": "Recalculate FOI",
+      "description": "Set Field of Interest",
+      "required": false,
+      "explicit": false,
+      "preferenceType": "enumeration",
+      "definition": {
+        "options": {
+          "SET": "Set",
+          "READY": "Ready"
+        },
+        "default": "READY"
+      }
+    },
+    {
+      "preferenceId": "DAZ",
+      "name": "dAZ",
+      "title": "Define Activation zones",
+      "description": "(x, y, w, h), Max 24 Activation zones",
+      "required": false,
+      "explicit": false,
+      "preferenceType": "string",
+      "definition": {
+        "stringType": "text",
+        "default": "(-010,+000,010,010), (+000,+000,010,010), (+000,-010,010,010), (-010,-010,010,010)"
+      }
+    },
+    {
+      "preferenceId": "SETAZ",
+      "name": "setAZ",
+      "title": "Set Activation Zones",
+      "description": "Check coordination",
+      "required": false,
+      "explicit": false,
+      "preferenceType": "enumeration",
+      "definition": {
+        "options": {
+          "SET": "Set",
+          "READY": "Ready"
+        },
+        "default": "READY"
+      }
+    }
+  ],
+  "components": [
+    {
+      "label": "main",
+      "id": "main",
+      "capabilities": [
+        {
+          "id": "mode",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "nexmosphere.numberAndStatus",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "refresh",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        }
+      ],
+      "categories": [
+        {
+          "name": "ZoneSensor",
+          "categoryType": "manufacturer"
+        }
+      ],
+      "optional": false
+    }
+  ],
+  "owner": {
+    "ownerType": "USER",
+    "ownerId": "f15ba00b-eb6e-6aec-8074-2c7a20433f5e"
+  }
+}
