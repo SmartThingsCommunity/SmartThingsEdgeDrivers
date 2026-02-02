@@ -6,9 +6,9 @@ components:
     version: 1
   - id: temperatureMeasurement
     config:
-        values:
-          - key: "temperature.value"
-            range: [-10, 60]
+      values:
+        - key: "temperature.value"
+          range: [-10, 60]
     version: 1
   - id: relativeHumidityMeasurement
     version: 1
@@ -20,12 +20,18 @@ components:
     version: 1
   - id: powerSource
     version: 1
+  - id: threeAxis
+    version: 1
   - id: battery
     version: 1
   - id: refresh
     version: 1
-  categories:
+categories:
   - name: ContactSensor
+metadata:
+  deviceType: ContactSensor
+  ocfDeviceType: x.com.st.d.sensor.contact
+  deviceTypeId: ContactSensor
 preferences:
   - name: "parameter1"
     title: "1 Set threshold Check Time"
@@ -52,25 +58,15 @@ preferences:
       minimum: 0
       maximum : 255
       default: 50
-  - name: "parameter4"
-    title: "4 Enable led indication"
-    description: "This parameter defines when the green or red LED will indicate events. Disabling all indications may extend battery life. Off means no indications."
-    required: false
-    preferenceType: enumeration
-    definition:
-      options:
-        0: "Off"
-        1: "On"
-      default: 0
   - name: "parameter5"
-    title: "5 Contact sensor polarity"
+    title: "5 State when the magnet is close"
     description: "This parameter allows to set the states of door/window when the magnet closes to the sensor."
     required: false
     preferenceType: enumeration
     definition:
       options:
-        0: "Closed = Alarm, Open = Idle"
-        1: "Open = Alarm, Closed = Idle"
+        0: "Open=magnet far, Closed=magnet near"
+        1: "Closed=magnet far, Open=magnet near"
       default: 0
   - name: "parameter13"
     title: "13 Mold alarm offset"
@@ -101,7 +97,7 @@ preferences:
       default: 43200
   - name: "parameter25"
     title: "25 Offset value for temperature"
-    description: "Calibrate temperature. Scale is defined by Param 64 .eg: Value 15 means 1.5°C or 1.5F"
+    description: "Calibrate temperature. Scale is defined by Param 64 .eg: Value 15 means 1.5°C or 1.5F."
     required: false
     preferenceType: integer
     definition:
@@ -116,6 +112,63 @@ preferences:
     definition:
       minimum: -200
       maximum : 200
+      default: 0
+  - name: "parameter27"
+    title: "27 Set tilt sensor mode"
+    description: "Set tilt sensor mode."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disable"
+        1: "Enabled. Needs magnet"
+        2: "Enabled. It can used without magnet."
+      default: 1
+  - name: "parameter28"
+    title: "28 State of tilt in Mode 2"
+    description: "This parameter allows setting the state of door/window when the sensor is tilted."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Opened = tilted, closed = not tilted"
+        1: "Closed = tilted, opened = not tilted"
+      default: 0
+  - name: "parameter33"
+    title: "33 Tilt triggered angle"
+    description: "With this parameter, you can adjust the tilt triggered angle if the tilt is too low or too strong."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum : 90
+      default: 5
+  - name: "parameter34"
+    title: "34 Timeout tilt detection Mode 1"
+    description: "Set the timeout of tilt detection Mode 1."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum : 60
+      default: 5
+  - name: "parameter35"
+    title: "35 Timeout tilt detection Mode 2"
+    description: "Set the timeout of tilt detection Mode 2."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 5
+      maximum : 60
+      default: 8
+  - name: "parameter36"
+    title: "36 Min. acc. change to report"
+    description: "Minimum acceleration change to trigger report"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum : 255
       default: 0
   - name: "parameter64"
     title: "64 Temperature Scale"

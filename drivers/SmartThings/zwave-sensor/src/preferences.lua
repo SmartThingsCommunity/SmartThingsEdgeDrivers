@@ -169,10 +169,9 @@ local devices = {
       product_ids = {0x0037}
     },
     PARAMETERS = {
-      parameter1 = {parameter_number = 1, size = 1},
+      parameter1 = {parameter_number = 1, size = 4},
       parameter2 = {parameter_number = 2, size = 1},
       parameter3 = {parameter_number = 3, size = 1},
-      parameter4 = {parameter_number = 4, size = 1},
       parameter5 = {parameter_number = 5, size = 1},
       parameter13 = {parameter_number = 13, size = 1},
       parameter23 = {parameter_number = 23, size = 1},
@@ -184,6 +183,7 @@ local devices = {
       parameter33 = {parameter_number = 33, size = 1},
       parameter34 = {parameter_number = 34, size = 1},
       parameter35 = {parameter_number = 35, size = 1},
+      parameter36 = {parameter_number = 36, size = 1},
       parameter64 = {parameter_number = 64, size = 1},
     },
   },
