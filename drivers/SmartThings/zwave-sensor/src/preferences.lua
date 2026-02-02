@@ -174,7 +174,6 @@ local devices = {
       parameter3 = {parameter_number = 3, size = 1},
       parameter4 = {parameter_number = 4, size = 1},
       parameter13 = {parameter_number = 13, size = 1},
-      parameter22 = {parameter_number = 22, size = 1},
       parameter23 = {parameter_number = 23, size = 1},
       parameter24 = {parameter_number = 24, size = 4},
       parameter25 = {parameter_number = 25, size = 2},

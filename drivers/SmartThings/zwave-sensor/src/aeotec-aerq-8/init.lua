@@ -44,25 +44,27 @@ local function can_handle_aeotec_aerq(opts, driver, device, ...)
 end
 
 local function added_handler(driver, device)
-  device:send(Configuration:Set({
-    parameter_number = 22,
-    size = 1,
-    configuration_value = 1
-  }))
+  device:send(Configuration:Get({ parameter_number = 10 }))
 
   device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "moderate"}))
-  device:send(SensorBinary:Get({sensor_type = SensorBinary.sensor_type.GENERAL}))
+  
+  -- Default value
+  device:emit_event(MoldHealthConcern.moldHealthConcern.good())
 
-  device:emit_event(capabilities.refresh.refresh())
+  -- Default value
+  device:emit_event(PowerSource.powerSource.battery())
+  
+  device:send(Battery:Get({}))
 end
 
 local function do_refresh(driver, device)
-  device:send(SensorBinary:Get({sensor_type = SensorBinary.sensor_type.GENERAL}))
   device:send(Battery:Get({}))
 end
 
 local function notification_report_handler(self, device, cmd)
   local event
+
+  -- POWER
   if cmd.args.notification_type == Notification.notification_type.POWER_MANAGEMENT then
     if cmd.args.event == Notification.event.power_management.AC_MAINS_DISCONNECTED then
       event = capabilities.powerSource.powerSource.battery()
@@ -73,6 +75,7 @@ local function notification_report_handler(self, device, cmd)
     end
   end
 
+  -- MOLD
   if cmd.args.notification_type == Notification.notification_type.WEATHER_ALARM then
     if cmd.args.event == Notification.event.weather_alarm.STATE_IDLE then
       event = capabilities.moldHealthConcern.moldHealthConcern.good()
@@ -86,34 +89,13 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
-local function sensor_binary_report_handler(self, device, cmd)
-  local sensorType = cmd.args.sensor_type
-  local value = cmd.args.sensor_value
-  local event
-
-  if sensorType == SensorBinary.sensor_type.GENERAL then
-    if value == SensorBinary.sensor_value.IDLE then
-      event = capabilities.moldHealthConcern.moldHealthConcern.good()
-    elseif value == SensorBinary.sensor_value.DETECTED_AN_EVENT then
-      event = capabilities.moldHealthConcern.moldHealthConcern.moderate()
-    end
-  end
-
-  if (event ~= nil) then
-    device:emit_event(event)
-  end
-end
-
-local aeotec_aerq = {
+local aeotec_aerq_8 = {
   supported_capabilities = {
     capabilities.powerSource
   },
   zwave_handlers = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
-    },
-    [cc.SENSOR_BINARY] = {
-      [SensorBinary.REPORT] = sensor_binary_report_handler
     },
   },
   capability_handlers = {
@@ -128,4 +110,4 @@ local aeotec_aerq = {
   can_handle = can_handle_aeotec_aerq
 }
 
-return aeotec_aerq
+return aeotec_aerq_8
