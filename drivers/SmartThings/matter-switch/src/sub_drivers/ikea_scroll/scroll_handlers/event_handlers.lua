@@ -18,24 +18,35 @@ end
 
 -- Used by ENDPOINTS_UP_SCROLL and ENDPOINTS_DOWN_SCROLL, not ENDPOINTS_PUSH
 function IkeaScrollEventHandlers.multi_press_ongoing_handler(driver, device, ib, response)
-  local cur_num_presses_counted = ib.data and ib.data.elements and ib.data.elements.current_number_of_presses_counted.value or 0
-  local num_presses_to_handle = cur_num_presses_counted - (device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED) or 0)
-  if num_presses_to_handle > 0 then
-    device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, cur_num_presses_counted)
-    rotate_amount_event_helper(device, ib.endpoint_id, num_presses_to_handle)
+  if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
+    -- Ignore MultiPressOngoing events from push endpoints.
+    device.log.debug("Received MultiPressOngoing event from push endpoint, ignoring.")
+  else
+    local cur_num_presses_counted = ib.data and ib.data.elements and ib.data.elements.current_number_of_presses_counted.value or 0
+    local num_presses_to_handle = cur_num_presses_counted - (device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED) or 0)
+    if num_presses_to_handle > 0 then
+      device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, cur_num_presses_counted)
+      rotate_amount_event_helper(device, ib.endpoint_id, num_presses_to_handle)
+    end
   end
 end
 
 function IkeaScrollEventHandlers.multi_press_complete_handler(driver, device, ib, response)
   if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
     generic_event_handlers.multi_press_complete_handler(driver, device, ib, response)
-  elseif device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED) == nil then
-    -- if LATEST_NUMBER_OF_PRESSES_COUNTED is nil, only InitialPress event(s) have been sent
-    -- since the previous MultiPressComplete. Therefore, handle a single press event.
-    rotate_amount_event_helper(device, ib.endpoint_id, 1)
   else
     -- reset the LATEST_NUMBER_OF_PRESSES_COUNTED to nil at the end of a MultiPress chain.
     device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, nil)
+  end
+end
+
+function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, response)
+  if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
+    generic_event_handlers.initial_press_handler(driver, device, ib, response)
+  else
+    -- Ignore InitialPress events from non-push endpoints. Presently, we want to solely
+    -- rely on MultiPressOngoing events to handle rotation for those endpoints.
+    device.log.debug("Received InitialPress event from scroll endpoint, ignoring.")
   end
 end
 

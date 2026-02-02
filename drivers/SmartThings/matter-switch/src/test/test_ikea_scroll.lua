@@ -155,12 +155,12 @@ local function expect_configure_buttons()
   local button_attr = capabilities.button.button
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 3)})
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("main", button_attr.pushed({state_change = false})))
-  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("main", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 6)})
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group2", button_attr.pushed({state_change = false})))
-  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group2", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 9)})
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group3", button_attr.pushed({state_change = false})))
+  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("main", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
+  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group2", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group3", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
 end
 
