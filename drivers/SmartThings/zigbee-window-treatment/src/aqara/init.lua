@@ -11,8 +11,8 @@ local AnalogOutput = clusters.AnalogOutput
 local Groups = clusters.Groups
 
 local deviceInitialization = capabilities["stse.deviceInitialization"]
-local reverseCurtainDirection = capabilities["stse.reverseCurtainDirection"]
-local softTouch = capabilities["stse.softTouch"]
+local reverseCurtainDirection = "stse.reverseCurtainDirection"
+local softTouch = "stse.softTouch"
 local setInitializedStateCommandName = "setInitializedState"
 
 local INIT_STATE = "initState"
@@ -133,12 +133,12 @@ end
 
 local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection.ID]
-    local softTouchPrefValue = device.preferences[softTouch.ID]
+    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection]
+    local softTouchPrefValue = device.preferences[softTouch]
 
     -- reverse direction
     if reverseCurtainDirectionPrefValue ~= nil and
-        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection.ID] then
+        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection] then
       local raw_value = reverseCurtainDirectionPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -152,7 +152,7 @@ local function device_info_changed(driver, device, event, args)
 
     -- soft touch
     if softTouchPrefValue ~= nil and
-        softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
+        softTouchPrefValue ~= args.old_st_store.preferences[softTouch] then
       local raw_value = softTouchPrefValue and PREF_SOFT_TOUCH_ON or PREF_SOFT_TOUCH_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
