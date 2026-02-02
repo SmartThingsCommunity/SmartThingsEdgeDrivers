@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
@@ -10,9 +13,7 @@ local zigbee_water_driver_template = {
     capabilities.fanSpeed,
     capabilities.mode
   },
-  sub_drivers = {
-    require("thirdreality")
-  },
+  sub_drivers = require("sub_drivers"),
   health_check = false,
 }
 

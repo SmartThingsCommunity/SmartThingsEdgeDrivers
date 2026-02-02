@@ -1,26 +1,11 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local cc = require "st.zwave.CommandClass"
 local capabilities = require "st.capabilities"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 
-local function can_handle_fortrezz_siren(opts, self, device, ...)
-  return device.zwave_manufacturer_id == 0x0084 and
-    device.zwave_product_type == 0x0313 and
-    device.zwave_product_id == 0x010B
-end
 
 local function set_and_get(value)
   return function (self, device, command)
@@ -47,7 +32,7 @@ end
 
 local fortrezz_siren = {
   NAME = "fortrezz-siren",
-  can_handle = can_handle_fortrezz_siren,
+  can_handle = require("fortrezz.can_handle"),
   capability_handlers = {
     [capabilities.alarm.ID] = {
       [capabilities.alarm.commands.siren.NAME] = set_and_get(0x42),
