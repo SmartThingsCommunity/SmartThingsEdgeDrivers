@@ -13,6 +13,7 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
+local zcl_commands = require "st.zigbee.zcl.global_commands"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
@@ -49,46 +50,43 @@ local Frient_AccelerationMeasurementCluster = {
   },
 }
 
-local function acceleration_measure_value_attr_handler(driver, device, attr_val, zb_rx)
-  -- Initialize variables to store the axis values
+local function acceleration_measure_report_handler(driver, device, zb_rx)
   local measured_x = device:get_field("measured_x")
   local measured_y = device:get_field("measured_y")
   local measured_z = device:get_field("measured_z")
 
-  -- Process the attribute records
   for _, attribute_record in ipairs(zb_rx.body.zcl_body.attr_records) do
     local attribute_id = attribute_record.attr_id.value
     local axis_value = attribute_record.data.value
 
-    if attribute_id == 0x0000 then
+    if attribute_id == Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID then
       measured_x = axis_value
       device:set_field("measured_x", measured_x)
-    elseif attribute_id == 0x0001 then
+    elseif attribute_id == Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID then
       measured_y = axis_value
       device:set_field("measured_y", measured_y)
-    elseif attribute_id == 0x0002 then
+    elseif attribute_id == Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID then
       measured_z = axis_value
       device:set_field("measured_z", measured_z)
     end
   end
 
-  -- Ensure all values are non-nil before emitting
   if measured_x and measured_y and measured_z then
     device:emit_event(threeAxis.threeAxis({measured_x, measured_y, measured_z}))
-  end
 
-  if device.preferences.garageSensor == "Yes" then
-    local garageAxis = measured_x
-    if device.preferences.contactSensorAxis == "Y" then
-      garageAxis = measured_y
-    elseif device.preferences.contactSensorAxis == "Z" then
-      garageAxis = measured_z
-    end
-    local initial_position = device.preferences.sensorInitialPosition or 0
-    if math.abs(initial_position - garageAxis) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
-      device:emit_event(capabilities.contactSensor.contact.open())
-    else
-      device:emit_event(capabilities.contactSensor.contact.closed())
+    if device.preferences.garageSensor == "Yes" then
+      local garageAxis = measured_x
+      if device.preferences.contactSensorAxis == "Y" then
+        garageAxis = measured_y
+      elseif device.preferences.contactSensorAxis == "Z" then
+        garageAxis = measured_z
+      end
+      local initial_position = device.preferences.sensorInitialPosition or 0
+      if math.abs(initial_position - garageAxis) >= device.preferences.contactSensorValue - device.preferences.contactSensorValue * (device.preferences.tolerance / 100) then
+        device:emit_event(capabilities.contactSensor.contact.open())
+      else
+        device:emit_event(capabilities.contactSensor.contact.closed())
+      end
     end
   end
 end
@@ -204,6 +202,12 @@ local frient_vibration_driver_template = {
     infoChanged = info_changed
   },
   zigbee_handlers = {
+    global = {
+      [Frient_AccelerationMeasurementCluster.ID] = {
+        [zcl_commands.ReportAttribute.ID] = acceleration_measure_report_handler,
+        [zcl_commands.ReadAttributeResponse.ID] = acceleration_measure_report_handler
+      }
+    },
     cluster = {
       [IASZone.ID] = {
         [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler
@@ -212,11 +216,6 @@ local frient_vibration_driver_template = {
     attr = {
       [IASZone.ID] = {
         [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
-      },
-      [Frient_AccelerationMeasurementCluster.ID] = {
-        [Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID] = acceleration_measure_value_attr_handler,
-        [Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID] = acceleration_measure_value_attr_handler,
-        [Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID] = acceleration_measure_value_attr_handler,
       }
     }
   },

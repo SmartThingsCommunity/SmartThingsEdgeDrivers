@@ -454,14 +454,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
     )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
-    )
   end
 )
 
@@ -487,22 +479,6 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.open())
     )
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.open())
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, -902}))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.open())
-    )
   end
 )
 
@@ -520,22 +496,6 @@ test.register_coroutine_test(
       mock_device_contact.id,
       zigbee_test_utils.build_attribute_report(mock_device_contact, Frient_AccelerationMeasurementCluster.ID, attr_report_data, 0x1015)
     })
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.closed())
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
-    )
-
-    test.socket.capability:__expect_send(
-      mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.closed())
-    )
 
     test.socket.capability:__expect_send(
       mock_device_contact:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
