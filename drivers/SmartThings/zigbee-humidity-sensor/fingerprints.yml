@@ -79,7 +79,7 @@ zigbeeManufacturer:
     model: TH01
     deviceProfileName: humidity-temp-battery
   - id: eWeLink/SNZB-02P
-    deviceLabel: eWeLink Multipurpose Sensor
+    deviceLabel: SONOFF Zigbee Temperature and Humidity Sensor
     manufacturer: eWeLink
     model: SNZB-02P
     deviceProfileName: humidity-temp-battery

@@ -55,7 +55,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_electrical_sensor = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
+  profile = t_utils.get_profile_definition("plug-energy-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x130A,
     product_id = 0x0050,
@@ -98,6 +98,12 @@ local mock_device_electrical_sensor = test.mock_device.build_test_matter_device(
           cluster_type = "SERVER",
           cluster_revision = 1,
           feature_map = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY,
+        },
+        {
+          cluster_id = clusters.PowerTopology.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = clusters.PowerTopology.types.Feature.NODE_TOPOLOGY,
         }
       },
       device_types = {
@@ -108,17 +114,27 @@ local mock_device_electrical_sensor = test.mock_device.build_test_matter_device(
 })
 
 local function test_init_electrical_sensor()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_electrical_sensor)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
     clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_electrical_sensor)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    subscribe_request:merge(cluster:subscribe(mock_device_electrical_sensor))
+  for i, clus in ipairs(cluster_subscribe_list) do
+    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_electrical_sensor)) end
   end
-  test.socket.matter:__expect_send({ mock_device_electrical_sensor.id, subscribe_request })
-  test.mock_device.add_test_device(mock_device_electrical_sensor)
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "added" })
+  test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "init" })
+  test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
+
+  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "doConfigure" })
+  mock_device_electrical_sensor:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
+  mock_device_electrical_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init()

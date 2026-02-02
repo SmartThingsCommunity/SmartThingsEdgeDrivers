@@ -9,6 +9,14 @@ local st_utils = require "st.utils"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 local color_utils = require "switch_utils.color_utils"
+local cfg = require "switch_utils.device_configuration"
+local device_cfg = cfg.DeviceCfg
+
+-- Include driver-side definitions when lua libs api version is < 11
+if version.api < 11 then
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
+end
 
 local AttributeHandlers = {}
 
@@ -30,7 +38,10 @@ end
 
 function AttributeHandlers.level_control_current_level_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
-    local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
+    local level = ib.data.value
+    if level > 0 then
+      level = math.max(1, st_utils.round(level / 254.0 * 100))
+    end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
     if type(device.register_native_capability_attr_handler) == "function" then
       device:register_native_capability_attr_handler("switchLevel", "level")
@@ -75,19 +86,23 @@ end
 -- [[ COLOR CONTROL CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.current_hue_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
   end
-  local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "hue")
+  end
 end
 
 function AttributeHandlers.current_saturation_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
   end
-  local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "saturation")
+  end
 end
 
 function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, response)
@@ -124,7 +139,7 @@ function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, 
 end
 
 function AttributeHandlers.current_x_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local y = device:get_field(fields.RECEIVED_Y)
@@ -142,7 +157,7 @@ function AttributeHandlers.current_x_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.current_y_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local x = device:get_field(fields.RECEIVED_X)
@@ -158,15 +173,17 @@ function AttributeHandlers.current_y_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.color_mode_handler(driver, device, ib, response)
-  if ib.data.value == device:get_field(fields.COLOR_MODE) or (ib.data.value ~= fields.HUE_SAT_COLOR_MODE and ib.data.value ~= fields.X_Y_COLOR_MODE) then
-    return
+  if ib.data.value == device:get_field(fields.COLOR_MODE)
+    or (ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
+    and ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY) then
+      return
   end
   device:set_field(fields.COLOR_MODE, ib.data.value)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == fields.HUE_SAT_COLOR_MODE then
+  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  elseif ib.data.value == fields.X_Y_COLOR_MODE then
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
@@ -234,16 +251,11 @@ end
 
 function AttributeHandlers.active_power_handler(driver, device, ib, response)
   if ib.data.value then
-    local watt_value = ib.data.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
-    if ib.endpoint_id ~= 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
-    else
-      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-      device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT), capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
-    end
-    if type(device.register_native_capability_attr_handler) == "function" then
-      device:register_native_capability_attr_handler("powerMeter","power")
-    end
+    local watt_value = ib.data.value / 1000 -- convert received milliwatt to watt
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.powerMeter.power({ value = watt_value, unit = "W"}))
+  end
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("powerMeter","power")
   end
 end
 
@@ -267,44 +279,91 @@ end
 
 -- [[ ELECTRICAL ENERGY MEASUREMENT CLUSTER ATTRIBUTES ]] --
 
-function AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
-  if ib.data.elements.energy then
-    local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
-    device:set_field(fields.TOTAL_IMPORTED_ENERGY, watt_hour_value, {persist = true})
-    if ib.endpoint_id ~= 0 then
-      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
-    else
-      -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-      device:emit_event_for_endpoint(device:get_field(fields.ENERGY_MANAGEMENT_ENDPOINT), capabilities.energyMeter.energy({ value = watt_hour_value, unit = "Wh" }))
-    end
-    switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
-  end
-end
-
-function AttributeHandlers.per_energy_imported_handler(driver, device, ib, response)
-  if ib.data.elements.energy then
-    local watt_hour_value = ib.data.elements.energy.value / fields.CONVERSION_CONST_MILLIWATT_TO_WATT
-    local latest_energy_report = device:get_field(fields.TOTAL_IMPORTED_ENERGY) or 0
-    local summed_energy_report = latest_energy_report + watt_hour_value
-    device:set_field(fields.TOTAL_IMPORTED_ENERGY, summed_energy_report, {persist = true})
-    device:emit_event(capabilities.energyMeter.energy({ value = summed_energy_report, unit = "Wh" }))
-    switch_utils.report_power_consumption_to_st_energy(device, device:get_field(fields.TOTAL_IMPORTED_ENERGY))
-  end
-end
-
-function AttributeHandlers.energy_imported_factory(is_cumulative_report)
+function AttributeHandlers.energy_imported_factory(is_periodic_report)
   return function(driver, device, ib, response)
-    if is_cumulative_report then
-      AttributeHandlers.cumul_energy_imported_handler(driver, device, ib, response)
-    elseif device:get_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED) then
-      AttributeHandlers.per_energy_imported_handler(driver, device, ib, response)
+    if version.api < 11 then
+      clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct:augment_type(ib.data)
     end
+    if ib.data.elements.energy then
+      local energy_imported_wh = ib.data.elements.energy.value / 1000 -- convert received milliwatt-hour to watt-hour
+      if is_periodic_report then
+        -- handle this report only if cumulative reports are not supported
+        if device:get_field(fields.CUMULATIVE_REPORTS_SUPPORTED) then return end
+        local energy_meter_latest_state = switch_utils.get_latest_state_for_endpoint(
+          device, ib, capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME
+        ) or 0
+        energy_imported_wh = energy_imported_wh + energy_meter_latest_state
+      else
+        -- the field containing the offset may be associated with a child device
+        local field_device = switch_utils.find_child(device, ib.endpoint_id) or device
+        local energy_meter_offset = field_device:get_field(fields.ENERGY_METER_OFFSET) or 0.0
+        energy_imported_wh = energy_imported_wh - energy_meter_offset
+      end
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
+      switch_utils.report_power_consumption_to_st_energy(device, ib.endpoint_id, energy_imported_wh)
+    else
+      device.log.warn("Received data from the energy imported attribute does not include a numerical energy value")
+    end
+  end
+end
+
+
+-- [[ POWER TOPOLOGY CLUSTER ATTRIBUTES ]] --
+
+--- AvailableEndpoints: This attribute SHALL indicate the list of endpoints capable of
+--- providing power to and/or consuming power from the endpoint hosting this server.
+---
+--- In the case there are multiple endpoints supporting the PowerTopology cluster with
+--- SET feature, all AvailableEndpoints responses must be handled before profiling.
+function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
+  local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
+  for i, set_ep_info in pairs(set_topology_eps or {}) do
+    if ib.endpoint_id == set_ep_info.endpoint_id then
+      -- since EP reponse is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
+      switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
+      local available_endpoints_ids = {}
+      for _, element in pairs(ib.data.elements) do
+        table.insert(available_endpoints_ids, element.value)
+      end
+      -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
+      -- set an assigned child key in the case this will emit events on an EDGE_CHILD device
+      switch_utils.set_fields_for_electrical_sensor_endpoint(device, set_ep_info, available_endpoints_ids)
+      break
+    end
+  end
+  if #set_topology_eps == 0 then -- in other words, all AvailableEndpoints attribute responses have been handled
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
+    device_cfg.match_profile(driver, device)
+  end
+end
+
+
+-- [[ DESCRIPTOR CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.parts_list_handler(driver, device, ib, response)
+  local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
+  for i, tree_ep_info in pairs(tree_topology_eps or {}) do
+    if ib.endpoint_id == tree_ep_info.endpoint_id then
+      -- since EP reponse is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
+      switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
+      local associated_endpoints_ids = {}
+      for _, element in pairs(ib.data.elements) do
+        table.insert(associated_endpoints_ids, element.value)
+      end
+      -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
+      -- set an assigned child key in the case this will emit events on an EDGE_CHILD device
+      switch_utils.set_fields_for_electrical_sensor_endpoint(device, tree_ep_info, associated_endpoints_ids)
+      break
+    end
+  end
+  if #tree_topology_eps == 0 then -- in other words, all PartsList attribute responses for TREE Electrical Sensor EPs have been handled
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, {persist=true})
+    device_cfg.match_profile(driver, device)
   end
 end
 
 
 -- [[ POWER SOURCE CLUSTER ATTRIBUTES ]] --
-
 
 function AttributeHandlers.bat_percent_remaining_handler(driver, device, ib, response)
   if ib.data.value then

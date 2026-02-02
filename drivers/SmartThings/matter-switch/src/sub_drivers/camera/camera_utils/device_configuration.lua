@@ -49,20 +49,22 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   local microphone_component_capabilities = {}
   local doorbell_component_capabilities = {}
 
+  local function has_server_cluster_type(cluster)
+    return cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH"
+  end
+
   local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
   if #camera_endpoints > 0 then
-    if #device:get_endpoints(clusters.WebRTCTransportProvider.ID, {cluster_type = "SERVER"}) > 0 and
-      #device:get_endpoints(clusters.WebRTCTransportRequestor.ID, {cluster_type = "CLIENT"}) > 0 then
-      table.insert(main_component_capabilities, capabilities.webrtc.ID)
-    end
     local camera_ep = switch_utils.get_endpoint_info(device, camera_endpoints[1])
     for _, ep_cluster in pairs(camera_ep.clusters or {}) do
-      if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID then
+      if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID and has_server_cluster_type(ep_cluster) then
         local clus_has_feature = function(feature_bitmap)
           return clusters.CameraAvStreamManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
-          table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
+          if switch_utils.find_cluster_on_ep(camera_ep, clusters.PushAvStreamTransport.ID, "SERVER") then
+            table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
+          end
           table.insert(main_component_capabilities, capabilities.cameraViewportSettings.ID)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE) then
@@ -92,7 +94,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.NIGHT_VISION) then
           table.insert(main_component_capabilities, capabilities.nightVision.ID)
         end
-      elseif ep_cluster.cluster_id == clusters.CameraAvSettingsUserLevelManagement.ID then
+      elseif ep_cluster.cluster_id == clusters.CameraAvSettingsUserLevelManagement.ID and has_server_cluster_type(ep_cluster) then
         local clus_has_feature = function(feature_bitmap)
           return clusters.CameraAvSettingsUserLevelManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
         end
@@ -102,10 +104,13 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
           table.insert(main_component_capabilities, capabilities.mechanicalPanTiltZoom.ID)
         end
         table.insert(main_component_capabilities, capabilities.videoStreamSettings.ID)
-      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID then
+      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
-      elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID then
+      elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.motionSensor.ID)
+      elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) and
+        #device:get_endpoints(clusters.WebRTCTransportRequestor.ID, {cluster_type = "CLIENT"}) > 0 then
+        table.insert(main_component_capabilities, capabilities.webrtc.ID)
       end
     end
   end
@@ -116,8 +121,6 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL)
   if #doorbell_endpoints > 0 then
     table.insert(doorbell_component_capabilities, capabilities.button.ID)
-    CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
-    button_cfg.configure_buttons(device)
   end
   if status_light_enabled_present then
     table.insert(status_led_component_capabilities, capabilities.switch.ID)
@@ -142,6 +145,10 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
 
   if camera_utils.optional_capabilities_list_changed(optional_supported_component_capabilities, device.profile.components) then
     device:try_update_metadata({profile = "camera", optional_component_capabilities = optional_supported_component_capabilities})
+    if #doorbell_endpoints > 0 then
+      CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
+      button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
+    end
   end
 end
 

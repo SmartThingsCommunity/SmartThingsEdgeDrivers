@@ -22,7 +22,12 @@ local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
 if version.api < 11 then
   clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
   clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
+  clusters.PowerTopology = require "embedded_clusters.PowerTopology"
   clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
+end
+
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
 local SwitchLifecycleHandlers = {}
@@ -32,6 +37,8 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device:send(clusters.OnOff.attributes.OnOff:read(device))
+  elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    switch_utils.handle_electrical_sensor_info(device)
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -42,27 +49,38 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
+  elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    -- because get_parent_device() may cause race conditions if used in init, an initial child subscribe is handled in doConfigure.
+    -- all future calls to subscribe will be handled by the parent device in init
+    device:subscribe()
   end
 end
 
 function SwitchLifecycleHandlers.driver_switched(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+    switch_utils.handle_electrical_sensor_info(device) -- field settings required for proper setup when switching drivers
     device_cfg.match_profile(driver, device)
   end
 end
 
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
-  if device.profile.id ~= args.old_st_store.profile.id then
-    device:subscribe()
-    local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-    if #button_eps > 0 and device.network_type == device_lib.NETWORK_TYPE_MATTER then
-      button_cfg.configure_buttons(device)
+  if device.profile.id ~= args.old_st_store.profile.id or device:get_field(fields.MODULAR_PROFILE_UPDATED) then
+    device:set_field(fields.MODULAR_PROFILE_UPDATED, nil)
+    if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+      device:subscribe()
+      button_cfg.configure_buttons(device,
+        device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+      )
+    elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
+      device:get_parent_device():subscribe() -- parent device required to send subscription requests
     end
   end
-end
 
-function SwitchLifecycleHandlers.device_removed(driver, device)
-  device.log.info("device removed")
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+    if device.matter_version.software ~= args.old_st_store.matter_version.software then
+      device_cfg.match_profile(driver, device)
+    end
+  end
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
@@ -73,46 +91,20 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
-    local default_endpoint_id = switch_utils.find_default_endpoint(device)
-    -- ensure subscription to all endpoint attributes- including those mapped to child devices
-    for idx, ep in ipairs(device.endpoints) do
-      if ep.endpoint_id ~= default_endpoint_id then
-        if device:supports_server_cluster(clusters.OnOff.ID, ep) then
-          local child_profile = switch_cfg.assign_child_profile(device, ep)
-          if idx == 1 and string.find(child_profile, "energy") then
-            -- when energy management is defined in the root endpoint(0), replace it with the first switch endpoint and process it.
-            device:set_field(fields.ENERGY_MANAGEMENT_ENDPOINT, ep, {persist = true})
-          end
-        end
-        local id = 0
-        for _, dt in ipairs(ep.device_types) do
-          id = math.max(id, dt.device_type_id)
-        end
-        for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-          if id == fields.DEVICE_TYPE_ID.GENERIC_SWITCH and
-             attr ~= clusters.PowerSource.attributes.BatPercentRemaining and
-             attr ~= clusters.PowerSource.attributes.BatChargeLevel then
-            device:add_subscribed_event(attr)
-          else
-            device:add_subscribed_attribute(attr)
-          end
-        end
-      end
-    end
+    device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
 
     -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
-    local electrical_energy_measurement_eps = embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID)
-    if #electrical_energy_measurement_eps > 0 then
-      local cumulative_energy_eps = embedded_cluster_utils.get_endpoints(
-        device,
-        clusters.ElectricalEnergyMeasurement.ID,
-        {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}
-      )
-      if #cumulative_energy_eps == 0 then device:set_field(fields.CUMULATIVE_REPORTS_NOT_SUPPORTED, true, {persist = false}) end
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
+      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then
+        device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false})
     end
   end
+end
+
+function SwitchLifecycleHandlers.device_removed(driver, device)
+  device.log.info("device removed")
 end
 
 local matter_driver_template = {
@@ -137,9 +129,12 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.CurrentX.ID] = attribute_handlers.current_x_handler,
         [clusters.ColorControl.attributes.CurrentY.ID] = attribute_handlers.current_y_handler,
       },
+      [clusters.Descriptor.ID] = {
+        [clusters.Descriptor.attributes.PartsList.ID] = attribute_handlers.parts_list_handler,
+      },
       [clusters.ElectricalEnergyMeasurement.ID] = {
-        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = attribute_handlers.energy_imported_factory(true),
-        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = attribute_handlers.energy_imported_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = attribute_handlers.energy_imported_factory(false),
+        [clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported.ID] = attribute_handlers.energy_imported_factory(true),
       },
       [clusters.ElectricalPowerMeasurement.ID] = {
         [clusters.ElectricalPowerMeasurement.attributes.ActivePower.ID] = attribute_handlers.active_power_handler,
@@ -167,6 +162,9 @@ local matter_driver_template = {
         [clusters.PowerSource.attributes.AttributeList.ID] = attribute_handlers.power_source_attribute_list_handler,
         [clusters.PowerSource.attributes.BatChargeLevel.ID] = attribute_handlers.bat_charge_level_handler,
         [clusters.PowerSource.attributes.BatPercentRemaining.ID] = attribute_handlers.bat_percent_remaining_handler,
+      },
+      [clusters.PowerTopology.ID] = {
+        [clusters.PowerTopology.attributes.AvailableEndpoints.ID] = attribute_handlers.available_endpoints_handler,
       },
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.relative_humidity_measured_value_handler
@@ -273,6 +271,9 @@ local matter_driver_template = {
     [capabilities.colorTemperature.ID] = {
       [capabilities.colorTemperature.commands.setColorTemperature.NAME] = capability_handlers.handle_set_color_temperature,
     },
+    [capabilities.energyMeter.ID] = {
+      [capabilities.energyMeter.commands.resetEnergyMeter.NAME] = capability_handlers.handle_reset_energy_meter,
+    },
     [capabilities.fanMode.ID] = {
       [capabilities.fanMode.commands.setFanMode.NAME] = capability_handlers.handle_set_fan_mode
     },
@@ -294,12 +295,46 @@ local matter_driver_template = {
       [capabilities.valve.commands.open.NAME] = capability_handlers.handle_valve_open,
     },
   },
-  supported_capabilities = fields.supported_capabilities,
+  supported_capabilities = {
+    capabilities.audioMute,
+    capabilities.audioRecording,
+    capabilities.audioVolume,
+    capabilities.battery,
+    capabilities.batteryLevel,
+    capabilities.button,
+    capabilities.cameraPrivacyMode,
+    capabilities.cameraViewportSettings,
+    capabilities.colorControl,
+    capabilities.colorTemperature,
+    capabilities.energyMeter,
+    capabilities.fanMode,
+    capabilities.fanSpeedPercent,
+    capabilities.hdr,
+    capabilities.illuminanceMeasurement,
+    capabilities.imageControl,
+    capabilities.level,
+    capabilities.localMediaStorage,
+    capabilities.mechanicalPanTiltZoom,
+    capabilities.motionSensor,
+    capabilities.nightVision,
+    capabilities.powerMeter,
+    capabilities.powerConsumptionReport,
+    capabilities.relativeHumidityMeasurement,
+    capabilities.sounds,
+    capabilities.switch,
+    capabilities.switchLevel,
+    capabilities.temperatureMeasurement,
+    capabilities.valve,
+    capabilities.videoStreamSettings,
+    capabilities.webrtc,
+    capabilities.zoneManagement
+  },
   sub_drivers = {
-    require("sub_drivers.aqara_cube"),
+    switch_utils.lazy_load_if_possible("sub_drivers.aqara_cube"),
     switch_utils.lazy_load("sub_drivers.camera"),
-    require("sub_drivers.eve_energy"),
-    require("sub_drivers.third_reality_mk1")
+    switch_utils.lazy_load_if_possible("sub_drivers.eve_energy"),
+    switch_utils.lazy_load_if_possible("sub_drivers.ikea_scroll"),
+    switch_utils.lazy_load_if_possible("sub_drivers.third_reality_mk1")
   }
 }
 

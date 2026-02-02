@@ -35,10 +35,6 @@ function CameraUtils.update_camera_component_map(device)
           clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel.ID,
           clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel.ID,
         },
-        capability_ids = {
-          capabilities.audioMute.ID,
-          capabilities.audioVolume.ID,
-        }
       }
     end
     if CameraUtils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
@@ -51,10 +47,6 @@ function CameraUtils.update_camera_component_map(device)
           clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel.ID,
           clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel.ID,
         },
-        capability_ids = {
-          capabilities.audioMute.ID,
-          capabilities.audioVolume.ID,
-        }
       }
     end
     device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
@@ -128,28 +120,49 @@ function CameraUtils.profile_changed(synced_components, prev_components)
   return false
 end
 
-function CameraUtils.optional_capabilities_list_changed(optional_capabilities, prev_component_list)
-  local prev_optional_capabilities = {}
-  for idx, comp in pairs(prev_component_list or {}) do
-    local cap_list = {}
-    for _, capability in pairs(comp.capabilities or {}) do
-      table.insert(cap_list, capability.id)
+function CameraUtils.optional_capabilities_list_changed(new_component_capability_list, previous_component_capability_list)
+  local previous_capability_map = {}
+  local component_sizes = {}
+
+  local previous_component_count = 0
+  for component_name, component in pairs(previous_component_capability_list or {}) do
+    previous_capability_map[component_name] = {}
+    component_sizes[component_name] = 0
+    for _, capability in pairs(component.capabilities or {}) do
+      if capability.id ~= "firmwareUpdate" and capability.id ~= "refresh" then
+        previous_capability_map[component_name][capability.id] = true
+        component_sizes[component_name] = component_sizes[component_name] + 1
+      end
     end
-    table.insert(prev_optional_capabilities, {idx, cap_list})
+    previous_component_count = previous_component_count + 1
   end
-  if #optional_capabilities ~= #prev_optional_capabilities then
+
+  local number_of_components_counted = 0
+  for _, new_component_capabilities in pairs(new_component_capability_list or {}) do
+    local component_name = new_component_capabilities[1]
+    local capability_list = new_component_capabilities[2]
+
+    number_of_components_counted = number_of_components_counted + 1
+
+    if previous_capability_map[component_name] == nil then
+      return true
+    end
+
+    for _, capability in ipairs(capability_list) do
+      if previous_capability_map[component_name][capability] == nil then
+        return true
+      end
+    end
+
+    if #capability_list ~= component_sizes[component_name] then
+      return true
+    end
+  end
+
+  if number_of_components_counted ~= previous_component_count then
     return true
   end
-  for _, capability in pairs(optional_capabilities or {}) do
-    if not switch_utils.tbl_contains(prev_optional_capabilities, capability) then
-      return true
-    end
-  end
-  for _, capability in pairs(prev_optional_capabilities or {}) do
-    if not switch_utils.tbl_contains(optional_capabilities, capability) then
-      return true
-    end
-  end
+
   return false
 end
 
@@ -201,7 +214,8 @@ function CameraUtils.subscribe(device)
       clusters.CameraAvStreamManagement.attributes.StatusLightBrightness
     },
     [capabilities.switch.ID] = {
-      clusters.CameraAvStreamManagement.attributes.StatusLightEnabled
+      clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
+      clusters.OnOff.attributes.OnOff
     },
     [capabilities.videoStreamSettings.ID] = {
       clusters.CameraAvStreamManagement.attributes.RateDistortionTradeOffPoints,
@@ -231,8 +245,26 @@ function CameraUtils.subscribe(device)
     },
     [capabilities.motionSensor.ID] = {
       clusters.OccupancySensing.attributes.Occupancy
-    }
+    },
+    [capabilities.switchLevel.ID] = {
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.LevelControl.attributes.MaxLevel,
+      clusters.LevelControl.attributes.MinLevel,
+    },
+    [capabilities.colorControl.ID] = {
+      clusters.ColorControl.attributes.ColorMode,
+      clusters.ColorControl.attributes.CurrentHue,
+      clusters.ColorControl.attributes.CurrentSaturation,
+      clusters.ColorControl.attributes.CurrentX,
+      clusters.ColorControl.attributes.CurrentY,
+    },
+    [capabilities.colorTemperature.ID] = {
+      clusters.ColorControl.attributes.ColorTemperatureMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+      clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    },
   }
+
   local camera_subscribed_events = {
     [capabilities.zoneManagement.ID] = {
       clusters.ZoneManagement.events.ZoneTriggered,
@@ -246,56 +278,26 @@ function CameraUtils.subscribe(device)
     }
   }
 
-  for capability, attr_list in pairs(camera_subscribed_attributes) do
-    if device:supports_capability_by_id(capability) then
-      for _, attr in pairs(attr_list) do
-        device:add_subscribed_attribute(attr)
-      end
-    end
-  end
-  for capability, event_list in pairs(camera_subscribed_events) do
-    if device:supports_capability_by_id(capability) then
-      for _, event in pairs(event_list) do
-        device:add_subscribed_event(event)
-      end
-    end
-  end
-
-  -- match_profile is called from the CameraAvStreamManagement AttributeList handler,
-  -- so the subscription needs to be added here first
-  if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) > 0 then
-    device:add_subscribed_attribute(clusters.CameraAvStreamManagement.attributes.AttributeList)
-  end
-
-  -- Add subscription for attributes specific to child devices
-  if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
-    for _, ep in ipairs(device.endpoints or {}) do
-      local id = 0
-      for _, dt in ipairs(ep.device_types or {}) do
-        if dt.device_type_id ~= fields.DEVICE_TYPE_ID.GENERIC_SWITCH then
-          id = math.max(id, dt.device_type_id)
-        end
-      end
-      for _, attr in pairs(fields.device_type_attribute_map[id] or {}) do
-        device:add_subscribed_attribute(attr)
-      end
-    end
-  end
-
   local im = require "st.matter.interaction_model"
-  local subscribed_attributes = device:get_field("__subscribed_attributes") or {}
-  local subscribed_events = device:get_field("__subscribed_events") or {}
+
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
-  for _, attributes in pairs(subscribed_attributes) do
-    for _, ib in pairs(attributes) do
-      subscribe_request:with_info_block(ib)
+  local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
+
+  if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) > 0 then
+    local ib = im.InteractionInfoBlock(nil, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.attributes.AttributeList.ID)
+    subscribe_request:with_info_block(ib)
+  end
+
+  for _, endpoint_info in ipairs(device.endpoints) do
+    local checked_device = switch_utils.find_child(device, endpoint_info.endpoint_id) or device
+    if not devices_seen[checked_device.id] then
+      switch_utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+        camera_subscribed_attributes, camera_subscribed_events
+      )
+      devices_seen[checked_device.id] = true -- only loop through any device once
     end
   end
-  for _, events in pairs(subscribed_events) do
-    for _, ib in pairs(events) do
-      subscribe_request:with_info_block(ib)
-    end
-  end
+
   if #subscribe_request.info_blocks > 0 then
     device:send(subscribe_request)
   end

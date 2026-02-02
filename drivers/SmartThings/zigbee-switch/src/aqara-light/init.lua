@@ -21,9 +21,21 @@ local function do_refresh(self, device)
   device:send(ColorControl.attributes.ColorTemperatureMireds:read(device))
 end
 
+local function emit_event_if_latest_state_missing(device, component, capability, attribute_name, value)
+  if device:get_latest_state(component, capability.ID, attribute_name) == nil then
+    device:emit_event(value)
+  end
+end
+
 local function device_added(driver, device, event)
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1)) -- private
+
+  local value = { minimum = 2700, maximum = 6000 }
+  if device:get_model() == "lumi.light.cwacn1" then
+    value.maximum = 6500
+  end
+  emit_event_if_latest_state_missing(device, "main", capabilities.colorTemperature, capabilities.colorTemperature.colorTemperatureRange.NAME, capabilities.colorTemperature.colorTemperatureRange(value))
 end
 
 local function do_configure(self, device)

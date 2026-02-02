@@ -23,6 +23,10 @@ local mock_device = test.mock_device.build_test_matter_device({
     vendor_id = 0x0000,
     product_id = 0x0000,
   },
+  matter_version = {
+    hardware = 1,
+    software = 1,
+  },
   endpoints = {
     {
       endpoint_id = 0,
@@ -162,7 +166,8 @@ local function test_init()
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -239,7 +244,8 @@ local function test_init_parent_child_endpoints_non_sequential()
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -259,7 +265,7 @@ local function test_init_parent_child_endpoints_non_sequential()
   test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.matter:__expect_send({unsup_mock_device.id, clusters.ColorControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
 
-  unsup_mock_device:expect_metadata_update({ profile = "light-binary" })
+  unsup_mock_device:expect_metadata_update({ profile = "switch-binary" })
   unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children_non_sequential) do
@@ -685,6 +691,16 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_parent_child_endpoints_non_sequential }
+)
+
+test.register_coroutine_test(
+  "Test info changed event with matter_version update",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })) -- bump to 2
+    mock_children[child1_ep]:expect_metadata_update({ profile = "light-level" })
+    mock_children[child2_ep]:expect_metadata_update({ profile = "light-color-level" })
+    mock_device:expect_metadata_update({ profile = "light-binary" })
+  end
 )
 
 test.run_registered_tests()

@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -20,24 +10,12 @@ local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 --- @type st.zwave.CommandClass.Battery
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 
-local MULTIFUNCTIONAL_SIREN_FINGERPRINTS = {
-  { manufacturerId = 0x027A, productType = 0x000C, productId = 0x0003 }, -- Zooz S2 Multisiren ZSE19
-  { manufacturerId = 0x0060, productType = 0x000C, productId = 0x0003 } -- Everspring Indoor Voice Siren
-}
 
 --- Determine whether the passed device is multifunctional siren
 ---
 --- @param driver Driver driver instance
 --- @param device Device device isntance
 --- @return boolean true if the device proper, else false
-local function can_handle_multifunctional_siren(opts, driver, device, ...)
-  for _, fingerprint in ipairs(MULTIFUNCTIONAL_SIREN_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 --- Default handler for notification command class reports
 ---
@@ -74,7 +52,7 @@ local multifunctional_siren = {
     doConfigure = do_configure
   },
   NAME = "multifunctional siren",
-  can_handle = can_handle_multifunctional_siren,
+  can_handle = require("multifunctional-siren.can_handle"),
 }
 
 return multifunctional_siren

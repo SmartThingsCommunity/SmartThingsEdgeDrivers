@@ -42,7 +42,7 @@ function CapabilityHandlers.handle_switch_set_level(driver, device, cmd)
     device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
   end
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.level/100.0 * 254)
+  local level = st_utils.round(cmd.args.level/100.0 * 254)
   device:send(clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate, 0, 0))
 end
 
@@ -166,6 +166,27 @@ function CapabilityHandlers.handle_fan_speed_set_percent(driver, device, cmd)
   local speed = math.floor(cmd.args.percent)
   local fan_ep = device:get_endpoints(clusters.FanControl.ID)[1]
   device:send(clusters.FanControl.attributes.PercentSetting:write(device, fan_ep, speed))
+end
+
+
+-- [[ ENERGY METER CAPABILITY COMMANDS ]] --
+
+---
+--- If a Cumulative Reporting device, this will store the most recent energy meter reading, and all subsequent reports will have this value subtracted
+--- from the value reported. Matter, like Zigbee and unlike Z-Wave, does not provide a way to reset the value to zero, so this is an attempt at a workaround.
+--- In the case it is a Periodic Reporting device, the reports do not need to be offset, so setting the current energy to 0.0 will do the same thing.
+---
+function CapabilityHandlers.handle_reset_energy_meter(driver, device, cmd)
+  local energy_meter_latest_state = device:get_latest_state(cmd.component, capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME) or 0.0
+  if energy_meter_latest_state ~= 0.0 then
+    device:emit_component_event(device.profile.components[cmd.component], capabilities.energyMeter.energy({value = 0.0, unit = "Wh"}))
+    -- note: field containing cumulative reports supported is only set on the parent device
+    local field_device = device:get_parent_device() or device
+    if field_device:get_field(fields.CUMULATIVE_REPORTS_SUPPORTED) then
+      local current_offset = device:get_field(fields.ENERGY_METER_OFFSET) or 0.0
+      device:set_field(fields.ENERGY_METER_OFFSET, current_offset + energy_meter_latest_state, {persist=true})
+    end
+  end
 end
 
 return CapabilityHandlers

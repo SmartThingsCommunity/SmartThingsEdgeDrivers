@@ -74,7 +74,11 @@ local function zb_fan_control_handler(driver, device, value, zb_rx)
 end
 
 local function zb_level_handler(driver, device, value, zb_rx)
-  local evt = capabilities.switchLevel.level(math.floor((value.value / 254.0 * 100) + 0.5))
+  local level = value.value
+  if level > 0 then
+    level = math.max(1, math.floor((level / 254.0 * 100) + 0.5))
+  end
+  local evt = capabilities.switchLevel.level(level)
   device:emit_component_event(device.profile.components.light, evt)
 end
 
