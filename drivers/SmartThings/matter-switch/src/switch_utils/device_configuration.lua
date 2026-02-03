@@ -17,6 +17,7 @@ end
 
 local DeviceConfiguration = {}
 local ChildConfiguration = {}
+local ClosureDeviceConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
@@ -188,6 +189,18 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
   end
 end
 
+local function populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
+  local power_source_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.PowerSource.ID)
+  if power_source_cluster_info then
+    local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
+    if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
+      table.insert(main_component_capabilities, capabilities.battery.ID)
+    elseif battery_support == fields.battery_support.BATTERY_LEVEL then
+      table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+    end
+  end
+end
+
 function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device, server_window_covering_ep_id)
   local ep_info = switch_utils.get_endpoint_info(device, server_window_covering_ep_id)
   local window_covering_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.WindowCovering.ID)
@@ -201,18 +214,46 @@ function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep
     table.insert(main_component_capabilities, capabilities.windowShadeTiltLevel.ID)
   end
 
-  local power_source_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.PowerSource.ID)
-  if power_source_cluster_info then
-    local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
-    if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
-      table.insert(main_component_capabilities, capabilities.battery.ID)
-    elseif battery_support == fields.battery_support.BATTERY_LEVEL then
-      table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
-    end
-  end
+  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
 
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   return "window-covering-modular", optional_supported_component_capabilities
+end
+
+function ClosureDeviceConfiguration.assign_profile_for_covering_ep(device, server_covering_ep_id)
+  local ep_info = switch_utils.get_endpoint_info(device, server_covering_ep_id)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  return "covering", optional_supported_component_capabilities
+end
+
+function ClosureDeviceConfiguration.assign_profile_for_gate_ep(device, server_gate_ep_id)
+  local ep_info = switch_utils.get_endpoint_info(device, server_gate_ep_id)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  return "gate", optional_supported_component_capabilities
+end
+
+function ClosureDeviceConfiguration.assign_profile_for_door_ep(device, server_door_ep_id)
+  local ep_info = switch_utils.get_endpoint_info(device, server_door_ep_id)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  return "door", optional_supported_component_capabilities
+end
+
+function ClosureDeviceConfiguration.assign_profile_for_garage_door_ep(device, server_garage_door_ep_id)
+  local ep_info = switch_utils.get_endpoint_info(device, server_garage_door_ep_id)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  return "garage-door", optional_supported_component_capabilities
 end
 
 
@@ -286,12 +327,31 @@ function DeviceConfiguration.match_profile(driver, device)
     updated_profile, optional_component_capabilities = WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device, default_endpoint_id)
   end
 
+  -- initialize the main device card with closure if applicable
+  local closure_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CLOSURE)
+  if #closure_ep_ids > 0 then
+    ChildConfiguration.create_or_update_child_devices(driver, device, closure_ep_ids, default_endpoint_id, ClosureDeviceConfiguration.assign_profile_for_closure_ep)
+  end
+  if switch_utils.tbl_contains(closure_ep_ids, default_endpoint_id) then
+    local closure_tag = device:get_field(fields.profiling_data.CLOSURE_TAG)
+    if closure_tag == fields.closure_tag.GATE then
+      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_gate_ep(device, default_endpoint_id)
+    elseif closure_tag == fields.closure_tag.DOOR then
+      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_door_ep(device, default_endpoint_id)
+    elseif closure_tag == fields.closure_tag.GARAGE_DOOR then
+      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_garage_door_ep(device, default_endpoint_id)
+    else -- COVERING, WINDOW, BARRIER, CABINET - use generic Covering
+      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_covering_ep(device, default_endpoint_id)
+    end
+  end
+
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
 end
 
 return {
   ButtonCfg = ButtonDeviceConfiguration,
   ChildCfg = ChildConfiguration,
+  ClosureCfg = ClosureDeviceConfiguration,
   DeviceCfg = DeviceConfiguration,
   SwitchCfg = SwitchDeviceConfiguration,
   WindowCoveringCfg = WindowCoveringDeviceConfiguration,

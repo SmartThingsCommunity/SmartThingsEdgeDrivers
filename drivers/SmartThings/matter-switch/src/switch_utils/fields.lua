@@ -25,6 +25,7 @@ SwitchFields.DEVICE_TYPE_ID = {
   BRIDGED_NODE = 0x0013,
   CAMERA = 0x0142,
   CHIME = 0x0146,
+  CLOSURE = 0x0230,
   DIMMABLE_PLUG_IN_UNIT = 0x010B,
   DOORBELL = 0x0143,
   ELECTRICAL_SENSOR = 0x0510,
@@ -146,14 +147,26 @@ SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
 SwitchFields.profiling_data = {
-  POWER_TOPOLOGY = "__power_topology",
   BATTERY_SUPPORT = "__battery_support",
+  CLOSURE_TAG = "__closure_tag",
+  POWER_TOPOLOGY = "__power_topology",
 }
 
 SwitchFields.battery_support = {
-  NO_BATTERY = "NO_BATTERY",
   BATTERY_LEVEL = "BATTERY_LEVEL",
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE",
+  NO_BATTERY = "NO_BATTERY",
+}
+
+SwitchFields.closure_tag = {
+  NA = "N/A",
+  COVERING = "COVERING",
+  WINDOW = "WINDOW",
+  BARRIER = "BARRIER",
+  CABINET = "CABINET",
+  GATE = "GATE",
+  GARAGE_DOOR = "GARAGE_DOOR",
+  DOOR = "DOOR",
 }
 
 SwitchFields.ENERGY_METER_OFFSET = "__energy_meter_offset"

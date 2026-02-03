@@ -9,8 +9,12 @@ local attribute_handlers = require "sub_drivers.closures.closure_handlers.attrib
 local capabilities = require "st.capabilities"
 local capability_handlers = require "sub_drivers.closures.closure_handlers.capability_handlers"
 local closure_fields = require "sub_drivers.closures.closure_utils.fields"
+local closure_utils = require "sub_drivers.closures.closure_utils.utils"
 local clusters = require "st.matter.clusters"
+local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
+
+clusters.ClosureControl = require "embedded_clusters.ClosureControl"
 
 local ClosureLifecycleHandlers = {}
 
@@ -26,7 +30,13 @@ function ClosureLifecycleHandlers.device_init(driver, device)
     device:emit_event(capabilities.windowShadePreset.position(preset_position, {visibility = {displayed = false}}))
     device:set_field(closure_fields.PRESET_LEVEL_KEY, preset_position, {persist = true})
   end
-  device:extend_device("subscribe", switch_utils.subscribe)
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+  end
+  if #device:get_endpoints(clusters.ClosureControl.ID) == 0 then
+    device:set_field(fields.profiling_data.CLOSURE_TAG, fields.closure_tag.NA, {persist = true})
+  end
+  device:extend_device("subscribe", closure_utils.subscribe)
   device:subscribe()
 end
 
@@ -44,6 +54,11 @@ local closures_handler = {
   },
   matter_handlers = {
     attr = {
+      [clusters.ClosureControl.ID] = {
+        [clusters.ClosureControl.attributes.MainState.ID] = attribute_handlers.main_state_attr_handler,
+        [clusters.ClosureControl.attributes.OverallCurrentState.ID] = attribute_handlers.overall_current_state_attr_handler,
+        [clusters.ClosureControl.attributes.OverallTargetState.ID] = attribute_handlers.overall_target_state_attr_handler,
+      },
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = attribute_handlers.level_attr_handler,
       },
@@ -55,6 +70,10 @@ local closures_handler = {
     },
   },
   capability_handlers = {
+    [capabilities.doorControl.ID] = {
+      [capabilities.doorControl.commands.open.NAME] = capability_handlers.handle_door_open,
+      [capabilities.doorControl.commands.close.NAME] = capability_handlers.handle_door_close
+    },
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = capability_handlers.handle_preset,
       [capabilities.windowShadePreset.commands.setPresetPosition.NAME] = capability_handlers.handle_set_preset

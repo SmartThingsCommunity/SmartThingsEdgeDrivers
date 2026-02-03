@@ -151,10 +151,6 @@ function utils.find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
-  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
-  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
-  local window_covering_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
 
   local get_first_non_zero_endpoint = function(endpoints)
     table.sort(endpoints)
@@ -167,11 +163,14 @@ function utils.find_default_endpoint(device)
   end
 
   -- Return the first fan endpoint as the default endpoint if any is found
+  local fan_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_ep_ids > 0 then
     return get_first_non_zero_endpoint(fan_ep_ids)
   end
 
   -- Return the first onoff endpoint as the default endpoint if no momentary switch endpoints are present
+  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
   if #momentary_switch_ep_ids == 0 and #onoff_ep_ids > 0 then
     return get_first_non_zero_endpoint(onoff_ep_ids)
   end
@@ -195,8 +194,15 @@ function utils.find_default_endpoint(device)
   end
 
   -- Return the first window covering endpoint as the default endpoint if any is found
+  local window_covering_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
   if #window_covering_ep_ids > 0 then
     return get_first_non_zero_endpoint(window_covering_ep_ids)
+  end
+
+  -- Return the first closure endpoint as the default endpoint if any is found
+  local closure_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CLOSURE)
+  if #closure_ep_ids > 0 then
+    return get_first_non_zero_endpoint(closure_ep_ids)
   end
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))

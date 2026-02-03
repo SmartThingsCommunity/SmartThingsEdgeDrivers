@@ -8,7 +8,8 @@ return function(opts, driver, device, ...)
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device = device:get_parent_device()
   end
-  if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING) > 0 then
+  if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING) > 0 or
+    #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CLOSURE) > 0 then
     return true, require("sub_drivers.closures")
   end
   return false
