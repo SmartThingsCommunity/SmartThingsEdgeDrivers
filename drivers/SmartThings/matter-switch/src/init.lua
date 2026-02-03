@@ -103,13 +103,10 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
-    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
-      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
-    end
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
 
-    -- device energy reporting must be handled cumulatively, periodically, or by both simultaneously.
+    -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
     if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then

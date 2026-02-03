@@ -319,10 +319,10 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, set_ep_info in pairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
-      -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
+      -- since EP reponse is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
       switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
       local available_endpoints_ids = {}
-      for _, element in pairs(ib.data.elements or {}) do
+      for _, element in pairs(ib.data.elements) do
         table.insert(available_endpoints_ids, element.value)
       end
       -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
@@ -344,10 +344,10 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, tree_ep_info in pairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then
-      -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
+      -- since EP reponse is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
       switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
       local associated_endpoints_ids = {}
-      for _, element in pairs(ib.data.elements or {}) do
+      for _, element in pairs(ib.data.elements) do
         table.insert(associated_endpoints_ids, element.value)
       end
       -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
@@ -382,19 +382,29 @@ function AttributeHandlers.bat_charge_level_handler(driver, device, ib, response
 end
 
 function AttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
-  local previous_battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
-  device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
-  for _, attr in ipairs(ib.data.elements or {}) do
-    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
-      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_PERCENTAGE, {persist=true})
+  local profile_name = ""
+
+  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  for _, attr in ipairs(ib.data.elements) do
+    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
+    -- BatChargeLevel (Attribute ID 0x0E) is present.
+    if attr.value == 0x0C then
+      profile_name = "button-battery"
       break
-    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID and
-      device:get_field(fields.profiling_data.BATTERY_SUPPORT) ~= fields.battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
-      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_LEVEL, {persist=true})
+    elseif attr.value == 0x0E then
+      profile_name = "button-batteryLevel"
+      break
     end
   end
-  if not previous_battery_support or previous_battery_support ~= device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
-    device_cfg.match_profile(driver, device)
+  if profile_name ~= "" then
+    if #button_eps > 1 then
+      profile_name = string.format("%d-", #button_eps) .. profile_name
+    end
+
+    if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
+      profile_name = profile_name .. "-temperature-humidity"
+    end
+    device:try_update_metadata({ profile = profile_name })
   end
 end
 
