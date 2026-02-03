@@ -17,6 +17,7 @@ local attribute_handlers = require "switch_handlers.attribute_handlers"
 local event_handlers = require "switch_handlers.event_handlers"
 local capability_handlers = require "switch_handlers.capability_handlers"
 local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
+local report_error = _envlibrequire("util.report_error")
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -108,6 +109,52 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     end
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
+
+    -- Create two duplicate child devices
+    device.log.info_with({hub_logs = true}, "Creating duplicate child devices on matter switch init")
+    local success, error_msg = driver:try_create_device({
+        type = "EDGE_CHILD",
+        label = "Test Child Device",
+        profile = "switch-binary",
+        parent_device_id = device.id,
+        parent_assigned_child_key = "1",
+        vendor_provided_label = "Test"
+      })
+
+      device.log.info_with({hub_logs = true}, string.format("Create Child Device 1 #1 - success: %s, error_msg: %s", success, error_msg))
+
+      driver:try_create_device({
+        type = "EDGE_CHILD",
+        label = "Test Child Device",
+        profile = "switch-binary",
+        parent_device_id = device.id,
+        parent_assigned_child_key = "1",
+        vendor_provided_label = "Test"
+      })
+
+      device.log.info_with({hub_logs = true}, string.format("Create Child Device 1 #2 - success: %s, error_msg: %s", success, error_msg))
+
+      local success, error_msg = driver:try_create_device({
+        type = "EDGE_CHILD",
+        label = "Test Child Device",
+        profile = "switch-binary",
+        parent_device_id = device.id,
+        parent_assigned_child_key = "2",
+        vendor_provided_label = "Test"
+      })
+
+      device.log.info_with({hub_logs = true}, string.format("Create Child Device 2 #1 - success: %s, error_msg: %s", success, error_msg))
+
+      driver:try_create_device({
+        type = "EDGE_CHILD",
+        label = "Test Child Device",
+        profile = "switch-binary",
+        parent_device_id = device.id,
+        parent_assigned_child_key = "2",
+        vendor_provided_label = "Test"
+      })
+
+      device.log.info_with({hub_logs = true}, string.format("Create Child Device 2 #2 - success: %s, error_msg: %s", success, error_msg))
 
     -- device energy reporting must be handled cumulatively, periodically, or by both simultaneously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
