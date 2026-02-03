@@ -89,6 +89,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x10E1, 0x2002}, -- VDA
   {0x1421, 0x0042}, -- Kwikset Halo Select Plus
   {0x1421, 0x0081}, -- Kwikset Aura Reach
+  {0x1236, 0xa538}, -- Kwikset Aura Reach
 }
 
 local battery_support = {
