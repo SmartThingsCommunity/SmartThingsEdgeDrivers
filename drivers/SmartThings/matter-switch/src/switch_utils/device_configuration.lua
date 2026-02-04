@@ -217,10 +217,10 @@ function ValveDeviceConfiguration.assign_profile_for_valve_ep(device, valve_ep_i
   if #irrigation_system_device_type_ep_ids > 0 then
     local irrigation_system_ep_info = switch_utils.get_endpoint_info(device, irrigation_system_device_type_ep_ids[1])
     for _, cluster in ipairs(irrigation_system_ep_info.clusters) do
-      if cluster.cluster_id == clusters.OperationalState.ID then
+      if cluster.cluster_id == clusters.FlowMeasurement.ID then
+      table.insert(main_component_capabilities, capabilities.flowMeasurement.ID)
+      elseif cluster.cluster_id == clusters.OperationalState.ID then
         table.insert(main_component_capabilities, capabilities.operationalState.ID)
-      elseif cluster.cluster_id == clusters.FlowMeasurement.ID then
-        table.insert(main_component_capabilities, capabilities.flowMeasurement.ID)
       end
     end
   end

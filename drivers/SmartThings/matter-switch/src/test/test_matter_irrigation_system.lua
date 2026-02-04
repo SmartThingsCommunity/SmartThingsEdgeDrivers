@@ -394,5 +394,42 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "OperationalState attribute running should generate running event",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_irrigation_system.id,
+      clusters.OperationalState.attributes.OperationalState:build_test_report_data(
+        mock_irrigation_system,
+        endpoints.IRRIGATION_SYSTEM_EP,
+        clusters.OperationalState.types.OperationalStateEnum.RUNNING
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_irrigation_system:generate_test_message("main", capabilities.operationalState.operationalState.running())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "OperationalState OperationalError UNABLE_TO_COMPLETE_OPERATION should generate unableToCompleteOperation event",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_irrigation_system.id,
+      clusters.OperationalState.attributes.OperationalError:build_test_report_data(
+        mock_irrigation_system,
+        endpoints.IRRIGATION_SYSTEM_EP, { error_state_id = clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_irrigation_system:generate_test_message("main", capabilities.operationalState.operationalState.unableToCompleteOperation())
+    )
+  end
+)
+
 test.run_registered_tests()
 
