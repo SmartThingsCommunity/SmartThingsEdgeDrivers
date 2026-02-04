@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -118,9 +121,7 @@ local aqara_high_precision_motion_handler = {
       }
     }
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "lumi.motion.agl04"
-  end
+  can_handle = require("aqara.high-precision-motion.can_handle")
 }
 
 return aqara_high_precision_motion_handler

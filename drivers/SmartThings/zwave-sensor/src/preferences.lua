@@ -162,6 +162,19 @@ local devices = {
       motionNotdetRepT = {parameter_number = 160, size = 2},
     },
   },
+  ZOOZ_ZSE42_WATER_LEAK = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0x7000,
+      product_ids = 0xE002
+    },
+    PARAMETERS = {
+      ledIndicator = { parameter_number = 1, size = 1 },
+      leakAlertClearDelay = { parameter_number = 2, size = 4 },
+      batteryThreshold = { parameter_number = 3, size = 1 },
+      lowBatteryAlert = { parameter_number = 4, size = 1 },
+    },
+  },
 }
 local preferences = {}
 

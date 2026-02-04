@@ -3,6 +3,7 @@
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
+local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local uint32 = require "st.matter.data_types.Uint32"
 
@@ -148,6 +149,9 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, read_req})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+  )
   test.socket.matter:__expect_send({mock_device.id, get_subscribe_request(mock_device, cluster_subscribe_list)})
 end
 test.set_test_init_function(test_init)
@@ -166,6 +170,9 @@ local function test_init_disorder_endpoints()
   test.socket.matter:__expect_send({mock_device_disorder_endpoints.id, read_req})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_disorder_endpoints.id, "init" })
+  test.socket.capability:__expect_send(
+    mock_device_disorder_endpoints:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+  )
   test.socket.matter:__expect_send({mock_device_disorder_endpoints.id, get_subscribe_request(
     mock_device_disorder_endpoints, cluster_subscribe_list)})
 end
@@ -196,6 +203,7 @@ local expected_metadata = {
       "main",
       {
         "relativeHumidityMeasurement",
+        "fanSpeedPercent",
         "fanMode",
         "fanOscillationMode",
         "thermostatHeatingSetpoint",
@@ -220,6 +228,7 @@ local new_cluster_subscribe_list = {
   clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
   clusters.FanControl.attributes.FanMode,
   clusters.FanControl.attributes.FanModeSequence,
+  clusters.FanControl.attributes.PercentCurrent,
   clusters.FanControl.attributes.RockSupport,  -- These two attributes will be subscribed to following the profile
   clusters.FanControl.attributes.RockSetting,  -- change since the fanOscillationMode capability will be enabled.
 }
@@ -239,6 +248,37 @@ test.register_coroutine_test(
       get_subscribe_request(mock_device_disorder_endpoints, new_cluster_subscribe_list))
   end,
   { test_init = test_init_disorder_endpoints }
+)
+
+test.register_coroutine_test(
+  "PercentCurrent reports and setPercent commands should be handled correctly after profile change",
+  function()
+    test_thermostat_device_type_update_modular_profile(mock_device, expected_metadata,
+      get_subscribe_request(mock_device, new_cluster_subscribe_list))
+
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, 2, 10)
+    })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.fanSpeedPercent.percent(10))
+    )
+
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "fanSpeedPercent", component = "main", command = "setPercent", args = { 50 } }
+    })
+
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      clusters.FanControl.attributes.PercentSetting:write(mock_device, 2, 50)
+    })
+  end
 )
 
 test.run_registered_tests()

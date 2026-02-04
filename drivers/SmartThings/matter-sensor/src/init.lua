@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -295,11 +295,7 @@ local matter_driver_template = {
     capabilities.hardwareFault,
     capabilities.flowMeasurement,
   },
-  sub_drivers = {
-    require("sub_drivers.air_quality_sensor"),
-    require("sub_drivers.smoke_co_alarm"),
-    require("sub_drivers.bosch_button_contact")
-  }
+  sub_drivers = require("sub_drivers"),
 }
 
 local matter_driver = MatterDriver("matter-sensor", matter_driver_template)

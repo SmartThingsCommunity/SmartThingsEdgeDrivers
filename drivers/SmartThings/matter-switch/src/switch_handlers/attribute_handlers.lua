@@ -38,7 +38,10 @@ end
 
 function AttributeHandlers.level_control_current_level_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
-    local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
+    local level = ib.data.value
+    if level > 0 then
+      level = math.max(1, st_utils.round(level / 254.0 * 100))
+    end
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.level(level))
     if type(device.register_native_capability_attr_handler) == "function" then
       device:register_native_capability_attr_handler("switchLevel", "level")
@@ -83,19 +86,23 @@ end
 -- [[ COLOR CONTROL CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.current_hue_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
   end
-  local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "hue")
+  end
 end
 
 function AttributeHandlers.current_saturation_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.X_Y_COLOR_MODE  or ib.data.value == nil then
-    return
+  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+    local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
   end
-  local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorControl", "saturation")
+  end
 end
 
 function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, response)
@@ -132,7 +139,7 @@ function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, 
 end
 
 function AttributeHandlers.current_x_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local y = device:get_field(fields.RECEIVED_Y)
@@ -150,7 +157,7 @@ function AttributeHandlers.current_x_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.current_y_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == fields.HUE_SAT_COLOR_MODE then
+  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
   local x = device:get_field(fields.RECEIVED_X)
@@ -166,15 +173,17 @@ function AttributeHandlers.current_y_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.color_mode_handler(driver, device, ib, response)
-  if ib.data.value == device:get_field(fields.COLOR_MODE) or (ib.data.value ~= fields.HUE_SAT_COLOR_MODE and ib.data.value ~= fields.X_Y_COLOR_MODE) then
-    return
+  if ib.data.value == device:get_field(fields.COLOR_MODE)
+    or (ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
+    and ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY) then
+      return
   end
   device:set_field(fields.COLOR_MODE, ib.data.value)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-  if ib.data.value == fields.HUE_SAT_COLOR_MODE then
+  if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
     req:merge(clusters.ColorControl.attributes.CurrentSaturation:read())
-  elseif ib.data.value == fields.X_Y_COLOR_MODE then
+  elseif ib.data.value == clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY then
     req:merge(clusters.ColorControl.attributes.CurrentX:read())
     req:merge(clusters.ColorControl.attributes.CurrentY:read())
   end
@@ -284,6 +293,11 @@ function AttributeHandlers.energy_imported_factory(is_periodic_report)
           device, ib, capabilities.energyMeter.ID, capabilities.energyMeter.energy.NAME
         ) or 0
         energy_imported_wh = energy_imported_wh + energy_meter_latest_state
+      else
+        -- the field containing the offset may be associated with a child device
+        local field_device = switch_utils.find_child(device, ib.endpoint_id) or device
+        local energy_meter_offset = field_device:get_field(fields.ENERGY_METER_OFFSET) or 0.0
+        energy_imported_wh = energy_imported_wh - energy_meter_offset
       end
       device:emit_event_for_endpoint(ib.endpoint_id, capabilities.energyMeter.energy({ value = energy_imported_wh, unit = "Wh" }))
       switch_utils.report_power_consumption_to_st_energy(device, ib.endpoint_id, energy_imported_wh)
@@ -305,10 +319,10 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, set_ep_info in pairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
-      -- since EP reponse is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
+      -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
       switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
       local available_endpoints_ids = {}
-      for _, element in pairs(ib.data.elements) do
+      for _, element in pairs(ib.data.elements or {}) do
         table.insert(available_endpoints_ids, element.value)
       end
       -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
@@ -330,10 +344,10 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, tree_ep_info in pairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then
-      -- since EP reponse is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
+      -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
       switch_utils.remove_field_index(device, fields.ELECTRICAL_SENSOR_EPS, i)
       local associated_endpoints_ids = {}
-      for _, element in pairs(ib.data.elements) do
+      for _, element in pairs(ib.data.elements or {}) do
         table.insert(associated_endpoints_ids, element.value)
       end
       -- set the required profile elements ("-power", etc.) to one of these EP IDs for later profiling.
@@ -368,29 +382,19 @@ function AttributeHandlers.bat_charge_level_handler(driver, device, ib, response
 end
 
 function AttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
-  local profile_name = ""
-
-  local button_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  for _, attr in ipairs(ib.data.elements) do
-    -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) or
-    -- BatChargeLevel (Attribute ID 0x0E) is present.
-    if attr.value == 0x0C then
-      profile_name = "button-battery"
+  local previous_battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
+  device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
+  for _, attr in ipairs(ib.data.elements or {}) do
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
+      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_PERCENTAGE, {persist=true})
       break
-    elseif attr.value == 0x0E then
-      profile_name = "button-batteryLevel"
-      break
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID and
+      device:get_field(fields.profiling_data.BATTERY_SUPPORT) ~= fields.battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
+      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_LEVEL, {persist=true})
     end
   end
-  if profile_name ~= "" then
-    if #button_eps > 1 then
-      profile_name = string.format("%d-", #button_eps) .. profile_name
-    end
-
-    if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
-      profile_name = profile_name .. "-temperature-humidity"
-    end
-    device:try_update_metadata({ profile = profile_name })
+  if not previous_battery_support or previous_battery_support ~= device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
+    device_cfg.match_profile(driver, device)
   end
 end
 

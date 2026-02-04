@@ -1,4 +1,4 @@
----@diagnostic disable: param-type-mismatch, undefined-field
+-- Copyright 2022 SmartThings, Inc.
 -- Copyright 2022 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
