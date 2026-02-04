@@ -227,7 +227,7 @@ local function match_profile_modular(driver, device)
         if clus_has_feature(DoorLock.types.Feature.DOOR_POSITION_SENSOR) then
           table.insert(main_component_capabilities, capabilities.doorState.ID)
           device.thread:call_with_delay(5, function(t)
-            device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are madatory
+            device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
           end)
         end
         if clus_has_feature(DoorLock.types.Feature.USER) then
@@ -398,7 +398,7 @@ local function door_state_handler(driver, device, ib, response)
   local DOOR_STATE_MAP = {
     [DoorStateEnum.DOOR_OPEN] = doorState.open,
     [DoorStateEnum.DOOR_CLOSED] = doorState.closed,
-    [DoorStateEnum.DOOR_JAMMED] = doorState.jameed,
+    [DoorStateEnum.DOOR_JAMMED] = doorState.jammed,
     [DoorStateEnum.DOOR_FORCED_OPEN] = doorState.forcedOpen,
     [DoorStateEnum.DOOR_UNSPECIFIED_ERROR] = doorState.unspecifiedError,
     [DoorStateEnum.DOOR_AJAR] = doorState.ajar
