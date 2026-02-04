@@ -241,11 +241,6 @@ local matter_driver_template = {
       clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
       clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
     },
-    [capabilities.doorControl.ID] = {
-      clusters.ColorControl.attributes.ColorTemperatureMireds,
-      clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-      clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    },
     [capabilities.energyMeter.ID] = {
       clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
       clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported

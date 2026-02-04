@@ -16,3 +16,6 @@ components:
     version: 1
   categories:
   - name: Door
+preferences:
+  - preferenceId: reverse
+    explicit: true

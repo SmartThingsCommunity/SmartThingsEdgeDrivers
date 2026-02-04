@@ -70,9 +70,9 @@ function ClosureUtils.subscribe(device)
     subscribe_request:with_info_block(ib)
   end
 
-  -- For devices supporting ClosureControl, add the Descriptor cluster's TagList to the list of subscribed
-  -- attributes in order to determine the closure type
-  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+  -- If the type of closure has not yet been determined, add the Descriptor TagList to the list of
+  -- subscribed attributes in order to determine which if any closure type should be used.
+  if device:get_field(fields.profiling_data.CLOSURE_TAG) == nil then
     local ib = im.InteractionInfoBlock(nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.TagList.ID)
     subscribe_request:with_info_block(ib)
   end

@@ -41,7 +41,9 @@ function ClosureLifecycleHandlers.device_init(driver, device)
 end
 
 function ClosureLifecycleHandlers.device_added(driver, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}}))
+  if device:supports_capability_by_id(capabilities.windowShade.ID) then
+    device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}}))
+  end
   device:set_field(closure_fields.REVERSE_POLARITY, false, { persist = true })
   switch_utils.handle_electrical_sensor_info(device)
 end

@@ -363,8 +363,16 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.tag_list_handler(driver, device, ib, response)
-  if not ib.data.elements or not ib.data.elements.tag.value then return end
+  if not ib.data.elements then return end
   local previous_closure_tag = device:get_field(fields.profiling_data.CLOSURE_TAG)
+  local closure_tag
+  for _, v in ipairs(ib.data.elements) do
+    local tag = v.elements
+    if tag.namespace_id.value == 0x44 then
+      closure_tag = tag.tag.value
+      break
+    end
+  end
   local closure_tags = {
     [0] = fields.closure_tag.COVERING,
     [1] = fields.closure_tag.WINDOW,
@@ -374,11 +382,11 @@ function AttributeHandlers.tag_list_handler(driver, device, ib, response)
     [5] = fields.closure_tag.GARAGE_DOOR,
     [6] = fields.closure_tag.DOOR
   }
-  local closure_tag = fields.closure_tag.NA
-  if closure_tags[ib.data.elements.tag.value] then
-    closure_tag = closure_tags[ib.data.elements.tag.value]
+  if closure_tags[closure_tag] then
+    device:set_field(fields.profiling_data.CLOSURE_TAG, closure_tags[closure_tag], {persist = true})
+  else
+    device:set_field(fields.profiling_data.CLOSURE_TAG, fields.closure_tag.NA, {persist = true})
   end
-  device:set_field(fields.profiling_data.CLOSURE_TAG, closure_tag, {persist = true})
   if not previous_closure_tag or previous_closure_tag ~= device:get_field(fields.profiling_data.CLOSURE_TAG) then
     device_cfg.match_profile(driver, device)
   end
