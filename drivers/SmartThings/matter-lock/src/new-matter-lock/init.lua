@@ -34,10 +34,7 @@ local ALL_INDEX = 0xFFFE
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
-local PRIV_KEY_START = 15
-local PRIV_KEY_END = 78
-local PUB_KEY_START = 115
-local PUB_KEY_END = 242
+local ASN1_TOTAL_LEN_POSITION = 2
 local PUB_KEY_PREFIX = "04"
 
 local RESPONSE_STATUS_MAP = {
@@ -275,13 +272,50 @@ local function generate_keypair(device)
     }
   }
   local status = security.generate_self_signed_cert(request_opts)
-  local privKey = string.sub(utils.bytes_to_hex_string(status.key_der), PRIV_KEY_START, PRIV_KEY_END)
-  local pubKey = PUB_KEY_PREFIX .. string.sub(utils.bytes_to_hex_string(status.key_der), PUB_KEY_START, PUB_KEY_END)
 
+  local pos = ASN1_TOTAL_LEN_POSITION
+  local tag = 0
+  local len = 0
+  local total_len = string.byte(status.key_der, pos)
+  local pubKey = nil
+  local privKey = nil
+  while pos < total_len + ASN1_TOTAL_LEN_POSITION do
+    tag = string.byte(status.key_der, pos + 1)
+    len = string.byte(status.key_der, pos + 2)
+    pos = pos + 2
+    -- Ignore Version(0x02) and Curve parameters field(0xa0)
+    if tag == 0x04 then -- Private key field
+      pubKey = utils.bytes_to_hex_string(string.sub(status.key_der, pos + 1, pos + len))
+    elseif tag == 0xa1 then -- Public key field
+      -- Tag
+      pos = pos + 1
+      tag = string.byte(status.key_der, pos)
+      if tag ~= 0x03 then -- Must be Big string(0x03)
+        device.log.error("Failed to generate keypair")
+      end
+      -- Length
+      pos = pos + 1
+      len = string.byte(status.key_der, pos) - 2 -- Exclude unused bits and ec point format
+      -- EC Point Format
+      pos = pos + 2
+      local ec_format = string.byte(status.key_der, pos)
+      if tag ~= 0x04 then -- Must be Uncompressed EC(0x04)
+        device.log.error("Failed to generate keypair")
+      end
+      privKey = PUB_KEY_PREFIX .. utils.bytes_to_hex_string(string.sub(status.key_der, pos + 1, pos + len))
+    end
+    pos = pos + len
+  end
+  if privKey == nil or pubKey == nil then
+    device.log.error("Failed to generate keypair")
+  end
   return privKey, pubKey
 end
 
 local function set_reader_config(device)
+  local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
+  if reader_config_updated == true then return end
+
   local cmdName = "setReaderConfig"
   local groupId = create_group_id_resolving_key()
   local groupResolvingKey = nil
@@ -320,6 +354,7 @@ local function set_reader_config(device)
       hex_string_to_octet_string(groupResolvingKey)
     )
   )
+  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, true)
 end
 
 local function match_profile_modular(driver, device)
@@ -371,9 +406,10 @@ local function match_profile_modular(driver, device)
   device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
   device:set_field(lock_utils.MODULAR_PROFILE_UPDATED, true)
 
-  local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
-  if is_support_aliro == true and reader_config_updated ~= true then
-    set_reader_config(device)
+  if is_support_aliro == true then
+    device.thread:call_with_delay(5, function(t)
+      set_reader_config(device)
+    end)
   end
 end
 
@@ -2681,10 +2717,11 @@ local function handle_set_reader_config(driver, device, command)
       device, ep,
       hex_string_to_octet_string(signingKey),
       hex_string_to_octet_string(verificationKey),
-      hex_string_to_octet_string(groupId), -- Group identification
-      hex_string_to_octet_string(groupResolvingKey) -- Group resolving key
+      hex_string_to_octet_string(groupId),
+      hex_string_to_octet_string(groupResolvingKey)
     )
   )
+  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, true)
 end
 
 local function set_aliro_reader_config_handler(driver, device, ib, response)
@@ -2693,7 +2730,6 @@ local function set_aliro_reader_config_handler(driver, device, ib, response)
   local status = "failure"
   if ib.status == DoorLock.types.DlStatus.SUCCESS then
     status = "success"
-    device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, true)
   elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
     status = "invalidCommand"
   end
