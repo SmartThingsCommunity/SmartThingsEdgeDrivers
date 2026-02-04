@@ -19,6 +19,7 @@ local zcl_cmds = require "st.zigbee.zcl.global_commands"
 local IASZone = clusters.IASZone
 local IASWD = clusters.IASWD
 local OnOff = clusters.OnOff
+local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local data_types = require "st.zigbee.data_types"
@@ -212,6 +213,20 @@ test.register_coroutine_test(
                                         mock_device.id,
                                         OnOff.attributes.OnOff:read(mock_device)
                                       })
+    test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, PowerConfiguration.ID)
+    })
+
+    test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
+    })
+
+    test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+    })
 
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
@@ -265,6 +280,14 @@ test.register_message_test(
         OnOff.attributes.OnOff:read(mock_device)
       }
     },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
+      }
+    }
   },
   {
     inner_block_ordering = "relaxed"
