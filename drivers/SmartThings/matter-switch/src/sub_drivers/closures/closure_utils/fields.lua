@@ -8,6 +8,8 @@ ClosureFields.CURRENT_TILT = "__current_tilt"
 ClosureFields.DEFAULT_PRESET_LEVEL = 50
 ClosureFields.PRESET_LEVEL_KEY = "__preset_level_key"
 ClosureFields.REVERSE_POLARITY = "__reverse_polarity"
-ClosureFields.TARGET_STATE = "__target_state"
+-- Endpoint-scoped ClosureControl state cache key. A table is stored for each endpoint:
+-- { main = <MainStateEnum>, current = <CurrentPositionEnum>, target = <TargetPositionEnum> }
+ClosureFields.CLOSURE_CONTROL_STATE_CACHE = "__closure_control_state_cache"
 
 return ClosureFields

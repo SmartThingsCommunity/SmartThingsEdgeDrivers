@@ -9,6 +9,67 @@ clusters.ClosureControl = require "embedded_clusters.ClosureControl"
 
 local ClosureAttributeHandlers = {}
 
+local function set_closure_control_state(device, endpoint_id, field)
+  local cache = device:get_field(closure_fields.CLOSURE_CONTROL_STATE_CACHE) or {}
+  if not cache[endpoint_id] then cache[endpoint_id] = {} end
+  for k, v in pairs(field) do
+    cache[endpoint_id][k] = v
+  end
+  device:set_field(closure_fields.CLOSURE_CONTROL_STATE_CACHE, cache)
+end
+
+local function emit_closure_control_capability(device, endpoint_id)
+  local closure_control_state = device:get_field(closure_fields.CLOSURE_CONTROL_STATE_CACHE)[endpoint_id] or {}
+
+  local main = closure_control_state.main
+  local current = closure_control_state.current
+  local target = closure_control_state.target
+
+  local closure_capability = capabilities.windowShade.windowShade
+  if device:supports_capability_by_id(capabilities.doorControl.ID) then
+    closure_capability = capabilities.doorControl.door
+  end
+
+  if main == clusters.ClosureControl.types.MainStateEnum.MOVING then
+    if target == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED then
+      device:emit_event_for_endpoint(endpoint_id, closure_capability.closing())
+    elseif target == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN then
+      device:emit_event_for_endpoint(endpoint_id, closure_capability.opening())
+    end
+  elseif main == clusters.ClosureControl.types.MainStateEnum.STOPPED or main == nil then
+    if current == nil then return end
+    if current == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED then
+      device:emit_event_for_endpoint(endpoint_id, closure_capability.closed())
+    elseif current == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_OPENED or
+      device:supports_capability_by_id(capabilities.doorControl.ID) then
+        -- doorControl does not support partially open; treat any not- fully closed as open
+      device:emit_event_for_endpoint(endpoint_id, closure_capability.open())
+    else
+      device:emit_event_for_endpoint(endpoint_id, closure_capability.partially_open())
+    end
+  end
+end
+
+function ClosureAttributeHandlers.main_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  set_closure_control_state(device, ib.endpoint_id, { main = ib.data.value })
+  emit_closure_control_capability(device, ib.endpoint_id)
+end
+
+function ClosureAttributeHandlers.overall_current_state_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil or ib.data.elements.position == nil or ib.data.elements.position.value == nil then return end
+  local current = ib.data.elements.position.value
+  set_closure_control_state(device, ib.endpoint_id, { current = current })
+  emit_closure_control_capability(device, ib.endpoint_id)
+end
+
+function ClosureAttributeHandlers.overall_target_state_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil or ib.data.elements.position == nil or ib.data.elements.position.value == nil then return end
+  local target = ib.data.elements.position.value
+  set_closure_control_state(device, ib.endpoint_id, { target = target })
+  emit_closure_control_capability(device, ib.endpoint_id)
+end
+
 ClosureAttributeHandlers.current_pos_handler = function(attribute)
   return function(driver, device, ib, response)
     if ib.data.value == nil then return end
@@ -65,78 +126,6 @@ function ClosureAttributeHandlers.level_attr_handler(driver, device, ib, respons
   if ib.data.value == nil then return end
   local level = math.floor((ib.data.value / 254.0 * 100) + 0.5)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level))
-end
-
-function ClosureAttributeHandlers.main_state_attr_handler(driver, device, ib, response)
-  if ib.data.value == nil then return end
-  local windowShade = capabilities.windowShade.windowShade
-  local current_state = device:get_field(closure_fields.CURRENT_STATE) or clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED
-  local target_state = device:get_field(closure_fields.TARGET_STATE) or clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
-
-  if device:supports_capability_by_id(capabilities.windowShade.ID) then
-    if ib.data.value == clusters.ClosureControl.types.MainStateEnum.MOVING then
-      if target_state == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closing())
-      elseif target_state == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.opening())
-      end
-    elseif ib.data.value == clusters.ClosureControl.types.MainStateEnum.STOPPED then
-      if current_state == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
-      elseif current_state == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_OPENED then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
-      else -- PARTIALLY_OPENED, OPENED_FOR_PEDESTRIAN, OPENED_FOR_VENTILATION, or OPENED_AT_SIGNATURE
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
-      end
-    end
-  else -- device:supports_capability_by_id(capabilities.doorControl.ID)
-    if ib.data.value == clusters.ClosureControl.types.MainStateEnum.MOVING then
-      if target_state == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.doorControl.door.closing())
-      elseif target_state == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.doorControl.door.opening())
-      end
-    elseif ib.data.value == clusters.ClosureControl.types.MainStateEnum.STOPPED then
-      if current_state == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.doorControl.door.closed())
-      else
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.doorControl.doorControl.open())
-      end
-    end
-  end
-  device:set_field(closure_fields.MAIN_STATE, ib.data.value)
-end
-
-function ClosureAttributeHandlers.overall_current_state_attr_handler(driver, device, ib, response)
-  if ib.data.elements == nil or ib.data.elements.position.value == nil then return end
-  local windowShade = capabilities.windowShade.windowShade
-  local main_state = device:get_field(closure_fields.MAIN_STATE) or clusters.ClosureControl.types.MainStateEnum.STOPPED
-
-  if device:supports_capability_by_id(capabilities.windowShade.ID) then
-    if main_state == clusters.ClosureControl.types.MainStateEnum.STOPPED then
-      if ib.data.elements.position.value == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.closed())
-      elseif ib.data.elements.position.value == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_OPENED then
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.open())
-      else -- PARTIALLY_OPENED, OPENED_FOR_PEDESTRIAN, OPENED_FOR_VENTILATION, or OPENED_AT_SIGNATURE
-        device:emit_event_for_endpoint(ib.endpoint_id, windowShade.partially_open())
-      end
-    end
-  else -- device:supports_capability_by_id(capabilities.doorControl.ID)
-    if main_state == clusters.ClosureControl.types.MainStateEnum.STOPPED then
-      if ib.data.elements.position.value == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.doorControl.door.closed())
-      else
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.doorControl.doorControl.open())
-      end
-    end
-  end
-  device:set_field(closure_fields.CURRENT_STATE, ib.data.elements.position.value)
-  end
-
-function ClosureAttributeHandlers.overall_target_state_attr_handler(driver, device, ib, response)
-  if ib.data.elements == nil or ib.data.elements.position.value == nil then return end
-  device:set_field(closure_fields.TARGET_STATE, ib.data.elements.position.value)
 end
 
 return ClosureAttributeHandlers

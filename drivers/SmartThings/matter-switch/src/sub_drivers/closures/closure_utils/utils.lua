@@ -1,16 +1,17 @@
 -- Copyright © 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local capabilities = require "st.capabilities"
+local clusters = require "st.matter.clusters"
+local fields = require "switch_utils.fields"
+local im = require "st.matter.interaction_model"
+local switch_utils = require "switch_utils.utils"
+
+clusters.ClosureControl = require "embedded_clusters.ClosureControl"
 
 local ClosureUtils = {}
 
 function ClosureUtils.subscribe(device)
-  local capabilities = require "st.capabilities"
-  local clusters = require "st.matter.clusters"
-  local fields = require "switch_utils.fields"
-  local im = require "st.matter.interaction_model"
-  local switch_utils = require "switch_utils.utils"
-
   local closure_subscribed_attributes = {
     [capabilities.battery.ID] = {
       clusters.PowerSource.attributes.BatPercentRemaining,
@@ -71,7 +72,6 @@ function ClosureUtils.subscribe(device)
 
   -- For devices supporting ClosureControl, add the Descriptor cluster's TagList to the list of subscribed
   -- attributes in order to determine the closure type
-  clusters.ClosureControl = require "embedded_clusters.ClosureControl"
   if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
     local ib = im.InteractionInfoBlock(nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.TagList.ID)
     subscribe_request:with_info_block(ib)

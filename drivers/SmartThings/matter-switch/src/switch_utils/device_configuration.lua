@@ -220,40 +220,29 @@ function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep
   return "window-covering-modular", optional_supported_component_capabilities
 end
 
-function ClosureDeviceConfiguration.assign_profile_for_covering_ep(device, server_covering_ep_id)
-  local ep_info = switch_utils.get_endpoint_info(device, server_covering_ep_id)
+local function get_optional_capabilities_for_closure_ep(device, server_ep_id)
+  local ep_info = switch_utils.get_endpoint_info(device, server_ep_id)
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
   populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
-  return "covering", optional_supported_component_capabilities
+  return optional_supported_component_capabilities
+end
+
+function ClosureDeviceConfiguration.assign_profile_for_covering_ep(device, server_covering_ep_id)
+  return "covering", get_optional_capabilities_for_closure_ep(device, server_covering_ep_id)
 end
 
 function ClosureDeviceConfiguration.assign_profile_for_gate_ep(device, server_gate_ep_id)
-  local ep_info = switch_utils.get_endpoint_info(device, server_gate_ep_id)
-  local optional_supported_component_capabilities = {}
-  local main_component_capabilities = {}
-  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
-  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
-  return "gate", optional_supported_component_capabilities
+  return "gate", get_optional_capabilities_for_closure_ep(device, server_gate_ep_id)
 end
 
 function ClosureDeviceConfiguration.assign_profile_for_door_ep(device, server_door_ep_id)
-  local ep_info = switch_utils.get_endpoint_info(device, server_door_ep_id)
-  local optional_supported_component_capabilities = {}
-  local main_component_capabilities = {}
-  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
-  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
-  return "door", optional_supported_component_capabilities
+  return "door", get_optional_capabilities_for_closure_ep(device, server_door_ep_id)
 end
 
 function ClosureDeviceConfiguration.assign_profile_for_garage_door_ep(device, server_garage_door_ep_id)
-  local ep_info = switch_utils.get_endpoint_info(device, server_garage_door_ep_id)
-  local optional_supported_component_capabilities = {}
-  local main_component_capabilities = {}
-  populate_battery_capability_if_supported(device, ep_info, main_component_capabilities)
-  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
-  return "garage-door", optional_supported_component_capabilities
+  return "garage-door", get_optional_capabilities_for_closure_ep(device, server_garage_door_ep_id)
 end
 
 
@@ -330,18 +319,19 @@ function DeviceConfiguration.match_profile(driver, device)
   -- initialize the main device card with closure if applicable
   local closure_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CLOSURE)
   if #closure_ep_ids > 0 then
-    ChildConfiguration.create_or_update_child_devices(driver, device, closure_ep_ids, default_endpoint_id, ClosureDeviceConfiguration.assign_profile_for_closure_ep)
-  end
-  if switch_utils.tbl_contains(closure_ep_ids, default_endpoint_id) then
+    local assign_closure_profile_fn_map = {
+      [fields.closure_tag.COVERING] = ClosureDeviceConfiguration.assign_profile_for_covering_ep,
+      [fields.closure_tag.WINDOW] = ClosureDeviceConfiguration.assign_profile_for_covering_ep,
+      [fields.closure_tag.BARRIER] = ClosureDeviceConfiguration.assign_profile_for_covering_ep,
+      [fields.closure_tag.CABINET] = ClosureDeviceConfiguration.assign_profile_for_covering_ep,
+      [fields.closure_tag.GATE] = ClosureDeviceConfiguration.assign_profile_for_gate_ep,
+      [fields.closure_tag.GARAGE_DOOR] = ClosureDeviceConfiguration.assign_profile_for_garage_door_ep,
+      [fields.closure_tag.DOOR] = ClosureDeviceConfiguration.assign_profile_for_door_ep
+    }
     local closure_tag = device:get_field(fields.profiling_data.CLOSURE_TAG)
-    if closure_tag == fields.closure_tag.GATE then
-      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_gate_ep(device, default_endpoint_id)
-    elseif closure_tag == fields.closure_tag.DOOR then
-      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_door_ep(device, default_endpoint_id)
-    elseif closure_tag == fields.closure_tag.GARAGE_DOOR then
-      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_garage_door_ep(device, default_endpoint_id)
-    else -- COVERING, WINDOW, BARRIER, CABINET - use generic Covering
-      updated_profile, optional_component_capabilities = ClosureDeviceConfiguration.assign_profile_for_covering_ep(device, default_endpoint_id)
+    ChildConfiguration.create_or_update_child_devices(driver, device, closure_ep_ids, default_endpoint_id, assign_closure_profile_fn_map[closure_tag])
+    if switch_utils.tbl_contains(closure_ep_ids, default_endpoint_id) then
+      updated_profile, optional_component_capabilities = assign_closure_profile_fn_map[closure_tag](device, default_endpoint_id)
     end
   end
 

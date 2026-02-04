@@ -35,9 +35,13 @@ function ClosureCapabilityHandlers.handle_close(driver, device, cmd)
       req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
     end
   else -- ClosureControl cluster
-    req = clusters.ClosureControl.server.commands.MoveTo(device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED)
+    req = clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
+    )
     if device:get_field(closure_fields.REVERSE_POLARITY) then
-      req = clusters.ClosureControl.server.commands.MoveTo(device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN)
+      req = clusters.ClosureControl.server.commands.MoveTo(
+        device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
+      )
     end
   end
   device:send(req)
@@ -52,9 +56,13 @@ function ClosureCapabilityHandlers.handle_open(driver, device, cmd)
       req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
     end
   else -- ClosureControl cluster
-    req = clusters.ClosureControl.server.commands.MoveTo(device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN)
+    req = clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
+    )
     if device:get_field(closure_fields.REVERSE_POLARITY) then
-      req = clusters.ClosureControl.server.commands.MoveTo(device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED)
+      req = clusters.ClosureControl.server.commands.MoveTo(
+        device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
+      )
     end
   end
   device:send(req)
