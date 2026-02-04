@@ -126,7 +126,7 @@ local function test_init()
   for i = 3,4 do
     mock_irrigation_system:expect_device_create({
       type = "EDGE_CHILD",
-      label = string.format("Matter Irrigation System Valve %d", i - 2),
+      label = string.format("Matter Irrigation System %d", i - 1),
       profile = "water-valve-level",
       parent_device_id = mock_irrigation_system.id,
       parent_assigned_child_key = string.format("%d", i)
