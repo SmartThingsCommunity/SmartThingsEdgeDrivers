@@ -11,7 +11,7 @@ components:
           - key: "level.value"
             range: [0, 100]
       optional: true
-    - id: flowSensor
+    - id: flowMeasurement
       version: 1
       optional: true
     - id: operationalState

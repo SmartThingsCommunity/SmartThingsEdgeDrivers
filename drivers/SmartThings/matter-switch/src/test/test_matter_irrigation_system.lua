@@ -39,6 +39,8 @@ local mock_irrigation_system = test.mock_device.build_test_matter_device({
       endpoint_id = endpoints.IRRIGATION_SYSTEM_EP,
       clusters = {
         {cluster_id = clusters.Descriptor.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.FlowMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.OperationalState.ID, cluster_type = "SERVER"},
       },
       device_types = {
         {device_type_id = 0x0040, device_type_revision = 1} -- Irrigation System
@@ -90,7 +92,7 @@ local mock_irrigation_system = test.mock_device.build_test_matter_device({
 })
 
 local mock_children = {}
-for i, endpoint in ipairs(mock_irrigation_system.endpoints) do
+for _, endpoint in ipairs(mock_irrigation_system.endpoints) do
   if endpoint.endpoint_id == 3 or endpoint.endpoint_id == 4 then
     local child_data = {
       profile = t_utils.get_profile_definition("water-valve-level.yml"),
@@ -138,6 +140,12 @@ test.set_test_init_function(test_init)
 
 
 local additional_subscribed_attributes = {
+  clusters.FlowMeasurement.attributes.MeasuredValue,
+  clusters.FlowMeasurement.attributes.MaxMeasuredValue,
+  clusters.FlowMeasurement.attributes.MinMeasuredValue,
+  clusters.OperationalState.attributes.AcceptedCommandList,
+  clusters.OperationalState.attributes.OperationalError,
+  clusters.OperationalState.attributes.OperationalState,
 }
 
 local expected_metadata = {
@@ -146,6 +154,8 @@ local expected_metadata = {
       "main",
       {
         "level",
+        "flowMeasurement",
+        "operationalState",
       }
     },
   },
@@ -251,6 +261,49 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(
       mock_irrigation_system:generate_test_message("main", capabilities.level.level(60))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Flow reports should generate correct messages",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_irrigation_system.id,
+      clusters.FlowMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_irrigation_system, 1, 20 * 10)
+    })
+    test.socket.capability:__expect_send(
+      mock_irrigation_system:generate_test_message(
+        "main",
+        capabilities.flowMeasurement.flow({ value = 20.0, unit = "m^3/h" })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Min and max flow attributes set capability constraint",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_irrigation_system.id,
+      clusters.FlowMeasurement.attributes.MinMeasuredValue:build_test_report_data(mock_irrigation_system, 1, 20)
+    })
+    test.socket.matter:__queue_receive({
+      mock_irrigation_system.id,
+      clusters.FlowMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_irrigation_system, 1, 5000)
+    })
+    test.socket.capability:__expect_send(
+      mock_irrigation_system:generate_test_message(
+        "main",
+        capabilities.flowMeasurement.flowRange({
+          value = { minimum = 2.0, maximum = 500.0 },
+          unit = "m^3/h"
+        })
+      )
     )
   end
 )

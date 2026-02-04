@@ -348,7 +348,7 @@ local matter_driver_template = {
     capabilities.energyMeter,
     capabilities.fanMode,
     capabilities.fanSpeedPercent,
-    capabilities.flowSensor,
+    capabilities.flowMeasurement,
     capabilities.hdr,
     capabilities.illuminanceMeasurement,
     capabilities.imageControl,

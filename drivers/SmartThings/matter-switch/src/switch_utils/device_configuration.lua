@@ -209,10 +209,19 @@ function ValveDeviceConfiguration.assign_profile_for_valve_ep(device, valve_ep_i
     if cluster.cluster_id == clusters.ValveConfigurationAndControl.ID and
       cluster.feature_map and (cluster.feature_map & clusters.ValveConfigurationAndControl.types.Feature.LEVEL) ~= 0 then
       table.insert(main_component_capabilities, capabilities.level.ID)
-    elseif cluster.cluster_id == clusters.OperationalState.ID then
-      table.insert(main_component_capabilities, capabilities.operationalState.ID)
-    elseif cluster.cluster_id == clusters.FlowMeasurement.ID then
-      table.insert(main_component_capabilities, capabilities.flowSensor.ID)
+      break
+    end
+  end
+
+  local irrigation_system_device_type_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM)
+  if #irrigation_system_device_type_ep_ids > 0 then
+    local irrigation_system_ep_info = switch_utils.get_endpoint_info(device, irrigation_system_device_type_ep_ids[1])
+    for _, cluster in ipairs(irrigation_system_ep_info.clusters) do
+      if cluster.cluster_id == clusters.OperationalState.ID then
+        table.insert(main_component_capabilities, capabilities.operationalState.ID)
+      elseif cluster.cluster_id == clusters.FlowMeasurement.ID then
+        table.insert(main_component_capabilities, capabilities.flowMeasurement.ID)
+      end
     end
   end
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
