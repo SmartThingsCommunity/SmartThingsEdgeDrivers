@@ -264,7 +264,6 @@ function DeviceConfiguration.match_profile(driver, device)
     updated_profile = "irrigation-system"
     if version.api >= 14 and version.rpc >= 8 then
       local main_component_capabilities = {}
-      local optional_supported_component_capabilities = {}
       local MAIN_COMPONENT_IDX, CAPABILITIES_LIST_IDX = 1, 2
 
       table.sort(valve_ep_ids)
@@ -280,22 +279,19 @@ function DeviceConfiguration.match_profile(driver, device)
         end
       end
 
-      table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
-
-      device:try_update_metadata({profile = profile_name, optional_component_capabilities = optional_supported_component_capabilities})
+      optional_component_capabilities = {}
+      table.insert(optional_component_capabilities, {"main", main_component_capabilities})
 
       -- earlier modular profile gating (min api v14, rpc 8) ensures we are running >= 0.57 FW.
       -- This gating specifies a workaround required only for 0.57 FW, which is not needed for 0.58 and higher.
       if version.api < 15 or version.rpc < 9 then
         -- add mandatory capabilities for subscription
-        local total_supported_capabilities = optional_supported_component_capabilities
+        local total_supported_capabilities = optional_component_capabilities
         table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.refresh.ID)
         table.insert(total_supported_capabilities[MAIN_COMPONENT_IDX][CAPABILITIES_LIST_IDX], capabilities.firmwareUpdate.ID)
 
         device:set_field(fields.SUPPORTED_COMPONENT_CAPABILITIES, total_supported_capabilities, { persist = true })
       end
-    else
-      device:try_update_metadata({profile = profile_name})
     end
 
     if #valve_ep_ids > 1 then

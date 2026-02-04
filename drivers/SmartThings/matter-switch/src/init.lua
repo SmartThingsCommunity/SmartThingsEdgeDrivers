@@ -161,8 +161,8 @@ local matter_driver_template = {
       },
       [clusters.FlowMeasurement.ID] = {
         [clusters.FlowMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.flow_attr_handler,
-        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.flow_attr_handler_factory(FLOW_MIN),
-        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.flow_attr_handler_factory(FLOW_MAX)
+        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.flow_attr_handler_factory(fields.FLOW_MIN),
+        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.flow_attr_handler_factory(fields.FLOW_MAX)
       },
       [clusters.IlluminanceMeasurement.ID] = {
         [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.illuminance_measured_value_handler
@@ -348,6 +348,7 @@ local matter_driver_template = {
     capabilities.energyMeter,
     capabilities.fanMode,
     capabilities.fanSpeedPercent,
+    capabilities.flowSensor,
     capabilities.hdr,
     capabilities.illuminanceMeasurement,
     capabilities.imageControl,
@@ -356,6 +357,7 @@ local matter_driver_template = {
     capabilities.mechanicalPanTiltZoom,
     capabilities.motionSensor,
     capabilities.nightVision,
+    capabilities.operationalState,
     capabilities.powerMeter,
     capabilities.powerConsumptionReport,
     capabilities.relativeHumidityMeasurement,

@@ -589,14 +589,14 @@ function AttributeHandlers.flow_attr_handler_factory(minOrMax)
     end
     local flow_bound = ib.data.value / 10.0
     local unit = "m^3/h"
-    set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..minOrMax, ib.endpoint_id, flow_bound)
-    local min = get_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MIN, ib.endpoint_id)
-    local max = get_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MAX, ib.endpoint_id)
+    switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..minOrMax, ib.endpoint_id, flow_bound)
+    local min = switch_utils.get_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MIN, ib.endpoint_id)
+    local max = switch_utils.get_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flowRange({ value = { minimum = min, maximum = max }, unit = unit }))
-        set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MIN, ib.endpoint_id, nil)
-        set_field_for_endpoint(device, FLOW_BOUND_RECEIVED..FLOW_MAX, ib.endpoint_id, nil)
+        switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MIN, ib.endpoint_id, nil)
+        switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MAX, ib.endpoint_id, nil)
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min flow measurement %d that is not lower than the reported max flow measurement %d", min, max))
       end
