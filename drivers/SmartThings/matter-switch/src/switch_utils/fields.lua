@@ -93,10 +93,6 @@ SwitchFields.updated_fields = {
 }
 
 SwitchFields.vendor_overrides = {
-  [0x1321] = { -- SONOFF_MANUFACTURER_ID
-    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
-    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
-  },
   [0x115F] = { -- AQARA_MANUFACTURER_ID
     [0x1006] = { ignore_combo_switch_button = true }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
     [0x100A] = { ignore_combo_switch_button = true }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
@@ -104,6 +100,14 @@ SwitchFields.vendor_overrides = {
   },
   [0x117C] = { -- IKEA_MANUFACTURER_ID
     [0x8000] = { is_ikea_scroll = true }
+  },
+  [0x1189] = { -- LEDVANCE_MANUFACTURER_ID
+    [0x0891] = { target_profile = "switch-binary", initial_profile = "light-binary" },
+    [0x0892] = { target_profile = "switch-binary", initial_profile = "light-binary" },
+  },
+  [0x1321] = { -- SONOFF_MANUFACTURER_ID
+    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
 }
 
