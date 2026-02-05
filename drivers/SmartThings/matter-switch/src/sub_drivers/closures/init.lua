@@ -15,8 +15,10 @@ local switch_utils = require "switch_utils.utils"
 local ClosureLifecycleHandlers = {}
 
 function ClosureLifecycleHandlers.device_init(driver, device)
-  device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
-  device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
+  if device:supports_capability_by_id(capabilities.windowShade.ID) and
+    device:get_latest_state("main", capabilities.windowShade.ID, capabilities.windowShade.supportedWindowShadeCommands.NAME) == nil then
+    device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}}))
+  end
   if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
     device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
     device:emit_event(capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed = false}}))
@@ -26,12 +28,15 @@ function ClosureLifecycleHandlers.device_init(driver, device)
     device:emit_event(capabilities.windowShadePreset.position(preset_position, {visibility = {displayed = false}}))
     device:set_field(closure_fields.PRESET_LEVEL_KEY, preset_position, {persist = true})
   end
+
+  device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
+  device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
+
   device:extend_device("subscribe", switch_utils.subscribe)
   device:subscribe()
 end
 
 function ClosureLifecycleHandlers.device_added(driver, device)
-  device:emit_event(capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}}))
   device:set_field(closure_fields.REVERSE_POLARITY, false, { persist = true })
   switch_utils.handle_electrical_sensor_info(device)
 end

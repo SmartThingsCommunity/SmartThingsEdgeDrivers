@@ -65,7 +65,13 @@ local mock_child = test.mock_device.build_test_child_device({
   parent_assigned_child_key = string.format("%d", 20)
 })
 
-local function set_preset(device)
+local function initialize_window_shade_capabilities(device)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main", capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"},
+        {visibility = {displayed = false}})
+    )
+  )
   test.socket.capability:__expect_send(
     device:generate_test_message(
       "main", capabilities.windowShadePreset.supportedCommands({"presetPosition", "setPresetPosition"}, {visibility = {displayed = false}})
@@ -84,15 +90,9 @@ local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message(
-      "main", capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"},
-        {visibility = {displayed = false}})
-    )
-  )
-
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
-  set_preset(mock_device)
+
+  initialize_window_shade_capabilities(mock_device)
 
   subscribe_request = WindowCovering.server.attributes.OperationalStatus:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.server.attributes.AttributeList:subscribe(mock_device))
@@ -679,21 +679,6 @@ test.register_coroutine_test(
   "Refresh necessary attributes", function()
     update_profile()
     test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
-    test.socket.capability:__expect_send(
-      {
-        mock_device.id,
-        {
-          capability_id = "windowShade",
-          component_id = "main",
-          attribute_id = "supportedWindowShadeCommands",
-          state = {value = {"open", "close", "pause"}},
-          visibility = {displayed = false}
-        },
-      }
-    )
-    test.wait_for_events()
-
     test.socket.capability:__queue_receive(
       {mock_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
     )
