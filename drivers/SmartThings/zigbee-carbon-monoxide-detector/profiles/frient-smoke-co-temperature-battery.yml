@@ -1,0 +1,34 @@
+name: frient-smoke-co-temperature-battery
+components:
+- id: main
+  capabilities:
+  - id: carbonMonoxideMeasurement
+    version: 1
+  - id: carbonMonoxideDetector
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: smokeDetector
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  - id: alarm
+    version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - off
+            - siren
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - off
+            - siren
+  categories:
+  - name: SmokeDetector
