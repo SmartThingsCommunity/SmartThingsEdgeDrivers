@@ -11,18 +11,20 @@ local IkeaScrollConfiguration = {}
 
 function IkeaScrollConfiguration.build_button_component_map(device)
   local component_map = {
-    main = scroll_fields.ENDPOINTS_PRESS[1],
-    group2 = scroll_fields.ENDPOINTS_PRESS[2],
-    group3 = scroll_fields.ENDPOINTS_PRESS[3],
+    main = {scroll_fields.ENDPOINTS_PUSH[1], scroll_fields.ENDPOINTS_UP_SCROLL[1], scroll_fields.ENDPOINTS_DOWN_SCROLL[1]},
+    group2 = {scroll_fields.ENDPOINTS_PUSH[2], scroll_fields.ENDPOINTS_UP_SCROLL[2], scroll_fields.ENDPOINTS_DOWN_SCROLL[2]},
+    group3 = {scroll_fields.ENDPOINTS_PUSH[3], scroll_fields.ENDPOINTS_UP_SCROLL[3], scroll_fields.ENDPOINTS_DOWN_SCROLL[3]},
   }
   device:set_field(switch_fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
 function IkeaScrollConfiguration.configure_buttons(device)
-  for _, ep in ipairs(scroll_fields.ENDPOINTS_PRESS) do
+  for _, ep in ipairs(scroll_fields.ENDPOINTS_PUSH) do
     device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
     switch_utils.set_field_for_endpoint(device, switch_fields.SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
     device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
+    -- though unrelated to the knob capability, the push endpoints all map to components including a knob
+    device:emit_event_for_endpoint(ep, capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}}))
   end
 end
 
