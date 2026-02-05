@@ -2,8 +2,8 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
-local clusters = require "st.matter.clusters"
 local closure_fields = require "sub_drivers.closures.closure_utils.fields"
+local clusters = require "st.matter.clusters"
 
 clusters.ClosureControl = require "embedded_clusters.ClosureControl"
 
@@ -28,42 +28,30 @@ end
 
 function ClosureCapabilityHandlers.handle_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req
-  if #device:get_endpoints(clusters.WindowCovering.ID) > 0 then
-    req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
-    if device:get_field(closure_fields.REVERSE_POLARITY) then
-      req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
-    end
-  else -- ClosureControl cluster
-    req = clusters.ClosureControl.server.commands.MoveTo(
+  local reverse = device:get_field(closure_fields.REVERSE_POLARITY)
+  local req = reverse and clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id) or
+    clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    req = reverse and clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
+    ) or clusters.ClosureControl.server.commands.MoveTo(
       device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
     )
-    if device:get_field(closure_fields.REVERSE_POLARITY) then
-      req = clusters.ClosureControl.server.commands.MoveTo(
-        device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
-      )
-    end
   end
   device:send(req)
 end
 
 function ClosureCapabilityHandlers.handle_open(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req
-  if #device:get_endpoints(clusters.WindowCovering.ID) > 0 then
-    req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
-    if device:get_field(closure_fields.REVERSE_POLARITY) then
-      req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
-    end
-  else -- ClosureControl cluster
-    req = clusters.ClosureControl.server.commands.MoveTo(
+  local reverse = device:get_field(closure_fields.REVERSE_POLARITY)
+  local req = reverse and clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id) or
+    clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    req = reverse and clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
+    ) or clusters.ClosureControl.server.commands.MoveTo(
       device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
     )
-    if device:get_field(closure_fields.REVERSE_POLARITY) then
-      req = clusters.ClosureControl.server.commands.MoveTo(
-        device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
-      )
-    end
   end
   device:send(req)
 end
