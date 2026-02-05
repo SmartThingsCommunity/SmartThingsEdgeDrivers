@@ -18,6 +18,7 @@ local IASWD = zcl_clusters.IASWD
 local carbonMonoxideMeasurement = capabilities.carbonMonoxideMeasurement
 local tamperAlert = capabilities.tamperAlert
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
+local SinglePrecisionFloat = require "st.zigbee.data_types.SinglePrecisionFloat"
 
 local alarm_command = {
   OFF = 0,
@@ -47,7 +48,7 @@ local CONFIGURATIONS = {
     minimum_interval = 10,
     maximum_interval = 600,
     data_type = data_types.SinglePrecisionFloat,
-    reportable_change = 1.0
+    reportable_change = SinglePrecisionFloat(0, 0, 0)
   }
 }
 
@@ -127,11 +128,17 @@ local function ias_zone_status_change_handler(driver, device, zb_rx)
 end
 
 local function carbon_monoxide_measure_value_attr_handler(driver, device, attr_val, zb_rx)
-  local voc_value = attr_val.value
-  if voc_value <= 1 then
-    voc_value = voc_value * 1000000
+  local co_value = attr_val.value
+  if co_value == 0x7FC00000 then
+    return
+  elseif co_value < 0 then
+    co_value = 0
+  elseif co_value <= 1 then
+    co_value = co_value * 1000000
+  elseif co_value > 1000000 then
+    co_value = 1000000
   end
-  device:emit_event(carbonMonoxideMeasurement.carbonMonoxideLevel({value = voc_value, unit = "ppm"}))
+  device:emit_event(carbonMonoxideMeasurement.carbonMonoxideLevel({value = co_value, unit = "ppm"}))
 end
 
 local function do_refresh(driver, device)
@@ -139,13 +146,13 @@ local function do_refresh(driver, device)
   device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device):to_endpoint(TEMPERATURE_ENDPOINT))
 end
 
---[[ local function do_configure(driver, device)
+local function do_configure(driver, device)
   device:configure()
 
   device.thread:call_with_delay(5, function()
     do_refresh(driver, device)
   end)
-end ]]
+end
 
 local frient_smoke_carbon_monoxide = {
   NAME = "Frient Smoke Carbon Monoxide",
@@ -153,7 +160,7 @@ local frient_smoke_carbon_monoxide = {
     added = device_added,
     init = device_init,
     refresh = do_refresh,
-    --[[ configure = do_configure, ]]
+    configure = do_configure,
   },
   zigbee_handlers = {
     cluster = {
