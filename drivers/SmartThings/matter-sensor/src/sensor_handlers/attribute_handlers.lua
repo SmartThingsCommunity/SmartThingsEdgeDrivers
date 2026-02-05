@@ -9,6 +9,8 @@ local fields = require "sensor_utils.fields"
 local device_cfg = require "sensor_utils.device_configuration"
 local version = require "version"
 
+clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
+
 local AttributeHandlers = {}
 
 
@@ -69,16 +71,24 @@ function AttributeHandlers.humidity_measured_value_handler(driver, device, ib, r
 end
 
 
+-- [[ SOIL MEASUREMENT CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.soil_moisture_measured_value_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(ib.data.value))
+end
+
+
 -- [[ BOOLEAN STATE CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.boolean_state_value_handler(driver, device, ib, response)
   local name
   for dt_name, _ in pairs(fields.BOOLEAN_DEVICE_TYPE_INFO) do
-      local dt_ep_id = device:get_field(dt_name)
-      if ib.endpoint_id == dt_ep_id then
-          name = dt_name
-          break
-      end
+    local dt_ep_id = device:get_field(dt_name)
+    if ib.endpoint_id == dt_ep_id then
+      name = dt_name
+      break
+    end
   end
   if name then
     device:emit_event_for_endpoint(ib.endpoint_id, fields.BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
