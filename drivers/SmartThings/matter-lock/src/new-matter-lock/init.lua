@@ -273,9 +273,8 @@ local function generate_keypair(device)
   }
   local status = security.generate_self_signed_cert(request_opts)
 
+  local tag, len
   local pos = ASN1_TOTAL_LEN_POSITION
-  local tag = 0
-  local len = 0
   local total_len = string.byte(status.key_der, pos)
   local pubKey = nil
   local privKey = nil
@@ -299,7 +298,7 @@ local function generate_keypair(device)
       -- EC Point Format
       pos = pos + 2
       local ec_format = string.byte(status.key_der, pos)
-      if tag ~= 0x04 then -- Must be Uncompressed EC(0x04)
+      if ec_format ~= 0x04 then -- Must be Uncompressed EC(0x04)
         device.log.error("Failed to generate keypair")
       end
       privKey = PUB_KEY_PREFIX .. utils.bytes_to_hex_string(string.sub(status.key_der, pos + 1, pos + len))
