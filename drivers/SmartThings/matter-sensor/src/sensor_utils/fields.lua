@@ -11,6 +11,8 @@ SensorFields.TEMP_MAX = "__temp_max"
 SensorFields.FLOW_BOUND_RECEIVED = "__flow_bound_received"
 SensorFields.FLOW_MIN = "__flow_min"
 SensorFields.FLOW_MAX = "__flow_max"
+SensorFields.SOIL_LIMIT_MIN = "__soil_limit_min"
+SensorFields.SOIL_LIMIT_MAX = "__soil_limit_max"
 
 SensorFields.battery_support = {
   NO_BATTERY = "NO_BATTERY",
