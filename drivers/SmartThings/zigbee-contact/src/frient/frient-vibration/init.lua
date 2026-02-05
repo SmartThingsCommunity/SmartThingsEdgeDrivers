@@ -20,6 +20,7 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local device_management = require "st.zigbee.device_management"
 local data_types = require "st.zigbee.data_types"
 local threeAxis = capabilities.threeAxis
+local log = require "log"
 
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 local IASZone = zcl_clusters.IASZone
@@ -51,9 +52,7 @@ local Frient_AccelerationMeasurementCluster = {
 }
 
 local function acceleration_measure_report_handler(driver, device, zb_rx)
-  local measured_x = device:get_field("measured_x")
-  local measured_y = device:get_field("measured_y")
-  local measured_z = device:get_field("measured_z")
+  local measured_x, measured_y, measured_z
 
   for _, attribute_record in ipairs(zb_rx.body.zcl_body.attr_records) do
     local attribute_id = attribute_record.attr_id.value
@@ -61,20 +60,17 @@ local function acceleration_measure_report_handler(driver, device, zb_rx)
 
     if attribute_id == Frient_AccelerationMeasurementCluster.attributes.MeasuredValueX.ID then
       measured_x = axis_value
-      device:set_field("measured_x", measured_x)
     elseif attribute_id == Frient_AccelerationMeasurementCluster.attributes.MeasuredValueY.ID then
       measured_y = axis_value
-      device:set_field("measured_y", measured_y)
     elseif attribute_id == Frient_AccelerationMeasurementCluster.attributes.MeasuredValueZ.ID then
       measured_z = axis_value
-      device:set_field("measured_z", measured_z)
     end
   end
 
   if measured_x and measured_y and measured_z then
     device:emit_event(threeAxis.threeAxis({measured_x, measured_y, measured_z}))
 
-    if device.preferences.garageSensor == "Yes" then
+    if device:supports_capability(capabilities.contactSensor) then
       local garageAxis = measured_x
       if device.preferences.contactSensorAxis == "Y" then
         garageAxis = measured_y

@@ -19,7 +19,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: VibrationsSensor
+  - name: ContactSensor
 preferences:
   - preferenceId: tempOffset
     explicit: true
