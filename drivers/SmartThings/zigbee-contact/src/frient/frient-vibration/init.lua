@@ -20,7 +20,6 @@ local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local device_management = require "st.zigbee.device_management"
 local data_types = require "st.zigbee.data_types"
 local threeAxis = capabilities.threeAxis
-local log = require "log"
 
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 local IASZone = zcl_clusters.IASZone
