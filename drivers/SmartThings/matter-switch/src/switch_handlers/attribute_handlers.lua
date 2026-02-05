@@ -362,6 +362,36 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   end
 end
 
+function AttributeHandlers.tag_list_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
+  local previous_closure_tag = device:get_field(fields.profiling_data.CLOSURE_TAG)
+  local closure_tag
+  for _, v in ipairs(ib.data.elements) do
+    local tag = v.elements
+    if tag.namespace_id.value == 0x44 then
+      closure_tag = tag.tag.value
+      break
+    end
+  end
+  local closure_tags = {
+    [0] = fields.closure_tag.COVERING,
+    [1] = fields.closure_tag.WINDOW,
+    [2] = fields.closure_tag.BARRIER,
+    [3] = fields.closure_tag.CABINET,
+    [4] = fields.closure_tag.GATE,
+    [5] = fields.closure_tag.GARAGE_DOOR,
+    [6] = fields.closure_tag.DOOR
+  }
+  if closure_tags[closure_tag] then
+    device:set_field(fields.profiling_data.CLOSURE_TAG, closure_tags[closure_tag], {persist = true})
+  else
+    device:set_field(fields.profiling_data.CLOSURE_TAG, fields.closure_tag.NA, {persist = true})
+  end
+  if not previous_closure_tag or previous_closure_tag ~= device:get_field(fields.profiling_data.CLOSURE_TAG) then
+    device_cfg.match_profile(driver, device)
+  end
+end
+
 
 -- [[ POWER SOURCE CLUSTER ATTRIBUTES ]] --
 

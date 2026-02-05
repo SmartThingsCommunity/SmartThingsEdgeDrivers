@@ -119,6 +119,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
     end
+    device:set_field(fields.profiling_data.CLOSURE_TAG, fields.closure_tag.NA, {persist = true})
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
 
@@ -159,6 +160,7 @@ local matter_driver_template = {
       },
       [clusters.Descriptor.ID] = {
         [clusters.Descriptor.attributes.PartsList.ID] = attribute_handlers.parts_list_handler,
+        [clusters.Descriptor.attributes.TagList.ID] = attribute_handlers.tag_list_handler,
       },
       [clusters.ElectricalEnergyMeasurement.ID] = {
         [clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported.ID] = attribute_handlers.energy_imported_factory(false),
@@ -281,16 +283,6 @@ local matter_driver_template = {
     [capabilities.valve.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentState
     },
-    [capabilities.windowShade.ID] = {
-      clusters.WindowCovering.attributes.OperationalStatus
-    },
-    [capabilities.windowShadeLevel.ID] = {
-      clusters.LevelControl.attributes.CurrentLevel,
-      clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths,
-    },
-    [capabilities.windowShadeTiltLevel.ID] = {
-      clusters.WindowCovering.attributes.CurrentPositionTiltPercent100ths,
-    },
   },
   subscribed_events = {
     [capabilities.button.ID] = {
@@ -344,6 +336,7 @@ local matter_driver_template = {
     capabilities.cameraViewportSettings,
     capabilities.colorControl,
     capabilities.colorTemperature,
+    capabilities.doorControl,
     capabilities.energyMeter,
     capabilities.fanMode,
     capabilities.fanSpeedPercent,

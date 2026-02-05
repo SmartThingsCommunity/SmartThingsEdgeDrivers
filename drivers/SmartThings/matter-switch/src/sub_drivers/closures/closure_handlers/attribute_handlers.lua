@@ -5,7 +5,81 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local closure_fields = require "sub_drivers.closures.closure_utils.fields"
 
+clusters.ClosureControl = require "embedded_clusters.ClosureControl"
+
 local ClosureAttributeHandlers = {}
+
+local function set_closure_control_state(device, endpoint_id, field)
+  local cache = device:get_field(closure_fields.CLOSURE_CONTROL_STATE_CACHE) or {}
+  if not cache[endpoint_id] then cache[endpoint_id] = {} end
+  for k, v in pairs(field) do
+    cache[endpoint_id][k] = v
+  end
+  device:set_field(closure_fields.CLOSURE_CONTROL_STATE_CACHE, cache)
+end
+
+local function emit_closure_control_capability(device, endpoint_id)
+  local closure_control_state = device:get_field(closure_fields.CLOSURE_CONTROL_STATE_CACHE)[endpoint_id] or {}
+  local reverse = device:get_field(closure_fields.REVERSE_POLARITY)
+
+  local main = closure_control_state.main
+  local current = closure_control_state.current
+  local target = closure_control_state.target
+
+  local closure_capability = capabilities.windowShade.windowShade
+  if device:supports_capability_by_id(capabilities.doorControl.ID) then
+    closure_capability = capabilities.doorControl.door
+  end
+
+  if main == clusters.ClosureControl.types.MainStateEnum.MOVING then
+    if target == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED then
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.opening() or closure_capability.closing())
+    elseif target == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN then
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.closing() or closure_capability.opening())
+    end
+  elseif main == clusters.ClosureControl.types.MainStateEnum.STOPPED or main == nil then
+    if current == nil then return end
+    if current == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED then
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.open() or closure_capability.closed())
+    elseif current == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_OPENED or
+      device:supports_capability_by_id(capabilities.doorControl.ID) then
+        -- doorControl does not support partially open; treat any not- fully closed as open
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.closed() or closure_capability.open())
+    else
+      device:emit_event_for_endpoint(endpoint_id, closure_capability.partially_open())
+    end
+  end
+end
+
+function ClosureAttributeHandlers.main_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  set_closure_control_state(device, ib.endpoint_id, { main = ib.data.value })
+  emit_closure_control_capability(device, ib.endpoint_id)
+end
+
+function ClosureAttributeHandlers.overall_current_state_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil then return end
+  for _, v in pairs(ib.data.elements) do
+    if v.field_id == 0 then
+      local current = v.value
+      set_closure_control_state(device, ib.endpoint_id, { current = current })
+      emit_closure_control_capability(device, ib.endpoint_id)
+      break
+    end
+  end
+end
+
+function ClosureAttributeHandlers.overall_target_state_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil then return end
+  for _, v in pairs(ib.data.elements) do
+    if v.field_id == 0 then
+      local target = v.value
+      set_closure_control_state(device, ib.endpoint_id, { target = target })
+      emit_closure_control_capability(device, ib.endpoint_id)
+      break
+    end
+  end
+end
 
 ClosureAttributeHandlers.current_pos_handler = function(attribute)
   return function(driver, device, ib, response)
