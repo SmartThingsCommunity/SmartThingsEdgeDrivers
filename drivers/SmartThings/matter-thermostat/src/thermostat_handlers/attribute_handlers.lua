@@ -84,8 +84,8 @@ end
 function AttributeHandlers.control_sequence_of_operation_handler(driver, device, ib, response)
   -- The ControlSequenceOfOperation attribute only directly specifies what can't be operated by the operating environment, not what can.
   -- However, we assert here that a Cooling enum value implies that SystemMode supports cooling, and the same for a Heating enum.
-  -- We also assert that Off is supported, though per spec this is optional.
-  if device:get_field(fields.OPTIONAL_THERMOSTAT_MODES_SEEN) == nil then
+  -- We also assert that Off is supported if the switch capability is not supported, though per spec this is optional.
+  if device:get_field(fields.OPTIONAL_THERMOSTAT_MODES_SEEN) == nil and device:supports_capability(capabilities.switch) == false then
     device:set_field(fields.OPTIONAL_THERMOSTAT_MODES_SEEN, {capabilities.thermostatMode.thermostatMode.off.NAME}, {persist=true})
   end
   local supported_modes = st_utils.deep_copy(device:get_field(fields.OPTIONAL_THERMOSTAT_MODES_SEEN))
