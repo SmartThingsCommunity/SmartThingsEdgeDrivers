@@ -59,6 +59,12 @@ function DeviceConfiguration.match_profile(driver, device, battery_supported)
 
   if device:supports_capability(capabilities.relativeHumidityMeasurement) then
     profile_name = profile_name .. "-humidity"
+    -- Soil Sensor fingerprints to the humidity profile, so we should also check for
+    -- TemperatureMeasurement, which is an optional cluster for this device type.
+    if #device:get_endpoints(clusters.SoilMeasurement.ID) > 0 and
+      #device:get_endpoints(clusters.TemperatureMeasurement.ID) > 0 then
+      profile_name = "-temperature" .. profile_name
+    end
   end
 
   if device:supports_capability(capabilities.atmosphericPressureMeasurement) then
@@ -117,7 +123,6 @@ function DeviceConfiguration.match_profile(driver, device, battery_supported)
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
 
-  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
 end
 
