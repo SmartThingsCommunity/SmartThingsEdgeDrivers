@@ -9,8 +9,6 @@ local uint32 = require "st.matter.data_types.Uint32"
 
 clusters.ClosureControl = require "embedded_clusters.ClosureControl"
 
-local WindowCovering = clusters.WindowCovering
-
 local mock_device = test.mock_device.build_test_matter_device(
   {
     label = "Matter Closure",

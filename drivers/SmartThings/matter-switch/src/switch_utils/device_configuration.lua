@@ -319,6 +319,8 @@ function DeviceConfiguration.match_profile(driver, device)
   -- initialize the main device card with closure if applicable
   local closure_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CLOSURE)
   if #closure_ep_ids > 0 then
+    -- Note that Window, Barrier, and Cabinet currently all use the generic Covering profile, but will be updated to
+    -- more specific profiles once the associated profile categories are published.
     local assign_closure_profile_fn_map = {
       [fields.closure_tag.COVERING] = ClosureDeviceConfiguration.assign_profile_for_covering_ep,
       [fields.closure_tag.WINDOW] = ClosureDeviceConfiguration.assign_profile_for_covering_ep,
