@@ -34,7 +34,6 @@ end
 local function battery_attr_handler(driver, device, value, zb_rx)
   local percent = math.floor((value.value or 0) / 2)
   device:emit_event(capabilities.battery.battery(percent))
-  log.info(string.format("Battery percentage remaining: %d%%", percent))
 end
 
 local function sonoff_attr_handler(driver, device, value, zb_rx)
@@ -42,7 +41,6 @@ local function sonoff_attr_handler(driver, device, value, zb_rx)
   local endpoint = zb_rx.address_header.src_endpoint.value
   local button_name = "button" .. tostring(endpoint)
   local event_func = EVENT_MAP[attr_val]
-  log.info(string.format("SONOFF attr: endpoint=%s, value=%s, button=%s", endpoint, attr_val, button_name))
   if event_func then
     local comp = device.profile.components[button_name]
     if comp then
