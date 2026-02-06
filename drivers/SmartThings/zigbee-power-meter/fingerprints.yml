@@ -13,6 +13,11 @@ zigbeeManufacturer:
     manufacturer: Develco Products A/S
     model: "EMIZB-132"
     deviceProfileName: power-meter
+  - id: "NodOn/SEM-4-1-00"
+    deviceLabel: Zigbee Smart Energy Monitor
+    manufacturer: NodOn
+    model: "SEM-4-1-00"
+    deviceProfileName: power-meter
   - id: "ShinaSystem/PMM-300Z1"
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
