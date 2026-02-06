@@ -3992,6 +3992,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x0110 # Mounted Dimmable Load Control
     deviceProfileName: switch-level
+  - id: "matter/irrigation-system"
+    deviceLabel: Matter Irrigation System
+    deviceTypes:
+      - id: 0x0040 # Irrigation System
+    deviceProfileName: irrigation-system
   - id: "matter/water-valve"
     deviceLabel: Matter Water Valve
     deviceTypes:

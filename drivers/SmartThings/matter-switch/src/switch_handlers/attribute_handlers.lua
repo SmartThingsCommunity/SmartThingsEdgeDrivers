@@ -534,4 +534,74 @@ function AttributeHandlers.percent_current_handler(driver, device, ib, response)
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
 end
 
+
+-- [[ OPERATIONAL STATE CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
+  local accepted_command_list = {}
+  for _, accepted_command in ipairs(ib.data.elements) do
+    local accepted_command_id = accepted_command.value
+    if fields.operational_state_command_map[accepted_command_id] ~= nil then
+      table.insert(accepted_command_list, fields.operational_state_command_map[accepted_command_id])
+    end
+  end
+  local event = capabilities.operationalState.supportedCommands(accepted_command_list, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+function AttributeHandlers.operational_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.stopped())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.running())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.paused())
+  end
+end
+
+function AttributeHandlers.operational_error_attr_handler(driver, device, ib, response)
+  if version.api < 10 then
+    clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
+  end
+  local operationalError = ib.data.elements.error_state_id.value
+  if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToStartOrResume())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToCompleteOperation())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.commandInvalidInCurrentState())
+  end
+end
+
+function AttributeHandlers.flow_attr_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local flow = measured_value / 10.0
+    local unit = "m^3/h"
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flow({value = flow, unit = unit}))
+  end
+end
+
+function AttributeHandlers.flow_attr_handler_factory(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    local flow_bound = ib.data.value / 10.0
+    local unit = "m^3/h"
+    switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..minOrMax, ib.endpoint_id, flow_bound)
+    local min = switch_utils.get_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MIN, ib.endpoint_id)
+    local max = switch_utils.get_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MAX, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flowRange({ value = { minimum = min, maximum = max }, unit = unit }))
+        switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MIN, ib.endpoint_id, nil)
+        switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MAX, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min flow measurement %d that is not lower than the reported max flow measurement %d", min, max))
+      end
+    end
+  end
+end
+
 return AttributeHandlers
