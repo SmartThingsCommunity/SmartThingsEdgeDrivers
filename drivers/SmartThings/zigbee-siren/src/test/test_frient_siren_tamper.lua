@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2025 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ local t_utils = require "integration_test.utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
         {
-            profile = t_utils.get_profile_definition("frient-siren-battery-source.yml"),
+            profile = t_utils.get_profile_definition("frient-siren-battery-source-tamper.yml"),
             zigbee_endpoints = {
                 [0x01] = {
                     id = 0x01,
@@ -95,7 +95,7 @@ local function set_no_firmware_and_defaults()
     mock_device:set_field(ALARM_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
 end
 
-local function get_siren_commands_new_fw( warningMode, sirenLevel, duration )
+local function get_siren_commands_new_fw(warningMode, sirenLevel, duration)
     local expectedSirenONConfiguration = SirenConfiguration(0x00)
     expectedSirenONConfiguration:set_warning_mode(warningMode) --WarningMode.BURGLAR
     expectedSirenONConfiguration:set_siren_level(sirenLevel) --IaswdLevel.VERY_HIGH_LEVEL
@@ -374,6 +374,13 @@ test.register_coroutine_test(
                             capabilities.alarm.alarm.off()
                     )
             )
+
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message(
+                            "main",
+                            capabilities.tamperAlert.tamper.clear()
+                    )
+            )
         end
 )
 
@@ -397,7 +404,7 @@ test.register_coroutine_test(
             test.mock_time.advance_time(1)
             -- Expect the command with given configuration
             get_siren_commands_new_fw(WarningMode.BURGLAR,IaswdLevel.VERY_HIGH_LEVEL,ALARM_DURATION_TEST_VALUE)
-            test.mock_time.advance_time(ALARM_DURATION_TEST_VALUE+1)
+            test.mock_time.advance_time(ALARM_DURATION_TEST_VALUE)
             -- stop the siren
             -- Expect the OFF command
             get_siren_OFF_commands()
@@ -486,6 +493,7 @@ test.register_coroutine_test(
             test.socket.capability:__expect_send(
                     mock_device:generate_test_message("WarningDuration", capabilities.mode.mode("5 seconds"))
             )
+
             test.wait_for_events()
             -- Test siren with update configuration
             test.socket.capability:__queue_receive({
@@ -664,7 +672,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
         "Should detect newer firmware version and use correct endian format to turn on squawk (test with default settings)",
         function()
-
             set_new_firmware_and_defaults()
 
             -- Verify fields are set correctly
@@ -899,6 +906,7 @@ test.register_coroutine_test(
                         IASZone.attributes.ZoneStatus:read(mock_device)
                     }
             )
+
             test.socket.zigbee:__expect_send(
                     {
                         mock_device.id,
@@ -917,6 +925,7 @@ test.register_coroutine_test(
                         )
                     }
             )
+
             test.wait_for_events()
         end
 )
@@ -927,18 +936,26 @@ test.register_message_test(
             {
                 channel = "zigbee",
                 direction = "receive",
-                message = { mock_device.id, ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0000) }
+                message = { mock_device.id, ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0005) }
             },
             {
                 channel = "capability",
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
             }
+        },
+        {
+            inner_block_ordering = "relaxed"
         }
 )
 
 test.register_message_test(
-        "Power source / battery and tamper clear should be handled",
+        "Power source / battery should be handled",
         {
             {
                 channel = "zigbee",
@@ -949,7 +966,15 @@ test.register_message_test(
                 channel = "capability",
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.battery())
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
             }
+        },
+        {
+            inner_block_ordering = "relaxed"
         }
 )
 
