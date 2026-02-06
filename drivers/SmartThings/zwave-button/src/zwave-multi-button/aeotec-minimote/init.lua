@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -20,18 +10,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 
-local ZWAVE_AEOTEC_MINIMOTE_FINGERPRINTS = {
-  {mfr = 0x0086, prod = 0x0001, model = 0x0003} -- Aeotec Mimimote
-}
 
-local function can_handle_aeotec_minimote(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZWAVE_AEOTEC_MINIMOTE_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local function basic_set_handler(self, device, cmd)
   local button = cmd.args.value // 40 + 1
@@ -59,7 +38,7 @@ local aeotec_minimote = {
   lifecycle_handlers = {
     doConfigure = do_configure
   },
-  can_handle = can_handle_aeotec_minimote,
+  can_handle = require("zwave-multi-button.aeotec-minimote.can_handle"),
 }
 
 return aeotec_minimote
