@@ -34,7 +34,6 @@ local ALL_INDEX = 0xFFFE
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
-local ASN1_TOTAL_LEN_POSITION = 2
 local PUB_KEY_PREFIX = "04"
 
 local RESPONSE_STATUS_MAP = {
@@ -301,9 +300,7 @@ local function generate_keypair(device)
     local tag = string.byte(der, pos)
     local len, content_start = get_length(der, pos + 1)
     if not len then break end
-    if tag == 0x02 then
-      -- Version field: Skip it
-    elseif tag == 0x04 then
+    if tag == 0x04 then
       -- PRIVATE KEY: Octet String
       privKey = utils.bytes_to_hex_string(string.sub(der, content_start, content_start + len - 1))
     elseif tag == 0xA1 then
