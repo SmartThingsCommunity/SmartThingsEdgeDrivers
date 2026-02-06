@@ -29,6 +29,7 @@ local PowerSource = clusters.PowerSource
 
 local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
+local NAME_MAX_L = 10
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
@@ -1273,6 +1274,10 @@ local function handle_update_user(driver, device, command)
   local cmdName = "updateUser"
   local userIdx = command.args.userIndex
   local userName = command.args.userName
+  local userNameMatter = userName
+  if #userNameMatter > NAME_MAX_L then
+    userNameMatter = string.sub(userNameMatter, 1, NAME_MAX_L)
+  end
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
@@ -1303,12 +1308,12 @@ local function handle_update_user(driver, device, command)
     DoorLock.server.commands.SetUser(
       device, ep,
       DoorLock.types.DataOperationTypeEnum.MODIFY, -- Operation Type: Add(0), Modify(2)
-      userIdx,        -- User Index
-      userName,       -- User Name
-      nil,            -- Unique ID
-      nil,            -- User Status
-      userTypeMatter, -- User Type
-      nil             -- Credential Rule
+      userIdx,
+      userNameMatter,
+      nil, -- Unique ID
+      nil, -- User Status
+      userTypeMatter,
+      nil  -- Credential Rule
     )
   )
 end
@@ -1530,13 +1535,15 @@ local function handle_add_credential(driver, device, command)
   -- Get parameters
   local cmdName = "addCredential"
   local userIdx = command.args.userIndex
-  if userIdx == 0 then
-    userIdx = nil
-  end
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
     userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
+  end
+  if userIdx == 0 then
+    userIdx = nil
+  else
+    userTypeMatter = nil
   end
   local credential = {
     credential_type = DoorLock.types.CredentialTypeEnum.PIN,
