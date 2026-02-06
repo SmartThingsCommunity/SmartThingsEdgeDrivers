@@ -27,7 +27,7 @@ end
 
 local DoorLock = clusters.DoorLock
 local PowerSource = clusters.PowerSource
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = 0x0101}
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 
 local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
@@ -196,9 +196,7 @@ local function device_init(driver, device)
       end
     end
   end
-  if device.manufacturer_info.vendor_id == 0x135D then
-    device:add_subscribed_attribute(DoorLockFeatureMapAttr)
-  end
+  device:add_subscribed_attribute(DoorLockFeatureMapAttr)
   device:subscribe()
  end
 
@@ -272,41 +270,61 @@ local function generate_keypair(device)
     }
   }
   local status = security.generate_self_signed_cert(request_opts)
-
-  local tag, len
-  local pos = ASN1_TOTAL_LEN_POSITION
-  local total_len = string.byte(status.key_der, pos)
-  local pubKey = nil
-  local privKey = nil
-  while pos < total_len + ASN1_TOTAL_LEN_POSITION do
-    tag = string.byte(status.key_der, pos + 1)
-    len = string.byte(status.key_der, pos + 2)
-    pos = pos + 2
-    -- Ignore Version(0x02) and Curve parameters field(0xa0)
-    if tag == 0x04 then -- Private key field
-      pubKey = utils.bytes_to_hex_string(string.sub(status.key_der, pos + 1, pos + len))
-    elseif tag == 0xa1 then -- Public key field
-      -- Tag
-      pos = pos + 1
-      tag = string.byte(status.key_der, pos)
-      if tag ~= 0x03 then -- Must be Big string(0x03)
-        device.log.error("Failed to generate keypair")
-      end
-      -- Length
-      pos = pos + 1
-      len = string.byte(status.key_der, pos) - 2 -- Exclude unused bits and ec point format
-      -- EC Point Format
-      pos = pos + 2
-      local ec_format = string.byte(status.key_der, pos)
-      if ec_format ~= 0x04 then -- Must be Uncompressed EC(0x04)
-        device.log.error("Failed to generate keypair")
-      end
-      privKey = PUB_KEY_PREFIX .. utils.bytes_to_hex_string(string.sub(status.key_der, pos + 1, pos + len))
-    end
-    pos = pos + len
+  if not status or not status.key_der then
+    device.log.error("generate_self_signed_cert returned no data")
+    return nil, nil
   end
-  if privKey == nil or pubKey == nil then
-    device.log.error("Failed to generate keypair")
+
+  local der = status.key_der
+  local privKey, pubKey = nil, nil
+  -- Helper: Parse ASN.1 length (handles 1-byte and multi-byte lengths)
+  local function get_length(data, start_pos)
+    local b = string.byte(data, start_pos)
+    if not b then return nil, start_pos end
+
+    if b < 0x80 then
+      return b, start_pos + 1
+    else
+      local num_bytes = b - 0x80
+      local len = 0
+      for i = 1, num_bytes do
+        len = (len * 256) + string.byte(data, start_pos + i)
+      end
+      return len, start_pos + 1 + num_bytes
+    end
+  end
+  -- Start parsing after the initial SEQUENCE tag (0x30)
+  -- Most keys start: [0x30][Length]. We find the first length to find the start of content.
+  local _, pos = get_length(der, 2)
+
+  while pos < #der do
+    local tag = string.byte(der, pos)
+    local len, content_start = get_length(der, pos + 1)
+    if not len then break end
+    if tag == 0x02 then
+      -- Version field: Skip it
+    elseif tag == 0x04 then
+      -- PRIVATE KEY: Octet String
+      privKey = utils.bytes_to_hex_string(string.sub(der, content_start, content_start + len - 1))
+    elseif tag == 0xA1 then
+      -- PUBLIC KEY Wrapper: Explicit Tag [1]
+      -- Inside 0xA1 is a BIT STRING (0x03)
+      local inner_tag = string.byte(der, content_start)
+      if inner_tag == 0x03 then
+        local bit_len, bit_start = get_length(der, content_start + 1)
+        -- BIT STRINGS have a "leading null byte" (unused bits indicator)
+        -- We skip that byte (bit_start) and the 0x04 EC prefix to get the raw X/Y coordinates
+        local actual_key_start = bit_start + 2
+        local actual_key_len = bit_len - 2
+        pubKey = PUB_KEY_PREFIX .. utils.bytes_to_hex_string(string.sub(der, actual_key_start, actual_key_start + actual_key_len - 1))
+      end
+    end
+    -- Move pointer to the next tag
+    pos = content_start + len
+  end
+
+  if not privKey or not pubKey then
+    device.log.error("Failed to extract keys from DER")
   end
   return privKey, pubKey
 end
