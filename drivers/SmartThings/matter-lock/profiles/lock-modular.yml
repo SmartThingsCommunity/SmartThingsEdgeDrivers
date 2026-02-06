@@ -4,6 +4,9 @@ components:
   capabilities:
     - id: lock
       version: 1
+    - id: doorState
+      version: 1
+      optional: true
     - id: lockAlarm
       version: 1
     - id: remoteControlStatus
