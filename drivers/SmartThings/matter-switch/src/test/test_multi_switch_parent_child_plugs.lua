@@ -10,7 +10,7 @@ test.disable_startup_messages()
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local parent_ep = 10
 local child1_ep = 20
@@ -489,7 +489,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -564,7 +564,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
