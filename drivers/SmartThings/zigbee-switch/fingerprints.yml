@@ -505,6 +505,11 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: SMRZB-342
     deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient/IOMZB-110"
+    deviceLabel: frient IO Module
+    manufacturer: frient A/S
+    model: IOMZB-110
+    deviceProfileName: switch-4inputs-2outputs
   - id: "AduroSmart Eria/AD-DimmableLight3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -595,6 +600,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "D1 (5503)"
     deviceProfileName: switch-level-power
+  - id: "ubisys/S1 (5501)"
+    deviceLabel: Switching Actuator S1
+    manufacturer: ubisys
+    model: "S1 (5501)"
+    deviceProfileName: switch-power
   - id: "ubisys/S2 (5502)"
     deviceLabel: ubisys S2
     manufacturer: ubisys
@@ -2407,10 +2417,10 @@ zigbeeManufacturer:
     model: Y-K003-001
     deviceProfileName: basic-switch
   - id: "JNL/Y-K001-001"
-    deviceLabel: Yanmi Switch (1 Way) 
+    deviceLabel: Yanmi Switch (1 Way)
     manufacturer: JNL
     model: Y-K001-001
-    deviceProfileName: basic-switch  
+    deviceProfileName: basic-switch
   - id: "JNL/Y-K002-001"
     deviceLabel: Yanmi Switch (2 Way) 1
     manufacturer: JNL

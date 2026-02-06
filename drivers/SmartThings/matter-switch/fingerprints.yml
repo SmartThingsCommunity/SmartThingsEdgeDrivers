@@ -165,12 +165,17 @@ matterManufacturer:
     deviceLabel: OREiN Matter smart Bathroom Fan
     vendorId: 0x1396
     productId: 0x1096
-    deviceProfileName: light-color-level-fan
+    deviceProfileName: fan-modular
   - id: "5014/4247"
-    deviceLabel: OREiN Matter smart  Bathroom Fan
+    deviceLabel: OREiN Matter smart Bathroom Fan
     vendorId: 0x1396
     productId: 0x1097
     deviceProfileName: fan-modular
+  - id: "5014/4215"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1077
+    deviceProfileName: light-color-level
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
@@ -1349,6 +1354,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Netatmo
+  - id: "4129/8"
+    deviceLabel: Netatmo Thermo Hub
+    vendorId: 0x1021
+    productId: 0x0008
+    deviceProfileName: matter-bridge
 #Onvis
   - id: "5181/4097"
     deviceLabel: Onvis Smart Plug S4EU

@@ -83,6 +83,8 @@ SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
 
+SwitchFields.SUBSCRIBED_ATTRIBUTES_KEY = "__subscribed_attributes"
+
 SwitchFields.updated_fields = {
   { current_field_name = "__component_to_endpoint_map_button", updated_field_name = SwitchFields.COMPONENT_TO_ENDPOINT_MAP },
   { current_field_name = "__switch_intialized", updated_field_name = nil },
@@ -114,6 +116,8 @@ SwitchFields.switch_category_vendor_overrides = {
     {0x007D, 0x0074, 0x0075},
   [0x1372] = -- Innovation Matters
     {0x0002},
+  [0x1189] = -- Ledvance
+    {0x0891, 0x0892},
   [0x1021] = -- Legrand
     {0x0005},
   [0x109B] = -- Leviton
@@ -135,13 +139,20 @@ SwitchFields.switch_category_vendor_overrides = {
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
---- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
+--- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 
 SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
+  BATTERY_SUPPORT = "__battery_support",
+}
+
+SwitchFields.battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE",
 }
 
 SwitchFields.ENERGY_METER_OFFSET = "__energy_meter_offset"

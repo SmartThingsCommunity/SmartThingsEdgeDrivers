@@ -81,6 +81,18 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       device_cfg.match_profile(driver, device)
     end
   end
+
+  -- instant update of values after offset preference change
+  for name, info in pairs(device.preferences or {}) do
+    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
+      if name == "tempOffset" then
+        device:send(clusters.TemperatureMeasurement.attributes.MeasuredValue:read(device))
+      elseif name == "humidityOffset" then
+        device:send(clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:read(device))
+      end
+    end
+  end
+
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
@@ -91,10 +103,13 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
+    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+    end
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
 
-    -- device energy reporting must be handled cumulatively, periodically, or by both simulatanously.
+    -- device energy reporting must be handled cumulatively, periodically, or by both simultaneously.
     -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
     if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then

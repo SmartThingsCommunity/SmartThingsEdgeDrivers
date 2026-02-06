@@ -449,19 +449,21 @@ function utils.populate_subscribe_request_for_device(checked_device, subscribe_r
         for _, attr in ipairs(subscribed_attributes[capability.id] or {}) do
           local cluster_id = attr.cluster or attr._cluster.ID
           local attr_id = attr.ID or attr.attribute
-          if not attributes_seen[cluster_id..attr_id] then
+          if not attributes_seen[cluster_id] or not attributes_seen[cluster_id][attr_id] then
             local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
             subscribe_request:with_info_block(ib)
-            attributes_seen[cluster_id..attr_id] = true
+            attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
+            attributes_seen[cluster_id][attr_id] = ib
           end
         end
         for _, event in ipairs(subscribed_events[capability.id] or {}) do
           local cluster_id = event.cluster or event._cluster.ID
           local event_id = event.ID or event.event
-          if not events_seen[cluster_id..event_id] then
+          if not events_seen[cluster_id] or not events_seen[cluster_id][event_id] then
             local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
             subscribe_request:with_info_block(ib)
-            events_seen[cluster_id..event_id] = true
+            events_seen[cluster_id] = events_seen[cluster_id] or {}
+            events_seen[cluster_id][event_id] = ib
           end
         end
         capabilities_seen[capability.id] = true -- only loop through any capability once
@@ -485,6 +487,17 @@ function utils.subscribe(device)
       )
       devices_seen[checked_device.id] = true -- only loop through any device once
     end
+  end
+  -- The refresh capability command handler in the lua libs uses this key to determine which attributes to read. Note
+  -- that only attributes_seen needs to be saved here, and not events_seen, since the refresh handler only checks
+  -- attributes and not events.
+  device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, attributes_seen)
+
+  -- If the type of battery support has not yet been determined, add the PowerSource AttributeList to the list of
+  -- subscribed attributes in order to determine which if any battery capability should be used.
+  if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
+    local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
+    subscribe_request:with_info_block(ib)
   end
 
   if #subscribe_request.info_blocks > 0 then
