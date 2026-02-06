@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2026 SmartThings
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    
+
     -- Check initial events for button 1
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
@@ -142,7 +142,7 @@ test.register_coroutine_test(
         mock_device.id,
         zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, clusters.PowerConfiguration.ID) 
     })
-    
+
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
@@ -158,7 +158,7 @@ test.register_coroutine_test(
       0x20, -- Uint8
       data_types.Uint8(0x01)
     )
-    
+
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.pushed({ state_change = true }))
@@ -177,7 +177,7 @@ test.register_coroutine_test(
       0x20, -- Uint8
       data_types.Uint8(0x02)
     )
-    
+
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.double({ state_change = true }))
@@ -196,7 +196,7 @@ test.register_coroutine_test(
       0x20, -- Uint8
       data_types.Uint8(0x03)
     )
-    
+
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.held({ state_change = true }))
@@ -215,7 +215,7 @@ test.register_coroutine_test(
       0x20, -- Uint8
       data_types.Uint8(0x04)
     )
-    
+
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.pushed_3x({ state_change = true }))
@@ -250,7 +250,7 @@ test.register_coroutine_test(
     -- 0x0001 PowerConfiguration, 0x0021 BatteryPercentageRemaining
     -- Driver logic: math.floor(value / 2)
     local battery_report = clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 180) -- 180/2 = 90%
-    
+
     test.socket.zigbee:__queue_receive({ mock_device.id, battery_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.battery.battery(90))
