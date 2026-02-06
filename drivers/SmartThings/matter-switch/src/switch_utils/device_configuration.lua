@@ -20,17 +20,18 @@ local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
+local WindowCoveringDeviceConfiguration = {}
 
 function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
-   return
+    return
   end
 
   table.sort(server_cluster_ep_ids)
   for device_num, ep_id in ipairs(server_cluster_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
       local label_and_name = string.format("%s %d", device.label, device_num)
-      local child_profile, _ = assign_profile_fn(device, ep_id, true)
+      local child_profile, optional_component_capabilities = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
         driver:try_create_device({
@@ -43,7 +44,8 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
         })
       else
         existing_child_device:try_update_metadata({
-          profile = child_profile
+          profile = child_profile,
+          optional_component_capabilities = optional_component_capabilities
         })
       end
     end
@@ -73,7 +75,6 @@ function FanDeviceConfiguration.assign_profile_for_fan_ep(device, server_fan_ep_
   table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
   return "fan-modular", optional_supported_component_capabilities
 end
-
 
 function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_onoff_ep_id, is_child_device)
   local ep_info = switch_utils.get_endpoint_info(device, server_onoff_ep_id)
@@ -187,6 +188,33 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
   end
 end
 
+function WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device, server_window_covering_ep_id)
+  local ep_info = switch_utils.get_endpoint_info(device, server_window_covering_ep_id)
+  local window_covering_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.WindowCovering.ID)
+  local optional_supported_component_capabilities = {}
+  local main_component_capabilities = {}
+
+  if clusters.WindowCovering.are_features_supported(clusters.WindowCovering.types.Feature.LIFT, window_covering_cluster_info.feature_map) then
+    table.insert(main_component_capabilities, capabilities.windowShadeLevel.ID)
+  end
+  if clusters.WindowCovering.are_features_supported(clusters.WindowCovering.types.Feature.TILT, window_covering_cluster_info.feature_map) then
+    table.insert(main_component_capabilities, capabilities.windowShadeTiltLevel.ID)
+  end
+
+  local power_source_cluster_info = switch_utils.find_cluster_on_ep(ep_info, clusters.PowerSource.ID)
+  if power_source_cluster_info then
+    local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT) or fields.battery_support.NO_BATTERY
+    if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
+      table.insert(main_component_capabilities, capabilities.battery.ID)
+    elseif battery_support == fields.battery_support.BATTERY_LEVEL then
+      table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
+    end
+  end
+
+  table.insert(optional_supported_component_capabilities, {"main", main_component_capabilities})
+  return "window-covering-modular", optional_supported_component_capabilities
+end
+
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
@@ -218,7 +246,6 @@ function DeviceConfiguration.match_profile(driver, device)
   if #server_onoff_ep_ids > 0 then
     ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
   end
-
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
@@ -250,11 +277,22 @@ function DeviceConfiguration.match_profile(driver, device)
     ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
   end
 
+  -- initialize the main device card with window covering if applicable
+  local window_covering_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WINDOW_COVERING)
+  if #window_covering_ep_ids > 0 then
+    ChildConfiguration.create_or_update_child_devices(driver, device, window_covering_ep_ids, default_endpoint_id, WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep)
+  end
+  if switch_utils.tbl_contains(window_covering_ep_ids, default_endpoint_id) then
+    updated_profile, optional_component_capabilities = WindowCoveringDeviceConfiguration.assign_profile_for_window_covering_ep(device, default_endpoint_id)
+  end
+
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
 end
 
 return {
+  ButtonCfg = ButtonDeviceConfiguration,
+  ChildCfg = ChildConfiguration,
   DeviceCfg = DeviceConfiguration,
   SwitchCfg = SwitchDeviceConfiguration,
-  ButtonCfg = ButtonDeviceConfiguration
+  WindowCoveringCfg = WindowCoveringDeviceConfiguration,
 }

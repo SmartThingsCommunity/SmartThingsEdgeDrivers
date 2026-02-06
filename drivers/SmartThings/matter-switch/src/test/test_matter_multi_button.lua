@@ -16,82 +16,82 @@ local mock_device = test.mock_device.build_test_matter_device(
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
     matter_version = {hardware = 1, software = 1},
     endpoints = {
-    {
-      endpoint_id = 0,
-      clusters = {},
-      device_types = {
-        {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode
-      }
-    },
-    {
-      endpoint_id = 10,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH,
-          cluster_type = "SERVER"
-        },
+      {
+        endpoint_id = 0,
+        clusters = {},
+        device_types = {
+          {device_type_id = 0x0016, device_type_revision = 1}, -- RootNode
+        }
       },
-      device_types = {
-        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
-      }
-    },
-    {
-      endpoint_id = 20,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE,
-          cluster_type = "SERVER"
+      {
+        endpoint_id = 10,
+        clusters = {
+          {
+            cluster_id = clusters.Switch.ID,
+            feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH,
+            cluster_type = "SERVER"
+          },
         },
+        device_types = {
+          {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+        }
       },
-      device_types = {
-        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
-      }
-    },
-    {
-      endpoint_id = 30,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
-          cluster_type = "SERVER"
+      {
+        endpoint_id = 20,
+        clusters = {
+          {
+            cluster_id = clusters.Switch.ID,
+            feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE,
+            cluster_type = "SERVER"
+          },
         },
+        device_types = {
+          {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+        }
       },
-      device_types = {
-        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
-      }
-    },
-    {
-      endpoint_id = 50,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS,
-          cluster_type = "SERVER"
+      {
+        endpoint_id = 30,
+        clusters = {
+          {
+            cluster_id = clusters.Switch.ID,
+            feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+            cluster_type = "SERVER"
+          },
         },
+        device_types = {
+          {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+        }
       },
-      device_types = {
-        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
-      }
-    },
-    {
-      endpoint_id = 60,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
-            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
-            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
-          cluster_type = "SERVER"
+      {
+        endpoint_id = 50,
+        clusters = {
+          {
+            cluster_id = clusters.Switch.ID,
+            feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH | clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS,
+            cluster_type = "SERVER"
+          },
         },
+        device_types = {
+          {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+        }
       },
-      device_types = {
-        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
-      }
+      {
+        endpoint_id = 60,
+        clusters = {
+          {
+            cluster_id = clusters.Switch.ID,
+            feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
+              clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
+              clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+            cluster_type = "SERVER"
+          },
+        },
+        device_types = {
+          {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+        }
+      },
     },
-  },
-})
+  })
 
 local mock_device_battery = test.mock_device.build_test_matter_device(
   {
@@ -278,18 +278,18 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "infoChanged", device_info_json })
     -- due to the AttributeList being processed in update_profile, setting profiling_data.BATTERY_SUPPORT,
     -- subsequent subscriptions will not include AttributeList.
-    local UPDATED_CLUSTER_SUBSCRIBE_LIST = {
+    local CLUSTER_SUBSCRIBE_LIST = {
       clusters.PowerSource.server.attributes.BatPercentRemaining,
       clusters.Switch.server.events.InitialPress,
       clusters.Switch.server.events.LongPress,
       clusters.Switch.server.events.ShortRelease,
       clusters.Switch.server.events.MultiPressComplete,
     }
-    local updated_subscribe_request = UPDATED_CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device_battery)
-    for i, clus in ipairs(UPDATED_CLUSTER_SUBSCRIBE_LIST) do
-      if i > 1 then updated_subscribe_request:merge(clus:subscribe(mock_device_battery)) end
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device_battery)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_battery)) end
     end
-    test.socket.matter:__expect_send({mock_device_battery.id, updated_subscribe_request})
+    test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
     expect_configure_buttons(mock_device_battery)
   end,
   { test_init = test_init_battery }
