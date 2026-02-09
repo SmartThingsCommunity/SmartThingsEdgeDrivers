@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
@@ -32,7 +22,9 @@ local IaswdLevel = IASWD.types.IaswdLevel
 local capabilities = require "st.capabilities"
 local alarm = capabilities.alarm
 local switch = capabilities.switch
-
+local mode = capabilities.mode
+local battery = capabilities.battery
+local refresh = capabilities.refresh
 -- Constants
 local ALARM_COMMAND = "alarmCommand"
 local ALARM_LAST_DURATION = "lastDuration"
@@ -81,13 +73,13 @@ local send_siren_command = function(device, warning_mode, warning_siren_level, s
   siren_configuration:set_siren_level(warning_siren_level)
 
   device:send(
-      IASWD.server.commands.StartWarning(
-          device,
-          siren_configuration,
-          data_types.Uint16(warning_duration),
-          data_types.Uint8(duty_cycle),
-          data_types.Enum8(strobe_level)
-      )
+          IASWD.server.commands.StartWarning(
+                  device,
+                  siren_configuration,
+                  data_types.Uint16(warning_duration),
+                  data_types.Uint8(duty_cycle),
+                  data_types.Enum8(strobe_level)
+          )
   )
 end
 
@@ -157,7 +149,10 @@ end
 local zigbee_siren_driver_template = {
   supported_capabilities = {
     alarm,
-    switch
+    switch,
+    mode,
+    battery,
+    refresh
   },
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   zigbee_handlers = {
@@ -189,7 +184,7 @@ local zigbee_siren_driver_template = {
     added = device_added,
     doConfigure = do_configure
   },
-  sub_drivers = { require("ozom"), require("frient") },
+  sub_drivers = require("sub_drivers"),
   cluster_configurations = {
     [alarm.ID] = {
       {

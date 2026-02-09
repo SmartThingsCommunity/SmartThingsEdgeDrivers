@@ -493,6 +493,13 @@ function utils.subscribe(device)
   -- attributes and not events.
   device:set_field(fields.SUBSCRIBED_ATTRIBUTES_KEY, attributes_seen)
 
+  -- If the type of battery support has not yet been determined, add the PowerSource AttributeList to the list of
+  -- subscribed attributes in order to determine which if any battery capability should be used.
+  if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
+    local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
+    subscribe_request:with_info_block(ib)
+  end
+
   if #subscribe_request.info_blocks > 0 then
     device:send(subscribe_request)
   end

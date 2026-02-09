@@ -77,4 +77,22 @@ function AirQualitySensorUtils.set_supported_health_concern_values(device)
   end
 end
 
+function AirQualitySensorUtils.profile_changed(synced_components, prev_components)
+  if #synced_components ~= #prev_components then
+    return true
+  end
+  for _, component in pairs(synced_components or {}) do
+    if (prev_components[component.id] == nil) or
+      (#component.capabilities ~= #prev_components[component.id].capabilities) then
+      return true
+    end
+    for _, capability in pairs(component.capabilities or {}) do
+      if prev_components[component.id][capability.id] == nil then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 return AirQualitySensorUtils
