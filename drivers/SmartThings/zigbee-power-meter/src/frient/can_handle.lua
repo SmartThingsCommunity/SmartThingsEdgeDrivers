@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local is_frient_power_meter = function(opts, driver, device)

@@ -1,4 +1,4 @@
-name: power-energy-battery-consumption-report
+name: frient-power-energy-battery-consumption-report
 components:
   - id: main
     capabilities:

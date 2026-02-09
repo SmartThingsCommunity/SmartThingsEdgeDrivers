@@ -29,7 +29,7 @@ local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
         {
-            profile = t_utils.get_profile_definition("power-energy-battery-consumption-report.yml"),
+            profile = t_utils.get_profile_definition("frient-power-energy-battery-consumption-report.yml"),
             zigbee_endpoints = {
                 [1] = {
                     id = 1,
@@ -126,12 +126,6 @@ test.register_coroutine_test(
                     mock_device,
                     zigbee_test_utils.mock_hub_eui,
                     PowerConfiguration.ID
-                )
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                PowerConfiguration.attributes.BatteryVoltage:configure_reporting(
-                        mock_device, 30, 21600, 1
                 )
             })
 

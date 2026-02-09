@@ -1,4 +1,4 @@
-name: power-energy-consumption-report
+name: frient-power-energy-consumption-report
 components:
   - id: main
     capabilities:

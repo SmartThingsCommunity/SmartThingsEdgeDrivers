@@ -1,4 +1,4 @@
-name: power-energy-current-voltage
+name: frient-power-energy-current-voltage
 components:
   - id: main
     capabilities:

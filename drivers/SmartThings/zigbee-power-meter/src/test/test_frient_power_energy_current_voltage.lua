@@ -34,7 +34,7 @@ zigbee_constants.ELECTRICAL_MEASUREMENT_AC_CURRENT_DIVISOR_KEY = "_electrical_me
 
 local mock_device = test.mock_device.build_test_zigbee_device(
         {
-            profile = t_utils.get_profile_definition("power-energy-current-voltage.yml"),
+            profile = t_utils.get_profile_definition("frient-power-energy-current-voltage.yml"),
             zigbee_endpoints = {
                 [1] = {
                     id = 1,
@@ -350,30 +350,6 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 SimpleMetering.attributes.Multiplier:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACVoltageDivisor:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACVoltageMultiplier:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACCurrentDivisor:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACCurrentMultiplier:read(mock_device)
             })
 
             test.socket.zigbee:__expect_send({

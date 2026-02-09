@@ -7,6 +7,5 @@ local sub_drivers = {
    lazy_load_if_possible("frient"),
    lazy_load_if_possible("shinasystems"),
    lazy_load_if_possible("bituo"),
-   lazy_load_if_possible("frient/EMIZB-151")
 }
 return sub_drivers

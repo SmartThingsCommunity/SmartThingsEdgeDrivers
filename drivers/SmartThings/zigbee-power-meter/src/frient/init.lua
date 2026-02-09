@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local zigbee_constants = require "st.zigbee.constants"
@@ -24,14 +24,6 @@ local ZIGBEE_POWER_METER_FINGERPRINTS = require("frient.fingerprints")
 local ATTRIBUTES = {
   {
     cluster = SimpleMetering.ID,
-    attribute = SimpleMetering.attributes.CurrentSummationDelivered.ID,
-    minimum_interval = 5,
-    maximum_interval = 3600,
-    data_type = data_types.Uint48,
-    reportable_change = 1
-  },
-  {
-    cluster = SimpleMetering.ID,
     attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
     minimum_interval = 5,
     maximum_interval = 3600,
@@ -42,7 +34,7 @@ local ATTRIBUTES = {
 
 local device_init = function(self, device)
   for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
-    if device:get_model() == fingerprint.model and fingerprint.battery then
+    if device:get_model() == fingerprint.model and fingerprint.MIN_BAT then
       battery_defaults.build_linear_voltage_init(fingerprint.MIN_BAT, fingerprint.MAX_BAT)(self, device)
     end
   end
@@ -61,10 +53,6 @@ end
 local do_configure = function(self, device)
   device:refresh()
   device:configure()
-
-  if device:supports_capability(capabilities.battery) then
-    device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
-  end
   for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
     if device:get_model() == fingerprint.model and fingerprint.preferences then
       local pulseConfiguration = tonumber(device.preferences.pulseConfiguration) or 1000
@@ -127,7 +115,7 @@ local function instantaneous_demand_handler(driver, device, value, zb_rx)
   raw_value = raw_value * multiplier / divisor * 1000
 
   local raw_value_watts = raw_value
-  device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, capabilities.powerMeter.power({ value = raw_value_watts, unit = "W" }))
+  device:emit_event(capabilities.powerMeter.power({ value = raw_value_watts, unit = "W" }))
 end
 
 local function energy_meter_handler(driver, device, value, zb_rx)
@@ -200,9 +188,7 @@ local frient_power_meter_handler = {
       }
     }
   },
-  sub_drivers = {
-    require("frient/EMIZB-151")
-  },
+  sub_drivers = require("frient.sub_drivers"),
   can_handle = require("frient.can_handle"),
 }
 
