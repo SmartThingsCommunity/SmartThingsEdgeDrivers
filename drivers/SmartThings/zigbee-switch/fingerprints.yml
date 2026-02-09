@@ -505,6 +505,11 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: SMRZB-342
     deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient/IOMZB-110"
+    deviceLabel: frient IO Module
+    manufacturer: frient A/S
+    model: IOMZB-110
+    deviceProfileName: switch-4inputs-2outputs
   - id: "AduroSmart Eria/AD-DimmableLight3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
