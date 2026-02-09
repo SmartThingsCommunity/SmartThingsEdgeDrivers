@@ -66,6 +66,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
             table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
           end
           table.insert(main_component_capabilities, capabilities.cameraViewportSettings.ID)
+          table.insert(main_component_capabilities, capabilities.videoStreamSettings.ID)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE) then
           table.insert(main_component_capabilities, capabilities.localMediaStorage.ID)
@@ -103,7 +104,6 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
           clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
           table.insert(main_component_capabilities, capabilities.mechanicalPanTiltZoom.ID)
         end
-        table.insert(main_component_capabilities, capabilities.videoStreamSettings.ID)
       elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
       elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
