@@ -35,6 +35,11 @@ function IkeaScrollEventHandlers.multi_press_complete_handler(driver, device, ib
   if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
     generic_event_handlers.multi_press_complete_handler(driver, device, ib, response)
   else
+    local total_num_presses_counted = ib.data and ib.data.elements and ib.data.elements.total_number_of_presses_counted.value or 0
+    local num_presses_to_handle = total_num_presses_counted - (device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED) or 0)
+    if num_presses_to_handle > 0 then
+      rotate_amount_event_helper(device, ib.endpoint_id, num_presses_to_handle)
+    end
     -- reset the LATEST_NUMBER_OF_PRESSES_COUNTED to nil at the end of a MultiPress chain.
     device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, nil)
   end
