@@ -239,6 +239,7 @@ local expected_metadata = {
       {
         "videoCapture2",
         "cameraViewportSettings",
+        "videoStreamSettings",
         "localMediaStorage",
         "audioRecording",
         "cameraPrivacyMode",
@@ -246,7 +247,6 @@ local expected_metadata = {
         "hdr",
         "nightVision",
         "mechanicalPanTiltZoom",
-        "videoStreamSettings",
         "zoneManagement",
         "webrtc",
         "motionSensor",
@@ -1857,11 +1857,11 @@ test.register_coroutine_test(
         uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
       })
     })
-    local expected_metadata = {
+    local updated_expected_metadata = {
       optional_component_capabilities = {
         { "main",
-          { "videoCapture2", "cameraViewportSettings", "localMediaStorage", "audioRecording", "cameraPrivacyMode",
-            "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "videoStreamSettings", "zoneManagement",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
             "webrtc", "motionSensor", "sounds", }
         },
         { "statusLed",
@@ -1879,7 +1879,7 @@ test.register_coroutine_test(
       },
       profile = "camera"
     }
-    mock_device:expect_metadata_update(expected_metadata)
+    mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
   end
