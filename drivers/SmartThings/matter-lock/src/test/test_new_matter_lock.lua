@@ -271,6 +271,17 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
+        DoorLock.attributes.MaxPINCodeLength:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.MaxPINCodeLength(8)
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(8, {visibility = {displayed = false}}))
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
         DoorLock.attributes.RequirePINforRemoteOperation:build_test_report_data(
           mock_device, 1, DoorLock.attributes.RequirePINforRemoteOperation(true)
         ),
@@ -336,6 +347,17 @@ test.register_coroutine_test(
 function()
   test.socket.matter:__set_channel_ordering("relaxed")
   test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      DoorLock.attributes.MaxPINCodeLength:build_test_report_data(
+        mock_device, 1, DoorLock.attributes.MaxPINCodeLength(8)
+      ),
+    }
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(8, {visibility = {displayed = false}}))
+  )
   test.socket.matter:__queue_receive(
     {
       mock_device.id,
