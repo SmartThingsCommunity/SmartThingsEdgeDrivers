@@ -371,6 +371,7 @@ local zigbee_thermostat_driver = {
     require("lux-konoz"),
     require("leviton"),
     require("danfoss"),
+    require("nodon-trv"),
     require("popp"),
     require("vimar"),
     require("resideo_korea"),
