@@ -1,4 +1,10 @@
 zigbeeManufacturer:
+  # GELUBU
+  - id: "GELUBU/S93"
+    deviceLabel: GELUBU Door Lock S93
+    manufacturer: GELUBU
+    model: S93
+    deviceProfileName: lock-battery
   # YALE
   - id: "Yale YRD220/240"
     deviceLabel: "Yale Door Lock"
