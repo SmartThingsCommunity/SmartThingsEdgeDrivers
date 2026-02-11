@@ -159,6 +159,11 @@ local matter_driver_template = {
         [clusters.FanControl.attributes.FanModeSequence.ID] = attribute_handlers.fan_mode_sequence_handler,
         [clusters.FanControl.attributes.PercentCurrent.ID] = attribute_handlers.percent_current_handler
       },
+      [clusters.FlowMeasurement.ID] = {
+        [clusters.FlowMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.flow_attr_handler,
+        [clusters.FlowMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.flow_attr_handler_factory(fields.FLOW_MIN),
+        [clusters.FlowMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.flow_attr_handler_factory(fields.FLOW_MAX)
+      },
       [clusters.IlluminanceMeasurement.ID] = {
         [clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.illuminance_measured_value_handler
       },
@@ -169,6 +174,11 @@ local matter_driver_template = {
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = attribute_handlers.occupancy_handler,
+      },
+      [clusters.OperationalState.ID] = {
+        [clusters.OperationalState.attributes.AcceptedCommandList.ID] = attribute_handlers.operational_state_accepted_command_list_attr_handler,
+        [clusters.OperationalState.attributes.OperationalState.ID] = attribute_handlers.operational_state_attr_handler,
+        [clusters.OperationalState.attributes.OperationalError.ID] = attribute_handlers.operational_error_attr_handler
       },
       [clusters.OnOff.ID] = {
         [clusters.OnOff.attributes.OnOff.ID] = attribute_handlers.on_off_attr_handler,
@@ -237,23 +247,33 @@ local matter_driver_template = {
     [capabilities.fanSpeedPercent.ID] = {
       clusters.FanControl.attributes.PercentCurrent
     },
+    [capabilities.flowMeasurement.ID] = {
+      clusters.FlowMeasurement.attributes.MeasuredValue,
+      clusters.FlowMeasurement.attributes.MinMeasuredValue,
+      clusters.FlowMeasurement.attributes.MaxMeasuredValue
+    },
     [capabilities.illuminanceMeasurement.ID] = {
       clusters.IlluminanceMeasurement.attributes.MeasuredValue
-    },
-    [capabilities.motionSensor.ID] = {
-      clusters.OccupancySensing.attributes.Occupancy
     },
     [capabilities.level.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentLevel
     },
-    [capabilities.switch.ID] = {
-      clusters.OnOff.attributes.OnOff
+    [capabilities.motionSensor.ID] = {
+      clusters.OccupancySensing.attributes.Occupancy
+    },
+    [capabilities.operationalState.ID] = {
+      clusters.OperationalState.attributes.AcceptedCommandList,
+      clusters.OperationalState.attributes.OperationalState,
+      clusters.OperationalState.attributes.OperationalError
     },
     [capabilities.powerMeter.ID] = {
       clusters.ElectricalPowerMeasurement.attributes.ActivePower
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+    },
+    [capabilities.switch.ID] = {
+      clusters.OnOff.attributes.OnOff
     },
     [capabilities.switchLevel.ID] = {
       clusters.LevelControl.attributes.CurrentLevel,
@@ -298,6 +318,10 @@ local matter_driver_template = {
     [capabilities.level.ID] = {
       [capabilities.level.commands.setLevel.NAME] = capability_handlers.handle_set_level
     },
+    [capabilities.operationalState.ID] = {
+      [capabilities.operationalState.commands.pause.NAME] = capability_handlers.handle_operational_state_pause,
+      [capabilities.operationalState.commands.resume.NAME] = capability_handlers.handle_operational_state_resume
+    },
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.off.NAME] = capability_handlers.handle_switch_off,
       [capabilities.switch.commands.on.NAME] = capability_handlers.handle_switch_on,
@@ -324,6 +348,7 @@ local matter_driver_template = {
     capabilities.energyMeter,
     capabilities.fanMode,
     capabilities.fanSpeedPercent,
+    capabilities.flowMeasurement,
     capabilities.hdr,
     capabilities.illuminanceMeasurement,
     capabilities.imageControl,
@@ -332,6 +357,7 @@ local matter_driver_template = {
     capabilities.mechanicalPanTiltZoom,
     capabilities.motionSensor,
     capabilities.nightVision,
+    capabilities.operationalState,
     capabilities.powerMeter,
     capabilities.powerConsumptionReport,
     capabilities.relativeHumidityMeasurement,
