@@ -94,7 +94,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 local function do_color_action(driver, bridge_device, group, args, aux)
   local hue, sat = (args.args.color.hue / 100), (args.args.color.saturation / 100)
   if hue == 1 then -- 0 and 360 degrees are equivalent in HSV, but not in our conversion function
@@ -135,7 +135,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 local function do_setHue_action(driver, bridge_device, group, args, aux)
   local currentSaturation = aux[Fields.COLOR_SATURATION] or 0
   args.args.color = {
@@ -149,7 +149,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 local function do_setSaturation_action(driver, bridge_device, group, args, aux)
   local currentHue = aux[Fields.COLOR_HUE] or 0
   args.args.color = {
@@ -163,8 +163,9 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 local function do_color_temp_action(driver, bridge_device, group, args, aux)
+  local capabilities = require "st.capabilities"
   local kelvin = args.args.temperature
 
   local grouped_light_id = group.grouped_light_rid
@@ -185,6 +186,29 @@ local function do_color_temp_action(driver, bridge_device, group, args, aux)
   local clamped_kelvin = st_utils.clamp_value(kelvin, min, Consts.MAX_TEMP_KELVIN)
   local mirek = math.floor(utils.kelvin_to_mirek(clamped_kelvin))
 
+  local all_same_mirek = true
+  for _, device in ipairs(group.devices) do
+    local current_color_temp = device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME)
+    if current_color_temp then
+      local current_mirek = math.floor(utils.kelvin_to_mirek(current_color_temp))
+      if current_mirek ~= mirek then
+        all_same_mirek = false
+        break
+      end
+    else
+      all_same_mirek = false
+      break
+    end
+  end
+
+  if all_same_mirek and #group.devices > 0 then
+    log.debug(string.format("Color temp change to %dK results in same mirek value (%d) for all devices in group, emitting events directly", clamped_kelvin, mirek))
+    for _, device in ipairs(group.devices) do
+      device:emit_event(capabilities.colorTemperature.colorTemperature(clamped_kelvin))
+    end
+    return
+  end
+
   local resp, err = hue_api:set_grouped_light_color_temp(grouped_light_id, mirek)
 
   if not resp or (resp.errors and #resp.errors == 0) then
@@ -203,7 +227,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 function GroupedLightCommandHandlers.switch_on_handler(driver, bridge_device, group, args, aux)
   do_switch_action(driver, bridge_device, group, args)
 end
@@ -212,7 +236,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 function GroupedLightCommandHandlers.switch_off_handler(driver, bridge_device, group, args, aux)
   do_switch_action(driver, bridge_device, group, args)
 end
@@ -221,7 +245,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 function GroupedLightCommandHandlers.switch_level_handler(driver, bridge_device, group, args, aux)
   do_switch_level_action(driver, bridge_device, group, args)
 end
@@ -230,7 +254,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 function GroupedLightCommandHandlers.set_color_handler(driver, bridge_device, group, args, aux)
   do_color_action(driver, bridge_device, group, args, aux)
 end
@@ -239,7 +263,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 function GroupedLightCommandHandlers.set_hue_handler(driver, bridge_device, group, args, aux)
   do_setHue_action(driver, bridge_device, group, args, aux)
 end
@@ -248,7 +272,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 function GroupedLightCommandHandlers.set_saturation_handler(driver, bridge_device, group, args, aux)
   do_setSaturation_action(driver, bridge_device, group, args, aux)
 end
@@ -257,7 +281,7 @@ end
 ---@param bridge_device HueBridgeDevice
 ---@param group table
 ---@param args table
----@param aux table auxilary data needed for the command that the devices all had in common
+---@param aux table auxiliary data needed for the command that the devices all had in common
 function GroupedLightCommandHandlers.set_color_temp_handler(driver, bridge_device, group, args, aux)
   do_color_temp_action(driver, bridge_device, group, args, aux)
 end
