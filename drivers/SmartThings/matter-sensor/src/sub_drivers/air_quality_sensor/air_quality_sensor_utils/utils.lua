@@ -78,16 +78,22 @@ function AirQualitySensorUtils.set_supported_health_concern_values(device)
 end
 
 function AirQualitySensorUtils.profile_changed(synced_components, prev_components)
-  if #synced_components ~= #prev_components then
-    return true
-  end
-  for _, component in pairs(synced_components or {}) do
-    if (prev_components[component.id] == nil) or
-      (#component.capabilities ~= #prev_components[component.id].capabilities) then
+  for component_id, synced_component in pairs(synced_components or {}) do
+    local prev_component = prev_components[component_id]
+    if prev_component == nil then
       return true
     end
-    for _, capability in pairs(component.capabilities or {}) do
-      if prev_components[component.id][capability.id] == nil then
+    if #synced_component.capabilities ~= #prev_component.capabilities then
+      return true
+    end
+    -- Build a table of capability IDs from the previous component. Then, use this map to check
+    -- that all capabilities in the synced component existed in the previous component.
+    local prev_cap_ids = {}
+    for _, capability in ipairs(prev_component.capabilities or {}) do
+      prev_cap_ids[capability.id] = true
+    end
+    for _, capability in ipairs(synced_component.capabilities or {}) do
+      if not prev_cap_ids[capability.id] then
         return true
       end
     end
