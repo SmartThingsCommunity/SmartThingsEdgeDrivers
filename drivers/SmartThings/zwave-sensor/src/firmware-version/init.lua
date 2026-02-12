@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -20,22 +10,6 @@ local Version = (require "st.zwave.CommandClass.Version")({ version = 1 })
 --- @type st.zwave.CommandClass.WakeUp
 local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
---This sub_driver will populate the currentVersion (firmware) when the firmwareUpdate capability is enabled
-local FINGERPRINTS = {
-  { manufacturerId = 0x027A, productType = 0x7000, productId = 0xE002 } -- Zooz ZSE42 Water Sensor
-}
-
-local function can_handle_fw(opts, driver, device, ...)
-  if device:supports_capability_by_id(capabilities.firmwareUpdate.ID) then
-    for _, fingerprint in ipairs(FINGERPRINTS) do
-      if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-        local subDriver = require("firmware-version")
-        return true, subDriver
-      end
-    end
-  end
-  return false
-end
 
 --Runs upstream handlers (ex zwave_handlers)
 local function call_parent_handler(handlers, self, device, event, args)
@@ -73,7 +47,7 @@ end
 
 local firmware_version = {
   NAME = "firmware_version",
-  can_handle = can_handle_fw,
+  can_handle = require("firmware-version.can_handle"),
 
   lifecycle_handlers = {
     added = added_handler,
