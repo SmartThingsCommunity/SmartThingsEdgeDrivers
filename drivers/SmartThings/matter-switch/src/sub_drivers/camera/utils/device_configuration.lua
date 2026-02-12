@@ -2,8 +2,8 @@
 -- Licensed under the Apache License, Version 2.0
 
 local button_cfg = require("switch_utils.device_configuration").ButtonCfg
-local camera_fields = require "sub_drivers.camera.camera_utils.fields"
-local camera_utils = require "sub_drivers.camera.camera_utils.utils"
+local camera_fields = require "sub_drivers.camera.utils.fields"
+local camera_utils = require "sub_drivers.camera.utils.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local device_cfg = require "switch_utils.device_configuration"
