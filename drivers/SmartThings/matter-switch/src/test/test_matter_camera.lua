@@ -114,7 +114,68 @@ local mock_device = test.mock_device.build_test_matter_device({
         }
       },
       device_types = {
-        {device_type_id = 0x0143, device_type_revision = 1} -- Doorbell
+        {device_type_id = 0x0148, device_type_revision = 1} -- DoorBell
+      }
+    }
+  }
+})
+
+local mock_device_chime = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("camera.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = CHIME_EP,
+      clusters = {
+        {
+          cluster_id = clusters.Chime.ID,
+          cluster_type = "SERVER"
+        },
+      },
+      device_types = {
+        {device_type_id = 0x0146, device_type_revision = 1} -- Chime
+      }
+    }
+  }
+})
+
+local mock_device_doorbell = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("camera.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = DOORBELL_EP,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+          cluster_type = "SERVER",
+        }
+      },
+      device_types = {
+        {device_type_id = 0x0148, device_type_revision = 1} -- DoorBell
       }
     }
   }
@@ -166,6 +227,82 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+local function test_init_chime()
+  test.mock_device.add_test_device(mock_device_chime)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_chime.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_chime.id, "init" })
+  local subscribed_attributes_chime = {
+    clusters.Chime.attributes.InstalledChimeSounds,
+    clusters.Chime.attributes.SelectedChime,
+    clusters.Chime.attributes.Enabled,
+  }
+  subscribe_request = subscribed_attributes_chime[1]:subscribe(mock_device_chime)
+  for i, attr in ipairs(subscribed_attributes_chime) do
+    if i > 1 then subscribe_request:merge(attr:subscribe(mock_device_chime)) end
+  end
+  test.socket.matter:__expect_send({mock_device_chime.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_chime.id, "doConfigure" })
+  local expected_metadata = {
+    optional_component_capabilities = {
+      {
+        "main",
+        {
+          "sounds",
+          "audioMute"
+        }
+      }
+    },
+    profile = "chime"
+  }
+  mock_device_chime:expect_metadata_update(expected_metadata)
+  local updated_device_profile = t_utils.get_profile_definition(
+    "chime.yml", {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.socket.device_lifecycle:__queue_receive(mock_device_chime:generate_info_changed({ profile = updated_device_profile }))
+  test.socket.matter:__expect_send({mock_device_chime.id, subscribe_request})
+  mock_device_chime:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_doorbell()
+  test.mock_device.add_test_device(mock_device_doorbell)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_doorbell.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_doorbell.id, "init" })
+  local subscribed_attributes_doorbell = {
+    clusters.Switch.server.events.InitialPress,
+    clusters.Switch.server.events.LongPress,
+    clusters.Switch.server.events.ShortRelease,
+    clusters.Switch.server.events.MultiPressComplete
+  }
+  subscribe_request = subscribed_attributes_doorbell[1]:subscribe(mock_device_doorbell)
+  for i, attr in ipairs(subscribed_attributes_doorbell) do
+    if i > 1 then subscribe_request:merge(attr:subscribe(mock_device_doorbell)) end
+  end
+  test.socket.matter:__expect_send({mock_device_doorbell.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_doorbell.id, "doConfigure" })
+  test.socket.matter:__expect_send({mock_device_doorbell.id, clusters.Switch.attributes.MultiPressMax:read(mock_device_doorbell, DOORBELL_EP)})
+  test.socket.capability:__expect_send(mock_device_doorbell:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
+  local expected_metadata = {
+    optional_component_capabilities = {
+      {
+        "main",
+        {
+          "button"
+        }
+      }
+    },
+    profile = "doorbell"
+  }
+  mock_device_doorbell:expect_metadata_update(expected_metadata)
+  local updated_device_profile = t_utils.get_profile_definition(
+    "doorbell.yml", {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.socket.device_lifecycle:__queue_receive(mock_device_doorbell:generate_info_changed({ profile = updated_device_profile }))
+  test.socket.matter:__expect_send({mock_device_doorbell.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device_doorbell.id, clusters.Switch.attributes.MultiPressMax:read(mock_device_doorbell, DOORBELL_EP)})
+  test.socket.capability:__expect_send(mock_device_doorbell:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
+  mock_device_doorbell:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
 
 local additional_subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
@@ -1915,6 +2052,20 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
   end
+)
+
+test.register_coroutine_test(
+  "Test init for chime device type",
+  function()
+  end,
+  { test_init = test_init_chime }
+)
+
+test.register_coroutine_test(
+  "Test init for doorbell device type",
+  function()
+  end,
+  { test_init = test_init_doorbell }
 )
 
 -- run the tests

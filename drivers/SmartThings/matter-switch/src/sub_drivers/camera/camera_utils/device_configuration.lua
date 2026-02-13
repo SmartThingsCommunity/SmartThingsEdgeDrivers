@@ -48,13 +48,19 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   local speaker_component_capabilities = {}
   local microphone_component_capabilities = {}
   local doorbell_component_capabilities = {}
+  local profile = "camera"
 
   local function has_server_cluster_type(cluster)
     return cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH"
   end
 
-  local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
+  local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, camera_fields.camera_profile_device_types)
+  local chime_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.CHIME)
+  local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.DOORBELL)
+
   if #camera_endpoints > 0 then
+    -- get full list of camera endpoints, including chime and doorbell
+    camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
     local camera_ep = switch_utils.get_endpoint_info(device, camera_endpoints[1])
     for _, ep_cluster in pairs(camera_ep.clusters or {}) do
       if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID and has_server_cluster_type(ep_cluster) then
@@ -113,40 +119,47 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         table.insert(main_component_capabilities, capabilities.webrtc.ID)
       end
     end
-  end
-  local chime_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CHIME)
-  if #chime_endpoints > 0 then
+	  if #chime_endpoints > 0 then
+	    table.insert(main_component_capabilities, capabilities.sounds.ID)
+	  end
+	  if #doorbell_endpoints > 0 then
+	    table.insert(doorbell_component_capabilities, capabilities.button.ID)
+	    CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1], camera_fields.profile_components.doorbell)
+	  end
+	  if status_light_enabled_present then
+	    table.insert(status_led_component_capabilities, capabilities.switch.ID)
+	  end
+	  if status_light_brightness_present then
+	    table.insert(status_led_component_capabilities, capabilities.mode.ID)
+	  end
+
+	  if #status_led_component_capabilities > 0 then
+	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})
+	  end
+	  if #speaker_component_capabilities > 0 then
+	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.speaker, speaker_component_capabilities})
+	  end
+	  if #microphone_component_capabilities > 0 then
+	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.microphone, microphone_component_capabilities})
+	  end
+	  if #doorbell_component_capabilities > 0 then
+	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.doorbell, doorbell_component_capabilities})
+	  end
+  elseif #chime_endpoints > 0 then
     table.insert(main_component_capabilities, capabilities.sounds.ID)
-  end
-  local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL)
-  if #doorbell_endpoints > 0 then
-    table.insert(doorbell_component_capabilities, capabilities.button.ID)
-  end
-  if status_light_enabled_present then
-    table.insert(status_led_component_capabilities, capabilities.switch.ID)
-  end
-  if status_light_brightness_present then
-    table.insert(status_led_component_capabilities, capabilities.mode.ID)
+    table.insert(main_component_capabilities, capabilities.audioMute.ID)
+    profile = "chime"
+  elseif #doorbell_endpoints > 0 then
+    table.insert(main_component_capabilities, capabilities.button.ID)
+    CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1], camera_fields.profile_components.main)
+    profile = "doorbell"
   end
 
-  table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.main, main_component_capabilities})
-  if #status_led_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})
-  end
-  if #speaker_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.speaker, speaker_component_capabilities})
-  end
-  if #microphone_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.microphone, microphone_component_capabilities})
-  end
-  if #doorbell_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.doorbell, doorbell_component_capabilities})
-  end
+  table.insert(optional_supported_component_capabilities, 1, {camera_fields.profile_components.main, main_component_capabilities})
 
   if camera_utils.optional_capabilities_list_changed(optional_supported_component_capabilities, device.profile.components) then
-    device:try_update_metadata({profile = "camera", optional_component_capabilities = optional_supported_component_capabilities})
+    device:try_update_metadata({profile = profile, optional_component_capabilities = optional_supported_component_capabilities})
     if #doorbell_endpoints > 0 then
-      CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
       button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
     end
   end
@@ -274,9 +287,13 @@ function CameraDeviceConfiguration.initialize_camera_capabilities(device)
   init_camera_privacy_mode(device)
 end
 
-function CameraDeviceConfiguration.update_doorbell_component_map(device, ep)
+function CameraDeviceConfiguration.update_doorbell_component_map(device, ep, component)
   local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  component_map.doorbell = ep
+  if component == camera_fields.profile_components.main then
+    component_map.main = ep
+  elseif component == camera_fields.profile_components.doorbell then
+    component_map.doorbell = ep
+  end
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
