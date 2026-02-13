@@ -245,7 +245,6 @@ local function do_color_temp_action(driver, device, args)
     if current_mirek == mirek then
       log.debug(string.format("Color temp change from %dK to %dK results in same mirek value (%d), emitting event directly", current_color_temp, clamped_kelvin, mirek))
       device:emit_event(capabilities.colorTemperature.colorTemperature(clamped_kelvin))
-      return
     end
   end
 
