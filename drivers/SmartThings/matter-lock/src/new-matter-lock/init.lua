@@ -238,7 +238,7 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
-function profile_changed(latest_profile, previous_profile)
+local function profile_changed(latest_profile, previous_profile)
   if latest_profile.id ~= previous_profile.id then
     return true
   end
