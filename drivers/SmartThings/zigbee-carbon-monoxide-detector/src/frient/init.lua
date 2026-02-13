@@ -11,14 +11,19 @@ local CarbonMonoxideEndpoint = 0x2E
 local SmokeAlarmEndpoint = 0x23
 local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
 local TEMPERATURE_ENDPOINT = 0x26
-local Basic = zcl_clusters.Basic
 local alarm = capabilities.alarm
 local smokeDetector = capabilities.smokeDetector
 local IASWD = zcl_clusters.IASWD
 local carbonMonoxideMeasurement = capabilities.carbonMonoxideMeasurement
 local tamperAlert = capabilities.tamperAlert
+local SirenConfiguration = IASWD.types.SirenConfiguration
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local SinglePrecisionFloat = require "st.zigbee.data_types.SinglePrecisionFloat"
+local ALARM_COMMAND = "alarmCommand"
+local ALARM_DURATION = "warningDuration"
+local DEFAULT_MAX_WARNING_DURATION = 0x00F0
+local zcl_global_commands = require "st.zigbee.zcl.global_commands"
+local Status = require "st.zigbee.generated.types.ZclStatus"
 
 local alarm_command = {
   OFF = 0,
@@ -29,47 +34,31 @@ local CONFIGURATIONS = {
   {
     cluster = IASZone.ID,
     attribute = IASZone.attributes.ZoneStatus.ID,
-    minimum_interval = 30,
+    minimum_interval = 0,
     maximum_interval = 300,
     data_type = IASZone.attributes.ZoneStatus.base_type,
     reportable_change = 1
   },
   {
-    cluster = TemperatureMeasurement.ID,
-    attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
-    minimum_interval = 60,
-    maximum_interval = 600,
-    data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
-    reportable_change = 100
-  },
-  {
     cluster = CarbonMonoxideCluster.ID,
     attribute = CarbonMonoxideCluster.attributes.MeasuredValue.ID,
-    minimum_interval = 10,
+    minimum_interval = 30,
     maximum_interval = 600,
     data_type = data_types.SinglePrecisionFloat,
-    reportable_change = SinglePrecisionFloat(0, 0, 0)
+    reportable_change = SinglePrecisionFloat(0, -20, 0.048576)  -- 0, -20, 0.048576 is 1ppm in SinglePrecisionFloat
   }
 }
 
+local function get_current_max_warning_duration(device)
+  return device.preferences.maxWarningDuration == nil and DEFAULT_MAX_WARNING_DURATION or device.preferences.maxWarningDuration
+end
+
 local function device_added(driver, device)
   device:emit_event(alarm.alarm.off())
-
-  if device:supports_capability(smokeDetector) then
-    device:emit_event(smokeDetector.smoke.clear())
-  end
-
-  if device:supports_capability(carbonMonoxide) then
-    device:emit_event(carbonMonoxide.carbonMonoxide.clear())
-  end
-
-  if device:supports_capability(tamperAlert) then
-    device:emit_event(tamperAlert.tamper.clear())
-  end
-
-  if device:supports_capability(carbonMonoxideMeasurement) then
-    device:emit_event(carbonMonoxideMeasurement.carbonMonoxideLevel({value = 0, unit = "ppm"}))
-  end
+  device:emit_event(smokeDetector.smoke.clear())
+  device:emit_event(carbonMonoxide.carbonMonoxide.clear())
+  device:emit_event(tamperAlert.tamper.clear())
+  device:emit_event(carbonMonoxideMeasurement.carbonMonoxideLevel({value = 0, unit = "ppm"}))
 end
 
 local function device_init(driver, device)
@@ -84,37 +73,31 @@ end
 local function generate_event_from_zone_status(driver, device, zone_status, zigbee_message)
   local endpoint = zigbee_message.address_header.src_endpoint.value
   if endpoint == SmokeAlarmEndpoint then
-    if device:supports_capability(smokeDetector) then
-      if zone_status:is_test_set() then
-          device:emit_event(smokeDetector.smoke.tested())
-      elseif zone_status:is_alarm1_set() then
-        device:emit_event(smokeDetector.smoke.detected())
-      else
-        device.thread:call_with_delay(6, function ()
-          device:emit_event(smokeDetector.smoke.clear())
-        end)
-      end
+    if zone_status:is_test_set() then
+        device:emit_event(smokeDetector.smoke.tested())
+    elseif zone_status:is_alarm1_set() then
+      device:emit_event(smokeDetector.smoke.detected())
+    else
+      device.thread:call_with_delay(6, function ()
+        device:emit_event(smokeDetector.smoke.clear())
+      end)
     end
   end
   if endpoint == CarbonMonoxideEndpoint then
-    if device:supports_capability(carbonMonoxide) then
-      if zone_status:is_test_set() then
-        device:emit_event(carbonMonoxide.carbonMonoxide.tested())
-      elseif zone_status:is_alarm1_set() then
-        device:emit_event(carbonMonoxide.carbonMonoxide.detected())
-      else
-        device.thread:call_with_delay(6, function ()
-          device:emit_event(carbonMonoxide.carbonMonoxide.clear())
-        end)
-      end
+    if zone_status:is_test_set() then
+      device:emit_event(carbonMonoxide.carbonMonoxide.tested())
+    elseif zone_status:is_alarm1_set() then
+      device:emit_event(carbonMonoxide.carbonMonoxide.detected())
+    else
+      device.thread:call_with_delay(6, function ()
+        device:emit_event(carbonMonoxide.carbonMonoxide.clear())
+      end)
     end
   end
-  if device:supports_capability(tamperAlert) then
-    if zone_status:is_tamper_set() then
-      device:emit_event(tamperAlert.tamper.detected())
-    else
-      device:emit_event(tamperAlert.tamper.clear())
-    end
+  if zone_status:is_tamper_set() then
+    device:emit_event(tamperAlert.tamper.detected())
+  else
+    device:emit_event(tamperAlert.tamper.clear())
   end
 end
 
@@ -129,29 +112,106 @@ end
 
 local function carbon_monoxide_measure_value_attr_handler(driver, device, attr_val, zb_rx)
   local co_value = attr_val.value
-  if co_value == 0x7FC00000 then
-    return
-  elseif co_value < 0 then
-    co_value = 0
-  elseif co_value <= 1 then
+  if co_value <= 1 then
     co_value = co_value * 1000000
-  elseif co_value > 1000000 then
-    co_value = 1000000
+  else
+    return
   end
-  device:emit_event(carbonMonoxideMeasurement.carbonMonoxideLevel({value = co_value, unit = "ppm"}))
+  device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, carbonMonoxideMeasurement.carbonMonoxideLevel({value = co_value, unit = "ppm"}))
 end
 
 local function do_refresh(driver, device)
-  device:send(CarbonMonoxideCluster.attributes.MeasuredValue:read(device):to_endpoint(CarbonMonoxideEndpoint))
-  device:send(TemperatureMeasurement.attributes.MeasuredValue:read(device):to_endpoint(TEMPERATURE_ENDPOINT))
+  device:refresh()
 end
 
 local function do_configure(driver, device)
   device:configure()
+  local maxWarningDuration = get_current_max_warning_duration(device)
+  device:set_field(ALARM_DURATION, maxWarningDuration , { persist = true})
+  device:send(IASWD.attributes.MaxDuration:write(device, maxWarningDuration):to_endpoint(0x23))
 
   device.thread:call_with_delay(5, function()
     do_refresh(driver, device)
   end)
+end
+
+local function send_siren_command(device, warning_mode, warning_siren_level)
+  local warning_duration = get_current_max_warning_duration(device)
+  local siren_configuration
+
+  siren_configuration = SirenConfiguration(0x00)
+  siren_configuration:set_warning_mode(warning_mode)
+  siren_configuration:set_siren_level(warning_siren_level)
+
+  device:send(
+          IASWD.server.commands.StartWarning(
+                  device,
+                  siren_configuration,
+                  data_types.Uint16(warning_duration),
+                  data_types.Uint8(0x00),
+                  data_types.Enum8(0x00)
+          )
+  )
+end
+
+local function siren_switch_off_handler(driver, device, command)
+  device:set_field(ALARM_COMMAND, alarm_command.OFF, {persist = true})
+  send_siren_command(device, 0x00, 0x00)
+end
+
+local function siren_alarm_siren_handler(driver, device, command)
+  device:set_field(ALARM_COMMAND, alarm_command.SIREN, {persist = true})
+  send_siren_command(device, 0x01 , 0x01)
+
+  local warningDurationDelay = get_current_max_warning_duration(device)
+
+  device.thread:call_with_delay(warningDurationDelay, function() -- Send command to switch from siren to off in the app when the siren is done
+    if(device:get_field(ALARM_COMMAND) == alarm_command.SIREN) then
+      siren_switch_off_handler(driver, device, command)
+    end
+  end)
+end
+
+local emit_alarm_event = function(device, cmd)
+  if cmd == alarm_command.OFF then
+    device:emit_event(capabilities.alarm.alarm.off())
+  elseif cmd == alarm_command.SIREN then
+    device:emit_event(capabilities.alarm.alarm.siren())
+  end
+end
+
+local default_response_handler = function(driver, device, zigbee_message)
+  local is_success = zigbee_message.body.zcl_body.status.value
+  local command = zigbee_message.body.zcl_body.cmd.value
+  local alarm_ev = device:get_field(ALARM_COMMAND)
+
+  if command == IASWD.server.commands.StartWarning.ID and is_success == Status.SUCCESS then
+    if alarm_ev ~= alarm_command.OFF then
+      emit_alarm_event(device, alarm_ev)
+      local lastDuration = get_current_max_warning_duration(device)
+      device.thread:call_with_delay(lastDuration, function(d)
+        device:emit_event(capabilities.alarm.alarm.off())
+      end)
+    else
+      emit_alarm_event(device,alarm_command.OFF)
+    end
+  end
+end
+
+local function info_changed(driver, device, event, args)
+  for name, info in pairs(device.preferences) do
+    if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
+      if (name == "maxWarningDuration") then
+        local input = device.preferences.maxWarningDuration
+        device:send(IASWD.attributes.MaxDuration:write(device, input))
+      end
+      if (name == "temperatureSensitivity") then
+        local sensitivity = device.preferences.temperatureSensitivity
+        local temperatureSensitivity = math.floor(sensitivity * 100 + 0.5)
+        device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 600, temperatureSensitivity):to_endpoint(TEMPERATURE_ENDPOINT))
+      end
+    end
+  end
 end
 
 local frient_smoke_carbon_monoxide = {
@@ -161,8 +221,23 @@ local frient_smoke_carbon_monoxide = {
     init = device_init,
     refresh = do_refresh,
     configure = do_configure,
+    infoChanged = info_changed,
+  },
+  capability_handlers = {
+    [alarm.ID] = {
+      [alarm.commands.off.NAME] = siren_switch_off_handler,
+      [alarm.commands.siren.NAME] = siren_alarm_siren_handler
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    }
   },
   zigbee_handlers = {
+    global = {
+      [IASWD.ID] = {
+        [zcl_global_commands.DEFAULT_RESPONSE_ID] = default_response_handler
+      }
+    },
     cluster = {
       [IASZone.ID] = {
         [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler

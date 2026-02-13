@@ -15,7 +15,8 @@ local zigbee_carbon_monoxide_driver_template = {
         capabilities.carbonMonoxideMeasurement,
         capabilities.temperatureMeasurement,
         capabilities.smokeDetector,
-        capabilities.tamperAlert
+        capabilities.tamperAlert,
+        capabilities.alarm
     },
     ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
     health_check = false,
