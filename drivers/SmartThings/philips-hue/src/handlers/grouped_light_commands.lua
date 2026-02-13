@@ -186,27 +186,15 @@ local function do_color_temp_action(driver, bridge_device, group, args, aux)
   local clamped_kelvin = st_utils.clamp_value(kelvin, min, Consts.MAX_TEMP_KELVIN)
   local mirek = math.floor(utils.kelvin_to_mirek(clamped_kelvin))
 
-  local all_same_mirek = true
   for _, device in ipairs(group.devices) do
     local current_color_temp = device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME)
     if current_color_temp then
       local current_mirek = math.floor(utils.kelvin_to_mirek(current_color_temp))
-      if current_mirek ~= mirek then
-        all_same_mirek = false
-        break
+      if current_mirek == mirek then
+        log.debug(string.format("Color temp change from %dK to %dK results in same mirek value (%d), emitting event directly", current_color_temp, clamped_kelvin, mirek))
+        device:emit_event(capabilities.colorTemperature.colorTemperature(clamped_kelvin))
       end
-    else
-      all_same_mirek = false
-      break
     end
-  end
-
-  if all_same_mirek and #group.devices > 0 then
-    log.debug(string.format("Color temp change to %dK results in same mirek value (%d) for all devices in group, emitting events directly", clamped_kelvin, mirek))
-    for _, device in ipairs(group.devices) do
-      device:emit_event(capabilities.colorTemperature.colorTemperature(clamped_kelvin))
-    end
-    return
   end
 
   local resp, err = hue_api:set_grouped_light_color_temp(grouped_light_id, mirek)
