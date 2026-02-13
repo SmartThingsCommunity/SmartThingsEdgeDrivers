@@ -325,9 +325,12 @@ function utils.create_multi_press_values_list(size, supportsHeld)
   return list
 end
 
-function utils.profile_changed(synced_components, prev_components)
-  for component_id, synced_component in pairs(synced_components or {}) do
-    local prev_component = prev_components[component_id]
+function utils.profile_changed(latest_profile, previous_profile)
+  if latest_profile.id ~= previous_profile.id then
+    return true
+  end
+  for component_id, synced_component in pairs(latest_profile.components or {}) do
+    local prev_component = previous_profile.components[component_id]
     if prev_component == nil then
       return true
     end

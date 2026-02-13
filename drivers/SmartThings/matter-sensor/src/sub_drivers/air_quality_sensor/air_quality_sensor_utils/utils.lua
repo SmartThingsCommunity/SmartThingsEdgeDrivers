@@ -77,9 +77,12 @@ function AirQualitySensorUtils.set_supported_health_concern_values(device)
   end
 end
 
-function AirQualitySensorUtils.profile_changed(synced_components, prev_components)
-  for component_id, synced_component in pairs(synced_components or {}) do
-    local prev_component = prev_components[component_id]
+function AirQualitySensorUtils.profile_changed(latest_profile, previous_profile)
+  if latest_profile.id ~= previous_profile.id then
+    return true
+  end
+  for component_id, synced_component in pairs(latest_profile.components or {}) do
+    local prev_component = previous_profile.components[component_id]
     if prev_component == nil then
       return true
     end
@@ -100,5 +103,6 @@ function AirQualitySensorUtils.profile_changed(synced_components, prev_component
   end
   return false
 end
+
 
 return AirQualitySensorUtils

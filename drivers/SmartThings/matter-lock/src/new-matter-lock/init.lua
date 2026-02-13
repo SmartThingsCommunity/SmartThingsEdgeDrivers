@@ -238,9 +238,12 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
-local function profile_changed(synced_components, prev_components)
-  for component_id, synced_component in pairs(synced_components or {}) do
-    local prev_component = prev_components[component_id]
+function profile_changed(latest_profile, previous_profile)
+  if latest_profile.id ~= previous_profile.id then
+    return true
+  end
+  for component_id, synced_component in pairs(latest_profile.components or {}) do
+    local prev_component = previous_profile.components[component_id]
     if prev_component == nil then
       return true
     end
@@ -263,7 +266,7 @@ local function profile_changed(synced_components, prev_components)
 end
 
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id and not profile_changed(device.profile.components, args.old_st_store.profile.components) then
+  if not profile_changed(device.profile, args.old_st_store.profile) then
     return
   end
   for cap_id, attributes in pairs(subscribed_attributes) do
