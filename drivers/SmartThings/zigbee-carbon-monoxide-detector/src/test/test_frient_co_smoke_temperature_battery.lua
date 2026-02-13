@@ -29,7 +29,6 @@ local Status = require "st.zigbee.generated.types.ZclStatus"
 local SMOKE_ENDPOINT = 0x23
 local CO_ENDPOINT = 0x2E
 local TEMPERATURE_ENDPOINT = 0x26
-local DEFAULT_MAX_WARNING_DURATION = 0x00F0
 local ALARM_COMMAND = "alarmCommand"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
