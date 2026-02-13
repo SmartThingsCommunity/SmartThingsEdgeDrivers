@@ -84,12 +84,24 @@ configurations.handle_reporting_config_response = function(driver, device, zb_me
   end
 end
 
-configurations.power_reconfig_wrapper = function(orig_function)
+configurations.reconfig_wrapper = function(orig_function)
   local new_init = function(driver, device)
     local config_version = device:get_field(CONFIGURATION_VERSION_KEY)
     if config_version == nil or config_version < driver.current_config_version then
       if driver._reconfig_timer == nil then
         driver._reconfig_timer = driver:call_with_delay(5*60, configurations.check_and_reconfig_devices, "reconfig_power_devices")
+      end
+    end
+
+    local capabilities = require "st.capabilities"
+    for id, _ in pairs(device.profile.components) do
+      if device:supports_capability(capabilities.colorTemperature, id) and
+       device:get_latest_state(id, capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME) == nil then
+        local clusters = require "st.zigbee.zcl.clusters"
+        driver:call_with_delay(5*60, function()
+          device:send_to_component(id, clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read(device))
+          device:send_to_component(id, clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read(device))
+        end)
       end
     end
     orig_function(driver, device)

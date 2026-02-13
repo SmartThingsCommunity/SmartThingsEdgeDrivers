@@ -86,7 +86,7 @@ end
 local aqara_multi_switch_handler = {
   NAME = "Aqara Multi Switch Handler",
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(device_init),
+    init = configurations.reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = require("aqara.multi-switch.can_handle"),

@@ -117,10 +117,10 @@ def run_tests(verbosity_level, filter, junit, coverage_files, html):
                 test_status = ""
                 test_logs = ""
                 test_done = False
-            if re.match("^\s*$", line) is None:
+            if re.match(r"^\s*$", line) is None:
                 last_line = line
 
-        m = re.match("Passed (\d+) of (\d+) tests", last_line)
+        m = re.match(r"Passed (\d+) of (\d+) tests", last_line)
         if m is None:
             failure_files[test_file].append("\n    ".join(a.stderr.decode().split("\n")))
             test_case = junit_xml.TestCase(test_suite.name)

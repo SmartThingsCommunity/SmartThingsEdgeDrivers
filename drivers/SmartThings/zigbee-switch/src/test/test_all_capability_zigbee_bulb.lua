@@ -393,6 +393,8 @@ test.register_coroutine_test(
                                          mock_device.id,
                                          SimpleMetering.attributes.Divisor:read(mock_device)
                                        })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
@@ -453,12 +455,15 @@ test.register_coroutine_test(
     "configuration version below 1 config response not success",
     function()
       test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
       assert(mock_device:get_field("_configuration_version") == nil)
       test.mock_device.add_test_device(mock_device)
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
       test.wait_for_events()
       test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 600, 5)})
       test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 600, 5)})
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
       test.mock_time.advance_time(5*60 + 1)
       test.wait_for_events()
       test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, ElectricalMeasurement.ID, Status.UNSUPPORTED_ATTRIBUTE)})
@@ -477,12 +482,15 @@ test.register_coroutine_test(
     "configuration version below 1 individual config response records ElectricalMeasurement",
     function()
       test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
       assert(mock_device:get_field("_configuration_version") == nil)
       test.mock_device.add_test_device(mock_device)
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
       test.wait_for_events()
       test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 600, 5)})
       test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 600, 5)})
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
       test.mock_time.advance_time(5*60 + 1)
       test.wait_for_events()
       test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, ElectricalMeasurement.ID, nil, ElectricalMeasurement.attributes.ActivePower.ID,  Status.SUCCESS)})
@@ -500,12 +508,15 @@ test.register_coroutine_test(
     "configuration version below 1 individual config response records SimpleMetering",
     function()
       test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "oneshot")
       assert(mock_device:get_field("_configuration_version") == nil)
       test.mock_device.add_test_device(mock_device)
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
       test.wait_for_events()
       test.socket.zigbee:__expect_send({mock_device.id, ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 600, 5)})
       test.socket.zigbee:__expect_send({mock_device.id, SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 600, 5)})
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
       test.mock_time.advance_time(5*60 + 1)
       test.wait_for_events()
       test.socket.zigbee:__queue_receive({mock_device.id, build_config_response_msg(mock_device, SimpleMetering.ID, nil, SimpleMetering.attributes.InstantaneousDemand.ID,  Status.SUCCESS)})
@@ -566,6 +577,16 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 556)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
     mock_device:expect_native_attr_handler_registration("colorTemperature", "colorTemperature")
+  end
+)
+
+test.register_coroutine_test(
+  "Color temperature range report test",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__queue_receive({mock_device.id, clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_attr_report(mock_device, 370)})
+    test.socket.zigbee:__queue_receive({mock_device.id, clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_attr_report(mock_device, 153)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2703, maximum = 6536})))
   end
 )
 

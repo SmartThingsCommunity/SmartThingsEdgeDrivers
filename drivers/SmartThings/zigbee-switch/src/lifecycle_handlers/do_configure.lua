@@ -17,4 +17,11 @@ return function(self, device)
     device:send(clusters.SimpleMetering.attributes.Divisor:read(device))
     device:send(clusters.SimpleMetering.attributes.Multiplier:read(device))
   end
+
+  if device:supports_capability(capabilities.colorTemperature) then
+    local clusters = require "st.zigbee.zcl.clusters"
+    -- min and max for color temperature
+    device:send(clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read(device))
+    device:send(clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read(device))
+  end
 end
