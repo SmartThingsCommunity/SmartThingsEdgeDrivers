@@ -16,6 +16,12 @@ if not pcall(function(cluster) return clusters[cluster] end,
   clusters.PressureMeasurement = require "embedded_clusters.PressureMeasurement"
 end
 
+-- This can be removed once LuaLibs supports the SoilMeasurement cluster
+if not pcall(function(cluster) return clusters[cluster] end,
+  "SoilMeasurement") then
+  clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
+end
+
 -- Include driver-side definitions when lua libs api version is < 10
 if version.api < 10 then
   clusters.AirQuality = require "embedded_clusters.AirQuality"
@@ -117,6 +123,9 @@ local matter_driver_template = {
       [clusters.RelativeHumidityMeasurement.ID] = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.humidity_measured_value_handler
       },
+      [clusters.SoilMeasurement.ID] = {
+        [clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue.ID] = attribute_handlers.soil_moisture_measured_value_handler
+      },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
         [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
@@ -164,7 +173,8 @@ local matter_driver_template = {
       clusters.BooleanState.attributes.StateValue,
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
+      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
+      clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue
     },
     [capabilities.temperatureAlarm.ID] = {
       clusters.BooleanState.attributes.StateValue,
@@ -242,9 +252,6 @@ local matter_driver_template = {
     [capabilities.radonMeasurement.ID] = {
       clusters.RadonConcentrationMeasurement.attributes.MeasuredValue,
       clusters.RadonConcentrationMeasurement.attributes.MeasurementUnit,
-    },
-    [capabilities.relativeHumidityMeasurement.ID] = {
-      clusters.RelativeHumidityMeasurement.attributes.MeasuredValue
     },
     [capabilities.tvocHealthConcern.ID] = {
       clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.LevelValue
