@@ -14,7 +14,7 @@ components:
       - id: refresh
         version: 1
     categories:
-    - name: RemoteController
+    - name: Button
   - id: group2
     label: Group 2
     capabilities:
@@ -23,7 +23,7 @@ components:
       - id: knob
         version: 1
     categories:
-    - name: RemoteController
+    - name: Button
   - id: group3
     label: Group 3
     capabilities:
@@ -32,4 +32,4 @@ components:
       - id: knob
         version: 1
     categories:
-    - name: RemoteController
+    - name: Button
