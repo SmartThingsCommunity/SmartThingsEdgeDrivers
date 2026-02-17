@@ -1548,6 +1548,14 @@ test.register_message_test(
         mock_device,
         Meter:Get({scale = 0})
       )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        Meter:Get({scale = 4})
+      )
     }
   },
   {
