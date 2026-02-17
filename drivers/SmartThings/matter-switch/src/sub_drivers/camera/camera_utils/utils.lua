@@ -235,7 +235,8 @@ function CameraUtils.subscribe(device)
       clusters.CameraAvStreamManagement.attributes.RateDistortionTradeOffPoints,
       clusters.CameraAvStreamManagement.attributes.MaxEncodedPixelRate,
       clusters.CameraAvStreamManagement.attributes.VideoSensorParams,
-      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams,
+      clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams
     },
     [capabilities.zoneManagement.ID] = {
       clusters.ZoneManagement.attributes.MaxZones,

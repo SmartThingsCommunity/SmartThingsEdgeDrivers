@@ -25,9 +25,9 @@ local utils = {}
 
 function utils.tbl_contains(array, value)
   if value == nil then return false end
-  for _, element in pairs(array or {}) do
+  for idx, element in pairs(array or {}) do
     if element == value then
-      return true
+      return idx
     end
   end
   return false
