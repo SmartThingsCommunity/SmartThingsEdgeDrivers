@@ -1837,6 +1837,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0B93
     deviceProfileName: light-color-level
+  - id: "4489/2194"
+    deviceLabel: SMART WIFI MATTER WALL SWITCH 1G
+    vendorId: 0x1189
+    productId: 0x0892
+    deviceProfileName: switch-binary
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
