@@ -13,7 +13,7 @@ CameraFields.SUPPORTED_RESOLUTIONS = "__supported_resolutions"
 CameraFields.MAX_RESOLUTION = "__max_resolution"
 CameraFields.MIN_RESOLUTION = "__min_resolution"
 CameraFields.TRIGGERED_ZONES = "__triggered_zones"
-CameraFields.VIEWPORT = "__viewport"
+CameraFields.DPTZ_VIEWPORTS = "__dptz_viewports"
 
 CameraFields.PAN_IDX = "PAN"
 CameraFields.TILT_IDX = "TILT"
