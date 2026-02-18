@@ -1,6 +1,16 @@
--- Copyright 2022 SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0
-
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 local configurationMap = require "configurations"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -9,7 +19,19 @@ local capabilities = require "st.capabilities"
 local DoorLock = clusters.DoorLock
 local PowerConfiguration = clusters.PowerConfiguration
 
+local LOCK_WITHOUT_CODES_FINGERPRINTS = {
+  { model = "E261-KR0B0Z0-HA" },
+  { mfr = "Danalock", model = "V3-BTZB" }
+}
 
+local function can_handle_lock_without_codes(opts, driver, device)
+  for _, fingerprint in ipairs(LOCK_WITHOUT_CODES_FINGERPRINTS) do
+    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
+      return true
+    end
+  end
+  return false
+end
 
 local function device_init(driver, device)
   local configuration = configurationMap.get_device_configuration(device)
@@ -73,7 +95,7 @@ local lock_without_codes = {
       }
     }
   },
-  can_handle = require("lock-without-codes.can_handle"),
+  can_handle = can_handle_lock_without_codes
 }
 
 return lock_without_codes
