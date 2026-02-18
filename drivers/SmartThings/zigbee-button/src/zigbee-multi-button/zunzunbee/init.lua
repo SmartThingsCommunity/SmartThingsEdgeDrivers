@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local Tone = capabilities.tone
@@ -30,24 +20,9 @@ local battery_config = utils.deep_copy(battery_defaults.default_percentage_confi
 battery_config.reportable_change = 0x02
 battery_config.data_type = clusters.PowerConfiguration.attributes.BatteryVoltage.base_type
 
--- List of supported device fingerprints
-local ZUNZUNBEE_BUTTON_FINGERPRINTS = {
-  { mfr = "zunzunbee", model = "SSWZ8T" }
-}
-
 -- Initialize device attributes
 local function init_handler(self, device)
   device:add_configured_attribute(battery_config)
-end
-
--- Check if a given device matches the supported fingerprints
-local function is_zunzunbee_button(opts, driver, device)
-  for _, fingerprint in ipairs(ZUNZUNBEE_BUTTON_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
 end
 
 -- Generate and emit button events based on IAS Zone status attribute
@@ -163,7 +138,7 @@ local zunzunbee_device_handler = {
       }
     }
   },
-  can_handle = is_zunzunbee_button
+  can_handle = require("zigbee-multi-button.zunzunbee.can_handle"),
 }
 
 return zunzunbee_device_handler

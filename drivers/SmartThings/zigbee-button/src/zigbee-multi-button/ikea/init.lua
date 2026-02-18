@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local constants = require "st.zigbee.constants"
@@ -30,20 +20,7 @@ local Groups = clusters.Groups
 
 local ENTRIES_READ = "ENTRIES_READ"
 
-local IKEA_MFG = {
-  { mfr = "IKEA of Sweden" },
-  { mfr = "KE" },
-  { mfr = "\02KE" }
-}
 
-local can_handle_ikea = function(opts, driver, device)
-  for _, fingerprint in ipairs(IKEA_MFG) do
-    if device:get_manufacturer() == fingerprint.mfr then
-      return true
-    end
-  end
-  return false
-end
 
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
@@ -140,12 +117,8 @@ local ikea_of_sweden = {
       }
     }
   },
-  sub_drivers = {
-    require("zigbee-multi-button.ikea.TRADFRI_remote_control"),
-    require("zigbee-multi-button.ikea.TRADFRI_on_off_switch"),
-    require("zigbee-multi-button.ikea.TRADFRI_open_close_remote")
-  },
-  can_handle = can_handle_ikea
+  sub_drivers = require("zigbee-multi-button.ikea.sub_drivers"),
+  can_handle = require("zigbee-multi-button.ikea.can_handle"),
 }
 
 return ikea_of_sweden
