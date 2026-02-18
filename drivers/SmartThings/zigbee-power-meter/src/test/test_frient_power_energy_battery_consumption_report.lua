@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -79,10 +68,10 @@ test.register_coroutine_test(
         function()
             test.socket.zigbee:__set_channel_ordering("relaxed")
             test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-            test.socket.zigbee:__expect_send({
+            --[[ test.socket.zigbee:__expect_send({
                 mock_device.id,
                 PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-            })
+            }) ]]
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 cluster_base.write_manufacturer_specific_attribute(mock_device, SimpleMetering.ID, 0x0300, DEVELCO_MANUFACTURER_CODE, data_types.Uint16, 1000):to_endpoint(0x02)
@@ -98,26 +87,6 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 SimpleMetering.attributes.Multiplier:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                SimpleMetering.attributes.InstantaneousDemand:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
-            })
-            test.socket.zigbee:__expect_send({
-                mock_device.id,
-                ElectricalMeasurement.attributes.ActivePower:read(mock_device)
             })
 
             test.socket.zigbee:__expect_send({
@@ -149,7 +118,7 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 SimpleMetering.attributes.InstantaneousDemand:configure_reporting(
-                    mock_device, 5, 3600, 1
+                    mock_device, 5, 3600, 5
                 )
             })
 

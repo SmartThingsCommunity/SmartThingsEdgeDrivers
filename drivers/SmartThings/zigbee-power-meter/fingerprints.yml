@@ -8,6 +8,11 @@ zigbeeManufacturer:
     manufacturer: Develco
     model: "ZHEMI101"
     deviceProfileName: frient-power-energy-consumption-report
+  - id: "Develco/EMIZB-132"
+    deviceLabel: frient Energy Monitor
+    manufacturer: Develco Products A/S
+    model: "EMIZB-132"
+    deviceProfileName: power-meter
   - id: "frient A/S/EMIZB-132"
     deviceLabel: frient Energy Monitor
     manufacturer: frient A/S

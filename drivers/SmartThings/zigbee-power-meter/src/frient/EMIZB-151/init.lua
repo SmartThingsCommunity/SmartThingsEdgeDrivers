@@ -30,14 +30,6 @@ local ATTRIBUTES = {
     reportable_change = 1
   },
   {
-    cluster = SimpleMetering.ID,
-    attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
-    minimum_interval = 5,
-    maximum_interval = 3600,
-    data_type = data_types.Int24,
-    reportable_change = 1
-  },
-  {
     cluster = ElectricalMeasurement.ID,
     attribute = ElectricalMeasurement.attributes.ActivePowerPhB.ID,
     minimum_interval = 5,

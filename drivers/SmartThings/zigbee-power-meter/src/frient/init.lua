@@ -21,25 +21,11 @@ local SIMPLE_METERING_DEFAULT_DIVISOR = 1000
 
 local ZIGBEE_POWER_METER_FINGERPRINTS = require("frient.fingerprints")
 
-local ATTRIBUTES = {
-  {
-    cluster = SimpleMetering.ID,
-    attribute = SimpleMetering.attributes.InstantaneousDemand.ID,
-    minimum_interval = 5,
-    maximum_interval = 3600,
-    data_type = data_types.Int24,
-    reportable_change = 1
-  }
-}
-
 local device_init = function(self, device)
   for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
     if device:get_model() == fingerprint.model and fingerprint.MIN_BAT then
       battery_defaults.build_linear_voltage_init(fingerprint.MIN_BAT, fingerprint.MAX_BAT)(self, device)
     end
-  end
-  for _, attribute in ipairs(ATTRIBUTES) do
-    device:add_configured_attribute(attribute)
   end
 end
 
@@ -51,10 +37,9 @@ local do_refresh = function(self, device)
 end
 
 local do_configure = function(self, device)
-  device:refresh()
   device:configure()
   for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
-    if device:get_model() == fingerprint.model and fingerprint.preferences then
+    if device:get_model() == fingerprint.model and device.preferences then
       local pulseConfiguration = tonumber(device.preferences.pulseConfiguration) or 1000
       device:send(cluster_base.write_manufacturer_specific_attribute(device, SimpleMetering.ID, 0x0300, DEVELCO_MANUFACTURER_CODE, data_types.Uint16, pulseConfiguration):to_endpoint(0x02))
 
