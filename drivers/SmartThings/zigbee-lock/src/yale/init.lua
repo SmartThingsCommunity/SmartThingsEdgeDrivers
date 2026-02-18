@@ -143,6 +143,7 @@ local yale_door_lock_driver = {
     }
   },
   sub_drivers = require("yale.sub_drivers"),
+  can_handle = require("yale.can_handle"),
 }
 
 return yale_door_lock_driver
