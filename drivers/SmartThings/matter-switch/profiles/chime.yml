@@ -1,0 +1,10 @@
+name: chime
+components:
+  - id: main
+    capabilities:
+      - id: sounds
+        version: 1
+        optional: true
+      - id: audioMute
+        version: 1
+        optional: true

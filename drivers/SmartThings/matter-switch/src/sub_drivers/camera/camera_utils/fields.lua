@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.matter.clusters"
+local switch_fields = require "switch_utils.fields"
 
 local CameraFields = {}
 
@@ -46,5 +47,16 @@ CameraFields.ABS_ZOOM_MAX = 100
 CameraFields.ABS_ZOOM_MIN = 1
 CameraFields.ABS_VOL_MAX = 254.0
 CameraFields.ABS_VOL_MIN = 0.0
+
+-- Subset of camera device types that always use the camera profile, excluding
+-- DoorBells and Chimes as they can be standalone devices.
+CameraFields.camera_profile_device_types = {
+  switch_fields.DEVICE_TYPE_ID.CAMERA.INTERCOM,
+  switch_fields.DEVICE_TYPE_ID.CAMERA.AUDIO_DOORBELL,
+  switch_fields.DEVICE_TYPE_ID.CAMERA.CAMERA,
+  switch_fields.DEVICE_TYPE_ID.CAMERA.VIDEO_DOORBELL,
+  switch_fields.DEVICE_TYPE_ID.CAMERA.FLOODLIGHT_CAMERA,
+  switch_fields.DEVICE_TYPE_ID.CAMERA.SNAPSHOT_CAMERA,
+}
 
 return CameraFields
