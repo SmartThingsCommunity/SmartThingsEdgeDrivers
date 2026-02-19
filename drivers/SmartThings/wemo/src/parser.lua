@@ -30,13 +30,28 @@ end
 
 local function handle_binary_state(device, value)
   -- parses wemo insight style ("8|1611850428|58|...") state, works just fine for a single value too
-  local vals = string.gmatch(value, "%d+")
-  -- map all values to numbers
-  -- note: this really does need `or nil`, `tonumber()` is an error, `tonumber(nil)` returns nil
-  local numvals = function() return tonumber(vals() or 0) end
+  local result = {}
+  local lut = {
+      "state",
+      "last_changed_timestamp",
+      "last_on_for_s",
+      "on_today_s",
+      "on_total_s",
+      "timespan_s",
+      "avg_power_W",
+      "current_power_mW",
+      "energy_today_Wh",
+      "energy_total_Wh",
+      "standby_limit_mW",
+  }
+  -- Parse the data and insert into the result_table
+  local iter = value:gmatch("([^|]+)")
+  for _, name in ipairs(lut) do
+      result[name] = tonumber(iter() or 0)
+  end
 
   -- power state
-  local state = numvals()
+  local state = result.state
   if state == 0 then
     if device:supports_capability_by_id("switch") then
       device:emit_event(capabilities.switch.switch("off"))
@@ -55,7 +70,17 @@ local function handle_binary_state(device, value)
       log.warn("parse| BinaryState event on device that supports neither `switch` nor `motionSensor`")
     end
   end
-  -- TODO: there's a bunch more values from insight plugs, what do they mean?
+
+  if result.current_power_mW ~= nil and result.energy_today_Wh ~= nil and
+    device:supports_capability_by_id("powerMeter") and device:supports_capability_by_id("energyMeter") then
+    device:emit_event(capabilities.powerMeter.power(result.current_power_mW / 1000)) --ST uses watts by default
+    --Sometimes total energy reported is way off, in that case use the daily energy reported
+    if result.energy_today_Wh > result.energy_total_Wh then
+      device:emit_event(capabilities.energyMeter.energy({value = result.energy_today_Wh, unit = "Wh"}))
+    else
+      device:emit_event(capabilities.energyMeter.energy({value = result.energy_total_Wh, unit = "Wh"}))
+    end
+  end
 end
 
 local function handle_brightness(device, value)
@@ -110,6 +135,12 @@ function parser.parse_get_state_resp_xml(device, xml)
   if brightness then
     log.trace("parse| brightness", brightness)
     handle_brightness(device, brightness)
+  end
+
+  local insight = tablefind(parsed_xml, "s:Envelope.s:Body.u:GetInsightParamsResponse.InsightParams")
+  if insight then
+    log.trace("parse| insight_params", insight)
+    handle_binary_state(device, insight)
   end
 end
 
