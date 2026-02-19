@@ -49,6 +49,7 @@ local mock_device_basic = test.mock_device.build_test_matter_device({
           {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
           {cluster_id = clusters.HepaFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
           {cluster_id = clusters.ActivatedCarbonFilterMonitoring.ID, cluster_type = "SERVER", feature_map = 7},
+          {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"}
         },
         device_types = {
           {device_type_id = 0x002D, device_type_revision = 1} -- AP
@@ -256,7 +257,7 @@ local function test_init_ap_thermo_aqs_preconfigured()
   test.socket.matter:__expect_send({ mock_device_ap_thermo_aqs.id, read_request })
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_ap_thermo_aqs.id, "init" })
-  local subscribe_request = nil
+  local subscribe_request
   for _, attributes in pairs(cluster_subscribe_list_configured) do
     for _, attribute in ipairs(attributes) do
       if subscribe_request == nil then
@@ -269,11 +270,13 @@ local function test_init_ap_thermo_aqs_preconfigured()
   test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, subscribe_request})
 end
 
-local expected_update_metadata= {
-  optional_component_capabilities={
+local expected_update_metadata = {
+  optional_component_capabilities = {
     {
       "main",
-      {},
+      {
+        "switch",
+      },
     },
     {
       "activatedCarbonFilter",
@@ -293,13 +296,6 @@ local expected_update_metadata= {
   profile="air-purifier-modular",
 }
 
-local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_basic)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_basic))
-    end
-  end
-
 test.register_coroutine_test(
   "Test profile change on init for basic Air Purifier device",
   function()
@@ -313,13 +309,20 @@ test.register_coroutine_test(
       {enabled_optional_capabilities = expected_update_metadata.optional_component_capabilities}
     )
     test.socket.device_lifecycle:__queue_receive(mock_device_basic:generate_info_changed({ profile = updated_device_profile }))
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_basic)
+    for i, cluster in ipairs(cluster_subscribe_list) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(mock_device_basic))
+      end
+    end
+    subscribe_request:merge(clusters.OnOff.attributes.OnOff:subscribe(mock_device_basic))
     test.socket.matter:__expect_send({mock_device_basic.id, subscribe_request})
   end,
   { test_init = test_init_basic }
 )
 
-local expected_update_metadata= {
-  optional_component_capabilities={
+local expected_update_metadata_configured = {
+  optional_component_capabilities = {
     {
       "main",
       {
@@ -358,17 +361,6 @@ local expected_update_metadata= {
   profile="air-purifier-modular",
 }
 
-local subscribe_request = nil
-for _, attributes in pairs(cluster_subscribe_list_configured) do
-  for _, attribute in ipairs(attributes) do
-    if subscribe_request == nil then
-      subscribe_request = attribute:subscribe(mock_device_ap_thermo_aqs)
-    else
-      subscribe_request:merge(attribute:subscribe(mock_device_ap_thermo_aqs))
-    end
-  end
-end
-
 test.register_coroutine_test(
   "Test profile change on init for AP and Thermo and AQS combined device type",
   function()
@@ -379,14 +371,24 @@ test.register_coroutine_test(
       mock_device_ap_thermo_aqs.id,
       clusters.Thermostat.attributes.AttributeList:build_test_report_data(mock_device_ap_thermo_aqs, 1, {uint32(0)})
     })
-    mock_device_ap_thermo_aqs:expect_metadata_update(expected_update_metadata)
+    mock_device_ap_thermo_aqs:expect_metadata_update(expected_update_metadata_configured)
 
     test.wait_for_events()
 
     local updated_device_profile = t_utils.get_profile_definition("air-purifier-modular.yml",
-      {enabled_optional_capabilities = expected_update_metadata.optional_component_capabilities}
+      {enabled_optional_capabilities = expected_update_metadata_configured.optional_component_capabilities}
     )
     test.socket.device_lifecycle:__queue_receive(mock_device_ap_thermo_aqs:generate_info_changed({ profile = updated_device_profile }))
+    local subscribe_request
+    for _, attributes in pairs(cluster_subscribe_list_configured) do
+      for _, attribute in ipairs(attributes) do
+        if subscribe_request == nil then
+          subscribe_request = attribute:subscribe(mock_device_ap_thermo_aqs)
+        else
+          subscribe_request:merge(attribute:subscribe(mock_device_ap_thermo_aqs))
+        end
+      end
+    end
     test.socket.matter:__expect_send({mock_device_ap_thermo_aqs.id, subscribe_request})
   end,
   { test_init = test_init_ap_thermo_aqs_preconfigured }
