@@ -19,6 +19,8 @@ local cc = require "st.zwave.CommandClass"
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({ version=1 })
 --- @type st.zwave.CommandClass.SceneActivation
 local SceneActivation = (require "st.zwave.CommandClass.SceneActivation")({ version=1 })
+local log = require "log"
+local utils = require "st.utils"
 
 local ZWAVE_MULTI_BUTTON_FINGERPRINTS = {
   {mfr = 0x010F, prod = 0x1001, model = 0x1000}, -- Fibaro KeyFob EU
@@ -67,7 +69,11 @@ local function central_scene_notification_handler(self, device, cmd)
       capabilities.button.supportedButtonValues.NAME,
       {capabilities.button.button.pushed.NAME, capabilities.button.button.held.NAME} -- default value
     )
+    log.debug("COMPONENT: "..device:endpoint_to_component(cmd.args.scene_number))
+    log.debug("SUPPORTED EVENTS: " .. utils.stringify_table(supportedEvents))
     for _, event_name in pairs(supportedEvents) do
+      log.debug("EVENT_NAME: " .. event_name)
+      log.debug("EVENT VALUE: " .. event.value.value)
       if event.value.value == event_name then
         device:emit_event_for_endpoint(cmd.args.scene_number, event)
         device:emit_event(event)
