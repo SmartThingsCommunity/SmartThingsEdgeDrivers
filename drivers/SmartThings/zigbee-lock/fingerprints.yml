@@ -6,6 +6,11 @@ zigbeeManufacturer:
     model: S93
     deviceProfileName: lock-battery
   # YALE
+  - id: "Yale Lia"
+    deviceLabel: "Yale Door Lock"
+    manufacturer: Yale
+    model: LIA
+    deviceProfileName: base-lock
   - id: "Yale YRD220/240"
     deviceLabel: "Yale Door Lock"
     manufacturer: Yale
