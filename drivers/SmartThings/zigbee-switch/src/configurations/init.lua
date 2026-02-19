@@ -97,7 +97,6 @@ configurations.reconfig_wrapper = function(orig_function)
     for id, _ in pairs(device.profile.components) do
       if device:supports_capability(capabilities.colorTemperature, id) and
        device:get_latest_state(id, capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME) == nil then
-        print("HELLO")
         local clusters = require "st.zigbee.zcl.clusters"
         driver:call_with_delay(5*60, function()
           device:send_to_component(id, clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read(device))
