@@ -284,8 +284,6 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
-  device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
-  device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is madatory
 end
 
 local function profiling_data_still_required(device)
@@ -309,6 +307,10 @@ end
 
 local function do_configure(driver, device)
   match_profile(driver, device)
+  device.thread:call_with_delay(5, function()
+    device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
+    device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
+  end)
 end
 
 local function driver_switched(driver, device)
