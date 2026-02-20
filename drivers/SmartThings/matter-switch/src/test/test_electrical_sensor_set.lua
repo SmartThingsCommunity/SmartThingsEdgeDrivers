@@ -111,6 +111,7 @@ local subscribed_attributes_periodic = {
   clusters.OnOff.attributes.OnOff,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.PowerTopology.attributes.AvailableEndpoints,
 }
 local subscribed_attributes = {
   clusters.OnOff.attributes.OnOff,
@@ -120,6 +121,7 @@ local subscribed_attributes = {
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.PowerTopology.attributes.AvailableEndpoints,
 }
 
 local cumulative_report_val_19 = {
@@ -180,9 +182,6 @@ local function test_init()
       end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  local read_req = clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device.id, 1)
-  read_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device.id, 3))
-  test.socket.matter:__expect_send({ mock_device.id, read_req })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 end
@@ -197,8 +196,6 @@ local function test_init_periodic()
     end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "added" })
-  local read_req = clusters.PowerTopology.attributes.AvailableEndpoints:read(mock_device_periodic.id, 1)
-  test.socket.matter:__expect_send({ mock_device_periodic.id, read_req })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "init" })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })

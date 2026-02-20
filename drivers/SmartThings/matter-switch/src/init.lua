@@ -16,7 +16,6 @@ local switch_utils = require "switch_utils.utils"
 local attribute_handlers = require "switch_handlers.attribute_handlers"
 local event_handlers = require "switch_handlers.event_handlers"
 local capability_handlers = require "switch_handlers.capability_handlers"
-local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -37,8 +36,6 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device:send(clusters.OnOff.attributes.OnOff:read(device))
-  elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    switch_utils.handle_electrical_sensor_info(device)
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -58,7 +55,6 @@ end
 
 function SwitchLifecycleHandlers.driver_switched(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
-    switch_utils.handle_electrical_sensor_info(device) -- field settings required for proper setup when switching drivers
     device_cfg.match_profile(driver, device)
   end
 end
@@ -105,15 +101,11 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
     end
+    if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+      switch_utils.handle_electrical_sensor_info(device)
+    end
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
-
-    -- device energy reporting must be handled cumulatively, periodically, or by both simultaneously.
-    -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ElectricalEnergyMeasurement.ID,
-      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) > 0 then
-        device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, {persist = false})
-    end
   end
 end
 
