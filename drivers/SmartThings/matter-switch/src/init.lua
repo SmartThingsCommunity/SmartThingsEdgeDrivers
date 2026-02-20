@@ -101,9 +101,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
     end
-    if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
-      switch_utils.handle_electrical_sensor_info(device)
-    end
+    switch_utils.handle_electrical_sensor_info(device)
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
   end
