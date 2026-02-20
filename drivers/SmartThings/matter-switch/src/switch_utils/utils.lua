@@ -279,7 +279,8 @@ function utils.find_cluster_on_ep(ep, cluster_id, opts)
   local clus_has_features = function(cluster, checked_feature)
     return (cluster.feature_map & checked_feature) == checked_feature
   end
-  for _, cluster in ipairs(ep.clusters) do
+  if type(ep) ~= "table" then return nil end
+  for _, cluster in ipairs(ep.clusters or {}) do
     if ((cluster.cluster_id == cluster_id)
       and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
       and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
@@ -425,24 +426,24 @@ function utils.handle_electrical_sensor_info(device)
     return
   end
 
+  -- energy reporting must be handled by a cumulative report, a periodic report, or both attributes simultaneously.
+  -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
+  for _, ep_info in ipairs(electrical_sensor_eps) do
+     if utils.find_cluster_on_ep(ep_info, clusters.ElectricalEnergyMeasurement.ID,
+      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) then
+        device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, { persist = false })
+        break
+     end
+  end
+
   -- check the feature map for the first (or only) Electrical Sensor EP
   local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
   local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
-  if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
-    local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- SET read
-    for _, ep in ipairs(electrical_sensor_eps) do
-      available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
-    end
-    device:send(available_eps_req)
-    return
-  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a TREE topology
-    local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- TREE read
-    for _, ep in ipairs(electrical_sensor_eps) do
-      parts_list_req:merge(clusters.Descriptor.attributes.PartsList:read(device, ep.endpoint_id))
-    end
-    device:send(parts_list_req)
+  if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) or
+    clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
+    -- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
+    -- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
+    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
     return
   elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
     -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
@@ -535,6 +536,21 @@ function utils.subscribe(device)
   if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
     local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
     subscribe_request:with_info_block(ib)
+  end
+
+  -- If the power topology of the device has not yet been determined, add the AvailableEndpoints (for SET topology)
+  -- or PartsList (for TREE topology) attributes to the list of subscribed attributes in order to map the device's electrical endpoints
+  -- to the proper device card(s).
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+    local electrical_sensor_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR, { with_info = true }) or {}
+    local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
+    if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
+      local ib = im.InteractionInfoBlock(nil, clusters.PowerTopology.ID, clusters.PowerTopology.attributes.AvailableEndpoints.ID)
+      subscribe_request:with_info_block(ib)
+    elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
+      local ib = im.InteractionInfoBlock(nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID)
+      subscribe_request:with_info_block(ib)
+    end
   end
 
   if #subscribe_request.info_blocks > 0 then
