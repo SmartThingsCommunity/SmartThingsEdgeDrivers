@@ -329,16 +329,117 @@ end
 
 function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
+
   local watermark_enabled, on_screen_display_enabled
-  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
-    watermark_enabled = cmd.args.watermark == "enabled"
+  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+    clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
+    if cmd.args.watermark ~= nil then
+      watermark_enabled = cmd.args.watermark == "enabled"
+    end
   end
-  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
-    on_screen_display_enabled = cmd.args.onScreenDisplay == "enabled"
+  if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+    clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
+    if cmd.args.onScreenDisplay ~= nil then
+      on_screen_display_enabled = cmd.args.onScreenDisplay == "enabled"
+    end
   end
-  device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamModify(device, endpoint_id,
-    cmd.args.streamId, watermark_enabled, on_screen_display_enabled
-  ))
+
+  local current_streams = device:get_latest_state("main", capabilities.videoStreamSettings.ID,
+    capabilities.videoStreamSettings.videoStreams.NAME)
+  local current_stream
+  for _, stream in ipairs(current_streams or {}) do
+    if stream.streamId == cmd.args.streamId then
+      current_stream = stream.data
+      break
+    end
+  end
+
+  local needs_reallocation = false
+  if cmd.args.type ~= nil and current_stream ~= nil and current_stream.type ~= cmd.args.type then
+    needs_reallocation = true
+  elseif cmd.args.resolution ~= nil and current_stream then
+    if current_stream.resolution.width ~= cmd.args.resolution.width or
+       current_stream.resolution.height ~= cmd.args.resolution.height or
+       current_stream.resolution.fps ~= cmd.args.resolution.fps then
+      needs_reallocation = true
+    end
+  elseif current_stream == nil and (cmd.args.type ~= nil or cmd.args.resolution ~= nil) then
+    needs_reallocation = true
+  end
+
+  local viewport_changed = false
+  if cmd.args.viewport ~= nil and
+    camera_utils.feature_supported(device, clusters.CameraAvSettingsUserLevelManagement.ID,
+      clusters.CameraAvSettingsUserLevelManagement.types.Feature.DIGITALPTZ) then
+    if current_stream ~= nil and current_stream.viewport ~= nil then
+      if current_stream.viewport.upperLeftVertex.x ~= cmd.args.viewport.upperLeftVertex.x or
+        current_stream.viewport.upperLeftVertex.y ~= cmd.args.viewport.upperLeftVertex.y or
+        current_stream.viewport.lowerRightVertex.x ~= cmd.args.viewport.lowerRightVertex.x or
+        current_stream.viewport.lowerRightVertex.y ~= cmd.args.viewport.lowerRightVertex.y then
+        viewport_changed = true
+      end
+    elseif current_stream == nil or current_stream.viewport == nil then
+      viewport_changed = true
+    end
+
+    if viewport_changed then
+      device:send(clusters.CameraAvSettingsUserLevelManagement.server.commands.DPTZSetViewport(device, endpoint_id,
+        cmd.args.streamId,
+        clusters.Global.types.ViewportStruct({
+          x1 = cmd.args.viewport.upperLeftVertex.x,
+          x2 = cmd.args.viewport.lowerRightVertex.x,
+          y1 = cmd.args.viewport.upperLeftVertex.y,
+          y2 = cmd.args.viewport.lowerRightVertex.y
+        })
+      ))
+    end
+  end
+
+  local label_changed = cmd.args.label ~= nil and cmd.args.label ~= current_stream.label
+
+  if needs_reallocation then
+    local stream_params = {
+      endpoint_id = endpoint_id,
+      type = cmd.args.type,
+      label = cmd.args.label,
+      resolution = cmd.args.resolution,
+      watermark_enabled = watermark_enabled,
+      on_screen_display_enabled = on_screen_display_enabled
+    }
+
+    device:set_field(camera_fields.PENDING_STREAM_ALLOCATION, stream_params)
+
+    device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamDeallocate(device, endpoint_id,
+      cmd.args.streamId
+    ))
+  elseif viewport_changed or label_changed then
+    local updated_streams = {}
+    for _, stream in ipairs(current_streams or {}) do
+      if stream.streamId == cmd.args.streamId then
+        local updated_stream = {
+          streamId = stream.streamId,
+          data = {}
+        }
+        for i, v in pairs(stream.data) do
+          updated_stream.data[i] = v
+        end
+        if cmd.args.label ~= nil then
+          updated_stream.data.label = cmd.args.label
+        end
+        if cmd.args.viewport ~= nil then
+          updated_stream.data.viewport = cmd.args.viewport
+        end
+        table.insert(updated_streams, updated_stream)
+      else
+        table.insert(updated_streams, stream)
+      end
+    end
+    device:emit_event(capabilities.videoStreamSettings.videoStreams(updated_streams))
+  else
+    device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamModify(device, endpoint_id,
+      cmd.args.streamId, watermark_enabled, on_screen_display_enabled
+    ))
+  end
 end
 
 function CameraCapabilityHandlers.handle_set_default_viewport(driver, device, cmd)

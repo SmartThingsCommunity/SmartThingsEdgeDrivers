@@ -46,7 +46,8 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {
           cluster_id = clusters.CameraAvSettingsUserLevelManagement.ID,
-          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
+          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.DIGITALPTZ |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
@@ -205,6 +206,7 @@ local additional_subscribed_attributes = {
   clusters.CameraAvSettingsUserLevelManagement.attributes.PanMin,
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams,
   clusters.Chime.attributes.InstalledChimeSounds,
   clusters.Chime.attributes.SelectedChime,
   clusters.ZoneManagement.attributes.MaxZones,
@@ -1774,35 +1776,114 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Stream management commands should send the appropriate commands",
+  "setStream with label and viewport changes should emit capability event",
   function()
     update_device_profile()
     test.wait_for_events()
-    test.socket.capability:__queue_receive({
+    -- Set up an existing stream
+    test.socket.matter:__queue_receive({
       mock_device.id,
-      { capability = "videoStreamSettings", component = "main", command = "setStream", args = {
-        3,
-        "liveStream",
-        "Stream 3",
-        { width = 1920, height = 1080, fps = 30 },
-        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1920, y = 1080} },
-        "enabled",
-        "disabled"
-      }}
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamModify(mock_device, CAMERA_EP,
-        3, true, false
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 3,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
       )
     })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 1920,
+              height = 1080,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1920, y = 1080 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change label and viewport only
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        3,
+        "liveStream",  -- type
+        "My Stream",  -- label
+        { width = 1920, height = 1080, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 100, y = 100}, lowerRightVertex = {x = 1820, y = 980} },  -- viewport
+        "disabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    -- Should send DPTZSetViewport command
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.DPTZSetViewport(mock_device, CAMERA_EP,
+        3,
+        clusters.Global.types.ViewportStruct({
+          x1 = 100,
+          x2 = 1820,
+          y1 = 100,
+          y2 = 980
+        })
+      )
+    })
+    -- Should emit updated capability directly, no stream reallocation
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "My Stream",
+            type = "liveStream",
+            resolution = {
+              width = 1920,
+              height = 1080,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 100, y = 100 },
+              lowerRightVertex = { x = 1820, y = 980 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
   end
 )
 
 test.register_coroutine_test(
-  "Stream management setStream command should modify an existing stream",
+  "setStream with only watermark/OSD changes should use VideoStreamModify",
   function()
     update_device_profile()
     test.wait_for_events()
+    -- Set up an existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
@@ -1837,22 +1918,29 @@ test.register_coroutine_test(
               height = 360,
               fps = 30
             },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 640, y = 360 }
+            },
             watermark = "enabled",
             onScreenDisplay = "disabled"
           }
         }
       }))
     )
+    test.wait_for_events()
+    -- Change watermark and OSD only
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
         1,
-        "liveStream",
-        "Stream 1",
-        { width = 640, height = 360, fps = 30 },
-        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 640, y = 360} },
-        "disabled",
-        "enabled"
+        "liveStream",  -- type
+        "Stream 1",  -- label
+        { width = 640, height = 360, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 640, y = 360} },  -- viewport
+        "disabled",  -- watermark
+        "enabled"  -- onScreenDisplay
       }}
     })
     test.socket.matter:__expect_send({
@@ -1860,6 +1948,576 @@ test.register_coroutine_test(
         1, false, true
       )
     })
+  end
+)
+
+test.register_coroutine_test(
+  "setStream with only label change should emit capability event",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 2,
+            stream_usage = clusters.Global.types.StreamUsageEnum.RECORDING,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 15,
+            max_frame_rate = 30,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 2,
+          data = {
+            label = "Stream 1",
+            type = "clipRecording",
+            resolution = {
+              width = 1280,
+              height = 720,
+              fps = 15
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change label only
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        2,
+        "clipRecording",  -- type
+        "Recording Stream",  -- label
+        { width = 1280, height = 720, fps = 15 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1280, y = 720} },  -- viewport
+        "disabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    -- Should emit updated capability directly, no stream reallocation
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 2,
+          data = {
+            label = "Recording Stream",
+            type = "clipRecording",
+            resolution = {
+              width = 1280,
+              height = 720,
+              fps = 15
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "setStream with only viewport change should send DPTZSetViewport command",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 5,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 3840, height = 2160}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 3840, height = 2160}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = true,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 5,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 3840,
+              height = 2160,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 3840, y = 2160 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "enabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change only viewport
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        5,
+        "liveStream",  -- type
+        "Stream 1",  -- label
+        { width = 3840, height = 2160, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 500, y = 500}, lowerRightVertex = {x = 3340, y = 1660} },  -- viewport
+        "disabled",  -- watermark
+        "enabled"  -- onScreenDisplay
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.DPTZSetViewport(mock_device, CAMERA_EP,
+        5,
+        clusters.Global.types.ViewportStruct({
+          x1 = 500,
+          x2 = 3340,
+          y1 = 500,
+          y2 = 1660
+        })
+      )
+    })
+    -- Should emit updated capability directly, no stream reallocation
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 5,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 3840,
+              height = 2160,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 500, y = 500 },
+              lowerRightVertex = { x = 3340, y = 1660 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "enabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "setStream with resolution change should trigger reallocation",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 1,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = true,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 1280,
+              height = 720,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            },
+            watermark = "enabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change resolution and reallocate stream
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        1,
+        "liveStream",  -- type
+        "HD Stream",  -- label
+        { width = 1920, height = 1080, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1280, y = 720} },  -- viewport
+        "enabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamDeallocate(mock_device, CAMERA_EP, 1)
+    })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {}
+      )
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(mock_device, CAMERA_EP,
+        clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+        clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+        30,
+        60,
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        10000,
+        2000000,
+        4000,
+        true,
+        false
+      )
+    })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 2,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 2,
+          data = {
+            label = "HD Stream",
+            type = "liveStream",
+            resolution = {
+              width = 1920,
+              height = 1080,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1920, y = 1080 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Stream label should persist across attribute reports",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 3,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = { width = 640, height = 480, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 640, y = 480 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change label
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        3,
+        "liveStream",  -- type
+        "My Camera",  -- label
+        { width = 640, height = 480, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 640, y = 480} },  -- viewport
+        "disabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "My Camera",
+            type = "liveStream",
+            resolution = { width = 640, height = 480, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 640, y = 480 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Simulate another AllocatedVideoStreams report
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 3,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    -- Should preserve the custom label from capability state
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "My Camera",
+            type = "liveStream",
+            resolution = { width = 640, height = 480, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 640, y = 480 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "DPTZStreams attribute should update viewports in capability",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up multiple existing streams
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 1,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          }),
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 2,
+            stream_usage = clusters.Global.types.StreamUsageEnum.RECORDING,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 15,
+            max_frame_rate = 30,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = { width = 1920, height = 1080, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 1920, y = 1080 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        },
+        {
+          streamId = 2,
+          data = {
+            label = "Stream 2",
+            type = "clipRecording",
+            resolution = { width = 1280, height = 720, fps = 15 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 1280, y = 720 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvSettingsUserLevelManagement.types.DPTZStruct({
+            video_stream_id = 1,
+            viewport = clusters.Global.types.ViewportStruct({
+              x1 = 200,
+              x2 = 1720,
+              y1 = 100,
+              y2 = 980
+            })
+          }),
+          clusters.CameraAvSettingsUserLevelManagement.types.DPTZStruct({
+            video_stream_id = 2,
+            viewport = clusters.Global.types.ViewportStruct({
+              x1 = 50,
+              x2 = 1230,
+              y1 = 50,
+              y2 = 670
+            })
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = { width = 1920, height = 1080, fps = 30 },
+            viewport = { upperLeftVertex = { x = 200, y = 100 }, lowerRightVertex = { x = 1720, y = 980 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        },
+        {
+          streamId = 2,
+          data = {
+            label = "Stream 2",
+            type = "clipRecording",
+            resolution = { width = 1280, height = 720, fps = 15 },
+            viewport = { upperLeftVertex = { x = 50, y = 50 }, lowerRightVertex = { x = 1230, y = 670 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
   end
 )
 
