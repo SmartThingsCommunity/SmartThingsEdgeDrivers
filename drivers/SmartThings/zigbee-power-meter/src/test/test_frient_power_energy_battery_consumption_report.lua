@@ -68,10 +68,6 @@ test.register_coroutine_test(
         function()
             test.socket.zigbee:__set_channel_ordering("relaxed")
             test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-            --[[ test.socket.zigbee:__expect_send({
-                mock_device.id,
-                PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
-            }) ]]
             test.socket.zigbee:__expect_send({
                 mock_device.id,
                 cluster_base.write_manufacturer_specific_attribute(mock_device, SimpleMetering.ID, 0x0300, DEVELCO_MANUFACTURER_CODE, data_types.Uint16, 1000):to_endpoint(0x02)
