@@ -735,4 +735,40 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Basic Set value=0 for contact sensor should emit contact.closed",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_contact_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+        value = 0
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_contact_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    }
+  }
+)
+
+test.register_message_test(
+  "Basic Set value=0 for motion sensor should emit motion.inactive",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_motion_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Set({
+        value = 0
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_motion_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+    }
+  }
+)
+
 test.run_registered_tests()
