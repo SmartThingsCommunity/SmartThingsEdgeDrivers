@@ -522,4 +522,130 @@ test.register_message_test(
   }
 )
 
+test.register_coroutine_test(
+  "Alarm with invalid sound preference should use default EMERGENCY sound",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed({preferences = {sound = 99}}))
+    test.wait_for_events()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_siren.id,
+      {component = "main", capability = "alarm", command = "siren", args = {} }
+    })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_siren,
+        Notification:Report({
+          notification_type = Notification.notification_type.HOME_SECURITY,
+          event             = Notification.event.home_security.INTRUSION_LOCATION_PROVIDED
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Chime during active alarm should re-sound alarm after chime completes",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.capability:__set_channel_ordering("relaxed")
+
+    -- Set alarm state to "both" via Basic:Report(0xFF)
+    test.socket.zwave:__queue_receive({
+      mock_siren.id,
+      zw_test_utils.zwave_test_build_receive_command(Basic:Report({value = 0xFF}))
+    })
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.alarm.alarm.both())
+    )
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.chime.chime.chime())
+    )
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.switch.switch.on())
+    )
+    test.wait_for_events()
+
+    -- Send chime command while alarm is active
+    test.socket.capability:__queue_receive({
+      mock_siren.id,
+      { capability = "chime", component = "main", command = "chime", args = {} }
+    })
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.chime.chime.chime())
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_siren,
+        Notification:Report({
+          notification_type = Notification.notification_type.ACCESS_CONTROL,
+          event             = Notification.event.access_control.WINDOW_DOOR_IS_OPEN
+        })
+      )
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.chime.chime.off())
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_siren,
+        Notification:Report({
+          notification_type = Notification.notification_type.HOME_SECURITY,
+          event             = Notification.event.home_security.INTRUSION_LOCATION_PROVIDED
+        })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "HOME_SECURITY TAMPERING should trigger tamper detected and auto-clear after 5 second delay",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.socket.zwave:__queue_receive({
+      mock_siren.id,
+      zw_test_utils.zwave_test_build_receive_command(
+        Notification:Report({
+          notification_type = Notification.notification_type.HOME_SECURITY,
+          event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED
+        })
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(5)
+    test.socket.capability:__expect_send(
+      mock_siren:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "infoChanged with boolean duration should send Configuration:Set and Basic:Set after delay",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zwave:__set_channel_ordering('relaxed')
+    test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed({preferences = {duration = true}}))
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_siren,
+        Configuration:Set({parameter_number = 31, size = 1, configuration_value = 1})
+      )
+    )
+    test.mock_time.advance_time(1)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_siren,
+        Basic:Set({value=0x00})
+      )
+    )
+  end
+)
+
 test.run_registered_tests()

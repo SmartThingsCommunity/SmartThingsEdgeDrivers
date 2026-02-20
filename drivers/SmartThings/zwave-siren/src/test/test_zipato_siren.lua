@@ -145,4 +145,60 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Basic report value 20 should be handled as alarm strobe",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(Basic:Report({ value = 20 })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.strobe())
+    }
+  }
+)
+
+test.register_message_test(
+  "Basic report value 50 should be handled as alarm siren",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(Basic:Report({ value = 50 })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.siren())
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "siren_on should send Basic:Get after 3 second timer fires",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({
+      mock_siren.id,
+      { capability = "alarm", command = "both", args = {} }
+    })
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_siren, Basic:Set({value=0xFF}))
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(3)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_siren, Basic:Get({}))
+    )
+  end
+)
+
 test.run_registered_tests()

@@ -153,4 +153,21 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "doConfigure should send no messages (no configuration entry for fortrezz)",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_siren.id, "doConfigure" })
+    test.socket.zwave:__set_channel_ordering("relaxed")
+    mock_siren:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+test.register_coroutine_test(
+  "infoChanged with no matching preference parameters should do nothing",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed({}))
+    test.socket.zwave:__set_channel_ordering("relaxed")
+  end
+)
+
 test.run_registered_tests()

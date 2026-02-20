@@ -86,4 +86,42 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Alarm report CO DETECTED should be handled as sound detected",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
+        z_wave_alarm_type = Alarm.z_wave_alarm_type.SMOKE,
+        z_wave_alarm_event = Alarm.z_wave_alarm_event.smoke.DETECTED
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.detected())
+    }
+  }
+)
+
+test.register_message_test(
+  "Alarm report SMOKE UNKNOWN_EVENT_STATE should be handled as sound not detected",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Alarm:Report({
+        z_wave_alarm_type = Alarm.z_wave_alarm_type.SMOKE,
+        z_wave_alarm_event = Alarm.z_wave_alarm_event.smoke.UNKNOWN_EVENT_STATE
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
+    }
+  }
+)
+
 test.run_registered_tests()

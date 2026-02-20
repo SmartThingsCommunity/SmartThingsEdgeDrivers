@@ -135,4 +135,28 @@ test.register_coroutine_test(
   end
 )
 
+test.register_message_test(
+  "Notification report HOME_SECURITY non-tamper event should be handled as tamper clear",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_siren.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          Notification:Report({
+            notification_type = Notification.notification_type.HOME_SECURITY,
+            event = Notification.event.home_security.STATE_IDLE
+          })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_siren:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+    }
+  }
+)
+
 test.run_registered_tests()

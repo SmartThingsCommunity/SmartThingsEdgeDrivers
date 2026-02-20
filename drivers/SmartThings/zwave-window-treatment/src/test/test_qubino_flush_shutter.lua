@@ -651,4 +651,60 @@ test.register_message_test(
   }
 )
 
+do
+  test.register_coroutine_test(
+    "SwitchMultilevel:Set with lower target than current should cache closing command and fire Meter:Get after 4s",
+    function()
+      -- Pre-set state so currentLevel (80) > targetLevel (10)
+      mock_qubino_flush_shutter_venetian:update_state_cache_entry(
+        "main", capabilities.windowShadeLevel.ID, "shadeLevel", { value = 80 }
+      )
+      test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+      test.socket.zwave:__queue_receive({
+        mock_qubino_flush_shutter_venetian.id,
+        SwitchMultilevel:Set({ value = 10 })
+      })
+      test.wait_for_events()
+      test.mock_time.advance_time(4)
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_qubino_flush_shutter_venetian,
+          Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
+        )
+      )
+    end
+  )
+end
+
+do
+  local new_param_value = 1
+  test.register_coroutine_test(
+    "infoChanged on venetian qubino should send Configuration:Set then Configuration:Get after 1s",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+      local device_data = utils.deep_copy(mock_qubino_flush_shutter_venetian.raw_st_data)
+      device_data.preferences["operatingModes"] = new_param_value
+      local device_data_json = dkjson.encode(device_data)
+      test.socket.device_lifecycle:__queue_receive({ mock_qubino_flush_shutter_venetian.id, "infoChanged", device_data_json })
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_qubino_flush_shutter_venetian,
+          Configuration:Set({
+            parameter_number = 71,
+            configuration_value = new_param_value,
+            size = 1
+          })
+        )
+      )
+      test.mock_time.advance_time(1)
+      test.socket.zwave:__expect_send(
+        zw_test_utils.zwave_test_build_send_command(
+          mock_qubino_flush_shutter_venetian,
+          Configuration:Get({ parameter_number = 71 })
+        )
+      )
+    end
+  )
+end
+
 test.run_registered_tests()
