@@ -269,7 +269,7 @@ test.register_coroutine_test(
     )
 
     test.socket.capability:__expect_send(
-      mock_child_sald_con:generate_test_message("main",
+        mock_parent:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 5000 }))
     )
   end

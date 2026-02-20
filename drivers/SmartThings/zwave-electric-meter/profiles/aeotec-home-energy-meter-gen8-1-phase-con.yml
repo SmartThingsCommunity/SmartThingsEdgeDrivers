@@ -18,6 +18,8 @@ components:
     version: 1
   - id: energyMeter
     version: 1
+  - id: powerConsumptionReport
+    version: 1
   categories:
   - name: CurbPowerMeter
 preferences:

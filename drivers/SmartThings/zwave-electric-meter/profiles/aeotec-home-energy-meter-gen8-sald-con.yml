@@ -9,7 +9,5 @@ components:
     version: 1
   - id: refresh
     version: 1
-  - id: powerConsumptionReport
-    version: 1
   categories:
   - name: CurbPowerMeter

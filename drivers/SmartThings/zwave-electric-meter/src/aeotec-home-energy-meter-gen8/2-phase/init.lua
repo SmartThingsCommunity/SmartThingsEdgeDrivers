@@ -90,7 +90,7 @@ local function meter_report_handler(driver, device, cmd, zb_rx)
 
     if endpoint == 7 then
       -- powerConsumptionReport
-      emit_power_consumption_report_event(device_to_emit_with, { value = event_arguments.value }, endpoint)
+      emit_power_consumption_report_event(device, { value = event_arguments.value }, endpoint)
     end
   elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
     local event_arguments = {
