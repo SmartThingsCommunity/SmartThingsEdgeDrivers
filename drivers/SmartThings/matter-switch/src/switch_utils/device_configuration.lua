@@ -123,12 +123,16 @@ function ButtonDeviceConfiguration.update_button_profile(device, default_endpoin
   if #motion_eps > 0 and (num_button_eps == 3 or num_button_eps == 6) then -- only these two devices are handled
     profile_name = profile_name .. "-motion"
   end
-  local battery_supported = #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) > 0
-  if battery_supported then -- battery profiles are configured later, in power_source_attribute_list_handler
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-  else
-    device:try_update_metadata({profile = profile_name})
+  local battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
+  if battery_support == fields.battery_support.BATTERY_PERCENTAGE then
+    profile_name = profile_name .. "-battery"
+  elseif battery_support == fields.battery_support.BATTERY_LEVEL then
+    profile_name = profile_name .. "-batteryLevel"
   end
+  if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
+    profile_name = "3-button-battery-temperature-humidity"
+  end
+  return profile_name
 end
 
 function ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, button_eps)
@@ -220,10 +224,10 @@ function DeviceConfiguration.match_profile(driver, device)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
     if generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
-    elseif generic_profile("plug-binary") or generic_profile("plug-level") then
-      if switch_utils.check_switch_category_vendor_overrides(device) then
-        updated_profile = string.gsub(updated_profile, "plug", "switch")
-      end
+    elseif switch_utils.check_switch_category_vendor_overrides(device) then
+      -- check whether the overwrite should be over "plug" or "light" based on the current profile
+      local overwrite_category = string.find(updated_profile, "plug") and "plug" or "light"
+      updated_profile = string.gsub(updated_profile, overwrite_category, "switch")
     elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
       -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
       -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
@@ -234,17 +238,15 @@ function DeviceConfiguration.match_profile(driver, device)
   local fan_device_type_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_device_type_ep_ids > 0 then
     updated_profile, optional_component_capabilities = FanDeviceConfiguration.assign_profile_for_fan_ep(device, default_endpoint_id)
-    device:set_field(fields.MODULAR_PROFILE_UPDATED, true)
   end
 
   -- initialize the main device card with buttons if applicable
-  local momemtary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #momemtary_switch_ep_ids) then
-    ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, #momemtary_switch_ep_ids)
+  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
+  if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #momentary_switch_ep_ids) then
+    updated_profile = ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, #momentary_switch_ep_ids)
     -- All button endpoints found will be added as additional components in the profile containing the default_endpoint_id.
-    ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momemtary_switch_ep_ids)
-    ButtonDeviceConfiguration.configure_buttons(device, momemtary_switch_ep_ids)
-    return
+    ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momentary_switch_ep_ids)
+    ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
   end
 
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })

@@ -1,17 +1,8 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
+
+local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
 --- @type st.zwave.CommandClass.Association
@@ -345,6 +336,20 @@ local devices = {
     ASSOCIATION = {
       {grouping_identifier = 1}
     }
+  },
+  ZOOZ_ZSE42_WATER_LEAK = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0x7000,
+      product_ids = 0xE002
+    },
+    BATTERY = {
+      quantity = 1,
+      type = "CR2450"
+    },
+    WAKE_UP = {
+      { seconds = 21600 } --6 hours
+    }
   }
 }
 local configurations = {}
@@ -375,6 +380,11 @@ configurations.initial_configuration = function(driver, device)
       local _node_id = value.node_id or driver.environment_info.hub_zwave_id
       device:send(WakeUp:IntervalSet({seconds = value.seconds, node_id = _node_id}))
     end
+  end
+  local battery = configurations.get_device_battery(device)
+  if battery ~= nil then
+    device:emit_event(capabilities.battery.quantity({ value = battery.quantity or 1 }))
+    device:emit_event(capabilities.battery.type({ value = battery.type or "Unspecified" }))
   end
 end
 
@@ -421,6 +431,18 @@ configurations.get_device_wake_up = function(zw_device)
       device.MATCHING_MATRIX.product_types,
       device.MATCHING_MATRIX.product_ids) then
       return device.WAKE_UP
+    end
+  end
+  return nil
+end
+
+configurations.get_device_battery = function(zw_device)
+  for _, device in pairs(devices) do
+    if zw_device:id_match(
+            device.MATCHING_MATRIX.mfrs,
+            device.MATCHING_MATRIX.product_types,
+            device.MATCHING_MATRIX.product_ids) then
+      return device.BATTERY
     end
   end
   return nil

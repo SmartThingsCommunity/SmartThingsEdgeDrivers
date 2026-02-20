@@ -10,7 +10,7 @@ test.disable_startup_messages()
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local parent_ep = 10
 local child1_ep = 20
@@ -258,7 +258,7 @@ local function test_init_parent_child_endpoints_non_sequential()
   test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, clusters.LevelControl.attributes.Options:write(mock_device_parent_child_endpoints_non_sequential, child1_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, clusters.LevelControl.attributes.Options:write(mock_device_parent_child_endpoints_non_sequential, child2_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, clusters.ColorControl.attributes.Options:write(mock_device_parent_child_endpoints_non_sequential, child2_ep_non_sequential, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
-  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ profile = "light-binary" })
+  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ profile = "switch-binary" })
   mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children_non_sequential) do
@@ -489,7 +489,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -564,7 +564,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {

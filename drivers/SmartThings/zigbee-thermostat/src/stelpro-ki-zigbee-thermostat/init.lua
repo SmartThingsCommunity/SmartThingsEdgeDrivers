@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local device_management = require "st.zigbee.device_management"
 
@@ -30,10 +20,6 @@ local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local TemperatureMeasurement = capabilities.temperatureMeasurement
 local TemperatureAlarm = capabilities.temperatureAlarm
 
-local STELPRO_KI_ZIGBEE_THERMOSTAT_FINGERPRINTS = {
-  { mfr = "Stelpro", model = "STZB402+" },
-  { mfr = "Stelpro", model = "ST218" },
-}
 
 -- The Groovy DTH stored the raw Celsius values because it was responsible for converting
 -- to Farenheit if the user's location necessitated. Right now the driver only operates
@@ -60,14 +46,6 @@ local THERMOSTAT_MODE_MAP = {
   [ThermostatSystemMode.EMERGENCY_HEATING] = ThermostatMode.thermostatMode.eco
 }
 
-local is_stelpro_ki_zigbee_thermostat = function(opts, driver, device)
-  for _, fingerprint in ipairs(STELPRO_KI_ZIGBEE_THERMOSTAT_FINGERPRINTS) do
-      if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-          return true
-      end
-  end
-  return false
-end
 
 local function has_member(haystack, needle)
   for _, value in ipairs(haystack) do
@@ -342,7 +320,7 @@ local stelpro_ki_zigbee_thermostat = {
     added = device_added,
     doConfigure = do_configure
   },
-  can_handle = is_stelpro_ki_zigbee_thermostat
+  can_handle = require("stelpro-ki-zigbee-thermostat.can_handle"),
 }
 
 return stelpro_ki_zigbee_thermostat

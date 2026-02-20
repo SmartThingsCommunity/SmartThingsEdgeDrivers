@@ -24,6 +24,7 @@ end
 
 local do_configure = function(self, device)
   device:configure()
+  device:refresh()
 end
 
 local device_init = function(self, device)

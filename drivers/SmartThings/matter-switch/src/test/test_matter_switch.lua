@@ -9,7 +9,7 @@ local st_utils = require "st.utils"
 local clusters = require "st.matter.clusters"
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("switch-color-level.yml"),
@@ -153,6 +153,11 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  -- note that since disable_startup_messages is not explicitly called here,
+  -- the following subscribe is due to the init event sent by the test framework.
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
   set_color_mode(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION)
@@ -166,6 +171,9 @@ local function test_init_x_y_color_mode()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
   set_color_mode(mock_device, 1, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY)
@@ -178,6 +186,9 @@ local function test_init_no_hue_sat()
       subscribe_request:merge(cluster:subscribe(mock_device_no_hue_sat))
     end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device_no_hue_sat.id, "added" })
+  test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
+
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_no_hue_sat)
   set_color_mode(mock_device_no_hue_sat, 1, clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY)
@@ -440,7 +451,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send(
       {
         mock_device_no_hue_sat.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     )
     test.socket.matter:__queue_receive(
@@ -502,7 +513,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -584,7 +595,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -658,7 +669,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
   }
@@ -680,7 +691,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
   }
@@ -702,7 +713,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -974,7 +985,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 165, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 165, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -990,7 +1001,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 365, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 365, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     }
   }
@@ -1183,6 +1194,21 @@ test.register_coroutine_test(
         "main", capabilities.colorControl.saturation(72)
       )
     )
+  end
+)
+
+test.register_coroutine_test(
+  "Refresh necessary attributes",
+  function()
+    test.socket.capability:__queue_receive(
+      {mock_device.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+    )
+    local read_request = cluster_subscribe_list[1]:read(mock_device)
+    for i, attr in ipairs(cluster_subscribe_list) do
+      if i > 1 then read_request:merge(attr:read(mock_device)) end
+    end
+    test.socket.matter:__expect_send({mock_device.id, read_request})
+    test.wait_for_events()
   end
 )
 

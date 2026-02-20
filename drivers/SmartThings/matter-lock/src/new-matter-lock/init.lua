@@ -1,18 +1,7 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
-local device_lib = require "st.device"
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
@@ -32,8 +21,6 @@ local ALL_INDEX = 0xFFFE
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
-
-local MODULAR_PROFILE_UPDATED = "__MODULAR_PROFILE_UPDATED"
 
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
@@ -60,32 +47,6 @@ local ALIRO_KEY_TYPE_TO_CRED_ENUM_MAP = {
   ["nonEvictableEndpointKey"] = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY
 }
 
-local NEW_MATTER_LOCK_PRODUCTS = {
-  {0x115f, 0x2802}, -- AQARA, U200
-  {0x115f, 0x2801}, -- AQARA, U300
-  {0x115f, 0x2807}, -- AQARA, U200 Lite
-  {0x147F, 0x0001}, -- U-tec
-  {0x147F, 0x0008}, -- Ultraloq, Bolt Smart Matter Door Lock
-  {0x144F, 0x4002}, -- Yale, Linus Smart Lock L2
-  {0x101D, 0x8110}, -- Yale, New Lock
-  {0x1533, 0x0001}, -- eufy, E31
-  {0x1533, 0x0002}, -- eufy, E30
-  {0x1533, 0x0003}, -- eufy, C34
-  {0x1533, 0x000F}, -- eufy, FamiLock S3 Max
-  {0x1533, 0x0010}, -- eufy, FamiLock S3
-  {0x1533, 0x0011}, -- eufy, FamiLock E34
-  {0x1533, 0x0012}, -- eufy, FamiLock E35
-  {0x1533, 0x0016}, -- eufy, FamiLock E32
-  {0x135D, 0x00B1}, -- Nuki, Smart Lock Pro
-  {0x135D, 0x00B2}, -- Nuki, Smart Lock
-  {0x135D, 0x00C1}, -- Nuki, Smart Lock
-  {0x135D, 0x00A1}, -- Nuki, Smart Lock
-  {0x135D, 0x00B0}, -- Nuki, Smart Lock
-  {0x15F2, 0x0001}, -- Viomi, AiSafety Smart Lock E100
-  {0x158B, 0x0001}, -- Deasino, DS-MT01
-  {0x10E1, 0x2002}, -- VDA
-  {0x1421, 0x0042}, -- Kwikset Halo Select Plus
-}
 
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
@@ -148,18 +109,6 @@ local subscribed_events = {
   }
 }
 
-local function is_new_matter_lock_products(opts, driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
-    return false
-  end
-  for _, p in ipairs(NEW_MATTER_LOCK_PRODUCTS) do
-    if device.manufacturer_info.vendor_id == p[1] and
-      device.manufacturer_info.product_id == p[2] then
-        return true
-    end
-  end
-  return false
-end
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -252,7 +201,6 @@ local function match_profile_modular(driver, device)
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
-  device:set_field(MODULAR_PROFILE_UPDATED, true)
 end
 
 local function match_profile_switch(driver, device)
@@ -290,11 +238,37 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
+local function profile_changed(latest_profile, previous_profile)
+  if latest_profile.id ~= previous_profile.id then
+    return true
+  end
+  for component_id, synced_component in pairs(latest_profile.components or {}) do
+    local prev_component = previous_profile.components[component_id]
+    if prev_component == nil then
+      return true
+    end
+    if #synced_component.capabilities ~= #prev_component.capabilities then
+      return true
+    end
+    -- Build a table of capability IDs from the previous component. Then, use this map to check
+    -- that all capabilities in the synced component existed in the previous component.
+    local prev_cap_ids = {}
+    for _, capability in ipairs(prev_component.capabilities or {}) do
+      prev_cap_ids[capability.id] = true
+    end
+    for _, capability in ipairs(synced_component.capabilities or {}) do
+      if not prev_cap_ids[capability.id] then
+        return true
+      end
+    end
+  end
+  return false
+end
+
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id and not device:get_field(MODULAR_PROFILE_UPDATED) then
+  if not profile_changed(device.profile, args.old_st_store.profile) then
     return
   end
-  device:set_field(MODULAR_PROFILE_UPDATED, nil)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
@@ -2967,7 +2941,7 @@ local new_matter_lock_handler = {
     capabilities.battery,
     capabilities.batteryLevel
   },
-  can_handle = is_new_matter_lock_products
+  can_handle = require("new-matter-lock.can_handle"),
 }
 
 return new_matter_lock_handler

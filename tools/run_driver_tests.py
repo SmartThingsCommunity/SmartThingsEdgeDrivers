@@ -7,6 +7,7 @@ from collections import defaultdict
 import argparse
 from pathlib import Path
 import junit_xml
+import shutil
 
 VERBOSITY_TOTALS_ONLY = 0
 VERBOSITY_TEST_STATUS_ONLY = 1
@@ -14,7 +15,7 @@ VERBOSITY_FAILURE_TEST_LOGS = 2
 VERBOSITY_ALL_TEST_LOGS = 3
 
 DRIVER_DIR = Path(os.path.abspath(__file__)).parents[1].joinpath("drivers")
-LUACOV_CONFIG = DRIVER_DIR.parent.joinpath(".circleci", "config.luacov")
+LUACOV_CONFIG = DRIVER_DIR.parent.joinpath("tools", "config.luacov")
 
 def find_affected_tests(working_dir, changed_files):
     affected_tests = []
@@ -29,13 +30,14 @@ def find_affected_tests(working_dir, changed_files):
     affected_tests = set(affected_tests)
     return affected_tests
 
-def run_tests(verbosity_level, filter, junit, coverage_files):
+def run_tests(verbosity_level, filter, junit, coverage_files, html):
     owd = os.getcwd()
     coverage_files = find_affected_tests(owd, coverage_files)
     failure_files = defaultdict(list)
     ts = []
     total_tests = 0
     total_passes = 0
+    drivers_needing_html = {}
     for test_file in DRIVER_DIR.glob("*" + os.path.sep + "*" + os.path.sep + "src" + os.path.sep + "test" + os.path.sep + "test_*.lua"):
         if filter != None and re.search(filter, str(test_file)) is None:
             continue
@@ -137,7 +139,29 @@ def run_tests(verbosity_level, filter, junit, coverage_files):
         test_suite.test_cases = test_cases
         ts.append(test_suite)
         if test_file in coverage_files:
-            subprocess.run("luacov -c={}".format(LUACOV_CONFIG), shell=True)
+            if html:
+                driver_name = test_file.parts[-4]
+                src_path = test_file.parents[1]
+                drivers_needing_html[driver_name] = src_path
+            else:
+                subprocess.run("luacov -c={}".format(LUACOV_CONFIG), shell=True)
+
+    if drivers_needing_html:
+        coverage_html_dir = DRIVER_DIR.parent.joinpath("tools/coverage_output_html")
+        try:
+            os.mkdir(coverage_html_dir)
+        except FileExistsError:
+            pass
+
+        for driver_name, src_path in drivers_needing_html.items():
+            os.chdir(src_path)
+            subprocess.run("luacov -c {} --reporter html".format(LUACOV_CONFIG), shell=True)
+            html_source = Path("luacov.report.out")
+            html_dest = coverage_html_dir.joinpath(driver_name+"_luacov.report.html")
+            if html_source.exists():
+                shutil.copy(html_source, html_dest)
+            else:
+                print(f"Warning: HTML coverage file for {driver_name} not found")
 
     total_test_info = "Total unit tests passes: {}/{}".format(total_passes, total_tests)
     print("#" * len(total_test_info))
@@ -165,6 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("--filter", "-f",  type=str, nargs="?", help="only run tests containing the filter value in the path")
     parser.add_argument("--junit", "-j", type=str, nargs="?", help="output test results in JUnit XML to the specified file")
     parser.add_argument("--coverage", "-c", nargs="*", help="run code tests with coverage (luacov must be installed) OPTIONAL: restrict files to run coverage tests for")
+    parser.add_argument("--html", action="store_true", help="Generate HTML coverage reports for the files specified by the coverage argument")
     args = parser.parse_args()
     verbosity_level = 0
     if args.verbose:
@@ -173,5 +198,4 @@ if __name__ == "__main__":
         verbosity_level = 2
     elif args.superextraverbose:
         verbosity_level = 3
-    run_tests(verbosity_level, args.filter, args.junit, args.coverage)
-
+    run_tests(verbosity_level, args.filter, args.junit, args.coverage, args.html)
