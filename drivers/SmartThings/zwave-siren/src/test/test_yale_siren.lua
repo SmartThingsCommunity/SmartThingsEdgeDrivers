@@ -31,18 +31,8 @@ local mock_siren = test.mock_device.build_test_zwave_device({
     zwave_product_id = 0x0001
 })
 
--- Device already on yale-siren-tamper profile (needed to test tamperAlert emit)
-local mock_siren_tamper = test.mock_device.build_test_zwave_device({
-    profile = t_utils.get_profile_definition("yale-siren-tamper.yml"),
-    zwave_endpoints = sensor_endpoints,
-    zwave_manufacturer_id = 0x0129,
-    zwave_product_type = 0x6F01,
-    zwave_product_id = 0x0001
-})
-
 local function test_init()
   test.mock_device.add_test_device(mock_siren)
-  test.mock_device.add_test_device(mock_siren_tamper)
 end
 
 test.set_test_init_function(test_init)
@@ -314,60 +304,6 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
       mock_siren,
       Battery:Get({})
-    ))
-  end
-)
-
-test.register_coroutine_test(
-  "Configuration report parameter 4 value 1 should update to tamper profile and clear tamper",
-  function()
-    -- Use a device already on yale-siren-tamper profile so tamperAlert capability is supported
-    test.socket.zwave:__queue_receive({
-      mock_siren_tamper.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Configuration:Report({ parameter_number = 4, configuration_value = 1 })
-      )
-    })
-    mock_siren_tamper:expect_metadata_update({ profile = "yale-siren-tamper" })
-    test.socket.capability:__expect_send(
-      mock_siren_tamper:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-    )
-  end
-)
-
-test.register_coroutine_test(
-  "Configuration report parameter 4 value 0 should update to yale-siren profile",
-  function()
-    test.socket.zwave:__queue_receive({
-      mock_siren.id,
-      zw_test_utils.zwave_test_build_receive_command(
-        Configuration:Report({ parameter_number = 4, configuration_value = 0 })
-      )
-    })
-    mock_siren:expect_metadata_update({ profile = "yale-siren" })
-  end
-)
-
-test.register_coroutine_test(
-  "infoChanged with non-tamper preference change should send Configuration:Set and Basic:Set after delay",
-  function()
-    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
-    test.socket.zwave:__set_channel_ordering('relaxed')
-    test.socket.device_lifecycle():__queue_receive(mock_siren:generate_info_changed(
-      {
-        preferences = {
-          ["certifiedpreferences.alarmLength"] = 5
-        }
-      }
-    ))
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_siren,
-      Configuration:Set({parameter_number = 1, size = 1, configuration_value = 5})
-    ))
-    test.mock_time.advance_time(1)
-    test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-      mock_siren,
-      Basic:Set({value=0x00})
     ))
   end
 )

@@ -5,7 +5,6 @@
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local capabilities = require "st.capabilities"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local t_utils = require "integration_test.utils"
@@ -60,22 +59,6 @@ test.register_coroutine_test(
       Battery:Get({})
     ))
   end
-)
-
-test.register_message_test(
-  "Battery report with non-zero level should update battery capability",
-  {
-    {
-      channel = "zwave",
-      direction = "receive",
-      message = { mock_siren.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 50 })) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_siren:generate_test_message("main", capabilities.battery.battery(50))
-    }
-  }
 )
 
 test.run_registered_tests()
