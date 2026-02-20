@@ -1,0 +1,37 @@
+name: frient-power-energy-battery-consumption-report
+components:
+  - id: main
+    capabilities:
+      - id: powerMeter
+        version: 1
+      - id: energyMeter
+        version: 1
+      - id: powerConsumptionReport
+        version: 1
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: CurbPowerMeter
+preferences:
+  - title: "Pulse Configuration"
+    name: pulseConfiguration
+    description: "Number of pulses the meter outputs per unit"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 50
+      maximum: 10000
+      default: 1000
+  - title: "Initial Energy Consumption"
+    name: currentSummation
+    description: "Offset (scaled value) for current summation delivered"
+    required: false
+    preferenceType: number
+    definition:
+      minimum: 0
+      maximum: 268435455
+      default: 0
