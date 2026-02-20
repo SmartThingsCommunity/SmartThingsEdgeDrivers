@@ -475,4 +475,52 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+  "Setting window shade level to 0 on iblinds v1 should emit windowShade.closed",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_blind.id,
+        { capability = "windowShadeLevel", command = "setShadeLevel", args = { 0 } }
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_blind:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_blind:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_blind,
+        SwitchMultilevel:Set({ value = 0 })
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Setting window shade level to 0 on iblinds v3 should emit windowShade.closed",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_blind_v3.id,
+        { capability = "windowShadeLevel", command = "setShadeLevel", args = { 0 } }
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_blind_v3:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_blind_v3:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_blind_v3,
+        SwitchMultilevel:Set({ value = 0 })
+      )
+    )
+  end
+)
+
 test.run_registered_tests()

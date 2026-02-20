@@ -531,4 +531,43 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+  "Setting window shade preset on basic-only device should generate Basic:Set and Basic:Get",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
+    test.socket.capability:__queue_receive(
+      {
+        mock_window_shade_basic.id,
+        { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
+      }
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_window_shade_basic,
+        Basic:Set({ value = 50 })
+      )
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(5)
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_window_shade_basic,
+        Basic:Get({})
+      )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Adding a window treatment device should emit supportedWindowShadeCommands",
+  function()
+    test.socket.device_lifecycle():__queue_receive({ mock_window_shade_basic.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_window_shade_basic:generate_test_message("main", capabilities.windowShade.supportedWindowShadeCommands(
+        {"open", "close", "pause"}, { visibility = { displayed = false } }
+      ))
+    )
+  end
+)
+
 test.run_registered_tests()
