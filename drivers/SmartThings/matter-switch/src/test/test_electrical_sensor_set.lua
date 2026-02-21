@@ -529,8 +529,14 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_child:generate_test_message("main", capabilities.energyMeter.energy({ value = 19.0, unit = "Wh" }))
     )
-    -- no powerConsumptionReport will be emitted now, since it has not been 15 minutes since the previous report (even though it was the parent).
-
+    test.socket.capability:__expect_send(
+      mock_child:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:00:00Z",
+        ["end"] = "1970-01-01T00:15:00Z",
+        deltaEnergy = 0.0,
+        energy = 19.0
+      }))
+    )
 
     test.wait_for_events()
     test.mock_time.advance_time(1500)
@@ -565,7 +571,7 @@ test.register_coroutine_test(
       mock_child:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
         start = "1970-01-01T00:15:01Z",
         ["end"] = "1970-01-01T00:40:00Z",
-        deltaEnergy = 0.0,
+        deltaEnergy = 1.0,
         energy = 20.0
       }))
     )
@@ -582,7 +588,14 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 20.0, unit = "Wh" }))
     )
-    -- no powerConsumptionReport will be emitted now, since it has not been 15 minutes since the previous report (even though it was the child).
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
+        start = "1970-01-01T00:15:01Z",
+        ["end"] = "1970-01-01T00:40:00Z",
+        deltaEnergy = 1.0,
+        energy = 20.0
+      }))
+    )
   end,
   { test_init = test_init }
 )

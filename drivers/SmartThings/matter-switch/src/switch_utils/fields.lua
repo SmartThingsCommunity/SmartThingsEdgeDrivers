@@ -92,6 +92,7 @@ SwitchFields.updated_fields = {
   { current_field_name = "__switch_intialized", updated_field_name = nil },
   { current_field_name = "__energy_management_endpoint", updated_field_name = nil },
   { current_field_name = "__total_imported_energy", updated_field_name = nil },
+  { current_field_name = "__last_imported_report_timestamp", updated_field_name = nil },
 }
 
 SwitchFields.vendor_overrides = {
