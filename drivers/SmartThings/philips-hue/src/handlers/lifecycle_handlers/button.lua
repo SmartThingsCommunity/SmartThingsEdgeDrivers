@@ -90,6 +90,15 @@ function ButtonLifecycleHandlers.added(driver, device, parent_device_id, resourc
     hue_id_to_device[button_info.power_id] = device
   end
 
+  if button_info.has_relative_rotary then
+    device.profile.components["main"]:emit_event(
+      capabilities.knob.supportedAttributes(
+        { "rotateAmount" },
+        { visibility = { displayed = false } }
+      )
+    )
+  end
+
   log.debug(st_utils.stringify_table(button_rid_to_index_map, "button index map", true))
   device:set_field(Fields.BUTTON_INDEX_MAP, button_rid_to_index_map, { persist = true })
   device:set_field(Fields.DEVICE_TYPE, HueDeviceTypes.BUTTON, { persist = true })

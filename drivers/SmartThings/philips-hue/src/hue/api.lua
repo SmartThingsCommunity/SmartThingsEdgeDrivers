@@ -405,6 +405,13 @@ function PhilipsHueApi:get_light_level_by_id(light_level_resource_id)
   return self:get_rtype_by_rid(HueDeviceTypes.LIGHT_LEVEL, light_level_resource_id)
 end
 
+---@param relative_rotary_resource_id string
+---@return HueResourceResponse<table>?
+---@return string? err nil on success
+function PhilipsHueApi:get_relative_rotary_by_id(relative_rotary_resource_id)
+  return self:get_rtype_by_rid(HueDeviceTypes.RELATIVE_ROTARY, relative_rotary_resource_id)
+end
+
 ---@param id string
 ---@param on boolean
 ---@return { errors: table[], [string]: any }? response json payload in response to the request, nil on error
