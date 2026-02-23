@@ -446,7 +446,7 @@ zwaveManufacturer:
     productId: 0x000B
     deviceProfileName: contact-battery-tamperalert
   - id: 634/28672/57345
-    deviceLabel: Open  Close XS Sensor
+    deviceLabel: Open Close XS Sensor
     manufacturerId: 0x027A
     productId: 0xE001
     productType: 0x7000
