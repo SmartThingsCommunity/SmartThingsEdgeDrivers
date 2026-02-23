@@ -64,8 +64,7 @@ function SwitchLifecycleHandlers.driver_switched(driver, device)
 end
 
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
-  if device.profile.id ~= args.old_st_store.profile.id or device:get_field(fields.MODULAR_PROFILE_UPDATED) then
-    device:set_field(fields.MODULAR_PROFILE_UPDATED, nil)
+  if switch_utils.profile_changed(device.profile, args.old_st_store.profile) then
     if device.network_type == device_lib.NETWORK_TYPE_MATTER then
       device:subscribe()
       button_cfg.configure_buttons(device,
@@ -297,6 +296,12 @@ local matter_driver_template = {
     },
     [capabilities.level.ID] = {
       [capabilities.level.commands.setLevel.NAME] = capability_handlers.handle_set_level
+    },
+    [capabilities.statelessColorTemperatureStep.ID] = {
+      [capabilities.statelessColorTemperatureStep.commands.stepColorTemperatureByPercent.NAME] = capability_handlers.handle_step_color_temperature_by_percent,
+    },
+    [capabilities.statelessSwitchLevelStep.ID] = {
+      [capabilities.statelessSwitchLevelStep.commands.stepLevel.NAME] = capability_handlers.handle_step_level,
     },
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.off.NAME] = capability_handlers.handle_switch_off,

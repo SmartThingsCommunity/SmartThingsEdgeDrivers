@@ -239,6 +239,7 @@ local expected_metadata = {
       {
         "videoCapture2",
         "cameraViewportSettings",
+        "videoStreamSettings",
         "localMediaStorage",
         "audioRecording",
         "cameraPrivacyMode",
@@ -246,7 +247,6 @@ local expected_metadata = {
         "hdr",
         "nightVision",
         "mechanicalPanTiltZoom",
-        "videoStreamSettings",
         "zoneManagement",
         "webrtc",
         "motionSensor",
@@ -683,6 +683,18 @@ local function receive_max_encoded_pixel_rate()
   })
 end
 
+local function receive_min_viewport()
+  test.socket.matter:__queue_receive({
+    mock_device.id,
+    clusters.CameraAvStreamManagement.attributes.MinViewportResolution:build_test_report_data(
+      mock_device, CAMERA_EP, clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
+        width = 1920,
+        height = 1080
+      })
+    )
+  })
+end
+
 local function receive_video_sensor_params()
   test.socket.matter:__queue_receive({
     mock_device.id,
@@ -695,6 +707,15 @@ local function receive_video_sensor_params()
       })
     )
   })
+end
+
+local function emit_min_viewport()
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.cameraViewportSettings.minViewportResolution({
+      width = 1920,
+      height = 1080,
+    }))
+  )
 end
 
 local function emit_video_sensor_parameters()
@@ -719,6 +740,11 @@ local function emit_supported_resolutions()
         width = 3840,
         height = 2160,
         fps = 15
+      },
+      {
+        width = 7360,
+        height = 4912,
+        fps = 0
       }
     }))
   )
@@ -730,12 +756,14 @@ end
 -- videoStreamSettings.supportedResolutions is emitted after all three attributes are received.
 
 test.register_coroutine_test(
-  "Rate Distortion Trade Off Points, MaxEncodedPixelRate, VideoSensorParams reports should generate appropriate events",
+  "Rate Distortion Trade Off Points, MaxEncodedPixelRate, MinViewport, VideoSensorParams reports should generate appropriate events",
   function()
     update_device_profile()
     test.wait_for_events()
     receive_rate_distortion_trade_off_points()
     receive_max_encoded_pixel_rate()
+    receive_min_viewport()
+    emit_min_viewport()
     receive_video_sensor_params()
     emit_video_sensor_parameters()
     emit_supported_resolutions()
@@ -743,11 +771,13 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Rate Distortion Trade Off Points, VideoSensorParams, MaxEncodedPixelRate reports should generate appropriate events",
+  "Rate Distortion Trade Off Points, MinViewport, VideoSensorParams, MaxEncodedPixelRate reports should generate appropriate events",
   function()
     update_device_profile()
     test.wait_for_events()
     receive_rate_distortion_trade_off_points()
+    receive_min_viewport()
+    emit_min_viewport()
     receive_video_sensor_params()
     emit_video_sensor_parameters()
     receive_max_encoded_pixel_rate()
@@ -756,11 +786,13 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "MaxEncodedPixelRate, VideoSensorParams, Rate Distortion Trade Off Points reports should generate appropriate events",
+  "MaxEncodedPixelRate, MinViewport, VideoSensorParams, Rate Distortion Trade Off Points reports should generate appropriate events",
   function()
     update_device_profile()
     test.wait_for_events()
     receive_max_encoded_pixel_rate()
+    receive_min_viewport()
+    emit_min_viewport()
     receive_video_sensor_params()
     emit_video_sensor_parameters()
     receive_rate_distortion_trade_off_points()
@@ -1857,11 +1889,11 @@ test.register_coroutine_test(
         uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
       })
     })
-    local expected_metadata = {
+    local updated_expected_metadata = {
       optional_component_capabilities = {
         { "main",
-          { "videoCapture2", "cameraViewportSettings", "localMediaStorage", "audioRecording", "cameraPrivacyMode",
-            "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "videoStreamSettings", "zoneManagement",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
             "webrtc", "motionSensor", "sounds", }
         },
         { "statusLed",
@@ -1879,7 +1911,7 @@ test.register_coroutine_test(
       },
       profile = "camera"
     }
-    mock_device:expect_metadata_update(expected_metadata)
+    mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
   end

@@ -1,6 +1,8 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local st_utils = require "st.utils"
+
 local SwitchFields = {}
 
 SwitchFields.MOST_RECENT_TEMP = "mostRecentTemp"
@@ -13,8 +15,8 @@ SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 -- These values are a "sanity check" to check that values we are getting are reasonable
 local COLOR_TEMPERATURE_KELVIN_MAX = 15000
 local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
-SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
+SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN)
+SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX)
 
 SwitchFields.SWITCH_LEVEL_LIGHTING_MIN = 1
 SwitchFields.CURRENT_HUESAT_ATTR_MIN = 0
@@ -145,8 +147,6 @@ SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 --- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 
-SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
-
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
   BATTERY_SUPPORT = "__battery_support",
@@ -186,10 +186,13 @@ SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
 
-SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
--- When sent with a command, these options mask and override bitmaps cause the command
--- to take effect when the switch/light is off.
+SwitchFields.TRANSITION_TIME = 0 -- number of 10ths of a second
+SwitchFields.TRANSITION_TIME_FAST = 3 -- 0.3 seconds
+
+-- For Level/Color Control cluster commands, this field indicates which bits in the OptionsOverride field are valid. In this case, we specify that the ExecuteIfOff option (bit 1) may be overridden.
 SwitchFields.OPTIONS_MASK = 0x01
-SwitchFields.OPTIONS_OVERRIDE = 0x01
+-- the OptionsOverride field's first bit overrides the ExecuteIfOff option, defining whether the command should take effect when the device is off.
+SwitchFields.HANDLE_COMMAND_IF_OFF = 0x01
+SwitchFields.IGNORE_COMMAND_IF_OFF = 0x00
 
 return SwitchFields

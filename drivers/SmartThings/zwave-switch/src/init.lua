@@ -17,8 +17,6 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ ve
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
 
-local lazy_load_if_possible = require "lazy_load_subdriver"
-
 --- Map component to end_points(channels)
 ---
 --- @param device st.zwave.Device
@@ -120,28 +118,7 @@ local driver_template = {
       [SwitchMultilevel.STOP_LEVEL_CHANGE] = switch_multilevel_stop_level_change_handler
     }
   },
-  sub_drivers = {
-    lazy_load_if_possible("eaton-accessory-dimmer"),
-    lazy_load_if_possible("inovelli"),
-    lazy_load_if_possible("dawon-smart-plug"),
-    lazy_load_if_possible("inovelli-2-channel-smart-plug"),
-    lazy_load_if_possible("zwave-dual-switch"),
-    lazy_load_if_possible("eaton-anyplace-switch"),
-    lazy_load_if_possible("fibaro-wall-plug-us"),
-    lazy_load_if_possible("dawon-wall-smart-switch"),
-    lazy_load_if_possible("zooz-power-strip"),
-    lazy_load_if_possible("aeon-smart-strip"),
-    lazy_load_if_possible("qubino-switches"),
-    lazy_load_if_possible("fibaro-double-switch"),
-    lazy_load_if_possible("fibaro-single-switch"),
-    lazy_load_if_possible("eaton-5-scene-keypad"),
-    lazy_load_if_possible("ecolink-switch"),
-    lazy_load_if_possible("multi-metering-switch"),
-    lazy_load_if_possible("zooz-zen-30-dimmer-relay"),
-    lazy_load_if_possible("multichannel-device"),
-    lazy_load_if_possible("aeotec-smart-switch"),
-    lazy_load_if_possible("aeotec-heavy-duty")
-  },
+  sub_drivers = require("sub_drivers"),
   lifecycle_handlers = {
     init = device_init,
     infoChanged = info_changed,

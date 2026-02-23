@@ -9,7 +9,7 @@ local clusters = require "st.matter.generated.zap_clusters"
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 local button_attr = capabilities.button.button
 
 
@@ -366,7 +366,7 @@ test.register_coroutine_test(
     })
     test.socket.matter:__expect_send({
       mock_device.id,
-      clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
     })
     test.socket.matter:__queue_receive({
       mock_device.id,

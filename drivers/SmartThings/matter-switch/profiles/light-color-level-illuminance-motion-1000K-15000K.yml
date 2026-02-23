@@ -7,12 +7,16 @@ components:
     version: 1
   - id: switchLevel
     version: 1
+  - id: statelessSwitchLevelStep
+    version: 1
   - id: colorTemperature
     version: 1
     config:
       values:
         - key: "colorTemperature.value"
           range: [ 1000, 15000 ]
+  - id: statelessColorTemperatureStep
+    version: 1
   - id: colorControl
     version: 1
   - id: motionSensor

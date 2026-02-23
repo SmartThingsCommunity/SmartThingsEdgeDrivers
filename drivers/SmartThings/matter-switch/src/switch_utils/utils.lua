@@ -207,7 +207,8 @@ end
 
 --- An extension of the library function endpoint_to_component, used to support a mapping scheme
 --- that optionally includes cluster and attribute ids so that multiple components can be mapped
---- to a single endpoint.
+--- to a single endpoint. This extension also handles the case that multiple endpoints map to the
+--- same component
 ---
 --- @param device any a Matter device object
 --- @param ep_info number|table either an ep_id or a table { endpoint_id, optional(cluster_id), optional(attribute_id) }
@@ -220,10 +221,19 @@ function utils.endpoint_to_component(device, ep_info)
   for component, map_info in pairs(device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}) do
     if type(map_info) == "number" and map_info == ep_info.endpoint_id then
       return component
-    elseif type(map_info) == "table" and map_info.endpoint_id == ep_info.endpoint_id
-      and (not map_info.cluster_id or (map_info.cluster_id == ep_info.cluster_id
-      and (not map_info.attribute_ids or utils.tbl_contains(map_info.attribute_ids, ep_info.attribute_id)))) then
-        return component
+    elseif type(map_info) == "table" then
+      if type(map_info.endpoint_id) == "number" then
+        map_info = {map_info}
+      end
+      for _, ep_map_info in ipairs(map_info) do
+        if type(ep_map_info) == "number" and ep_map_info == ep_info.endpoint_id then
+          return component
+        elseif type(ep_map_info) == "table" and ep_map_info.endpoint_id == ep_info.endpoint_id
+          and (not ep_map_info.cluster_id or (ep_map_info.cluster_id == ep_info.cluster_id
+          and (not ep_map_info.attribute_ids or utils.tbl_contains(ep_map_info.attribute_ids, ep_info.attribute_id)))) then
+            return component
+        end
+      end
     end
   end
   return "main"
@@ -313,6 +323,33 @@ function utils.create_multi_press_values_list(size, supportsHeld)
     table.insert(list, string.format("pushed_%dx", i))
   end
   return list
+end
+
+function utils.profile_changed(latest_profile, previous_profile)
+  if latest_profile.id ~= previous_profile.id then
+    return true
+  end
+  for component_id, synced_component in pairs(latest_profile.components or {}) do
+    local prev_component = previous_profile.components[component_id]
+    if prev_component == nil then
+      return true
+    end
+    if #synced_component.capabilities ~= #prev_component.capabilities then
+      return true
+    end
+    -- Build a table of capability IDs from the previous component. Then, use this map to check
+    -- that all capabilities in the synced component existed in the previous component.
+    local prev_cap_ids = {}
+    for _, capability in ipairs(prev_component.capabilities or {}) do
+      prev_cap_ids[capability.id] = true
+    end
+    for _, capability in ipairs(synced_component.capabilities or {}) do
+      if not prev_cap_ids[capability.id] then
+        return true
+      end
+    end
+  end
+  return false
 end
 
 function utils.detect_bridge(device)
