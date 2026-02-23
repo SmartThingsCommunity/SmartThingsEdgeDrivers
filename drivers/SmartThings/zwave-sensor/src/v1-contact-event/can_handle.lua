@@ -13,7 +13,7 @@ local function can_handle_v1_contact_event(opts, driver, device, cmd, ...)
     cmd.args.notification_type == Notification.notification_type.HOME_SECURITY and
     cmd.args.v1_alarm_type == 0x07 then
       local subdriver = require("v1-contact-event")
-      return true, subdriver, require("v1-contact-event")
+      return true, subdriver
     else
       return false
     end

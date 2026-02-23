@@ -6,7 +6,7 @@ local function can_handle_sensative_strip(opts, driver, device, cmd, ...)
   local SENSATIVE_MODEL = 0x000A
   if device:id_match(SENSATIVE_MFR, nil, SENSATIVE_MODEL) then
     local subdriver = require("sensative-strip")
-    return true, subdriver, require("sensative-strip")
+    return true, subdriver
   end
   return false
 end
