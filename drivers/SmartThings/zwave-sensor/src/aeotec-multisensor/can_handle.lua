@@ -6,7 +6,7 @@ local function can_handle_aeotec_multisensor(opts, self, device, ...)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
       local subdriver = require("aeotec-multisensor")
-      return true, subdriver, require("aeotec-multisensor")
+      return true, subdriver
     end
   end
   return false

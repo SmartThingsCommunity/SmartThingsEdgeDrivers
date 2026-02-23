@@ -6,7 +6,7 @@ local function can_handle_zwave_water_temp_humidity_sensor(opts, driver, device,
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
       local subdriver = require("aeotec-water-sensor")
-      return true, subdriver, require("aeotec-water-sensor")
+      return true, subdriver
     end
   end
   return false
