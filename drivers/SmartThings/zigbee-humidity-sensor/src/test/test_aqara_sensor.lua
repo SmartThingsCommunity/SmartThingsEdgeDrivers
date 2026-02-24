@@ -18,10 +18,16 @@ local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
+local cluster_base = require "st.zigbee.cluster_base"
+local data_types = require "st.zigbee.data_types"
 
 local PowerConfiguration = clusters.PowerConfiguration
 local TemperatureMeasurement = clusters.TemperatureMeasurement
 local RelativeHumidity = clusters.RelativeHumidity
+
+local PRIVATE_CLUSTER_ID = 0xFCC0
+local PRIVATE_ATTRIBUTE_ID = 0x0009
+local MFG_CODE = 0x115F
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -254,6 +260,25 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning())
     }
   }
+)
+
+test.register_coroutine_test(
+  "Added handler should send manufacturer attribute and initialize device state",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device,
+        PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.temperatureMeasurement.temperature({ value = 0, unit = "C" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.relativeHumidityMeasurement.humidity(0)))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.batteryLevel.battery("normal")))
+    test.wait_for_events()
+  end
 )
 
 test.run_registered_tests()

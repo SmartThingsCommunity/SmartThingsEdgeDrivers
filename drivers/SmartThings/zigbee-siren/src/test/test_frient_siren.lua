@@ -1001,4 +1001,120 @@ test.register_message_test(
         }
 )
 
+local function build_sw_version_attr_report(device, fw_bytes)
+    local zcl_messages_mod = require "st.zigbee.zcl"
+    local messages_mod = require "st.zigbee.messages"
+    local zb_const_mod = require "st.zigbee.constants"
+    local report_attr = require "st.zigbee.zcl.global_commands.report_attribute"
+    local zcl_cmds_mod = require "st.zigbee.zcl.global_commands"
+
+    local attr_record = report_attr.ReportAttributeAttributeRecord(
+        DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR,
+        data_types.CharString.ID,
+        fw_bytes
+    )
+    local report_body = report_attr.ReportAttribute({ attr_record })
+    local zclh = zcl_messages_mod.ZclHeader({
+        cmd = data_types.ZCLCommandId(zcl_cmds_mod.REPORT_ATTRIBUTE_ID)
+    })
+    local addrh = messages_mod.AddressHeader(
+        device:get_short_address(),
+        device:get_endpoint(Basic.ID),
+        zb_const_mod.HUB.ADDR,
+        zb_const_mod.HUB.ENDPOINT,
+        zb_const_mod.HA_PROFILE_ID,
+        Basic.ID
+    )
+    local message_body = zcl_messages_mod.ZclMessageBody({ zcl_header = zclh, zcl_body = report_body })
+    return messages_mod.ZigbeeMessageRx({ address_header = addrh, body = message_body })
+end
+
+test.register_coroutine_test(
+        "SW version attr handler with new firmware should configure battery percentage",
+        function()
+            mock_device:set_field(PRIMARY_SW_VERSION, nil, {persist = true})
+            mock_device:set_field("_frient_battery_config_applied", nil, {persist = true})
+
+            -- Binary "\x01\x09\x03" -> hex "010903" (new firmware >= SIREN_FIXED_ENDIAN_SW_VERSION)
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                build_sw_version_attr_report(mock_device, "\x01\x09\x03")
+            })
+            test.wait_for_events()
+        end
+)
+
+test.register_coroutine_test(
+        "SW version attr handler with old firmware should configure battery voltage",
+        function()
+            mock_device:set_field(PRIMARY_SW_VERSION, nil, {persist = true})
+            mock_device:set_field("_frient_battery_config_applied", nil, {persist = true})
+
+            -- Binary "\x01\x09\x01" -> hex "010901" (old firmware < SIREN_FIXED_ENDIAN_SW_VERSION)
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                build_sw_version_attr_report(mock_device, "\x01\x09\x01")
+            })
+            test.wait_for_events()
+        end
+)
+
+test.register_coroutine_test(
+        "doConfigure with existing sw_version should call configure_battery_handling",
+        function()
+            mock_device:set_field(PRIMARY_SW_VERSION, "010903", {persist = true})
+            mock_device:set_field("_frient_battery_config_applied", nil, {persist = true})
+
+            test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASWD.attributes.MaxDuration:write(mock_device, ALARM_DEFAULT_MAX_DURATION)
+            })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                zigbee_test_utils.build_bind_request(
+                        mock_device,
+                        zigbee_test_utils.mock_hub_eui,
+                        PowerConfiguration.ID,
+                        0x2B
+                ):to_endpoint(0x2B)
+            })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(
+                        mock_device, 30, 21600, 1)
+            })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                zigbee_test_utils.build_bind_request(
+                        mock_device,
+                        zigbee_test_utils.mock_hub_eui,
+                        IASZone.ID,
+                        0x2B
+                ):to_endpoint(0x2B)
+            })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASZone.attributes.ZoneStatus:configure_reporting(mock_device, 0, 21600, 1)
+            })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASZone.attributes.IASCIEAddress:write(mock_device, zigbee_test_utils.mock_hub_eui)
+            })
+
+            test.socket.zigbee:__expect_send({
+                mock_device.id,
+                IASZone.server.commands.ZoneEnrollResponse(mock_device, IasEnrollResponseCode.SUCCESS, 0x00)
+            })
+
+            mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+        end
+)
+
 test.run_registered_tests()

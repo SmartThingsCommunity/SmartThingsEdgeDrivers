@@ -140,4 +140,23 @@ test.register_coroutine_test(
   end
 )
 
+test.register_message_test(
+  "Handle added lifecycle - reads ApplicationVersion",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = {mock_device1.id, "added"}
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device1.id,
+        Basic.attributes.ApplicationVersion:read(mock_device1)
+      }
+    }
+  }
+)
+
 test.run_registered_tests()

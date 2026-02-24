@@ -64,6 +64,24 @@ local mock_device = test.mock_device.build_test_zigbee_device(
         }
 )
 
+local mock_device_112 = test.mock_device.build_test_zigbee_device(
+        {
+            profile = t_utils.get_profile_definition("frient-siren-battery-source-tamper.yml"),
+            zigbee_endpoints = {
+                [0x01] = {
+                    id = 0x01,
+                    manufacturer = "frient A/S",
+                    model = "SIRZB-112",
+                    server_clusters = { Scenes.ID, OnOff.ID}
+                },
+                [0x2B] = {
+                    id = 0x2B,
+                    server_clusters = { Basic.ID, Identify.ID, PowerConfiguration.ID, Groups.ID, IASZone.ID, IASWD.ID }
+                }
+            }
+        }
+)
+
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
     test.mock_device.add_test_device(mock_device)
@@ -1024,6 +1042,42 @@ test.register_message_test(
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
             }
         }
+)
+
+local function get_siren_OFF_commands_112(duration)
+    local expectedSirenOFFConfiguration = SirenConfiguration(0x00)
+    expectedSirenOFFConfiguration:set_warning_mode(WarningMode.STOP)
+    expectedSirenOFFConfiguration:set_siren_level(IaswdLevel.LOW_LEVEL)
+
+    test.socket.zigbee:__expect_send({
+        mock_device_112.id,
+        IASWD.server.commands.StartWarning(
+                mock_device_112,
+                expectedSirenOFFConfiguration,
+                data_types.Uint16(duration and duration or ALARM_DURATION_TEST_VALUE),
+                data_types.Uint8(0x00),
+                data_types.Enum8(0x00)
+        )
+    })
+end
+
+test.register_coroutine_test(
+        "SIRZB-112 alarm off command should be handled via frient sub-driver",
+        function()
+            mock_device_112:set_field(PRIMARY_SW_VERSION, "010903", {persist = true})
+            mock_device_112:set_field(ALARM_DURATION, ALARM_DURATION_TEST_VALUE, {persist = true})
+
+            test.socket.capability:__queue_receive({
+                mock_device_112.id,
+                { capability = "alarm", component = "main", command = "off", args = {} }
+            })
+
+            get_siren_OFF_commands_112()
+            test.wait_for_events()
+        end,
+        { test_init = function()
+            test.mock_device.add_test_device(mock_device_112)
+        end }
 )
 
 test.run_registered_tests()

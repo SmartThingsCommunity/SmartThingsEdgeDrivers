@@ -223,4 +223,29 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Second OnWithTimedOff cancels existing timer and resets motion",
+  function()
+    local frm_ctrl = FrameCtrl(0x01)
+    -- Pre-register two timers: first will be cancelled, second will fire
+    test.timer.__create_and_queue_test_time_advance_timer(0x0708/10, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(0x0708/10, "oneshot")
+    -- First motion event
+    local first_cmd = OnOff.server.commands.OnWithTimedOff.build_test_rx(mock_device, 0x00, 0x0708, 0x0000)
+    first_cmd.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({mock_device.id, first_cmd})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+    test.wait_for_events()
+    -- Second motion event before first timer fires - cancels first timer
+    local second_cmd = OnOff.server.commands.OnWithTimedOff.build_test_rx(mock_device, 0x00, 0x0708, 0x0000)
+    second_cmd.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({mock_device.id, second_cmd})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+    test.wait_for_events()
+    -- Only the second timer fires
+    test.mock_time.advance_time(180)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+  end
+)
+
 test.run_registered_tests()

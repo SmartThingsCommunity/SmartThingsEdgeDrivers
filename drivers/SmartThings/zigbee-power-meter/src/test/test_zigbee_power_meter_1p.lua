@@ -7,6 +7,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
+local constants = require "st.zigbee.constants"
 
 
 -- Mock out globals
@@ -219,6 +220,101 @@ test.register_coroutine_test(
       ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
+)
+
+test.register_message_test(
+  "resetEnergyMeter command should send OnOff On to reset device",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = { mock_device.id, { capability = "energyMeter", component = "main", command = "resetEnergyMeter", args = {} } }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = { mock_device.id, clusters.OnOff.server.commands.On(mock_device) }
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "refresh capability command should read device attributes",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "refresh", component = "main", command = "refresh", args = {} }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      SimpleMetering.attributes.InstantaneousDemand:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      cluster_base.read_attribute(mock_device, data_types.ClusterId(SimpleMetering.ID), data_types.AttributeId(0x0001))
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.ActivePower:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.RMSVoltage:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.RMSCurrent:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "energy handler resets offset when reading is below stored offset",
+  function()
+    -- Set an offset larger than the incoming value (100 raw / 100 = 1.0 kWh, offset = 5.0)
+    mock_device:set_field(constants.ENERGY_METER_OFFSET, 5.0, {persist = true})
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 100)
+    })
+    -- Offset resets to 0; raw_value_kilowatts = 1.0 - 0 = 1.0; no powerConsumptionReport (delta_tick < 15 min)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.0, unit = "kWh"}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "energy handler resets save tick when timer has slipped beyond 30 minutes",
+  function()
+    -- Advance time > 30 min so that curr_save_tick + 15*60 < os.time() is true
+    test.timer.__create_and_queue_test_time_advance_timer(40*60, "oneshot")
+    test.mock_time.advance_time(40*60)
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 100)
+    })
+    -- raw_value = 100, divisor = 100, kWh = 1.0, watts = 1000.0; first report: deltaEnergy = 0.0
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 1000.0, deltaEnergy = 0.0}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.0, unit = "kWh"}))
+    )
   end
 )
 

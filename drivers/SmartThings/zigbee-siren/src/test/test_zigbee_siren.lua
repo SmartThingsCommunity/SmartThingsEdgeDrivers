@@ -340,6 +340,63 @@ test.register_coroutine_test(
   end
 )
 
+local function build_default_response_zigbee_msg()
+  local zcl_messages = require "st.zigbee.zcl"
+  local messages = require "st.zigbee.messages"
+  local zb_const = require "st.zigbee.constants"
+  local buf_lib = require "st.buf"
+  local buf_from_str = function(str) return buf_lib.Reader(str) end
+  local frame = "\x00\x00"
+  local default_response = zcl_cmds.DefaultResponse.deserialize(buf_from_str(frame))
+  local zclh = zcl_messages.ZclHeader({ cmd = data_types.ZCLCommandId(zcl_cmds.DefaultResponse.ID) })
+  local addrh = messages.AddressHeader(
+    mock_device:get_short_address(),
+    mock_device:get_endpoint(data_types.ClusterId(IASWD.ID)),
+    zb_const.HUB.ADDR, zb_const.HUB.ENDPOINT, zb_const.HA_PROFILE_ID, IASWD.ID)
+  local message_body = zcl_messages.ZclMessageBody({ zcl_header = zclh, zcl_body = default_response })
+  return messages.ZigbeeMessageRx({ address_header = addrh, body = message_body })
+end
+
+test.register_coroutine_test(
+  "Default response with OFF alarm command should emit off events",
+  function()
+    mock_device:set_field("alarmCommand", 0, {persist = true})
+    test.socket.zigbee:__queue_receive({ mock_device.id, build_default_response_zigbee_msg() })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.alarm.alarm.off()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+  end
+)
+
+test.register_coroutine_test(
+  "Default response with STROBE alarm command should emit strobe event and timer off",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(180, "oneshot")
+    mock_device:set_field("alarmCommand", 2, {persist = true})
+    test.socket.zigbee:__queue_receive({ mock_device.id, build_default_response_zigbee_msg() })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.alarm.alarm.strobe()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    test.mock_time.advance_time(180)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.alarm.alarm.off()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Default response with BOTH alarm command should emit both event",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(180, "oneshot")
+    mock_device:set_field("alarmCommand", 3, {persist = true})
+    test.socket.zigbee:__queue_receive({ mock_device.id, build_default_response_zigbee_msg() })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.alarm.alarm.both()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    test.mock_time.advance_time(180)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.alarm.alarm.off()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+    test.wait_for_events()
+  end
+)
+
 test.register_coroutine_test(
   "Setting a max duration should be handled",
   function()
