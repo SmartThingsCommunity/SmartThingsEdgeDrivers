@@ -413,4 +413,26 @@ test.register_coroutine_test(
   end
 )
 
+test.register_message_test(
+  "Notification HOME_SECURITY MOTION_DETECTION should be handled as motion active",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+          notification_type = Notification.notification_type.HOME_SECURITY,
+          event = Notification.event.home_security.MOTION_DETECTION
+        }))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
+    }
+  }
+)
+
 test.run_registered_tests()
