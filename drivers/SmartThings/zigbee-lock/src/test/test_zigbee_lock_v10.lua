@@ -11,6 +11,10 @@ local PowerConfiguration = clusters.PowerConfiguration
 local DoorLock = clusters.DoorLock
 local Alarm = clusters.Alarms
 local capabilities = require "st.capabilities"
+-- Note: This is not the proper way to test against previous versions.
+-- Instead, testing should be run against different lua lib artifacts
+local version = require "version"
+version.api = 10
 
 local DoorLockState = DoorLock.attributes.LockState
 local OperationEventCode = DoorLock.types.OperationEventCode
