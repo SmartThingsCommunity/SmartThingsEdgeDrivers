@@ -161,7 +161,7 @@ test.register_coroutine_test(
       if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_capabilities_disabled)) end
     end
     test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed(
-      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={{id="fanSpeedPercent", version=1}, {id="fanMode", version=1}, {id="firmwareUpdate", version=1}, {id="refresh", version=1}}}}}})
+      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={["fanSpeedPercent"] = {id="fanSpeedPercent", version=1}, ["fanMode"] = {id="fanMode", version=1}, ["firmwareUpdate"] = {id="firmwareUpdate", version=1}, ["refresh"] = {id="refresh", version=1}}}}}})
     )
     test.socket.matter:__expect_send({mock_device_capabilities_disabled.id, subscribe_request})
   end,
@@ -180,7 +180,7 @@ test.register_coroutine_test(
       if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_capabilities_disabled)) end
     end
     test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed(
-      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={{id="firmwareUpdate", version=1}, {id="refresh", version=1}}}}}})
+      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={["firmwareUpdate"] = {id="firmwareUpdate", version=1}, ["refresh"] = {id="refresh", version=1}}}}}})
     )
   end,
   { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }

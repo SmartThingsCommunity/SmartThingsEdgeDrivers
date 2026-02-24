@@ -334,16 +334,13 @@ function utils.profile_changed(latest_profile, previous_profile)
     if prev_component == nil then
       return true
     end
-    if #synced_component.capabilities ~= #prev_component.capabilities then
-      return true
-    end
     -- Build a table of capability IDs from the previous component. Then, use this map to check
     -- that all capabilities in the synced component existed in the previous component.
     local prev_cap_ids = {}
-    for _, capability in ipairs(prev_component.capabilities or {}) do
+    for _, capability in pairs(prev_component.capabilities or {}) do
       prev_cap_ids[capability.id] = true
     end
-    for _, capability in ipairs(synced_component.capabilities or {}) do
+    for _, capability in pairs(synced_component.capabilities or {}) do
       if not prev_cap_ids[capability.id] then
         return true
       end
