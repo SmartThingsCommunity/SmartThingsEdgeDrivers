@@ -131,19 +131,6 @@ local function handle_power_source_attribute_list(driver, device, ib, response)
   end
 end
 
-local function max_pin_code_len_handler(driver, device, ib, response)
-  device:emit_event(capabilities.lockCodes.maxCodeLength(ib.data.value, {visibility = {displayed = false}}))
-end
-
-local function min_pin_code_len_handler(driver, device, ib, response)
-  device:emit_event(capabilities.lockCodes.minCodeLength(ib.data.value, {visibility = {displayed = false}}))
-end
-
-local function num_pin_users_handler(driver, device, ib, response)
-  device:set_field(lock_utils.TOTAL_PIN_USERS, ib.data.value)
-  device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
-end
-
 local function apply_cota_credentials_if_absent(device)
   if not device:get_field(lock_utils.COTA_CRED) then
     --Process after all other info blocks have been dispatched to ensure MaxPINCodeLength has been processed
@@ -158,12 +145,36 @@ local function apply_cota_credentials_if_absent(device)
   end
 end
 
+local function num_pin_users_handler(driver, device, ib, response)
+  device:set_field(lock_utils.TOTAL_PIN_USERS, ib.data.value)
+  device:emit_event(capabilities.lockCodes.maxCodes(ib.data.value, {visibility = {displayed = false}}))
+end
+
 local function require_remote_pin_handler(driver, device, ib, response)
+  if device:get_field(lock_utils.MAX_PIN_CODE_LENGTH) == nil then -- this being nil means the sequence_of_operation_handler hasn't run.
+    device.log.info_with({hub_logs = true}, "In the RequirePinForRemoteOperation handler: MaxPinCodeLength handler has not run yet. Exiting early.")
+    device:set_field(lock_utils.REQUIRE_PIN_FOR_REMOTE_OPERATION_IB, ib)
+    return
+  end
   if ib.data.value then
     apply_cota_credentials_if_absent(device)
   else
     device:set_field(lock_utils.COTA_CRED, false, {persist = true})
   end
+  device:set_field(lock_utils.MAX_PIN_CODE_LENGTH, nil)
+end
+
+local function max_pin_code_len_handler(driver, device, ib, response)
+  device:emit_event(capabilities.lockCodes.maxCodeLength(ib.data.value, {visibility = {displayed = false}}))
+  device:set_field(lock_utils.MAX_PIN_CODE_LENGTH, ib.data.value)
+  if device:get_field(lock_utils.REQUIRE_PIN_FOR_REMOTE_OPERATION_IB) then
+    require_remote_pin_handler(driver, device, device:get_field(lock_utils.REQUIRE_PIN_FOR_REMOTE_OPERATION_IB), response)
+    device:set_field(lock_utils.REQUIRE_PIN_FOR_REMOTE_OPERATION_IB, nil)
+  end
+end
+
+local function min_pin_code_len_handler(driver, device, ib, response)
+  device:emit_event(capabilities.lockCodes.minCodeLength(ib.data.value, {visibility = {displayed = false}}))
 end
 
 local function clear_credential_response_handler(driver, device, ib, response)
