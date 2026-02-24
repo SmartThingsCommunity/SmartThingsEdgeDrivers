@@ -100,7 +100,8 @@ local ikea_window_treatment = {
   can_handle = function(opts, driver, device, ...)
     return device:get_manufacturer() == "IKEA of Sweden" or
       device:get_manufacturer() == "Smartwings" or
-      device:get_manufacturer() == "Insta GmbH"
+      device:get_manufacturer() == "Insta GmbH" or
+      device:get_manufacturer() == "Screen Innovations"
   end
 }
 
