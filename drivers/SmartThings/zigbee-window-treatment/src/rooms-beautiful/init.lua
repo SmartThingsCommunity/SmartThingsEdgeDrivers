@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
@@ -21,22 +11,11 @@ local PowerConfiguration = zcl_clusters.PowerConfiguration
 local OnOff = zcl_clusters.OnOff
 local WindowCovering = zcl_clusters.WindowCovering
 
-local ZIGBEE_WINDOW_SHADE_FINGERPRINTS = {
-  { mfr = "Rooms Beautiful", model = "C001" }
-}
 
 local INVERT_CLUSTER = 0xFC00
 local INVERT_CLUSTER_ATTRIBUTE = 0x0000
 local PREV_TIME = "shadeLevelCmdTime"
 
-local is_zigbee_window_shade = function(opts, driver, device)
-  for _, fingerprint in ipairs(ZIGBEE_WINDOW_SHADE_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function invert_preference_handler(device)
   local window_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
@@ -129,7 +108,7 @@ local rooms_beautiful_handler = {
     init = battery_defaults.build_linear_voltage_init(2.5, 3.0),
     infoChanged = info_changed
   },
-  can_handle = is_zigbee_window_shade,
+  can_handle = require("rooms-beautiful.can_handle"),
 }
 
 return rooms_beautiful_handler
