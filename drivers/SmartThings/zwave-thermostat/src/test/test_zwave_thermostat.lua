@@ -19,6 +19,7 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 local ThermostatSetpoint = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 1 })
+local ThermostatSetpointV3 = (require "st.zwave.CommandClass.ThermostatSetpoint")({ version = 3 })
 local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({ version = 1 })
 local ThermostatFanMode = (require "st.zwave.CommandClass.ThermostatFanMode")({ version = 3 })
 local zw = require "st.zwave"
@@ -138,6 +139,22 @@ test.register_message_test(
       message = zw_test_utilities.zwave_test_build_send_command(
         mock_device,
         ThermostatFanMode:SupportedGet({})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
+      )
+    },
+    {
+      channel = "zwave",
+      direction = "send",
+      message = zw_test_utilities.zwave_test_build_send_command(
+        mock_device,
+        ThermostatSetpointV3:CapabilitiesGet({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
       )
     },
     table.unpack(refresh_commands)
@@ -383,6 +400,138 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState.heating())
+    }
+  }
+)
+
+test.register_message_test(
+  "Thermostat heating setpoint capability reports should be sent to the capabilities channel.",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utilities.zwave_test_build_receive_command(
+          ThermostatSetpointV3:CapabilitiesReport(
+            {
+              setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+              scale1 = ThermostatSetpoint.scale.CELSIUS,
+              min_value = 7.22,
+              scale2 = ThermostatSetpoint.scale.CELSIUS,
+              max_value = 27.2
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+          {
+            unit = 'C',
+            value = {minimum = 7.22, maximum = 27.2}
+          }
+        )
+    )
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utilities.zwave_test_build_receive_command(
+          ThermostatSetpointV3:CapabilitiesReport(
+            {
+              setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1,
+              scale1 = ThermostatSetpoint.scale.FAHRENHEIT,
+              min_value = 44.9,
+              scale2 = ThermostatSetpoint.scale.FAHRENHEIT,
+              max_value = 80.9
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
+          {
+            unit = 'F',
+            value = {minimum = 44.9, maximum = 80.9}
+          }
+        )
+    )
+    }
+  }
+)
+
+test.register_message_test(
+  "Thermostat cooling setpoint capability reports should be sent to the capabilities channel.",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utilities.zwave_test_build_receive_command(
+          ThermostatSetpointV3:CapabilitiesReport(
+            {
+              setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
+              scale1 = ThermostatSetpoint.scale.CELSIUS,
+              min_value = 7.22,
+              scale2 = ThermostatSetpoint.scale.CELSIUS,
+              max_value = 27.2
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
+          {
+            unit = 'C',
+            value = {minimum = 7.22, maximum = 27.2}
+          }
+        )
+    )
+    },
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        zw_test_utilities.zwave_test_build_receive_command(
+          ThermostatSetpointV3:CapabilitiesReport(
+            {
+              setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1,
+              scale1 = ThermostatSetpoint.scale.FAHRENHEIT,
+              min_value = 44.9,
+              scale2 = ThermostatSetpoint.scale.FAHRENHEIT,
+              max_value = 80.9
+            }
+          )
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main",
+        capabilities.thermostatCoolingSetpoint.coolingSetpointRange(
+          {
+            unit = 'F',
+            value = {minimum = 44.9, maximum = 80.9}
+          }
+        )
+    )
     }
   }
 )
