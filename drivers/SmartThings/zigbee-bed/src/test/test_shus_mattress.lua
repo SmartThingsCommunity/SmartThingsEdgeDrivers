@@ -399,6 +399,21 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Device reported yoga 3 and driver emit custom_capabilities.yoga.state.both()",
+  function()
+    local attr_report_data = {
+      { 0x0008, data_types.Uint8.ID, 3 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.yoga.state.both()))
+  end
+)
+
+test.register_coroutine_test(
   "Device reported yoga 2 and driver emit custom_capabilities.yoga.state.right()",
   function()
     local attr_report_data = {
@@ -907,6 +922,28 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0008, MFG_CODE, data_types.Uint8, 0)
       })
+  end
+)
+
+test.register_coroutine_test(
+  "capability left_control backControl soft emits idle event after delay",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = custom_capabilities.left_control.ID, component = "main", command ="backControl" , args = {"soft"}}
+    })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
+        0x0000, MFG_CODE, data_types.Uint8, 0)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.left_control.leftback.soft()))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.left_control.leftback("idle", { visibility = { displayed = false }})))
   end
 )
 
