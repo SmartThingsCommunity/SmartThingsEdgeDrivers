@@ -124,6 +124,12 @@ matterManufacturer:
     vendorId: 0x135D
     productId: 0x00C1
     deviceProfileName: lock-nocodes-notamper
+  #Secuyou
+  - id: "5149/111"
+    deviceLabel: Secuyou Smart Lock
+    vendorId: 0x141D
+    productId: 0x006F
+    deviceProfileName: lock-user-pin-unlatch
   #U-tec
   - id: "5247/1"
     deviceLabel: ULTRALOQ Bolt Fingerprint Smart Matter Deadbolt
