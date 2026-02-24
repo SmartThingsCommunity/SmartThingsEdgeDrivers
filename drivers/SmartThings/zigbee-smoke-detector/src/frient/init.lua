@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local capabilities = require "st.capabilities"
@@ -21,6 +11,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local Basic = zcl_clusters.Basic
 local alarm = capabilities.alarm
 local smokeDetector = capabilities.smokeDetector
+local temperatureAlarm = capabilities.temperatureAlarm
 
 local IASWD = zcl_clusters.IASWD
 local IASZone = zcl_clusters.IASZone
@@ -72,7 +63,14 @@ end
 
 local function device_added(driver, device)
   device:emit_event(alarm.alarm.off())
-  device:emit_event(smokeDetector.smoke.clear())
+
+  if device:supports_capability(capabilities.temperatureAlarm) then
+    device:emit_event(temperatureAlarm.temperatureAlarm.cleared())
+  end
+
+  if device:supports_capability(capabilities.smokeDetector) then
+    device:emit_event(smokeDetector.smoke.clear())
+  end
   device:send(cluster_base.read_manufacturer_specific_attribute(device, Basic.ID, DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR, DEVELCO_MANUFACTURER_CODE))
 end
 
@@ -111,14 +109,28 @@ local info_changed = function (driver, device, event, args)
 end
 
 local function generate_event_from_zone_status(driver, device, zone_status, zigbee_message)
-
    if zone_status:is_test_set() then
-      device:emit_event(smokeDetector.smoke.tested())
+      if device:supports_capability(capabilities.temperatureAlarm) then
+        device:emit_event(temperatureAlarm.temperatureAlarm.heat())
+      end
+      if device:supports_capability(capabilities.smokeDetector) then
+        device:emit_event(smokeDetector.smoke.tested())
+      end
    elseif zone_status:is_alarm1_set() then
-      device:emit_event(smokeDetector.smoke.detected())
+      if device:supports_capability(capabilities.temperatureAlarm) then
+        device:emit_event(temperatureAlarm.temperatureAlarm.heat())
+      end
+      if device:supports_capability(capabilities.smokeDetector) then
+        device:emit_event(smokeDetector.smoke.detected())
+      end
    else
       device.thread:call_with_delay(6, function ()
-      device:emit_event(smokeDetector.smoke.clear())
+        if device:supports_capability(capabilities.temperatureAlarm) then
+          device:emit_event(temperatureAlarm.temperatureAlarm.cleared())
+        end
+        if device:supports_capability(capabilities.smokeDetector) then
+          device:emit_event(smokeDetector.smoke.clear())
+        end
       end)
    end
 end
@@ -248,8 +260,6 @@ local frient_smoke_sensor = {
       }
     }
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_manufacturer() == "frient A/S" and device:get_model() == "SMSZB-120"
-  end
+  can_handle = require("frient.can_handle"),
 }
 return frient_smoke_sensor

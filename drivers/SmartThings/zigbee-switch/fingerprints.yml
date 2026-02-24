@@ -116,6 +116,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.light.acn004
     deviceProfileName: aqara-light
+  - id: "LUMI/lumi.light.cwacn1"
+    deviceLabel: Aqara Smart Dimmer Controller T1 (0-10v)
+    manufacturer: LUMI
+    model: lumi.light.cwacn1
+    deviceProfileName: aqara-light
   - id: "Aqara/lumi.light.acn014"
     deviceLabel: Aqara LED Light Bulb T1 (Tunable White)
     manufacturer: Aqara
@@ -500,6 +505,11 @@ zigbeeManufacturer:
     manufacturer: frient A/S
     model: SMRZB-342
     deviceProfileName: frient-switch-power-energy-voltage
+  - id: "frient/IOMZB-110"
+    deviceLabel: frient IO Module
+    manufacturer: frient A/S
+    model: IOMZB-110
+    deviceProfileName: switch-4inputs-2outputs
   - id: "AduroSmart Eria/AD-DimmableLight3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -590,6 +600,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "D1 (5503)"
     deviceProfileName: switch-level-power
+  - id: "ubisys/S1 (5501)"
+    deviceLabel: Switching Actuator S1
+    manufacturer: ubisys
+    model: "S1 (5501)"
+    deviceProfileName: switch-power
   - id: "ubisys/S2 (5502)"
     deviceLabel: ubisys S2
     manufacturer: ubisys
@@ -600,6 +615,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "1151"
     deviceProfileName: switch-power
+  - id: "ubisys/D1-R (5603)"
+    deviceLabel: Dimmer D1-R
+    manufacturer: ubisys
+    model: "D1-R (5603)"
+    deviceProfileName: switch-level-power
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
@@ -2359,16 +2379,58 @@ zigbeeManufacturer:
     model: NEXENTRO Dimming Actuator
     deviceProfileName: on-off-level
   # Inovelli
+  - id: "Inovelli/VZM30-SN"
+    deviceLabel: "Inovelli On/Off Blue Series"
+    manufacturer: Inovelli
+    model: VZM30-SN
+    deviceProfileName: inovelli-vzm30-sn
   - id: "Inovelli/VZM31-SN"
     deviceLabel: "Inovelli 2-in-1 Blue Series"
     manufacturer: Inovelli
     model: VZM31-SN
     deviceProfileName: inovelli-vzm31-sn
+  - id: "Inovelli/VZM32-SN"
+    deviceLabel: "Inovelli mmWave Dimmer Blue Series"
+    manufacturer: Inovelli
+    model: VZM32-SN
+    deviceProfileName: inovelli-vzm32-sn
   - id: "LAISIAO/BATH"
     deviceLabel: Laisiao Bathroom Heater
     manufacturer: LAISIAO
     model: yuba
     deviceProfileName: switch-smart-bath-heater-laisiao
+  # NodOn
+  - id: "NodOn/SIN-4-1-20"
+    deviceLabel: Zigbee Multifunction Relay Switch
+    manufacturer: NodOn
+    model: SIN-4-1-20
+    deviceProfileName: basic-switch
+  - id: "NodOn/SIN-4-2-20"
+    deviceLabel: Zigbee ON/OFF Lighting Relay Switch
+    manufacturer: NodOn
+    model: SIN-4-2-20
+    deviceProfileName: switch-level
+  - id: "NodOn/SIN-4-1-21"
+    deviceLabel: Zigbee Multifunction Relay Switch with Metering
+    manufacturer: NodOn
+    model: SIN-4-1-21
+    deviceProfileName: switch-power-energy
+  #Yanmi
+  - id: "JNL/Y-K003-001"
+    deviceLabel: Yanmi Switch (3 Way) 1
+    manufacturer: JNL
+    model: Y-K003-001
+    deviceProfileName: basic-switch
+  - id: "JNL/Y-K001-001"
+    deviceLabel: Yanmi Switch (1 Way)
+    manufacturer: JNL
+    model: Y-K001-001
+    deviceProfileName: basic-switch
+  - id: "JNL/Y-K002-001"
+    deviceLabel: Yanmi Switch (2 Way) 1
+    manufacturer: JNL
+    model: Y-K002-001
+    deviceProfileName: basic-switch
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

@@ -502,12 +502,12 @@ zwaveManufacturer:
     productType: 0x4C47
     productId: 0x4C44
     deviceProfileName: base-water
-  - id: 027A/7000/E002
-    deviceLabel: Zooz Water Leak Sensor
+  - id: "Zooz/ZSE42"
+    deviceLabel: Zooz ZSE42 XS Water Leak Sensor
     manufacturerId: 0x027A
     productType: 0x7000
     productId: 0xE002
-    deviceProfileName: base-water
+    deviceProfileName: zooz-zse42-water
   - id: 010F/0800
     deviceLabel: Fibaro Motion Sensor
     manufacturerId: 0x010F

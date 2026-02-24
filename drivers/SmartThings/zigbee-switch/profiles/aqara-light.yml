@@ -12,10 +12,6 @@ components:
               range: [1, 100]
       - id: colorTemperature
         version: 1
-        config:
-          values:
-            - key: "colorTemperature.value"
-              range: [2700, 6000]
       - id: firmwareUpdate
         version: 1
       - id: refresh

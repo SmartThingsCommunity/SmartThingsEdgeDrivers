@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- The only reason we need this is because of supported_capabilities on the driver template
 local capabilities = require "st.capabilities"
@@ -27,17 +16,6 @@ if version.api >= 15 then
   lazy_handler = require "st.utils.lazy_handler"
 else
   lazy_handler = require
-end
-
-local function lazy_load_if_possible(sub_driver_name)
-  -- gets the current lua libs api version
-  -- version 9 will include the lazy loading functions
-  if version.api >= 9 then
-    return ZigbeeDriver.lazy_load_sub_driver(require(sub_driver_name))
-  else
-    return require(sub_driver_name)
-  end
-
 end
 
 local function component_to_endpoint(device, component_id)
@@ -84,39 +62,12 @@ local zigbee_switch_driver_template = {
     capabilities.colorTemperature,
     capabilities.powerMeter,
     capabilities.energyMeter,
-    capabilities.motionSensor
+    capabilities.motionSensor,
+    capabilities.illuminanceMeasurement,
+    capabilities.relativeHumidityMeasurement,
+    capabilities.temperatureMeasurement,
   },
-  sub_drivers = {
-    lazy_load_if_possible("non_zigbee_devices"),
-    lazy_load_if_possible("hanssem"),
-    lazy_load_if_possible("aqara"),
-    lazy_load_if_possible("aqara-light"),
-    lazy_load_if_possible("ezex"),
-    lazy_load_if_possible("rexense"),
-    lazy_load_if_possible("sinope"),
-    lazy_load_if_possible("sinope-dimmer"),
-    lazy_load_if_possible("zigbee-dimmer-power-energy"),
-    lazy_load_if_possible("zigbee-metering-plug-power-consumption-report"),
-    lazy_load_if_possible("jasco"),
-    lazy_load_if_possible("multi-switch-no-master"),
-    lazy_load_if_possible("zigbee-dual-metering-switch"),
-    lazy_load_if_possible("rgb-bulb"),
-    lazy_load_if_possible("zigbee-dimming-light"),
-    lazy_load_if_possible("white-color-temp-bulb"),
-    lazy_load_if_possible("rgbw-bulb"),
-    (version.api < 16) and lazy_load_if_possible("zll-dimmer-bulb") or nil,
-    lazy_load_if_possible("ikea-xy-color-bulb"),
-    lazy_load_if_possible("zll-polling"),
-    lazy_load_if_possible("zigbee-switch-power"),
-    lazy_load_if_possible("ge-link-bulb"),
-    lazy_load_if_possible("bad_on_off_data_type"),
-    lazy_load_if_possible("robb"),
-    lazy_load_if_possible("wallhero"),
-    lazy_load_if_possible("inovelli-vzm31-sn"),
-    lazy_load_if_possible("laisiao"),
-    lazy_load_if_possible("tuya-multi"),
-    lazy_load_if_possible("frient")
-  },
+  sub_drivers = require("sub_drivers"),
   zigbee_handlers = {
     global = {
       [SIMPLE_METERING_ID] = {

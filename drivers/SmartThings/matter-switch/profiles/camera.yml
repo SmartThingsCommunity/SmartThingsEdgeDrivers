@@ -1,0 +1,156 @@
+name: camera
+components:
+  - id: main
+    capabilities:
+      - id: webrtc
+        version: 1
+        optional: true
+      - id: videoCapture2
+        version: 1
+        optional: true
+      - id: videoStreamSettings
+        version: 1
+        optional: true
+      - id: imageCapture
+        version: 1
+        optional: true
+      - id: mechanicalPanTiltZoom
+        version: 1
+        optional: true
+      - id: hdr
+        version: 1
+        optional: true
+      - id: nightVision
+        version: 1
+        optional: true
+      - id: imageControl
+        version: 1
+        optional: true
+      - id: audioRecording
+        version: 1
+        optional: true
+      - id: sounds
+        version: 1
+        optional: true
+      - id: cameraPrivacyMode
+        version: 1
+        optional: true
+      - id: zoneManagement
+        version: 1
+        optional: true
+      - id: localMediaStorage
+        version: 1
+        optional: true
+      - id: cameraViewportSettings
+        version: 1
+        optional: true
+      - id: motionSensor
+        version: 1
+        optional: true
+      - id: vision.clipAnalysis
+        version: 1
+        optional: true
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Camera
+  - id: statusLed
+    optional: true
+    capabilities:
+      - id: switch
+        version: 1
+        optional: true
+      - id: mode
+        version: 1
+        optional: true
+  - id: speaker
+    optional: true
+    capabilities:
+      - id: audioMute
+        version: 1
+        optional: true
+      - id: audioVolume
+        version: 1
+        optional: true
+  - id: microphone
+    optional: true
+    capabilities:
+      - id: audioMute
+        version: 1
+        optional: true
+      - id: audioVolume
+        version: 1
+        optional: true
+  - id: doorbell
+    optional: true
+    capabilities:
+      - id: button
+        version: 1
+        optional: true
+deviceConfig:
+  dashboard:
+    states:
+    - component: main
+      capability: imageCapture
+      version: 1
+      values:
+        - label: "{{___PO_CODE_SAMSUNGELECTRONICS.IM_DEFAULT_IMAGE_CAPTURE}}"
+      visibleCondition:
+        component: main
+        capability: imageCapture
+        version: 1
+        value: captureTime.value
+        valueType: string
+        operator: CONTAINS
+        operand: T
+        isOffline: false
+    basicPlus:
+      - displayType: camera
+        camera:
+          image:
+            component: main
+            capability: imageCapture
+            version: 1
+            value: image.value
+          overlayIcons:
+            - iconUrl: "res://ic_camera_motion_detected"
+              visibleCondition:
+                component: main
+                capability: motionSensor
+                version: 1
+                value: motion.value
+                valueType: string
+                operator: EQUALS
+                operand: "active"
+  detailView:
+    - component: main
+      capability: webrtc
+      version: 1
+    - component: main
+      capability: mechanicalPanTiltZoom
+      version: 1
+    - component: main
+      capability: motionSensor
+      version: 1
+  automation:
+    conditions:
+    - component: main
+      capability: motionSensor
+      version: 1
+    actions:
+    - component: main
+      capability: videoCapture2
+      version: 1
+    - component: main
+      capability: imageCapture
+      version: 1
+  dpInfo:
+    - os: ios
+      dpUri: "storyboard://HMVSController/HMVSViewController"
+    - os: android
+      dpUri: "plugin://com.samsung.android.plugin.camera"
+metadata:
+  mnmn: SmartThingsEdge
+  vid: matter-camera

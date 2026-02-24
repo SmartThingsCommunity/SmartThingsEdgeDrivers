@@ -8,12 +8,32 @@ zigbeeManufacturer:
     deviceLabel: Aqara Wireless Mini Switch T1
     manufacturer: LUMI
     model: lumi.remote.b1acn02
-    deviceProfileName: one-button-battery
+    deviceProfileName: one-button-batteryLevel
   - id: "LUMI/lumi.remote.acn003"
     deviceLabel: Aqara Wireless Remote Switch E1 (Single Rocker)
     manufacturer: LUMI
     model: lumi.remote.acn003
-    deviceProfileName: one-button-battery
+    deviceProfileName: one-button-batteryLevel
+  - id: "LUMI/lumi.remote.b186acn03"
+    deviceLabel: Aqara Wireless Remote Switch T1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b186acn03
+    deviceProfileName: one-button-batteryLevel
+  - id: "LUMI/lumi.remote.b286acn03"
+    deviceLabel: Aqara Wireless Remote Switch T1 (Double Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b286acn03
+    deviceProfileName: aqara-double-buttons
+  - id: "LUMI/lumi.remote.b18ac1"
+    deviceLabel: Aqara Wireless Remote Switch H1 (Single Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b18ac1
+    deviceProfileName: aqara-single-button-mode
+  - id: "LUMI/lumi.remote.b28ac1"
+    deviceLabel: Aqara Wireless Remote Switch H1 (Double Rocker)
+    manufacturer: LUMI
+    model: lumi.remote.b28ac1
+    deviceProfileName: aqara-double-buttons-mode
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN
@@ -200,7 +220,7 @@ zigbeeManufacturer:
     model: WB01
     deviceProfileName: one-button-battery
   - id: eWeLink/SNZB-01P
-    deviceLabel: eWeLink Button
+    deviceLabel: Zigbee Wireless Switch
     manufacturer: eWeLink
     model: SNZB-01P
     deviceProfileName: one-button-battery

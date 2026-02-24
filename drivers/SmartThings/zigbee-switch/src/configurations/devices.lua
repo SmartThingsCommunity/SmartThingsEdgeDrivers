@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
 local ColorControl = clusters.ColorControl
@@ -18,7 +7,10 @@ local IASZone = clusters.IASZone
 local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 local Alarms = clusters.Alarms
+local BasicInput = clusters.BasicInput
+local OnOff      = clusters.OnOff
 local constants = require "st.zigbee.constants"
+local data_types = require "st.zigbee.data_types"
 
 local devices = {
   IKEA_RGB_BULB = {
@@ -121,6 +113,64 @@ local devices = {
       },
     }
   },
+  FRIENT_IO_MODULE = {
+    FINGERPRINTS = {
+      { mfr = "frient A/S", model = "IOMZB-110" }
+    },
+    CONFIGURATION = {
+      {
+        cluster = OnOff.ID,
+        attribute = OnOff.attributes.OnTime.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 1,
+        data_type = OnOff.attributes.OnOff.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = OnOff.ID,
+        attribute = OnOff.attributes.OffWaitTime.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 1,
+        data_type = OnOff.attributes.OffWaitTime.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = BasicInput.ID,
+        attribute = BasicInput.attributes.PresentValue.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 0,
+        data_type = BasicInput.attributes.PresentValue.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = BasicInput.ID,
+        attribute = BasicInput.attributes.Polarity.ID,
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 0,
+        data_type = BasicInput.attributes.Polarity.base_type,
+        configurable = true,
+        monitored = true
+      },
+      {
+        cluster = BasicInput.ID,
+        attribute = 0x8000, -- IASActivation
+        minimum_interval = 10,
+        maximum_interval = 600,
+        reportable_change = 0,
+        data_type = data_types.Uint16,
+        mfg_code = 0x1015,
+        configurable = true,
+        monitored = true
+      }
+    }
+  }
 }
 
 return devices

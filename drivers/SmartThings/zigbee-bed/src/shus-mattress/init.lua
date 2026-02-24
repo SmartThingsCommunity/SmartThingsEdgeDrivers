@@ -1,25 +1,12 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cluster_base = require "st.zigbee.cluster_base"
 local custom_clusters = require "shus-mattress/custom_clusters"
 local custom_capabilities = require "shus-mattress/custom_capabilities"
 
-local FINGERPRINTS = {
-  { mfr = "SHUS", model = "SX-1" }
-}
 
 -- #############################
 -- # Attribute handlers define #
@@ -36,7 +23,7 @@ end
 
 local function process_control_attr_factory(cmd)
   return function(driver, device, value, zb_rx)
-    device:emit_event(cmd.idle())
+    device:emit_event(cmd("idle", { visibility = { displayed = false }}))
   end
 end
 
@@ -129,7 +116,7 @@ local function process_capabilities_hardness_factory(cap,attrs,cap_attr)
     )
     --A button that can be triggered continuously
     local evt_ctrl = cap_attr.soft()
-    local evt_idle = cap_attr.idle()
+    local evt_idle = cap_attr("idle", { visibility = { displayed = false }})
     if cmd.args[cap] == "hard" then
       evt_ctrl = cap_attr.hard()
     end
@@ -148,21 +135,13 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
-   device:emit_event(custom_capabilities.yoga.supportedYogaState({"stop", "left", "right"}))
+   device:emit_event(custom_capabilities.yoga.supportedYogaState({"stop", "left", "right"}, { visibility = { displayed = false }}))
    do_refresh(driver, device)
 end
 
 local function do_configure(driver, device)
 end
 
-local function is_shus_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 -- #################
 -- # Handlers bind #
@@ -229,7 +208,7 @@ local shus_smart_mattress = {
       ["stateControl"] = process_capabilities_factory("stateControl","yoga")
     }
   },
-  can_handle = is_shus_products
+  can_handle = require("shus-mattress.can_handle"),
 }
 
 return shus_smart_mattress

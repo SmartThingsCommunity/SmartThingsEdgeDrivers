@@ -159,7 +159,7 @@ end
 function __sender_mt:close()
   self._bus_inner.closed = true
   local existing_links = self._bus_inner.receiver_links
-  for _, link in pairs(existing_links) do
+  for _, link in pairs(existing_links or {}) do
     if link.waker then
       link.waker()
     end
@@ -176,7 +176,7 @@ end
 function __sender_mt:send(msg)
   if not self._bus_inner.closed then
     -- wapping in table allows `nil` to be sent as a message
-    for _, link in pairs(self._bus_inner.receiver_links) do
+    for _, link in pairs(self._bus_inner.receiver_links or {}) do
       table.insert(link.queue, { msg = msg })
       if link.waker then
         link.waker()

@@ -1,14 +1,15 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 
 local clusters = require "st.matter.generated.zap_clusters"
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 local button_attr = capabilities.button.button
 
 
@@ -25,6 +26,7 @@ local mock_device = test.mock_device.build_test_matter_device({
     vendor_id = 0x0000,
     product_id = 0x0000,
   },
+  matter_version = {hardware = 1, software = 1},
   endpoints = {
     {
       endpoint_id = 0,
@@ -100,11 +102,12 @@ local mock_device = test.mock_device.build_test_matter_device({
 
 local mock_device_mcd_unsupported_switch_device_type = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
-  profile = t_utils.get_profile_definition("matter-thing.yml"),
+  profile = t_utils.get_profile_definition("button.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
   },
+  matter_version = {hardware = 1, software = 1},
   endpoints = {
     {
       endpoint_id = 0,
@@ -163,7 +166,18 @@ local child_data = {
 local mock_child = test.mock_device.build_test_child_device(child_data)
 
 -- add device for each mock device
-local CLUSTER_SUBSCRIBE_LIST ={
+local CLUSTER_SUBSCRIBE_LIST_NO_CHILD ={
+  clusters.OnOff.attributes.OnOff,
+  clusters.LevelControl.attributes.CurrentLevel,
+  clusters.LevelControl.attributes.MaxLevel,
+  clusters.LevelControl.attributes.MinLevel,
+  clusters.Switch.server.events.InitialPress,
+  clusters.Switch.server.events.LongPress,
+  clusters.Switch.server.events.ShortRelease,
+  clusters.Switch.server.events.MultiPressComplete,
+}
+
+local CLUSTER_SUBSCRIBE_LIST_WITH_CHILD ={
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
   clusters.LevelControl.attributes.MaxLevel,
@@ -175,6 +189,7 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.ColorControl.attributes.CurrentSaturation,
   clusters.ColorControl.attributes.CurrentX,
   clusters.ColorControl.attributes.CurrentY,
+  clusters.ColorControl.attributes.ColorMode,
   clusters.Switch.server.events.InitialPress,
   clusters.Switch.server.events.LongPress,
   clusters.Switch.server.events.ShortRelease,
@@ -192,27 +207,24 @@ local function expect_configure_buttons()
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 end
 
--- All messages queued and expectations set are done before the driver is actually run
 local function test_init()
-  -- we dont want the integration test framework to generate init/doConfigure, we are doing that here
-  -- so we can set the proper expectations on those events.
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device) -- make sure the cache is populated
-  test.mock_device.add_test_device(mock_child)
 
   -- added sets a bunch of fields on the device, and calls init
-  local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
-  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+  local subscribe_request = CLUSTER_SUBSCRIBE_LIST_NO_CHILD[1]:subscribe(mock_device)
+  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_CHILD) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
-  -- init results in subscription interaction
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
 
-  --doConfigure sets the provisioning state to provisioned
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, mock_device_ep1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, mock_device_ep5, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, mock_device_ep5, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   mock_device:expect_metadata_update({ profile = "light-level-3-button" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   mock_device:expect_device_create({
@@ -224,20 +236,6 @@ local function test_init()
   })
   expect_configure_buttons()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-
-  -- simulate the profile change update taking affect and the device info changing
-  local device_info_copy = utils.deep_copy(mock_device.raw_st_data)
-  device_info_copy.profile.id = "5-buttons-battery"
-  local device_info_json = dkjson.encode(device_info_copy)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", device_info_json })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  expect_configure_buttons()
-
-  test.socket.matter:__expect_send({mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device)})
-  test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
-  test.socket.device_lifecycle:__queue_receive({ mock_child.id, "init" })
-  mock_child:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
 end
 
 -- All messages queued and expectations set are done before the driver is actually run
@@ -357,94 +355,90 @@ test.register_coroutine_test(
   end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "Switch child device: Set color temperature should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_child.id,
-        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, mock_device_ep5)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, mock_device_ep5, 556)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
-    },
-  }
+  function()
+    test.mock_device.add_test_device(mock_child)
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({
+      mock_child.id,
+      { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
+    })
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, mock_device_ep5)
+    })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, mock_device_ep5, 556)
+    })
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
+  end
 )
 
 test.register_coroutine_test(
   "Test MCD configuration not including switch for unsupported switch device type, create child device instead",
   function()
+    local unsup_mock_device = mock_device_mcd_unsupported_switch_device_type
     -- added sets a bunch of fields on the device, and calls init
-    local cluster_subscribe_list = {
-      clusters.OnOff.attributes.OnOff,
+    local CLUSTER_SUBSCRIBE_LIST = {
       clusters.Switch.server.events.InitialPress,
       clusters.Switch.server.events.LongPress,
       clusters.Switch.server.events.ShortRelease,
       clusters.Switch.server.events.MultiPressComplete,
     }
-    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_mcd_unsupported_switch_device_type)
-    for i, cluster in ipairs(cluster_subscribe_list) do
-      if i > 1 then
-        subscribe_request:merge(cluster:subscribe(mock_device_mcd_unsupported_switch_device_type))
-      end
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(unsup_mock_device)
+    for _, cluster in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+      subscribe_request:merge(cluster:subscribe(unsup_mock_device))
     end
-    test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "added" })
-    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-    -- init results in subscription interaction
-    test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "init" })
-    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-    -- doConfigure sets the provisioning state to provisioned
-    mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ profile = "2-button" })
-    mock_device_mcd_unsupported_switch_device_type:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    mock_device_mcd_unsupported_switch_device_type:expect_device_create({
+    test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "doConfigure" })
+    unsup_mock_device:expect_device_create({
       type = "EDGE_CHILD",
       label = "Matter Switch 1",
       profile = "switch-binary",
-      parent_device_id = mock_device_mcd_unsupported_switch_device_type.id,
+      parent_device_id = unsup_mock_device.id,
       parent_assigned_child_key = string.format("%d", 7)
     })
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "doConfigure" })
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
+    unsup_mock_device:expect_metadata_update({ profile = "2-button" })
+    unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
     test.wait_for_events()
 
-    -- simulate the profile change update taking affect and the device info changing
-    local device_info_copy = utils.deep_copy(mock_device_mcd_unsupported_switch_device_type.raw_st_data)
-    device_info_copy.profile.id = "5-buttons-battery"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_mcd_unsupported_switch_device_type.id, "infoChanged", device_info_json })
-    test.socket.matter:__expect_send({mock_device_mcd_unsupported_switch_device_type.id, subscribe_request})
+    local updated_device_profile = t_utils.get_profile_definition("2-button.yml")
+    test.socket.device_lifecycle:__queue_receive(unsup_mock_device:generate_info_changed({ profile = updated_device_profile }))
+
+    local CLUSTER_SUBSCRIBE_LIST = {
+      clusters.Switch.server.events.InitialPress,
+      clusters.Switch.server.events.LongPress,
+      clusters.Switch.server.events.ShortRelease,
+      clusters.Switch.server.events.MultiPressComplete,
+    }
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(unsup_mock_device)
+    for i, cluster in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(unsup_mock_device))
+      end
+    end
+    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
+
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
+
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
+    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
     end,
   { test_init = test_init_mcd_unsupported_switch_device_type }
 )
@@ -452,16 +446,60 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Test driver switched event",
   function()
+    test.mock_device.add_test_device(mock_child)
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST_WITH_CHILD[1]:subscribe(mock_device)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_WITH_CHILD) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
+    end
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    mock_child:expect_metadata_update({ profile = "light-color-level" })
     mock_device:expect_metadata_update({ profile = "light-level-3-button" })
     expect_configure_buttons()
-    mock_device:expect_device_create({
-      type = "EDGE_CHILD",
-      label = "Matter Switch 2",
-      profile = "light-color-level",
-      parent_device_id = mock_device.id,
-      parent_assigned_child_key = string.format("%d", mock_device_ep5)
-    })
+  end
+)
+
+test.register_coroutine_test(
+  "Test info changed event with parent device profile update",
+  function()
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST_NO_CHILD[1]:subscribe(mock_device)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_CHILD) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
+    end
+    local updated_device_profile = t_utils.get_profile_definition("light-level-3-button.yml")
+    updated_device_profile.id = "updated device profile id"
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    expect_configure_buttons()
+  end
+)
+
+test.register_coroutine_test(
+  "Test info changed event with matter_version update",
+  function()
+    test.mock_device.add_test_device(mock_child)
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })) -- bump sw to 2
+    mock_child:expect_metadata_update({ profile = "light-color-level" })
+    mock_device:expect_metadata_update({ profile = "light-level-3-button" })
+    expect_configure_buttons()
+  end
+)
+
+test.register_coroutine_test(
+  "Test child device initialization, and that subscriptions are initialized correctly",
+  function ()
+    test.mock_device.add_test_device(mock_child)
+    test.socket.matter:__expect_send({mock_device.id, clusters.OnOff.attributes.OnOff:read(mock_device)})
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "init" })
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST_WITH_CHILD[1]:subscribe(mock_device)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_WITH_CHILD) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
+    end
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    mock_child:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
   end
 )
 

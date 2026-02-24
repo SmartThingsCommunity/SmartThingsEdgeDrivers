@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local multi_utils = require "multi-sensor/multi_utils"
@@ -24,23 +13,6 @@ local SMARTSENSE_MULTI_ACC_CMD = 0x00
 local SMARTSENSE_MULTI_XYZ_CMD = 0x05
 local SMARTSENSE_MULTI_STATUS_CMD = 0x07
 local SMARTSENSE_MULTI_STATUS_REPORT_CMD = 0x09
-local SMARTSENSE_PROFILE_ID = 0xFC01
-
-local SMARTSENSE_MULTI_FINGERPRINTS = {
-  { mfr = "SmartThings", model = "PGC313" },
-  { mfr = "SmartThings", model = "PGC313EU" }
-}
-
-local function can_handle(opts, driver, device, ...)
-  for _, fingerprint in ipairs(SMARTSENSE_MULTI_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  local endpoint = device.zigbee_endpoints[1] or device.zigbee_endpoints["1"]
-  if endpoint.profile_id == SMARTSENSE_PROFILE_ID then return true end
-  return false
-end
 
 local function acceleration_handler(driver, device, zb_rx)
   -- This is a custom cluster command for the kickstarter multi.
@@ -182,7 +154,7 @@ local smartsense_multi = {
       }
     }
   },
-  can_handle = can_handle
+  can_handle = require("smartsense-multi.can_handle"),
 }
 
 return smartsense_multi

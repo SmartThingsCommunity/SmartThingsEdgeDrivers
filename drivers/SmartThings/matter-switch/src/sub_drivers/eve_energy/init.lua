@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -------------------------------------------------------------------------------------
 -- Definitions
@@ -19,7 +8,7 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
-local utils = require "st.utils"
+local st_utils = require "st.utils"
 local data_types = require "st.matter.data_types"
 local device_lib = require "st.device"
 
@@ -27,7 +16,6 @@ local SWITCH_INITIALIZED = "__switch_intialized"
 local COMPONENT_TO_ENDPOINT_MAP = "__component_to_endpoint_map"
 local ON_OFF_STATES = "ON_OFF_STATES"
 
-local EVE_MANUFACTURER_ID = 0x130A
 local PRIVATE_CLUSTER_ID = 0x130AFC01
 
 local PRIVATE_ATTR_ID_WATT = 0x130A000A
@@ -46,16 +34,6 @@ local MINIMUM_ST_ENERGY_REPORT_INTERVAL = (15 * 60) -- 15 minutes, reported in s
 -------------------------------------------------------------------------------------
 -- Eve specifics
 -------------------------------------------------------------------------------------
-
-local function is_eve_energy_products(opts, driver, device)
-  -- this sub driver does not support child devices
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-      device.manufacturer_info.vendor_id == EVE_MANUFACTURER_ID then
-    return true
-  end
-
-  return false
-end
 
 -- Return a ISO 8061 formatted timestamp in UTC (Z)
 -- @return e.g. 2022-02-02T08:00:00Z
@@ -337,7 +315,7 @@ end
 local function watt_accumulated_attr_handler(driver, device, ib, zb_rx)
   if ib.data.value then
     local totalConsumptionRawValue = ib.data.value
-    local totalConsumptionWh = utils.round(1000 * totalConsumptionRawValue)
+    local totalConsumptionWh = st_utils.round(1000 * totalConsumptionRawValue)
     updateEnergyMeter(device, totalConsumptionWh)
     report_power_consumption_to_st_energy(device, totalConsumptionWh)
   end
@@ -377,7 +355,7 @@ local eve_energy_handler = {
     capabilities.energyMeter,
     capabilities.powerConsumptionReport
   },
-  can_handle = is_eve_energy_products
+  can_handle = require("sub_drivers.eve_energy.can_handle")
 }
 
 return eve_energy_handler

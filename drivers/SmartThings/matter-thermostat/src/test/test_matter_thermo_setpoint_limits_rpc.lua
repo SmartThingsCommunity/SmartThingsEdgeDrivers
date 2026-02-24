@@ -1,19 +1,10 @@
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 
+local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -43,6 +34,9 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = clusters.PowerSource.types.PowerSourceFeature.BATTERY},
         {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "BOTH"},
+      },
+      device_types = {
+        { device_type_id = 0x0301, device_type_revision = 1 } -- Thermostat
       }
     }
   }
@@ -72,6 +66,9 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+  )
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   local read_setpoint_deadband = clusters.Thermostat.attributes.MinSetpointDeadBand:read()

@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local data_types = require "st.zigbee.data_types"

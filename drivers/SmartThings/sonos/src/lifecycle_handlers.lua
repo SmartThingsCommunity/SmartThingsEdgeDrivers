@@ -165,6 +165,7 @@ function SonosDriverLifecycleHandlers.initialize_device(driver, device)
             { hub_logs = true },
             string.format("Driver wasn't able to spin up SSDP task, cannot initialize devices.")
           )
+          cosock.socket.sleep(30)
         end
       end
     end,

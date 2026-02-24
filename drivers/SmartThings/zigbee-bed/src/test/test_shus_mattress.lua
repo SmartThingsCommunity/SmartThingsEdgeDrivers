@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -59,7 +48,7 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.yoga.supportedYogaState({"stop", "left", "right"}) ))
+      custom_capabilities.yoga.supportedYogaState({"stop", "left", "right"}, { visibility = { displayed = false }}) ))
     local read_0x0006_messge = cluster_base.read_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, 0x0006, MFG_CODE)
     local read_0x0007_messge = cluster_base.read_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, 0x0007, MFG_CODE)
     local read_0x0009_messge = cluster_base.read_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, 0x0009, MFG_CODE)
@@ -140,7 +129,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Device reported leftback 0 and driver emit custom_capabilities.left_control.leftback.idle()",
+  "Device reported leftback 0 and driver emit custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0000, data_types.Uint8.ID, 0 }
@@ -150,12 +139,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.left_control.leftback.idle()))
+      custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported leftback 1 and driver emit custom_capabilities.left_control.leftback.idle()",
+  "Device reported leftback 1 and driver emit custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0000, data_types.Uint8.ID, 1 }
@@ -165,12 +154,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.left_control.leftback.idle()))
+      custom_capabilities.left_control.leftback.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported leftwaist 0 and driver emit custom_capabilities.left_control.leftwaist.idle()",
+  "Device reported leftwaist 0 and driver emit custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0001, data_types.Uint8.ID, 0 }
@@ -180,12 +169,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.left_control.leftwaist.idle()))
+      custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported leftwaist 1 and driver emit custom_capabilities.left_control.leftwaist.idle()",
+  "Device reported leftwaist 1 and driver emit custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0001, data_types.Uint8.ID, 1 }
@@ -195,12 +184,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.left_control.leftwaist.idle()))
+      custom_capabilities.left_control.leftwaist.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported lefthip 0 and driver emit custom_capabilities.left_control.lefthip.idle()",
+  "Device reported lefthip 0 and driver emit custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0002, data_types.Uint8.ID, 0 }
@@ -210,12 +199,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.left_control.lefthip.idle()))
+      custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported lefthip 1 and driver emit custom_capabilities.left_control.lefthip.idle()",
+  "Device reported lefthip 1 and driver emit custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0002, data_types.Uint8.ID, 1 }
@@ -225,12 +214,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.left_control.lefthip.idle()))
+      custom_capabilities.left_control.lefthip.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported rightback 0 and driver emit custom_capabilities.right_control.rightback.idle()",
+  "Device reported rightback 0 and driver emit custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0003, data_types.Uint8.ID, 0 }
@@ -240,12 +229,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.right_control.rightback.idle()))
+      custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported rightback 1 and driver emit custom_capabilities.right_control.rightback.idle()",
+  "Device reported rightback 1 and driver emit custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0003, data_types.Uint8.ID, 1 }
@@ -255,12 +244,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.right_control.rightback.idle()))
+      custom_capabilities.right_control.rightback.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported rightwaist 0 and driver emit custom_capabilities.right_control.rightwaist.idle()",
+  "Device reported rightwaist 0 and driver emit custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0004, data_types.Uint8.ID, 0 }
@@ -270,12 +259,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.right_control.rightwaist.idle()))
+      custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported rightwaist 1 and driver emit custom_capabilities.right_control.rightwaist.idle()",
+  "Device reported rightwaist 1 and driver emit custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0004, data_types.Uint8.ID, 1 }
@@ -285,12 +274,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.right_control.rightwaist.idle()))
+      custom_capabilities.right_control.rightwaist.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported righthip 0 and driver emit custom_capabilities.right_control.righthip.idle()",
+  "Device reported righthip 0 and driver emit custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0005, data_types.Uint8.ID, 0 }
@@ -300,12 +289,12 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.right_control.righthip.idle()))
+      custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})))
   end
 )
 
 test.register_coroutine_test(
-  "Device reported righthip 1 and driver emit custom_capabilities.right_control.righthip.idle()",
+  "Device reported righthip 1 and driver emit custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})",
   function()
     local attr_report_data = {
       { 0x0005, data_types.Uint8.ID, 1 }
@@ -315,7 +304,7 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      custom_capabilities.right_control.righthip.idle()))
+      custom_capabilities.right_control.righthip.idle({ visibility = { displayed = false }})))
   end
 )
 

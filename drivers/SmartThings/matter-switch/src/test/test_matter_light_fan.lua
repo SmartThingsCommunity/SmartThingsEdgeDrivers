@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.generated.zap_clusters"
@@ -20,17 +9,22 @@ local version = require "version"
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device_ep1 = 1
 local mock_device_ep2 = 2
 
 local mock_device = test.mock_device.build_test_matter_device({
-  label = "Matter Switch",
-  profile = t_utils.get_profile_definition("light-color-level-fan.yml"),
+  label = "Matter Fan Light",
+  profile = t_utils.get_profile_definition("fan-modular.yml",
+    {enabled_optional_capabilities = {{"main", {"fanSpeedPercent", "fanMode"}}}}),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
+  },
+  matter_version = {
+    software = 1,
+    hardware = 1,
   },
   endpoints = {
     {
@@ -45,12 +39,46 @@ local mock_device = test.mock_device.build_test_matter_device({
     {
       endpoint_id = mock_device_ep1,
       clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", feature_map = 0},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
         {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30},
       },
       device_types = {
         {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+      }
+    },
+    {
+      endpoint_id = mock_device_ep2,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 15},
+      },
+      device_types = {
+        {device_type_id = 0x002B, device_type_revision = 1,} -- Fan
+      }
+    }
+  }
+})
+
+local mock_device_capabilities_disabled = test.mock_device.build_test_matter_device({
+  label = "Matter Fan Light",
+  profile = t_utils.get_profile_definition("fan-modular.yml",
+    {enabled_optional_capabilities = {{"main", {}}}}),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  matter_version = {
+    software = 1,
+    hardware = 1,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -83,32 +111,87 @@ local CLUSTER_SUBSCRIBE_LIST ={
   clusters.FanControl.attributes.PercentCurrent,
 }
 
+local mock_child = test.mock_device.build_test_child_device({
+  profile = t_utils.get_profile_definition("light-color-level.yml"),
+  device_network_id = string.format("%s:%d", mock_device.id, 4),
+  parent_device_id = mock_device.id,
+  parent_assigned_child_key = string.format("%d", mock_device_ep1)
+})
+
 local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
+  test.mock_device.add_test_device(mock_child)
   local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request}) -- since all fan capabilities are optional, nothing is initially subscribed to
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "light-color-level-fan" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, mock_device_ep1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, mock_device_ep1, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Fan Light 1",
+    profile = "light-color-level",
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", mock_device_ep1)
+  })
+  mock_device:expect_metadata_update({ profile = "fan-modular", optional_component_capabilities = {{"main", {"fanSpeedPercent", "fanMode"}}} })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
+  "Component-capability update without profile ID update should cause re-subscribe in infoChanged handler", function()
+    local cluster_subscribe_list ={
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode,
+      clusters.FanControl.attributes.PercentCurrent,
+    }
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_capabilities_disabled)
+    for i, clus in ipairs(cluster_subscribe_list) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_capabilities_disabled)) end
+    end
+    test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed(
+      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={{id="fanSpeedPercent", version=1}, {id="fanMode", version=1}, {id="firmwareUpdate", version=1}, {id="refresh", version=1}}}}}})
+    )
+    test.socket.matter:__expect_send({mock_device_capabilities_disabled.id, subscribe_request})
+  end,
+  { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
+)
+
+test.register_coroutine_test(
+  "No component-capability update an no profile ID update should not cause a re-subscribe in infoChanged handler", function()
+    local cluster_subscribe_list ={
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode,
+      clusters.FanControl.attributes.PercentCurrent,
+    }
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_capabilities_disabled)
+    for i, clus in ipairs(cluster_subscribe_list) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_capabilities_disabled)) end
+    end
+    test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed(
+      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={{id="firmwareUpdate", version=1}, {id="refresh", version=1}}}}}})
+    )
+  end,
+  { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
+)
+
+
+test.register_coroutine_test(
   "Switch capability should send the appropriate commands", function()
     test.socket.capability:__queue_receive(
       {
-        mock_device.id,
+        mock_child.id,
         { capability = "switch", component = "main", command = "on", args = { } }
       }
     )
@@ -116,14 +199,14 @@ test.register_coroutine_test(
       test.socket.devices:__expect_send(
         {
           "register_native_capability_cmd_handler",
-          { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+          { device_uuid = mock_child.id, capability_id = "switch", capability_cmd_id = "on" }
         }
       )
     end
     test.socket.matter:__expect_send(
       {
         mock_device.id,
-        clusters.OnOff.server.commands.On(mock_device, 1)
+        clusters.OnOff.server.commands.On(mock_device, mock_device_ep1)
       }
     )
     test.socket.matter:__queue_receive(
@@ -138,9 +221,8 @@ test.register_coroutine_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     )
-
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
+      mock_child:generate_test_message(
         "main", capabilities.switch.switch.on()
       )
     )
@@ -154,7 +236,7 @@ test.register_message_test(
       channel = "capability",
       direction = "receive",
       message = {
-        mock_device.id,
+        mock_child.id,
         { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
       }
     },
@@ -163,7 +245,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep1, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -185,7 +267,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
+      message = mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
   }
 )

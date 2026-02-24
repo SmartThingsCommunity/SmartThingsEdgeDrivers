@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -21,7 +10,7 @@ test.disable_startup_messages()
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local parent_ep = 10
 local child1_ep = 20
@@ -33,6 +22,10 @@ local mock_device = test.mock_device.build_test_matter_device({
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
+  },
+  matter_version = {
+    hardware = 1,
+    software = 1,
   },
   endpoints = {
     {
@@ -173,7 +166,8 @@ local function test_init()
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -189,6 +183,10 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, child1_ep, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, child2_ep, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.ColorControl.attributes.Options:write(mock_device, child2_ep, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  mock_device:expect_metadata_update({ profile = "light-binary" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children) do
@@ -232,7 +230,9 @@ for i, endpoint in ipairs(mock_device_parent_child_endpoints_non_sequential.endp
 end
 
 local function test_init_parent_child_endpoints_non_sequential()
-  test.mock_device.add_test_device(mock_device_parent_child_endpoints_non_sequential)
+  local unsup_mock_device = mock_device_parent_child_endpoints_non_sequential
+
+  test.mock_device.add_test_device(unsup_mock_device)
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
     clusters.LevelControl.attributes.CurrentLevel,
@@ -244,50 +244,56 @@ local function test_init_parent_child_endpoints_non_sequential()
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
   }
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_endpoints_non_sequential)
+  local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
     if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_parent_child_endpoints_non_sequential))
+      subscribe_request:merge(cluster:subscribe(unsup_mock_device))
     end
   end
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "added" })
-  test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "init" })
-  test.socket.matter:__expect_send({mock_device_parent_child_endpoints_non_sequential.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_endpoints_non_sequential.id, "doConfigure" })
-  mock_device_parent_child_endpoints_non_sequential:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child1_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  test.socket.matter:__expect_send({unsup_mock_device.id, clusters.ColorControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+
+  unsup_mock_device:expect_metadata_update({ profile = "switch-binary" })
+  unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children_non_sequential) do
     test.mock_device.add_test_device(child)
   end
 
-  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+  unsup_mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 2",
     profile = "light-color-level",
-    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_device_id = unsup_mock_device.id,
     parent_assigned_child_key = string.format("%d", child2_ep_non_sequential)
   })
 
   -- switch-binary will be selected as an overridden child device profile
-  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+  unsup_mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 3",
     profile = "switch-binary",
-    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_device_id = unsup_mock_device.id,
     parent_assigned_child_key = string.format("%d", child3_ep_non_sequential)
   })
 
-  mock_device_parent_child_endpoints_non_sequential:expect_device_create({
+  unsup_mock_device:expect_device_create({
     type = "EDGE_CHILD",
     label = "Matter Switch 4",
     profile = "light-level",
-    parent_device_id = mock_device_parent_child_endpoints_non_sequential.id,
+    parent_device_id = unsup_mock_device.id,
     parent_assigned_child_key = string.format("%d", child1_ep_non_sequential)
   })
 end
@@ -490,7 +496,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -565,7 +571,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -685,6 +691,16 @@ test.register_coroutine_test(
   function()
   end,
   { test_init = test_init_parent_child_endpoints_non_sequential }
+)
+
+test.register_coroutine_test(
+  "Test info changed event with matter_version update",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })) -- bump to 2
+    mock_children[child1_ep]:expect_metadata_update({ profile = "light-level" })
+    mock_children[child2_ep]:expect_metadata_update({ profile = "light-color-level" })
+    mock_device:expect_metadata_update({ profile = "light-binary" })
+  end
 )
 
 test.run_registered_tests()
