@@ -66,7 +66,8 @@ function AirQualitySensorLifecycleHandlers.device_init(driver, device)
 end
 
 function AirQualitySensorLifecycleHandlers.info_changed(driver, device, event, args)
-  if aqs_utils.profile_changed(device.profile, args.old_st_store.profile) then
+  if device.profile.id ~= args.old_st_store.profile.id or
+    aqs_utils.profile_changed(device.profile.components, args.old_st_store.profile.components) then
     if device:get_field(fields.SUPPORTED_COMPONENT_CAPABILITIES) then
       --re-up subscription with new capabilities using the modular supports_capability override
        device:extend_device("supports_capability_by_id", aqs_utils.supports_capability_by_id_modular)
