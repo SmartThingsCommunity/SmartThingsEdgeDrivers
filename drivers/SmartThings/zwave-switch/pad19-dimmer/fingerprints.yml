@@ -1,7 +1,0 @@
-zwaveManufacturer:
-  - id: "Philio/PAD19"
-    manufacturerId: 0x013C
-    productType: 0x0005
-    productId: 0x008A
-    deviceLabel: PAD19
-    deviceProfileName: pad19-dimmer-switch        

@@ -916,6 +916,12 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+  - id: Philio/PAD19
+    deviceLabel: PAD19
+    manufacturerId: 0x013C
+    productType: 0x0005
+    productId: 0x008A
+    deviceProfileName: philio-dimmer-switch
 #Shelly/Qubino
   - id: 1120/2/137
     deviceLabel: Wave Plug UK
