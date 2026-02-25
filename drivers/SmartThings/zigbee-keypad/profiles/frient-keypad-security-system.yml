@@ -16,7 +16,7 @@ components:
   - name: SmartLock
 preferences:
   - name: pinMap
-    title: PIN Map
+    title: Add PIN code
     description: "Format: 1234:Alice,4321:Bob. Entries are added/updated; existing entries are kept."
     required: false
     preferenceType: string
@@ -24,7 +24,7 @@ preferences:
       stringType: text
       default: ""
   - name: rfidMap
-    title: RFID Map
+    title: Add RFID
     description: "Format: ABCD1234:Alice,EFGH5678:Bob. Entries are added/updated; existing entries are kept."
     required: false
     preferenceType: string
@@ -56,7 +56,7 @@ preferences:
       default: true
   - name: minCodeLength
     title: Minimum PIN Length
-    description: "Minimum PIN length reported to the app."
+    description: "Minimum PIN length."
     required: false
     preferenceType: integer
     definition:
@@ -65,35 +65,64 @@ preferences:
       default: 4
   - name: maxCodeLength
     title: Maximum PIN Length
-    description: "Maximum PIN length reported to the app."
+    description: "Maximum PIN length."
     required: false
     preferenceType: integer
     definition:
       minimum: 1
       maximum: 32
-      default: 8
-  - name: maxCodes
-    title: Maximum Codes
-    description: "Maximum number of PIN codes reported to the app."
+      default: 10
+  - name: exitDelay
+    title: Exit Delay
+    description: "Turn on exit delay when arming. Duration in seconds can be set in the 'Exit Delay Length' setting."
     required: false
-    preferenceType: integer
+    preferenceType: boolean
     definition:
-      minimum: 1
-      maximum: 500
-      default: 30
+      default: false
   - name: length
-    title: Length
-    description: "length"
+    title: Exit Delay Length
+    description: "Exit delay length in seconds."
     required: false
     preferenceType: integer
     definition:
       minimum: 0
       maximum: 30
       default: 5
-  - name: exitDelay
-    title: Exit Delay
-    description: "Turn on exit delay when arming. Duration in seconds. Default is 60 seconds. Set to 0 to disable exit delay."
+  - name: autoArmDisarmMode
+    title: Auto Arm/Disarm Mode
+    description: "Automatically arm/disarm without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'Pin'."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "RFID"
+        2: "Pin"
+      default: 0
+  - name: autoDisarmModeSetting
+    title: Auto Disarm Mode Setting
+    description: "When Auto Arm/Disarm Mode is set to 'Pin' or 'RFID', automatically disarm when a valid PIN/RFID is used."
     required: false
     preferenceType: boolean
     definition:
       default: false
+  - name: autoArmModeSetting
+    title: Auto Arm Mode Setting
+    description: "When Auto Arm/Disarm Mode is set to 'Pin' or 'RFID', automatically arm in one of the following modes: 'Disabled', 'Arm Stay', 'Arm Away'."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Arm Away"
+        3: "Arm Stay"
+      default: 0
+  - name: pinLengthSetting
+    title: PIN Length Setting
+    description: "When Auto Arm/Disarm Mode is set to 'Pin', the length of PINs that will trigger auto arm/disarm."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 32
+      default: 4
