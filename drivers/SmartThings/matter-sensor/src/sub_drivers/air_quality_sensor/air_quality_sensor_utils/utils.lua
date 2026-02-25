@@ -77,19 +77,54 @@ function AirQualitySensorUtils.set_supported_health_concern_values(device)
   end
 end
 
-function AirQualitySensorUtils.profile_changed(synced_components, prev_components)
-  if #synced_components ~= #prev_components then
+--- Deeply compare two values (including tables and their metatables).
+---
+--- @param a any
+--- @param b any
+--- @return boolean
+function AirQualitySensorUtils.deep_equals(a, b)
+  if a == b then return true end -- same object
+  if type(a) ~= type(b) then return false end -- different type
+  if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+  -- Compare keys/values from a
+  for k, v in pairs(a) do
+    if not AirQualitySensorUtils.deep_equals(v, rawget(b, k)) then
+      return false
+    end
+  end
+  -- Check for keys in b that are not in a
+  for k in pairs(b) do
+    if rawget(a, k) == nil then
+      return false
+    end
+  end
+  -- Compare metatables
+  local mt_a = getmetatable(a)
+  local mt_b = getmetatable(b)
+  return AirQualitySensorUtils.deep_equals(mt_a, mt_b)
+end
+
+--- Check if the profile has changed by comparing the latest profile with the previous profile.
+---
+--- @param latest_profile any
+--- @param previous_profile any
+--- @return boolean
+function AirQualitySensorUtils.profile_changed(latest_profile, previous_profile)
+  -- Check if the profile id has changed
+  if latest_profile.id ~= previous_profile.id then
     return true
   end
-  for _, component in pairs(synced_components or {}) do
-    if (prev_components[component.id] == nil) or
-      (#component.capabilities ~= #prev_components[component.id].capabilities) then
+  -- Check if all component and capability info in the latest profile existed in the previous profile
+  for _, component in pairs(latest_profile.components) do
+    local previous_component = previous_profile.components[component.id]
+    if not previous_component or not AirQualitySensorUtils.deep_equals(component.capabilities, previous_component.capabilities) then
       return true
     end
-    for _, capability in pairs(component.capabilities or {}) do
-      if prev_components[component.id][capability.id] == nil then
-        return true
-      end
+  end
+  -- Check if any components in the previous profile no longer exist in the latest profile
+  for _, component in pairs(previous_profile.components) do
+    if not latest_profile.components[component.id] then
+      return true
     end
   end
   return false
