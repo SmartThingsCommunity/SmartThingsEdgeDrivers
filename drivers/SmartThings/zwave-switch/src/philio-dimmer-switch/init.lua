@@ -13,7 +13,7 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
 
 
-print("DEBUG: philio-dimmer-switch/init.lua loaded")
+-- print("DEBUG: philio-dimmer-switch/init.lua loaded")
 
 local function dimmer_event(driver, device, cmd)
   local value = cmd.args.value or cmd.args.target_value or 0
@@ -72,7 +72,7 @@ end
 
 ---- Refresh 指令函式（SmartThings Test Suite 必要）
 local function refresh_cmd(driver, device, command)
-  print("DEBUG: PAD19 refresh_cmd called")
+  -- print("DEBUG: PAD19 refresh_cmd called")
 
   -- 取得目前開關狀態
   local switch_get = Basic:Get({})
@@ -87,19 +87,19 @@ end
 -- Lifecycle
 -------------------------------------------------------------------
 local function device_init(driver, device)
-  print("DEBUG: PAD19 device_init called")
+  -- print("DEBUG: PAD19 device_init called")
 end
 
 local function device_added(driver, device)
-  print("DEBUG: PAD19 device_added - init state off")
+  -- print("DEBUG: PAD19 device_added - init state off")
   device:emit_event(capabilities.switch.switch.off())
   device:emit_event(capabilities.switchLevel.level(0))
-  print("DEBUG: PAD19 Initial switchlevel = 0")
+  -- print("DEBUG: PAD19 Initial switchlevel = 0")
 end
 
 -- NEW: 修正 driverSwitched 崩潰
 local function device_driver_switched(driver, device, event, args)
-  print("DEBUG: PAD19 driverSwitched - ignored")
+  -- print("DEBUG: PAD19 driverSwitched - ignored")
 end
 
 local pad19_driver_template = {
