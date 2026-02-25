@@ -29,8 +29,8 @@ local BATTERY_INIT = battery_defaults.build_linear_voltage_init(4.0, 6.0)
 local LOCK_CODES_FIELD = "lockCodes"
 local LOCK_CODE_PINS_FIELD = "lockCodePins"
 local LOCK_CODE_LENGTH_FIELD = "lockCodeLength"
---[[ local LOCK_CODES_AT_LIMIT_FIELD = "lockCodesAtLimit"
-local DEFAULT_MAX_CODES = 30 ]]
+local LOCK_CODES_MAX_LEN = 255
+local LOCK_CODES_CHUNK_MAX_LEN = 220
 local armCommandFromKeypad = false
 local DEVELCO_MANUFACTURER_CODE = 0x1015
 
@@ -130,25 +130,10 @@ local function is_pin_length_valid(device, pin)
     return false
   end
   return true
-end--[[ 
-
-
-local function currentCodesCount(device)
-  local base_map = device:get_field("securitySystem_user_map") or LOCAL_USER_MAP
-  local count = 0
-  for _, _ in pairs(base_map) do
-    count = count + 1
-  end
-  return count
 end
-
-local function is_below_limit(device)
-  return device.preferences.maxCodes > currentCodesCount(device)
-end ]]
 
 local function parse_user_map(value, validator)
   local map = {}
-  --[[ if is_below_limit(device) then ]]
     if value == nil or value == "" then
       return map
     end
@@ -161,9 +146,6 @@ local function parse_user_map(value, validator)
         end
       end
     end
-  --[[ else
-    log.error("I chuj")
-  end ]]
 
   return map
 end
@@ -190,32 +172,7 @@ end
 
 local function get_lock_code_pins(device)
   return device:get_field(LOCK_CODE_PINS_FIELD) or {}
-end--[[ 
-
-local function get_max_codes_limit(device)
-  local max_codes = get_pref_number(device.preferences.maxCodes)
-  if max_codes == nil then
-    max_codes = get_pref_number(device:get_latest_state("main", LockCodes.ID, LockCodes.maxCodes.NAME))
-  end
-  if max_codes == nil then
-    max_codes = DEFAULT_MAX_CODES
-  end
-
-  max_codes = math.max(1, math.floor(max_codes))
-  local state_max_codes = get_pref_number(device:get_latest_state("main", LockCodes.ID, LockCodes.maxCodes.NAME))
-  if state_max_codes == nil or math.floor(state_max_codes) ~= max_codes then
-    device:emit_event(LockCodes.maxCodes(max_codes, { visibility = { displayed = false } }))
-  end
-  return max_codes
-end ]]
-
---[[ local function get_lock_code_count(lock_codes)
-  local count = 0
-  for _, _ in pairs(lock_codes or {}) do
-    count = count + 1
-  end
-  return count
-end ]]
+end
 
 local function build_lock_codes_payload(device, lock_codes, lock_pins)
   local payload = {}
@@ -233,15 +190,99 @@ local function build_lock_codes_payload(device, lock_codes, lock_pins)
   return payload
 end
 
+local function get_sorted_slots(lock_codes)
+  local slots = {}
+  for slot, _ in pairs(lock_codes or {}) do
+    slots[#slots + 1] = tostring(slot)
+  end
+
+  table.sort(slots, function(left, right)
+    local left_num = tonumber(left)
+    local right_num = tonumber(right)
+    if left_num ~= nil and right_num ~= nil then
+      return left_num < right_num
+    end
+    if left_num ~= nil then
+      return true
+    end
+    if right_num ~= nil then
+      return false
+    end
+    return left < right
+  end)
+
+  return slots
+end
+
+local function emit_lock_codes_chunks(device, lock_codes, lock_pins)
+  local chunks = {}
+  local current = ""
+  local slots = get_sorted_slots(lock_codes)
+
+  for _, slot in ipairs(slots) do
+    local name = tostring(lock_codes[slot] or ("Code " .. slot))
+    local pin = lock_pins and lock_pins[slot] or nil
+    local entry = pin and pin ~= "" and string.format("%s:%s (%s)", slot, name, pin) or string.format("%s:%s", slot, name)
+
+    if current == "" then
+      current = entry
+    elseif (#current + 2 + #entry) <= LOCK_CODES_CHUNK_MAX_LEN then
+      current = current .. ", " .. entry
+    else
+      chunks[#chunks + 1] = current
+      current = entry
+    end
+  end
+
+  if current ~= "" then
+    chunks[#chunks + 1] = current
+  end
+
+  for index, chunk in ipairs(chunks) do
+    local message = string.format("codes %d/%d: %s", index, #chunks, chunk)
+    device:emit_event(LockCodes.codeChanged(message, { state_change = true }))
+  end
+end
+
+local function encode_payload(payload)
+  local ok, encoded = pcall(json.encode, utils.deep_copy(payload))
+  if ok and type(encoded) == "string" then
+    return encoded
+  end
+  return "{}"
+end
+
+local function build_partial_payload(payload)
+  local partial = {}
+  local slots = get_sorted_slots(payload)
+  for _, slot in ipairs(slots) do
+    partial[slot] = tostring(payload[slot] or "")
+    local encoded = encode_payload(partial)
+    if #encoded > LOCK_CODES_MAX_LEN then
+      partial[slot] = nil
+      break
+    end
+  end
+  return partial
+end
+
 local function emit_lock_codes(device, lock_codes, lock_pins)
-  local payload = build_lock_codes_payload(device, lock_codes, lock_pins)
-  device:emit_event(LockCodes.lockCodes(json.encode(utils.deep_copy(payload)), { state_change = true }, { visibility = { displayed = true } }))
+  local full_payload = build_lock_codes_payload(device, lock_codes, lock_pins)
+  local full_encoded = encode_payload(full_payload)
+  if #full_encoded <= LOCK_CODES_MAX_LEN then
+    device:emit_event(LockCodes.lockCodes(full_encoded, { state_change = true }, { visibility = { displayed = true } }))
+    return
+  end
+
+  local partial_payload = build_partial_payload(full_payload)
+  local partial_encoded = encode_payload(partial_payload)
+  device:emit_event(LockCodes.lockCodes(partial_encoded, { state_change = true }, { visibility = { displayed = true } }))
+  emit_lock_codes_chunks(device, lock_codes, lock_pins)
 end
 
 local function emit_lock_code_limits(device)
   local min_len = get_pref_number(device.preferences.minCodeLength)
   local max_len = get_pref_number(device.preferences.maxCodeLength)
-  --[[ local max_codes = get_max_codes_limit(device) ]]
   local code_len = device:get_field(LOCK_CODE_LENGTH_FIELD)
 
   if min_len ~= nil then
@@ -249,10 +290,7 @@ local function emit_lock_code_limits(device)
   end
   if max_len ~= nil then
     device:emit_event(LockCodes.maxCodeLength(max_len, { visibility = { displayed = false } }))
-  end--[[ 
-  if max_codes ~= nil then
-    device:emit_event(LockCodes.maxCodes(max_codes, { visibility = { displayed = false } }))
-  end ]]
+  end
   if code_len ~= nil then
     device:emit_event(LockCodes.codeLength(code_len, { visibility = { displayed = false } }))
   end
@@ -268,18 +306,47 @@ local function get_next_index(map_section)
   return max_index + 1
 end
 
+local function normalize_user_name(value)
+  if type(value) == "string" then
+    return value
+  end
+  if type(value) == "table" then
+    if type(value.name) == "string" then
+      return value.name
+    end
+    if type(value.value) == "string" then
+      return value.value
+    end
+  end
+  return nil
+end
+
+local function normalize_user_entry(entry)
+  if type(entry) == "table" then
+    return {
+      name = normalize_user_name(entry.name) or normalize_user_name(entry),
+      index = tonumber(entry.index),
+    }
+  end
+  return {
+    name = normalize_user_name(entry),
+    index = nil,
+  }
+end
+
 local function merge_user_section(base_section, updates)
   local merged = {}
   for code, entry in pairs(base_section or {}) do
-    merged[code] = { name = entry.name, index = entry.index }
+    merged[code] = normalize_user_entry(entry)
   end
 
   local next_index = get_next_index(merged)
-  for code, name in pairs(updates or {}) do
+  for code, value in pairs(updates or {}) do
+    local name = normalize_user_name(value)
     local existing = merged[code]
-    if existing ~= nil then
+    if existing ~= nil and name ~= nil and name ~= "" then
       existing.name = name
-    else
+    elseif existing == nil and name ~= nil and name ~= "" then
       merged[code] = { name = name, index = next_index }
       next_index = next_index + 1
     end
@@ -287,41 +354,6 @@ local function merge_user_section(base_section, updates)
 
   return merged
 end
-
---[[ local function update_user_map_from_prefs(device, base_map)
-  local pin_updates = parse_user_map(device.preferences.pinMap, function(pin)
-    if is_pin_length_valid(device, pin) then
-      return true
-    end
-    log.warn(string.format("Ignoring pinMap entry with invalid length (pin=%s)", tostring(pin)))
-    return false
-  end)
-  local rfid_updates = parse_user_map(device.preferences.rfidMap)
-  local delete_pins = parse_delete_list(device.preferences.deletePinMap)
-  local delete_rfids = parse_delete_list(device.preferences.deleteRfidMap)
-
-  if next(pin_updates) == nil and next(rfid_updates) == nil and next(delete_pins) == nil and next(delete_rfids) == nil then
-    return base_map
-  end
-
-  local map = {
-    pins = merge_user_section(base_map and base_map.pins or {}, pin_updates),
-    rfids = merge_user_section(base_map and base_map.rfids or {}, rfid_updates),
-  }
-
-  for pin, _ in pairs(delete_pins) do
-    if map.pins[pin] ~= nil then
-      map.pins[pin] = nil
-    end
-  end
-  for rfid, _ in pairs(delete_rfids) do
-    if map.rfids[rfid] ~= nil then
-      map.rfids[rfid] = nil
-    end
-  end
-
-  return map
-end ]]
 
 local function get_user_map(device)
   return device:get_field("securitySystem_user_map")
@@ -333,36 +365,9 @@ local function emit_code_changed(device, code_slot, change_type, code_name)
     event.data = { codeName = code_name }
   end
   device:emit_event(event)
-end--[[ 
-
-local function emit_code_failed(device, code_slot, reason)
-  local event = LockCodes.codeChanged(tostring(code_slot) .. " failed", { state_change = true })
-  if reason ~= nil and reason ~= "" then
-    event.data = { codeName = reason }
-  end
-  device:emit_event(event)
 end
 
-local function  emit_capacity_state(device, lock_codes)
-  local max_codes = get_max_codes_limit(device)
-  if max_codes == nil then
-    return
-  end
-  log.error("no i szto?")
-
-  local current_count = get_lock_code_count(lock_codes)
-  local at_limit = current_count >= max_codes
-  local was_at_limit = device:get_field(LOCK_CODES_AT_LIMIT_FIELD) == true
-
-  if at_limit and not was_at_limit then
-    emit_code_failed(device, max_codes + 1, string.format("Maximum number of codes reached (%d)", max_codes))
-  end
-
-  device:set_field(LOCK_CODES_AT_LIMIT_FIELD, at_limit, { persist = false })
-end ]]
-
 local function sync_lock_codes_from_user_map(device, map)
-  --[[ local max_codes = get_max_codes_limit(device) ]]
   local previous_lock_codes = utils.deep_copy(get_lock_codes(device))
   local previous_lock_pins = utils.deep_copy(get_lock_code_pins(device))
   local lock_codes = {}
@@ -371,10 +376,11 @@ local function sync_lock_codes_from_user_map(device, map)
 
   local entries = {}
   for pin, entry in pairs(map.pins or {}) do
+    local normalized = normalize_user_entry(entry)
     entries[#entries + 1] = {
       pin = pin,
-      name = entry.name,
-      index = tonumber(entry.index),
+      name = normalized.name,
+      index = normalized.index,
     }
   end
 
@@ -398,11 +404,13 @@ local function sync_lock_codes_from_user_map(device, map)
     end
 
     used_slots[slot_index] = true
+    map.pins[entry.pin] = map.pins[entry.pin] or {}
     map.pins[entry.pin].index = slot_index
+    map.pins[entry.pin].name = entry.name or map.pins[entry.pin].name or ("Code " .. tostring(slot_index))
 
     local slot = tostring(slot_index)
     lock_pins[slot] = entry.pin
-    lock_codes[slot] = entry.name or previous_lock_codes[slot] or ("Code " .. slot)
+    lock_codes[slot] = entry.name or normalize_user_name(previous_lock_codes[slot]) or ("Code " .. slot)
   end
 
   for slot, pin in pairs(previous_lock_pins or {}) do
@@ -419,7 +427,6 @@ local function sync_lock_codes_from_user_map(device, map)
   device:set_field(LOCK_CODES_FIELD, lock_codes, { persist = true })
   device:set_field(LOCK_CODE_PINS_FIELD, lock_pins, { persist = true })
   emit_lock_codes(device, lock_codes, lock_pins)
-  --[[ emit_capacity_state(device, lock_codes) ]]
 end
 
 local function resolve_user_from_code(device, code)
@@ -442,100 +449,6 @@ local function emit_arm_activity(device, status, user_name)
   end
   device:emit_event(event)
 end
-
---[[ local function update_lock_code_entry(device, code_slot, code_pin, code_name)
-  local slot = tostring(code_slot)
-  local lock_codes = get_lock_codes(device)
-  local lock_pins = get_lock_code_pins(device)
-  local map = get_user_map(device)
-
-  local max_codes = get_max_codes_limit(device)
-  local numeric_slot = tonumber(code_slot)
-  log.error("Twój stary")
-  if lock_codes[slot] == nil and max_codes ~= nil and numeric_slot ~= nil and numeric_slot > max_codes then
-    local message = string.format("Cannot add code slot %s: slot exceeds maxCodes (%d)", slot, max_codes)
-    device.log.warn(message)
-    emit_code_failed(device, slot, string.format("Max codes limit (%d) reached", max_codes))
-    return
-  end
-  if lock_codes[slot] == nil and max_codes ~= nil and get_lock_code_count(lock_codes) >= max_codes then
-    local message = string.format("Cannot add code slot %s: maxCodes limit (%d) reached", slot, max_codes)
-    device.log.warn(message)
-    emit_code_failed(device, slot, string.format("Max codes limit (%d) reached", max_codes))
-    return
-  end
-
-  local change_type = lock_codes[slot] == nil and " set" or " changed"
-  local existing_pin = lock_pins[slot]
-  if existing_pin ~= nil and existing_pin ~= code_pin then
-    map.pins[existing_pin] = nil
-  end
-
-  if code_pin ~= nil and code_pin ~= "" then
-    if not is_pin_length_valid(device, code_pin) then
-      log.warn(string.format("Rejected pin with invalid length (slot=%s, len=%d)", slot, string.len(tostring(code_pin))))
-      return
-    end
-  end
-
-  local resolved_name = code_name or lock_codes[slot] or ("Code " .. slot)
-  lock_codes[slot] = resolved_name
-  if code_pin ~= nil and code_pin ~= "" then
-    lock_pins[slot] = code_pin
-    map.pins[code_pin] = { name = resolved_name, index = tonumber(code_slot) }
-  end
-
-  device:set_field("securitySystem_user_map", map, { persist = true })
-  device:set_field(LOCK_CODES_FIELD, lock_codes, { persist = true })
-  device:set_field(LOCK_CODE_PINS_FIELD, lock_pins, { persist = true })
-  emit_code_changed(device, slot, change_type, resolved_name)
-  emit_lock_codes(device, lock_codes, lock_pins)
-  emit_capacity_state(device, lock_codes)
-end
-
-local function delete_lock_code_entry(device, code_slot)
-  local slot = tostring(code_slot)
-  local lock_codes = get_lock_codes(device)
-  local lock_pins = get_lock_code_pins(device)
-  local map = get_user_map(device)
-
-  local code_name = lock_codes[slot]
-  local pin = lock_pins[slot]
-  if pin ~= nil then
-    map.pins[pin] = nil
-  end
-
-  lock_codes[slot] = nil
-  lock_pins[slot] = nil
-
-  device:set_field("securitySystem_user_map", map, { persist = true })
-  device:set_field(LOCK_CODES_FIELD, lock_codes, { persist = true })
-  device:set_field(LOCK_CODE_PINS_FIELD, lock_pins, { persist = true })
-  emit_code_changed(device, slot, " deleted", code_name)
-  emit_lock_codes(device, lock_codes, lock_pins)
-  emit_capacity_state(device, lock_codes)
-end
-
-local function rename_lock_code_entry(device, code_slot, code_name)
-  local slot = tostring(code_slot)
-  local lock_codes = get_lock_codes(device)
-  local lock_pins = get_lock_code_pins(device)
-  local map = get_user_map(device)
-
-  local resolved_name = code_name or lock_codes[slot] or ("Code " .. slot)
-  lock_codes[slot] = resolved_name
-
-  local pin = lock_pins[slot]
-  if pin ~= nil and map.pins[pin] ~= nil then
-    map.pins[pin].name = resolved_name
-  end
-
-  device:set_field("securitySystem_user_map", map, { persist = true })
-  device:set_field(LOCK_CODES_FIELD, lock_codes, { persist = true })
-  emit_code_changed(device, slot, " changed", resolved_name)
-  emit_lock_codes(device, lock_codes, lock_pins)
-  emit_capacity_state(device, lock_codes)
-end ]]
 
 local function get_current_status(device)
   return device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME) or "disarmed"
@@ -646,7 +559,6 @@ local function handle_arm(device, status)
     if device.preferences.exitDelay == true then
       send_panel_status(device, "exitDelay")
       device.thread:call_with_delay(length, function()
-        log.error("Shalom")
         emit_status_event(device, status, { source = "app" })
         emit_arm_activity(device, status, "App")
         send_panel_status(device, status)
@@ -682,73 +594,6 @@ local function handle_disarm(driver, device, command)
   end
   armCommandFromKeypad = false
 end
-
---[[ local function handle_update_codes(driver, device, command)
-  log.error("W końcu cię dorwę gnoju")
-  local codes = command.args.codes
-  if type(codes) == "string" then
-    local ok, decoded = pcall(json.decode, codes)
-    if ok then
-      codes = decoded
-    end
-  end
-  if type(codes) ~= "table" then
-    log.warn("updateCodes ignored: invalid codes payload")
-    return
-  end
-
-  for code_slot, entry in pairs(codes) do
-    local slot = tonumber(code_slot) or code_slot
-    local code_name = nil
-    local code_pin = nil
-    if type(entry) == "table" then
-      code_name = entry.name or entry.codeName
-      code_pin = entry.pin or entry.codePIN or entry.codePin
-    elseif type(entry) == "string" then
-      code_name = entry
-    end
-    update_lock_code_entry(device, slot, code_pin, code_name)
-  end
-end ]]
-
---[[ local function handle_set_code(driver, device, command)
-  log.error("Działa to w ogóle?")
-  update_lock_code_entry(device, command.args.codeSlot, command.args.codePIN, command.args.codeName)
-end
-
-local function handle_delete_code(driver, device, command)
-  log.error("Działa to w ogóle?")
-  delete_lock_code_entry(device, command.args.codeSlot)
-end
-
-local function handle_name_slot(driver, device, command)
-  log.error("Działa to w ogóle?")
-  rename_lock_code_entry(device, command.args.codeSlot, command.args.codeName)
-end
-
-local function handle_reload_all_codes(driver, device, command)
-  log.error("Działa to w ogóle?")
-  emit_lock_codes(device, get_lock_codes(device), get_lock_code_pins(device))
-end
-
-local function handle_request_code(driver, device, command)
-  log.error("Działa to w ogóle?")
-  local slot = command.args.codeSlot
-  device:emit_event(LockCodes.codeReport({ value = slot }, { state_change = true }))
-end
-
-local function handle_set_code_length(driver, device, command)
-  log.error("Działa to w ogóle?")
-  local length = command.args.length
-  if type(length) ~= "number" then
-    length = tonumber(length)
-  end
-  if length == nil then
-    return
-  end
-  device:set_field(LOCK_CODE_LENGTH_FIELD, length, { persist = true })
-  device:emit_event(LockCodes.codeLength(length, { state_change = true }))
-end ]]
 
 local function refresh(driver, device, command)
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
@@ -798,7 +643,7 @@ local function info_changed(driver, device, event, args)
         end)
         local map = {
           pins = merge_user_section(base_map and base_map.pins or {}, pin_updates),
-          rfids = merge_user_section(base_map and base_map.rfids or {}, base_map.rfids or {}),
+          rfids = merge_user_section(base_map and base_map.rfids or {}, {}),
         }
         device:set_field("securitySystem_user_map", map, { persist = true })
         sync_lock_codes_from_user_map(device, map)
@@ -806,11 +651,11 @@ local function info_changed(driver, device, event, args)
       if (name == "rfidMap") then
         local rfid_updates = parse_user_map(device.preferences.rfidMap)
         local map = {
-          pins = merge_user_section(base_map and base_map.pins or {}, base_map.pins or {}),
+          pins = merge_user_section(base_map and base_map.pins or {}, {}),
           rfids = merge_user_section(base_map and base_map.rfids or {}, rfid_updates),
         }
         device:set_field("securitySystem_user_map", map, { persist = true })
-        sync_lock_codes_from_user_map(device, map)
+        --sync_lock_codes_from_user_map(device, map)
       end
       if (name == "deletePinMap") then
         local delete_pins = parse_delete_list(device.preferences.deletePinMap)
@@ -830,7 +675,7 @@ local function info_changed(driver, device, event, args)
           end
         end
         device:set_field("securitySystem_user_map", base_map, { persist = true })
-        sync_lock_codes_from_user_map(device, base_map)
+        --sync_lock_codes_from_user_map(device, base_map)
       end
       if (name == "autoArmDisarmMode") then
         local autoArmDisarmMode = tonumber(device.preferences.autoArmDisarmMode)
@@ -901,16 +746,7 @@ local frient_keypad = {
       [SecuritySystem.commands.armAway.NAME] = handle_arm_away,
       [SecuritySystem.commands.armStay.NAME] = handle_arm_stay,
       [SecuritySystem.commands.disarm.NAME] = handle_disarm,
-    },--[[ 
-    [LockCodes.ID] = {
-      [LockCodes.commands.updateCodes.NAME] = handle_update_codes,
-      [LockCodes.commands.deleteCode.NAME] = handle_delete_code,
-      [LockCodes.commands.setCode.NAME] = handle_set_code,
-      [LockCodes.commands.reloadAllCodes.NAME] = handle_reload_all_codes,
-      [LockCodes.commands.requestCode.NAME] = handle_request_code,
-      [LockCodes.commands.setCodeLength.NAME] = handle_set_code_length,
-      [LockCodes.commands.nameSlot.NAME] = handle_name_slot,
-    }, ]]
+    },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = refresh,
     },
