@@ -1209,12 +1209,12 @@ zigbeeManufacturer:
     deviceLabel: Samsung Light
     manufacturer: Samsung Electronics
     model: SAMSUNG-ITM-Z-002
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: Juno/ABL-LIGHT-Z-201
     deviceLabel: Juno Connect
     manufacturer: Juno
     model: ABL-LIGHT-Z-201
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2700K-5000K
   - id: "AduroSmart Eria/AD-RGBW3001"
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
@@ -1224,7 +1224,7 @@ zigbeeManufacturer:
     deviceLabel: AOne Light
     manufacturer: Aurora
     model: RGBCXStrip50AU
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2500K-6000K
   - id: Aurora/RGBGU10Bulb50AU
     deviceLabel: Aurora Light
     manufacturer: Aurora
@@ -1254,32 +1254,32 @@ zigbeeManufacturer:
     deviceLabel: Innr Light
     manufacturer: innr
     model: RB 285 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "innr/BY 285 C"
     deviceLabel: Innr Light
     manufacturer: innr
     model: BY 285 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "innr/RB 250 C"
     deviceLabel: Innr Light
     manufacturer: innr
     model: RB 250 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "innr/RS 230 C"
     deviceLabel: Innr Light
     manufacturer: innr
     model: RS 230 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "innr/AE 280 C"
     deviceLabel: Innr Light
     manufacturer: innr
     model: AE 280 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: MLI/ZBT-ExtendedColor
     deviceLabel: Tint Light
     manufacturer: MLI
     model: ZBT-ExtendedColor
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "OSRAM/LIGHTIFY Flex RGBW"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -1374,12 +1374,12 @@ zigbeeManufacturer:
     deviceLabel: Sengled Smart Light Strip
     manufacturer: sengled
     model: E1G-G8E
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: sengled/E11-U3E
     deviceLabel: Sengled Element Color Plus
     manufacturer: sengled
     model: E11-U3E
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: sengled/E11-U2E
     deviceLabel: Sengled Element Color Plus
     manufacturer: sengled
@@ -1394,22 +1394,22 @@ zigbeeManufacturer:
     deviceLabel: Q-Smart Light
     manufacturer: Neuhaus Lighting Group
     model: ZBT-ExtendedColor
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "Ajaxonline/AJ-RGBCCT 5 in 1"
     deviceLabel: Ajax Light
     manufacturer: Ajaxonline
     model: AJ-RGBCCT 5 in 1
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: "Ajax online Ltd/AJ_ZB30_GU10"
     deviceLabel: Ajax Light
     manufacturer: Ajax online Ltd
     model: AJ_ZB30_GU10
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: "eWeLight/ZB-CL01"
     deviceLabel: easyiot Light
     manufacturer: eWeLight
     model: ZB-CL01
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: "CREE/Connected A-19 60W Equivalent"
     deviceLabel: CREE Bulb
     manufacturer: CREE
@@ -1434,57 +1434,57 @@ zigbeeManufacturer:
     deviceLabel: Halo Light
     manufacturer: Eaton
     model: Halo_RL5601
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-5000K
   - id: "IKEA/TRADFRI E26 WS clear 950lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E26 WS clear 950lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI GU10 WS 400lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb GU10 WS 400lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI E12 WS opal 400lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E12 WS opal 400lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI E26 WS opal 980lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E26 WS opal 980lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI E27 WS clear 950lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E27 WS clear 950lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI E14 WS opal 400lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E14 WS opal 400lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI E27 WS opal 980lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E27 WS opal 980lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "innr/RS 128 T"
     deviceLabel: Innr Light
     manufacturer: innr
     model: RS 128 T
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: "innr/RB 178 T"
     deviceLabel: Innr Light
     manufacturer: innr
     model: RB 178 T
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-5000K
   - id: "innr/RB 148 T"
     deviceLabel: Innr Light
     manufacturer: innr
     model: RB 148 T
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: "OSRAM/Gardenspot RGB"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -1544,27 +1544,27 @@ zigbeeManufacturer:
     deviceLabel: Aurora Light
     manufacturer: Aurora
     model: TWBulb51AU
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: Aurora/TWMPROZXBulb50AU
     deviceLabel: Aurora Light
     manufacturer: Aurora
     model: TWMPROZXBulb50AU
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: Aurora/TWStrip50AU
     deviceLabel: Aurora Light
     manufacturer: Aurora
     model: TWStrip50AU
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2500K-6000K
   - id: Aurora/TWGU10Bulb50AU
     deviceLabel: Aurora Light
     manufacturer: Aurora
     model: TWGU10Bulb50AU
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: Aurora/TWCLBulb50AU
     deviceLabel: AOne Light
     manufacturer: Aurora
     model: TWCLBulb50AU
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: CWD/ZB.A806Ecct-A001
     deviceLabel: CWD Light
     manufacturer: CWD
@@ -1584,7 +1584,7 @@ zigbeeManufacturer:
     deviceLabel: Commercial Light
     manufacturer: ETI
     model: Zigbee CCT Downlight
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-5000K
   - id: HomeDepot/Ecosmart-ZBT-BR30-CCT-Bulb
     deviceLabel: Ecosmart Light
     manufacturer: The Home Depot
@@ -1599,47 +1599,47 @@ zigbeeManufacturer:
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: GUNNARP panel round
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/LEPTITER Recessed spot light"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: LEPTITER Recessed spot light
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E12 WS opal 600lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E12 WS opal 600lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E14 WS 470lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E14 WS 470lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E14 WS opal 600lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E14 WS opal 600lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E26 WS clear 806lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E26 WS clear 806lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E27 WS clear 806lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E27 WS clear 806lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E26 WS opal 1000lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E26 WS opal 1000lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/TRADFRI bulb E27 WS opal 1000lm"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: TRADFRI bulb E27 WS opal 1000lm
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: Megaman/Z3-ColorTemperature
     deviceLabel: INGENIUM Light
     manufacturer: Megaman
@@ -1649,17 +1649,17 @@ zigbeeManufacturer:
     deviceLabel: Innr Light
     manufacturer: innr
     model: RB 248 T
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: "innr/RB 278 T"
     deviceLabel: Innr Light
     manufacturer: innr
     model: RB 278 T
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: "innr/RS 228 T"
     deviceLabel: Innr Light
     manufacturer: innr
     model: RS 228 T
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-5000K
   - id: "OSRAM/LIGHTIFY BR Tunable White"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -1734,7 +1734,7 @@ zigbeeManufacturer:
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
     model: LIGHTIFY Edge-lit flushmount
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: Smarthome/S111-202A
     deviceLabel: Leedarson Light
     manufacturer: Smarthome
@@ -1784,7 +1784,7 @@ zigbeeManufacturer:
     deviceLabel: Ajax Light
     manufacturer: Ajax Online
     model: CCT
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-6500K
   - id: CentraLite/3200
     deviceLabel: SmartThings Outlet
     manufacturer: CentraLite
@@ -2064,7 +2064,7 @@ zigbeeManufacturer:
     deviceLabel: Innr Light
     manufacturer: innr
     model: RB 185 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: "innr/FL 130 C"
     deviceLabel: Innr Light
     manufacturer: innr
@@ -2074,17 +2074,17 @@ zigbeeManufacturer:
     deviceLabel: Innr Light
     manufacturer: innr
     model: OFL 120 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "innr/OFL 140 C"
     deviceLabel: Innr Light
     manufacturer: innr
     model: OFL 140 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "innr/OSL 130 C"
     deviceLabel: Innr Light
     manufacturer: innr
     model: OSL 130 C
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-1800K-6500K
   - id: "OSRAM/Classic A60 RGBW"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
@@ -2119,7 +2119,7 @@ zigbeeManufacturer:
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
     model: LIGHTIFY Indoor Flex RGBW
-    deviceProfileName: rgbw-bulb
+    deviceProfileName: rgbw-bulb-2000K-6500K
   - id: Philips/LCT001
     deviceLabel: Philips Light
     manufacturer: Philips
@@ -2189,32 +2189,32 @@ zigbeeManufacturer:
     deviceLabel: Eria Light
     manufacturer: AduroSmart Eria
     model: ZLL-ColorTemperature
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-6500K
   - id: "IKEA/FLOALT panel WS 30x30"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: FLOALT panel WS 30x30
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/FLOALT panel WS 30x90"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: FLOALT panel WS 30x90
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/FLOALT panel WS 60x60"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: FLOALT panel WS 60x60
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/SURTE door WS 38x64"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: SURTE door WS 38x64
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "IKEA/JORMLIEN door WS 40x80"
     deviceLabel: IKEA Light
     manufacturer: IKEA of Sweden
     model: JORMLIEN door WS 40x80
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2200K-4000K
   - id: "OSRAM/Classic B40 TW - LIGHTIFY"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
@@ -2462,7 +2462,7 @@ zigbeeGeneric:
         - 0x0300 #Color Control
     deviceIdentifiers:
       - 0x0220
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "genericZHAColorTempBulb"
     deviceLabel: Zigbee Light
     clusters:
@@ -2472,7 +2472,7 @@ zigbeeGeneric:
         - 0x0300 #Color Control
     deviceIdentifiers:
       - 0x010C
-    deviceProfileName: color-temp-bulb
+    deviceProfileName: color-temp-bulb-2700K-6500K
   - id: "genericMeteredSwitch"
     deviceLabel: Zigbee Switch
     clusters:
