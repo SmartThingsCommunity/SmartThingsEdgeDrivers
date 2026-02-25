@@ -13,12 +13,10 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local clusters = require "st.zigbee.zcl.clusters"
 local log = require "log"
 
 local SONOFF_CLUSTER_ID = 0xFC12
 local SONOFF_ATTR_ID = 0x0000
-local BatteryPercentageRemaining = clusters.PowerConfiguration.attributes.BatteryPercentageRemaining
 
 local EVENT_MAP = {
   [0x01] = capabilities.button.button.pushed,
@@ -29,11 +27,6 @@ local EVENT_MAP = {
 
 local function can_handle(opts, driver, device, ...)
   return device:get_manufacturer() == "SONOFF"
-end
-
-local function battery_attr_handler(driver, device, value, zb_rx)
-  local percent = math.floor((value.value or 0) / 2)
-  device:emit_event(capabilities.battery.battery(percent))
 end
 
 local function sonoff_attr_handler(driver, device, value, zb_rx)
@@ -53,31 +46,14 @@ local function sonoff_attr_handler(driver, device, value, zb_rx)
   end
 end
 
-local function added_handler(self, device)
-  device:configure()
-  for _, comp in pairs(device.profile.components) do
-    if comp.id ~= "main" then
-      device:emit_component_event(comp, capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = { displayed = false }}))
-      device:emit_component_event(comp, capabilities.button.numberOfButtons({value = 1}, {visibility = { displayed = false }}))
-      device:emit_component_event(comp, capabilities.button.button.pushed({state_change = false}))
-    end
-  end
-end
-
 local sonoff_handler = {
   NAME = "SONOFF Multi-Button Handler",
   zigbee_handlers = {
     attr = {
       [SONOFF_CLUSTER_ID] = {
         [SONOFF_ATTR_ID] = sonoff_attr_handler
-      },
-      [clusters.PowerConfiguration.ID] = {
-        [BatteryPercentageRemaining.ID] = battery_attr_handler
-      },
+      }
     }
-  },
-  lifecycle_handlers = {
-    added = added_handler
   },
   can_handle = can_handle
 }

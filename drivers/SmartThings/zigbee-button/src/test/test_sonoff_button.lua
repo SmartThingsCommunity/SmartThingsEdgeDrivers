@@ -63,6 +63,7 @@ test.set_test_init_function(test_init)
 test.register_coroutine_test(
   "added lifecycle event",
   function()
+    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
     -- Check initial events for button 1
@@ -78,9 +79,6 @@ test.register_coroutine_test(
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("button1", capabilities.button.button.pushed({ state_change = false }))
-    )
 
     -- Check initial events for button 2
     test.socket.capability:__expect_send(
@@ -94,9 +92,6 @@ test.register_coroutine_test(
         "button2",
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
       )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("button2", capabilities.button.button.pushed({ state_change = false }))
     )
 
     -- Check initial events for button 3
@@ -112,9 +107,6 @@ test.register_coroutine_test(
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("button3", capabilities.button.button.pushed({ state_change = false }))
-    )
 
     -- Check initial events for button 4
     test.socket.capability:__expect_send(
@@ -129,21 +121,7 @@ test.register_coroutine_test(
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
       )
     )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("button4", capabilities.button.button.pushed({ state_change = false }))
-    )
-
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-    test.socket.zigbee:__expect_send({
-        mock_device.id,
-        clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:configure_reporting(mock_device, 30, 21600, 1)
-    })
-    test.socket.zigbee:__expect_send({
-        mock_device.id,
-        zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, clusters.PowerConfiguration.ID) 
-    })
-
-    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
   end
 )
 
@@ -247,9 +225,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Battery percentage report should generate event",
   function()
-    -- 0x0001 PowerConfiguration, 0x0021 BatteryPercentageRemaining
-    -- Driver logic: math.floor(value / 2)
-    local battery_report = clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 180) -- 180/2 = 90%
+    local battery_report = clusters.PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 180)
 
     test.socket.zigbee:__queue_receive({ mock_device.id, battery_report })
     test.socket.capability:__expect_send(
