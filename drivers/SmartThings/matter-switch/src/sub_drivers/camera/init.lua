@@ -47,7 +47,7 @@ function CameraLifecycleHandlers.driver_switched(driver, device)
 end
 
 function CameraLifecycleHandlers.info_changed(driver, device, event, args)
-  if switch_utils.profile_changed(device.profile, args.old_st_store.profile) then
+  if camera_utils.profile_changed(device.profile.components, args.old_st_store.profile.components) then
     camera_cfg.initialize_camera_capabilities(device)
     device:subscribe()
     if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
