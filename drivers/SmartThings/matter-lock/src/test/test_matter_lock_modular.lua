@@ -607,16 +607,27 @@ test.register_coroutine_test(
       mock_device_modular:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
     )
     mock_device_modular:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}}} })
+  end,
+  { test_init = test_init_modular }
+)
 
-    local updated_device_profile = t_utils.get_profile_definition("lock-modular-embedded-unlatch.yml",
-      {enabled_optional_capabilities = {{ "main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}},
-  },}
+test.register_coroutine_test(
+  "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler", function()
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed(
+      {profile = {id = "00000000-1111-2222-3333-000000000010"}})
     )
-    updated_device_profile.id = "00000000-1111-2222-3333-000000000010"
+  end,
+  { test_init = test_init_modular }
+)
 
-    test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({ profile = updated_device_profile }))
-
+test.register_coroutine_test(
+  "Component-capability update without profile ID update should cause re-subscribe in infoChanged handler", function()
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed(
+      {profile = {id = "00000000-1111-2222-3333-000000000010", components = { main = {capabilities={
+        ["lock"]= {id="lock", version=1}, ["lockAlarm"] = {id="lockAlarm", version=1}, ["remoteControlStatus"] = {id="remoteControlStatus", version=1},
+        ["lockUsers"] = {id="lockUsers", version=1}, ["lockCredentials"] = {id="lockCredentials", version=1}, ["lockSchedules"] = {id="lockSchedules", version=1},
+        ["battery"] = {id="battery", version=1}, ["firmwareUpdate"] = {id="firmwareUpdate", version=1}, ["refresh"] = {id="refresh", version=1}}}}}})
+    )
     local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_modular)
     subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device_modular))

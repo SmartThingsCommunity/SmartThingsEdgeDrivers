@@ -169,18 +169,9 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "No component-capability update an no profile ID update should not cause a re-subscribe in infoChanged handler", function()
-    local cluster_subscribe_list ={
-      clusters.FanControl.attributes.FanModeSequence,
-      clusters.FanControl.attributes.FanMode,
-      clusters.FanControl.attributes.PercentCurrent,
-    }
-    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_capabilities_disabled)
-    for i, clus in ipairs(cluster_subscribe_list) do
-      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_capabilities_disabled)) end
-    end
+  "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler", function()
     test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed(
-      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={["firmwareUpdate"] = {id="firmwareUpdate", version=1}, ["refresh"] = {id="refresh", version=1}}}}}})
+      {profile = {id = "00000000-1111-2222-3333-000000000004"}})
     )
   end,
   { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
