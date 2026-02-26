@@ -6,6 +6,8 @@ components:
     version: 1
   - id: lockCodes
     version: 1
+  - id: lock
+    version: 1
   - id: battery
     version: 1
   - id: tamperAlert
@@ -15,33 +17,27 @@ components:
   categories:
   - name: SmartLock
 preferences:
+  - name: mode
+    title: Use to control Security System Status or Lock Status
+    description: "Choose whether to use the keypad to control Security System Status (Arm/Disarm) or Lock Status (Lock/Unlock)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Security System Status"
+        1: "Lock Status"
+      default: 0
   - name: pinMap
-    title: Add PIN code
-    description: "Format: 1234:Alice,4321:Bob. Entries are added/updated; existing entries are kept."
+    title: Add PIN code(s)
+    description: "Format: 1234:Alice,4321:Bob (other format will not be accepted). Entries are added/updated; existing entries are kept."
     required: false
     preferenceType: string
     definition:
       stringType: text
       default: ""
   - name: rfidMap
-    title: Add RFID
-    description: "Format: ABCD1234:Alice,EFGH5678:Bob. Entries are added/updated; existing entries are kept."
-    required: false
-    preferenceType: string
-    definition:
-      stringType: text
-      default: ""
-  - name: deletePinMap
-    title: Delete PINs
-    description: "Comma-separated PINs to delete. Example: 1234,4321"
-    required: false
-    preferenceType: string
-    definition:
-      stringType: text
-      default: ""
-  - name: deleteRfidMap
-    title: Delete RFIDs
-    description: "Comma-separated RFIDs to delete. Example: ABCD1234,EFGH5678"
+    title: Add RFID(s)
+    description: "Format: ABCD1234:Alice,EFGH5678:Bob (other format will not be accepted). Entries are added/updated; existing entries are kept."
     required: false
     preferenceType: string
     definition:
@@ -74,14 +70,14 @@ preferences:
       default: 10
   - name: exitDelay
     title: Exit Delay
-    description: "Turn on exit delay when arming. Duration in seconds can be set in the 'Exit Delay Length' setting."
+    description: "Turn on exit delay when arming. Duration in seconds can be set in the 'Exit Delay Duration' setting."
     required: false
     preferenceType: boolean
     definition:
       default: false
-  - name: length
-    title: Exit Delay Length
-    description: "Exit delay length in seconds."
+  - name: duration
+    title: Exit Delay Duration
+    description: "Exit delay duration in seconds."
     required: false
     preferenceType: integer
     definition:

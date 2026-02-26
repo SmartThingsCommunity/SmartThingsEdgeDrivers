@@ -17,6 +17,7 @@ local SecuritySystem = capabilities.securitySystem
 local LockCodes = capabilities.lockCodes
 local IASZone = clusters.IASZone
 local tamperAlert = capabilities.tamperAlert
+local lock = capabilities.lock
 
 local ArmMode = IASACE.types.ArmMode
 local ArmNotification = IASACE.types.ArmNotification
@@ -24,11 +25,8 @@ local PanelStatus = IASACE.types.IasacePanelStatus
 local AudibleNotification = IASACE.types.IasaceAudibleNotification
 local AlarmStatus = IASACE.types.IasaceAlarmStatus
 
-local BATTERY_INIT = battery_defaults.build_linear_voltage_init(4.0, 6.0)
-
 local LOCK_CODES_FIELD = "lockCodes"
 local LOCK_CODE_PINS_FIELD = "lockCodePins"
-local LOCK_CODE_LENGTH_FIELD = "lockCodeLength"
 local LOCK_CODES_MAX_LEN = 255
 local LOCK_CODES_CHUNK_MAX_LEN = 220
 local armCommandFromKeypad = false
@@ -79,6 +77,8 @@ local STATUS_TO_ACTIVITY = {
 local function emit_supported(device)
   device:emit_event(SecuritySystem.supportedSecuritySystemStatuses({ "armedAway", "armedStay", "disarmed" }, { visibility = { displayed = false } }))
   device:emit_event(SecuritySystem.supportedSecuritySystemCommands({ "armAway", "armStay", "disarm" }, { visibility = { displayed = false } }))
+  device:emit_event(lock.supportedLockValues({ "locked", "unlocked"}, { visibility = { displayed = false } }))
+  device:emit_event(lock.supportedLockCommands({ "lock", "unlock"}, { visibility = { displayed = false } }))
 end
 
 local function emit_status_event(device, status, extra_data)
@@ -98,6 +98,11 @@ local function emit_status_event(device, status, extra_data)
   device:emit_event(event)
 end
 
+local function emit_lock_event(device, lock_state)
+  local event = lock.lock(lock_state, { state_change = true })
+  device:emit_event(event)
+end 
+
 local function get_pref_number(value)
   if type(value) == "number" then
     return value
@@ -116,6 +121,10 @@ local function get_pref_number(value)
 end
 
 local function is_pin_length_valid(device, pin)
+  local pinStr = tostring(pin)
+  if pinStr:sub(1,1) == "+" then
+    return true
+  end
   if pin == nil or pin == "" then
     return false
   end
@@ -150,7 +159,7 @@ local function parse_user_map(value, validator)
   return map
 end
 
-local function parse_delete_list(value)
+--[[ local function parse_delete_list(value)
   local items = {}
   if value == nil or value == "" then
     return items
@@ -164,7 +173,7 @@ local function parse_delete_list(value)
   end
 
   return items
-end
+end ]]
 
 local function get_lock_codes(device)
   return device:get_field(LOCK_CODES_FIELD) or {}
@@ -172,6 +181,10 @@ end
 
 local function get_lock_code_pins(device)
   return device:get_field(LOCK_CODE_PINS_FIELD) or {}
+end
+
+local function get_exit_delay_duration(device)
+  return device:get_field("securitySystem_exit_delay_duration") or 5
 end
 
 local function build_lock_codes_payload(device, lock_codes, lock_pins)
@@ -214,33 +227,37 @@ local function get_sorted_slots(lock_codes)
   return slots
 end
 
-local function emit_lock_codes_chunks(device, lock_codes, lock_pins)
+local function emit_lock_codes_chunks(device, payload)
   local chunks = {}
-  local current = ""
-  local slots = get_sorted_slots(lock_codes)
+  local current_chunk = {}
+  local slots = get_sorted_slots(payload)
+
+  local function encode_chunk(chunk)
+    local ok, encoded = pcall(json.encode, utils.deep_copy(chunk))
+    if ok and type(encoded) == "string" then
+      return encoded
+    end
+    return "{}"
+  end
 
   for _, slot in ipairs(slots) do
-    local name = tostring(lock_codes[slot] or ("Code " .. slot))
-    local pin = lock_pins and lock_pins[slot] or nil
-    local entry = pin and pin ~= "" and string.format("%s:%s (%s)", slot, name, pin) or string.format("%s:%s", slot, name)
-
-    if current == "" then
-      current = entry
-    elseif (#current + 2 + #entry) <= LOCK_CODES_CHUNK_MAX_LEN then
-      current = current .. ", " .. entry
-    else
-      chunks[#chunks + 1] = current
-      current = entry
+    current_chunk[slot] = tostring(payload[slot] or "")
+    local encoded = encode_chunk(current_chunk)
+    if #encoded > LOCK_CODES_CHUNK_MAX_LEN then
+      current_chunk[slot] = nil
+      if next(current_chunk) ~= nil then
+        chunks[#chunks + 1] = encode_chunk(current_chunk)
+      end
+      current_chunk = { [slot] = tostring(payload[slot] or "") }
     end
   end
 
-  if current ~= "" then
-    chunks[#chunks + 1] = current
+  if next(current_chunk) ~= nil then
+    chunks[#chunks + 1] = encode_chunk(current_chunk)
   end
 
-  for index, chunk in ipairs(chunks) do
-    local message = string.format("codes %d/%d: %s", index, #chunks, chunk)
-    device:emit_event(LockCodes.codeChanged(message, { state_change = true }))
+  for _, chunk in ipairs(chunks) do
+    device:emit_event(LockCodes.lockCodes(chunk, { state_change = true }, { visibility = { displayed = true } }))
   end
 end
 
@@ -277,26 +294,22 @@ local function emit_lock_codes(device, lock_codes, lock_pins)
   local partial_payload = build_partial_payload(full_payload)
   local partial_encoded = encode_payload(partial_payload)
   device:emit_event(LockCodes.lockCodes(partial_encoded, { state_change = true }, { visibility = { displayed = true } }))
-  emit_lock_codes_chunks(device, lock_codes, lock_pins)
+  emit_lock_codes_chunks(device, full_payload)
 end
 
 local function emit_lock_code_limits(device)
   local min_len = get_pref_number(device.preferences.minCodeLength)
   local max_len = get_pref_number(device.preferences.maxCodeLength)
-  local code_len = device:get_field(LOCK_CODE_LENGTH_FIELD)
 
   if min_len ~= nil then
-    device:emit_event(LockCodes.minCodeLength(min_len, { visibility = { displayed = false } }))
+    device:emit_event(LockCodes.minCodeLength(min_len, { visibility = { displayed = true } }))
   end
   if max_len ~= nil then
-    device:emit_event(LockCodes.maxCodeLength(max_len, { visibility = { displayed = false } }))
-  end
-  if code_len ~= nil then
-    device:emit_event(LockCodes.codeLength(code_len, { visibility = { displayed = false } }))
+    device:emit_event(LockCodes.maxCodeLength(max_len, { visibility = { displayed = true } }))
   end
 end
 
-local function get_next_index(map_section)
+--[[ local function get_next_index(map_section)
   local max_index = 0
   for _, entry in pairs(map_section or {}) do
     if type(entry.index) == "number" and entry.index > max_index then
@@ -304,7 +317,7 @@ local function get_next_index(map_section)
     end
   end
   return max_index + 1
-end
+end ]]
 
 local function normalize_user_name(value)
   if type(value) == "string" then
@@ -334,7 +347,7 @@ local function normalize_user_entry(entry)
   }
 end
 
-local function merge_user_section(base_section, updates)
+--[[ local function merge_user_section(base_section, updates)
   local merged = {}
   for code, entry in pairs(base_section or {}) do
     merged[code] = normalize_user_entry(entry)
@@ -353,7 +366,7 @@ local function merge_user_section(base_section, updates)
   end
 
   return merged
-end
+end ]]
 
 local function get_user_map(device)
   return device:get_field("securitySystem_user_map")
@@ -455,12 +468,12 @@ local function get_current_status(device)
 end
 
 local function send_panel_status(device, status)
-  local length = device.preferences.length or 5
+  local duration = get_exit_delay_duration(device)
   local panel_status = STATUS_TO_PANEL[status] or PanelStatus.PANEL_DISARMED_READY_TO_ARM
   device:send(IASACE.client.commands.PanelStatusChanged(
     device,
     panel_status,
-    length,
+    duration,
     AudibleNotification.DEFAULT_SOUND,
     AlarmStatus.NO_ALARM
   ))
@@ -503,7 +516,6 @@ local function handle_arm_command(driver, device, zb_rx)
     log.warn("IAS ACE Arm rejected: unknown pin or rfid")
     return
   end
-  log.error("Dupsko")
 
   local data = {
     source = "keypad",
@@ -514,10 +526,11 @@ local function handle_arm_command(driver, device, zb_rx)
   device:set_field("securitySystem_last_user", data, { persist = false })
   if can_process_arm_command(status, get_current_status(device)) then
     if device.preferences.exitDelay == true and status ~= "disarmed" then
-      log.error("Twój stary")
+      local duration = get_exit_delay_duration(device)
       send_panel_status(device, "exitDelay")
-      device.thread:call_with_delay(device.preferences.length or 5, function()
+      device.thread:call_with_delay(duration, function()
         emit_status_event(device, status, data)
+        emit_lock_event(device, status == "armedAway" and "locked" or "unlocked")
         emit_arm_activity(device, status, user.name)
         device:send(IASACE.client.commands.ArmResponse(
           device,
@@ -526,6 +539,7 @@ local function handle_arm_command(driver, device, zb_rx)
       end)
     else
       emit_status_event(device, status, data)
+      emit_lock_event(device, status == "armedAway" and "locked" or "unlocked")
       emit_arm_activity(device, status, user.name)
       device:send(IASACE.client.commands.ArmResponse(
         device,
@@ -542,30 +556,32 @@ local function handle_arm_command(driver, device, zb_rx)
 end
 
 local function handle_get_panel_status(driver, device, zb_rx)
-  local length = device.preferences.length or 5
+  local duration = get_exit_delay_duration(device)
   local status = get_current_status(device)
   device:send(IASACE.client.commands.GetPanelStatusResponse(
     device,
     STATUS_TO_PANEL[status] or PanelStatus.PANEL_DISARMED_READY_TO_ARM,
-    length,
+    duration,
     AudibleNotification.DEFAULT_SOUND,
     AlarmStatus.NO_ALARM
   ))
 end
 
 local function handle_arm(device, status)
-  local length = device.preferences.length or 5
+  local duration = get_exit_delay_duration(device)
   if not armCommandFromKeypad and can_process_arm_command(status, get_current_status(device)) then
     if device.preferences.exitDelay == true then
       send_panel_status(device, "exitDelay")
-      device.thread:call_with_delay(length, function()
+      device.thread:call_with_delay(duration, function()
         emit_status_event(device, status, { source = "app" })
         emit_arm_activity(device, status, "App")
+        emit_lock_event(device, status == "armedAway" and "locked" or "unlocked")
         send_panel_status(device, status)
       end)
     else
       emit_status_event(device, status, { source = "app" })
       emit_arm_activity(device, status, "App")
+      emit_lock_event(device, status == "armedAway" and "locked" or "unlocked")
       send_panel_status(device, status)
     end
   else
@@ -587,6 +603,7 @@ local function handle_disarm(driver, device, command)
   if can_process_arm_command("disarmed", get_current_status(device)) and not armCommandFromKeypad then
     emit_status_event(device, "disarmed", { source = "app" })
     emit_arm_activity(device, "disarmed", "App")
+    emit_lock_event(device, "unlocked")
     send_panel_status(device, "disarmed")
   else
     armCommandFromKeypad = false
@@ -605,6 +622,9 @@ local function device_added(driver, device)
   if device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME) == nil then
     emit_status_event(device, "disarmed", { source = "driver" })
   end
+  if device:get_latest_state("main", lock.ID, lock.lock.NAME) == nil then
+    emit_lock_event(device, "unlocked")
+  end
 end
 
 local function do_configure(self, device)
@@ -614,7 +634,7 @@ local function do_configure(self, device)
 end
 
 local function device_init(driver, device)
-  BATTERY_INIT(driver, device)
+  battery_defaults.build_linear_voltage_init(4.0, 6.0)(driver, device)
   emit_supported(device)
   local base_map = device:get_field("securitySystem_user_map") or LOCAL_USER_MAP
   device:set_field("securitySystem_user_map", base_map, { persist = true })
@@ -642,8 +662,8 @@ local function info_changed(driver, device, event, args)
           return false
         end)
         local map = {
-          pins = merge_user_section(base_map and base_map.pins or {}, pin_updates),
-          rfids = merge_user_section(base_map and base_map.rfids or {}, {}),
+          pins = pin_updates,
+          rfids = base_map.rfids,
         }
         device:set_field("securitySystem_user_map", map, { persist = true })
         sync_lock_codes_from_user_map(device, map)
@@ -651,50 +671,36 @@ local function info_changed(driver, device, event, args)
       if (name == "rfidMap") then
         local rfid_updates = parse_user_map(device.preferences.rfidMap)
         local map = {
-          pins = merge_user_section(base_map and base_map.pins or {}, {}),
-          rfids = merge_user_section(base_map and base_map.rfids or {}, rfid_updates),
+          pins = base_map.pins,
+          rfids = rfid_updates,
         }
         device:set_field("securitySystem_user_map", map, { persist = true })
-        --sync_lock_codes_from_user_map(device, map)
-      end
-      if (name == "deletePinMap") then
-        local delete_pins = parse_delete_list(device.preferences.deletePinMap)
-        for pin, _ in pairs(delete_pins) do
-          if base_map.pins[pin] ~= nil then
-            base_map.pins[pin] = nil
-          end
-        end
-        device:set_field("securitySystem_user_map", base_map, { persist = true })
-        sync_lock_codes_from_user_map(device, base_map)
-      end
-      if (name == "deleteRfidMap") then
-        local delete_rfids = parse_delete_list(device.preferences.deleteRfidMap)
-        for rfid, _ in pairs(delete_rfids) do
-          if base_map.rfids[rfid] ~= nil then
-            base_map.rfids[rfid] = nil
-          end
-        end
-        device:set_field("securitySystem_user_map", base_map, { persist = true })
-        --sync_lock_codes_from_user_map(device, base_map)
       end
       if (name == "autoArmDisarmMode") then
         local autoArmDisarmMode = tonumber(device.preferences.autoArmDisarmMode)
         if autoArmDisarmMode ~= nil then
           send_iasace_mfg_write(device, 0x8003, data_types.Enum8, autoArmDisarmMode)
         end
-      elseif (name == "autoDisarmModeSetting") then
+      end
+      if (name == "autoDisarmModeSetting") then
         local autoDisarmModeSetting = device.preferences.autoDisarmModeSetting
         send_iasace_mfg_write(device, 0x8004, data_types.Boolean, autoDisarmModeSetting)
-      elseif (name == "autoArmModeSetting") then
+      end
+      if (name == "autoArmModeSetting") then
         local autoArmModeSetting = tonumber(device.preferences.autoArmModeSetting)
         if autoArmModeSetting ~= nil then
           send_iasace_mfg_write(device, 0x8005, data_types.Enum8, autoArmModeSetting)
         end
-      elseif (name == "pinLengthSetting") then
+      end
+      if (name == "pinLengthSetting") then
         local pinLengthSetting = tonumber(device.preferences.pinLengthSetting)
         if pinLengthSetting ~= nil then
           send_iasace_mfg_write(device, 0x8006, data_types.Uint8, pinLengthSetting)
         end
+      end
+      if (name == "duration") then
+        local duration = tonumber(device.preferences.duration)
+        device:set_field("securitySystem_exit_delay_duration", duration, { persist = true })
       end
     end
   end
@@ -746,6 +752,10 @@ local frient_keypad = {
       [SecuritySystem.commands.armAway.NAME] = handle_arm_away,
       [SecuritySystem.commands.armStay.NAME] = handle_arm_stay,
       [SecuritySystem.commands.disarm.NAME] = handle_disarm,
+    },
+    [lock.ID] = {
+      [lock.commands.lock.NAME] = handle_arm_away,
+      [lock.commands.unlock.NAME] = handle_disarm,
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = refresh,
