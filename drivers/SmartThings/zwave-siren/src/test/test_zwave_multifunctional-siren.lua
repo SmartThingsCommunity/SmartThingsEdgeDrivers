@@ -50,6 +50,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -69,6 +72,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -88,6 +94,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({value = 25}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -107,6 +116,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 25, unit = 'C'}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -132,7 +144,10 @@ test.register_coroutine_test(
       Basic:Get({})
     ))
     mock_siren:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

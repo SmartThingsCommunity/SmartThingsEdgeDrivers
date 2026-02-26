@@ -46,7 +46,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -105,7 +108,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -121,6 +127,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -137,6 +146,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -161,6 +173,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "waterSensor", capability_attr_id = "water" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -185,6 +200,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "waterSensor", capability_attr_id = "water" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -214,6 +232,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

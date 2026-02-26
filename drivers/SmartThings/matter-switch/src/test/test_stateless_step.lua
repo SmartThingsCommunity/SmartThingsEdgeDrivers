@@ -102,6 +102,9 @@ test.register_message_test(
         clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 467, fields.TRANSITION_TIME_FAST, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -157,6 +160,9 @@ test.register_message_test(
         clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 254, fields.TRANSITION_TIME_FAST, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

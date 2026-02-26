@@ -128,7 +128,10 @@ test.register_coroutine_test(
         Notification:Get({notification_type = Notification.notification_type.HOME_SECURITY, event = Notification.event.home_security.MOTION_DETECTION})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test switch on command
@@ -154,7 +157,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test switch off command
@@ -180,7 +186,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test switch level command
@@ -211,7 +220,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test central scene notifications
@@ -236,6 +248,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -261,6 +276,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -319,6 +337,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 

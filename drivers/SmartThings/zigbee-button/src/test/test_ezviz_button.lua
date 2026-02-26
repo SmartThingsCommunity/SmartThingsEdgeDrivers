@@ -53,6 +53,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_ezviz_button:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -94,6 +97,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_ezviz_button:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -110,6 +116,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_ezviz_button:generate_test_message("main", capabilities.button.button.double({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -126,6 +135,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_ezviz_button:generate_test_message("main", capabilities.button.button.held({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -159,7 +171,10 @@ test.register_coroutine_test(
         }
       )
       test.socket.zigbee:__expect_send({ mock_device_ezviz_button.id, ZoneStatusAttribute:read(mock_device_ezviz_button) })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -182,7 +197,10 @@ test.register_coroutine_test(
         mock_device_ezviz_button:generate_test_message("main", capabilities.button.button.pushed({ state_change = false }))
       )
 
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

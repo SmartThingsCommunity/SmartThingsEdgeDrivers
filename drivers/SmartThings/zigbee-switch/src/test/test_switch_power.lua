@@ -123,7 +123,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.Divisor:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, SimpleMetering.attributes.Multiplier:read(mock_device) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -177,6 +180,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -236,7 +242,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_aurora_relay_device.id, ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_aurora_relay_device) })
     test.socket.zigbee:__expect_send({ mock_aurora_relay_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_aurora_relay_device) })
     mock_aurora_relay_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -303,7 +312,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_vimar_device.id, ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_vimar_device) })
     test.socket.zigbee:__expect_send({ mock_vimar_device.id, SimpleMetering.attributes.InstantaneousDemand:read(mock_vimar_device) })
     mock_vimar_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 

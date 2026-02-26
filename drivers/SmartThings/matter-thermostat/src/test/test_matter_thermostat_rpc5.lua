@@ -135,6 +135,9 @@ test.register_message_test(
         clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1, 35 * 100)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

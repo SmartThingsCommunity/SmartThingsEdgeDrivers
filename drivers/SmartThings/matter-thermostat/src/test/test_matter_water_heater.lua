@@ -115,6 +115,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 70.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -137,6 +140,9 @@ test.register_message_test(
         clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, WATER_HEATER_EP, 80*100)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -225,6 +231,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -247,6 +256,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 15, unit = "Wh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -316,6 +328,9 @@ test.register_coroutine_test(
     test_init = function()
       test_init()
     end
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -415,6 +430,9 @@ test.register_message_test(
         clusters.WaterHeaterMode.commands.ChangeToMode(mock_device, WATER_HEATER_EP, 0) -- Index is Water Heater Mode 1
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

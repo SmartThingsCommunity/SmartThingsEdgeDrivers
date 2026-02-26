@@ -133,6 +133,9 @@ test.register_message_test(
         clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, APPLICATION_ENDPOINT, 25 * 100, nil)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -173,6 +176,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device_washer:generate_test_message("main", capabilities.temperatureSetpoint.temperatureSetpoint({value = 30.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

@@ -122,7 +122,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.powerMeter.power({ value = 35.0, unit = "W" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -169,6 +172,9 @@ test.register_coroutine_test(
     test_init = function()
       test_init()
     end
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -191,7 +197,10 @@ test.register_coroutine_test(
       .CumulativeEnergyImported:build_test_report_data(mock_device,
       SOLAR_POWER_EP_ONE,
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 100000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) })             --100Wh
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

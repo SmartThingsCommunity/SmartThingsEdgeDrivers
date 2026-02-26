@@ -47,7 +47,10 @@ test.register_coroutine_test(
         test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
         test.wait_for_events()
       end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -64,6 +67,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState("cooling"))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 test.register_message_test(
@@ -80,6 +86,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -97,6 +106,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -135,7 +147,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -194,7 +209,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }, { visibility = { displayed = false } }))
       )
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -271,7 +289,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
       )
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -403,7 +424,10 @@ test.register_coroutine_test(
       )
       test.mock_time.advance_time(2)
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -435,7 +459,10 @@ test.register_coroutine_test(
     )
     test.mock_time.advance_time(2)
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -447,6 +474,9 @@ test.register_message_test(
         message = { mock_device.id, Thermostat.attributes.ThermostatRunningMode:build_test_attr_report(mock_device,
                                                                                                         3), }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

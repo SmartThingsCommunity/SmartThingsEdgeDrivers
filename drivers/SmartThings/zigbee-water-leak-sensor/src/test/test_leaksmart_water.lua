@@ -40,7 +40,10 @@ test.register_coroutine_test(
       local alert_command = ApplianceEventsAlerts.client.commands.AlertsNotification.build_test_rx(mock_device, 0x01, {0x001181})
       test.socket.zigbee:__queue_receive({ mock_device.id, alert_command })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.waterSensor.water.wet()))
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -49,7 +52,10 @@ test.register_coroutine_test(
       local alert_command = ApplianceEventsAlerts.client.commands.AlertsNotification.build_test_rx(mock_device, 0x01, {0x000081})
       test.socket.zigbee:__queue_receive({ mock_device.id, alert_command })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.waterSensor.water.dry()))
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -58,7 +64,10 @@ test.register_coroutine_test(
       local alert_command = ApplianceEventsAlerts.client.commands.AlertsNotification.build_test_rx(mock_device, 0x01, {0x000581})
       test.socket.zigbee:__queue_receive({ mock_device.id, alert_command })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.waterSensor.water.dry()))
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -67,7 +76,10 @@ test.register_coroutine_test(
       local alert_command = ApplianceEventsAlerts.client.commands.AlertsNotification.build_test_rx(mock_device, 0x01, {0x001081})
       test.socket.zigbee:__queue_receive({ mock_device.id, alert_command })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.waterSensor.water.dry()))
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -76,7 +88,10 @@ test.register_coroutine_test(
       local alert_command = ApplianceEventsAlerts.client.commands.AlertsNotification.build_test_rx(mock_device, 0x01, {0x001281})
       test.socket.zigbee:__queue_receive({ mock_device.id, alert_command })
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.waterSensor.water.dry()))
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 -- test.register_coroutine_test(
@@ -161,7 +176,10 @@ test.register_coroutine_test(
                                          IASZone.attributes.ZoneStatus:read(mock_device)
                                       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

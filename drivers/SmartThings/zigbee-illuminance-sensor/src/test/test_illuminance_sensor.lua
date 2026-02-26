@@ -44,6 +44,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
      }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -63,6 +66,9 @@ test.register_message_test(
          direction = "send",
          message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
      }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -98,7 +104,10 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({ mock_device.id, IlluminanceMeasurement.attributes.MeasuredValue:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

@@ -61,6 +61,9 @@ test.register_message_test(
           { device_uuid = mock_switch.id, capability_id = "powerMeter", capability_attr_id = "power" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -80,6 +83,9 @@ test.register_message_test(
         direction = "send",
         message = mock_switch:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -110,6 +116,9 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -143,6 +152,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -152,7 +164,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({mock_switch.id, { capability = "energyMeter", component = "main", command = "resetEnergyMeter", args = {}}})
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command( mock_switch, Meter:Reset({})))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command( mock_switch, Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

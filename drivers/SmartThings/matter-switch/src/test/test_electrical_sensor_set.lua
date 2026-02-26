@@ -232,6 +232,9 @@ test.register_message_test(
 				clusters.OnOff.server.commands.On(mock_device, 2)
 			}
 		}
+	},
+	{
+	   min_api_version = 19
 	}
 )
 
@@ -262,6 +265,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, 2)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -289,6 +295,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -354,7 +363,10 @@ test.register_coroutine_test(
           energy = 39.0
         }))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -376,7 +388,10 @@ test.register_coroutine_test(
         )
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -435,7 +450,10 @@ test.register_coroutine_test(
         }))
       )
     end,
-    { test_init = test_init_periodic }
+    { test_init = test_init_periodic },
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -457,7 +475,10 @@ test.register_coroutine_test(
       parent_assigned_child_key = string.format("%d", 4)
     })
   end,
-  { test_init = test_init }
+  { test_init = test_init },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -469,7 +490,10 @@ test.register_coroutine_test(
     test.socket.matter:__queue_receive({ mock_device_periodic.id, clusters.PowerTopology.attributes.AvailableEndpoints:build_test_report_data(mock_device_periodic, 1, {uint32(1)})})
     mock_device_periodic:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
   end,
-  { test_init = test_init_periodic }
+  { test_init = test_init_periodic },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -584,7 +608,10 @@ test.register_coroutine_test(
     )
     -- no powerConsumptionReport will be emitted now, since it has not been 15 minutes since the previous report (even though it was the child).
   end,
-  { test_init = test_init }
+  { test_init = test_init },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -652,7 +679,10 @@ test.register_coroutine_test(
       }))
     )
   end,
-  { test_init = test_init_periodic }
+  { test_init = test_init_periodic },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -732,6 +762,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 

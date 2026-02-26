@@ -67,6 +67,9 @@ test.register_message_test(
                                                                             data_types.Uint8(40),
                                                                             data_types.Enum8(3)) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -87,6 +90,9 @@ test.register_message_test(
                                                                             data_types.Uint8(0x28),
                                                                             data_types.Enum8(0)) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -107,6 +113,9 @@ test.register_message_test(
                                                                             data_types.Uint8(40),
                                                                             data_types.Enum8(3)) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -127,6 +136,9 @@ test.register_message_test(
                                                                             data_types.Uint8(40),
                                                                             data_types.Enum8(0)) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -147,6 +159,9 @@ test.register_message_test(
                                                                             data_types.Uint8(40),
                                                                             data_types.Enum8(0)) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -167,6 +182,9 @@ test.register_message_test(
                                                                             data_types.Uint8(40),
                                                                             data_types.Enum8(3)) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -229,7 +247,10 @@ test.register_coroutine_test(
     })
 
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -250,6 +271,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -291,6 +315,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -337,7 +364,10 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.alarm.alarm.siren()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -356,7 +386,10 @@ test.register_coroutine_test(
                                                                                   data_types.Uint16(0x0032),
                                                                                   data_types.Uint8(40),
                                                                                   data_types.Enum8(0)) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

@@ -59,7 +59,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.alarm.alarm.both({})))
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.switch.switch.on({})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -90,7 +93,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.alarm.alarm.siren({})))
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.switch.switch.on({})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -120,7 +126,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.alarm.alarm.strobe({})))
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.switch.switch.on({})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -150,7 +159,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.alarm.alarm.off({})))
     test.socket.capability:__expect_send(mock_siren:generate_test_message("main", capabilities.switch.switch.off({})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

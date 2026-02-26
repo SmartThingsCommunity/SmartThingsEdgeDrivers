@@ -59,6 +59,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -78,6 +81,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -94,6 +100,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -110,6 +119,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -123,7 +135,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, move_command })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(10)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -136,7 +151,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, move_command })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(100)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -148,7 +166,10 @@ test.register_coroutine_test(
     step_command.body.zcl_header.frame_ctrl = frm_ctrl
     test.socket.zigbee:__queue_receive({ mock_device.id, step_command })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(90)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -160,7 +181,10 @@ test.register_coroutine_test(
     step_command.body.zcl_header.frame_ctrl = frm_ctrl
     test.socket.zigbee:__queue_receive({ mock_device.id, step_command })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(100)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -174,7 +198,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.held(
                                                                             { state_change = true }
                                                                             )))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -187,7 +214,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed(
                                             { state_change = true }
                                             )))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -214,7 +244,10 @@ test.register_coroutine_test(
                                                                               Scenes.ID)
                                        })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

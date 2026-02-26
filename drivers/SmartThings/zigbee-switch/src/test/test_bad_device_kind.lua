@@ -41,6 +41,9 @@ test.register_message_test(
         channel = "capability",
         direction = "receive",
         message = { mock_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
+  },
+  {
+     min_api_version = 19
   }
 )
 

@@ -161,6 +161,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 41 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -180,6 +183,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -199,6 +205,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -231,6 +240,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -250,6 +262,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5)))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -282,6 +297,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -316,6 +334,9 @@ test.register_message_test(
           refresh_commands(mock_device)
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -343,6 +364,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -355,7 +379,10 @@ test.register_coroutine_test(
     })
     mock_device_presence_sensor:expect_metadata_update({ profile = "presence-illuminance-temperature-humidity-battery" })
   end,
-  { test_init = test_init_presence_sensor }
+  { test_init = test_init_presence_sensor },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

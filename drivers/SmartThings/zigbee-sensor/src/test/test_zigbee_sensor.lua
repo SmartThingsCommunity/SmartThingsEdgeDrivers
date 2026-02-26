@@ -119,7 +119,10 @@ test.register_coroutine_test(
     function ()
       test.socket.zigbee:__queue_receive({mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x0015)})
       mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_CONTACT_SENSOR_PROFILE})
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -128,7 +131,10 @@ test.register_coroutine_test(
     function ()
       test.socket.zigbee:__queue_receive({mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x000d)})
       mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_MOTION_SENSOR_PROFILE})
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -136,7 +142,10 @@ test.register_coroutine_test(
     function ()
       test.socket.zigbee:__queue_receive({mock_device_motion_illuminance.id, ZoneTypeAttribute:build_test_attr_report(mock_device_motion_illuminance, 0x000d)})
       mock_device_motion_illuminance:expect_metadata_update({profile = ZIGBEE_GENERIC_MOTION_ILLUMINANCE_PROFILE})
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -144,7 +153,10 @@ test.register_coroutine_test(
     function ()
       test.socket.zigbee:__queue_receive({mock_device_generic_sensor.id, ZoneTypeAttribute:build_test_attr_report(mock_device_generic_sensor, 0x002a)})
       mock_device_generic_sensor:expect_metadata_update({profile = ZIGBEE_GENERIC_WATERLEAK_SENSOR_PROFILE})
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -160,6 +172,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_contact_sensor:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -176,6 +191,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_sensor:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -192,6 +210,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_illuminance:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -208,6 +229,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_waterleak_sensor:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -224,6 +248,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_contact_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -240,6 +267,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_contact_sensor:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -258,6 +288,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_contact_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -276,6 +309,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_contact_sensor:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -292,6 +328,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -308,6 +347,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -324,6 +366,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -340,6 +385,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -356,6 +404,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_illuminance:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -372,6 +423,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_illuminance:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -391,6 +445,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_illuminance:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
      }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -407,6 +464,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_illuminance:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -423,6 +483,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_motion_illuminance:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -439,6 +502,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_waterleak_sensor:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -455,6 +521,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_waterleak_sensor:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -471,6 +540,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_waterleak_sensor:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -487,6 +559,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_waterleak_sensor:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -597,7 +672,10 @@ test.register_coroutine_test(
       )
       test.socket.zigbee:__expect_send({ mock_device_contact_sensor.id, ZoneStatusAttribute:read(mock_device_contact_sensor) })
 
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -614,7 +692,10 @@ test.register_coroutine_test(
         }
       )
       test.socket.zigbee:__expect_send({ mock_device_motion_sensor.id, ZoneStatusAttribute:read(mock_device_motion_sensor) })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -631,7 +712,10 @@ test.register_coroutine_test(
         }
       )
       test.socket.zigbee:__expect_send({ mock_device_motion_illuminance.id, ZoneStatusAttribute:read(mock_device_motion_illuminance) })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -648,7 +732,10 @@ test.register_coroutine_test(
         }
       )
       test.socket.zigbee:__expect_send({ mock_device_waterleak_sensor.id, ZoneStatusAttribute:read(mock_device_waterleak_sensor) })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -719,7 +806,10 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device_contact_sensor.id, IASZone.attributes.ZoneStatus:read(mock_device_contact_sensor) })
 
       mock_device_contact_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -782,7 +872,10 @@ test.register_coroutine_test(
           }
       )
       mock_device_motion_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -845,7 +938,10 @@ test.register_coroutine_test(
           }
       )
       mock_device_motion_illuminance:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -909,7 +1005,10 @@ test.register_coroutine_test(
           }
       )
       mock_device_waterleak_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

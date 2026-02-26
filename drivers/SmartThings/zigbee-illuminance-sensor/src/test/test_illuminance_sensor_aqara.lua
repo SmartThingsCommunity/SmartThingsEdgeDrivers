@@ -51,7 +51,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -89,7 +92,10 @@ test.register_coroutine_test(
         , data_types.Uint8, 1) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -109,6 +115,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -128,6 +137,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

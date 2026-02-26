@@ -49,6 +49,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_notification:generate_test_message("main", capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -73,6 +76,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_notification:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -92,6 +98,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_notification:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -116,6 +125,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_notification:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

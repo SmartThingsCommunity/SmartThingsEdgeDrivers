@@ -101,6 +101,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, APPLICATION_ENDPOINT)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -166,6 +169,9 @@ test.register_message_test(
           }))
       }
     }, -- on receiving NO ERROR we don't do anything.
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -231,6 +237,9 @@ test.register_message_test(
           }))
       }
     }, -- on receiving NO ERROR we don't do anything.
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -296,6 +305,9 @@ test.register_message_test(
           }))
       }
     }, -- on receiving NO ERROR we don't do anything.
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -372,6 +384,9 @@ test.register_message_test(
           }))
       }
     }, -- on receiving NO ERROR we don't do anything.
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -433,6 +448,9 @@ test.register_message_test(
         clusters.DishwasherMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, 1) --1 is the index where Super Dry is stored.
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -470,6 +488,9 @@ test.register_message_test(
         clusters.TemperatureControl.server.commands.SetTemperature(mock_device, APPLICATION_ENDPOINT, nil, 0) --0 is the index where Level1 is stored.
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -526,6 +547,9 @@ test.register_message_test(
         clusters.TemperatureControl.commands.SetTemperature(mock_device, APPLICATION_ENDPOINT, 40 * 100, nil)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 

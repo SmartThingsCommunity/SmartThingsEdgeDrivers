@@ -52,7 +52,10 @@ test.register_coroutine_test(
       mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6000 })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -104,7 +107,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -128,7 +134,10 @@ test.register_coroutine_test(
         ColorControl.commands.MoveToColorTemperature(mock_device, temp_in_mired, 0x0000)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -140,7 +149,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

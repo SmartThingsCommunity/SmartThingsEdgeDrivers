@@ -90,7 +90,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ profile = "smoke-co-temp-humidity-comeas-battery" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -102,7 +105,10 @@ test.register_coroutine_test(
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(0)})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -119,7 +125,10 @@ test.register_coroutine_test(
         "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

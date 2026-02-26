@@ -74,6 +74,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -104,6 +107,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -134,6 +140,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -164,7 +173,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -194,7 +206,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -213,7 +228,10 @@ test.register_coroutine_test(
             SwitchMultilevel:StopLevelChange({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -244,7 +262,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -274,7 +295,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -299,6 +323,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter_venetian:generate_test_message("venetianBlind", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -329,7 +356,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({}, {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {2}})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 do
@@ -351,7 +381,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -374,7 +408,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -397,7 +435,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -420,7 +462,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -443,7 +489,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -466,7 +516,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -507,7 +561,10 @@ test.register_coroutine_test(
         capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, { visibility = { displayed = false }})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -523,7 +580,10 @@ test.register_coroutine_test(
     })
   })
   mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter-venetian" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -539,7 +599,10 @@ test.register_coroutine_test(
       })
     })
     mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -558,7 +621,10 @@ test.register_coroutine_test(
     local actualCachedEvent = utils.stringify_table(mock_qubino_flush_shutter.transient_store.blinds_last_command)
     assert(expectedCachedEvent == actualCachedEvent, "driver should cache 'opening' event when targetLevel > currentLevel")
     assert(targetValue == mock_qubino_flush_shutter.transient_store.shade_target, "driver should chache correct level value")
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -585,7 +651,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 10, unit = "W"}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -615,7 +684,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_qubino_flush_shutter:generate_test_message("main", capabilities.powerMeter.power({value = 0, unit = "W"}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -639,6 +711,9 @@ test.register_message_test(
       direction = "send",
       message = mock_qubino_flush_shutter:generate_test_message("main", capabilities.energyMeter.energy({value = 50, unit = "kWh"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -662,7 +737,10 @@ test.register_coroutine_test(
         Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 do
@@ -692,7 +770,11 @@ do
           Configuration:Get({ parameter_number = 71 })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 

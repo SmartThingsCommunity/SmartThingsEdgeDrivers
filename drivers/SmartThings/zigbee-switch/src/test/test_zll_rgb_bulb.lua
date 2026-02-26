@@ -83,7 +83,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -95,7 +98,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -107,7 +113,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -130,6 +139,9 @@ test.register_coroutine_test(
         test.mock_device.add_test_device(mock_device)
         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "polling")
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -150,7 +162,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -170,7 +185,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -190,7 +208,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 local test_data = {
@@ -235,7 +256,11 @@ for _, data in ipairs(test_data) do
 
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -280,7 +305,11 @@ for _, data in ipairs(test_data) do
 
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -319,7 +348,10 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -357,7 +389,10 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -381,7 +416,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentX:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentY:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -393,7 +431,10 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.hue(75)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.saturation(65)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -405,7 +446,10 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.hue(75)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.saturation(65)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -417,7 +461,10 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.hue(75)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.saturation(65)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -429,7 +476,10 @@ test.register_coroutine_test(
 
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.hue(75)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.saturation(65)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

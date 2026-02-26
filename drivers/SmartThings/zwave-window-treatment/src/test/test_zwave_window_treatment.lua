@@ -79,6 +79,9 @@ test.register_message_test(
         direction = "send",
         message = mock_window_shade_basic:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -102,6 +105,9 @@ test.register_message_test(
         direction = "send",
         message = mock_window_shade_basic:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -125,6 +131,9 @@ test.register_message_test(
         direction = "send",
         message = mock_window_shade_basic:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -155,6 +164,9 @@ test.register_message_test(
       direction = "send",
       message = mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -185,6 +197,9 @@ test.register_message_test(
       direction = "send",
       message = mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -215,6 +230,9 @@ test.register_message_test(
       direction = "send",
       message = mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -246,7 +264,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -277,7 +298,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -296,7 +320,10 @@ test.register_coroutine_test(
             SwitchMultilevel:StopLevelChange({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -327,7 +354,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -358,7 +388,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -384,7 +417,10 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShade.windowShade.open()))
     test.socket.capability:__expect_send(mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -410,7 +446,10 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
     test.socket.capability:__expect_send(mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -449,7 +488,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 
@@ -489,7 +531,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -528,7 +573,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -555,7 +603,10 @@ test.register_coroutine_test(
         Basic:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -567,7 +618,10 @@ test.register_coroutine_test(
         {"open", "close", "pause"}, { visibility = { displayed = false } }
       ))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

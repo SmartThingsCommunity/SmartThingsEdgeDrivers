@@ -42,6 +42,9 @@ test.register_message_test(
       direction = "receive",
       message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Basic:Report({ value = 0xFF })) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -63,6 +66,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -87,6 +93,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -119,7 +128,11 @@ do
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.switchLevel.level(level))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -161,6 +174,9 @@ test.register_message_test(
         SwitchMultilevel:Get({})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 end
@@ -185,7 +201,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -208,7 +227,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -233,7 +255,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

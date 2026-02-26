@@ -91,6 +91,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -117,6 +120,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -142,6 +148,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -167,6 +176,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -189,6 +201,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 2.7, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -210,6 +225,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.027, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -279,7 +297,10 @@ test.register_coroutine_test(
                                          SimpleMetering.attributes.Divisor:read(mock_device)
                                        })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 

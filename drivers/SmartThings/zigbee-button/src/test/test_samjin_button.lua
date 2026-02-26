@@ -88,7 +88,10 @@ test.register_coroutine_test(
       IASZone.server.commands.ZoneEnrollResponse(mock_device, IasEnrollResponseCode.SUCCESS, 0x00)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -135,7 +138,10 @@ test.register_coroutine_test(
     --   mock_device.id,
     --   IASZone.attributes.ZoneStatus:read(mock_device)
     -- })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

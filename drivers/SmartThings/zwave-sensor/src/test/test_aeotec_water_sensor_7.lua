@@ -60,6 +60,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -79,6 +82,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -98,6 +104,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -117,6 +126,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -136,6 +148,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -161,7 +176,10 @@ test.register_coroutine_test(
       test.wait_for_events()
       test.mock_time.advance_time(10)
       test.socket.capability:__expect_send(mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

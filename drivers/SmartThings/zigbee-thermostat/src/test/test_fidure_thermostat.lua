@@ -61,7 +61,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -73,6 +76,9 @@ test.register_message_test(
         message = { mock_device.id, Thermostat.attributes.ThermostatRunningMode:build_test_attr_report(mock_device,
                                                                                                         3), }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

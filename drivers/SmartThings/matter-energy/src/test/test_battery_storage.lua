@@ -102,7 +102,10 @@ test.register_coroutine_test(
         "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 test.register_coroutine_test(
   "Battery charge state  must reported properly",
@@ -157,7 +160,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main", capabilities.chargingState.chargingState.error())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -171,7 +177,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.powerMeter.power({ value = 30.0, unit = "W" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -185,7 +194,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.powerMeter.power({ value = 30.0, unit = "W" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -289,6 +301,9 @@ test.register_coroutine_test(
     test_init = function()
       test_init()
     end
+  },
+  {
+     min_api_version = 19
   }
 )
 

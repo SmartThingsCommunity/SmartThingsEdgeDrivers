@@ -172,6 +172,9 @@ test.register_message_test(
           }))
       }
     }, -- on receiving NO ERROR we don't do anything.
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -255,6 +258,9 @@ test.register_message_test(
       test_init()
       init_supported_microwave_oven_modes()
     end
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -332,6 +338,9 @@ test.register_message_test(
           }))
       }
     }, -- on receiving NO ERROR we don't do anything.
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -444,6 +453,9 @@ test.register_message_test(
           }))
       }
     }, -- on receiving NO ERROR we don't do anything.
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -467,6 +479,9 @@ test.register_message_test(
         maximum = 900
       },{visibility={displayed=false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -557,6 +572,9 @@ test.register_message_test(
           300)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 

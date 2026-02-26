@@ -223,7 +223,10 @@ test.register_coroutine_test(
     req:merge(DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device, 10))
     test.socket.matter:__expect_send({mock_device.id, req})
     expect_reload_all_codes_messages(mock_device)
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -236,7 +239,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -257,6 +263,9 @@ test.register_message_test(
         capabilities.lockCodes.minCodeLength(4, {visibility = {displayed = false}})
       ),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -278,6 +287,9 @@ test.register_message_test(
         capabilities.lockCodes.maxCodeLength(4, {visibility = {displayed = false}})
       ),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -299,6 +311,9 @@ test.register_message_test(
         capabilities.lockCodes.maxCodes(16, {visibility = {displayed = false}})
       ),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -318,6 +333,9 @@ test.register_message_test(
         ),
       },
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -340,6 +358,9 @@ test.register_message_test(
         ),
       },
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -352,7 +373,10 @@ test.register_coroutine_test(
       }
     )
     expect_reload_all_codes_messages(mock_device)
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -394,7 +418,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -429,7 +456,10 @@ test.register_coroutine_test(
           .codeChanged("1 unset", {data = {codeName = "Code 1"}, state_change = true})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -532,7 +562,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -578,7 +611,10 @@ test.register_coroutine_test(
           capabilities.lockCodes.lockCodes(json.encode({}), {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -635,7 +671,10 @@ test.register_coroutine_test(
           .lockCodes(json.encode({["1"] = "test"}), {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -667,7 +706,10 @@ test.register_coroutine_test(
           .lockCodes(json.encode({["1"] = "foo"}), {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 test.register_coroutine_test(
   "Setting a user code name via setCode should be handled", function()
@@ -698,7 +740,10 @@ test.register_coroutine_test(
           .lockCodes(json.encode({["1"] = "foo"}), {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -737,6 +782,9 @@ test.register_message_test(
         )
       ),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -777,7 +825,10 @@ test.register_coroutine_test(
           capabilities.lockCodes.lockCodes(json.encode({}), {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -853,7 +904,10 @@ test.register_coroutine_test(
       )
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

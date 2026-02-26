@@ -99,6 +99,9 @@ test.register_message_test(
         clusters.Thermostat.attributes.AbsMaxCoolSetpointLimit:build_test_report_data(mock_device, 1, 3222)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -121,6 +124,9 @@ test.register_message_test(
         clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit:build_test_report_data(mock_device, 1, 3222)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -143,6 +149,9 @@ test.register_message_test(
         clusters.TemperatureMeasurement.attributes.MaxMeasuredValue:build_test_report_data(mock_device, 1, 4000)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

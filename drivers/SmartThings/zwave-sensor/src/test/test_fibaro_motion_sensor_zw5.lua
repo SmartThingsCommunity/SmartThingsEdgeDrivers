@@ -77,7 +77,10 @@ test.register_coroutine_test(
         capabilities.threeAxis.threeAxis({value = {200, 200, 400}, unit = 'mG'})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -213,7 +216,10 @@ test.register_coroutine_test(
           mock_sensor,
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ACCELERATION_Z_AXIS, scale = SensorMultilevel.scale.acceleration_z_axis.METERS_PER_SQUARE_SECOND})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

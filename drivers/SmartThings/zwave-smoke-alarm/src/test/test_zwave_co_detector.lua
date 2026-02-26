@@ -53,6 +53,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -72,6 +75,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 test.register_message_test(
@@ -90,6 +96,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -109,6 +118,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -128,6 +140,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -147,6 +162,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -161,6 +179,9 @@ test.register_message_test(
           alarm_level = 1
         })) }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 

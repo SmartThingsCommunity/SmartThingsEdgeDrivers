@@ -42,6 +42,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "carbonMonoxideDetector", capability_attr_id = "carbonMonoxide" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -66,6 +69,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "carbonMonoxideDetector", capability_attr_id = "carbonMonoxide" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -91,6 +97,9 @@ test.register_message_test(
         }
       },
 
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -115,6 +124,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "carbonMonoxideDetector", capability_attr_id = "carbonMonoxide" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -131,6 +143,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -199,7 +214,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 

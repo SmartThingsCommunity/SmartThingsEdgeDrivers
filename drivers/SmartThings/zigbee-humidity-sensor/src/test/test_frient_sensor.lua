@@ -67,6 +67,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -83,6 +86,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -99,6 +105,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -141,7 +150,10 @@ test.register_coroutine_test(
       TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 0x001E, 0x0E10, 100)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -160,6 +172,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 65 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -184,6 +199,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -217,7 +235,10 @@ test.register_coroutine_test(
                                            )
         })
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

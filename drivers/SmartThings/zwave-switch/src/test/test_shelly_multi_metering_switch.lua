@@ -113,7 +113,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -162,7 +165,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -211,7 +217,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -236,6 +245,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -261,6 +273,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -286,6 +301,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -311,6 +329,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -351,6 +372,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -391,6 +415,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -418,7 +445,11 @@ do
         message = mock_parent_device:generate_test_message(
           "main", capabilities.energyMeter.energy({ value = energy, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -448,7 +479,11 @@ do
           "main", capabilities.energyMeter.energy({ value = energy, unit = "kWh" })
         )
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -476,7 +511,11 @@ do
         message = mock_parent_device:generate_test_message(
           "main", capabilities.powerMeter.power({ value = power, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -504,7 +543,11 @@ do
         message = mock_child_device:generate_test_message(
           "main", capabilities.powerMeter.power({ value = power, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -535,7 +578,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -565,7 +611,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 do
@@ -656,7 +705,11 @@ do
           )
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -669,7 +722,10 @@ test.register_coroutine_test(
         current_value = 0xFF
       })
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

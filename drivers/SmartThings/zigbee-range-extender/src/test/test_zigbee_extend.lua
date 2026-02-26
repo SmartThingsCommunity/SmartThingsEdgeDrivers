@@ -28,7 +28,10 @@ test.register_coroutine_test(
             Basic.attributes.ZCLVersion:read(mock_device)
           }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 -- test.register_coroutine_test(

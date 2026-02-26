@@ -674,91 +674,130 @@ test.register_coroutine_test(
   "Test profile change on init for onoff parent cluster as server",
   function()
   end,
-  { test_init = test_init_onoff }
+  { test_init = test_init_onoff },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for dimmer parent cluster as server",
   function()
   end,
-  { test_init = test_init_dimmer }
+  { test_init = test_init_dimmer },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for color dimmer parent cluster as server",
   function()
   end,
-  { test_init = test_init_color_dimmer }
+  { test_init = test_init_color_dimmer },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test init for onoff parent cluster as client",
   function()
   end,
-  { test_init = test_init_onoff_client }
+  { test_init = test_init_onoff_client },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test init for device with requiring the switch category as a vendor override",
   function()
   end,
-  { test_init = test_init_switch_vendor_override }
+  { test_init = test_init_switch_vendor_override },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test init for mounted onoff control parent cluster as server",
   function()
   end,
-  { test_init = test_init_mounted_on_off_control }
+  { test_init = test_init_mounted_on_off_control },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test init for mounted dimmable load control parent cluster as server",
   function()
   end,
-  { test_init = test_init_mounted_dimmable_load_control }
+  { test_init = test_init_mounted_dimmable_load_control },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for water valve parent cluster as server",
   function()
   end,
-  { test_init = test_init_water_valve }
+  { test_init = test_init_water_valve },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for onoff parent cluster as client and onoff child as server",
   function()
   end,
-  { test_init = test_init_parent_client_child_server }
+  { test_init = test_init_parent_client_child_server },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for onoff device when parent and child are both server",
   function()
   end,
-  { test_init = test_init_parent_child_switch_types }
+  { test_init = test_init_parent_child_switch_types },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test child device attribute subscriptions when parent device has clusters that are not a superset of child device clusters",
   function()
   end,
-  { test_init = test_init_parent_child_different_types }
+  { test_init = test_init_parent_child_different_types },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test child device attributes not subscribed to for unsupported device type for child device",
   function()
   end,
-  { test_init = test_init_parent_child_unsupported_device_type }
+  { test_init = test_init_parent_child_unsupported_device_type },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test init for light with motion sensor",
   function()
   end,
-  { test_init = test_init_light_level_motion }
+  { test_init = test_init_light_level_motion },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

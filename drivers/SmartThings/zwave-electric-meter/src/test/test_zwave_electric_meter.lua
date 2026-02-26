@@ -45,6 +45,9 @@ test.register_message_test(
         direction = "send",
         message = mock_meter:generate_test_message("main", capabilities.powerMeter.power({ value = 27, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -64,6 +67,9 @@ test.register_message_test(
         direction = "send",
         message = mock_meter:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -94,6 +100,9 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    },
+    {
+       min_api_version = 19
     }
 )
 

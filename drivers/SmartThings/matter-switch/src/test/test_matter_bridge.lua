@@ -71,7 +71,10 @@ test.register_coroutine_test(
   "Profile should not change for devices with aggregator device type (bridges)",
   function()
   end,
-  { test_init = test_init_mock_bridge }
+  { test_init = test_init_mock_bridge },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

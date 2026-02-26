@@ -41,7 +41,10 @@ test.register_coroutine_test(
           Configuration:Set({parameter_number=7, configuration_value=1, size=1})
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

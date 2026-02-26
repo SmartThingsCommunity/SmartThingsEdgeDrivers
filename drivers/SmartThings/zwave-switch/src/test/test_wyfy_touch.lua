@@ -69,7 +69,10 @@ test.register_coroutine_test(
       Configuration:Set({parameter_number = 2, size = 1, configuration_value = 1})
     ))
     mock_parent_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -94,6 +97,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -119,6 +125,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -144,6 +153,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -169,6 +181,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -199,6 +214,9 @@ test.register_message_test(
       direction = "send",
       message = mock_parent_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -229,6 +247,9 @@ test.register_message_test(
       direction = "send",
       message = mock_child_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -260,7 +281,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -290,7 +314,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 local function prepare_metadata(device, endpoint, profile)
@@ -321,7 +348,10 @@ test.register_coroutine_test(
               )
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -337,7 +367,10 @@ test.register_coroutine_test(
               )
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

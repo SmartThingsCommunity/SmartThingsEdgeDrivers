@@ -64,7 +64,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE
       , data_types.Uint8, 1) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -85,7 +88,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.batteryLevel.quantity(1)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.batteryLevel.battery("normal")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -100,7 +106,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.batteryLevel.battery("normal")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -115,7 +124,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.batteryLevel.battery("critical")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -130,7 +142,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.batteryLevel.battery("normal")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -145,7 +160,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.batteryLevel.battery("warning")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -160,7 +178,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.batteryLevel.battery("critical")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -175,7 +196,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.contactSensor.contact.closed()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -190,7 +214,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.contactSensor.contact.open()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

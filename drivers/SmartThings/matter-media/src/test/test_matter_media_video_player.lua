@@ -238,6 +238,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -273,6 +276,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.mediaPlayback.playbackStatus.playing())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -308,6 +314,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.mediaPlayback.playbackStatus.paused())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -343,6 +352,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.mediaPlayback.playbackStatus.stopped())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -381,6 +393,9 @@ test.register_message_test(
           clusters.MediaPlayback.server.commands.FastForward(mock_device, 10)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -419,6 +434,9 @@ test.register_message_test(
           clusters.MediaPlayback.server.commands.Next(mock_device, 10)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -585,6 +603,9 @@ test.register_message_test(
           clusters.KeypadInput.server.commands.SendKey(mock_device, 10, clusters.KeypadInput.types.CecKeyCode.ROOT_MENU)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -615,7 +636,10 @@ test.register_coroutine_test(
       )
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -645,7 +669,10 @@ test.register_coroutine_test(
       )
 
       mock_device_variable_speed:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

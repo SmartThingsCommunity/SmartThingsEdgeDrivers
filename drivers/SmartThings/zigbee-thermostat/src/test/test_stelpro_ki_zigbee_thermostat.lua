@@ -57,6 +57,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.freeze())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -73,6 +76,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -94,6 +100,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 55.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -115,6 +124,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = -1.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -136,6 +148,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 15.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -152,6 +167,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 25.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -168,6 +186,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -187,6 +208,9 @@ test.register_message_test(
         zigbee_test_utils.build_attribute_read(mock_device, Thermostat.ID, {MFR_SETPOINT_MODE_ATTTRIBUTE}, MFG_CODE)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -216,7 +240,10 @@ test.register_coroutine_test(
         Thermostat.attributes.PIHeatingDemand:build_test_attr_report(mock_device, 0)
       })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", ThermostatOperatingState.thermostatOperatingState("idle")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -236,7 +263,10 @@ test.register_coroutine_test(
             {{ MFR_SETPOINT_MODE_ATTTRIBUTE, data_types.Uint16.ID, 0x04}}, MFG_CODE)
       })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", ThermostatMode.thermostatMode.heat()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -266,7 +296,10 @@ test.register_coroutine_test(
         mock_device.id,
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -296,7 +329,10 @@ test.register_coroutine_test(
         mock_device.id,
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -385,7 +421,10 @@ test.register_coroutine_test(
         })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -467,6 +506,9 @@ test.register_message_test(
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -487,7 +529,11 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
       mock_device.id,
       Thermostat.attributes.PIHeatingDemand:read(mock_device)
     })
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test(
   "Setting thermostat mode to eco should generate correct zigbee messages",
@@ -515,7 +561,10 @@ test.register_coroutine_test(
         mock_device.id,
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

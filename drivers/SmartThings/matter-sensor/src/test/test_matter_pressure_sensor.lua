@@ -92,6 +92,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.atmosphericPressureMeasurement.atmosphericPressure({ value = 0, unit = "kPa" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -111,6 +114,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5)))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -140,6 +146,9 @@ test.register_message_test(
           refresh_commands(mock_device)
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 test.run_registered_tests()

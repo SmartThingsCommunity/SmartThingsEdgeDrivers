@@ -59,7 +59,10 @@ test.register_coroutine_test(
           Battery:Get({})
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -93,7 +96,10 @@ test.register_coroutine_test(
         mock_sensor,
         Battery:Get({})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

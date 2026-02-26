@@ -82,6 +82,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_basic:generate_test_message("main", capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -105,6 +108,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_basic:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -128,6 +134,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_basic:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -151,6 +160,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_basic:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -174,6 +186,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_switch_binary:generate_test_message("main", capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -197,6 +212,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_switch_binary:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -220,6 +238,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_switch_binary:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -243,6 +264,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren_switch_binary:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -271,7 +295,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -299,7 +326,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 
@@ -328,7 +358,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -356,7 +389,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -384,7 +420,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -422,7 +461,10 @@ test.register_coroutine_test(
 
     test.socket.device_lifecycle:__queue_receive({ mock_siren_basic.id, "added" })
     test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

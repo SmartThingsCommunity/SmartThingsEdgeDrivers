@@ -238,7 +238,10 @@ test.register_coroutine_test(
   function()
     test_thermostat_device_type_update_modular_profile(mock_device, expected_metadata,
       get_subscribe_request(mock_device, new_cluster_subscribe_list))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -247,7 +250,10 @@ test.register_coroutine_test(
     test_thermostat_device_type_update_modular_profile(mock_device_disorder_endpoints, expected_metadata,
       get_subscribe_request(mock_device_disorder_endpoints, new_cluster_subscribe_list))
   end,
-  { test_init = test_init_disorder_endpoints }
+  { test_init = test_init_disorder_endpoints },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -278,7 +284,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.FanControl.attributes.PercentSetting:write(mock_device, 2, 50)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

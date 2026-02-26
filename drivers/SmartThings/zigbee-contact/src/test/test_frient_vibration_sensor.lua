@@ -298,7 +298,10 @@ test.register_coroutine_test(
             })
 
             mock_device_contact:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -323,6 +326,9 @@ test.register_message_test(
         }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -339,6 +345,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -355,6 +364,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -393,7 +405,10 @@ function()
                 Frient_AccelerationMeasurementCluster.ManufacturerSpecificCode
         ):to_endpoint(POWER_CONFIGURATION_AND_ACCELERATION_ENDPOINT)
     })
-end
+end,
+{
+   min_api_version = 19
+}
 )
 
 test.register_message_test(
@@ -414,6 +429,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive(mock_device))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -435,6 +453,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.active(mock_device))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -454,7 +475,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 200, 100}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -479,7 +503,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.open())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -504,7 +531,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device_contact:generate_test_message("main", capabilities.contactSensor.contact.closed())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

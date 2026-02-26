@@ -88,7 +88,10 @@ test.register_coroutine_test(
       PowerConfiguration.attributes.BatteryVoltage:configure_reporting(mock_device, 30, 3600, 1)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -108,6 +111,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.relativeHumidityMeasurement.humidity({ value = 79 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -128,6 +134,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.relativeHumidityMeasurement.humidity({ value = 0 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -148,6 +157,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.relativeHumidityMeasurement.humidity({ value = 100 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -176,6 +188,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -196,7 +211,10 @@ test.register_coroutine_test(
       capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" })))
     mock_device:expect_native_attr_handler_registration("temperatureMeasurement", "temperature")
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -215,6 +233,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.normal())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -234,6 +255,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -253,6 +277,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.warning())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

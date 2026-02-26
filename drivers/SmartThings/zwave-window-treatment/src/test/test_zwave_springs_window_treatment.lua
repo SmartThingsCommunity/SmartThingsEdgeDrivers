@@ -63,7 +63,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

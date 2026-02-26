@@ -60,6 +60,9 @@ test.register_message_test(
                                                                               data_types.Enum8(0))
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -94,7 +97,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -119,6 +125,9 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    },
+    {
+       min_api_version = 19
     }
 )
 

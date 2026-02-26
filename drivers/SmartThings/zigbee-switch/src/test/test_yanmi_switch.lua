@@ -99,6 +99,9 @@ test.register_message_test(
           { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -129,6 +132,9 @@ test.register_message_test(
           { device_uuid = mock_first_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -159,6 +165,9 @@ test.register_message_test(
           { device_uuid = mock_second_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -190,6 +199,9 @@ test.register_message_test(
           { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -220,6 +232,9 @@ test.register_message_test(
           { device_uuid = mock_first_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -250,6 +265,9 @@ test.register_message_test(
           { device_uuid = mock_second_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -280,6 +298,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x01) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -304,6 +325,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x02) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -328,6 +352,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x03) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -355,6 +382,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x01) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -379,6 +409,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x02) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -403,6 +436,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x03) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

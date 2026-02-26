@@ -140,7 +140,10 @@ test.register_coroutine_test(
   function()
     test_thermostat_device_type_update_modular_profile(mock_device_basic, expected_metadata, subscribe_request_basic)
   end,
-  { test_init = test_init }
+  { test_init = test_init },
+  {
+     min_api_version = 19
+  }
 )
 
 -- run tests

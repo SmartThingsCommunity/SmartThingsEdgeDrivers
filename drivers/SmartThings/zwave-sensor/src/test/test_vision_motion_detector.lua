@@ -66,6 +66,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -85,6 +88,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -104,6 +110,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -123,6 +132,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -161,6 +173,9 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -182,7 +197,10 @@ test.register_coroutine_test(
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

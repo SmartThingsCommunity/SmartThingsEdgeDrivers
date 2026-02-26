@@ -90,7 +90,10 @@ test.register_coroutine_test(
           mock_sensor,
           Configuration:Set({parameter_number = 77, size = 1, configuration_value = 2})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

@@ -118,7 +118,10 @@ test.register_coroutine_test(
     assert(component_to_endpoint_map["electricalSensor"] == ELECTRICAL_SENSOR_EP, "Electrical Sensor Endpoint must be 2")
     assert(component_to_endpoint_map["deviceEnergyManagement"] == DEVICE_ENERGY_MANAGEMENT_DEVICE_EP,
       "Device Energy Management Endpoint must be 3")
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -145,6 +148,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseChargingSession.chargingState.charging({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -193,6 +199,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseChargingSession.chargingState.charging({state_change = true}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -214,6 +223,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseState.faultState.groundFault())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -234,6 +246,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseChargingSession.targetEndTime("2024-08-23T07:47:22Z"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -254,6 +269,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseChargingSession.minCurrent(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -274,6 +292,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseChargingSession.maxCurrent(10000))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -294,6 +315,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseChargingSession.sessionTime(9000))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -314,6 +338,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.evseChargingSession.energyDelivered(900000))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -335,6 +362,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("electricalSensor",
         capabilities.powerSource.powerSource.mains())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -406,6 +436,9 @@ test.register_message_test(
         clusters.EnergyEvseMode.commands.ChangeToMode(mock_device, EVSE_EP, 0) --Index is Auto-Scheduled
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -506,6 +539,9 @@ test.register_message_test(
         clusters.DeviceEnergyManagementMode.commands.ChangeToMode(mock_device, DEVICE_ENERGY_MANAGEMENT_DEVICE_EP, 0) --Index is Grid Energy Management
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

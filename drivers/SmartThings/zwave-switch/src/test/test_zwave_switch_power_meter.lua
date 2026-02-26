@@ -66,6 +66,9 @@ test.register_message_test(
           { device_uuid = mock_switch.id, capability_id = "powerMeter", capability_attr_id = "power" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -80,6 +83,9 @@ test.register_message_test(
           meter_value = 5})
         )}
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -110,6 +116,9 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -143,6 +152,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 

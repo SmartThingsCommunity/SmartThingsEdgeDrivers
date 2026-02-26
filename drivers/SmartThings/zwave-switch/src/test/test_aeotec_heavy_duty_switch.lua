@@ -55,6 +55,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.powerMeter.power({ value = 27, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -76,6 +79,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -117,6 +123,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -127,7 +136,10 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(mock_device, Meter:Reset({})))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(mock_device,
       Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -155,7 +167,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 5000 }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -178,7 +193,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -201,7 +219,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -225,7 +246,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -249,7 +273,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -273,7 +300,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -297,7 +327,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -321,7 +354,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -345,7 +381,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -369,7 +408,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -393,7 +435,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -417,7 +462,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -441,7 +489,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -465,7 +516,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

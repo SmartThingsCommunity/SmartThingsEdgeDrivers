@@ -341,6 +341,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -392,6 +395,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -443,6 +449,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -470,6 +479,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -513,6 +525,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -545,6 +560,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.saturation(72))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -601,6 +619,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.saturation(72))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -649,6 +670,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 50, maximum = 80}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -676,6 +700,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -683,7 +710,10 @@ test.register_coroutine_test(
   "Test child devices are created in order of their endpoints",
   function()
   end,
-  { test_init = test_init_parent_child_endpoints_non_sequential }
+  { test_init = test_init_parent_child_endpoints_non_sequential },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

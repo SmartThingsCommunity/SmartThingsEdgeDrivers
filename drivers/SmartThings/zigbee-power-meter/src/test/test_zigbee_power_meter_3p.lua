@@ -67,7 +67,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 2.0, unit = "kWh"}))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -84,6 +87,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("PhaseA", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -101,6 +107,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseA", capabilities.currentMeasurement.current({ value = 0.34, unit = "A" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -118,6 +127,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseA", capabilities.voltageMeasurement.voltage({ value = 220.0, unit = "V" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -135,6 +147,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("PhaseB", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -152,6 +167,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseB", capabilities.currentMeasurement.current({ value = 0.34, unit = "A" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -169,6 +187,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseB", capabilities.voltageMeasurement.voltage({ value = 220.0, unit = "V" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -186,6 +207,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("PhaseC", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -203,6 +227,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseC", capabilities.currentMeasurement.current({ value = 0.34, unit = "A" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -220,6 +247,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseC", capabilities.voltageMeasurement.voltage({ value = 220.0, unit = "V" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -349,7 +379,10 @@ test.register_coroutine_test(
       SimpleMetering.attributes.InstantaneousDemand:read(mock_device)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

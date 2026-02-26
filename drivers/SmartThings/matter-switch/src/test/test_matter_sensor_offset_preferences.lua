@@ -97,7 +97,11 @@ test.register_coroutine_test("Read appropriate attribute values after tempOffset
         value = 20.0,
         unit = "C"
     })))
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test("Read appropriate attribute values after humidityOffset preference change", function()
     local report = clusters.RelativeHumidityMeasurement.attributes.MeasuredValue:build_test_report_data(mock_device,2, 2000)
@@ -116,7 +120,11 @@ test.register_coroutine_test("Read appropriate attribute values after humidityOf
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",capabilities.relativeHumidityMeasurement.humidity({
         value = 20
     })))
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.set_test_init_function(test_init)
 

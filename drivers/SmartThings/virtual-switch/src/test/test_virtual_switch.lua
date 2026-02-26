@@ -41,6 +41,9 @@ test.register_message_test(
       direction = "send",
       message = mock_simple_device:generate_test_message("main", capabilities.switch.switch.on())
      }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -57,6 +60,9 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("main", capabilities.switch.switch.on({state_change=true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -73,6 +79,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_no_prefs:generate_test_message("main", capabilities.switch.switch.on({state_change=true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -90,6 +99,9 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("main", capabilities.switch.switch.off({state_change=true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -106,6 +118,9 @@ test.register_message_test(
        direction = "send",
        message = mock_simple_device:generate_test_message("main", capabilities.switch.switch.off({state_change=true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -128,6 +143,9 @@ test.register_message_test(
        direction = "send",
        message = mock_simple_device:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -146,7 +164,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_simple_device.id,
       { capability = "switch", component = "main", command = "on", args = {} } })
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.switch.switch.on()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

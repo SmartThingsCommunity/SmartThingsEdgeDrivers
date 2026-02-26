@@ -70,6 +70,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -111,6 +114,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -132,7 +138,11 @@ do
         direction = "send",
         message = mock_inovelli_dimmer:generate_test_message("main", capabilities.energyMeter.energy({ value = energy, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -154,7 +164,11 @@ do
         direction = "send",
         message = mock_inovelli_dimmer:generate_test_message("main", capabilities.powerMeter.power({ value = power, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -188,6 +202,9 @@ test.register_message_test(
         Meter:Get({scale = Meter.scale.electric_meter.WATTS})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -228,7 +245,11 @@ do
           Meter:Get({scale = Meter.scale.electric_meter.WATTS})
         )
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -257,7 +278,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -285,7 +309,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 do
@@ -315,7 +342,11 @@ do
           SwitchMultilevel:Get({})
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 

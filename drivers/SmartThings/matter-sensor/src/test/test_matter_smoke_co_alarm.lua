@@ -122,6 +122,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -167,6 +170,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -212,6 +218,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -270,6 +279,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -328,6 +340,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -373,6 +388,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.batteryLevel.battery.critical()),
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -415,6 +433,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, clusters.SmokeCoAlarm.attributes.COState:read(mock_device)}
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -447,6 +468,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -466,6 +490,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -498,6 +525,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 41 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -546,6 +576,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.carbonMonoxideMeasurement.carbonMonoxideLevel({value = 10, unit = "ppm"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

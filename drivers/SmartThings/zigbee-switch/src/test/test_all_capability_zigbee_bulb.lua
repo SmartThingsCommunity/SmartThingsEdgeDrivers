@@ -99,6 +99,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -124,6 +127,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -149,6 +155,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -175,6 +184,9 @@ test.register_message_test(
                                                                                math.floor(57 * 0xFE / 100),
                                                                                0) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -200,6 +212,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -217,6 +232,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27000.0, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -242,6 +260,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "hue" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -267,6 +288,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -395,7 +419,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 -- test.register_coroutine_test(
@@ -446,6 +473,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -470,6 +500,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -493,6 +526,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -516,6 +552,9 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -550,7 +589,10 @@ test.register_coroutine_test(
       test.mock_time.advance_time(2)
       test.socket.zigbee:__expect_send({mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device)})
       test.socket.zigbee:__expect_send({mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device)})
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 -- This tests that our code responsible for handling conversion errors from Kelvin<->Mireds works as expected
@@ -566,7 +608,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 556)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
     mock_device:expect_native_attr_handler_registration("colorTemperature", "colorTemperature")
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -587,7 +632,10 @@ test.register_coroutine_test(
     --- offset should be reset by a reading under the previous offset
     test.socket.zigbee:__queue_receive({mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 14)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 14.0, unit = "kWh" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 

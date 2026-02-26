@@ -319,7 +319,10 @@ test.register_coroutine_test(
     local subscribe_request_all = get_subscribe_request_all()
     test_aqs_device_type_update_modular_profile(mock_device_all, expected_metadata_all, subscribe_request_all, expected_supported_values_setters)
   end,
-  { test_init = test_init_all }
+  { test_init = test_init_all },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -346,7 +349,10 @@ test.register_coroutine_test(
     local subscribe_request_common = get_subscribe_request_common()
     test_aqs_device_type_update_modular_profile(mock_device_common, expected_metadata_common, subscribe_request_common, expected_supported_values_setters)
   end,
-  { test_init = test_init_common }
+  { test_init = test_init_common },
+  {
+     min_api_version = 19
+  }
 )
 
 -- run tests

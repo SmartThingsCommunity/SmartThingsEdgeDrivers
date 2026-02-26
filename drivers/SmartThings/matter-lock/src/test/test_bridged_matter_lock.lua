@@ -91,7 +91,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     mock_device:expect_metadata_update({ profile = "base-lock-nobattery" })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -99,7 +102,10 @@ test.register_coroutine_test(
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_device_level.id, "doConfigure" })
     mock_device_level:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

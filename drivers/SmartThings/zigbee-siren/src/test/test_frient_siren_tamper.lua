@@ -257,7 +257,10 @@ test.register_coroutine_test(
 
             mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -381,7 +384,10 @@ test.register_coroutine_test(
                             capabilities.tamperAlert.tamper.clear()
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -409,7 +415,10 @@ test.register_coroutine_test(
             -- Expect the OFF command
             get_siren_OFF_commands()
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -436,7 +445,10 @@ test.register_coroutine_test(
             -- Expect the OFF command
             get_siren_OFF_commands()
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -449,7 +461,10 @@ test.register_coroutine_test(
             })
             get_siren_OFF_commands()
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -507,7 +522,10 @@ test.register_coroutine_test(
             -- stop the siren
             -- Expect the OFF command
             get_siren_OFF_commands()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -590,7 +608,10 @@ test.register_coroutine_test(
             )
             -- Expect the OFF command
             get_siren_OFF_commands()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -666,7 +687,10 @@ test.register_coroutine_test(
             -- stop the siren
             -- Expect the OFF command
             get_siren_OFF_commands(expectedWarningDuration)
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -689,7 +713,10 @@ test.register_coroutine_test(
             -- Expect the command with given configuration
             get_squawk_command_new_fw( SquawkMode.SOUND_FOR_SYSTEM_IS_ARMED, IaswdLevel.VERY_HIGH_LEVEL )
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -712,7 +739,10 @@ test.register_coroutine_test(
             -- Expect the command with given configuration
             get_squawk_command_older_fw( SquawkMode.SOUND_FOR_SYSTEM_IS_ARMED, IaswdLevel.VERY_HIGH_LEVEL )
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -754,7 +784,10 @@ test.register_coroutine_test(
             test.mock_time.advance_time(1)
             -- Expect the command with given configuration
             get_squawk_command_new_fw(SquawkMode.SOUND_FOR_SYSTEM_IS_DISARMED, IaswdLevel.MEDIUM_LEVEL)
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -796,7 +829,10 @@ test.register_coroutine_test(
             test.mock_time.advance_time(1)
             -- Expect the command with given configuration
             get_squawk_command_older_fw(SquawkMode.SOUND_FOR_SYSTEM_IS_DISARMED, IaswdLevel.MEDIUM_LEVEL)
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -850,7 +886,10 @@ test.register_coroutine_test(
             )
             -- Expect the command with given configuration
             get_squawk_command_new_fw(SquawkMode.SOUND_FOR_SYSTEM_IS_DISARMED, IaswdLevel.MEDIUM_LEVEL)
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -881,7 +920,10 @@ test.register_coroutine_test(
                     }
             )
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -927,7 +969,10 @@ test.register_coroutine_test(
             )
 
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -951,6 +996,9 @@ test.register_message_test(
         },
         {
             inner_block_ordering = "relaxed"
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -975,6 +1023,9 @@ test.register_message_test(
         },
         {
             inner_block_ordering = "relaxed"
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -991,6 +1042,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -1007,6 +1061,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(50))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -1023,6 +1080,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 

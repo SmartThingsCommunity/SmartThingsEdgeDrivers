@@ -45,7 +45,10 @@ test.register_coroutine_test(
     function()
       test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
       expect_reload_all_codes_messages()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -84,7 +87,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     expect_reload_all_codes_messages()
 
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -131,7 +137,10 @@ test.register_coroutine_test(
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false }})))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -178,7 +187,10 @@ test.register_coroutine_test(
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["0"] = "test"}), { visibility = { displayed = false }})))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 
@@ -204,6 +216,9 @@ test.register_message_test(
         message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("0 unset",
                                                                                        { data = { codeName = "Code 0" }, state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -259,7 +274,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -301,7 +319,10 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockCodes.codeChanged("1 failed", { state_change = true  })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -316,7 +337,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

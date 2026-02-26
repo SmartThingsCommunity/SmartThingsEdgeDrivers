@@ -63,7 +63,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", sensitivityAdjustment.sensitivityAdjustment.High()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", selfCheck.selfCheckState.idle()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", lifeTimeReport.lifeTimeState.normal()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -81,7 +84,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, config_attr_message})
     test.socket.zigbee:__expect_send({mock_device.id, write_attr_messge})
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -97,7 +103,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.gasDetector.gas.detected()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -112,7 +121,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.gasDetector.gas.clear()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -127,7 +139,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.audioMute.mute.muted()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -142,7 +157,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.audioMute.mute.unmuted()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -153,7 +171,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
     cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -163,7 +184,10 @@ test.register_coroutine_test(
       { capability = "audioMute", component = "main", command = "unmute", args = {} } })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.audioMute.mute.muted()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -180,7 +204,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       selfCheck.selfCheckState.selfCheckCompleted()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -194,7 +221,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
     cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_SELF_CHECK_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -211,7 +241,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       lifeTimeReport.lifeTimeState.endOfLife()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -226,7 +259,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       lifeTimeReport.lifeTimeState.normal()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -241,7 +277,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       sensitivityAdjustment.sensitivityAdjustment.Low()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -274,7 +313,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       sensitivityAdjustment.sensitivityAdjustment.Low())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 

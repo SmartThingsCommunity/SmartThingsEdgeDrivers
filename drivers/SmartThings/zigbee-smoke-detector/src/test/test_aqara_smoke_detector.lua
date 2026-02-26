@@ -58,7 +58,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.audioMute.mute.unmuted()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", selfCheck.selfCheckState.idle()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -86,7 +89,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
       data_types.Uint8, 0x01) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -102,7 +108,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.smokeDetector.smoke.detected()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -119,7 +128,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.audioMute.mute.muted()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -132,7 +144,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -149,7 +164,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     selfCheck.selfCheckState.selfCheckCompleted()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -163,7 +181,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_SELF_CHECK_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -181,6 +202,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

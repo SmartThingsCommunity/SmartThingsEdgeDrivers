@@ -456,7 +456,10 @@ test.register_coroutine_test(
       { mock_device_dishwasher.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_dishwasher, dishwasher_ep, 40 * 100, nil) }
     )
   end,
-  { test_init = test_init_dishwasher }
+  { test_init = test_init_dishwasher },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -495,7 +498,10 @@ test.register_coroutine_test(
       { mock_device_dishwasher.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_dishwasher, dishwasher_ep, 50 * 100, nil) }
     )
   end,
-  { test_init = test_init_dishwasher }
+  { test_init = test_init_dishwasher },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -534,7 +540,10 @@ test.register_coroutine_test(
       { mock_device_washer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, washer_ep, 28 * 100, nil) }
     )
   end,
-  { test_init = test_init_washer }
+  { test_init = test_init_washer },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -573,7 +582,10 @@ test.register_coroutine_test(
       { mock_device_washer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_washer, washer_ep, 50 * 100, nil) }
     )
   end,
-  { test_init = test_init_washer }
+  { test_init = test_init_washer },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -612,7 +624,10 @@ test.register_coroutine_test(
       { mock_device_dryer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_dryer, dryer_ep, 40 * 100, nil) }
     )
   end,
-  { test_init = test_init_dryer }
+  { test_init = test_init_dryer },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -651,7 +666,10 @@ test.register_coroutine_test(
       { mock_device_dryer.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_dryer, dryer_ep, 40 * 100, nil) }
     )
   end,
-  { test_init = test_init_dryer }
+  { test_init = test_init_dryer },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -690,7 +708,10 @@ test.register_coroutine_test(
       { mock_device_oven.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_oven, oven_tcc_one_ep, 140 * 100, nil) }
     )
   end,
-  { test_init = test_init_oven }
+  { test_init = test_init_oven },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -729,7 +750,10 @@ test.register_coroutine_test(
       { mock_device_oven.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_oven, oven_tcc_one_ep, 140 * 100, nil) }
     )
   end,
-  { test_init = test_init_oven }
+  { test_init = test_init_oven },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -768,7 +792,10 @@ test.register_coroutine_test(
       { mock_device_refrigerator.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_refrigerator, refrigerator_ep, 4 * 100, nil) }
     )
   end,
-  { test_init = test_init_refrigerator }
+  { test_init = test_init_refrigerator },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -807,7 +834,10 @@ test.register_coroutine_test(
       { mock_device_refrigerator.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_refrigerator, refrigerator_ep, 10 * 100, nil) }
     )
   end,
-  { test_init = test_init_refrigerator }
+  { test_init = test_init_refrigerator },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -846,7 +876,10 @@ test.register_coroutine_test(
       { mock_device_refrigerator.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_refrigerator, freezer_ep, -15 * 100, nil) }
     )
   end,
-  { test_init = test_init_refrigerator }
+  { test_init = test_init_refrigerator },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -885,7 +918,10 @@ test.register_coroutine_test(
       { mock_device_refrigerator.id, clusters.TemperatureControl.commands.SetTemperature(mock_device_refrigerator, freezer_ep, -20 * 100, nil) }
     )
   end,
-  { test_init = test_init_refrigerator }
+  { test_init = test_init_refrigerator },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

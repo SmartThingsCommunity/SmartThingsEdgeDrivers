@@ -169,21 +169,30 @@ test.register_coroutine_test(
   "Test profile change on init for humidity sensor with battery",
   function()
   end,
-  { test_init = test_init_humidity_battery }
+  { test_init = test_init_humidity_battery },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for humidity sensor without battery",
   function()
   end,
-  { test_init = test_init_humidity_no_battery }
+  { test_init = test_init_humidity_no_battery },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for temperature-humidity sensor",
   function()
   end,
-  { test_init = test_init_temp_humidity }
+  { test_init = test_init_temp_humidity },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

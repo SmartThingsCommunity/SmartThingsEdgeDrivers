@@ -86,6 +86,9 @@ test.register_message_test(
       },
       {
         inner_block_ordering = "relaxed"
+      },
+      {
+         min_api_version = 19
       }
 )
 
@@ -105,6 +108,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.firmwareUpdate.currentVersion({ value = "1.05" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -118,7 +124,10 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(mock_device, Version:Get({}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

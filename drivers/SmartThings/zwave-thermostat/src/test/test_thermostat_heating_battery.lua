@@ -102,7 +102,10 @@ test.register_coroutine_test(
         "doConfigure() should generate WakeUp:IntervalSet",
         function()
             do_initial_setup()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -118,6 +121,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -147,7 +153,10 @@ test.register_coroutine_test(
                   mock_device,
                   WakeUp:IntervalGet({})
             ))
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -206,7 +215,10 @@ test.register_coroutine_test(
                     zw_test_utilities.zwave_test_build_send_command(mock_device, Clock:Set({hour=now.hour, minute=now.min, weekday=WEEK[now.wday]}))
             )
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -225,6 +237,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 25, unit = "C"}))
             },
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -254,6 +269,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 4, unit = "C"}))
             },
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -283,6 +301,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 28, unit = "C"}))
             },
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -309,7 +330,10 @@ test.register_coroutine_test(
                             capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 50, unit = "F"})
                     ))
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -399,7 +423,10 @@ test.register_coroutine_test(
                             })
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -510,7 +537,10 @@ test.register_coroutine_test(
                             })
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -610,7 +640,10 @@ test.register_coroutine_test(
                     {mock_device.id, zw_test_utilities.zwave_test_build_receive_command(WakeUp:Notification({}))}
             )
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -693,7 +726,10 @@ test.register_coroutine_test(
                             })
                     ))
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -732,7 +768,10 @@ test.register_coroutine_test(
               mock_device,
               WakeUp:IntervalGet({})
         ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -769,7 +808,10 @@ test.register_coroutine_test(
                   WakeUp:IntervalGet({})
             ))
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.run_registered_tests()

@@ -37,6 +37,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -53,6 +56,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -69,6 +75,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", button_attr.double({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -80,6 +89,9 @@ test.register_message_test(
         direction = "receive",
         message = { mock_device.id, ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0000) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -96,6 +108,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -112,6 +127,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -128,6 +146,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", button_attr.double({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -144,6 +165,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -161,6 +185,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -184,6 +211,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 20.00, maximum = 30.00 }, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -264,7 +294,10 @@ test.register_coroutine_test(
             TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
           }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -338,7 +371,10 @@ test.register_coroutine_test(
           }
       )
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

@@ -129,7 +129,10 @@ test.register_coroutine_test(
         )
       )
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -154,6 +157,9 @@ test.register_message_test(
       direction = "send",
       message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -178,6 +184,9 @@ test.register_message_test(
       direction = "send",
       message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_4x({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -202,6 +211,9 @@ test.register_message_test(
         direction = "send",
         message = mock_inovelli_dimmer:generate_test_message("button3", capabilities.button.button.pushed({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

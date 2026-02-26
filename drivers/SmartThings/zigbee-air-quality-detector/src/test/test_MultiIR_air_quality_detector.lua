@@ -71,7 +71,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_tvoc_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_carbonDioxide_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_AQI_messge})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -90,6 +93,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 40 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -109,6 +115,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -126,7 +135,10 @@ test.register_coroutine_test(
       capabilities.carbonDioxideMeasurement.carbonDioxide({value = 1400, unit = "ppm"})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern({value = "good"})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -143,7 +155,10 @@ test.register_coroutine_test(
       capabilities.fineDustSensor.fineDustLevel({value = 74 })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.fineDustHealthConcern.fineDustHealthConcern.good()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -160,7 +175,10 @@ test.register_coroutine_test(
       capabilities.veryFineDustSensor.veryFineDustLevel({value = 69 })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern.good()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -177,7 +195,10 @@ test.register_coroutine_test(
       capabilities.dustSensor.dustLevel({value = 69 })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
      capabilities.dustHealthConcern.dustHealthConcern.good()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -192,7 +213,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 1000.0, unit = "mg/m^3"})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -209,7 +233,10 @@ test.register_coroutine_test(
       capabilities.tvocMeasurement.tvocLevel({value = 1000.0, unit = "ug/m3"})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.tvocHealthConcern.tvocHealthConcern({value = "unhealthy"})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -224,7 +251,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "good"})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

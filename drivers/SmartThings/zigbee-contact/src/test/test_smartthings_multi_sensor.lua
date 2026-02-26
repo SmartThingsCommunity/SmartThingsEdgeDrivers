@@ -87,6 +87,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -103,6 +106,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -126,7 +132,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, 0xFC02, acceleration_report_inactive, 0x110A)
     })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()) )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -140,7 +149,10 @@ test.register_coroutine_test(
       cluster_base.build_test_read_attr_response(attribute_def, mock_device, 1)
     })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.active()) )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -156,7 +168,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, 0xFC02, attr_report_data, 0x110A)
     })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({300, 100, -200})) )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -189,7 +204,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, 0xFC02, attr_report_data, 0x110A)
     })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.contactSensor.contact.open()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -216,7 +234,10 @@ test.register_coroutine_test(
       mock_device.id,
       ZoneStatusAttribute:build_test_attr_report(mock_device, 0x0001)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -240,7 +261,10 @@ test.register_coroutine_test(
       mock_device.id,
       zigbee_test_utils.build_attribute_read(mock_device, 0xFC02, {0x0010}, 0x110A)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -261,7 +285,10 @@ test.register_coroutine_test(
       mock_device.id,
       TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -323,7 +350,10 @@ test.register_coroutine_test(
     })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -364,7 +394,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
       test.wait_for_events()
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

@@ -85,6 +85,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -101,6 +104,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -117,6 +123,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -191,7 +200,10 @@ test.register_coroutine_test(
 
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -210,6 +222,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 65 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -226,6 +241,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -259,7 +277,10 @@ test.register_coroutine_test(
                                            )
         })
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -288,6 +309,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 

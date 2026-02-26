@@ -111,7 +111,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("main", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -146,7 +149,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("sound2", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -181,7 +187,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("sound3", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -216,7 +225,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("sound4", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -251,7 +263,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("sound5", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -286,7 +301,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("sound6", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -321,7 +339,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("sound7", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -356,7 +377,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_siren:generate_test_message("sound8", capabilities.chime.chime.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -400,6 +424,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -444,6 +471,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -488,6 +518,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -532,6 +565,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -576,6 +612,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -620,6 +659,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -664,6 +706,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -708,6 +753,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -745,7 +793,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -782,7 +833,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -819,7 +873,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -856,7 +913,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -893,7 +953,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -930,7 +993,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -967,7 +1033,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1004,7 +1073,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1041,7 +1113,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1078,7 +1153,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1115,7 +1193,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1152,7 +1233,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1189,7 +1273,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1226,7 +1313,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1263,7 +1353,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1300,7 +1393,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1337,7 +1433,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1374,7 +1473,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1411,7 +1513,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1448,7 +1553,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1485,7 +1593,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1522,7 +1633,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1559,7 +1673,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1596,7 +1713,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1633,7 +1753,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1670,7 +1793,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1707,7 +1833,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1744,7 +1873,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1781,7 +1913,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1818,7 +1953,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1855,7 +1993,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1892,7 +2033,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1929,7 +2073,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1966,7 +2113,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2003,7 +2153,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2040,7 +2193,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2077,7 +2233,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2114,7 +2273,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2151,7 +2313,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2188,7 +2353,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2225,7 +2393,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2262,7 +2433,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2299,7 +2473,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2336,7 +2513,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2373,7 +2553,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2410,7 +2593,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2447,7 +2633,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2484,7 +2673,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -2506,6 +2698,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2528,6 +2723,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2558,7 +2756,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2571,7 +2772,10 @@ test.register_coroutine_test(
     _preferences.configureSoundAndVolume = false
 
     test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed({ preferences = _preferences}))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2593,7 +2797,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2604,7 +2811,10 @@ test.register_coroutine_test(
     _preferences.triggerButtonUnpairing = false
 
     test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed({ preferences = _preferences}))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2626,7 +2836,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2637,7 +2850,10 @@ test.register_coroutine_test(
     _preferences.triggerButtonPairing = false
 
     test.socket.device_lifecycle:__queue_receive(mock_siren:generate_info_changed({ preferences = _preferences}))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -2662,6 +2878,9 @@ test.register_message_test(
       direction = "send",
       message = mock_siren_with_buttons:generate_test_message("sound3", capabilities.battery.battery(BUTTON_BATTERY_LOW))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2687,6 +2906,9 @@ test.register_message_test(
       direction = "send",
       message = mock_siren_with_buttons:generate_test_message("sound3", capabilities.battery.battery(BUTTON_BATTERY_NORMAL))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2712,6 +2934,9 @@ test.register_message_test(
       direction = "send",
       message = mock_siren_with_buttons:generate_test_message("sound4", capabilities.battery.battery(BUTTON_BATTERY_LOW))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2737,6 +2962,9 @@ test.register_message_test(
       direction = "send",
       message = mock_siren_with_buttons:generate_test_message("sound4", capabilities.battery.battery(BUTTON_BATTERY_NORMAL))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2762,6 +2990,9 @@ test.register_message_test(
       direction = "send",
       message = mock_siren_with_buttons:generate_test_message("sound5", capabilities.battery.battery(BUTTON_BATTERY_LOW))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2787,6 +3018,9 @@ test.register_message_test(
       direction = "send",
       message = mock_siren_with_buttons:generate_test_message("sound5", capabilities.battery.battery(BUTTON_BATTERY_NORMAL))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -2820,7 +3054,10 @@ test.register_coroutine_test(
           })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -2837,7 +3074,10 @@ test.register_coroutine_test(
             test.socket.capability:__expect_send(
                     mock_siren:generate_test_message("sound5", capabilities.battery.battery(BUTTON_BATTERY_LOW))
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.run_registered_tests()

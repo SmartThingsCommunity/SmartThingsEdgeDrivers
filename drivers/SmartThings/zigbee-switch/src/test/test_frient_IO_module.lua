@@ -520,7 +520,10 @@ test.register_coroutine_test(
 		assert(child2_native, "expected Output 2 child to register native switch handler")
 		local parent_native = mock_parent_device:get_field("frient_io_native_72")
 		assert(parent_native, "expected parent device to register native switch handler for input 3")
-	end
+	end,
+	{
+	   min_api_version = 19
+	}
 )
 
 test.register_coroutine_test(
@@ -551,7 +554,10 @@ test.register_coroutine_test(
 		test.socket.capability:__expect_send(mock_output_child_1:generate_test_message("main", Switch.switch.off()))
 
 		test.wait_for_events()
-	end
+	end,
+	{
+	   min_api_version = 19
+	}
 )
 
 test.register_coroutine_test(
@@ -608,7 +614,10 @@ test.register_coroutine_test(
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, direct_off })
 
 		test.wait_for_events()
-	end
+	end,
+	{
+	   min_api_version = 19
+	}
 )
 
 test.register_coroutine_test(
@@ -629,7 +638,10 @@ test.register_coroutine_test(
 		})
 
 		test.wait_for_events()
-	end
+	end,
+	{
+	   min_api_version = 19
+	}
 )
 
 test.register_coroutine_test(
@@ -677,7 +689,10 @@ test.register_coroutine_test(
 		})
 		test.socket.zigbee:__expect_send({ mock_parent_device.id, build_unbind(mock_parent_device, ZIGBEE_ENDPOINTS.INPUT_3, ZIGBEE_ENDPOINTS.OUTPUT_2) })
 		test.wait_for_events()
-	end
+	end,
+	{
+	   min_api_version = 19
+	}
 )
 
 test.run_registered_tests()

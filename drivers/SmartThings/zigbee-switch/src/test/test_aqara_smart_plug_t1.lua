@@ -77,7 +77,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -116,7 +119,10 @@ test.register_coroutine_test(
       SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -132,7 +138,10 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(ENERGY_METER_ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -146,7 +155,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -160,7 +172,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -171,7 +186,10 @@ test.register_coroutine_test(
     mock_device:expect_native_cmd_handler_registration("switch", "on")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -182,7 +200,10 @@ test.register_coroutine_test(
     mock_device:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -201,7 +222,10 @@ test.register_coroutine_test(
     )
     test.socket.zigbee:__expect_send({ mock_device.id,
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(ENERGY_METER_ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -233,7 +257,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 1000000.0 }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -245,7 +272,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -257,7 +287,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, MAX_POWER_ATTRIBUTE_ID,
         MFG_CODE, data_types.SinglePrecisionFloat, SinglePrecisionFloat(0, 6, 0.5625)) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -269,7 +302,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       RESTORE_TURN_OFF_INDICATOR_LIGHT_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- with standard cluster
@@ -295,7 +331,10 @@ test.register_coroutine_test(
       ElectricalMeasurement.attributes.ActivePower:read(mock_standard) })
     test.socket.zigbee:__expect_send({ mock_standard.id,
       SimpleMetering.attributes.CurrentSummationDelivered:read(mock_standard) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -318,7 +357,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_standard:generate_test_message("main", capabilities.powerMeter.power({ value = 10.0, unit = "W" }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -340,7 +382,10 @@ test.register_coroutine_test(
       mock_standard:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 10 }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

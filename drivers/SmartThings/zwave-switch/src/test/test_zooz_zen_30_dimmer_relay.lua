@@ -92,7 +92,10 @@ test.register_coroutine_test(
               Version:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -109,7 +112,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({}, { dst_channels = { 1 } })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -138,6 +144,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -167,6 +176,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -204,6 +216,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -246,6 +261,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -292,6 +310,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -325,6 +346,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -354,6 +378,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -383,6 +410,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -411,7 +441,10 @@ test.register_coroutine_test(
               SwitchMultilevel:Get({}, { dst_channels = { 0 } })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -439,7 +472,10 @@ test.register_coroutine_test(
               SwitchMultilevel:Get({}, { dst_channels = { 0 } })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -467,7 +503,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({}, { dst_channels = { 1 } })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -495,7 +534,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({}, { dst_channels = { 1 } })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -528,7 +570,10 @@ test.register_coroutine_test(
               SwitchMultilevel:Get({}, { dst_channels = { 0 } })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -574,6 +619,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -598,6 +646,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.up({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -622,6 +673,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.down({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -646,6 +700,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -670,6 +727,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.up_2x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -694,6 +754,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.down_2x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -718,6 +781,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.pushed_2x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -742,6 +808,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.up_3x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -766,6 +835,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.down_3x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -790,6 +862,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.pushed_3x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -814,6 +889,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.up_4x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -838,6 +916,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.down_4x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -862,6 +943,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.pushed_4x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -886,6 +970,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.up_5x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -910,6 +997,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.down_5x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -934,6 +1024,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.pushed_5x({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -958,6 +1051,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.up_hold({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -982,6 +1078,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.down_hold({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1006,6 +1105,9 @@ test.register_message_test(
         direction = "send",
         message = mock_parent:generate_test_message("main", capabilities.button.button.held({state_change = true}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1025,6 +1127,9 @@ test.register_message_test(
           )
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1050,7 +1155,10 @@ test.register_coroutine_test(
               }
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -1075,7 +1183,10 @@ test.register_coroutine_test(
               }
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -1111,7 +1222,10 @@ test.register_coroutine_test(
         })
       })
 
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -1156,7 +1270,10 @@ test.register_coroutine_test(
               )
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -1172,7 +1289,10 @@ test.register_coroutine_test(
               )
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

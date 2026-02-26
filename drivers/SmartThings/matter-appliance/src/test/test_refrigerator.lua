@@ -145,6 +145,9 @@ test.register_message_test(
         clusters.RefrigeratorAndTemperatureControlledCabinetMode.server.commands.ChangeToMode(mock_device, refrigerator_ep, 1) --1 is the index where Super Dry is stored.
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -201,6 +204,9 @@ test.register_message_test(
         clusters.TemperatureControl.commands.SetTemperature(mock_device, refrigerator_ep, 4 * 100, nil)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -241,6 +247,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("refrigerator", capabilities.temperatureSetpoint.temperatureSetpoint({value = 7.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -297,6 +306,9 @@ test.register_message_test(
         clusters.TemperatureControl.commands.SetTemperature(mock_device, freezer_ep, -15 * 100, nil)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -337,6 +349,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("freezer", capabilities.temperatureSetpoint.temperatureSetpoint({value = -15.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

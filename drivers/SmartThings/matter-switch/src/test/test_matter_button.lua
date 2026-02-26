@@ -170,7 +170,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device_battery.id, updated_subscribe_request})
     expect_configure_buttons(mock_device_battery)
   end,
-  { test_init = test_init_battery }
+  { test_init = test_init_battery },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -191,7 +194,10 @@ test.register_coroutine_test(
       )
     )
   end,
-  { test_init = test_init_battery }
+  { test_init = test_init_battery },
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -211,6 +217,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true})) --should send initial press
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -246,6 +255,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", button_attr.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -282,6 +294,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -327,6 +342,9 @@ test.register_message_test(
         )
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -348,6 +366,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -369,6 +390,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -390,6 +414,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -426,6 +453,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", button_attr.double({state_change = true}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -462,6 +492,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", button_attr.pushed_4x({state_change = true}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -481,7 +514,10 @@ test.register_coroutine_test(
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(10)})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -499,7 +535,10 @@ test.register_coroutine_test(
     )
     expect_configure_buttons(mock_device)
     mock_device:expect_metadata_update({ profile = "button-batteryLevel" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -517,7 +556,10 @@ test.register_coroutine_test(
     )
     expect_configure_buttons(mock_device)
     mock_device:expect_metadata_update({ profile = "button-battery" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

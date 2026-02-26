@@ -180,6 +180,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.On(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -210,6 +213,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -227,7 +233,10 @@ test.register_coroutine_test(
     )
 
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -239,7 +248,10 @@ test.register_coroutine_test(
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "removed" })
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -271,6 +283,9 @@ test.register_coroutine_test(
 
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -287,7 +302,10 @@ test.register_coroutine_test(
     refresh_response:merge(cluster_base.read(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_WATT_ACCUMULATED, nil))
     test.socket.matter:__expect_send({ mock_device.id, refresh_response})
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -311,7 +329,10 @@ test.register_coroutine_test(
     )
 
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -335,7 +356,10 @@ test.register_coroutine_test(
     )
 
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -371,7 +395,10 @@ test.register_coroutine_test(
     )
 
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -396,7 +423,10 @@ test.register_coroutine_test(
       cluster_base.write(mock_device, 0x01, PRIVATE_CLUSTER_ID, PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT, nil, data) })
 
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -420,7 +450,10 @@ test.register_coroutine_test(
     )
 
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -455,6 +488,9 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -545,7 +581,10 @@ test.register_coroutine_test(
           energy = 39.0
         }))
       )
-    end, { test_init = test_init_electrical_sensor }
+    end, { test_init = test_init_electrical_sensor },
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

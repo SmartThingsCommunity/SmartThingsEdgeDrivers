@@ -67,6 +67,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -88,6 +91,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -109,6 +115,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -130,6 +139,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -151,6 +163,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -172,6 +187,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -203,6 +221,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.closing())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -234,6 +255,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.opening())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -261,7 +285,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -288,7 +315,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -305,7 +335,10 @@ test.register_coroutine_test(
           Association:Set({grouping_identifier = 3, node_ids = {}})
       ))
       mock_garage_door:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -327,6 +360,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 test.run_registered_tests()

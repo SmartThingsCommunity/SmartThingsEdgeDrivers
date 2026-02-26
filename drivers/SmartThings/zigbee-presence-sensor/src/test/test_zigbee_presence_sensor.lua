@@ -78,6 +78,9 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -94,6 +97,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_simple_device.id, IdentifyCluster.server.commands.Identify(mock_simple_device, 0x05) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -145,7 +151,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence.present()))
       test.wait_for_events()
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -178,7 +187,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
       test.wait_for_events()
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -186,7 +198,10 @@ test.register_coroutine_test(
     function ()
       add_device()
       add_device_after_switch_over()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -201,6 +216,9 @@ test.register_coroutine_test(
     end,
     {
       test_init = function()      end
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -229,7 +247,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(121)
     test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -261,7 +282,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(305)
     test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -291,7 +315,10 @@ test.register_coroutine_test(
         PowerConfiguration.ID
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

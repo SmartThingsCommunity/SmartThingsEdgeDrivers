@@ -60,7 +60,11 @@ do
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = level}))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -77,6 +81,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2700))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -98,6 +105,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = 100}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -119,6 +129,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = 0}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -142,7 +155,11 @@ do
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = level}))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -164,6 +181,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = 100}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -185,6 +205,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = 0}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -207,6 +230,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = 0}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -229,6 +255,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = 100}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -250,6 +279,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = 0}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -279,7 +311,11 @@ do
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.switchLevel.level({value = level}))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -309,6 +345,9 @@ test.register_message_test(
         Configuration:Get({parameter_number = 0x52})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -338,6 +377,9 @@ test.register_message_test(
         Configuration:Get({parameter_number = 0x51})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -364,7 +406,11 @@ do
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature({value = temp}))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -390,7 +436,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -414,7 +463,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -439,7 +491,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -513,7 +568,10 @@ test.register_coroutine_test(
         SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.COLD_WHITE })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

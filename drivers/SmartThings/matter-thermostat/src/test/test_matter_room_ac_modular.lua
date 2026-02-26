@@ -312,7 +312,10 @@ test.register_coroutine_test(
   function()
     test_room_ac_device_type_update_modular_profile(mock_device_basic, expected_metadata_basic, subscribe_request_basic, uint32(0x29))
   end,
-  { test_init = test_init_basic }
+  { test_init = test_init_basic },
+  {
+     min_api_version = 19
+  }
 )
 
 local expected_metadata_no_state = {
@@ -337,6 +340,9 @@ test.register_coroutine_test(
   function()
     test_room_ac_device_type_update_modular_profile(mock_device_no_state, expected_metadata_no_state, subscribe_request_no_state, uint32(0))
   end,
-  { test_init = test_init_no_state }
+  { test_init = test_init_no_state },
+  {
+     min_api_version = 19
+  }
 )
 test.run_registered_tests()

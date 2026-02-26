@@ -58,6 +58,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -74,6 +77,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.doorControl.door.closing())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -95,6 +101,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -116,6 +125,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -132,6 +144,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.doorControl.door.unknown())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -151,6 +166,9 @@ test.register_message_test(
   },
   {
     test_init = test_init
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -171,6 +189,9 @@ test.register_message_test(
   {
     test_init = test_init,
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 

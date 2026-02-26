@@ -116,6 +116,9 @@ test.register_message_test(
       direction = "send",
       message = mock_everspring:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -142,6 +145,9 @@ test.register_message_test(
       direction = "send",
       message = mock_everspring:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -165,7 +171,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_everspring:generate_test_message(
       "main",
       capabilities.button.button.double({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -191,6 +200,9 @@ test.register_message_test(
       direction = "send",
       message = mock_everspring:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -217,6 +229,9 @@ test.register_message_test(
       direction = "send",
       message = mock_everspring:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -240,7 +255,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_everspring:generate_test_message(
       "main",
       capabilities.button.button.double({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -266,6 +284,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -292,6 +313,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -318,6 +342,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -340,7 +367,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_aeotec_wallmote_quad:generate_test_message(
       "main",
       capabilities.button.button.held({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -356,6 +386,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -383,6 +416,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_keyfob_button:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -409,6 +445,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_keyfob_button:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -435,6 +474,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_keyfob_button:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -461,6 +503,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_keyfob_button:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -483,7 +528,10 @@ test.register_coroutine_test(
         Association:Set({grouping_identifier = 1, node_ids = {}})
     ))
     mock_aeotec_keyfob_button:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -568,7 +616,10 @@ test.register_coroutine_test(
         Battery:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 --configuration for fibaro keyfob
@@ -606,7 +657,10 @@ test.register_coroutine_test(
         Configuration:Set({parameter_number = 26, size = 1, configuration_value = 15})
     ))
     mock_fibaro_keyfob_button:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -719,7 +773,10 @@ test.register_coroutine_test(
         Battery:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -804,7 +861,10 @@ test.register_coroutine_test(
         Battery:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -861,7 +921,10 @@ test.register_coroutine_test(
           Battery:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -887,6 +950,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

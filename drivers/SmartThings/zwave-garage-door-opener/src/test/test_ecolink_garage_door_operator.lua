@@ -67,6 +67,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -83,6 +86,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.open())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -124,6 +130,9 @@ test.register_message_test(
   {
     test_init = test_init,
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -163,6 +172,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -183,6 +195,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 12.2999999, unit = 'C'}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -203,6 +218,9 @@ test.register_message_test(
               direction = "send",
               message = mock_garage_door:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 45.6, unit = 'F'}))
           }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -228,7 +246,10 @@ test.register_coroutine_test(
           parameters = updated_params})
       ))
       mock_garage_door:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -255,7 +276,10 @@ test.register_coroutine_test(
               BarrierOperator:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -282,7 +306,11 @@ test.register_coroutine_test(
                   BarrierOperator:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 
 test.register_coroutine_test(
@@ -295,7 +323,11 @@ test.register_coroutine_test(
       )
       test.wait_for_events()
       test.mock_time.advance_time(1)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 
   test.register_coroutine_test(
@@ -308,7 +340,11 @@ test.register_coroutine_test(
       )
       test.wait_for_events()
       test.mock_time.advance_time(1)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 
 test.run_registered_tests()

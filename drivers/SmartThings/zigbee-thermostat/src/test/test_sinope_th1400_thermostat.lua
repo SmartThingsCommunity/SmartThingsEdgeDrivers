@@ -45,6 +45,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -61,6 +64,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState("idle"))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -94,7 +100,10 @@ test.register_coroutine_test(
                                          Thermostat.attributes.SystemMode:configure_reporting(mock_device, 10, 305)
                                        })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -197,7 +206,10 @@ test.register_coroutine_test(
           data_types.validate_or_build_type(0x0708, data_types.Uint16, "payload")
         )
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

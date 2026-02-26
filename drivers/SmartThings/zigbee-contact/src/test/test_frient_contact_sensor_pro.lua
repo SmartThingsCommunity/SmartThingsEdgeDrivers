@@ -54,7 +54,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -173,7 +176,10 @@ test.register_coroutine_test(
             })
 
             mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -197,6 +203,9 @@ test.register_message_test(
                 { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
             }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -213,6 +222,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -229,6 +241,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -307,6 +322,9 @@ test.register_message_test(
         },
         {
             inner_block_ordering = "relaxed"
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -328,6 +346,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -349,6 +370,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -370,6 +394,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -391,6 +418,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -416,7 +446,10 @@ test.register_coroutine_test(
                                                        temperatureSensitivity
                                                ):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT)
             })
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.run_registered_tests()

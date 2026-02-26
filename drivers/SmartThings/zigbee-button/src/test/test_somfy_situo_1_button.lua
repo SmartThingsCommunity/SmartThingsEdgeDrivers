@@ -63,7 +63,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -111,7 +114,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -132,7 +138,10 @@ test.register_coroutine_test(
       }
     )
     test.socket.zigbee:__expect_add_hub_to_group(0xB9F2)
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -191,7 +200,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id,
       Groups.commands.AddGroup(mock_device, 0x0000)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -236,7 +248,10 @@ test.register_coroutine_test(
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 

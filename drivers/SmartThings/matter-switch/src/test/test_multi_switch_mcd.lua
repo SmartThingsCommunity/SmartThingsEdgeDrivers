@@ -204,7 +204,10 @@ test.register_message_test(
       }
     }
   },
-  { test_init = test_init_mock_3switch }
+  { test_init = test_init_mock_3switch },
+  {
+     min_api_version = 19
+  }
 )
 
 -- The custom "test_init" function also checks that the appropriate profile is switched on init
@@ -228,7 +231,10 @@ test.register_message_test(
       }
     }
   },
-  { test_init = test_init_mock_2switch }
+  { test_init = test_init_mock_2switch },
+  {
+     min_api_version = 19
+  }
 )
 
 -- The custom "test_init" function also checks that the appropriate profile is switched on init
@@ -252,7 +258,10 @@ test.register_message_test(
       }
     }
   },
-  { test_init = test_init_mock_3switch_non_sequential }
+  { test_init = test_init_mock_3switch_non_sequential },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

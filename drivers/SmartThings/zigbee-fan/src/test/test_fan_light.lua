@@ -48,6 +48,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                             (mock_base_device, 254, 0) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -66,6 +69,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                 (mock_base_device, 127, 0) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -84,6 +90,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                 (mock_base_device, 127, 0) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -102,6 +111,9 @@ test.register_message_test(
                 message = { mock_base_device.id, Level.server.commands.MoveToLevelWithOnOff
                 (mock_base_device, 0, 0) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -124,6 +136,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -146,6 +161,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -163,6 +181,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switch.switch.on())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -180,6 +201,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switch.switch.off())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -197,6 +221,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(100))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -214,6 +241,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(50))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -231,6 +261,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("light", capabilities.switchLevel.level(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -252,6 +285,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -273,6 +309,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -294,6 +333,9 @@ test.register_message_test(
                 direction = "send",
                 message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -321,6 +363,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(1))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -348,6 +393,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(2))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -375,6 +423,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(3))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -402,6 +453,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(4))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -429,6 +483,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_base_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 

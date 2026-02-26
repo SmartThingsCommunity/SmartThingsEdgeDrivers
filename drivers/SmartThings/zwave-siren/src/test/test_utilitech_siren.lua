@@ -41,6 +41,9 @@ test.register_message_test(
       direction = "receive",
       message = { mock_siren.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x00 })) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -58,7 +61,10 @@ test.register_coroutine_test(
       mock_siren,
       Battery:Get({})
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

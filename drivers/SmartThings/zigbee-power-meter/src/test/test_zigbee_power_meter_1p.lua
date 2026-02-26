@@ -70,23 +70,9 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 2.0, unit = "kWh"}))
       )
-    end
-)
-
-test.register_message_test(
-    "ActivePower Report should be handled. Sensor value is in W, capability attribute value is in hectowatts",
+    end,
     {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_device,
-                                                                                                        27) },
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("PhaseA", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
-      }
+       min_api_version = 19
     }
 )
 
@@ -104,6 +90,29 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("PhaseA", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_message_test(
+    "ActivePower Report should be handled. Sensor value is in W, capability attribute value is in hectowatts",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_device,
+                                                                                                        27) },
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("PhaseA", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
+      }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -121,6 +130,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseA", capabilities.currentMeasurement.current({ value = 0.34, unit = "A" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -138,6 +150,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("PhaseA", capabilities.voltageMeasurement.voltage({ value = 220.0, unit = "V" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -219,7 +234,10 @@ test.register_coroutine_test(
       ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

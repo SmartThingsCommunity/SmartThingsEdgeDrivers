@@ -54,6 +54,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -78,6 +81,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -102,6 +108,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -126,6 +135,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "motionSensor", capability_attr_id = "motion" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -162,7 +174,10 @@ test.register_coroutine_test(
                                       })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -205,6 +220,9 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed"
+    },
+    {
+       min_api_version = 19
     }
 )
 

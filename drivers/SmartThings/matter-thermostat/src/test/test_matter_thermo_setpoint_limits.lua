@@ -148,7 +148,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", cached_heating_setpoint)
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -174,7 +177,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", cached_cooling_setpoint)
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -200,7 +206,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", cached_heating_setpoint)
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -226,7 +235,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", cached_cooling_setpoint)
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -245,7 +257,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", cached_heating_setpoint)
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -264,7 +279,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", cached_cooling_setpoint)
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -277,7 +295,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     local min_setpoint_deadband_checked = mock_device:get_field("MIN_SETPOINT_DEADBAND_CHECKED")
     assert(min_setpoint_deadband_checked == true, "min_setpoint_deadband_checked is True")
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -304,6 +325,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -331,6 +355,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpointRange({ value = { minimum = 10.00, maximum = 32.22, step = 0.1 }, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -358,6 +385,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 39.00 }, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

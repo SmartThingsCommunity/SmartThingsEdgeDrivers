@@ -161,6 +161,9 @@ test.register_message_test(
           { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -191,6 +194,9 @@ test.register_message_test(
           { device_uuid = mock_first_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -221,6 +227,9 @@ test.register_message_test(
           { device_uuid = mock_second_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -251,6 +260,9 @@ test.register_message_test(
           { device_uuid = mock_third_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -281,6 +293,9 @@ test.register_message_test(
           { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -311,6 +326,9 @@ test.register_message_test(
           { device_uuid = mock_first_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -341,6 +359,9 @@ test.register_message_test(
           { device_uuid = mock_second_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -371,6 +392,9 @@ test.register_message_test(
           { device_uuid = mock_third_child.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -383,7 +407,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_parent_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_parent_device, 0x0006,
         0x6000, 0x1235, data_types.Uint8, 0x01) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -395,7 +422,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_parent_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_parent_device, 0x0006,
         0x6000, 0x1235, data_types.Uint8, 0x00) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -424,6 +454,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x01) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -448,6 +481,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x02) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -472,6 +508,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x03) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -496,6 +535,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x04) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -521,6 +563,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x01) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -545,6 +590,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x02) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -569,6 +617,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x03) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -593,6 +644,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x04) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -607,7 +661,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_fourth_child:generate_test_message("main", capabilities.button.button.pushed(
                                             { state_change = true }
                                             )))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -620,7 +677,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_fifth_child:generate_test_message("main", capabilities.button.button.pushed(
                                             { state_change = true }
                                             )))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -633,7 +693,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_sixth_child:generate_test_message("main", capabilities.button.button.pushed(
                                             { state_change = true }
                                             )))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -646,7 +709,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_seventh_child:generate_test_message("main", capabilities.button.button.pushed(
                                             { state_change = true }
                                             )))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -707,7 +773,10 @@ test.register_coroutine_test(
         mock_base_device.id,
         OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(0x01)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

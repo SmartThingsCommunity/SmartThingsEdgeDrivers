@@ -66,7 +66,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -116,7 +119,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -153,7 +159,10 @@ test.register_coroutine_test(
       })
       test.mock_time.advance_time(3)
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -232,7 +241,10 @@ test.register_coroutine_test(
           }
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -253,6 +265,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, WindowCovering.server.commands.UpOrOpen(mock_device) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -277,6 +292,9 @@ test.register_message_test(
           WindowCovering.server.commands.DownOrClose(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -296,6 +314,9 @@ test.register_message_test(
           WindowCovering.server.commands.Stop(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -321,6 +342,9 @@ test.register_message_test(
           WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 33)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -346,6 +370,9 @@ test.register_message_test(
           WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -371,7 +398,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 99)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -395,7 +425,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -413,7 +446,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -437,7 +473,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -459,7 +498,10 @@ test.register_coroutine_test(
         mock_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -492,7 +534,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -514,7 +559,10 @@ test.register_coroutine_test(
             }
           }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

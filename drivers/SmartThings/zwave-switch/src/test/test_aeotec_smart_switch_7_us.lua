@@ -52,7 +52,10 @@ test.register_coroutine_test(
       })
     ))
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -79,7 +82,10 @@ test.register_coroutine_test(
         SwitchBinary:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -106,7 +112,10 @@ test.register_coroutine_test(
         SwitchBinary:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -127,6 +136,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 55, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -148,6 +160,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -176,7 +191,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 5000 }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

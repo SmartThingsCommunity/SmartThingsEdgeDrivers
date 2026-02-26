@@ -75,7 +75,10 @@ test.register_coroutine_test(
       test.mock_time.advance_time(2)
       expect_reload_all_codes_messages()
 
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -87,7 +90,10 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)})
       test.socket.zigbee:__expect_send({mock_device.id, DoorLock.attributes.LockState:read(mock_device)})
       test.socket.zigbee:__expect_send({mock_device.id, Alarm.attributes.AlarmCount:read(mock_device)})
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -104,6 +110,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -121,6 +130,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -145,6 +157,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -175,6 +190,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({["2"] = "Code 2"} ), { visibility = { displayed = false } }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -191,6 +209,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, DoorLock.server.commands.LockDoor(mock_device) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -207,6 +228,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = false }}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -223,6 +247,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(4, { visibility = { displayed = false }}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -240,6 +267,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(16, { visibility = { displayed = false }}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -248,7 +278,10 @@ test.register_coroutine_test(
     function()
       test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
       expect_reload_all_codes_messages()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -264,6 +297,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -303,7 +339,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -350,7 +389,10 @@ test.register_coroutine_test(
         capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test" }, state_change = true })))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 local function init_code_slot(slot_number, name, device)
@@ -405,7 +447,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false } })))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -420,7 +465,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false } })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -491,7 +539,10 @@ test.register_coroutine_test(
       DoorLock.server.commands.GetPINCode(mock_device, 4)
     })
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -523,7 +574,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 4) })
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -555,6 +609,9 @@ test.register_message_test(
             capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"}, state_change = true })
         )
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -591,6 +648,9 @@ test.register_message_test(
         message = mock_device:generate_test_message("main",
             capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"}), { visibility = { displayed = false } }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -623,7 +683,10 @@ test.register_coroutine_test(
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
           capabilities.lockCodes.lockCodes(json.encode({}), { visibility = { displayed = false } })))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -677,7 +740,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({}), { visibility = { displayed = false } })))
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -705,7 +771,10 @@ test.register_coroutine_test(
               capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Code 1" } })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -768,7 +837,10 @@ test.register_coroutine_test(
         capabilities.lock.lock.locked()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

@@ -131,6 +131,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true})) --should send initial press
   }
+},
+{
+   min_api_version = 19
 }
 )
 
@@ -162,6 +165,9 @@ test.register_message_test(
     direction = "send",
     message = mock_children[3]:generate_test_message("main", button_attr.pushed({state_change = true}))
   },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -202,6 +208,9 @@ test.register_message_test(
       )
     }
   },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -223,6 +232,9 @@ test.register_message_test(
       message = mock_children[4]:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -244,6 +256,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -275,6 +290,9 @@ test.register_message_test(
     message = mock_children[4]:generate_test_message("main", button_attr.double({state_change = true}))
   },
 
+},
+{
+   min_api_version = 19
 }
 )
 
@@ -306,6 +324,9 @@ test.register_message_test(
     message = mock_children[4]:generate_test_message("main", button_attr.pushed_4x({state_change = true}))
   },
 
+},
+{
+   min_api_version = 19
 }
 )
 
@@ -328,6 +349,9 @@ test.register_message_test(
         "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
       ),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 -- run the tests

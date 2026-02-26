@@ -46,6 +46,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -63,6 +66,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -80,6 +86,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -108,7 +117,10 @@ test.register_coroutine_test(
             Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device)
           }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -136,7 +148,10 @@ test.register_coroutine_test(
             Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device)
           }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

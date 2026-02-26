@@ -48,6 +48,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.detected())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -67,6 +70,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -83,6 +89,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.soundSensor.sound.not_detected())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

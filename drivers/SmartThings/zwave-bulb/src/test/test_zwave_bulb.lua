@@ -100,6 +100,9 @@ test.register_message_test(
   },
   {
     inner_block_ordering = "relaxed"
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -130,7 +133,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -157,6 +163,9 @@ test.register_message_test(
     }
   },
   {
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -190,6 +199,9 @@ test.register_coroutine_test(
     )
   end,
   {
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -222,6 +234,9 @@ test.register_coroutine_test(
     )
   end,
   {
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -254,7 +269,11 @@ do
         direction = "send",
         message = mock_zwave_bulb:generate_test_message("main", capabilities.switchLevel.level(level))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -302,7 +321,11 @@ do
           SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -369,7 +392,11 @@ do
         direction = "send",
         message = mock_zwave_bulb:generate_test_message("main", capabilities.colorControl.saturation(sat))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -410,7 +437,10 @@ test.register_coroutine_test(
         SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.WARM_WHITE })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 do
@@ -455,7 +485,11 @@ do
         direction = "send",
         message = mock_zwave_bulb:generate_test_message("main", capabilities.colorTemperature.colorTemperature(temp))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 

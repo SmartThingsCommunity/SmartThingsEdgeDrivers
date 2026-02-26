@@ -119,7 +119,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ profile = "base-lock" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -144,13 +147,19 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ profile = "base-lock-batteryLevel" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Test that profile changes to base-lock-no-battery when battery feature is not available",
   function()
   end,
-  { test_init = test_init_no_battery }
+  { test_init = test_init_no_battery },
+  {
+     min_api_version = 19
+  }
 )
 test.run_registered_tests()

@@ -79,7 +79,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -119,6 +122,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.button.button.up_hold({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -161,6 +167,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.button.button.down_hold({ state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -201,7 +210,10 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_add_hub_to_group(0xE902)
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -312,7 +324,10 @@ test.register_coroutine_test(
       mock_device.id,
       PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -351,6 +366,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -366,7 +384,10 @@ test.register_coroutine_test(
         PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

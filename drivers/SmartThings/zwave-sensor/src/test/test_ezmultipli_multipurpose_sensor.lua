@@ -60,6 +60,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -86,6 +89,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -121,7 +127,11 @@ do
         mock_device,
         SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED })
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -157,7 +167,11 @@ do
         mock_device,
         SwitchColor:Get({ color_component_id=SwitchColor.color_component_id.RED })
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -287,7 +301,10 @@ test.register_coroutine_test(
     )
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
