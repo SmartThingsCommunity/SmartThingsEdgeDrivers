@@ -430,21 +430,6 @@ local devices = {
     PARAMETERS = {
     statusLEDmode = {parameter_number = 7, size = 4}
     }
-  },
-  PHILIO_PAD19 = {
-    MATCHING_MATRIX = {
-      mfrs = 0x013C,
-      product_types = 0x0005,
-      product_ids = 0x008A
-    },
-    PARAMETERS = {
-    parameter1 = {parameter_number = 1, size = 1},
-    parameter2 = {parameter_number = 2, size = 1},
-    parameter3 = {parameter_number = 3, size = 1},
-    parameter4 = {parameter_number = 4, size = 1},
-    parameter5 = {parameter_number = 5, size = 1},
-    parameter6 = {parameter_number = 6, size = 1}
-    }
   }
 }
 
