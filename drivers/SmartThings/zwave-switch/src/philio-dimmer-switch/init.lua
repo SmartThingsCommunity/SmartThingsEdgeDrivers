@@ -16,8 +16,17 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ ve
 -- print("DEBUG: philio-dimmer-switch/init.lua loaded")
 
 local function dimmer_event(driver, device, cmd)
-  local value = cmd.args.value or cmd.args.target_value or 0
-  local level = utils.clamp_value(value, 0, 100)
+  local raw = cmd.args.value or cmd.args.target_value or 0
+
+  if raw == "OFF_DISABLE" then
+    raw = 0
+  end
+
+  if type(raw) ~= "number" then
+    raw = 0
+  end
+
+  local level = utils.clamp_value(raw, 0, 99)
   
   device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
   device:emit_event(capabilities.switchLevel.level(level))
@@ -25,9 +34,9 @@ end
 
 local function basic_report_handler(driver, device, cmd)
   local basic_level = cmd.args.value or 0
-  local level = utils.clamp_value(basic_level, 0, 100)
+  local level = utils.clamp_value(basic_level, 0, 99)
 
-  device:emit_event(basic_level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
+  device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
   device:emit_event(capabilities.switchLevel.level(level))
 end
 
