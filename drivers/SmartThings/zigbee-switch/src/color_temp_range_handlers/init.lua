@@ -4,13 +4,7 @@
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
-local KELVIN_MAX = "_max_kelvin"
-local KELVIN_MIN = "_min_kelvin"
-local MIREDS_CONVERSION_CONSTANT = 1000000
-local COLOR_TEMPERATURE_KELVIN_MAX = 15000
-local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-local COLOR_TEMPERATURE_MIRED_MAX = utils.round(MIREDS_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN) -- 1000
-local COLOR_TEMPERATURE_MIRED_MIN = utils.round(MIREDS_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX) -- 67
+local switch_utils = require "switch_utils"
 
 local function color_temp_min_mireds_handler(driver, device, value, zb_rx)
   local temp_in_mired = value.value
@@ -18,13 +12,13 @@ local function color_temp_min_mireds_handler(driver, device, value, zb_rx)
   if temp_in_mired == nil then
     return
   end
-  if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
-    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+  if (temp_in_mired < switch_utils.COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > switch_utils.COLOR_TEMPERATURE_MIRED_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, switch_utils.COLOR_TEMPERATURE_MIRED_MIN, switch_utils.COLOR_TEMPERATURE_MIRED_MAX))
     return
   end
-  local temp_in_kelvin = utils.round(MIREDS_CONVERSION_CONSTANT / temp_in_mired)
-  device:set_field(KELVIN_MAX..endpoint, temp_in_kelvin)
-  local min = device:get_field(KELVIN_MIN..endpoint)
+  local temp_in_kelvin = utils.round(switch_utils.MIREDS_CONVERSION_CONSTANT / temp_in_mired)
+  device:set_field(switch_utils.KELVIN_MAX..endpoint, temp_in_kelvin)
+  local min = device:get_field(switch_utils.KELVIN_MIN..endpoint)
   if min ~= nil then
     if temp_in_kelvin > min then
       device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = temp_in_kelvin}}))
@@ -40,13 +34,13 @@ local function color_temp_max_mireds_handler(driver, device, value, zb_rx)
   if temp_in_mired == nil then
     return
   end
-  if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
-    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+  if (temp_in_mired < switch_utils.COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > switch_utils.COLOR_TEMPERATURE_MIRED_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, switch_utils.COLOR_TEMPERATURE_MIRED_MIN, switch_utils.COLOR_TEMPERATURE_MIRED_MAX))
     return
   end
-  local temp_in_kelvin = utils.round(MIREDS_CONVERSION_CONSTANT / temp_in_mired)
-  device:set_field(KELVIN_MIN..endpoint, temp_in_kelvin)
-  local max = device:get_field(KELVIN_MAX..endpoint)
+  local temp_in_kelvin = utils.round(switch_utils.MIREDS_CONVERSION_CONSTANT / temp_in_mired)
+  device:set_field(switch_utils.KELVIN_MIN..endpoint, temp_in_kelvin)
+  local max = device:get_field(switch_utils.KELVIN_MAX..endpoint)
   if max ~= nil then
     if temp_in_kelvin < max then
       device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = temp_in_kelvin, maximum = max}}))
