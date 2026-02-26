@@ -22,6 +22,8 @@ local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
+local MODULAR_PROFILE_UPDATED = "__MODULAR_PROFILE_UPDATED"
+
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
   [DoorLock.types.DlStatus.FAILURE] = "failure",
@@ -201,6 +203,7 @@ local function match_profile_modular(driver, device)
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
+  device:set_field(MODULAR_PROFILE_UPDATED, true)
 end
 
 local function match_profile_switch(driver, device)
@@ -238,37 +241,11 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
-local function profile_changed(latest_profile, previous_profile)
-  if latest_profile.id ~= previous_profile.id then
-    return true
-  end
-  for component_id, synced_component in pairs(latest_profile.components or {}) do
-    local prev_component = previous_profile.components[component_id]
-    if prev_component == nil then
-      return true
-    end
-    if #synced_component.capabilities ~= #prev_component.capabilities then
-      return true
-    end
-    -- Build a table of capability IDs from the previous component. Then, use this map to check
-    -- that all capabilities in the synced component existed in the previous component.
-    local prev_cap_ids = {}
-    for _, capability in ipairs(prev_component.capabilities or {}) do
-      prev_cap_ids[capability.id] = true
-    end
-    for _, capability in ipairs(synced_component.capabilities or {}) do
-      if not prev_cap_ids[capability.id] then
-        return true
-      end
-    end
-  end
-  return false
-end
-
 local function info_changed(driver, device, event, args)
-  if not profile_changed(device.profile, args.old_st_store.profile) then
+  if device.profile.id == args.old_st_store.profile.id and not device:get_field(MODULAR_PROFILE_UPDATED) then
     return
   end
+  device:set_field(MODULAR_PROFILE_UPDATED, nil)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
