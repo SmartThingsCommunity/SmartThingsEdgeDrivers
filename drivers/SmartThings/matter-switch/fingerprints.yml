@@ -867,7 +867,7 @@ matterManufacturer:
     deviceLabel: BILRESA dual button
     vendorId: 0x117C
     productId: 0x8001
-    deviceProfileName: 2-button-battery
+    deviceProfileName: ikea-2-button-battery
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
