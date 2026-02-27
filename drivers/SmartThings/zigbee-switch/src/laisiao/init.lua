@@ -48,7 +48,7 @@ local laisiao_bath_heater = {
     capabilities.switch,
   },
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(device_init),
+    init = configurations.reconfig_wrapper(device_init),
   },
   capability_handlers = {
     [capabilities.switch.ID] = {
