@@ -68,6 +68,31 @@ zigbeeManufacturer:
     manufacturer: BITUO TECHNIK
     model: "SDM01B"
     deviceProfileName: power-meter-1p
+  - id: "Zemismart/SPM01-1Z2"
+    deviceLabel: Energy Monitor 1PN
+    manufacturer: Zemismart
+    model: "SPM01-1Z2"
+    deviceProfileName: power-meter-1p
+  - id: "Zemismart/SDM02-2Z1"
+    deviceLabel: Energy Monitor 2PN
+    manufacturer: Zemismart
+    model: "SDM02-2Z1"
+    deviceProfileName: power-meter-2p
+  - id: "Zemismart/SPM02-3Z3"
+    deviceLabel: Energy Monitor 3PN
+    manufacturer: Zemismart
+    model: "SPM02-3Z3"
+    deviceProfileName: power-meter-3p
+  - id: "Zemismart/SDM01-3Z1"
+    deviceLabel: Energy Monitor 3PN
+    manufacturer: Zemismart
+    model: "SDM01-3Z1"
+    deviceProfileName: power-meter-3p
+  - id: "Zemismart/SDM01-1Z1"
+    deviceLabel: Energy Monitor 1PN
+    manufacturer: Zemismart
+    model: "SDM01-1Z1"
+    deviceProfileName: power-meter-1p
 zigbeeGeneric:
   - id: "genericMeter"
     deviceLabel: Zigbee Meter
