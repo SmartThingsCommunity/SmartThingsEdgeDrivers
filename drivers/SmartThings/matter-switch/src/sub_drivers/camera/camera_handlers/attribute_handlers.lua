@@ -351,6 +351,21 @@ function CameraAttributeHandlers.triggers_handler(driver, device, ib, response)
     })
   end
   device:emit_event_for_endpoint(ib, capabilities.zoneManagement.triggers(triggers))
+
+  local pending_zone_id = device:get_field(camera_fields.PENDING_ZONE_REMOVAL)
+  if pending_zone_id ~= nil then
+    local trigger_still_present = false
+    for _, v in ipairs(triggers) do
+      if v.zoneId == pending_zone_id then
+        trigger_still_present = true
+        break
+      end
+    end
+    if not trigger_still_present then
+      device:send(clusters.ZoneManagement.server.commands.RemoveZone(device, ib.endpoint_id, pending_zone_id))
+      device:set_field(camera_fields.PENDING_ZONE_REMOVAL, nil)
+    end
+  end
 end
 
 function CameraAttributeHandlers.sensitivity_max_handler(driver, device, ib, response)

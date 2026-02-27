@@ -259,7 +259,22 @@ end
 
 function CameraCapabilityHandlers.handle_remove_zone(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  device:send(clusters.ZoneManagement.server.commands.RemoveZone(device, endpoint_id, cmd.args.zoneId))
+  local triggers = device:get_latest_state(
+    camera_fields.profile_components.main, capabilities.zoneManagement.ID, capabilities.zoneManagement.triggers.NAME
+  ) or {}
+  local has_trigger = false
+  for _, v in pairs(triggers) do
+    if v.zoneId == cmd.args.zoneId then
+      has_trigger = true
+      break
+    end
+  end
+  if has_trigger then
+    device:set_field(camera_fields.PENDING_ZONE_REMOVAL, cmd.args.zoneId)
+    device:send(clusters.ZoneManagement.server.commands.RemoveTrigger(device, endpoint_id, cmd.args.zoneId))
+  else
+    device:send(clusters.ZoneManagement.server.commands.RemoveZone(device, endpoint_id, cmd.args.zoneId))
+  end
 end
 
 function CameraCapabilityHandlers.handle_create_or_update_trigger(driver, device, cmd)
