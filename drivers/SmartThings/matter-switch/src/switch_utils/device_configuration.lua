@@ -132,6 +132,9 @@ function ButtonDeviceConfiguration.update_button_profile(device, default_endpoin
   if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
     profile_name = "3-button-battery-temperature-humidity"
   end
+  if switch_utils.get_product_override_field(device, "is_ikea_dual_button") then
+    profile_name = "ikea-2-button-battery"
+  end
   return profile_name
 end
 
