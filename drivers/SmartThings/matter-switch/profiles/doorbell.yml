@@ -1,0 +1,7 @@
+name: doorbell
+components:
+  - id: main
+    capabilities:
+      - id: button
+        version: 1
+        optional: true

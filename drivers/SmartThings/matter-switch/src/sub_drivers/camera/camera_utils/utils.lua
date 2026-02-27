@@ -310,6 +310,14 @@ function CameraUtils.subscribe(device)
     }
   }
 
+  -- If using the standalone Chime profile, change the subscribed attribute list for audioMute appropriately.
+  if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.CHIME) > 0 and
+    #switch_utils.get_endpoints_by_device_type(device, camera_fields.camera_profile_device_types) == 0 then
+    camera_subscribed_attributes[capabilities.audioMute.ID] = {
+      clusters.Chime.attributes.Enabled
+    }
+  end
+
   local im = require "st.matter.interaction_model"
 
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
