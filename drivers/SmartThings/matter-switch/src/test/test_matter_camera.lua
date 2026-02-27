@@ -1774,7 +1774,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Removing a zone with an existing trigger should first send RemoveTrigger, then send RemoveZone after the trigger is removed",
+  "Removing a zone with an existing trigger should send RemoveTrigger followed by RemoveZone",
   function()
     update_device_profile()
     test.wait_for_events()
@@ -1818,6 +1818,7 @@ test.register_coroutine_test(
       })
     })
 
+    -- Receive the Triggers attribute update from the device reflecting the new trigger
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ZoneManagement.attributes.Triggers:build_test_report_data(
@@ -1837,7 +1838,7 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
 
-    -- Receive removeZone command, and send RemoveTrigger to the device instead of RemoveZone
+    -- Receive removeZone command: since a trigger exists for zone 1, RemoveTrigger is sent first, then RemoveZone
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "zoneManagement", component = "main", command = "removeZone", args = { 1 } }
@@ -1845,21 +1846,12 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.ZoneManagement.server.commands.RemoveTrigger(mock_device, CAMERA_EP, 1)
     })
-    test.wait_for_events()
-
-    -- When the Triggers attribute reflects that the trigger has been removed, RemoveZone is sent to the device
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.ZoneManagement.attributes.Triggers:build_test_report_data(mock_device, CAMERA_EP, {})
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.zoneManagement.triggers({}))
-    )
     test.socket.matter:__expect_send({
       mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, 1)
     })
     test.wait_for_events()
 
+    -- Receive the updated Zones attribute from the device with the zone removed
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ZoneManagement.attributes.Zones:build_test_report_data(mock_device, CAMERA_EP, {})

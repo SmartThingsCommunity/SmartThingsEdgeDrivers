@@ -12,7 +12,6 @@ CameraFields.MIN_VOLUME_LEVEL = "__min_volume_level"
 CameraFields.SUPPORTED_RESOLUTIONS = "__supported_resolutions"
 CameraFields.MAX_RESOLUTION = "__max_resolution"
 CameraFields.MIN_RESOLUTION = "__min_resolution"
-CameraFields.PENDING_ZONE_REMOVAL = "__pending_zone_removal"
 CameraFields.TRIGGERED_ZONES = "__triggered_zones"
 CameraFields.VIEWPORT = "__viewport"
 
