@@ -2,12 +2,10 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
+local clusters = require "st.zigbee.zcl.clusters"
 local utils = require "st.utils"
-local COLOR_CONTROL_ID = 0x0300
-local COLOR_TEMP_PHYSICAL_MIN_MIREDS_ID = 0x0400B
-local COLOR_TEMP_PHYSICAL_MAX_MIREDS_ID = 0x0400C
-local MIREDS_MIN = "_min_mireds"
-local MIREDS_MAX = "_max_mireds"
+local KELVIN_MAX = "_max_kelvin"
+local KELVIN_MIN = "_min_kelvin"
 local MIREDS_CONVERSION_CONSTANT = 1000000
 local COLOR_TEMPERATURE_KELVIN_MAX = 15000
 local COLOR_TEMPERATURE_KELVIN_MIN = 1000
@@ -25,8 +23,8 @@ local function color_temp_min_handler(driver, device, value, zb_rx)
     return
   end
   local temp_in_kelvin = utils.round(MIREDS_CONVERSION_CONSTANT / temp_in_mired)
-  device:set_field(MIREDS_MAX..endpoint, temp_in_kelvin)
-  local min = device:get_field(MIREDS_MIN..endpoint)
+  device:set_field(KELVIN_MAX..endpoint, temp_in_kelvin)
+  local min = device:get_field(KELVIN_MIN..endpoint)
   if min ~= nil then
     if temp_in_kelvin > min then
       device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = temp_in_kelvin}}))
@@ -47,8 +45,8 @@ local function color_temp_max_handler(driver, device, value, zb_rx)
     return
   end
   local temp_in_kelvin = utils.round(MIREDS_CONVERSION_CONSTANT / temp_in_mired)
-  device:set_field(MIREDS_MIN..endpoint, temp_in_kelvin)
-  local max = device:get_field(MIREDS_MAX..endpoint)
+  device:set_field(KELVIN_MIN..endpoint, temp_in_kelvin)
+  local max = device:get_field(KELVIN_MAX..endpoint)
   if max ~= nil then
     if temp_in_kelvin < max then
       device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = temp_in_kelvin, maximum = max}}))
@@ -62,9 +60,9 @@ local color_temp_range_handlers = {
   NAME = "Color temp range handlers",
   zigbee_handlers = {
     attr = {
-      [COLOR_CONTROL_ID] = {
-        [COLOR_TEMP_PHYSICAL_MIN_MIREDS_ID] = color_temp_min_handler,
-        [COLOR_TEMP_PHYSICAL_MAX_MIREDS_ID] = color_temp_max_handler
+      [clusters.ColorControl.ID] = {
+        [clusters.ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = color_temp_min_handler,
+        [clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = color_temp_max_handler
       }
     }
   },
