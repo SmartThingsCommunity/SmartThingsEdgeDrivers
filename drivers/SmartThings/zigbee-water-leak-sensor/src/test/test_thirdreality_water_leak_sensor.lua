@@ -37,6 +37,14 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
+  "Added lifecycle should read ApplicationVersion",
+  function()
+    test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
+    test.socket.zigbee:__expect_send({mock_device.id, Basic.attributes.ApplicationVersion:read(mock_device)})
+  end
+)
+
+test.register_coroutine_test(
   "Refresh necessary attributes",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")

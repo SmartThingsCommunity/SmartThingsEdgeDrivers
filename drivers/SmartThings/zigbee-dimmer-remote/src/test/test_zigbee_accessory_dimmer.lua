@@ -217,4 +217,81 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+  "On command when current level is 0 should reset level then toggle switch",
+  function()
+    mock_device:set_field("current_level", 0)
+    test.socket.zigbee:__queue_receive({ mock_device.id, OnOff.server.commands.On.build_test_rx(mock_device) })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(10)))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+  end
+)
+
+test.register_coroutine_test(
+  "Step command(MoveStepMode.DOWN) to level 0 should emit switch off and level 0",
+  function()
+    mock_device:set_field("current_level", 10)
+    local step_command = Level.server.commands.Step.build_test_rx(mock_device, Level.types.MoveStepMode.DOWN, 0x00,
+                                                                  0x0000, 0x00, 0x00)
+    local frm_ctrl = FrameCtrl(0x01)
+    step_command.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({ mock_device.id, step_command })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(0)))
+  end
+)
+
+test.register_coroutine_test(
+  "Step command(MoveStepMode.UP) when device is off should emit switch on",
+  function()
+    mock_device:set_field("current_status", "off")
+    local step_command = Level.server.commands.Step.build_test_rx(mock_device, Level.types.MoveStepMode.UP, 0x00,
+                                                                  0x0000, 0x00, 0x00)
+    local frm_ctrl = FrameCtrl(0x01)
+    step_command.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({ mock_device.id, step_command })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(100)))
+  end
+)
+
+test.register_coroutine_test(
+  "Capability command setLevel should be handled",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = { 50 } } })
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(50)))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Capability command setLevel 0 should restore previous level",
+  function()
+    mock_device:set_field("current_level", 30)
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "switchLevel", component = "main", command = "setLevel", args = { 0 } } })
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(30)))
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "device added lifecycle should initialize device state",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switchLevel.level(100)))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = true })))
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()
