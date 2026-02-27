@@ -1,20 +1,9 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local device_lib = require "st.device"
 
 local DEFAULT_LEVEL = 0
 local STATE_MACHINE = "__state_machine"
@@ -27,22 +16,7 @@ local StateMachineEnum = {
   STATE_CURRENT_POSITION_FIRED = 0x03
 }
 
-local SUB_WINDOW_COVERING_VID_PID = {
-  {0x10e1, 0x1005} -- VDA
-}
 
-local function is_matter_window_covering_position_updates_while_moving(opts, driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
-    return false
-  end
-  for i, v in ipairs(SUB_WINDOW_COVERING_VID_PID) do
-    if device.manufacturer_info.vendor_id == v[1] and
-       device.manufacturer_info.product_id == v[2] then
-      return true
-    end
-  end
-  return false
-end
 
 local function device_init(driver, device)
   device:subscribe()
@@ -145,7 +119,7 @@ local matter_window_covering_position_updates_while_moving_handler = {
   },
   capability_handlers = {
   },
-  can_handle = is_matter_window_covering_position_updates_while_moving,
+  can_handle = require("matter-window-covering-position-updates-while-moving.can_handle"),
 }
 
 return matter_window_covering_position_updates_while_moving_handler
