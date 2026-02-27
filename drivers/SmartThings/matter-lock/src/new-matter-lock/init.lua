@@ -27,7 +27,6 @@ end
 
 local DoorLock = clusters.DoorLock
 local PowerSource = clusters.PowerSource
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 
 local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
@@ -98,9 +97,11 @@ local profiling_data = {
   BATTERY_SUPPORT = "__BATTERY_SUPPORT",
 }
 
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local subscribed_attributes = {
   [capabilities.lock.ID] = {
-    DoorLock.attributes.LockState
+    DoorLock.attributes.LockState,
+    DoorLockFeatureMapAttr
   },
   [capabilities.remoteControlStatus.ID] = {
     DoorLock.attributes.OperatingMode
@@ -195,7 +196,6 @@ local function device_init(driver, device)
       end
     end
   end
-  device:add_subscribed_attribute(DoorLockFeatureMapAttr)
   device:subscribe()
  end
 
