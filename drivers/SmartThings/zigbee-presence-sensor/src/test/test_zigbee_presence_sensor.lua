@@ -10,6 +10,7 @@ local PowerConfiguration = clusters.PowerConfiguration
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local presence_utils = require "presence_utils"
 
 -- Needed for building ConfigureReportingResponse msg
 local messages = require "st.zigbee.messages"
@@ -292,6 +293,98 @@ test.register_coroutine_test(
       )
     })
   end
+)
+
+test.register_coroutine_test(
+  "battery_config_response_handler cancels pre-existing recurring poll timer",
+  function()
+    -- Place a live timer in the field so the nil-check branch is taken.
+    local pre_timer = test.timer.__create_test_time_advance_timer(60, "interval")
+    mock_simple_device:set_field(presence_utils.RECURRING_POLL_TIMER, pre_timer)
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      build_config_response_msg(PowerConfiguration.ID, 0x00)
+    })
+    -- poke() emits "present" for every inbound zigbee message
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present"))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "info_changed with changed check_interval cancels existing recurring poll timer",
+  function()
+    local pre_timer = test.timer.__create_test_time_advance_timer(60, "interval")
+    mock_simple_device:set_field(presence_utils.RECURRING_POLL_TIMER, pre_timer)
+    test.socket.device_lifecycle():__queue_receive(
+      mock_simple_device:generate_info_changed({ preferences = { check_interval = 100 } })
+    )
+    test.wait_for_events()
+  end
+)
+
+-- Build two additional mock devices (module-level) for checkInterval type variants.
+-- The profile default sets checkInterval = 120 (number); we override after building.
+local mock_device_str_interval = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("smartthings-arrival-sensor.yml"),
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "SmartThings",
+        model = "tagv4",
+        server_clusters = {0x0000, 0x0001, 0x0003}
+      }
+    }
+  }
+)
+mock_device_str_interval.preferences.checkInterval = "120"  -- string → triggers elseif branch
+
+local mock_device_nil_interval = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("smartthings-arrival-sensor.yml"),
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "SmartThings",
+        model = "tagv4",
+        server_clusters = {0x0000, 0x0001, 0x0003}
+      }
+    }
+  }
+)
+mock_device_nil_interval.preferences.checkInterval = nil  -- nil → triggers default-return branch
+
+test.register_coroutine_test(
+  "init with string checkInterval uses parsed value for presence timeout",
+  function()
+    test.mock_device.add_test_device(mock_device_str_interval)
+    test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_str_interval.id, "init" })
+    test.wait_for_events()
+    test.mock_time.advance_time(121)
+    test.socket.capability:__expect_send(
+      mock_device_str_interval:generate_test_message("main", capabilities.presenceSensor.presence("not present"))
+    )
+  end,
+  { test_init = function() end }
+)
+
+test.register_coroutine_test(
+  "init with nil checkInterval uses default presence timeout",
+  function()
+    test.mock_device.add_test_device(mock_device_nil_interval)
+    test.timer.__create_and_queue_test_time_advance_timer(120, "oneshot")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_nil_interval.id, "init" })
+    test.wait_for_events()
+    test.mock_time.advance_time(121)
+    test.socket.capability:__expect_send(
+      mock_device_nil_interval:generate_test_message("main", capabilities.presenceSensor.presence("not present"))
+    )
+  end,
+  { test_init = function() end }
 )
 
 test.run_registered_tests()

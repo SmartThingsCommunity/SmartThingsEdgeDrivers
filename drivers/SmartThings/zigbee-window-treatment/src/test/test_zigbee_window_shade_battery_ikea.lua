@@ -215,4 +215,114 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "Cancel existing set-status timer when a new partial level report arrives",
+  function()
+    -- First attr: level 90 sets T1
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+    -- Second attr arrives before T1 fires: should cancel T1 and create T2
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 15)
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 85 } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
+    )
+    -- T2 fires; T1 was cancelled so only partially_open from T2
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Timer callback emits closed when shade reaches level 0",
+  function()
+    -- First attr starts partial movement and arms a 1-second status timer
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+    -- Second attr reports fully closed (level=0); goes through elseif branch, T1 still pending
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+    )
+    -- T1 fires; get_latest_state returns 0 so the callback emits closed()
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Timer callback emits open when shade reaches level 100",
+  function()
+    -- First attr starts partial movement and arms a 1-second status timer
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+    })
+    test.socket.capability:__expect_send({
+      mock_device.id,
+      { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+    -- Second attr reports fully open (level=100); goes through elseif branch, T1 still pending
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 0)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+    )
+    -- T1 fires; get_latest_state returns 100 so the callback emits open()
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+    )
+    test.wait_for_events()
+  end
+)
+
 test.run_registered_tests()

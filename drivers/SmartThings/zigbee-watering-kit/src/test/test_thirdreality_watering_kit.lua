@@ -218,4 +218,50 @@ test.register_coroutine_test(
   end
 )
 
+test.register_message_test(
+  "ZoneStatusChangeNotification should be handled: detected",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
+    }
+  }
+)
+
+test.register_message_test(
+  "ZoneStatusChangeNotification should be handled: clear",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0000, 0x00) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "fanspeed reported should be clamped to 0 when value >= 1000",
+  function()
+    local attr_report_data = {
+      { WATERING_TIME_ATTR, data_types.Uint16.ID, 1000 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, THIRDREALITY_WATERING_CLUSTER, attr_report_data, 0x1407)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(0)))
+  end
+)
+
 test.run_registered_tests()

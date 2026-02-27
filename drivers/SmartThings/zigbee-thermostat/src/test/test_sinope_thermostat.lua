@@ -174,4 +174,31 @@ test.register_coroutine_test(
     end
 )
 
+test.register_coroutine_test(
+    "Refresh should send read requests for all necessary attributes",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "refresh", component = "main", command = "refresh", args = {} }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.LocalTemperature:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.PIHeatingDemand:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:read(mock_device)
+      })
+    end
+)
+
 test.run_registered_tests()
