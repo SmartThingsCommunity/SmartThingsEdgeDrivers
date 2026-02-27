@@ -15,6 +15,7 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local cluster_base = require "st.matter.cluster_base"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
 
@@ -211,6 +212,7 @@ local mock_device_modular = test.mock_device.build_test_matter_device({
 })
 
 
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe request
@@ -218,6 +220,7 @@ local function test_init()
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   -- add test device
   test.mock_device.add_test_device(mock_device)
   -- actual onboarding flow
@@ -239,6 +242,7 @@ local function test_init_unlatch()
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_unlatch))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   -- add test device, handle initial subscribe
   test.mock_device.add_test_device(mock_device_unlatch)
   -- actual onboarding flow
@@ -266,6 +270,7 @@ local function test_init_user_pin()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   -- add test device
   test.mock_device.add_test_device(mock_device_user_pin)
   -- actual onboarding flow
@@ -295,6 +300,7 @@ local function test_init_user_pin_schedule_unlatch()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin_schedule_unlatch))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   -- add test device
   test.mock_device.add_test_device(mock_device_user_pin_schedule_unlatch)
   -- actual onboarding flow
@@ -316,6 +322,7 @@ local function test_init_modular()
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_modular))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   -- add test device
   test.mock_device.add_test_device(mock_device_modular)
   -- actual onboarding flow
@@ -640,6 +647,7 @@ test.register_coroutine_test(
     subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_modular))
     subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device_modular))
+    subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
     test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
     test.socket.capability:__expect_send(
       mock_device_modular:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
