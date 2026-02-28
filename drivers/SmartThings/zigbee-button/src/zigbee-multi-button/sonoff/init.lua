@@ -13,7 +13,6 @@
 -- limitations under the License.
 
 local capabilities = require "st.capabilities"
-local log = require "log"
 
 local SONOFF_CLUSTER_ID = 0xFC12
 local SONOFF_ATTR_ID = 0x0000
@@ -38,11 +37,7 @@ local function sonoff_attr_handler(driver, device, value, zb_rx)
     local comp = device.profile.components[button_name]
     if comp then
         device:emit_component_event(comp, event_func({state_change = true}))
-    else
-      log.warn("Unknown button component: " .. button_name)
     end
-  else
-    log.warn("Unknown event value: " .. tostring(attr_val))
   end
 end
 
