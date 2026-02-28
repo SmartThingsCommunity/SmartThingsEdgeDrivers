@@ -316,6 +316,10 @@ end
 --- In the case there are multiple endpoints supporting the PowerTopology cluster with
 --- SET feature, all AvailableEndpoints responses must be handled before profiling.
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
+    device.log.warn_with({hub_logs = true}, "Received an AvailableEndpoints response after power topology has already been determined. Ignoring this response.")
+    return
+  end
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, set_ep_info in pairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
@@ -341,6 +345,10 @@ end
 -- [[ DESCRIPTOR CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.parts_list_handler(driver, device, ib, response)
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
+    device.log.warn_with({hub_logs = true}, "Received a PartsList response after power topology has already been determined. Ignoring this response.")
+    return
+  end
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
   for i, tree_ep_info in pairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then

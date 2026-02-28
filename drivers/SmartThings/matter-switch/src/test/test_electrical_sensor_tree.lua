@@ -87,6 +87,7 @@ local subscribed_attributes = {
   clusters.ElectricalPowerMeasurement.attributes.ActivePower,
   clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
   clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
+  clusters.Descriptor.attributes.PartsList,
 }
 
 local cumulative_report_val_19 = {
@@ -128,9 +129,6 @@ local function test_init()
       end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  local read_req = clusters.Descriptor.attributes.PartsList:read(mock_device.id, 1)
-  read_req:merge(clusters.Descriptor.attributes.PartsList:read(mock_device.id, 3))
-  test.socket.matter:__expect_send({ mock_device.id, read_req })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 end
