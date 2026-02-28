@@ -82,6 +82,36 @@ local mock_device_common = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_modular_fingerprint = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("aqs-modular.yml",
+    {enabled_optional_capabilities = {{"main", {}}}}),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.AirQuality.ID, cluster_type = "SERVER", feature_map = 3},
+        {cluster_id = clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.ID, cluster_type = "SERVER", feature_map = 1},
+      },
+      device_types = {
+        {device_type_id = 0x002C, device_type_revision = 1} -- Air Quality Sensor
+      }
+    }
+  }
+})
+
 local function test_init_all()
   test.mock_device.add_test_device(mock_device_all)
   test.socket.device_lifecycle:__queue_receive({ mock_device_all.id, "init" })
@@ -92,6 +122,18 @@ local function test_init_all()
   -- on device create, a generic AQS device will be profiled as aqs, thus only subscribing to one attribute
   local subscribe_request = clusters.AirQuality.attributes.AirQuality:subscribe(mock_device_all)
   test.socket.matter:__expect_send({mock_device_all.id, subscribe_request})
+end
+
+local function test_init_modular_fingerprint()
+  test.mock_device.add_test_device(mock_device_modular_fingerprint)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_modular_fingerprint.id, "init" })
+  test.socket.capability:__expect_send(mock_device_modular_fingerprint:generate_test_message("main",
+    capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"},
+    {visibility={displayed=false}}))
+  )
+  -- on device create, a generic AQS device will be profiled as aqs, thus only subscribing to one attribute
+  local subscribe_request = clusters.AirQuality.attributes.AirQuality:subscribe(mock_device_modular_fingerprint)
+  test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, subscribe_request})
 end
 
 local function test_init_common()
@@ -243,6 +285,30 @@ local function get_subscribe_request_common()
   return subscribe_request
 end
 
+local function get_subscribe_request_tvoc()
+  local subscribed_attributes = {
+    [capabilities.airQualityHealthConcern.ID] = {
+      clusters.AirQuality.attributes.AirQuality
+    },
+    [capabilities.tvocMeasurement.ID] = {
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasuredValue,
+      clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement.attributes.MeasurementUnit,
+    },
+  }
+  local subscribe_request = nil
+  for _, attributes in pairs(subscribed_attributes) do
+    for _, attribute in pairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device_common)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device_common))
+      end
+    end
+  end
+  return subscribe_request
+end
+
+
 -- run the profile configuration tests
 local function test_aqs_device_type_update_modular_profile(generic_mock_device, expected_metadata, subscribe_request, expected_supported_values_setters)
   test.socket.device_lifecycle:__queue_receive({generic_mock_device.id, "doConfigure"})
@@ -347,6 +413,53 @@ test.register_coroutine_test(
     test_aqs_device_type_update_modular_profile(mock_device_common, expected_metadata_common, subscribe_request_common, expected_supported_values_setters)
   end,
   { test_init = test_init_common }
+)
+
+test.register_coroutine_test(
+  "Component-capability update without profile ID update should cause re-subscribe in infoChanged handler",
+  function()
+    local expected_metadata_modular_disabled = {
+      optional_component_capabilities={
+        {
+          "main",
+          {
+            "tvocMeasurement",
+          },
+        },
+      },
+      profile="aqs-modular",
+    }
+    local subscribe_request_tvoc = get_subscribe_request_tvoc()
+    local updated_device_profile = t_utils.get_profile_definition("aqs-modular.yml",
+      {enabled_optional_capabilities = expected_metadata_modular_disabled.optional_component_capabilities}
+    )
+    updated_device_profile.id = "00000000-1111-2222-3333-000000000006"
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({ profile = updated_device_profile }))
+    test.socket.capability:__expect_send(mock_device_modular_fingerprint:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"}, {visibility={displayed=false}})))
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, subscribe_request_tvoc})
+  end,
+  { test_init = test_init_modular_fingerprint }
+)
+
+test.register_coroutine_test(
+  "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler",
+  function()
+    local expected_metadata_modular_disabled = {
+      optional_component_capabilities={
+        {
+          "main",
+          {},
+        },
+      },
+      profile="aqs-modular",
+    }
+    local updated_device_profile = t_utils.get_profile_definition("aqs-modular.yml",
+      {enabled_optional_capabilities = expected_metadata_modular_disabled.optional_component_capabilities}
+    )
+    updated_device_profile.id = "00000000-1111-2222-3333-000000000006"
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({ profile = updated_device_profile }))
+  end,
+  { test_init = test_init_modular_fingerprint }
 )
 
 -- run tests

@@ -16,7 +16,8 @@ local mock_device_ep2 = 2
 
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Fan Light",
-  profile = t_utils.get_profile_definition("fan-modular.yml", {}),
+  profile = t_utils.get_profile_definition("fan-modular.yml",
+    {enabled_optional_capabilities = {{"main", {"fanSpeedPercent", "fanMode"}}}}),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -44,6 +45,40 @@ local mock_device = test.mock_device.build_test_matter_device({
       },
       device_types = {
         {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+      }
+    },
+    {
+      endpoint_id = mock_device_ep2,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 15},
+      },
+      device_types = {
+        {device_type_id = 0x002B, device_type_revision = 1,} -- Fan
+      }
+    }
+  }
+})
+
+local mock_device_capabilities_disabled = test.mock_device.build_test_matter_device({
+  label = "Matter Fan Light",
+  profile = t_utils.get_profile_definition("fan-modular.yml",
+    {enabled_optional_capabilities = {{"main", {}}}}),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  matter_version = {
+    software = 1,
+    hardware = 1,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
       }
     },
     {
@@ -110,15 +145,38 @@ local function test_init()
   })
   mock_device:expect_metadata_update({ profile = "fan-modular", optional_component_capabilities = {{"main", {"fanSpeedPercent", "fanMode"}}} })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-
-  local updated_device_profile = t_utils.get_profile_definition("fan-modular.yml",
-    {enabled_optional_capabilities = {{"main", {"fanSpeedPercent", "fanMode"}}}}
-  )
-  test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Component-capability update without profile ID update should cause re-subscribe in infoChanged handler", function()
+    local cluster_subscribe_list ={
+      clusters.FanControl.attributes.FanModeSequence,
+      clusters.FanControl.attributes.FanMode,
+      clusters.FanControl.attributes.PercentCurrent,
+    }
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_capabilities_disabled)
+    for i, clus in ipairs(cluster_subscribe_list) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_capabilities_disabled)) end
+    end
+    test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed(
+      {profile = {id = "00000000-1111-2222-3333-000000000004", components = { main = {capabilities={["fanSpeedPercent"] = {id="fanSpeedPercent", version=1}, ["fanMode"] = {id="fanMode", version=1}, ["firmwareUpdate"] = {id="firmwareUpdate", version=1}, ["refresh"] = {id="refresh", version=1}}}}}})
+    )
+    test.socket.matter:__expect_send({mock_device_capabilities_disabled.id, subscribe_request})
+  end,
+  { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
+)
+
+test.register_coroutine_test(
+  "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler", function()
+    test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed(
+      {profile = {id = "00000000-1111-2222-3333-000000000004"}})
+    )
+  end,
+  { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
+)
+
 
 test.register_coroutine_test(
   "Switch capability should send the appropriate commands", function()

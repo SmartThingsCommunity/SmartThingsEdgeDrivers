@@ -22,8 +22,6 @@ local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
-local MODULAR_PROFILE_UPDATED = "__MODULAR_PROFILE_UPDATED"
-
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
   [DoorLock.types.DlStatus.FAILURE] = "failure",
@@ -203,7 +201,6 @@ local function match_profile_modular(driver, device)
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
-  device:set_field(MODULAR_PROFILE_UPDATED, true)
 end
 
 local function match_profile_switch(driver, device)
@@ -241,11 +238,63 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
+--- Deeply compare two values (including tables and their metatables).
+---
+--- @param a any
+--- @param b any
+--- @return boolean
+local function deep_equals(a, b)
+  if a == b then return true end -- same object
+  if type(a) ~= type(b) then return false end -- different type
+  if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+  -- Compare keys/values from a
+  for k, v in pairs(a) do
+    if not deep_equals(v, rawget(b, k)) then
+      return false
+    end
+  end
+  -- Check for keys in b that are not in a
+  for k in pairs(b) do
+    if rawget(a, k) == nil then
+      return false
+    end
+  end
+  -- Compare metatables
+  local mt_a = getmetatable(a)
+  local mt_b = getmetatable(b)
+  return deep_equals(mt_a, mt_b)
+end
+
+--- Check if the profile has changed by comparing the latest profile with the previous profile.
+---
+--- @param latest_profile any
+--- @param previous_profile any
+--- @return boolean
+local function profile_changed(latest_profile, previous_profile)
+  -- Check if the profile id has changed
+  if latest_profile.id ~= previous_profile.id then
+    return true
+  end
+  -- Check if all component and capability info in the latest profile existed in the previous profile
+  for _, component in pairs(latest_profile.components) do
+    local previous_component = previous_profile.components[component.id]
+    if not previous_component or not deep_equals(component.capabilities, previous_component.capabilities) then
+      return true
+    end
+  end
+  -- Check if any components in the previous profile no longer exist in the latest profile
+  for _, component in pairs(previous_profile.components) do
+    if not latest_profile.components[component.id] then
+      return true
+    end
+  end
+  return false
+end
+
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id and not device:get_field(MODULAR_PROFILE_UPDATED) then
+  if not profile_changed(device.profile, args.old_st_store.profile) then
     return
   end
-  device:set_field(MODULAR_PROFILE_UPDATED, nil)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do

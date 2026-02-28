@@ -241,7 +241,6 @@ function DeviceConfiguration.match_profile(driver, device)
   local fan_device_type_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_device_type_ep_ids > 0 then
     updated_profile, optional_component_capabilities = FanDeviceConfiguration.assign_profile_for_fan_ep(device, default_endpoint_id)
-    device:set_field(fields.MODULAR_PROFILE_UPDATED, true)
   end
 
   -- initialize the main device card with buttons if applicable
