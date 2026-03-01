@@ -346,13 +346,13 @@ end
 
 function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_imported_energy_wh)
   local current_time = os.time()
-  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+  local last_time = utils.get_field_for_endpoint(device, fields.LAST_IMPORTED_REPORT_TIMESTAMP, endpoint_id) or 0
 
   -- Ensure that the previous report was sent at least 15 minutes ago
   if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
     return
   end
-  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+  utils.set_field_for_endpoint(device, fields.LAST_IMPORTED_REPORT_TIMESTAMP, endpoint_id, current_time, { persist = true })
 
   local previous_imported_report = utils.get_latest_state_for_endpoint(device, endpoint_id, capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
