@@ -182,14 +182,41 @@ end
 
 function CameraAttributeHandlers.allocated_video_streams_handler(driver, device, ib, response)
   if not ib.data.elements then return end
+
+  local pending_allocation = device:get_field(camera_fields.PENDING_STREAM_ALLOCATION)
+  local dptz_viewports = device:get_field(camera_fields.DPTZ_VIEWPORTS) or {}
   local streams = {}
+  local previous_stream_ids = {}
+
+  local previous_streams = device:get_latest_state("main", capabilities.videoStreamSettings.ID,
+    capabilities.videoStreamSettings.videoStreams.NAME)
+  local previous_stream_labels = {}
+
+  if previous_streams then
+    for _, stream in ipairs(previous_streams) do
+      previous_stream_ids[stream.streamId] = true
+      previous_stream_labels[stream.streamId] = stream.data.label
+    end
+  end
+
   for i, v in ipairs(ib.data.elements) do
     local stream = v.elements
+    local stream_id = stream.video_stream_id.value
+    local is_new_stream = not previous_stream_ids[stream_id]
+
+    -- Get label from: 1) pending allocation (for new streams), 2) existing capability state, 3) default
+    local saved_label
+    if pending_allocation and is_new_stream then
+      saved_label = pending_allocation.label
+    end
+    local capability_label = previous_stream_labels[stream_id]
+
     local video_stream = {
-      streamId = stream.video_stream_id.value,
+      streamId = stream_id,
       data = {
-        label = "Stream " .. i,
-        type = stream.stream_usage.value == clusters.Global.types.StreamUsageEnum.LIVE_VIEW and "liveStream" or "clipRecording",
+        label = saved_label or capability_label or "Stream " .. i,
+        type = stream.stream_usage.value ==
+          clusters.Global.types.StreamUsageEnum.LIVE_VIEW and "liveStream" or "clipRecording",
         resolution = {
           width = stream.min_resolution.elements.width.value,
           height = stream.min_resolution.elements.height.value,
@@ -197,20 +224,73 @@ function CameraAttributeHandlers.allocated_video_streams_handler(driver, device,
         }
       }
     }
-    local viewport = device:get_field(camera_fields.VIEWPORT)
-    if viewport then
-      video_stream.data.viewport = viewport
+
+    if dptz_viewports[stream_id] then
+      video_stream.data.viewport = dptz_viewports[stream_id]
+    else
+      video_stream.data.viewport = {
+        upperLeftVertex = { x = 0, y = 0 },
+        lowerRightVertex = {
+          x = stream.min_resolution.elements.width.value,
+          y = stream.min_resolution.elements.height.value
+        }
+      }
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
+
+    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+      clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
       video_stream.data.watermark = stream.watermark_enabled.value and "enabled" or "disabled"
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
+    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+      clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
       video_stream.data.onScreenDisplay = stream.osd_enabled.value and "enabled" or "disabled"
     end
     table.insert(streams, video_stream)
   end
+
   if #streams > 0 then
     device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(streams))
+    if device:get_field(camera_fields.CLEAR_PENDING_STREAM_ALLOCATION) then
+      device:set_field(camera_fields.PENDING_STREAM_ALLOCATION, nil)
+      device:set_field(camera_fields.CLEAR_PENDING_STREAM_ALLOCATION, nil)
+      pending_allocation = false
+    end
+  end
+
+  if pending_allocation then
+    local endpoint_id = pending_allocation.endpoint_id
+    local stream_usage = pending_allocation.type == "liveStream" and
+      clusters.Global.types.StreamUsageEnum.LIVE_VIEW or clusters.Global.types.StreamUsageEnum.RECORDING
+
+    local min_resolution, max_resolution
+    if pending_allocation.resolution then
+      min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
+        width = pending_allocation.resolution.width,
+        height = pending_allocation.resolution.height
+      })
+      max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
+        width = pending_allocation.resolution.width,
+        height = pending_allocation.resolution.height
+      })
+    end
+
+    -- Use resolution (if available) for MinResolution and MaxResolution to force the server to allocate the stream
+    -- with the desired resolution
+    -- TODO: define default values as constants in table indexed by VID or VID+PID
+    device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(device, endpoint_id,
+      stream_usage,
+      clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+      30,
+      device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or 60,
+      min_resolution or (device:get_field(camera_fields.MIN_RESOLUTION) or clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 320, height = 240})),
+      max_resolution or (device:get_field(camera_fields.MAX_RESOLUTION) or clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080})),
+      10000,
+      device:get_field(camera_fields.MAX_ENCODED_PIXEL_RATE) or 2000000,
+      4000,
+      pending_allocation.watermark_enabled or false,
+      pending_allocation.on_screen_display_enabled or false
+    ))
+    device:set_field(camera_fields.CLEAR_PENDING_STREAM_ALLOCATION, true)
   end
 end
 
@@ -219,6 +299,44 @@ function CameraAttributeHandlers.viewport_handler(driver, device, ib, response)
     upperLeftVertex = { x = ib.data.elements.x1.value, y = ib.data.elements.y1.value },
     lowerRightVertex = { x = ib.data.elements.x2.value, y = ib.data.elements.y2.value },
   }))
+end
+
+function CameraAttributeHandlers.dptz_streams_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
+
+  local dptz_viewports = {}
+  for _, v in ipairs(ib.data.elements) do
+    local dptz_struct = v.elements
+    local stream_id = dptz_struct.video_stream_id.value
+    local viewport = dptz_struct.viewport.elements
+
+    dptz_viewports[stream_id] = {
+      upperLeftVertex = { x = viewport.x1.value, y = viewport.y1.value },
+      lowerRightVertex = { x = viewport.x2.value, y = viewport.y2.value }
+    }
+  end
+
+  device:set_field(camera_fields.DPTZ_VIEWPORTS, dptz_viewports)
+
+  local current_streams = device:get_latest_state("main", capabilities.videoStreamSettings.ID,
+    capabilities.videoStreamSettings.videoStreams.NAME)
+  if current_streams then
+    local updated_streams = {}
+    for _, stream in ipairs(current_streams) do
+      local updated_stream = {
+        streamId = stream.streamId,
+        data = stream.data
+      }
+      if dptz_viewports[stream.streamId] then
+        updated_stream.data.viewport = dptz_viewports[stream.streamId]
+      end
+      table.insert(updated_streams, updated_stream)
+    end
+
+    if #updated_streams > 0 then
+      device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(updated_streams))
+    end
+  end
 end
 
 function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, response)

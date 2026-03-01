@@ -108,14 +108,15 @@ local camera_handler = {
         [clusters.CameraAvSettingsUserLevelManagement.attributes.PanMax.ID] = attribute_handlers.pt_range_handler_factory(capabilities.mechanicalPanTiltZoom.panRange, camera_fields.pt_range_fields[camera_fields.PAN_IDX].max),
         [clusters.CameraAvSettingsUserLevelManagement.attributes.PanMin.ID] = attribute_handlers.pt_range_handler_factory(capabilities.mechanicalPanTiltZoom.panRange, camera_fields.pt_range_fields[camera_fields.PAN_IDX].min),
         [clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax.ID] = attribute_handlers.pt_range_handler_factory(capabilities.mechanicalPanTiltZoom.tiltRange, camera_fields.pt_range_fields[camera_fields.TILT_IDX].max),
-        [clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin.ID] = attribute_handlers.pt_range_handler_factory(capabilities.mechanicalPanTiltZoom.tiltRange, camera_fields.pt_range_fields[camera_fields.TILT_IDX].min)
+        [clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin.ID] = attribute_handlers.pt_range_handler_factory(capabilities.mechanicalPanTiltZoom.tiltRange, camera_fields.pt_range_fields[camera_fields.TILT_IDX].min),
+        [clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams.ID] = attribute_handlers.dptz_streams_handler
       },
       [clusters.ZoneManagement.ID] = {
         [clusters.ZoneManagement.attributes.MaxZones.ID] = attribute_handlers.max_zones_handler,
         [clusters.ZoneManagement.attributes.Zones.ID] = attribute_handlers.zones_handler,
         [clusters.ZoneManagement.attributes.Triggers.ID] = attribute_handlers.triggers_handler,
         [clusters.ZoneManagement.attributes.SensitivityMax.ID] = attribute_handlers.sensitivity_max_handler,
-        [clusters.ZoneManagement.attributes.Sensitivity.ID] = attribute_handlers.sensitivity_handler,
+        [clusters.ZoneManagement.attributes.Sensitivity.ID] = attribute_handlers.sensitivity_handler
       },
       [clusters.Chime.ID] = {
         [clusters.Chime.attributes.InstalledChimeSounds.ID] = attribute_handlers.installed_chime_sounds_handler,
