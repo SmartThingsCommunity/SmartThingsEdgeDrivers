@@ -1,24 +1,19 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Opportunities for improvement:
 -- * MediaInput cluster could be used to support the MediaSource capability.
 -- * Channel cluster could be used to support the TvChannel capability.
 -- * AdvancedSeek feature support.
+
+local MatterDriver = require "st.matter.driver"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local MatterDriver = require "st.matter.driver"
+local st_utils = require "st.utils"
+
+local LEVEL_BOUND_RECEIVED = "__level_bound_received"
+local LEVEL_MIN = "__level_min"
+local LEVEL_MAX = "__level_max"
 
 local VOLUME_STEP = 5
 
@@ -116,9 +111,25 @@ local function on_off_attr_handler(driver, device, ib, response)
 end
 
 local function level_attr_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then
-    local volume = math.floor((ib.data.value / 254.0 * 100) + 0.5)
-    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.audioVolume.volume(volume))
+  if ib.data.value == nil then return end
+  local min_volume = device:get_field(LEVEL_BOUND_RECEIVED..LEVEL_MIN) or 0
+  local max_volume = device:get_field(LEVEL_BOUND_RECEIVED..LEVEL_MAX) or 254
+  -- Convert level (0-254) to volume (0-100), taking reported min and max level values into account
+  local volume = st_utils.round(((ib.data.value - min_volume) * 100) / (max_volume - min_volume))
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.audioVolume.volume(volume))
+end
+
+function level_bounds_handler_factory(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then return end
+    device:set_field(LEVEL_BOUND_RECEIVED..minOrMax, ib.data.value)
+    local min = device:get_field(LEVEL_BOUND_RECEIVED..LEVEL_MIN)
+    local max = device:get_field(LEVEL_BOUND_RECEIVED..LEVEL_MAX)
+    if min ~= nil and max ~= nil and (min < 0 or max > 254 or min >= max) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported invalid min level value [%d] or max level value [%d]", min, max))
+      device:set_field(LEVEL_BOUND_RECEIVED..LEVEL_MAX, nil)
+      device:set_field(LEVEL_BOUND_RECEIVED..LEVEL_MIN, nil)
+    end
   end
 end
 
@@ -163,7 +174,10 @@ end
 
 local function handle_set_volume(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local level = math.floor(cmd.args.volume/100.0 * 254)
+  local min_volume = device:get_field(LEVEL_BOUND_RECEIVED..LEVEL_MIN) or 0
+  local max_volume = device:get_field(LEVEL_BOUND_RECEIVED..LEVEL_MAX) or 254
+  -- Convert volume (0-100) to level (0-254), taking reported min and max level values into account
+  local level = st_utils.round((cmd.args.volume * (max_volume - min_volume)) / 100) + min_volume
   local req = clusters.LevelControl.server.commands.MoveToLevelWithOnOff(device, endpoint_id, level, cmd.args.rate or 0, 0, 0)
   device:send(req)
 end
@@ -231,7 +245,9 @@ local matter_driver_template = {
         [clusters.OnOff.attributes.OnOff.ID] = on_off_attr_handler,
       },
       [clusters.LevelControl.ID] = {
-        [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler
+        [clusters.LevelControl.attributes.CurrentLevel.ID] = level_attr_handler,
+        [clusters.LevelControl.attributes.MaxLevel.ID] = level_bounds_handler_factory(LEVEL_MAX),
+        [clusters.LevelControl.attributes.MinLevel.ID] = level_bounds_handler_factory(LEVEL_MIN),
       },
       [clusters.MediaPlayback.ID] = {
         [clusters.MediaPlayback.attributes.CurrentState.ID] = media_playback_state_attr_handler,
@@ -246,7 +262,9 @@ local matter_driver_template = {
       clusters.OnOff.attributes.OnOff
     },
     [capabilities.audioVolume.ID] = {
-      clusters.LevelControl.attributes.CurrentLevel
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.LevelControl.attributes.MaxLevel,
+      clusters.LevelControl.attributes.MinLevel,
     },
     [capabilities.mediaPlayback.ID] = {
       clusters.MediaPlayback.attributes.CurrentState,
