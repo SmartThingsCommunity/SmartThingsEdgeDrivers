@@ -209,6 +209,21 @@ function AttributeEmitters.emit_button_attribute_events(button_device, button_in
     )
   end
 
+  -- Handle relative_rotary events (e.g. from the Hue Tap Dial)
+  local rotary_report = button_info.relative_rotary and button_info.relative_rotary.rotary_report
+  if rotary_report and rotary_report.rotation then
+    local rotation = rotary_report.rotation
+    local direction_sign = (rotation.direction == "clock_wise") and 1 or -1
+    -- Scale: 1000 steps = one full rotation = 100 units. Including direction_sign, translate to an integer, scaled between [-100, 100]
+    local rotate_amount = st_utils.round(st_utils.clamp_value(direction_sign * ((rotation.steps / 1000) * 100), -100, 100))
+    log.debug(string.format("emit knob rotateAmount: %s", rotate_amount))
+    if rotate_amount ~= 0 then
+      button_device:emit_event(
+        capabilities.knob.rotateAmount(rotate_amount, { state_change = true })
+      )
+    end
+  end
+
   local button_idx_map = button_device:get_field(Fields.BUTTON_INDEX_MAP)
   if not button_idx_map then
     log.error(

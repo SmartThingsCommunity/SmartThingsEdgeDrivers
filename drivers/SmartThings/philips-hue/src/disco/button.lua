@@ -23,11 +23,14 @@ local function _do_update(driver, api_instance, device_service_info, bridge_netw
   local rid_by_rtype = {}
   local button_services = {}
   local num_buttons = 0
+  local relative_rotary_services = {}
 
   for _, svc in ipairs(device_service_info.services) do
     if svc.rtype == HueDeviceTypes.BUTTON then
       num_buttons = num_buttons + 1
       table.insert(button_services, svc.rid)
+    elseif svc.rtype == HueDeviceTypes.RELATIVE_ROTARY then
+      table.insert(relative_rotary_services, svc.rid)
     else
       rid_by_rtype[svc.rtype] = svc.rid
     end
@@ -40,8 +43,15 @@ local function _do_update(driver, api_instance, device_service_info, bridge_netw
     hue_device_id = device_service_info.id,
     hue_device_data = device_service_info,
     num_buttons = num_buttons,
+    has_relative_rotary = #relative_rotary_services > 0,
     sensor_list = { power_id = HueDeviceTypes.DEVICE_POWER }
   }
+
+  for idx, rotary_rid in ipairs(relative_rotary_services) do
+    local rotary_id_key = string.format("relative_rotary%s_id", idx)
+    button_remote_description[rotary_id_key] = rotary_rid
+    button_remote_description.sensor_list[rotary_id_key] = HueDeviceTypes.RELATIVE_ROTARY
+  end
 
   for _, button_rid in ipairs(button_services) do
     local button_repr, err = api_instance:get_button_by_id(button_rid)
@@ -136,7 +146,10 @@ function M.handle_discovered_device(
     -- For double switch In-Wall Switch module
     elseif button_description.num_buttons == 2 then
       button_profile_ref = "two-button"
-    -- For Philips Hue Dimmer Remote and Tap Dial, which contains 4 buttons
+    -- For Philips Hue Tap Dial, which contains 4 buttons and a relative rotary
+    elseif button_description.num_buttons == 4 and button_description.has_relative_rotary then
+      button_profile_ref = "4-button-remote-with-knob"
+    -- For Philips Hue Dimmer Remote, which contains 4 buttons
     elseif button_description.num_buttons == 4 then
       button_profile_ref = "4-button-remote"
     else

@@ -7,6 +7,7 @@ local HueDeviceTypes = {
   LIGHT = "light",
   LIGHT_LEVEL = "light_level",
   MOTION = "motion",
+  RELATIVE_ROTARY = "relative_rotary",
   TAMPER = "tamper",
   TEMPERATURE = "temperature",
   ZIGBEE_CONNECTIVITY = "zigbee_connectivity"
