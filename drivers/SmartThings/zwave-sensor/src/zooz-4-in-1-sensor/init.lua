@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -22,22 +13,8 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 --- @type st.utils
 local utils = require "st.utils"
 
-local ZOOZ_4_IN_1_FINGERPRINTS = {
-  { manufacturerId = 0x027A, productType = 0x2021, productId = 0x2101 }, -- Zooz 4-in-1 sensor
-  { manufacturerId = 0x0109, productType = 0x2021, productId = 0x2101 }, -- ZP3111US 4-in-1 Motion
-  { manufacturerId = 0x0060, productType = 0x0001, productId = 0x0004 } -- Everspring Immune Pet PIR Sensor SP815
-}
 
 --- Determine whether the passed device is zooz_4_in_1_sensor
-local function can_handle_zooz_4_in_1_sensor(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZOOZ_4_IN_1_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      local subdriver = require("zooz-4-in-1-sensor")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 --- Handler for notification report command class
 ---
@@ -109,7 +86,7 @@ local zooz_4_in_1_sensor = {
     }
   },
   NAME = "zooz 4 in 1 sensor",
-  can_handle = can_handle_zooz_4_in_1_sensor
+  can_handle = require("zooz-4-in-1-sensor.can_handle"),
 }
 
 return zooz_4_in_1_sensor
