@@ -20,22 +20,39 @@ local capabilities = require "st.capabilities"
 
 local TAMPER_TIMER = "_tamper_timer"
 local TAMPER_CLEAR = 10
-local FIBARO_DOOR_WINDOW_MFR_ID = 0x010F
 
-local function can_handle_tamper_event(opts, driver, device, cmd, ...)
-  if device.zwave_manufacturer_id ~= FIBARO_DOOR_WINDOW_MFR_ID and
-    opts.dispatcher_class == "ZwaveDispatcher" and
+local excluded_devices = {
+  FIBARO_DOOR_WINDOW = {
+    mfrs = 0x010F
+  }
+}
+
+local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)
+  -- check only for relevant tamper event first
+  if not(opts.dispatcher_class == "ZwaveDispatcher" and
     cmd ~= nil and
     cmd.cmd_class ~= nil and
     cmd.cmd_class == cc.NOTIFICATION and
     cmd.cmd_id == Notification.REPORT and
     cmd.args.notification_type == Notification.notification_type.HOME_SECURITY and
     (cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED or
-    cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_MOVED) then
-      local subdriver = require("timed-tamper-clear")
-      return true, subdriver
-    else return false
+    cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_MOVED)) then
+    return false
+  end
+
+  -- check exclusion list: if device matches any entry, skip auto-clear
+  for _, excluded_device in pairs(excluded_devices) do
+    if zw_device:id_match(
+        excluded_device.mfrs,
+        excluded_device.product_types,
+        excluded_device.product_ids
+      ) then
+      return false
     end
+  end
+
+  local subdriver = require("timed-tamper-clear")
+  return true, subdriver
 end
 
 -- This behavior is from zwave-door-window-sensor.groovy. We've seen this behavior
