@@ -64,6 +64,9 @@ local subscribed_attributes = {
   [capabilities.lock.ID] = {
     DoorLock.attributes.LockState
   },
+  [capabilities.doorState.ID] = {
+    DoorLock.attributes.DoorState
+  },
   [capabilities.remoteControlStatus.ID] = {
     DoorLock.attributes.OperatingMode
   },
@@ -167,6 +170,12 @@ local function match_profile_modular(driver, device)
       if ep_cluster.cluster_id == DoorLock.ID then
         local clus_has_feature = function(feature_bitmap)
           return DoorLock.are_features_supported(feature_bitmap, ep_cluster.feature_map)
+        end
+        if clus_has_feature(DoorLock.types.Feature.DOOR_POSITION_SENSOR) then
+          table.insert(main_component_capabilities, capabilities.doorState.ID)
+          device.thread:call_with_delay(5, function(t)
+            device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
+          end)
         end
         if clus_has_feature(DoorLock.types.Feature.USER) then
           table.insert(main_component_capabilities, capabilities.lockUsers.ID)
@@ -328,6 +337,29 @@ local function lock_state_handler(driver, device, ib, response)
       device.log.warn("Lock State is nil")
     end
   end)
+end
+
+local function door_state_handler(driver, device, ib, response)
+  local DoorStateEnum = DoorLock.types.DoorStateEnum
+  local doorState = capabilities.doorState.doorState
+  local DOOR_STATE_MAP = {
+    [DoorStateEnum.DOOR_OPEN] = doorState.open,
+    [DoorStateEnum.DOOR_CLOSED] = doorState.closed,
+    [DoorStateEnum.DOOR_JAMMED] = doorState.jammed,
+    [DoorStateEnum.DOOR_FORCED_OPEN] = doorState.forcedOpen,
+    [DoorStateEnum.DOOR_UNSPECIFIED_ERROR] = doorState.unspecifiedError,
+    [DoorStateEnum.DOOR_AJAR] = doorState.ajar
+  }
+  device:emit_event(DOOR_STATE_MAP[ib.data.value]())
+
+  local supportedDoorStates = device:get_latest_state("main", capabilities.doorState.ID, capabilities.doorState.supportedDoorStates.NAME) or {}
+  for _, state in pairs(supportedDoorStates) do
+    if state == DOOR_STATE_MAP[ib.data.value].NAME then
+      return
+    end
+  end
+  table.insert(supportedDoorStates, DOOR_STATE_MAP[ib.data.value].NAME);
+  device:emit_event(capabilities.doorState.supportedDoorStates(supportedDoorStates, {visibility = {displayed = false}}))
 end
 
 ---------------------
@@ -2831,6 +2863,7 @@ local new_matter_lock_handler = {
     attr = {
       [DoorLock.ID] = {
         [DoorLock.attributes.LockState.ID] = lock_state_handler,
+        [DoorLock.attributes.DoorState.ID] = door_state_handler,
         [DoorLock.attributes.OperatingMode.ID] = operating_modes_handler,
         [DoorLock.attributes.NumberOfTotalUsersSupported.ID] = total_users_supported_handler,
         [DoorLock.attributes.NumberOfPINUsersSupported.ID] = pin_users_supported_handler,

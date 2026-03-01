@@ -6,6 +6,9 @@ components:
       version: 1
     - id: lockAlarm
       version: 1
+    - id: doorState
+      version: 1
+      optional: true
     - id: remoteControlStatus
       version: 1
     - id: lockUsers
