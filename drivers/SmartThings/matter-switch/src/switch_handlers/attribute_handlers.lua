@@ -317,7 +317,7 @@ end
 --- SET feature, all AvailableEndpoints responses must be handled before profiling.
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
   if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
-    device.log.warn_with({hub_logs = true}, "Received an AvailableEndpoints response after power topology has already been determined. Ignoring this response.")
+    device.log.warn("Received an AvailableEndpoints response after power topology has already been determined. Ignoring this response.")
     return
   end
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
@@ -346,7 +346,7 @@ end
 
 function AttributeHandlers.parts_list_handler(driver, device, ib, response)
   if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
-    device.log.warn_with({hub_logs = true}, "Received a PartsList response after power topology has already been determined. Ignoring this response.")
+    device.log.warn("Received a PartsList response after power topology has already been determined. Ignoring this response.")
     return
   end
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)

@@ -402,29 +402,29 @@ function utils.handle_electrical_sensor_info(device)
   -- energy reporting must be handled by a cumulative report, a periodic report, or both attributes simultaneously.
   -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
   for _, ep_info in ipairs(electrical_sensor_eps) do
-     if utils.find_cluster_on_ep(ep_info, clusters.ElectricalEnergyMeasurement.ID,
+    if utils.find_cluster_on_ep(ep_info, clusters.ElectricalEnergyMeasurement.ID,
       {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) then
-        device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true, { persist = false })
-        break
-     end
+      device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true)
+      break
+    end
   end
 
-  -- check the feature map for the first (or only) Electrical Sensor EP
-  local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
-  local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
-  if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) or
-    clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
-    -- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
-    -- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
-    return
-  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
-    -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
-    if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
-      device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
+  -- check the feature map for the first (or only) Electrical Sensor EP if the device profiling has not been completed
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+    local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
+    local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
+    if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) or
+      clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
+      -- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
+      -- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
+      device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
+    elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
+      -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
+      device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
+      if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
+        device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
+      end
     end
-    return
   end
 end
 
