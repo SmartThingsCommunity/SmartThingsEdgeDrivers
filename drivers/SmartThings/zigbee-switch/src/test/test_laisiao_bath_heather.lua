@@ -458,4 +458,21 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "component main Capability on command emits on then off after delay",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = "switch", component = "main", command = "on", args = {} } })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    )
+  end
+)
+
 test.run_registered_tests()

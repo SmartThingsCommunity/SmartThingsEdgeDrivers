@@ -83,6 +83,22 @@ test.register_message_test(
 )
 
 test.register_message_test(
+    "Battery percentage report - not low should return 50%",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0000) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.battery.battery(50))
+      }
+    }
+)
+
+test.register_message_test(
     "PowerSource(unknown) reporting should be handled",
     {
       {

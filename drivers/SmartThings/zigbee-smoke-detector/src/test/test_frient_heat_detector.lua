@@ -569,4 +569,36 @@ test.register_coroutine_test(
         end
 )
 
+test.register_message_test(
+        "IASZone attribute report should be handled: detected",
+        {
+            {
+                channel = "zigbee",
+                direction = "receive",
+                message = { mock_device.id, IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0001) }
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
+            }
+        }
+)
+
+test.register_coroutine_test(
+        "IASZone attribute report should be handled: cleared",
+        function()
+            test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0000)
+            })
+            test.mock_time.advance_time(6)
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+            )
+            test.wait_for_events()
+        end
+)
+
 test.run_registered_tests()
