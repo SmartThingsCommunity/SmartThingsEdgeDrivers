@@ -6,6 +6,9 @@ local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 
+clusters.Global = require "embedded_clusters.Global"
+clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("humidity.yml"),
   manufacturer_info = { vendor_id = 0x0000, product_id = 0x0000 },
@@ -36,6 +39,7 @@ local subscribe_request
 
 local cluster_subscribe_list = {
   clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue,
+  clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits,
 }
 
 local additional_subscribed_attributes = {
@@ -141,6 +145,91 @@ test.register_coroutine_test(
         "main",
         capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" })
       )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Soil moisture is reported raw when no limits are set",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue:build_test_report_data(mock_device, 1, 55)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 55 }))
+    )
+  end
+)
+
+local function build_soil_moisture_limits(min_value, max_value)
+  return clusters.Global.types.MeasurementAccuracyStruct({
+    measurement_type = clusters.Global.types.MeasurementTypeEnum.SOIL_MOISTURE,
+    measured = true,
+    min_measured_value = min_value,
+    max_measured_value = max_value,
+    accuracy_ranges = {clusters.Global.types.MeasurementAccuracyRangeStruct({range_min = min_value, range_max = max_value})}
+  })
+end
+
+test.register_coroutine_test(
+  "Soil moisture is scaled 0-100% when min and max limits are set",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits:build_test_report_data(mock_device, 1, build_soil_moisture_limits(0, 50))
+      }
+    )
+    -- Receive a measured value of 25, which is 50% when scaled between 0 and 50
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue:build_test_report_data(mock_device, 1, 25)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 50 }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Soil moisture scaling rounds correctly",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits:build_test_report_data(mock_device, 1, build_soil_moisture_limits(10, 90))
+      }
+    )
+    -- Receive a measured value of 10, should map to 0%
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue:build_test_report_data(mock_device, 1, 10)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 0 }))
+    )
+    -- Receive a measured value of 90, should map to 100%
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue:build_test_report_data(mock_device, 1, 90)
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 100 }))
     )
   end
 )

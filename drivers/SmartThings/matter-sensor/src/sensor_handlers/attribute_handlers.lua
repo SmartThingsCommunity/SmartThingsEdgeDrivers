@@ -75,7 +75,27 @@ end
 
 function AttributeHandlers.soil_moisture_measured_value_handler(driver, device, ib, response)
   if ib.data.value == nil then return end
-  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(ib.data.value))
+  local min = sensor_utils.get_field_for_endpoint(device, fields.SOIL_LIMIT_MIN, ib.endpoint_id)
+  local max = sensor_utils.get_field_for_endpoint(device, fields.SOIL_LIMIT_MAX, ib.endpoint_id)
+  if min == nil or max == nil then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(ib.data.value))
+    return
+  end
+  local soil_moisture = st_utils.round((ib.data.value - min) / (max - min) * 100.0)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(soil_moisture))
+end
+
+function AttributeHandlers.soil_moisture_measurement_limits_handler(driver, device, ib, response)
+  clusters.Global.types.MeasurementAccuracyStruct:augment_type(ib.data)
+  if ib.data.elements == nil or
+    ib.data.elements.min_measured_value == nil or ib.data.elements.min_measured_value.value == nil or
+    ib.data.elements.max_measured_value == nil or ib.data.elements.max_measured_value.value == nil or
+    ib.data.elements.min_measured_value.value >= ib.data.elements.max_measured_value.value then
+    device.log.warn_with({hub_logs = true}, "Device reported invalid soil moisture limits")
+    return
+  end
+  sensor_utils.set_field_for_endpoint(device, fields.SOIL_LIMIT_MIN, ib.endpoint_id, ib.data.elements.min_measured_value.value)
+  sensor_utils.set_field_for_endpoint(device, fields.SOIL_LIMIT_MAX, ib.endpoint_id, ib.data.elements.max_measured_value.value)
 end
 
 

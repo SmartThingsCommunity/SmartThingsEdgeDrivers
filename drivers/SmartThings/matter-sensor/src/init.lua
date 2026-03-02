@@ -124,7 +124,8 @@ local matter_driver_template = {
         [clusters.RelativeHumidityMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.humidity_measured_value_handler
       },
       [clusters.SoilMeasurement.ID] = {
-        [clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue.ID] = attribute_handlers.soil_moisture_measured_value_handler
+        [clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue.ID] = attribute_handlers.soil_moisture_measured_value_handler,
+        [clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits.ID] = attribute_handlers.soil_moisture_measurement_limits_handler
       },
       [clusters.TemperatureMeasurement.ID] = {
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
@@ -174,7 +175,8 @@ local matter_driver_template = {
     },
     [capabilities.relativeHumidityMeasurement.ID] = {
       clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-      clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue
+      clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue,
+      clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits
     },
     [capabilities.temperatureAlarm.ID] = {
       clusters.BooleanState.attributes.StateValue,
