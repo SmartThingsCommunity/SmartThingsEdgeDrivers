@@ -1,16 +1,5 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 --- @type st.capabilities
 local capabilities = require "st.capabilities"
@@ -27,11 +16,6 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 8 })
-
--- Ecolink garage door operator
-local ECOLINK_GARAGE_DOOR_FINGERPRINTS = {
-  manufacturerId = 0x014A, productType = 0x0007, productId = 0x4731
-}
 
 local GDO_ENDPOINT_NAME = "main"
 local CONTACTSENSOR_ENDPOINT_NAME = "sensor"
@@ -55,11 +39,6 @@ local GDO_CONFIG_PARAMS = {
 --- @param driver Driver driver instance
 --- @param device Device device isntance
 --- @return boolean true if the device proper, else false
-local function can_handle_ecolink_garage_door(opts, driver, device, ...)
-  return device:id_match(ECOLINK_GARAGE_DOOR_FINGERPRINTS.manufacturerId,
-                          ECOLINK_GARAGE_DOOR_FINGERPRINTS.productType,
-                          ECOLINK_GARAGE_DOOR_FINGERPRINTS.productId)
-end
 
 local function component_to_endpoint(device, component_id)
   if (CONTACTSENSOR_ENDPOINT_NAME == component_id)  then
@@ -282,7 +261,7 @@ local ecolink_garage_door_operator = {
     doConfigure = configure_device_with_updated_config,
     infoChanged = configure_device_with_updated_config
   },
-  can_handle = can_handle_ecolink_garage_door
+  can_handle = require("ecolink-zw-gdo.can_handle"),
 }
 
 return ecolink_garage_door_operator
