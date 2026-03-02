@@ -58,12 +58,15 @@ function DeviceConfiguration.match_profile(driver, device, battery_supported)
   end
 
   if device:supports_capability(capabilities.relativeHumidityMeasurement) then
-    profile_name = profile_name .. "-humidity"
     -- Soil Sensor fingerprints to the humidity profile, so we should also check for
     -- TemperatureMeasurement, which is an optional cluster for this device type.
-    if #device:get_endpoints(clusters.SoilMeasurement.ID) > 0 and
-      #device:get_endpoints(clusters.TemperatureMeasurement.ID) > 0 then
-      profile_name = "-temperature" .. profile_name
+    if #device:get_endpoints(clusters.SoilMeasurement.ID) > 0 then
+      profile_name = profile_name .. "-soil-sensor"
+      if #device:get_endpoints(clusters.TemperatureMeasurement.ID) > 0 then
+        profile_name = "-temperature" .. profile_name
+      end
+    else
+      profile_name = profile_name .. "-humidity"
     end
   end
 
