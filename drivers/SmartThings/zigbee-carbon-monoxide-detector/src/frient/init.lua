@@ -1,29 +1,31 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local data_types = require "st.zigbee.data_types"
-local IASZone = zcl_clusters.IASZone
-local CarbonMonoxideCluster = zcl_clusters.CarbonMonoxide
-local carbonMonoxide = capabilities.carbonMonoxideDetector
-local CarbonMonoxideEndpoint = 0x2E
-local SmokeAlarmEndpoint = 0x23
-local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
-local TEMPERATURE_ENDPOINT = 0x26
-local alarm = capabilities.alarm
-local smokeDetector = capabilities.smokeDetector
-local IASWD = zcl_clusters.IASWD
-local carbonMonoxideMeasurement = capabilities.carbonMonoxideMeasurement
-local tamperAlert = capabilities.tamperAlert
-local SirenConfiguration = IASWD.types.SirenConfiguration
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local SinglePrecisionFloat = require "st.zigbee.data_types.SinglePrecisionFloat"
+local zcl_global_commands = require "st.zigbee.zcl.global_commands"
+local Status = require "st.zigbee.generated.types.ZclStatus"
+
+local IASZone = zcl_clusters.IASZone
+local CarbonMonoxideCluster = zcl_clusters.CarbonMonoxide
+local TemperatureMeasurement = zcl_clusters.TemperatureMeasurement
+local IASWD = zcl_clusters.IASWD
+local SirenConfiguration = IASWD.types.SirenConfiguration
+local carbonMonoxide = capabilities.carbonMonoxideDetector
+local alarm = capabilities.alarm
+local smokeDetector = capabilities.smokeDetector
+local carbonMonoxideMeasurement = capabilities.carbonMonoxideMeasurement
+local tamperAlert = capabilities.tamperAlert
+
 local ALARM_COMMAND = "alarmCommand"
 local ALARM_DURATION = "warningDuration"
 local DEFAULT_MAX_WARNING_DURATION = 0x00F0
-local zcl_global_commands = require "st.zigbee.zcl.global_commands"
-local Status = require "st.zigbee.generated.types.ZclStatus"
+local CarbonMonoxideEndpoint = 0x2E
+local SmokeAlarmEndpoint = 0x23
+local TEMPERATURE_ENDPOINT = 0x26
 
 local alarm_command = {
   OFF = 0,
@@ -31,14 +33,6 @@ local alarm_command = {
 }
 
 local CONFIGURATIONS = {
-  {
-    cluster = IASZone.ID,
-    attribute = IASZone.attributes.ZoneStatus.ID,
-    minimum_interval = 0,
-    maximum_interval = 300,
-    data_type = IASZone.attributes.ZoneStatus.base_type,
-    reportable_change = 1
-  },
   {
     cluster = CarbonMonoxideCluster.ID,
     attribute = CarbonMonoxideCluster.attributes.MeasuredValue.ID,
@@ -101,10 +95,6 @@ local function generate_event_from_zone_status(driver, device, zone_status, zigb
   end
 end
 
-local function ias_zone_status_attr_handler(driver, device, zone_status, zb_rx)
-  generate_event_from_zone_status(driver, device, zone_status, zb_rx)
-end
-
 local function ias_zone_status_change_handler(driver, device, zb_rx)
   local zone_status = zb_rx.body.zcl_body.zone_status
   generate_event_from_zone_status(driver, device, zone_status, zb_rx)
@@ -120,10 +110,6 @@ local function carbon_monoxide_measure_value_attr_handler(driver, device, attr_v
   device:emit_event_for_endpoint(zb_rx.address_header.src_endpoint.value, carbonMonoxideMeasurement.carbonMonoxideLevel({value = co_value, unit = "ppm"}))
 end
 
-local function do_refresh(driver, device)
-  device:refresh()
-end
-
 local function do_configure(driver, device)
   device:configure()
   local maxWarningDuration = get_current_max_warning_duration(device)
@@ -131,7 +117,7 @@ local function do_configure(driver, device)
   device:send(IASWD.attributes.MaxDuration:write(device, maxWarningDuration):to_endpoint(0x23))
 
   device.thread:call_with_delay(5, function()
-    do_refresh(driver, device)
+    device:refresh()
   end)
 end
 
@@ -204,8 +190,7 @@ local function info_changed(driver, device, event, args)
       if (name == "maxWarningDuration") then
         local input = device.preferences.maxWarningDuration
         device:send(IASWD.attributes.MaxDuration:write(device, input))
-      end
-      if (name == "temperatureSensitivity") then
+      elseif (name == "temperatureSensitivity") then
         local sensitivity = device.preferences.temperatureSensitivity
         local temperatureSensitivity = math.floor(sensitivity * 100 + 0.5)
         device:send(TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(device, 30, 600, temperatureSensitivity):to_endpoint(TEMPERATURE_ENDPOINT))
@@ -219,7 +204,6 @@ local frient_smoke_carbon_monoxide = {
   lifecycle_handlers = {
     added = device_added,
     init = device_init,
-    refresh = do_refresh,
     configure = do_configure,
     infoChanged = info_changed,
   },
@@ -227,9 +211,6 @@ local frient_smoke_carbon_monoxide = {
     [alarm.ID] = {
       [alarm.commands.off.NAME] = siren_switch_off_handler,
       [alarm.commands.siren.NAME] = siren_alarm_siren_handler
-    },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
     }
   },
   zigbee_handlers = {
@@ -245,7 +226,7 @@ local frient_smoke_carbon_monoxide = {
     },
     attr = {
       [IASZone.ID] = {
-        [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
+        [IASZone.attributes.ZoneStatus.ID] = generate_event_from_zone_status
       },
       [CarbonMonoxideCluster.ID] = {
         [CarbonMonoxideCluster.attributes.MeasuredValue.ID] = carbon_monoxide_measure_value_attr_handler

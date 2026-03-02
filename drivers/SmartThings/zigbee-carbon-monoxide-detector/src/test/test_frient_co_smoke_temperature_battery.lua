@@ -135,9 +135,8 @@ test.register_coroutine_test(
 			cluster = IASZone.ID,
 			attribute = IASZone.attributes.ZoneStatus.ID,
 			minimum_interval = 0,
-			maximum_interval = 300,
-			data_type = IASZone.attributes.ZoneStatus.base_type,
-			reportable_change = 1
+			maximum_interval = 180,
+			data_type = IASZone.attributes.ZoneStatus.base_type
 		}
 		local co_config = {
 			cluster = CarbonMonoxideCluster.ID,
