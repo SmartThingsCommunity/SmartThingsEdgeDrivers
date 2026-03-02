@@ -354,4 +354,4 @@ matterGeneric:
     deviceLabel: Matter Soil Sensor
     deviceTypes:
       - id: 0x0045 # Soil Sensor
-    deviceProfileName: soil-sensor
+    deviceProfileName: soil-sensor-battery

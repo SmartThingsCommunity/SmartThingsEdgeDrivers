@@ -1,12 +1,10 @@
-name: soil-sensor-temperature-battery
+name: temperature-soil-sensor
 components:
 - id: main
   capabilities:
   - id: relativeHumidityMeasurement
     version: 1
   - id: temperatureMeasurement
-    version: 1
-  - id: battery
     version: 1
   - id: firmwareUpdate
     version: 1

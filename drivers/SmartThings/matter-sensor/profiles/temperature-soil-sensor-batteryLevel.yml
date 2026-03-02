@@ -1,10 +1,12 @@
-name: soil-sensor-temperature
+name: temperature-soil-sensor-batteryLevel
 components:
 - id: main
   capabilities:
   - id: relativeHumidityMeasurement
     version: 1
   - id: temperatureMeasurement
+    version: 1
+  - id: batteryLevel
     version: 1
   - id: firmwareUpdate
     version: 1

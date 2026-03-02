@@ -10,7 +10,7 @@ clusters.Global = require "embedded_clusters.Global"
 clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("humidity.yml"),
+  profile = t_utils.get_profile_definition("soil-sensor-battery.yml"),
   manufacturer_info = { vendor_id = 0x0000, product_id = 0x0000 },
   endpoints = {
     {
@@ -66,7 +66,7 @@ test.set_test_init_function(test_init)
 
 local function update_device_profile()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ profile = "temperature-humidity" })
+  mock_device:expect_metadata_update({ profile = "temperature-soil-sensor" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   test.wait_for_events()
