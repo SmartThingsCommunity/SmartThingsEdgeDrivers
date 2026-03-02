@@ -446,11 +446,23 @@ zwaveManufacturer:
     productId: 0x000B
     deviceProfileName: contact-battery-tamperalert
   - id: 027A/7000/E001
-    deviceLabel: Zooz Open/Closed Sensor
+    deviceLabel: Open Close XS Sensor
     manufacturerId: 0x027A
     productType: 0x7000
     productId: 0xE001
-    deviceProfileName: contact-battery-tamperalert
+    deviceProfileName: base-contact
+  - id: 027A/0201/0006
+    deviceLabel: Q Sensor
+    manufacturerId: 0x027A
+    productType: 0x0201
+    productId: 0x0006
+    deviceProfileName: multi-functional-motion
+  - id: 027A/7000/E004
+    deviceLabel: Temperature  Humidity XS Sensor
+    manufacturerId: 0x027A
+    productType: 0x7000
+    productId: 0xE004
+    deviceProfileName: humidity-temperature-battery
   - id: "aeotec/multisensor/7"
     deviceLabel: Aeotec Multipurpose Sensor
     manufacturerId: 0x0371
