@@ -143,21 +143,6 @@ local function emit_mode_status_event(device, status, extra_data)
   end
 end
 
-local function emit_mode_arm_activity(device, status, user_name)
-  local activity
-  if should_use_lock_mode(device) then
-    activity = LOCK_STATUS_TO_ACTIVITY[status] or status
-  else
-    activity = STATUS_TO_ACTIVITY[status] or status
-  end
-  local actor = user_name or "Unknown"
-  local event = LockCodes.codeChanged(string.format("%s by %s", activity, actor), { state_change = true })
-  if user_name ~= nil then
-    event.data = { codeName = user_name }
-  end
-  device:emit_event(event)
-end
-
 local function get_pref_number(value)
   if type(value) == "number" then
     return value
@@ -348,16 +333,6 @@ local function emit_lock_code_limits(device)
   end
 end
 
---[[ local function get_next_index(map_section)
-  local max_index = 0
-  for _, entry in pairs(map_section or {}) do
-    if type(entry.index) == "number" and entry.index > max_index then
-      max_index = entry.index
-    end
-  end
-  return max_index + 1
-end ]]
-
 local function normalize_user_name(value)
   if type(value) == "string" then
     return value
@@ -385,27 +360,6 @@ local function normalize_user_entry(entry)
     index = nil,
   }
 end
-
---[[ local function merge_user_section(base_section, updates)
-  local merged = {}
-  for code, entry in pairs(base_section or {}) do
-    merged[code] = normalize_user_entry(entry)
-  end
-
-  local next_index = get_next_index(merged)
-  for code, value in pairs(updates or {}) do
-    local name = normalize_user_name(value)
-    local existing = merged[code]
-    if existing ~= nil and name ~= nil and name ~= "" then
-      existing.name = name
-    elseif existing == nil and name ~= nil and name ~= "" then
-      merged[code] = { name = name, index = next_index }
-      next_index = next_index + 1
-    end
-  end
-
-  return merged
-end ]]
 
 local function get_user_map(device)
   return device:get_field("securitySystem_user_map")
@@ -505,7 +459,6 @@ local function emit_arm_activity(device, status, user_name)
     event.data = { codeName = user_name }
   end
   device:emit_event(event)
-  log.error("czy tu?")
 end
 
 local function get_current_status(device)
@@ -752,50 +705,42 @@ local function info_changed(driver, device, event, args)
         }
         device:set_field("securitySystem_user_map", map, { persist = true })
         sync_lock_codes_from_user_map(device, map)
-      end
-      if (name == "rfidMap") then
+      elseif (name == "rfidMap") then
         local rfid_updates = parse_user_map(device.preferences.rfidMap)
         local map = {
           pins = base_map.pins,
           rfids = rfid_updates,
         }
         device:set_field("securitySystem_user_map", map, { persist = true })
-      end
-      if (name == "autoArmDisarmMode") then
+      elseif (name == "autoArmDisarmMode") then
         local autoArmDisarmMode = tonumber(device.preferences.autoArmDisarmMode)
         if autoArmDisarmMode ~= nil then
           send_iasace_mfg_write(device, 0x8003, data_types.Enum8, autoArmDisarmMode)
         end
-      end
-      if (name == "autoDisarmModeSetting") then
+      elseif (name == "autoDisarmModeSetting") then
         local autoDisarmModeSetting = device.preferences.autoDisarmModeSetting
         send_iasace_mfg_write(device, 0x8004, data_types.Boolean, autoDisarmModeSetting)
-      end
-      if (name == "autoArmModeSetting") then
+      elseif (name == "autoArmModeSetting") then
         local autoArmModeSetting = tonumber(device.preferences.autoArmModeSetting)
         if autoArmModeSetting ~= nil then
           send_iasace_mfg_write(device, 0x8005, data_types.Enum8, autoArmModeSetting)
         end
-      end
-      if (name == "autoArmModeSettingBool") then
+      elseif (name == "autoArmModeSettingBool") then
         local autoArmModeSetting = device.preferences.autoArmModeSettingBool
         if autoArmModeSetting == true then
           send_iasace_mfg_write(device, 0x8005, data_types.Enum8, 1)
         else
           send_iasace_mfg_write(device, 0x8005, data_types.Enum8, 0)
         end
-      end
-      if (name == "pinLengthSetting") then
+      elseif (name == "pinLengthSetting") then
         local pinLengthSetting = tonumber(device.preferences.pinLengthSetting)
         if pinLengthSetting ~= nil then
           send_iasace_mfg_write(device, 0x8006, data_types.Uint8, pinLengthSetting)
         end
-      end
-      if (name == "duration") then
+      elseif (name == "duration") then
         local duration = tonumber(device.preferences.duration)
         device:set_field("exit_delay_duration", duration, { persist = true })
-      end
-      if (name == "mode") then
+      elseif (name == "mode") then
         local mode = tonumber(device.preferences.mode)
         if mode == 1 then
           device:try_update_metadata({ profile = "frient-keypad-lock-status" })
@@ -818,10 +763,6 @@ local function generate_event_from_zone_status(driver, device, zone_status, zigb
   else
     device:emit_event(tamperAlert.tamper.clear())
   end
-end
-
-local function ias_zone_status_attr_handler(driver, device, zone_status, zb_rx)
-  generate_event_from_zone_status(driver, device, zone_status, zb_rx)
 end
 
 local function ias_zone_status_change_handler(driver, device, zb_rx)
@@ -849,7 +790,7 @@ local frient_keypad = {
     },
     attr = {
       [IASZone.ID] = {
-        [IASZone.attributes.ZoneStatus.ID] = ias_zone_status_attr_handler
+        [IASZone.attributes.ZoneStatus.ID] = generate_event_from_zone_status
       },
     }
   },

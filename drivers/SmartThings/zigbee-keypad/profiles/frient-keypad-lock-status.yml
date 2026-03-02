@@ -43,7 +43,7 @@ preferences:
       default: ""
   - name: showPinSnapshot
     title: Show PIN Snapshot
-    description: "Display the current PIN/RFID list in the device UI (sensitive)."
+    description: "Display the current PIN/RFID list in the device history (sensitive)."
     required: false
     preferenceType: boolean
     definition:
@@ -84,7 +84,7 @@ preferences:
       default: 5
   - name: autoArmDisarmMode
     title: Auto Lock/Unlock Mode
-    description: "Automatically lock/unlock without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'Pin'."
+    description: "Automatically lock/unlock without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'PIN'."
     required: false
     preferenceType: enumeration
     definition:
@@ -95,21 +95,21 @@ preferences:
       default: 0
   - name: autoDisarmModeSetting
     title: Auto Unlock Mode Setting
-    description: "When Auto Lock/Unlock Mode is set to 'Pin' or 'RFID', automatically unlock when a valid PIN/RFID is used."
+    description: "When Auto Lock/Unlock Mode is set to 'PIN' or 'RFID', automatically unlock when a valid PIN/RFID is used."
     required: false
     preferenceType: boolean
     definition:
       default: false
   - name: autoArmModeSettingBool
     title: Auto Lock Setting
-    description: "When Auto Lock/Unlock Mode is set to 'Pin' or 'RFID', automatically lock when a valid PIN/RFID is used."
+    description: "When Auto Lock/Unlock Mode is set to 'PIN' or 'RFID', automatically lock when a valid PIN/RFID is used."
     required: false
     preferenceType: boolean
     definition:
       default: false
   - name: pinLengthSetting
-    title: PIN Length Setting
-    description: "When Auto Lock/Unlock Mode is set to 'Pin', the length of PINs that will trigger auto lock/unlock."
+    title: PIN length to auto lock/unlock
+    description: "When Auto Lock/Unlock Mode is set to 'PIN', the length of PINs that will trigger auto lock/unlock."
     required: false
     preferenceType: integer
     definition:
