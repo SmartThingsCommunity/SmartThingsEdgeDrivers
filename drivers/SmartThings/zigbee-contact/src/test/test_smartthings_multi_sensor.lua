@@ -219,6 +219,38 @@ test.register_coroutine_test(
   end
 )
 
+test.register_message_test(
+  "ZoneStatusChangeNotification should generate contact event when garageSensor not set: open",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+    }
+  }
+)
+
+test.register_message_test(
+  "ZoneStatusChangeNotification should generate contact event when garageSensor not set: closed",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0000, 0x00) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+    }
+  }
+)
+
 test.register_coroutine_test(
   "Refresh necessary attributes",
   function()

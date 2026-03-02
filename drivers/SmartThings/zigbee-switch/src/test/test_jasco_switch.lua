@@ -5,11 +5,14 @@ local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local OnOffCluster = clusters.OnOff
 local SimpleMeteringCluster = clusters.SimpleMetering
+local ElectricalMeasurementCluster = clusters.ElectricalMeasurement
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local mock_device = test.mock_device.build_test_zigbee_device({
   profile = t_utils.get_profile_definition("switch-power-energy.yml"),
+  fingerprinted_endpoint_id = 0x01,
   zigbee_endpoints = {
     [1] = {
       id = 1,
@@ -20,6 +23,8 @@ local mock_device = test.mock_device.build_test_zigbee_device({
     }
   }
 })
+
+zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   mock_device:set_field("_configuration_version", 1, {persist = true})
@@ -111,6 +116,32 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.5555, unit = "kWh" }))
     }
   }
+)
+
+test.register_coroutine_test(
+  "doConfigure lifecycle should call refresh and configure on device",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    -- device:refresh() reads
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOffCluster.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, SimpleMeteringCluster.attributes.InstantaneousDemand:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, SimpleMeteringCluster.attributes.CurrentSummationDelivered:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ActivePower:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ACPowerDivisor:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ACPowerMultiplier:read(mock_device) })
+    -- device:configure() bind requests and configure_reporting
+    test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, OnOffCluster.ID) })
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOffCluster.attributes.OnOff:configure_reporting(mock_device, 0, 300) })
+    test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, SimpleMeteringCluster.ID) })
+    test.socket.zigbee:__expect_send({ mock_device.id, SimpleMeteringCluster.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5) })
+    test.socket.zigbee:__expect_send({ mock_device.id, SimpleMeteringCluster.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1) })
+    test.socket.zigbee:__expect_send({ mock_device.id, zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, ElectricalMeasurementCluster.ID) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1) })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end
 )
 
 test.run_registered_tests()

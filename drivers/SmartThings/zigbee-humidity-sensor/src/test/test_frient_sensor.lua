@@ -105,6 +105,7 @@ test.register_message_test(
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.zigbee:__expect_send({
@@ -141,6 +142,22 @@ test.register_coroutine_test(
       TemperatureMeasurement.attributes.MeasuredValue:configure_reporting(mock_device, 0x001E, 0x0E10, 100)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+
+    test.mock_time.advance_time(5)
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      HumidityMeasurement.attributes.MeasuredValue:read(mock_device)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
+    })
+    test.wait_for_events()
   end
 )
 
@@ -190,6 +207,7 @@ test.register_message_test(
 test.register_coroutine_test(
     "info_changed to check for necessary preferences settings: Temperature Sensitivity",
     function()
+        test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
         local updates = {
             preferences = {
                 temperatureSensitivity = 0.9,
@@ -215,6 +233,21 @@ test.register_coroutine_test(
                                                    3600,
                                                    humiditySensitivity
                                            )
+        })
+        test.wait_for_events()
+
+        test.mock_time.advance_time(5)
+        test.socket.zigbee:__expect_send({
+          mock_device.id,
+          PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+        })
+        test.socket.zigbee:__expect_send({
+          mock_device.id,
+          HumidityMeasurement.attributes.MeasuredValue:read(mock_device)
+        })
+        test.socket.zigbee:__expect_send({
+          mock_device.id,
+          TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
         })
         test.wait_for_events()
     end

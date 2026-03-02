@@ -174,4 +174,36 @@ test.register_message_test(
         }
 )
 
+test.register_message_test(
+    "ZoneStatusChangeNotification - mains should be handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
+      }
+    }
+)
+
+test.register_message_test(
+    "Device added lifecycle should emit mains powerSource",
+    {
+      {
+        channel = "device_lifecycle",
+        direction = "receive",
+        message = { mock_device.id, "added" }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
+      }
+    }
+)
+
 test.run_registered_tests()

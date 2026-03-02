@@ -315,4 +315,122 @@ test.register_coroutine_test(
     end
 )
 
+test.register_message_test(
+    "Attribute handler reports closed when shade reaches level 0",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 0 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+      }
+    }
+)
+
+test.register_message_test(
+    "Attribute handler reports open when shade reaches level 100",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 0)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 100 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+      }
+    }
+)
+
+test.register_coroutine_test(
+    "SetLevel command emits closing when requested level is below current level",
+    function()
+      -- Attr report sets current shade level to 90 (inverted value=10)
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+      })
+      test.wait_for_events()
+      -- Now both vimar flags are false; requesting level 30 (< 90) triggers closing branch
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 30 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(30))
+      )
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 70)
+      })
+      test.wait_for_events()
+    end
+)
+
+test.register_coroutine_test(
+    "SetLevel command is ignored (early return) when shades are already moving",
+    function()
+      -- Open command: current=0 < 100 → opening, sets VIMAR_SHADES_OPENING=true
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "windowShade", component = "main", command = "open", args = {} }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+      )
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      )
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+      })
+      test.wait_for_events()
+      -- While opening, a different setShadeLevel is requested: ignored with current level re-emitted
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "windowShadeLevel", component = "main", command = "setShadeLevel", args = { 50 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      )
+      test.wait_for_events()
+    end
+)
+
 test.run_registered_tests()

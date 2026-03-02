@@ -517,4 +517,96 @@ test.register_coroutine_test(
     end
 )
 
+test.register_message_test(
+    "Attribute handler reports closed when level is 0",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 0 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+      }
+    }
+)
+
+test.register_message_test(
+    "Attribute handler reports open when level is 100",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 0)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 100 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+      }
+    }
+)
+
+test.register_coroutine_test(
+    "Cancel existing poll timer when a new partial level report arrives",
+    function()
+      -- First attr: level 90 creates T1 via overwrite_existing_timer_if_needed
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+      )
+      -- Second attr before T1 fires: overwrite_existing_timer_if_needed cancels T1 and stores T2
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 15)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 85 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
+      )
+      -- T2 fires; T1 was cancelled so only one partially_open
+      test.mock_time.advance_time(2)
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+      )
+      test.wait_for_events()
+    end
+)
+
 test.run_registered_tests()

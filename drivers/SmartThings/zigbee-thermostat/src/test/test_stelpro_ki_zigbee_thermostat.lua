@@ -517,5 +517,51 @@ test.register_coroutine_test(
       })
   end
 )
+test.register_coroutine_test(
+  "LocalTemperature handler should request PIHeatingDemand when setpoint > temperature",
+  function()
+    local RAW_SETPOINT_FIELD = "raw_setpoint"
+    mock_device:set_field(RAW_SETPOINT_FIELD, 3000, { persist = true })
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.LocalTemperature:build_test_attr_report(mock_device, 2000)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.PIHeatingDemand:read(mock_device)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 20.0, unit = "C" }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Setting an unsupported thermostat mode should re-emit the current mode",
+  function()
+    -- Establish a known current mode state
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, ThermostatSystemMode.OFF)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
+    )
+    test.wait_for_events()
+
+    -- "cool" is not in SUPPORTED_MODES for stelpro-ki; the driver re-emits the current mode
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "thermostatMode", component = "main", command = "setThermostatMode", args = { "cool" } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
+    )
+  end
+)
 
 test.run_registered_tests()
