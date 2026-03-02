@@ -1,10 +1,10 @@
-name: frient-keypad-security-system
+name: frient-keypad-lock-status
 components:
 - id: main
   capabilities:
-  - id: securitySystem
-    version: 1
   - id: lockCodes
+    version: 1
+  - id: lock
     version: 1
   - id: battery
     version: 1
@@ -24,7 +24,7 @@ preferences:
       options:
         0: "Security System Status"
         1: "Lock Status"
-      default: 0
+      default: 1
   - name: pinMap
     title: Add PIN code(s)
     description: "Format: 1234:Alice,4321:Bob (other format will not be accepted). Entries are added/updated; existing entries are kept."
@@ -83,8 +83,8 @@ preferences:
       maximum: 30
       default: 5
   - name: autoArmDisarmMode
-    title: Auto Arm/Disarm Mode
-    description: "Automatically arm/disarm without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'Pin'."
+    title: Auto Lock/Unlock Mode
+    description: "Automatically lock/unlock without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'Pin'."
     required: false
     preferenceType: enumeration
     definition:
@@ -94,26 +94,22 @@ preferences:
         2: "Pin"
       default: 0
   - name: autoDisarmModeSetting
-    title: Auto Disarm Mode Setting
-    description: "When Auto Arm/Disarm Mode is set to 'Pin' or 'RFID', automatically disarm when a valid PIN/RFID is used."
+    title: Auto Unlock Mode Setting
+    description: "When Auto Lock/Unlock Mode is set to 'Pin' or 'RFID', automatically unlock when a valid PIN/RFID is used."
     required: false
     preferenceType: boolean
     definition:
       default: false
-  - name: autoArmModeSetting
-    title: Auto Arm Mode Setting
-    description: "When Auto Arm/Disarm Mode is set to 'Pin' or 'RFID', automatically arm in one of the following modes: 'Disabled', 'Arm Stay', 'Arm Away'."
+  - name: autoArmModeSettingBool
+    title: Auto Lock Setting
+    description: "When Auto Lock/Unlock Mode is set to 'Pin' or 'RFID', automatically lock when a valid PIN/RFID is used."
     required: false
-    preferenceType: enumeration
+    preferenceType: boolean
     definition:
-      options:
-        0: "Disabled"
-        1: "Arm Away"
-        3: "Arm Stay"
-      default: 0
+      default: false
   - name: pinLengthSetting
     title: PIN Length Setting
-    description: "When Auto Arm/Disarm Mode is set to 'Pin', the length of PINs that will trigger auto arm/disarm."
+    description: "When Auto Lock/Unlock Mode is set to 'Pin', the length of PINs that will trigger auto lock/unlock."
     required: false
     preferenceType: integer
     definition:
