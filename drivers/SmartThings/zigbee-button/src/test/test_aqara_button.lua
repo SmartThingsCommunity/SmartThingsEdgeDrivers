@@ -21,6 +21,21 @@ local PRIVATE_ATTRIBUTE_ID_ALIVE = 0x00F7
 local MODE_CHANGE = "stse.allowOperationModeChange"
 
 local COMP_LIST = { "button1", "button2", "all" }
+
+local mock_device_h1_single = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("aqara-single-button-mode.yml"),
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "LUMI",
+        model = "lumi.remote.b18ac1",
+        server_clusters = { 0x0001, 0x0012 }
+      }
+    }
+  }
+)
+
 local mock_device_e1 = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("one-button-batteryLevel.yml"),
@@ -51,6 +66,7 @@ local mock_device_h1_double_rocker = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
+  test.mock_device.add_test_device(mock_device_h1_single)
   test.mock_device.add_test_device(mock_device_e1)
   test.mock_device.add_test_device(mock_device_h1_double_rocker)
 end
@@ -283,6 +299,25 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message(COMP_LIST[i],
         capabilities.button.button.pushed({ state_change = false })))
     end
+  end
+)
+
+test.register_coroutine_test(
+  "Handle added lifecycle - H1 single rocker (sets mode=1)",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_h1_single.id, "added" })
+    test.socket.capability:__expect_send(mock_device_h1_single:generate_test_message("main",
+      capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_h1_single:generate_test_message("main",
+      capabilities.button.numberOfButtons({ value = 1 })))
+    test.socket.capability:__expect_send(mock_device_h1_single:generate_test_message("main",
+      capabilities.button.button.pushed({ state_change = false })))
+    test.socket.capability:__expect_send(mock_device_h1_single:generate_test_message("main",
+      capabilities.batteryLevel.battery.normal()))
+    test.socket.capability:__expect_send(mock_device_h1_single:generate_test_message("main",
+      capabilities.batteryLevel.type("CR2450")))
+    test.socket.capability:__expect_send(mock_device_h1_single:generate_test_message("main",
+      capabilities.batteryLevel.quantity(1)))
   end
 )
 

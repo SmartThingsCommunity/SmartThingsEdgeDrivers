@@ -49,9 +49,12 @@ function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, respo
   if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
     generic_event_handlers.initial_press_handler(driver, device, ib, response)
   else
-    -- Ignore InitialPress events from non-push endpoints. Presently, we want to solely
-    -- rely on MultiPressOngoing events to handle rotation for those endpoints.
-    device.log.debug("Received InitialPress event from scroll endpoint, ignoring.")
+    -- the magic number "1" occurs in this handler since the InitialPress event represents the first press.
+    local latest_presses_counted = device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED) or 0
+    if latest_presses_counted == 0 then
+      device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_COUNTED, 1)
+      rotate_amount_event_helper(device, ib.endpoint_id, 1)
+    end
   end
 end
 

@@ -432,4 +432,46 @@ test.register_message_test(
         }
 )
 
+test.register_message_test(
+    "Fan switch on command from main component",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_base_device.id, { capability = "switch", component = "main", command = "on", args = {} } }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 1) }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
+      }
+    }
+)
+
+test.register_message_test(
+    "Fan switch off command from main component",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_base_device.id, { capability = "switch", component = "main", command = "off", args = {} } }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:write(mock_base_device, 0x00) }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = { mock_base_device.id, FanControl.attributes.FanMode:read(mock_base_device) }
+      }
+    }
+)
+
 test.run_registered_tests()

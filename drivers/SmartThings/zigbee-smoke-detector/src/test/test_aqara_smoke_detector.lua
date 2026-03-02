@@ -7,12 +7,9 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
-
-
 local PowerConfiguration = clusters.PowerConfiguration
 local selfCheck = capabilities["stse.selfCheck"]
 local selfCheckId = "stse.selfCheck"
-
 
 test.add_package_capability("selfCheck.yaml")
 
@@ -22,8 +19,6 @@ local MFG_CODE = 0x115F
 local PRIVATE_MUTE_ATTRIBUTE_ID = 0x0126
 local PRIVATE_SELF_CHECK_ATTRIBUTE_ID = 0x0127
 local PRIVATE_SMOKE_ZONE_STATUS_ATTRIBUTE_ID = 0x013A
-
-
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -39,14 +34,10 @@ local mock_device = test.mock_device.build_test_zigbee_device(
   }
 )
 
-
-
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
-
-
 
 test.set_test_init_function(test_init)
 
@@ -89,7 +80,6 @@ test.register_coroutine_test(
   end
 )
 
-
 test.register_coroutine_test(
   "smokeDetector report should be handled",
   function()
@@ -104,8 +94,6 @@ test.register_coroutine_test(
     capabilities.smokeDetector.smoke.detected()))
   end
 )
-
-
 
 test.register_coroutine_test(
   "audioMute report should be handled",
@@ -122,8 +110,6 @@ test.register_coroutine_test(
   end
 )
 
-
-
 test.register_coroutine_test(
   "Capability on command should be handled : device mute",
   function()
@@ -134,8 +120,6 @@ test.register_coroutine_test(
       PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
   end
 )
-
-
 
 test.register_coroutine_test(
   "selfCheck report should be handled",
@@ -152,8 +136,6 @@ test.register_coroutine_test(
   end
 )
 
-
-
 test.register_coroutine_test(
   "Capability on command should be handled : device selfCheck",
   function()
@@ -166,7 +148,50 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "smokeDetector report should be handled, smoke clear",
+  function()
+    local attr_report_data = {
+      { PRIVATE_SMOKE_ZONE_STATUS_ATTRIBUTE_ID, data_types.Uint16.ID, 0x0000 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.smokeDetector.smoke.clear()))
+  end
+)
 
+test.register_coroutine_test(
+  "audioMute report should be handled, unmuted",
+  function()
+    local attr_report_data = {
+      { PRIVATE_MUTE_ATTRIBUTE_ID, data_types.Uint8.ID, 0x00 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.audioMute.mute.unmuted()))
+  end
+)
+
+test.register_coroutine_test(
+  "selfCheck report should be handled, idle",
+  function()
+    local attr_report_data = {
+      { PRIVATE_SELF_CHECK_ATTRIBUTE_ID, data_types.Uint8.ID, 0x00 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      selfCheck.selfCheckState.idle()))
+  end
+)
 
 test.register_message_test(
   "Battery voltage report should be handled",
@@ -183,6 +208,5 @@ test.register_message_test(
     }
   }
 )
-
 
 test.run_registered_tests()

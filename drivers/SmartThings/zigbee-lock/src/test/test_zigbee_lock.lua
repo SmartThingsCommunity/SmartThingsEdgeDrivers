@@ -771,4 +771,88 @@ test.register_coroutine_test(
   end
 )
 
+test.register_message_test(
+    "Alarm code 0 should generate lock unknown event",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Alarm.client.commands.Alarm.build_test_rx(mock_device, 0x00, DoorLock.ID) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.lock.lock.unknown())
+      }
+    }
+)
+
+test.register_message_test(
+    "Alarm code 1 should generate lock unknown event",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Alarm.client.commands.Alarm.build_test_rx(mock_device, 0x01, DoorLock.ID) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.lock.lock.unknown())
+      }
+    }
+)
+
+test.register_message_test(
+    "Pin response for unoccupied slot with no existing code should generate unset event",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id,
+                    DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+                        mock_device,
+                        0x05,
+                        DoorLockUserStatus.OCCUPIED_DISABLED,
+                        DoorLockUserType.UNRESTRICTED,
+                        ""
+                    )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("5 unset",
+                                                                             { data = { codeName = "Code 5" }, state_change = true }))
+      }
+    }
+)
+
+test.register_coroutine_test(
+    "Pin response for already-set slot should use changed change type",
+    function()
+      init_code_slot(1, "Code 1", mock_device)
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"}), { visibility = { displayed = false } })))
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive(
+          {
+            mock_device.id,
+            DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+                mock_device,
+                0x01,
+                DoorLockUserStatus.OCCUPIED_ENABLED,
+                DoorLockUserType.UNRESTRICTED,
+                "1234"
+            )
+          }
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+          capabilities.lockCodes.codeChanged("1 changed", { data = { codeName = "Code 1" }, state_change = true })))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "Code 1"}), { visibility = { displayed = false } })))
+    end
+)
+
 test.run_registered_tests()

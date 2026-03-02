@@ -85,6 +85,7 @@ local function battery_level_handler(driver, device, value, zb_rx)
     batteryLevel = "warning"
   end
 
+  -- Note that all aqara buttons use batteryLevel and not battery capability.
   if device:supports_capability_by_id(capabilities.battery.ID) then
     device:emit_event(capabilities.battery.battery(calc_battery_percentage(voltage)))
   elseif device:supports_capability_by_id(capabilities.batteryLevel.ID) then

@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Mock out globals
 local test = require "integration_test"
@@ -329,6 +319,111 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
+  end
+)
+
+test.register_coroutine_test(
+  "Default response emits opening when current level is higher than target",
+  function()
+    -- Establish a partially-closed shade state (zigbee value 90 → shadeLevel 10)
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 90)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(10))
+    )
+    test.wait_for_events()
+    -- Send open command: MOST_RECENT_SETLEVEL = 0 (level = 100 - 100 = 0)
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "windowShade", component = "main", command = "open", args = {} }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+    })
+    test.wait_for_events()
+    -- Default response: current_level_zigbee=90, most_recent=0 → 90 > 0 → opening()
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_default_response_msg(WindowCovering.ID, WindowCovering.server.commands.GoToLiftPercentage.ID, Status.SUCCESS)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Attr handler emits partially_open when report matches most-recent set level",
+  function()
+    -- Send presetPosition; preset level = 50 so MOST_RECENT_SETLEVEL = 50 (100-50=50)
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "windowShadePreset", component = "main", command = "presetPosition", args = {} }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
+    })
+    test.wait_for_events()
+    -- Attr report value=50 matches MOST_RECENT_SETLEVEL; shade stops at partial level
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 50)
+    })
+    -- current_level was nil → partially_open from the nil-check branch
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    -- most_recent matches and value is partial → partially_open again (from the match branch)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Spontaneous level report towards open emits opening event",
+  function()
+    -- First attr establishes a partial shade level (value=10 → shadeLevel=90)
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(90))
+    )
+    -- Second attr moves toward open (value=5 < current zigbee 10 → opening)
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 5)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(95))
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(2)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+    )
+    test.wait_for_events()
   end
 )
 

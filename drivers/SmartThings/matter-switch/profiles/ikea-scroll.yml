@@ -14,7 +14,7 @@ components:
       - id: refresh
         version: 1
     categories:
-    - name: RemoteController
+    - name: Button
   - id: group2
     label: Group 2
     capabilities:
@@ -23,7 +23,7 @@ components:
       - id: knob
         version: 1
     categories:
-    - name: RemoteController
+    - name: Button
   - id: group3
     label: Group 3
     capabilities:
@@ -32,4 +32,50 @@ components:
       - id: knob
         version: 1
     categories:
-    - name: RemoteController
+    - name: Button
+deviceConfig:
+  icons:
+  - group: main
+    iconUrl: 'icon://button_wheel'
+  dashboard:
+    states:
+      - component: main
+        capability: button
+        version: 1
+  detailView:
+    - component: main
+      capability: button
+      version: 1
+    - component: main
+      capability: knob
+      version: 1
+    - component: main
+      capability: battery
+      version: 1
+    - component: group2
+      capability: button
+      version: 1
+    - component: group2
+      capability: knob
+      version: 1
+    - component: group3
+      capability: button
+      version: 1
+    - component: group3
+      capability: knob
+      version: 1
+  automation:
+    conditions:
+      - component: main
+        capability: button
+        version: 1
+      - component: main
+        capability: battery
+        version: 1
+      - component: group2
+        capability: button
+        version: 1
+      - component: group3
+        capability: button
+        version: 1
+    actions: []

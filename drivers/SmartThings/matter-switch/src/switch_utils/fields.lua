@@ -101,7 +101,8 @@ SwitchFields.vendor_overrides = {
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
   },
   [0x117C] = { -- IKEA_MANUFACTURER_ID
-    [0x8000] = { is_ikea_scroll = true }
+    [0x8000] = { is_ikea_scroll = true }, -- BILRESA scroll wheel
+    [0x8001] = { is_ikea_dual_button = true}, -- BILRESA dual button
   },
   [0x1189] = { -- LEDVANCE_MANUFACTURER_ID
     [0x0891] = { target_profile = "switch-binary", initial_profile = "light-binary" },
@@ -146,6 +147,8 @@ SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
 --- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
+
+SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",

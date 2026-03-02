@@ -180,4 +180,38 @@ test.register_coroutine_test(
   end
 )
 
+local mock_device_cwacn1 = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("aqara-light.yml"),
+    preferences = { ["stse.lightFadeInTimeInSec"] = 0, ["stse.lightFadeOutTimeInSec"] = 0 },
+    fingerprinted_endpoint_id = 0x01,
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "LUMI",
+        model = "lumi.light.cwacn1",
+        server_clusters = { 0x0006, 0x0008, 0x0300 }
+      }
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "Handle added lifecycle for lumi.light.cwacn1 model (colorTemperatureRange max = 6500)",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_cwacn1.id, "added" })
+
+    test.socket.zigbee:__expect_send({
+      mock_device_cwacn1.id, cluster_base.write_manufacturer_specific_attribute(mock_device_cwacn1, PRIVATE_CLUSTER_ID,
+      PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
+    test.socket.capability:__expect_send(mock_device_cwacn1:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6500 })))
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_device_cwacn1)
+    end
+  }
+)
+
 test.run_registered_tests()

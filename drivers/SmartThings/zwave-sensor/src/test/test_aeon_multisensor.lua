@@ -1,11 +1,23 @@
--- Copyright 2022 SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0
-
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
+local capabilities = require "st.capabilities"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
+local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
@@ -80,6 +92,28 @@ test.register_coroutine_test(
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end
+)
+
+test.register_message_test(
+  "Notification HOME_SECURITY MOTION_DETECTION should be handled as motion active",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+          notification_type = Notification.notification_type.HOME_SECURITY,
+          event = Notification.event.home_security.MOTION_DETECTION
+        }))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
+    }
+  }
 )
 
 test.run_registered_tests()

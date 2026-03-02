@@ -476,4 +476,45 @@ test.register_coroutine_test(
   end
 )
 
+local mock_non_mns_device = test.mock_device.build_test_zigbee_device(
+  {
+    label = "Generic Switch 1",
+    profile = profile,
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "GenericMfr",
+        model = "GenericModel-DualSwitch",
+        server_clusters = { 0x0006 }
+      },
+      [2] = {
+        id = 2,
+        manufacturer = "GenericMfr",
+        model = "GenericModel-DualSwitch",
+        server_clusters = { 0x0006 }
+      }
+    },
+    fingerprinted_endpoint_id = 0x01
+  }
+)
+
+test.register_coroutine_test(
+  "device added lifecycle creates child device for secondary OnOff endpoint",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_non_mns_device.id, "added" })
+    mock_non_mns_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Generic Switch 1 2",
+      profile = "basic-switch",
+      parent_device_id = mock_non_mns_device.id,
+      parent_assigned_child_key = "02"
+    })
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_non_mns_device)
+    end
+  }
+)
+
 test.run_registered_tests()

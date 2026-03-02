@@ -1,0 +1,53 @@
+name: ikea-2-button-battery
+components:
+  - id: main
+    label: Button 1
+    capabilities:
+      - id: button
+        version: 1
+      - id: battery
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+    - name: RemoteController
+  - id: button2
+    label: Button 2
+    capabilities:
+      - id: button
+        version: 1
+    categories:
+    - name: RemoteController
+deviceConfig:
+  icons:
+  - group: main
+    iconUrl: 'icon://button_multi'
+  dashboard:
+    states:
+      - component: main
+        capability: button
+        version: 1
+  detailView:
+    - component: main
+      capability: button
+      version: 1
+    - component: main
+      capability: battery
+      version: 1
+    - component: button2
+      capability: button
+      version: 1
+  automation:
+    conditions:
+      - component: main
+        capability: button
+        version: 1
+      - component: main
+        capability: battery
+        version: 1
+      - component: button2
+        capability: button
+        version: 1
+    actions: []
