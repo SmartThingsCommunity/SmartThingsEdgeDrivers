@@ -86,7 +86,10 @@ test.register_coroutine_test(
           test.wait_for_events()
         end
       end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -103,6 +106,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_sengled:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -120,6 +126,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_nyce:generate_test_message("main", capabilities.battery.battery(100))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

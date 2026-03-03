@@ -89,7 +89,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -142,7 +143,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test child device switch off command
@@ -173,7 +177,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test child device level command
@@ -229,7 +236,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test child device color command
@@ -289,7 +299,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test child device color temperature command
@@ -329,7 +342,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

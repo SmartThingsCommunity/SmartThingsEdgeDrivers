@@ -93,7 +93,10 @@ test.register_coroutine_test(
       mock_device.id,
       zigbee_test_utils.build_attribute_read(mock_device, 0xFC02, {0x0010}, 0x1241)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -114,7 +117,10 @@ test.register_coroutine_test(
       mock_device.id,
       TemperatureMeasurement.attributes.MeasuredValue:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -172,7 +178,10 @@ test.register_coroutine_test(
     })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -211,7 +220,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
       test.wait_for_events()
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

@@ -52,6 +52,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -70,6 +73,9 @@ test.register_message_test(
         direction = "send",
         message = mock_siren:generate_test_message("main", capabilities.alarm.alarm.both())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -105,7 +111,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 
@@ -141,7 +150,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -176,7 +188,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -210,7 +225,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -243,7 +261,10 @@ test.register_coroutine_test(
           mock_siren,
           Basic:Set({value=0x00})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -288,7 +309,10 @@ test.register_coroutine_test(
           mock_siren,
           Configuration:Get({parameter_number = 4})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -305,7 +329,10 @@ test.register_coroutine_test(
       mock_siren,
       Battery:Get({})
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

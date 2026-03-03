@@ -39,7 +39,10 @@ test.register_coroutine_test(
       "SIMPLE_METERING_DIVISOR_KEY should be 1000")
     assert(mock_device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) == 10000,
       "ELECTRICAL_MEASUREMENT_DIVISOR_KEY should be 10000")
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -96,7 +99,10 @@ test.register_coroutine_test(
       ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

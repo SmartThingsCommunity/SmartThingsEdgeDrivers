@@ -39,7 +39,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -70,7 +73,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -80,7 +86,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -90,7 +99,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "lock", component = "main", command = "lock", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.commands.LockDoor(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -100,7 +112,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "lock", component = "main", command = "unlock", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.commands.UnlockDoor(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -112,7 +127,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(5)
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -124,14 +142,20 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(5)
     test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "PinUsersSupported report should be a no-op",
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:build_test_attr_report(mock_device, 8)})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

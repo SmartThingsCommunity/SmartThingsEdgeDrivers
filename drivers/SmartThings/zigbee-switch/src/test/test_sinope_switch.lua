@@ -55,7 +55,11 @@ test.register_coroutine_test(
                 data_types.validate_or_build_type(device_info_copy.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
-   end
+   end,
+   {
+      min_api_version = 19
+   }
+
   )
 
 test.register_coroutine_test(
@@ -78,7 +82,11 @@ test.register_coroutine_test(
                 data_types.validate_or_build_type(device_info_copy.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
-   end
+   end,
+   {
+      min_api_version = 19
+   }
+
   )
 
 test.register_coroutine_test(
@@ -101,7 +109,11 @@ test.register_coroutine_test(
                 data_types.validate_or_build_type(device_info_copy.preferences.ledIntensity, data_types.Uint8, "payload"))})
       test.socket.zigbee:__set_channel_ordering("relaxed")
 
-   end
+   end,
+   {
+      min_api_version = 19
+   }
+
   )
 
 test.run_registered_tests()

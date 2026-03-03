@@ -69,7 +69,10 @@ test.register_coroutine_test(
           Configuration:Get({ parameter_number = 12 })
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -77,7 +80,10 @@ test.register_coroutine_test(
   function()
     test.socket.zwave:__queue_receive({mock_sensor.id, Configuration:Report( { configuration_value = 0x00, parameter_number = 12 } )})
     mock_sensor:expect_metadata_update({ profile = "illuminance-temperature" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -96,7 +102,10 @@ test.register_coroutine_test(
     test.socket.zwave:__queue_receive({mock_sensor.id, Configuration:Report( { configuration_value = 0x00, parameter_number = 12 } )})
     mock_sensor:expect_metadata_update({ profile = "illuminance-temperature" })
     test.socket.zwave:__queue_receive({mock_sensor.id, WakeUp:Notification({})})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
