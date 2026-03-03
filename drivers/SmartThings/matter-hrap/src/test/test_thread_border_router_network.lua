@@ -106,7 +106,10 @@ test.register_coroutine_test(
                 mock_device, 1, 6
             )
         })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -138,6 +141,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.threadBorderRouter.threadInterfaceState("disabled"))
       }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -183,6 +189,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.threadBorderRouter.borderRouterName({ value = "john foo no suffix"}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -202,6 +211,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.wifiInformation.ssid({ value = "test name for ssid!" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -216,6 +228,9 @@ test.register_message_test(
             clusters.WifiNetworkMangement.attributes.Ssid:build_test_report_data(mock_device, 1, string.char(data_types.Null.ID))
         }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -230,6 +245,9 @@ test.register_message_test(
             clusters.WifiNetworkMangement.attributes.Ssid:build_test_report_data(mock_device, 1, string.char(0xC0)) --  0xC0 never appears in utf8
         }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -336,7 +354,10 @@ test.register_coroutine_test(
         test.socket.capability:__expect_send(
             mock_device:generate_test_message("main", capabilities.threadNetwork.panId({ value = 55672 }))
         )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.run_registered_tests()

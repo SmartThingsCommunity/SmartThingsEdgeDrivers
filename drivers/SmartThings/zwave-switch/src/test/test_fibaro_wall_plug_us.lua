@@ -69,6 +69,9 @@ test.register_message_test(
         Meter:Get({scale = Meter.scale.electric_meter.WATTS}, {dst_channels = {1}})
       )
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -103,6 +106,9 @@ test.register_message_test(
         Meter:Get({scale = Meter.scale.electric_meter.WATTS}, {dst_channels = {1}})
       )
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -134,6 +140,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 55, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -165,6 +174,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("smartplug1",  capabilities.powerMeter.power({ value = 89, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -196,6 +208,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -227,6 +242,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("smartplug1",  capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -238,7 +256,10 @@ test.register_coroutine_test(
       mock_device,
       SwitchBinary:Set({target_value=0xFF},{dst_channels={1}})
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -317,7 +338,10 @@ test.register_coroutine_test(
           )
       )
 
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()
