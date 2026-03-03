@@ -21,7 +21,6 @@ local carbonMonoxideMeasurement = capabilities.carbonMonoxideMeasurement
 local tamperAlert = capabilities.tamperAlert
 
 local ALARM_COMMAND = "alarmCommand"
-local ALARM_DURATION = "warningDuration"
 local DEFAULT_MAX_WARNING_DURATION = 0x00F0
 local CarbonMonoxideEndpoint = 0x2E
 local SmokeAlarmEndpoint = 0x23
@@ -76,8 +75,7 @@ local function generate_event_from_zone_status(driver, device, zone_status, zigb
         device:emit_event(smokeDetector.smoke.clear())
       end)
     end
-  end
-  if endpoint == CarbonMonoxideEndpoint then
+  elseif endpoint == CarbonMonoxideEndpoint then
     if zone_status:is_test_set() then
       device:emit_event(carbonMonoxide.carbonMonoxide.tested())
     elseif zone_status:is_alarm1_set() then
@@ -113,7 +111,6 @@ end
 local function do_configure(driver, device)
   device:configure()
   local maxWarningDuration = get_current_max_warning_duration(device)
-  device:set_field(ALARM_DURATION, maxWarningDuration , { persist = true})
   device:send(IASWD.attributes.MaxDuration:write(device, maxWarningDuration):to_endpoint(0x23))
 
   device.thread:call_with_delay(5, function()
