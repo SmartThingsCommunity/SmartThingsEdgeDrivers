@@ -22,7 +22,7 @@ local AlarmStatus = IASACE.types.IasaceAlarmStatus
 
 local mock_device = test.mock_device.build_test_zigbee_device(
 	{
-		profile = t_utils.get_profile_definition("frient-keypad-security-system.yml"),
+		profile = t_utils.get_profile_definition("frient-keypad-lock-status.yml"),
 		fingerprinted_endpoint_id = 0x2C,
 		zigbee_endpoints = {
 			[0x2C] = {
@@ -43,13 +43,13 @@ local function test_init()
 	test.socket.capability:__expect_send(
 		mock_device:generate_test_message(
 			"main",
-			capabilities.securitySystem.supportedSecuritySystemStatuses({ "armedAway", "armedStay", "disarmed" }, { visibility = { displayed = false } })
+			capabilities.lock.supportedLockValues({ "locked", "unlocked"}, { visibility = { displayed = false } })
 		)
 	)
 	test.socket.capability:__expect_send(
 		mock_device:generate_test_message(
 			"main",
-			capabilities.securitySystem.supportedSecuritySystemCommands({ "armAway", "armStay", "disarm" }, { visibility = { displayed = false } })
+			capabilities.lock.supportedLockCommands({ "lock", "unlock" }, { visibility = { displayed = false } })
 		)
 	)
 	test.socket.capability:__expect_send(
@@ -81,38 +81,6 @@ local function info_changed_device_data(preference_updates)
 	end
 	return dkjson.encode(device_info_copy)
 end
-
-test.register_coroutine_test(
-	"Added lifecycle emits supported statuses only",
-	function()
-		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message(
-				"main",
-				capabilities.securitySystem.supportedSecuritySystemStatuses({ "armedAway", "armedStay", "disarmed" }, { visibility = { displayed = false } })
-			)
-		)
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message(
-				"main",
-				capabilities.securitySystem.supportedSecuritySystemCommands({ "armAway", "armStay", "disarm" }, { visibility = { displayed = false } })
-			)
-		)
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.securitySystem.securitySystemStatus.disarmed({ state_change = true })
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message(
-        "main",
-        capabilities.lockCodes.codeChanged("Security System disarmed by App", { state_change = true, data = { codeName = "App" } })
-      )
-    )
-	end
-)
 
 test.register_coroutine_test(
 	"doConfigure binds clusters and configures battery reporting",
@@ -211,19 +179,19 @@ test.register_message_test(
 )
 
 test.register_coroutine_test(
-	"App armAway emits security status, activity, and panel status",
+	"App lock emits lock status, activity, and panel status",
 	function()
 		test.socket.capability:__queue_receive({
 			mock_device.id,
-			{ capability = capabilities.securitySystem.ID, component = "main", command = capabilities.securitySystem.commands.armAway.NAME, args = {} }
+			{ capability = capabilities.lock.ID, component = "main", command = capabilities.lock.commands.lock.NAME, args = {} }
 		})
 
 		test.socket.capability:__set_channel_ordering("relaxed")
 		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", capabilities.securitySystem.securitySystemStatus.armedAway({ state_change = true }))
+			mock_device:generate_test_message("main", capabilities.lock.lock.locked({ state_change = true }))
 		)
 		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("Security System armed away by App", { state_change = true, data = { codeName = "App" } }))
+			mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("Lock locked by App", { state_change = true, data = { codeName = "App" } }))
 		)
 		test.socket.zigbee:__expect_send(
 			{
@@ -308,10 +276,10 @@ test.register_coroutine_test(
 
 		test.socket.capability:__set_channel_ordering("relaxed")
 		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", capabilities.securitySystem.securitySystemStatus.armedAway({ state_change = true }))
+			mock_device:generate_test_message("main", capabilities.lock.lock.locked({ state_change = true }))
 		)
 		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("Security System armed away by Bob", { state_change = true, data = { codeName = "Bob" } }))
+			mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("Lock locked by Bob", { state_change = true, data = { codeName = "Bob" } }))
 		)
 		test.socket.zigbee:__expect_send(
 			{ mock_device.id, IASACE.client.commands.ArmResponse(mock_device, ArmNotification.ALL_ZONES_ARMED) }
@@ -366,6 +334,38 @@ test.register_coroutine_test(
 				)
 			)
 		)
+	end
+)
+
+test.register_coroutine_test(
+	"Added lifecycle emits supported statuses only",
+	function()
+		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message(
+				"main",
+				capabilities.lock.supportedLockValues({ "locked", "unlocked"}, { visibility = { displayed = false } })
+			)
+		)
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message(
+				"main",
+				capabilities.lock.supportedLockCommands({ "lock", "unlock" }, { visibility = { displayed = false } })
+			)
+		)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lock.lock.unlocked({ state_change = true })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCodes.codeChanged("Lock unlocked by App", { state_change = true, data = { codeName = "App" } })
+      )
+    )
 	end
 )
 

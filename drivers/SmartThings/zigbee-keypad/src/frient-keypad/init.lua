@@ -143,7 +143,7 @@ local function emit_mode_status_event(device, status, extra_data)
   end
 end
 
-local function get_pref_number(value)
+--[[ local function get_pref_number(value)
   if type(value) == "number" then
     return value
   end
@@ -158,7 +158,7 @@ local function get_pref_number(value)
     end
   end
   return nil
-end
+end ]]
 
 local function is_pin_length_valid(device, pin)
   local pinStr = tostring(pin)
@@ -168,8 +168,8 @@ local function is_pin_length_valid(device, pin)
   if pin == nil or pin == "" then
     return false
   end
-  local min_len = get_pref_number(device.preferences.minCodeLength)
-  local max_len = get_pref_number(device.preferences.maxCodeLength)
+  local min_len = device.preferences.minCodeLength
+  local max_len = device.preferences.maxCodeLength
   local len = string.len(tostring(pin))
 
   if min_len ~= nil and len < min_len then
@@ -322,8 +322,8 @@ local function emit_lock_codes(device, lock_codes, lock_pins)
 end
 
 local function emit_lock_code_limits(device)
-  local min_len = get_pref_number(device.preferences.minCodeLength)
-  local max_len = get_pref_number(device.preferences.maxCodeLength)
+  local min_len = device.preferences.minCodeLength
+  local max_len = device.preferences.maxCodeLength
 
   if min_len ~= nil then
     device:emit_event(LockCodes.minCodeLength(min_len, { visibility = { displayed = true } }))
@@ -428,10 +428,6 @@ local function sync_lock_codes_from_user_map(device, map)
       emit_code_changed(device, slot, " deleted", nil)
     end
   end
-  log.error("previous lock codes " .. json.encode(previous_lock_codes))
-  log.error("previous lock pins " .. json.encode(previous_lock_pins))
-  log.error("lock codes" .. json.encode(lock_codes))
-  log.error("lock pins " .. json.encode(lock_pins))
 
   device:set_field("securitySystem_user_map", map, { persist = true })
   device:set_field(LOCK_CODES_FIELD, lock_codes, { persist = true })
@@ -453,9 +449,13 @@ end
 local function emit_arm_activity(device, status, user_name)
   local activity
   if should_use_lock_mode(device) then
-    activity = LOCK_STATUS_TO_ACTIVITY[status] or status
+    if status == "locked" or status == "unlocked" then
+      activity = "Lock " .. (LOCK_STATUS_TO_ACTIVITY[status] or status)
+    else
+      activity =  "Lock " .. LOCK_STATUS_TO_ACTIVITY[status == "disarmed" and "unlocked" or "locked"]
+    end
   else
-    activity = STATUS_TO_ACTIVITY[status] or status
+    activity = "Security System " .. (STATUS_TO_ACTIVITY[status] or status)
   end
   local actor = user_name or "Unknown"
   local event = LockCodes.codeChanged(string.format("%s by %s", activity, actor), { state_change = true })
@@ -484,7 +484,6 @@ local function send_panel_status(device, status)
     AudibleNotification.DEFAULT_SOUND,
     AlarmStatus.NO_ALARM
   ))
-  log.error("to tu?")
 end
 
 local function can_process_arm_command(command, status)
