@@ -328,7 +328,7 @@ end
 
 local function set_reader_config(device)
   local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
-  if reader_config_updated == true then return end
+  if reader_config_updated == "TRUE" or reader_config_updated == "IN_PROGRESS" then return end
 
   local cmdName = "setReaderConfig"
   local groupId = create_group_id_resolving_key()
@@ -368,7 +368,7 @@ local function set_reader_config(device)
       hex_string_to_octet_string(groupResolvingKey)
     )
   )
-  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, true)
+  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS")
 end
 
 local function match_profile_modular(driver, device)
@@ -694,6 +694,7 @@ local function aliro_reader_verification_key_handler(driver, device, ib, respons
     device:emit_event(capabilities.lockAliro.readerVerificationKey(
       utils.bytes_to_hex_string(ib.data.value), {visibility = {displayed = false}}
     ))
+    device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "TRUE")
   end
 end
 
@@ -2705,7 +2706,9 @@ local function handle_set_reader_config(driver, device, command)
   end
 
   local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
-  if reader_config_updated == true then
+  if reader_config_updated == "IN_PROGRESS" then
+    return
+  elseif reader_config_updated == "TRUE" then
     -- Update commandResult
     local command_result_info = {
       commandName = cmdName,
@@ -2735,7 +2738,7 @@ local function handle_set_reader_config(driver, device, command)
       hex_string_to_octet_string(groupResolvingKey)
     )
   )
-  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, true)
+  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS")
 end
 
 local function set_aliro_reader_config_handler(driver, device, ib, response)
