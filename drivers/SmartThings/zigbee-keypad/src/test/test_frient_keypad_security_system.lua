@@ -83,7 +83,7 @@ local function info_changed_device_data(preference_updates)
 end
 
 test.register_coroutine_test(
-	"Added lifecycle emits supported statuses and default disarmed state",
+	"Added lifecycle emits supported statuses only",
 	function()
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
@@ -99,9 +99,18 @@ test.register_coroutine_test(
 				capabilities.securitySystem.supportedSecuritySystemCommands({ "armAway", "armStay", "disarm" }, { visibility = { displayed = false } })
 			)
 		)
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", capabilities.securitySystem.securitySystemStatus.disarmed({ state_change = true }))
-		)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.securitySystem.securitySystemStatus.disarmed({ state_change = true })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCodes.codeChanged("disarmed by App", { state_change = true, data = { codeName = "App" } })
+      )
+    )
 	end
 )
 
@@ -252,7 +261,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-	"infoChanged pinMap add then delete updates lockCodes and deletion event",
+	"infoChanged pinMap add updates lockCodes",
 	function()
 		local add_data = info_changed_device_data({ pinMap = "1234:Alice" })
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", add_data })
@@ -272,13 +281,6 @@ test.register_coroutine_test(
 
 		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
 		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10, { visibility = { displayed = true } })))
-		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 deleted", { state_change = true })))
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message(
-				"main",
-				capabilities.lockCodes.lockCodes(json.encode({}), { state_change = true }, { visibility = { displayed = true } })
-			)
-		)
 	end
 )
 
@@ -338,7 +340,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-	"Overflow lockCodes payload falls back to chunked codeChanged events with user and pin",
+	"Overflow lockCodes payload emits lockCodes event",
 	function()
 		local very_long_name = string.rep("A", 280)
 		local add_data = info_changed_device_data({ pinMap = "1234:" .. very_long_name })
@@ -354,9 +356,15 @@ test.register_coroutine_test(
 			)
 		)
 
-		local chunk_message = json.encode({ ["1"] = very_long_name .. ": 1234" })
 		test.socket.capability:__expect_send(
-			mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged(chunk_message, { state_change = true }))
+			mock_device:generate_test_message(
+				"main",
+				capabilities.lockCodes.lockCodes(
+					json.encode({ ["1"] = very_long_name .. ": 1234" }),
+					{ state_change = true },
+					{ visibility = { displayed = true } }
+				)
+			)
 		)
 	end
 )

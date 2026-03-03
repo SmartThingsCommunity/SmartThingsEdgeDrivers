@@ -162,7 +162,7 @@ end
 
 local function is_pin_length_valid(device, pin)
   local pinStr = tostring(pin)
-  if pinStr:sub(1,1) == "+" then
+  if pinStr:sub(1,1) == "+" then -- device adds + to the rfid codes, so ignore length check for those
     return true
   end
   if pin == nil or pin == "" then
@@ -410,9 +410,13 @@ local function sync_lock_codes_from_user_map(device, map)
     end
 
     used_slots[slot_index] = true
-    map.pins[entry.pin] = map.pins[entry.pin] or {}
-    map.pins[entry.pin].index = slot_index
-    map.pins[entry.pin].name = entry.name or map.pins[entry.pin].name or ("Code " .. tostring(slot_index))
+    local existing_entry = map.pins[entry.pin]
+    if type(existing_entry) ~= "table" then
+      existing_entry = { name = normalize_user_name(existing_entry) }
+    end
+    existing_entry.index = slot_index
+    existing_entry.name = entry.name or existing_entry.name or ("Code " .. tostring(slot_index))
+    map.pins[entry.pin] = existing_entry
 
     local slot = tostring(slot_index)
     lock_pins[slot] = entry.pin
@@ -438,10 +442,10 @@ end
 local function resolve_user_from_code(device, code)
   local map = get_user_map(device)
   if map.pins ~= nil and map.pins[code] ~= nil then
-    return map.pins[code], "pin"
+    return normalize_user_entry(map.pins[code]), "pin"
   end
   if map.rfids ~= nil and map.rfids[code] ~= nil then
-    return map.rfids[code], "rfid"
+    return normalize_user_entry(map.rfids[code]), "rfid"
   end
   return nil, nil
 end
