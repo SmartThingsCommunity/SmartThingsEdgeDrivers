@@ -193,6 +193,11 @@ function utils.find_default_endpoint(device)
     end
   end
 
+  local water_valve_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
+  if #water_valve_eps > 0 then
+    return get_first_non_zero_endpoint(water_valve_eps)
+  end
+
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
   return device.MATTER_DEFAULT_ENDPOINT
 end
