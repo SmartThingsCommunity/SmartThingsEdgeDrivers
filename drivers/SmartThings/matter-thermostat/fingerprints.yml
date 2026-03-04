@@ -88,7 +88,7 @@ matterManufacturer:
     deviceLabel: TARUIE AC Remote
     vendorId: 0x141F
     productId: 0x1005
-    deviceProfileName: heat-pump-thermostat-humidity-thermostat
+    deviceProfileName: thermostat-humidity
   #720
   - id: "5482/1"
     deviceLabel: xCREAS Smart Air Purifier Cyclone400
