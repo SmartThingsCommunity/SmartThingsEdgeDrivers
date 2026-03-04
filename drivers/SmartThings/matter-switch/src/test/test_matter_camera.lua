@@ -118,7 +118,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_chime = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("camera.yml"),
+  profile = t_utils.get_profile_definition("chime.yml"),
   manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
   matter_version = {hardware = 1, software = 1},
   endpoints = {
@@ -147,7 +147,7 @@ local mock_device_chime = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_doorbell = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("camera.yml"),
+  profile = t_utils.get_profile_definition("doorbell.yml"),
   manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
   matter_version = {hardware = 1, software = 1},
   endpoints = {
@@ -181,7 +181,6 @@ local mock_device_doorbell = test.mock_device.build_test_matter_device({
 local subscribe_request
 local subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.AttributeList,
-  clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
   clusters.LevelControl.attributes.MaxLevel,
@@ -315,6 +314,7 @@ local additional_subscribed_attributes = {
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
   clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams,
+  clusters.Chime.attributes.Enabled,
   clusters.Chime.attributes.InstalledChimeSounds,
   clusters.Chime.attributes.SelectedChime,
   clusters.ZoneManagement.attributes.MaxZones,
