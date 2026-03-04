@@ -337,28 +337,15 @@ function CameraCapabilityHandlers.handle_set_selected_sound(driver, device, cmd)
 end
 
 local function update_viewport_or_label(device, current_streams, streamId, label, viewport)
-  local updated_streams = {}
+  current_streams = current_streams or {}
   for _, stream in ipairs(current_streams) do
     if stream.streamId == streamId then
-      local updated_stream = {
-        streamId = stream.streamId,
-        data = {}
-      }
-      for i, v in pairs(stream.data) do
-        updated_stream.data[i] = v
-      end
-      if label ~= nil then
-        updated_stream.data.label =label
-      end
-      if viewport ~= nil then
-        updated_stream.data.viewport = viewport
-      end
-      table.insert(updated_streams, updated_stream)
-    else
-      table.insert(updated_streams, stream)
+      if label ~= nil then stream.data.label = label end
+      if viewport ~= nil then stream.data.viewport = viewport end
+      break
     end
   end
-  device:emit_event(capabilities.videoStreamSettings.videoStreams(updated_streams))
+  device:emit_event(capabilities.videoStreamSettings.videoStreams(current_streams))
 end
 
 function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
@@ -434,65 +421,73 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
 
   local label_changed = cmd.args.label ~= nil and cmd.args.label ~= current_stream.label
 
-  if needs_reallocation then
-    if viewport_changed or label_changed then
-      update_viewport_or_label(device, current_streams, cmd.args.streamId, cmd.args.label, cmd.args.viewport)
-    end
-    device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamDeallocate(
-      device, endpoint_id, cmd.args.streamId
-    ))
-
-    local stream_usage = cmd.args.type == "liveStream" and
-      clusters.Global.types.StreamUsageEnum.LIVE_VIEW or clusters.Global.types.StreamUsageEnum.RECORDING
-
-    local min_resolution, max_resolution
-    if cmd.args.resolution then
-      min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
-        width = cmd.args.resolution.width,
-        height = cmd.args.resolution.height
-      })
-      max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
-        width = cmd.args.resolution.width,
-        height = cmd.args.resolution.height
-      })
-    end
-
-    local video_stream_defaults = {
-      codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
-      min_frame_rate = 30,
-      max_frame_rate = 60,
-      min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 320, height = 240}),
-      max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
-      min_bitrate = 10000,
-      max_bitrate = 2000000,
-      key_frame_interval = 4000,
-      watermark_enabled = false,
-      on_screen_display_enabled = false
-    }
-
-    -- Use the same resolution (if available) for MinResolution and MaxResolution to force the server to allocate the
-    -- stream with the desired resolution
-    device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(device, endpoint_id,
-      stream_usage,
-      video_stream_defaults.codec,
-      video_stream_defaults.min_frame_rate,
-      math.min(device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or video_stream_defaults.max_frame_rate,
-        video_stream_defaults.max_frame_rate),
-      min_resolution or device:get_field(camera_fields.MIN_RESOLUTION) or video_stream_defaults.min_resolution,
-      max_resolution or device:get_field(camera_fields.MAX_RESOLUTION) or video_stream_defaults.max_resolution,
-      video_stream_defaults.min_bitrate,
-      video_stream_defaults.max_bitrate,
-      video_stream_defaults.key_frame_interval,
-      watermark_enabled or video_stream_defaults.watermark_enabled,
-      on_screen_display_enabled or video_stream_defaults.on_screen_display_enabled
-    ))
-  elseif viewport_changed or label_changed then
+  if viewport_changed or label_changed then
     update_viewport_or_label(device, current_streams, cmd.args.streamId, cmd.args.label, cmd.args.viewport)
-  else
-    device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamModify(device, endpoint_id,
-      cmd.args.streamId, watermark_enabled, on_screen_display_enabled
-    ))
   end
+
+  if not needs_reallocation then
+    local watermark_changed = watermark_enabled ~= nil and current_stream.watermark ~= nil and
+      ((watermark_enabled and current_stream.watermark == "disabled") or
+      (not watermark_enabled and current_stream.watermark == "enabled"))
+    local on_screen_display_changed = on_screen_display_enabled ~= nil and current_stream.onScreenDisplay ~= nil and
+      ((on_screen_display_enabled and current_stream.onScreenDisplay == "disabled") or
+      (not on_screen_display_enabled and current_stream.onScreenDisplay == "enabled"))
+    if watermark_changed or on_screen_display_changed then
+      device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamModify(
+        device, endpoint_id, cmd.args.streamId, watermark_enabled, on_screen_display_enabled
+      ))
+    end
+    return
+  end
+
+  device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamDeallocate(
+    device, endpoint_id, cmd.args.streamId
+  ))
+
+  local stream_usage = cmd.args.type == "liveStream" and
+    clusters.Global.types.StreamUsageEnum.LIVE_VIEW or clusters.Global.types.StreamUsageEnum.RECORDING
+
+  local min_resolution, max_resolution
+  if cmd.args.resolution then
+    min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
+      width = cmd.args.resolution.width,
+      height = cmd.args.resolution.height
+    })
+    max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
+      width = cmd.args.resolution.width,
+      height = cmd.args.resolution.height
+    })
+  end
+
+  local video_stream_defaults = {
+    codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+    min_frame_rate = 30,
+    max_frame_rate = 60,
+    min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 320, height = 240}),
+    max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+    min_bitrate = 10000,
+    max_bitrate = 2000000,
+    key_frame_interval = 4000,
+    watermark_enabled = false,
+    on_screen_display_enabled = false
+  }
+
+  -- Use the same resolution (if available) for MinResolution and MaxResolution to force the server to allocate the
+  -- stream with the desired resolution
+  device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(device, endpoint_id,
+    stream_usage,
+    video_stream_defaults.codec,
+    video_stream_defaults.min_frame_rate,
+    math.min(device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or video_stream_defaults.max_frame_rate,
+      video_stream_defaults.max_frame_rate),
+    min_resolution or device:get_field(camera_fields.MIN_RESOLUTION) or video_stream_defaults.min_resolution,
+    max_resolution or device:get_field(camera_fields.MAX_RESOLUTION) or video_stream_defaults.max_resolution,
+    video_stream_defaults.min_bitrate,
+    video_stream_defaults.max_bitrate,
+    video_stream_defaults.key_frame_interval,
+    watermark_enabled or video_stream_defaults.watermark_enabled,
+    on_screen_display_enabled or video_stream_defaults.on_screen_display_enabled
+  ))
 end
 
 function CameraCapabilityHandlers.handle_set_default_viewport(driver, device, cmd)
