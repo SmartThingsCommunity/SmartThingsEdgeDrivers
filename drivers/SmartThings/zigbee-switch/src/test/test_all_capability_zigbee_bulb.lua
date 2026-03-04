@@ -339,6 +339,14 @@ test.register_coroutine_test(
                                        })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
+                                         ColorControl.attributes.ColorTempPhysicalMaxMireds:configure_reporting(mock_device, 1, 43200, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTempPhysicalMinMireds:configure_reporting(mock_device, 1, 43200, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
                                          ColorControl.attributes.CurrentHue:configure_reporting(mock_device, 1, 3600, 0x0010)
       })
       test.socket.zigbee:__expect_send({
@@ -392,6 +400,14 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
                                          SimpleMetering.attributes.Divisor:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device)
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })

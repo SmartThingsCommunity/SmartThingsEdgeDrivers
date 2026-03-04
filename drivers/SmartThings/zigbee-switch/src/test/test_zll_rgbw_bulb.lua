@@ -83,6 +83,18 @@ test.register_coroutine_test(
         ColorControl.attributes.CurrentSaturation:configure_reporting(mock_device, 1, 3600, 16)
       }
     )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.attributes.ColorTempPhysicalMaxMireds:configure_reporting(mock_device, 1, 43200, 1)
+      }
+    )
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.attributes.ColorTempPhysicalMinMireds:configure_reporting(mock_device, 1, 43200, 1)
+      }
+    )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )
@@ -95,33 +107,37 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end
 )
 
 test.register_coroutine_test(
-    "ZLL periodic poll should occur",
-    function()
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.zigbee:__set_channel_ordering("relaxed")
-      test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
-      test.wait_for_events()
+  "ZLL periodic poll should occur",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
+    test.wait_for_events()
 
-      test.mock_time.advance_time(5*60)
-      test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
-      test.wait_for_events()
-    end,
-    {
-      test_init = function()
-        test.mock_device.add_test_device(mock_device)
-        test.timer.__create_and_queue_test_time_advance_timer(5*60, "interval", "polling")
-      end
-    }
+    test.mock_time.advance_time(5*60)
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+    test.wait_for_events()
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_device)
+      test.timer.__create_and_queue_test_time_advance_timer(5*60, "interval", "polling")
+    end
+  }
 )
 
 test.register_coroutine_test(
@@ -140,6 +156,8 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end
@@ -161,6 +179,8 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end
@@ -182,6 +202,8 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end
@@ -204,6 +226,8 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentHue:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.CurrentSaturation:read(mock_device) })
   end
