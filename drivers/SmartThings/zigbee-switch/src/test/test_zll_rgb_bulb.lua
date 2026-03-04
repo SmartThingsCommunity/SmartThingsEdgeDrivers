@@ -205,6 +205,7 @@ for _, data in ipairs(test_data) do
       if data.saturation ~= nil then
         test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.CurrentSaturation:build_test_attr_report(mock_device, math.ceil(data.saturation / 100 * 0xFE))})
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.saturation(data.saturation)))
+        mock_device:expect_native_attr_handler_registration("colorControl", "saturation")
       end
 
       test.timer.__create_and_queue_test_time_advance_timer(0.2, "oneshot")
@@ -249,6 +250,7 @@ for _, data in ipairs(test_data) do
       if data.hue ~= nil then
         test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.CurrentHue:build_test_attr_report(mock_device, math.ceil(data.hue / 100 * 0xFE))})
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorControl.hue(data.hue)))
+        mock_device:expect_native_attr_handler_registration("colorControl", "hue")
       end
 
       test.timer.__create_and_queue_test_time_advance_timer(0.2, "oneshot")

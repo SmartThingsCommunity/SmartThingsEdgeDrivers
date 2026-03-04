@@ -9,7 +9,7 @@ local clusters = require "st.matter.clusters"
 test.set_rpc_version(7)
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
+  profile = t_utils.get_profile_definition("thermostat-humidity-fan-nostate.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -46,7 +46,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_simple = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("thermostat.yml"),
+  profile = t_utils.get_profile_definition("thermostat-nostate.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -81,7 +81,7 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_no_battery = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("thermostat.yml"),
+  profile = t_utils.get_profile_definition("thermostat-nostate.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -123,7 +123,6 @@ local cluster_subscribe_list = {
   clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
   clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
-  clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
@@ -142,7 +141,6 @@ local cluster_subscribe_list_simple = {
   clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
   clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
-  clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
@@ -158,7 +156,6 @@ local cluster_subscribe_list_no_battery = {
   clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
   clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
-  clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.TemperatureMeasurement.attributes.MinMeasuredValue,

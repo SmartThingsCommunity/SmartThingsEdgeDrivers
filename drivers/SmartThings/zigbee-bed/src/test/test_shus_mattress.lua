@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -406,6 +395,21 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       custom_capabilities.mattressHardness.rightHipHardness(1)))
+  end
+)
+
+test.register_coroutine_test(
+  "Device reported yoga 3 and driver emit custom_capabilities.yoga.state.both()",
+  function()
+    local attr_report_data = {
+      { 0x0008, data_types.Uint8.ID, 3 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.yoga.state.both()))
   end
 )
 
@@ -918,6 +922,28 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0008, MFG_CODE, data_types.Uint8, 0)
       })
+  end
+)
+
+test.register_coroutine_test(
+  "capability left_control backControl soft emits idle event after delay",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = custom_capabilities.left_control.ID, component = "main", command ="backControl" , args = {"soft"}}
+    })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
+        0x0000, MFG_CODE, data_types.Uint8, 0)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.left_control.leftback.soft()))
+    test.wait_for_events()
+
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      custom_capabilities.left_control.leftback("idle", { visibility = { displayed = false }})))
   end
 )
 

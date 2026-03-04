@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -526,6 +515,52 @@ test.register_coroutine_test(
         mock_device.id,
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       })
+  end
+)
+test.register_coroutine_test(
+  "LocalTemperature handler should request PIHeatingDemand when setpoint > temperature",
+  function()
+    local RAW_SETPOINT_FIELD = "raw_setpoint"
+    mock_device:set_field(RAW_SETPOINT_FIELD, 3000, { persist = true })
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.LocalTemperature:build_test_attr_report(mock_device, 2000)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.PIHeatingDemand:read(mock_device)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 20.0, unit = "C" }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Setting an unsupported thermostat mode should re-emit the current mode",
+  function()
+    -- Establish a known current mode state
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, ThermostatSystemMode.OFF)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
+    )
+    test.wait_for_events()
+
+    -- "cool" is not in SUPPORTED_MODES for stelpro-ki; the driver re-emits the current mode
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "thermostatMode", component = "main", command = "setThermostatMode", args = { "cool" } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
+    )
   end
 )
 

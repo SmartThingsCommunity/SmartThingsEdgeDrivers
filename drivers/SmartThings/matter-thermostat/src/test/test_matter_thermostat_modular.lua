@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
+local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
@@ -95,6 +96,9 @@ local function test_init()
   test.socket.matter:__expect_send({ mock_device_basic.id, read_request })
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_basic.id, "init" })
+  test.socket.capability:__expect_send(
+    mock_device_basic:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+  )
   subscribe_request_basic = initialize_mock_device(mock_device_basic, subscribed_attributes)
 end
 

@@ -740,4 +740,30 @@ do
     end
   )
 end
+test.register_coroutine_test(
+  "Configuration:Report for OPERATING_MODE=1 should update to roller shutter profile",
+  function()
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_roller_shutter_venetian.id,
+      zw_test_utils.zwave_test_build_receive_command(
+        Configuration:Report({ parameter_number = 151, configuration_value = 1 })
+      )
+    })
+    mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter" })
+  end
+)
+
+test.register_coroutine_test(
+  "Configuration:Report for OPERATING_MODE=2 should update to venetian profile",
+  function()
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_roller_shutter_venetian.id,
+      zw_test_utils.zwave_test_build_receive_command(
+        Configuration:Report({ parameter_number = 151, configuration_value = 2 })
+      )
+    })
+    mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter-venetian" })
+  end
+)
+
 test.run_registered_tests()

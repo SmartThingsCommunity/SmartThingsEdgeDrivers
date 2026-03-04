@@ -61,15 +61,15 @@ local mock_bridge = test.mock_device.build_test_matter_device({
 
 local function test_init_mock_bridge()
   test.mock_device.add_test_device(mock_bridge)
+  test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "init" })
+  test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "doConfigure" })
+  mock_bridge:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.register_coroutine_test(
   "Profile should not change for devices with aggregator device type (bridges)",
   function()
-    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "added" })
-    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "init" })
-    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "doConfigure" })
-    mock_bridge:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   { test_init = test_init_mock_bridge }
 )

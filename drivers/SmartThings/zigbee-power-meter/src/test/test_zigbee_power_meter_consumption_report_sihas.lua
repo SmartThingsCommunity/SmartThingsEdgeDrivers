@@ -26,6 +26,7 @@ local zb_const = require "st.zigbee.constants"
 local zcl_messages = require "st.zigbee.zcl"
 local data_types = require "st.zigbee.data_types"
 local Status = require "st.zigbee.generated.types.ZclStatus"
+local constants = require "st.zigbee.constants"
 
 
 local mock_device = test.mock_device.build_test_zigbee_device(
@@ -227,6 +228,41 @@ test.register_coroutine_test(
         -- no op to override auto device add on startup
       end
     }
+)
+test.register_coroutine_test(
+  "energy handler resets shinasystems offset when reading is below stored offset",
+  function()
+    -- divisor=1000; raw_value=100 -> 0.1 kWh; offset=0.5 -> 0.1 < 0.5 triggers reset
+    mock_device:set_field(constants.ENERGY_METER_OFFSET, 0.5, {persist = true})
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 100)
+    })
+    -- offset resets to 0; raw_value_kilowatts = 0.1; no powerConsumptionReport (delta_tick < 15 min)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 0.1, unit = "kWh"}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "shinasystems energy handler resets save tick when timer has slipped beyond 30 minutes",
+  function()
+    -- Advance time > 30 min so that curr_save_tick + 15*60 < os.time() is true
+    test.timer.__create_and_queue_test_time_advance_timer(40*60, "oneshot")
+    test.mock_time.advance_time(40*60)
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 1500)
+    })
+    -- raw_value=1500, divisor=1000, kWh=1.5, watts=1500.0; first report: deltaEnergy=0.0
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 1500.0, deltaEnergy = 0.0}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.5, unit = "kWh"}))
+    )
+  end
 )
 
 

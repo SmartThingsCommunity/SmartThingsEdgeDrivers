@@ -1,16 +1,6 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
@@ -18,7 +8,6 @@ local common_utils = require "common-utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local version = require "version"
 
-local REFRIGERATOR_DEVICE_TYPE_ID = 0x0070
 local TEMPERATURE_CONTROLLED_CABINET_DEVICE_TYPE_ID = 0x0071
 
 if version.api < 10 then
@@ -28,17 +17,6 @@ if version.api < 10 then
 end
 
 local SUPPORTED_REFRIGERATOR_TCC_MODES_MAP = "__supported_refrigerator_tcc_modes_map"
-
-local function is_matter_refrigerator(opts, driver, device)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == REFRIGERATOR_DEVICE_TYPE_ID then
-        return true
-      end
-    end
-  end
-  return false
-end
 
 -- Lifecycle Handlers --
 local function device_added(driver, device)
@@ -182,7 +160,7 @@ local matter_refrigerator_handler = {
       [capabilities.temperatureSetpoint.commands.setTemperatureSetpoint.NAME] = handle_temperature_setpoint
     }
   },
-  can_handle = is_matter_refrigerator
+  can_handle = require("matter-refrigerator.can_handle"),
 }
 
 return matter_refrigerator_handler

@@ -228,4 +228,22 @@ test.register_message_test(
   }
 )
 
+test.register_message_test(
+  "Sensor multilevel luminance report with value=0 uses default lux conversion",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
+        sensor_type = SensorMultilevel.sensor_type.LUMINANCE,
+        sensor_value = 0 })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({value = 0, unit = "lux"}))
+    }
+  }
+)
+
 test.run_registered_tests()
