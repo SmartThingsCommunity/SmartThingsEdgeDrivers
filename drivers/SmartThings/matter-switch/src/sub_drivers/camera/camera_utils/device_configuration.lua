@@ -54,13 +54,11 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
     return cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH"
   end
 
-  local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, camera_fields.camera_profile_device_types)
-  local chime_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.CHIME)
-  local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.DOORBELL)
+  local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
+  local chime_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CHIME)
+  local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL)
 
   if #camera_endpoints > 0 then
-    -- get full list of camera endpoints, including chime and doorbell
-    camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
     local camera_ep = switch_utils.get_endpoint_info(device, camera_endpoints[1])
     for _, ep_cluster in pairs(camera_ep.clusters or {}) do
       if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID and has_server_cluster_type(ep_cluster) then
