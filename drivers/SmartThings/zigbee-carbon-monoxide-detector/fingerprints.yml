@@ -14,3 +14,13 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: COSensor-EM
     deviceProfileName: carbonMonoxide-battery
+  - id: "frient A/S/SCAZB-143"
+    deviceLabel: Frient Carbon Monoxide Detector
+    manufacturer: frient A/S
+    model: SCAZB-143
+    deviceProfileName: frient-smoke-co-temperature-battery
+  - id: "frient A/S/SCAZB-141"
+    deviceLabel: Frient Carbon Monoxide Detector
+    manufacturer: frient A/S
+    model: SCAZB-141
+    deviceProfileName: frient-smoke-co-temperature-battery
