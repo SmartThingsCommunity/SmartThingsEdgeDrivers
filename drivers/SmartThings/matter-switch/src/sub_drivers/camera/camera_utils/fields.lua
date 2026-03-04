@@ -47,4 +47,17 @@ CameraFields.ABS_ZOOM_MIN = 1
 CameraFields.ABS_VOL_MAX = 254.0
 CameraFields.ABS_VOL_MIN = 0.0
 
+CameraFields.video_stream_defaults = {
+  codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+  min_frame_rate = 30,
+  max_frame_rate = 60,
+  min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 320, height = 240}),
+  max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+  min_bitrate = 10000,
+  max_bitrate = 2000000,
+  key_frame_interval = 4000,
+  watermark_enabled = false,
+  on_screen_display_enabled = false
+}
+
 return CameraFields

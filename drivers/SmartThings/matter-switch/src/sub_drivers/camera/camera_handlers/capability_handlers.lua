@@ -459,34 +459,21 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     })
   end
 
-  local video_stream_defaults = {
-    codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
-    min_frame_rate = 30,
-    max_frame_rate = 60,
-    min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 320, height = 240}),
-    max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
-    min_bitrate = 10000,
-    max_bitrate = 2000000,
-    key_frame_interval = 4000,
-    watermark_enabled = false,
-    on_screen_display_enabled = false
-  }
-
   -- Use the same resolution (if available) for MinResolution and MaxResolution to force the server to allocate the
   -- stream with the desired resolution
   device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(device, endpoint_id,
     stream_usage,
-    video_stream_defaults.codec,
-    video_stream_defaults.min_frame_rate,
-    math.min(device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or video_stream_defaults.max_frame_rate,
-      video_stream_defaults.max_frame_rate),
-    min_resolution or device:get_field(camera_fields.MIN_RESOLUTION) or video_stream_defaults.min_resolution,
-    max_resolution or device:get_field(camera_fields.MAX_RESOLUTION) or video_stream_defaults.max_resolution,
-    video_stream_defaults.min_bitrate,
-    video_stream_defaults.max_bitrate,
-    video_stream_defaults.key_frame_interval,
-    watermark_enabled or video_stream_defaults.watermark_enabled,
-    on_screen_display_enabled or video_stream_defaults.on_screen_display_enabled
+    camera_fields.video_stream_defaults.codec,
+    camera_fields.video_stream_defaults.min_frame_rate,
+    math.min(device:get_field(camera_fields.MAX_FRAMES_PER_SECOND) or camera_fields.video_stream_defaults.max_frame_rate,
+      camera_fields.video_stream_defaults.max_frame_rate),
+    min_resolution or device:get_field(camera_fields.MIN_RESOLUTION) or camera_fields.video_stream_defaults.min_resolution,
+    max_resolution or device:get_field(camera_fields.MAX_RESOLUTION) or camera_fields.video_stream_defaults.max_resolution,
+    camera_fields.video_stream_defaults.min_bitrate,
+    camera_fields.video_stream_defaults.max_bitrate,
+    camera_fields.video_stream_defaults.key_frame_interval,
+    watermark_enabled or camera_fields.video_stream_defaults.watermark_enabled,
+    on_screen_display_enabled or camera_fields.video_stream_defaults.on_screen_display_enabled
   ))
 end
 
