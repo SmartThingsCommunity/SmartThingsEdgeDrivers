@@ -212,7 +212,7 @@ local function set_heating_setpoint(driver, device, command)
   end
 
   if value >= MIN_SETPOINT and value <= MAX_SETPOINT then
-    device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, value * 100))
+    device:send(Thermostat.attributes.OccupiedHeatingSetpoint:write(device, utils.round(value * 100)))
     device:send(Thermostat.attributes.OccupiedHeatingSetpoint:read(device))
     device:send(Thermostat.attributes.PIHeatingDemand:read(device))
   end
