@@ -478,7 +478,7 @@ local frient_bridge_handler = {
   },
   lifecycle_handlers = {
     added = added_handler,
-    init = init_handler,
+    init = configurationMap.reconfig_wrapper(init_handler),
     doConfigure = configure_handler,
     infoChanged = info_changed_handler
   },
