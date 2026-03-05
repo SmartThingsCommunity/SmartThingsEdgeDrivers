@@ -296,11 +296,18 @@ function utils.matter_handler(driver, device, response_block)
   device.log.info(string.format("Fallback handler for %s", response_block))
 end
 
--- get a list of endpoints for a specified device type or list of device types
+--- Get a list of endpoints for a specified device type or list of device types.
+---
+--- @param device table a Matter device object
+--- @param device_type_id number|table a single device type ID or a list of device type IDs to match against
+--- @param opts table|nil optional parameters:
+---   - `with_info` boolean: if true, returns full endpoint info tables instead of just endpoint IDs
+--- @return table a list of endpoint IDs by default, or a list of endpoint info tables if `opts.with_info` is true
 function utils.get_endpoints_by_device_type(device, device_type_id, opts)
+  if device_type_id == nil then return end
+  device_type_id = type(device_type_id) == "table" and device_type_id or { device_type_id }
   opts = opts or {}
   local dt_eps = {}
-
   local function insert_ep(ep)
     if opts.with_info then
       table.insert(dt_eps, ep)
@@ -308,15 +315,9 @@ function utils.get_endpoints_by_device_type(device, device_type_id, opts)
       table.insert(dt_eps, ep.endpoint_id)
     end
   end
-
   for _, ep in ipairs(device.endpoints) do
     for _, dt in ipairs(ep.device_types) do
-      if type(device_type_id) == "table" then
-        if utils.tbl_contains(device_type_id, dt.device_type_id) then
-          insert_ep(ep)
-          break
-        end
-      elseif dt.device_type_id == device_type_id then
+      if utils.tbl_contains(device_type_id, dt.device_type_id) then
         insert_ep(ep)
         break
       end
