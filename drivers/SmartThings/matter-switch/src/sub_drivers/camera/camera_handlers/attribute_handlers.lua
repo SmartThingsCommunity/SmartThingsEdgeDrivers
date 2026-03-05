@@ -219,7 +219,7 @@ function CameraAttributeHandlers.allocated_video_streams_handler(driver, device,
       }
     }
 
-    if dptz_viewports[stream_id] then
+    if dptz_viewports[stream_id] ~= nil then
       video_stream.data.viewport = dptz_viewports[stream_id]
     else
       video_stream.data.viewport = {
@@ -280,7 +280,7 @@ function CameraAttributeHandlers.dptz_streams_handler(driver, device, ib, respon
       streamId = stream.streamId,
       data = stream.data
     }
-    if dptz_viewports[stream.streamId] then
+    if dptz_viewports[stream.streamId] ~= nil then
       updated_stream.data.viewport = dptz_viewports[stream.streamId]
     end
     table.insert(updated_streams, updated_stream)
