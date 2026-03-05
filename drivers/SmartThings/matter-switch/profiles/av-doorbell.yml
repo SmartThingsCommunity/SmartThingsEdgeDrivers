@@ -1,4 +1,4 @@
-name: video-doorbell
+name: av-doorbell
 components:
   - id: main
     capabilities:
@@ -138,6 +138,9 @@ deviceConfig:
     conditions:
     - component: main
       capability: motionSensor
+      version: 1
+    - component: doorbell
+      capability: button
       version: 1
     actions:
     - component: main
