@@ -66,7 +66,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -116,7 +119,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -137,6 +143,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, clusters.WindowCovering.server.commands.UpOrOpen(mock_device) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -161,6 +170,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.DownOrClose(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -180,6 +192,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.Stop(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -205,6 +220,9 @@ test.register_message_test(
           Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(33/100 * 254))
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -224,7 +242,10 @@ test.register_coroutine_test(
       mock_device.id,
       Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(50/100 * 254))
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -242,7 +263,10 @@ test.register_coroutine_test(
       mock_device.id,
       Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(50/100 * 254))
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -261,7 +285,10 @@ test.register_coroutine_test(
       mock_device.id,
       Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(50/100 * 254))
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -288,7 +315,10 @@ test.register_coroutine_test(
       mock_device.id,
       Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(1/100 * 254))
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -315,7 +345,10 @@ test.register_coroutine_test(
       mock_device.id,
       Level.server.commands.MoveToLevelWithOnOff(mock_device,math.floor(0/100 * 254))
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -340,6 +373,9 @@ test.register_message_test(
           Level.server.commands.MoveToLevelWithOnOff(mock_device, math.floor(50 / 100 * 254))
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -363,7 +399,10 @@ test.register_coroutine_test(
         mock_device.id,
         Level.attributes.CurrentLevel:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -389,7 +428,10 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({ mock_device.id, WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device) })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

@@ -62,7 +62,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -81,7 +84,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -107,7 +113,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(25))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -124,7 +133,10 @@ test.register_coroutine_test(
         WindowCovering.server.commands.UpOrOpen(mock_device)
       })
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -141,7 +153,10 @@ test.register_coroutine_test(
         WindowCovering.server.commands.DownOrClose(mock_device)
       })
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -158,7 +173,10 @@ test.register_coroutine_test(
         WindowCovering.server.commands.Stop(mock_device)
       })
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -176,7 +194,10 @@ test.register_coroutine_test(
         test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc_out)) )
         test.wait_for_events()
       end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -196,7 +217,10 @@ test.register_coroutine_test(
       mock_device.id,
       Basic.attributes.PowerSource:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -245,7 +269,10 @@ test.register_coroutine_test(
       mock_device.id,
       Basic.attributes.PowerSource:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -274,7 +301,10 @@ test.register_coroutine_test(
       mock_device.id,
       Basic.attributes.PowerSource:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -314,7 +344,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(45))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -354,7 +387,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(85))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -394,7 +430,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -416,7 +455,10 @@ test.register_coroutine_test(
         Basic.attributes.PowerSource:build_test_attr_report(mock_device, 0)})
         test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.powerSource.powerSource.unknown()))
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

@@ -44,6 +44,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -60,6 +63,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -76,6 +82,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -92,6 +101,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -116,7 +128,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -140,7 +155,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 

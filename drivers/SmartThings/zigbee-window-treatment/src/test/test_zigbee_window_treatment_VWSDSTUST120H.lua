@@ -49,7 +49,10 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0000_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0001_messge})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -65,7 +68,10 @@ test.register_coroutine_test(
     })
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0000_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0001_messge})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -86,6 +92,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, clusters.WindowCovering.server.commands.UpOrOpen(mock_device) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -110,6 +119,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.DownOrClose(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -129,6 +141,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.Stop(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -143,7 +158,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0000, MFG_CODE, data_types.Uint8, 0)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -157,7 +175,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0000, MFG_CODE, data_types.Uint8, 1)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -171,7 +192,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0000, MFG_CODE, data_types.Uint8, 2)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -185,7 +209,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         0x0000, MFG_CODE, data_types.Uint8, 3)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -200,7 +227,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.mode.mode("Delete upper limit")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -215,7 +245,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.mode.mode("Set the upper limit")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -230,7 +263,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.mode.mode("Delete lower limit")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -245,7 +281,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.mode.mode("Set the lower limit")))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -260,7 +299,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("hardwareFault",
       capabilities.hardwareFault.hardwareFault.clear()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -275,7 +317,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("hardwareFault",
       capabilities.hardwareFault.hardwareFault.detected()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -293,7 +338,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -311,7 +359,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

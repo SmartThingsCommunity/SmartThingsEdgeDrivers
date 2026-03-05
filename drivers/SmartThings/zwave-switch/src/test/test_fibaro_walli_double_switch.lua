@@ -115,6 +115,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -168,6 +171,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -212,6 +218,9 @@ test.register_message_test(
         { device_uuid = mock_parent.id, capability_id = "powerMeter", capability_attr_id = "power" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -243,6 +252,9 @@ test.register_message_test(
       direction = "send",
       message = mock_parent:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -296,6 +308,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -349,6 +364,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -393,6 +411,9 @@ test.register_message_test(
         { device_uuid = mock_child.id, capability_id = "powerMeter", capability_attr_id = "power" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -429,6 +450,9 @@ test.register_message_test(
       direction = "send",
       message = mock_child:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -496,7 +520,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -562,7 +589,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -626,7 +656,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -692,7 +725,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -733,7 +769,10 @@ test.register_coroutine_test(
               )
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -765,7 +804,10 @@ test.register_coroutine_test(
               )
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -797,7 +839,10 @@ test.register_coroutine_test(
               )
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()
