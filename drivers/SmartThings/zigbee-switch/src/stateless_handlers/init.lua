@@ -6,6 +6,12 @@ local st_utils = require "st.utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local constants = require "st.zigbee.constants"
 
+local MIREDS_CONVERSION_CONSTANT = 1000000
+local COLOR_TEMPERATURE_KELVIN_MAX = 15000
+local COLOR_TEMPERATURE_KELVIN_MIN = 1000
+local COLOR_TEMPERATURE_MIRED_MAX = st_utils.round(MIREDS_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN) -- 1000
+local COLOR_TEMPERATURE_MIRED_MIN = st_utils.round(MIREDS_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX) -- 67
+
 -- Transition Time: The time that shall be taken to perform the step change, in units of 1/10ths of a second.
 local TRANSITION_TIME = 3 -- default: 0.3 seconds
 -- Options Mask & Override: Indicates which options are being overriden by the Level/ColorControl cluster commands
@@ -16,8 +22,8 @@ local function step_color_temperature_by_percent_handler(driver, device, cmd)
     local step_percent_change = cmd.args and cmd.args.stepSize or 0
     if step_percent_change == 0 then return end
     local step_mode = step_percent_change > 0 and (clusters.ColorControl.types.CcStepMode and clusters.ColorControl.types.CcStepMode.DOWN or 3) or (clusters.ColorControl.types.CcStepMode and clusters.ColorControl.types.CcStepMode.UP or 1)
-    local min_mireds = device:get_field(constants.KELVIN_MIN) or constants.COLOR_TEMPERATURE_MIRED_MIN -- default min mireds
-    local max_mireds = device:get_field(constants.KELVIN_MAX) or constants.COLOR_TEMPERATURE_MIRED_MAX -- default max mireds
+    local min_mireds = capabilities.colorTemperature.colorTemperatureRange.minimum or COLOR_TEMPERATURE_MIRED_MIN -- default min mireds
+    local max_mireds = capabilities.colorTemperature.colorTemperatureRange.maximum or COLOR_TEMPERATURE_MIRED_MAX -- default max mireds
     local step_size_in_mireds = st_utils.round((max_mireds - min_mireds) * (math.abs(step_percent_change)/100.0))
     device:send(clusters.ColorControl.server.commands.StepColorTemperature(device, step_mode, step_size_in_mireds, TRANSITION_TIME, min_mireds, max_mireds, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF))
 end
