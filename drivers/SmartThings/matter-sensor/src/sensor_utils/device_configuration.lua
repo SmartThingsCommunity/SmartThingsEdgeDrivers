@@ -15,14 +15,14 @@ local DeviceConfiguration = {}
 
 function DeviceConfiguration.set_boolean_device_type_per_endpoint(driver, device)
   for _, ep in ipairs(device.endpoints) do
-      for _, dt in ipairs(ep.device_types) do
-          for dt_name, info in pairs(fields.BOOLEAN_DEVICE_TYPE_INFO) do
-              if dt.device_type_id == info.id then
-                  device:set_field(dt_name, ep.endpoint_id, { persist = true })
-                  device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, ep.endpoint_id))
-              end
-          end
+    for _, dt in ipairs(ep.device_types) do
+      for dt_name, info in pairs(fields.BOOLEAN_DEVICE_TYPE_INFO) do
+        if dt.device_type_id == info.id then
+          device:set_field(dt_name, ep.endpoint_id, { persist = true })
+          device:send(clusters.BooleanStateConfiguration.attributes.SupportedSensitivityLevels:read(device, ep.endpoint_id))
+        end
       end
+    end
   end
 end
 
@@ -58,7 +58,16 @@ function DeviceConfiguration.match_profile(driver, device, battery_supported)
   end
 
   if device:supports_capability(capabilities.relativeHumidityMeasurement) then
-    profile_name = profile_name .. "-humidity"
+    -- Soil Sensor fingerprints to the humidity profile, so we should also check for
+    -- TemperatureMeasurement, which is an optional cluster for this device type.
+    if #device:get_endpoints(clusters.SoilMeasurement.ID) > 0 then
+      profile_name = profile_name .. "-soil-sensor"
+      if #device:get_endpoints(clusters.TemperatureMeasurement.ID) > 0 then
+        profile_name = "-temperature" .. profile_name
+      end
+    else
+      profile_name = profile_name .. "-humidity"
+    end
   end
 
   if device:supports_capability(capabilities.atmosphericPressureMeasurement) then
@@ -117,7 +126,6 @@ function DeviceConfiguration.match_profile(driver, device, battery_supported)
   -- remove leading "-"
   profile_name = string.sub(profile_name, 2)
 
-  device.log.info_with({hub_logs=true}, string.format("Updating device profile to %s.", profile_name))
   device:try_update_metadata({profile = profile_name})
 end
 
