@@ -457,19 +457,20 @@ end
 --- helper for the switch subscribe override, which adds to a subscribed request for a checked device
 ---
 --- @param checked_device any a Matter device object, either a parent or child device, so not necessarily the same as device
+--- @param parent_device any the parent Matter device object; could be the same as checked_device if checked_device is the parent device
 --- @param subscribe_request table a subscribe request that will be appended to as needed for the device
 --- @param capabilities_seen table a list of capabilities that have already been checked by previously handled devices
 --- @param attributes_seen table a list of attributes that have already been checked
 --- @param events_seen table a list of events that have already been checked
 --- @param subscribed_attributes table key-value pairs mapping capability ids to subscribed attributes
 --- @param subscribed_events table key-value pairs mapping capability ids to subscribed events
-function utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
- for _, component in pairs(checked_device.st_store.profile.components) do
+function utils.populate_subscribe_request_for_device(checked_device, parent_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
+  for _, component in pairs(checked_device.st_store.profile.components) do
     for _, capability in pairs(component.capabilities) do
       if not capabilities_seen[capability.id] then
         for _, attr in ipairs(subscribed_attributes[capability.id] or {}) do
           local cluster_id = attr.cluster or attr._cluster.ID
-          if #checked_device:get_endpoints(cluster_id) > 0 then
+          if #parent_device:get_endpoints(cluster_id) > 0 then
             local attr_id = attr.ID or attr.attribute
             if not attributes_seen[cluster_id] or not attributes_seen[cluster_id][attr_id] then
               local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
@@ -481,7 +482,7 @@ function utils.populate_subscribe_request_for_device(checked_device, subscribe_r
         end
         for _, event in ipairs(subscribed_events[capability.id] or {}) do
           local cluster_id = event.cluster or event._cluster.ID
-          if #checked_device:get_endpoints(cluster_id) > 0 then
+          if #parent_device:get_endpoints(cluster_id) > 0 then
             local event_id = event.ID or event.event
             if not events_seen[cluster_id] or not events_seen[cluster_id][event_id] then
               local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
@@ -507,7 +508,7 @@ function utils.subscribe(device)
   for _, endpoint_info in ipairs(device.endpoints) do
     local checked_device = utils.find_child(device, endpoint_info.endpoint_id) or device
     if not devices_seen[checked_device.id] then
-      utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+      utils.populate_subscribe_request_for_device(checked_device, device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
         device.driver.subscribed_attributes, device.driver.subscribed_events
       )
       devices_seen[checked_device.id] = true -- only loop through any device once

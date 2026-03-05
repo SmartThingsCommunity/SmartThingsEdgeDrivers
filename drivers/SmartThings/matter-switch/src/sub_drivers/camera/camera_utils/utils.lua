@@ -324,7 +324,7 @@ function CameraUtils.subscribe(device)
   for _, endpoint_info in ipairs(device.endpoints) do
     local checked_device = switch_utils.find_child(device, endpoint_info.endpoint_id) or device
     if not devices_seen[checked_device.id] then
-      switch_utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+      switch_utils.populate_subscribe_request_for_device(checked_device, device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
         camera_subscribed_attributes, camera_subscribed_events
       )
       devices_seen[checked_device.id] = true -- only loop through any device once

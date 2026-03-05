@@ -184,6 +184,7 @@ local mock_device_doorbell = test.mock_device.build_test_matter_device({
 local subscribe_request
 local subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.AttributeList,
+  clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
   clusters.OnOff.attributes.OnOff,
   clusters.LevelControl.attributes.CurrentLevel,
   clusters.LevelControl.attributes.MaxLevel,
