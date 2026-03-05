@@ -753,14 +753,6 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6094
     deviceProfileName: light-color-level
-
-# Haojai
-  - id: "5530/4098"
-    deviceLabel: HAOJAI Smart Switch
-    vendorId: 0x159A
-    productId: 0x1002
-    deviceProfileName: 6-button-motion
-
 # Hue
   - id: "4107/2049"
     deviceLabel: Hue W 1600 A21 E26 1P NAM
