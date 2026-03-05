@@ -119,7 +119,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.battery.battery(100))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -163,7 +166,10 @@ test.register_coroutine_test(
         PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -177,7 +183,10 @@ test.register_coroutine_test(
       custom_write_attribute(mock_device , WindowCovering.ID, WindowCovering.attributes.Mode.ID,
       data_types.Bitmap8, 0x01, nil)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -189,7 +198,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_CURTAIN_MANUAL_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, false) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -217,7 +229,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.UpOrOpen(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -243,7 +258,10 @@ test.register_coroutine_test(
     --     mock_device.id,
     --     WindowCovering.server.commands.DownOrClose(mock_device)
     -- })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -270,7 +288,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.Stop(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -285,7 +306,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x01) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -300,7 +324,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0x00) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -329,7 +356,10 @@ test.register_coroutine_test(
         mock_device.id,
         PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -346,7 +376,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", chargingState.chargingState.charging())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -363,6 +396,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -379,7 +415,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", initializedStateWithGuide.initializedStateWithGuide.initialized())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -395,7 +434,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -411,7 +453,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", hookLockState.hookLockState.locking())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

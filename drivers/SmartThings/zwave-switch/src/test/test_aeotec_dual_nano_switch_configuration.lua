@@ -111,7 +111,10 @@ test.register_coroutine_test(
       })
     ))
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

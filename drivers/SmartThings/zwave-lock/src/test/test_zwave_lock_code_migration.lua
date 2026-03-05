@@ -97,7 +97,10 @@ test.register_coroutine_test(
       assert(mock_device.state_cache.main.lockCodes.lockCodes.value == json.encode(utils.deep_copy(lockCodes)))
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -126,7 +129,10 @@ test.register_coroutine_test(
       assert(mock_device_no_data.state_cache.main.lockCodes.lockCodes.value == json.encode({}))
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "migrationComplete", nil)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -162,7 +168,10 @@ test.register_coroutine_test(
       assert(mock_device.state_cache.main.lockCodes.lockCodes.value == json.encode(utils.deep_copy(lockCodes)))
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -207,7 +216,10 @@ test.register_coroutine_test(
       assert(mock_device_no_data.state_cache.main.lockCodes.lockCodes.value == json.encode(utils.deep_copy(lockCodes)))
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "migrationComplete", true)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 
@@ -240,7 +252,10 @@ test.register_coroutine_test(
       test.wait_for_events()
       test.mock_time.advance_time(35)
       -- Nothing should happen
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

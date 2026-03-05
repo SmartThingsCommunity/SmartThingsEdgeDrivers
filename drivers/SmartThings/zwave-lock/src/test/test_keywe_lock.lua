@@ -54,7 +54,10 @@ test.register_coroutine_test(
       DoorLock:OperationReport({door_lock_mode = 0x00})
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -64,7 +67,10 @@ test.register_coroutine_test(
       DoorLock:OperationReport({door_lock_mode = 0xFF})
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -96,6 +102,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({data={method="manual"}}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

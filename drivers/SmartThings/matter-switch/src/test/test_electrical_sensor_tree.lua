@@ -139,14 +139,6 @@ test.set_test_init_function(test_init)
 test.register_message_test(
 	"On command should send the appropriate commands",
   {
-    channel = "devices",
-    direction = "send",
-    message = {
-      "register_native_capability_cmd_handler",
-      { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
-    }
-  },
-	{
 		{
 			channel = "capability",
 			direction = "receive",
@@ -155,6 +147,14 @@ test.register_message_test(
 				{ capability = "switch", component = "main", command = "on", args = { } }
 			}
 		},
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
+      }
+    },
 		{
 			channel = "matter",
 			direction = "send",
@@ -163,19 +163,14 @@ test.register_message_test(
 				clusters.OnOff.server.commands.On(mock_device, 2)
 			}
 		}
+	},
+	{
+	   min_api_version = 19
 	}
 )
 
 test.register_message_test(
   "Off command should send the appropriate commands",
-  {
-    channel = "devices",
-    direction = "send",
-    message = {
-      "register_native_capability_cmd_handler",
-      { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
-    }
-  },
   {
     {
       channel = "capability",
@@ -186,6 +181,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -193,6 +196,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, 2)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -220,6 +226,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -285,7 +294,10 @@ test.register_coroutine_test(
           energy = 39.0
         }))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -308,7 +320,10 @@ test.register_coroutine_test(
       parent_assigned_child_key = string.format("%d", 4)
     })
   end,
-  { test_init = test_init }
+  {
+    test_init = test_init,
+    min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -388,6 +403,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 

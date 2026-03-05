@@ -66,6 +66,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -89,6 +92,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -112,6 +118,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -142,6 +151,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -172,6 +184,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -202,6 +217,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -233,7 +251,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -264,7 +285,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -283,7 +307,10 @@ test.register_coroutine_test(
             SwitchMultilevel:StopLevelChange({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -314,7 +341,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -345,7 +375,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -370,6 +403,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter_venetian:generate_test_message("venetianBlind", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -393,7 +429,10 @@ test.register_coroutine_test(
       test.socket.zwave:__queue_receive({mock_fibaro_roller_shutter.id, Configuration:Report({ parameter_number = 150, configuration_value = 1 }) })
       test.wait_for_events()
       assert(mock_fibaro_roller_shutter:get_field("calibration") == "done", "Calibration should be done")
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 do
@@ -415,7 +454,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -438,7 +481,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -461,7 +508,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -484,7 +535,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -507,7 +562,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -530,7 +589,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -553,7 +616,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -576,7 +643,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -599,7 +670,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -622,7 +697,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -645,7 +724,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -668,7 +751,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -691,7 +778,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -714,7 +805,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -737,7 +832,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 test.register_coroutine_test(
@@ -750,7 +849,10 @@ test.register_coroutine_test(
       )
     })
     mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -763,7 +865,10 @@ test.register_coroutine_test(
       )
     })
     mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter-venetian" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

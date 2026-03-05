@@ -53,7 +53,10 @@ test.register_coroutine_test(
           Configuration:Set({parameter_number=10, configuration_value=1, size=2})
       ))
       mock_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

@@ -64,7 +64,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -83,7 +86,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -102,7 +108,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -132,7 +141,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -182,7 +194,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -206,7 +221,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 30)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -222,7 +240,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -260,7 +281,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -296,7 +320,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -332,7 +359,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

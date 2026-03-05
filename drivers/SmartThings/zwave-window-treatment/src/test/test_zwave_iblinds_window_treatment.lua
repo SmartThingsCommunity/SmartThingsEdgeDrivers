@@ -75,7 +75,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -102,7 +105,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -139,7 +145,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -166,7 +175,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -203,7 +215,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -230,7 +245,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -269,7 +287,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -296,7 +317,10 @@ test.register_coroutine_test(
             })
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -324,7 +348,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -365,7 +392,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -392,7 +422,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -433,7 +466,10 @@ test.register_coroutine_test(
             })
           )
       )
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 
 test.register_coroutine_test(
@@ -472,7 +508,10 @@ test.register_coroutine_test(
           mock_blind_v3,
           Configuration:Set({parameter_number = 6, size = 1, configuration_value = 50})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -496,7 +535,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Set({ value = 0 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -520,7 +562,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Set({ value = 0 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

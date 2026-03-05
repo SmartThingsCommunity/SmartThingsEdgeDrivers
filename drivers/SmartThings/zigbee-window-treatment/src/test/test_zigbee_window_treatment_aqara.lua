@@ -151,7 +151,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
         data_types.CharString,
         PREF_SOFT_TOUCH_ON) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -183,7 +186,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_read(mock_device, Basic.ID, { PREF_ATTRIBUTE_ID }, MFG_CODE)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -202,7 +208,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -221,7 +230,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -240,7 +252,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -256,7 +271,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.UpOrOpen(mock_device, 'open')
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -272,7 +290,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.DownOrClose(mock_device, 'close')
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -288,7 +309,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.Stop(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -332,7 +356,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       deviceInitialization.initializedState.initialized()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -361,7 +388,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
         data_types.CharString,
         PREF_SOFT_TOUCH_OFF) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -382,7 +412,10 @@ test.register_coroutine_test(
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -409,7 +442,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -436,7 +472,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -463,7 +502,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -480,7 +522,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -507,7 +552,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -536,7 +584,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -566,7 +617,10 @@ test.register_coroutine_test(
       cluster_base.read_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID,
           MFG_CODE)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -585,7 +639,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -604,7 +661,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 

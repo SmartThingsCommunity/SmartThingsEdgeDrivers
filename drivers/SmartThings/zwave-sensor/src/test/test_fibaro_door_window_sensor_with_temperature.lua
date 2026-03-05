@@ -94,7 +94,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -120,7 +121,10 @@ test.register_coroutine_test(
         SensorBinary:Get({})
       ))
       mock_fibaro_door_window_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -136,6 +140,9 @@ test.register_message_test(
        direction = "send",
        message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.battery.battery(99))
    }
+ },
+ {
+    min_api_version = 19
  }
 )
 
@@ -155,6 +162,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
    }
+ },
+ {
+    min_api_version = 19
  }
 )
 
@@ -174,6 +184,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
    }
+ },
+ {
+    min_api_version = 19
  }
 )
 
@@ -194,6 +207,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
    }
+ },
+ {
+    min_api_version = 19
  }
 )
 
@@ -213,6 +229,9 @@ test.register_message_test(
      direction = "send",
      message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.closed())
    }
+ },
+ {
+    min_api_version = 19
  }
 )
 
@@ -241,6 +260,9 @@ test.register_message_test(
         { device_uuid = mock_fibaro_door_window_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -268,6 +290,9 @@ test.register_message_test(
         { device_uuid = mock_fibaro_door_window_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -542,7 +567,10 @@ test.register_coroutine_test(
       mock_fibaro_door_window_sensor.id,
       Configuration:Report({ parameter_number = 56, configuration_value = 40 })
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

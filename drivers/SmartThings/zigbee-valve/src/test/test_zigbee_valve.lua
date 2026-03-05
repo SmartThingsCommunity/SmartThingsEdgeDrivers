@@ -55,6 +55,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -73,6 +76,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.valve.valve.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -89,6 +95,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.battery.battery(28))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -106,6 +115,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.unknown())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -123,6 +135,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -140,6 +155,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.battery())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -157,6 +175,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.dc())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -173,6 +194,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.On(mock_device) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -189,6 +213,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.Off(mock_device) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -235,7 +262,10 @@ test.register_coroutine_test(
       })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -275,7 +305,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -313,7 +344,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
