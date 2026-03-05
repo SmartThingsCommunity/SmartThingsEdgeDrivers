@@ -345,7 +345,8 @@ local function update_viewport_or_label(device, current_streams, streamId, label
       break
     end
   end
-  device:emit_event(capabilities.videoStreamSettings.videoStreams(current_streams))
+  local endpoint_id = device:component_to_endpoint()
+  device:emit_event_for_endpoint(endpoint_id, capabilities.videoStreamSettings.videoStreams(current_streams))
 end
 
 function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
@@ -379,9 +380,9 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
   end
 
   local needs_reallocation = false
-  if cmd.args.type ~= nil and current_stream ~= nil and current_stream.type ~= cmd.args.type then
+  if current_stream ~= nil and current_stream.type ~= cmd.args.type then
     needs_reallocation = true
-  elseif cmd.args.resolution ~= nil and current_stream then
+  elseif current_stream ~= nil and cmd.args.resolution ~= nil then
     if current_stream.resolution.width ~= cmd.args.resolution.width or
        current_stream.resolution.height ~= cmd.args.resolution.height or
        current_stream.resolution.fps ~= cmd.args.resolution.fps then
