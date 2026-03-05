@@ -472,8 +472,8 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     camera_fields.video_stream_defaults.min_bitrate,
     camera_fields.video_stream_defaults.max_bitrate,
     camera_fields.video_stream_defaults.key_frame_interval,
-    watermark_enabled or camera_fields.video_stream_defaults.watermark_enabled,
-    on_screen_display_enabled or camera_fields.video_stream_defaults.on_screen_display_enabled
+    watermark_enabled ~= nil and watermark_enabled or camera_fields.video_stream_defaults.watermark_enabled,
+    on_screen_display_enabled ~= nil and on_screen_display_enabled or camera_fields.video_stream_defaults.on_screen_display_enabled
   ))
 end
 
