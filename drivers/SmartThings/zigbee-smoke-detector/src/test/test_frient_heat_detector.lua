@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -577,6 +566,38 @@ test.register_coroutine_test(
                         string.format("Version mismatch! Expected '%s' but got '%s'",
                                 expected_hex, stored_version or "nil"))
             end
+        end
+)
+
+test.register_message_test(
+        "IASZone attribute report should be handled: detected",
+        {
+            {
+                channel = "zigbee",
+                direction = "receive",
+                message = { mock_device.id, IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0001) }
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
+            }
+        }
+)
+
+test.register_coroutine_test(
+        "IASZone attribute report should be handled: cleared",
+        function()
+            test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0000)
+            })
+            test.mock_time.advance_time(6)
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+            )
+            test.wait_for_events()
         end
 )
 

@@ -83,6 +83,8 @@ test.register_coroutine_test(
         ColorControl.attributes.CurrentSaturation:configure_reporting(mock_device, 1, 3600, 16)
       }
     )
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end
 )

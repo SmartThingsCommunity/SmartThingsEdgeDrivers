@@ -864,4 +864,30 @@ test.register_coroutine_test(
   end
 )
 
+test.register_message_test(
+  "Central scene notification with scene_number beyond profile buttons falls back to main component",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_aeotec_wallmote_quad.id,
+        zw_test_utils.zwave_test_build_receive_command(
+          CentralScene:Notification({ key_attributes = CentralScene.key_attributes.KEY_PRESSED_1_TIME, scene_number = 5 })
+        )
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_aeotec_wallmote_quad:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
+    }
+  }
+)
+
 test.run_registered_tests()

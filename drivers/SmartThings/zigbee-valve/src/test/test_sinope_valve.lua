@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -138,6 +128,14 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 0) })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(0)) )
+  end
+)
+
+test.register_coroutine_test(
+  "Battery voltage above max should clamp to 100 percent",
+  function()
+    test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 65) })
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(100)) )
   end
 )
 

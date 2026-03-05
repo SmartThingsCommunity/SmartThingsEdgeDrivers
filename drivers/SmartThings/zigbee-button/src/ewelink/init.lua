@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -19,19 +9,7 @@ local device_management = require "st.zigbee.device_management"
 local OnOff = clusters.OnOff
 local button = capabilities.button.button
 
-local EWELINK_BUTTON_FINGERPRINTS = {
-  { mfr = "eWeLink", model = "WB01" },
-  { mfr = "eWeLink", model = "SNZB-01P" }
-}
 
-local function can_handle_ewelink_button(opts, driver, device, ...)
-  for _, fingerprint in ipairs(EWELINK_BUTTON_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function do_configure(driver, device)
   device:configure()
@@ -61,7 +39,7 @@ local ewelink_button = {
       }
     }
   },
-  can_handle = can_handle_ewelink_button
+  can_handle = require("ewelink.can_handle"),
 }
 
 return ewelink_button

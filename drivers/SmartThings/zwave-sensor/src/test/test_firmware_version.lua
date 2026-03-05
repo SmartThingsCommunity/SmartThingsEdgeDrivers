@@ -17,6 +17,7 @@ local test = require "integration_test"
 local cc = require "st.zwave.CommandClass"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
+local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Version
 local Version = (require "st.zwave.CommandClass.Version")({ version = 1 })
 --- @type st.zwave.CommandClass.WakeUp
@@ -86,6 +87,38 @@ test.register_message_test(
       {
         inner_block_ordering = "relaxed"
       }
+)
+
+test.register_message_test(
+  "Version:Report should emit firmwareUpdate.currentVersion",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_device.id, zw_test_utils.zwave_test_build_receive_command(Version:Report({
+        application_version = 1,
+        application_sub_version = 5,
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.firmwareUpdate.currentVersion({ value = "1.05" }))
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "added lifecycle event should emit initial state and request firmware version",
+  function ()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(mock_device, Version:Get({}))
+    )
+  end
 )
 
 test.run_registered_tests()
