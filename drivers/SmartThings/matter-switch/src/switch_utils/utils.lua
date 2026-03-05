@@ -325,33 +325,6 @@ function utils.create_multi_press_values_list(size, supportsHeld)
   return list
 end
 
-function utils.profile_changed(latest_profile, previous_profile)
-  if latest_profile.id ~= previous_profile.id then
-    return true
-  end
-  for component_id, synced_component in pairs(latest_profile.components or {}) do
-    local prev_component = previous_profile.components[component_id]
-    if prev_component == nil then
-      return true
-    end
-    if #synced_component.capabilities ~= #prev_component.capabilities then
-      return true
-    end
-    -- Build a table of capability IDs from the previous component. Then, use this map to check
-    -- that all capabilities in the synced component existed in the previous component.
-    local prev_cap_ids = {}
-    for _, capability in ipairs(prev_component.capabilities or {}) do
-      prev_cap_ids[capability.id] = true
-    end
-    for _, capability in ipairs(synced_component.capabilities or {}) do
-      if not prev_cap_ids[capability.id] then
-        return true
-      end
-    end
-  end
-  return false
-end
-
 function utils.detect_bridge(device)
   return #utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.AGGREGATOR) > 0
 end

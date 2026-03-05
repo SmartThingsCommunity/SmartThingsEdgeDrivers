@@ -1,5 +1,16 @@
--- Copyright 2022 SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -9,6 +20,19 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=
 local SensorAlarm = (require "st.zwave.CommandClass.SensorAlarm")({ version = 1 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 1 })
 local configurationsMap = require "configurations"
+
+local FIBARO_DOOR_WINDOW_SENSOR_1_FINGERPRINTS = {
+  { manufacturerId = 0x010F, prod = 0x0501, productId = 0x1002 }
+}
+
+local function can_handle_fibaro_door_window_sensor_1(opts, driver, device, cmd, ...)
+  for _, fingerprint in ipairs(FIBARO_DOOR_WINDOW_SENSOR_1_FINGERPRINTS) do
+    if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
+      return true
+    end
+  end
+  return false
+end
 
 local function sensor_alarm_report_handler(driver, device, cmd)
   if (cmd.args.sensor_state == SensorAlarm.sensor_state.ALARM) then
@@ -68,7 +92,7 @@ local fibaro_door_window_sensor_1 = {
   [capabilities.refresh.ID] = {
     [capabilities.refresh.commands.refresh.NAME] = do_refresh
   },
-  can_handle = require("fibaro-door-window-sensor.fibaro-door-window-sensor-1.can_handle"),
+  can_handle = can_handle_fibaro_door_window_sensor_1
 }
 
 return fibaro_door_window_sensor_1

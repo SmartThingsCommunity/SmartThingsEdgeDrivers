@@ -1,5 +1,16 @@
--- Copyright 2022 SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -15,6 +26,19 @@ local WakeUp = (require "st.zwave.CommandClass.WakeUp")({ version = 1 })
 
 local preferences = require "preferences"
 local configurations = require "configurations"
+
+local function lazy_load_if_possible(sub_driver_name)
+  -- gets the current lua libs api version
+  local version = require "version"
+
+  -- version 9 will include the lazy loading functions
+  if version.api >= 9 then
+    return ZwaveDriver.lazy_load_sub_driver(require(sub_driver_name))
+  else
+    return require(sub_driver_name)
+  end
+
+end
 
 --- Handle preference changes
 ---
@@ -110,7 +134,27 @@ local driver_template = {
     capabilities.powerMeter,
     capabilities.smokeDetector
   },
-  sub_drivers = require("sub_drivers"),
+  sub_drivers = {
+    lazy_load_if_possible("zooz-4-in-1-sensor"),
+    lazy_load_if_possible("vision-motion-detector"),
+    lazy_load_if_possible("fibaro-flood-sensor"),
+    lazy_load_if_possible("aeotec-water-sensor"),
+    lazy_load_if_possible("glentronics-water-leak-sensor"),
+    lazy_load_if_possible("homeseer-multi-sensor"),
+    lazy_load_if_possible("fibaro-door-window-sensor"),
+    lazy_load_if_possible("sensative-strip"),
+    lazy_load_if_possible("enerwave-motion-sensor"),
+    lazy_load_if_possible("aeotec-multisensor"),
+    lazy_load_if_possible("zwave-water-leak-sensor"),
+    lazy_load_if_possible("everspring-motion-light-sensor"),
+    lazy_load_if_possible("ezmultipli-multipurpose-sensor"),
+    lazy_load_if_possible("fibaro-motion-sensor"),
+    lazy_load_if_possible("v1-contact-event"),
+    lazy_load_if_possible("timed-tamper-clear"),
+    lazy_load_if_possible("wakeup-no-poll"),
+    lazy_load_if_possible("firmware-version"),
+    lazy_load_if_possible("apiv6_bugfix"),
+  },
   lifecycle_handlers = {
     added = added_handler,
     init = device_init,

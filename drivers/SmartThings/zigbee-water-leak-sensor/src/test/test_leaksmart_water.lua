@@ -79,27 +79,15 @@ test.register_coroutine_test(
       end
 )
 
--- test.register_coroutine_test(
---     "Health check should check all relevant attributes",
---     function()
---       test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
---       test.socket.capability:__expect_send(
---         {
---           mock_device.id,
---           {
---             capability_id = "waterSensor", component_id = "main",
---             attribute_id = "water", state={value="dry"}
---           }
---         }
---       )
---     end,
---     {
---       test_init = function()
---         test.mock_device.add_test_device(mock_device)
---         test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
---       end
---     }
--- )
+test.register_coroutine_test(
+    "Added lifecycle should emit water dry event",
+    function()
+      test.socket.device_lifecycle:__queue_receive({mock_device.id, "added"})
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
+      )
+    end
+)
 
 test.register_coroutine_test(
     "Configure should configure all necessary attributes",
