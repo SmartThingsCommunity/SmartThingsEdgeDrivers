@@ -178,13 +178,13 @@ local device_init = function(self, device)
     device:add_configured_attribute(attribute)
     device:add_monitored_attribute(attribute)
   end
-  if string.find(device:get_model(), "SDM02") or string.find(device:get_model(), "SPM02") or string.find(device:get_model(), "SDM01W") then
+  if string.find(device:get_model(), "SDM02") or string.find(device:get_model(), "SPM02") or string.find(device:get_model(), "SDM01W") or string.find(device:get_model(), "SDM01-3Z1", 1, true) then
     for _, attribute in ipairs(PHASE_B_CONFIGURATION) do
       device:add_configured_attribute(attribute)
       device:add_monitored_attribute(attribute)
     end
   end
-  if string.find(device:get_model(), "SPM02") or string.find(device:get_model(), "SDM01W") then
+  if string.find(device:get_model(), "SPM02") or string.find(device:get_model(), "SDM01W") or string.find(device:get_model(), "SDM01-3Z1", 1, true)then
     for _, attribute in ipairs(PHASE_C_CONFIGURATION) do
       device:add_configured_attribute(attribute)
       device:add_monitored_attribute(attribute)
