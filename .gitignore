@@ -10,3 +10,5 @@ tools/coverage_output_html/
 tools/__pycache__/
 .DS_Store
 .venv/
+/test_can_handle.md
+/check_lua_syntax.ps1
