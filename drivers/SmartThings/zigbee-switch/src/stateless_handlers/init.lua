@@ -4,7 +4,6 @@
 local capabilities = require "st.capabilities"
 local st_utils = require "st.utils"
 local clusters = require "st.zigbee.zcl.clusters"
-local constants = require "st.zigbee.constants"
 
 local MIREDS_CONVERSION_CONSTANT = 1000000
 local COLOR_TEMPERATURE_KELVIN_MAX = 15000
