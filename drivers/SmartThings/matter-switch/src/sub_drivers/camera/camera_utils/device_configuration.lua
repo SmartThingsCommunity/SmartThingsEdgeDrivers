@@ -117,7 +117,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         table.insert(main_component_capabilities, capabilities.webrtc.ID)
       end
     end
-	  if #chime_endpoints > 0 then
+	  if #device:get_endpoints(clusters.Chime.ID, {cluster_type = "SERVER"}) > 0 then
 	    table.insert(main_component_capabilities, capabilities.sounds.ID)
 	  end
 	  if #doorbell_endpoints > 0 then
@@ -153,8 +153,9 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   table.insert(optional_supported_component_capabilities, 1, {camera_fields.profile_components.main, main_component_capabilities})
 
   if camera_utils.optional_capabilities_list_changed(optional_supported_component_capabilities, device.profile.components) then
-    if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.VIDEO_DOORBELL) > 0 then
-      profile = "video-doorbell"
+    if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.VIDEO_DOORBELL) > 0 or
+      #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA.AUDIO_DOORBELL) > 0 then
+      profile = "av-doorbell"
     end
     device:try_update_metadata({profile = profile, optional_component_capabilities = optional_supported_component_capabilities})
     if #doorbell_endpoints > 0 then
