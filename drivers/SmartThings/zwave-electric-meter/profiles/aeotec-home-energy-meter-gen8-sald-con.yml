@@ -1,0 +1,13 @@
+name: aeotec-home-energy-meter-gen8-sald-con
+components:
+- id: main
+  label: "Settled Consumption"
+  capabilities:
+  - id: powerMeter
+    version: 1
+  - id: energyMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: CurbPowerMeter
