@@ -478,6 +478,8 @@ function utils.populate_subscribe_request_for_device(checked_device, parent_devi
               attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
               attributes_seen[cluster_id][attr_id] = ib
             end
+          else
+            log.warn_with({ hub_logs = true }, string.format("Device does not support cluster 0x%04X, not adding subscribed attribute", cluster_id))
           end
         end
         for _, event in ipairs(subscribed_events[capability.id] or {}) do
@@ -490,6 +492,8 @@ function utils.populate_subscribe_request_for_device(checked_device, parent_devi
               events_seen[cluster_id] = events_seen[cluster_id] or {}
               events_seen[cluster_id][event_id] = ib
             end
+          else
+            log.warn_with({ hub_logs = true }, string.format("Device does not support cluster 0x%04X, not adding subscribed event", cluster_id))
           end
         end
         capabilities_seen[capability.id] = true -- only loop through any capability once
