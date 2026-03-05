@@ -371,7 +371,7 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     capabilities.videoStreamSettings.videoStreams.NAME
   ) or {}
   local current_stream
-  for _, stream in ipairs(current_streams) do
+  for _, stream in pairs(current_streams) do
     if stream.streamId == cmd.args.streamId then
       current_stream = stream.data
       break
