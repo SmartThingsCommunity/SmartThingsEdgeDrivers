@@ -637,9 +637,8 @@ test.register_coroutine_test(
 
 test.register_coroutine_test(
   "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler", function()
-    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed(
-      {profile = {id = "00000000-1111-2222-3333-000000000010"}})
-    )
+    -- simulate no actual change
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({}))
   end,
   { test_init = test_init_modular }
 )

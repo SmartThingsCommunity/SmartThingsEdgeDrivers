@@ -77,57 +77,45 @@ function AirQualitySensorUtils.set_supported_health_concern_values(device)
   end
 end
 
---- Deeply compare two values (including tables and their metatables).
+--- Deeply compare two values.
+--- Handles cycles, metatables, and optional function ignoring.
 ---
 --- @param a any
 --- @param b any
+--- @param opts table|nil { ignore_functions = boolean }
+--- @param seen table|nil
 --- @return boolean
-function AirQualitySensorUtils.deep_equals(a, b)
+function AirQualitySensorUtils.deep_equals(a, b, opts, seen)
   if a == b then return true end -- same object
   if type(a) ~= type(b) then return false end -- different type
+  if type(a) == "function" and opts and opts.ignore_functions then return true end
   if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+
+  -- check for cycles in table references and preserve reference topology.
+  seen = seen or { a_to_b = {}, b_to_a = {} }
+  if seen.a_to_b[a] ~= nil then return seen.a_to_b[a] == b end
+  if seen.b_to_a[b] ~= nil then return seen.b_to_a[b] == a end
+  seen.a_to_b[a] = b
+  seen.b_to_a[b] = a
+
   -- Compare keys/values from a
-  for k, v in pairs(a) do
-    if not AirQualitySensorUtils.deep_equals(v, rawget(b, k)) then
+  for k, v in next, a do
+    if not AirQualitySensorUtils.deep_equals(v, rawget(b, k), opts, seen) then
       return false
     end
   end
-  -- Check for keys in b that are not in a
-  for k in pairs(b) do
+
+  -- Ensure b doesn't have extra keys
+  for k in next, b do
     if rawget(a, k) == nil then
       return false
     end
   end
+
   -- Compare metatables
   local mt_a = getmetatable(a)
   local mt_b = getmetatable(b)
-  return AirQualitySensorUtils.deep_equals(mt_a, mt_b)
-end
-
---- Check if the profile has changed by comparing the latest profile with the previous profile.
----
---- @param latest_profile any
---- @param previous_profile any
---- @return boolean
-function AirQualitySensorUtils.profile_changed(latest_profile, previous_profile)
-  -- Check if the profile id has changed
-  if latest_profile.id ~= previous_profile.id then
-    return true
-  end
-  -- Check if all component and capability info in the latest profile existed in the previous profile
-  for _, component in pairs(latest_profile.components) do
-    local previous_component = previous_profile.components[component.id]
-    if not previous_component or not AirQualitySensorUtils.deep_equals(component.capabilities, previous_component.capabilities) then
-      return true
-    end
-  end
-  -- Check if any components in the previous profile no longer exist in the latest profile
-  for _, component in pairs(previous_profile.components) do
-    if not latest_profile.components[component.id] then
-      return true
-    end
-  end
-  return false
+  return AirQualitySensorUtils.deep_equals(mt_a, mt_b, opts, seen)
 end
 
 return AirQualitySensorUtils

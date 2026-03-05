@@ -299,9 +299,9 @@ local function get_subscribe_request_tvoc()
   for _, attributes in pairs(subscribed_attributes) do
     for _, attribute in pairs(attributes) do
       if subscribe_request == nil then
-        subscribe_request = attribute:subscribe(mock_device_common)
+        subscribe_request = attribute:subscribe(mock_device_modular_fingerprint)
       else
-        subscribe_request:merge(attribute:subscribe(mock_device_common))
+        subscribe_request:merge(attribute:subscribe(mock_device_modular_fingerprint))
       end
     end
   end
@@ -450,20 +450,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler",
   function()
-    local expected_metadata_modular_disabled = {
-      optional_component_capabilities={
-        {
-          "main",
-          {},
-        },
-      },
-      profile="aqs-modular",
-    }
-    local updated_device_profile = t_utils.get_profile_definition("aqs-modular.yml",
-      {enabled_optional_capabilities = expected_metadata_modular_disabled.optional_component_capabilities}
-    )
-    updated_device_profile.id = "00000000-1111-2222-3333-000000000006"
-    test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({ profile = updated_device_profile }))
+    -- simulate no actual change
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({}))
   end,
   { test_init = test_init_modular_fingerprint }
 )
