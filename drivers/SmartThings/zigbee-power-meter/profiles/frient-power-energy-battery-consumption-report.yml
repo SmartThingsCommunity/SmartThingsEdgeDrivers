@@ -15,7 +15,7 @@ components:
       - id: refresh
         version: 1
     categories:
-      - name: CurbPowerMeter
+      - name: PowerMeasurementSensor
 preferences:
   - title: "Pulse Configuration"
     name: pulseConfiguration

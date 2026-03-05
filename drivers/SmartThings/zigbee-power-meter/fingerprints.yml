@@ -12,12 +12,12 @@ zigbeeManufacturer:
     deviceLabel: frient Energy Monitor
     manufacturer: Develco Products A/S
     model: "EMIZB-132"
-    deviceProfileName: power-meter
+    deviceProfileName: frient-power-meter-consumption-report
   - id: "frient A/S/EMIZB-132"
     deviceLabel: frient Energy Monitor
     manufacturer: frient A/S
     model: "EMIZB-132"
-    deviceProfileName: power-meter-consumption-report
+    deviceProfileName: frient-power-meter-consumption-report
   - id: "frient A/S/EMIZB-141"
     deviceLabel: "frient EMI 2 LED"
     manufacturer: frient A/S

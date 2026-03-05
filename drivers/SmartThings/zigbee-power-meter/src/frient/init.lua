@@ -40,11 +40,16 @@ local do_configure = function(self, device)
   device:configure()
   for _, fingerprint in ipairs(ZIGBEE_POWER_METER_FINGERPRINTS) do
     if device:get_model() == fingerprint.model and device.preferences then
-      local pulseConfiguration = tonumber(device.preferences.pulseConfiguration) or 1000
-      device:send(cluster_base.write_manufacturer_specific_attribute(device, SimpleMetering.ID, 0x0300, DEVELCO_MANUFACTURER_CODE, data_types.Uint16, pulseConfiguration):to_endpoint(0x02))
+      -- Only write manufacturer-specific attributes when preferences exist for this device.
+      if device.preferences.pulseConfiguration ~= nil then
+        local pulseConfiguration = tonumber(device.preferences.pulseConfiguration) or 1000
+        device:send(cluster_base.write_manufacturer_specific_attribute(device, SimpleMetering.ID, 0x0300, DEVELCO_MANUFACTURER_CODE, data_types.Uint16, pulseConfiguration):to_endpoint(0x02))
+      end
 
-      local currentSummation = tonumber(device.preferences.currentSummation) or 0
-      device:send(cluster_base.write_manufacturer_specific_attribute(device, SimpleMetering.ID, 0x0301, DEVELCO_MANUFACTURER_CODE, data_types.Uint48, currentSummation):to_endpoint(0x02))
+      if device.preferences.currentSummation ~= nil then
+        local currentSummation = tonumber(device.preferences.currentSummation) or 0
+        device:send(cluster_base.write_manufacturer_specific_attribute(device, SimpleMetering.ID, 0x0301, DEVELCO_MANUFACTURER_CODE, data_types.Uint48, currentSummation):to_endpoint(0x02))
+      end
     end
   end
 
