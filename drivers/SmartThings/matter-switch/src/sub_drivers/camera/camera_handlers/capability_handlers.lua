@@ -460,6 +460,14 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     })
   end
 
+  if watermark_enabled == nil then
+    watermark_enabled = camera_fields.video_stream_defaults.watermark_enabled
+  end
+
+  if on_screen_display_enabled == nil then
+    on_screen_display_enabled = camera_fields.video_stream_defaults.on_screen_display_enabled
+  end
+
   -- Use the same resolution (if available) for MinResolution and MaxResolution to force the server to allocate the
   -- stream with the desired resolution
   device:send(clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(device, endpoint_id,
@@ -473,8 +481,8 @@ function CameraCapabilityHandlers.handle_set_stream(driver, device, cmd)
     camera_fields.video_stream_defaults.min_bitrate,
     camera_fields.video_stream_defaults.max_bitrate,
     camera_fields.video_stream_defaults.key_frame_interval,
-    watermark_enabled ~= nil and watermark_enabled or camera_fields.video_stream_defaults.watermark_enabled,
-    on_screen_display_enabled ~= nil and on_screen_display_enabled or camera_fields.video_stream_defaults.on_screen_display_enabled
+    watermark_enabled,
+    on_screen_display_enabled
   ))
 end
 

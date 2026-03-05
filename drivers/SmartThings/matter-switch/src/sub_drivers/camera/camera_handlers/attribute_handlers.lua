@@ -194,7 +194,7 @@ function CameraAttributeHandlers.allocated_video_streams_handler(driver, device,
 
   local previous_stream_labels = {}
 
-  for _, stream in ipairs(previous_streams) do
+  for _, stream in pairs(previous_streams) do
     previous_stream_labels[stream.streamId] = stream.data.label
   end
 
