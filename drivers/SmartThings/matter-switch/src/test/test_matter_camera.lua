@@ -67,10 +67,6 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_type = "SERVER"
         },
         {
-          cluster_id = clusters.WebRTCTransportRequestor.ID,
-          cluster_type = "CLIENT"
-        },
-        {
           cluster_id = clusters.OccupancySensing.ID,
           cluster_type = "SERVER"
         }
