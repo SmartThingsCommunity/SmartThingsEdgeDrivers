@@ -10,6 +10,11 @@ jobs:
   get-latest-release-artifact:
     runs-on: ubuntu-latest
     if: ${{ always() }}
+
+    strategy:
+      matrix:
+        version: [0.52, 0.60]
+
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
     steps:
@@ -154,16 +159,16 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: tests
+          name: tests-${{ matrix.version }}
           path: |
-            tools/test_output/$VERSION/*.xml
+            tools/test_output/*.xml
       - name: Upload coverage artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: coverage-${{ matrix.version }}
           path: |
-            tools/coverage_output/$VERSION/*_coverage.xml
+            tools/coverage_output/*_coverage.xml
 
   event-file:
     runs-on: ubuntu-latest
