@@ -45,12 +45,11 @@ jobs:
         run: tar -xf *.tar.gz --wildcards -C . --strip-components=1 '*.lua'
       - name: Verify lua_libs directory
         run: ls /home/runner/work/lua_libs_${{ matrix.version }}
-      - name: Write output
-        id: cache_key
-        uses: actions/upload-artifact@v4
+      - name: Save normalized cache
+        uses: actions/cache/save@v3
         with:
-          name: url_v${{ matrix.version }}
-          path: version_${{ matrix.version }}_link.log
+          path: /home/runner/work/lua_libs_${{ matrix.version }}
+          key: lua_libs_${{ matrix.version }}
 
   get-dev-artifact:
     runs-on: ubuntu-latest
@@ -109,21 +108,14 @@ jobs:
       [ get-latest-release-artifact, get-dev-artifact ]
     if: ${{ always() }}
     steps:
-      - name: Get URL
-        uses: actions/download-artifact@v4
+      - name: Restore lua_libs cache
+        id: restore_libs
+        uses: actions/cache/restore@v3
         with:
-          name: url_v${{ matrix.version }}
-          path: version_urls
-      - name: Verify url file
-        run: cat url_v${{ matrix.version }}
-      - name: Try to retrieve cache
-        id: cached_libs
-        uses: actions/cache@v3
-        with:
-          path: '/home/runner/work/lua_libs_${{ matrix.version }}'
-          key: ${{ steps.cache_key.outputs.CACHE_KEY }}
+          path: /home/runner/work/lua_libs_${{ matrix.version }}
+          key: lua_libs_${{ matrix.version }}
       - name: Fail if cache missed
-        if: steps.cached_libs.outputs.cache-hit != 'true'
+        if: steps.restore_libs.outputs.cache-hit != 'true'
         uses: actions/github-script@v3
         with:
           script: |
