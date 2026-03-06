@@ -39,7 +39,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: '/home/runner/work/lua_libs_${{ matrix.version }}'
-          key: ${{ steps.lib-version.outputs.url }}
+          key: lua_libs_${{ matrix.version }}
       - name: Get the latest release artifact
         if: steps.cached-libs.outputs.cache-hit != 'true'
         uses: dsaltares/fetch-gh-release-asset@master
@@ -53,8 +53,9 @@ jobs:
         working-directory: '/home/runner/work/lua_libs_${{ matrix.version }}'
         run: tar -xf *.tar.gz --wildcards -C . --strip-components=1 '*.lua'
       - name: Verify lua_libs directory
-        run: cat /home/runner/work/lua_libs_${{ matrix.version }}/version.lua | grep -oP "\s*api = \d+"
-      - name: Save normalized cache
+        run: cat /home/runner/work/lua_libs_${{ matrix.version }}/version.lua | grep -oP "api = \d+"
+      - name: Save lua libs cache
+        if: steps.cached-libs.outputs.cache-hit != 'true'
         uses: actions/cache/save@v3
         with:
           path: /home/runner/work/lua_libs_${{ matrix.version }}
@@ -112,6 +113,7 @@ jobs:
     strategy:
       matrix:
         version: ["52", "60"]
+      fail-fast: false
       
     
     needs:
