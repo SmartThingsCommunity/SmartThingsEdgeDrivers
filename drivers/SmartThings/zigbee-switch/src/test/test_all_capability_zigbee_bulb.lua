@@ -25,8 +25,10 @@ local zigbee_bulb_all_caps = {
       capabilities = {
         [capabilities.switch.ID] = { id = capabilities.switch.ID },
         [capabilities.switchLevel.ID] = { id = capabilities.switchLevel.ID },
+        [capabilities.statelessSwitchLevelStep.ID] = { id = capabilities.statelessSwitchLevelStep.ID },
         [capabilities.colorControl.ID] = { id = capabilities.colorControl.ID },
         [capabilities.colorTemperature.ID] = { id = capabilities.colorTemperature.ID },
+        [capabilities.statelessColorTemperatureStep.ID] = { id = capabilities.statelessColorTemperatureStep.ID },
         [capabilities.powerMeter.ID] = { id = capabilities.powerMeter.ID },
         [capabilities.energyMeter.ID] = { id = capabilities.energyMeter.ID },
         [capabilities.refresh.ID] = { id = capabilities.refresh.ID },
@@ -294,6 +296,114 @@ test.register_message_test(
     }
 )
 
+test.register_message_test(
+  "Step ColorTemperature command test",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } }
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        ColorControl.server.commands.StepColorTemperature(mock_device, ColorControl.types.CcStepMode.DOWN, 187, 3, zb_const.COLOR_TEMPERATURE_MIRED_MIN, zb_const.COLOR_TEMPERATURE_MIRED_MAX, 0x01, 0x00)
+      },
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 90 } }
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        ColorControl.server.commands.StepColorTemperature(mock_device, ColorControl.types.CcStepMode.DOWN, 840, 3, zb_const.COLOR_TEMPERATURE_MIRED_MIN, zb_const.COLOR_TEMPERATURE_MIRED_MAX, 0x01, 0x00)
+      },
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { -50 } }
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        ColorControl.server.commands.StepColorTemperature(mock_device, ColorControl.types.CcStepMode.UP, 467, 3, zb_const.COLOR_TEMPERATURE_MIRED_MIN, zb_const.COLOR_TEMPERATURE_MIRED_MAX, 0x01, 0x00)
+      },
+    }
+  }
+)
+
+test.register_message_test(
+  "Step Level command test",
+  {
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } }
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        Level.server.commands.Step(mock_device, Level.types.MoveStepMode.UP, 64, 3, 0x01, 0x00)
+      },
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { -50 } }
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        Level.server.commands.Step(mock_device, Level.types.MoveStepMode.DOWN, 127, 3, 0x01, 0x00)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 100 } }
+      }
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device.id,
+        Level.server.commands.Step(mock_device, Level.types.MoveStepMode.UP, 254, 3, 0x01, 0x00)
+      }
+    }
+  }
+)
+
 test.register_coroutine_test(
     "lifecycle configure event should configure device",
     function ()
@@ -337,6 +447,14 @@ test.register_coroutine_test(
                                          mock_device.id,
                                          ElectricalMeasurement.attributes.ActivePower:read(mock_device)
                                        })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device)
+                                      })
       test.socket.zigbee:__expect_send({
                                          mock_device.id,
                                          OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 300)
@@ -417,6 +535,14 @@ test.register_coroutine_test(
                                          mock_device.id,
                                          SimpleMetering.attributes.Divisor:read(mock_device)
                                        })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTempPhysicalMaxMireds:configure_reporting(mock_device, 1, 43200, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ColorControl.attributes.ColorTempPhysicalMinMireds:configure_reporting(mock_device, 1, 43200, 1)
+                                      })
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
 
