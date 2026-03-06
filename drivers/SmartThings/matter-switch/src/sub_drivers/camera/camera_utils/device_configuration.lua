@@ -110,8 +110,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
       elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.motionSensor.ID)
-      elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) and
-        #device:get_endpoints(clusters.WebRTCTransportRequestor.ID, {cluster_type = "CLIENT"}) > 0 then
+      elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.webrtc.ID)
       end
     end
