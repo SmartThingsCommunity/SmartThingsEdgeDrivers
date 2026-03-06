@@ -14,6 +14,9 @@ jobs:
     strategy:
       matrix:
         version: ["52", "60"]
+      max-parallel: 1
+      fail-fast: false
+
     steps:
       - name: Find the lua lib release version for 0.${{ matrix.version}}
         id: lib-version
@@ -109,6 +112,7 @@ jobs:
     strategy:
       matrix:
         version: ["52", "60"]
+      
     
     needs:
       [ get-latest-release-artifact, get-dev-artifact ]
