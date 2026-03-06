@@ -58,7 +58,7 @@ jobs:
       matrix:
         version: ["0.52", "0.60"]
 
-    if: ${{ @always() }}
+    if: ${{ always() }}
     steps:
       - name: Get the version from the label
         id: label-version
