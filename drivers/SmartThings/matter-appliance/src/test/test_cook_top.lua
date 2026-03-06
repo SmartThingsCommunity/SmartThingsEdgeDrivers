@@ -89,7 +89,10 @@ test.register_coroutine_test(
     local component_to_endpoint_map = mock_device:get_field("__component_to_endpoint_map")
     assert(component_to_endpoint_map["cookSurfaceOne"] == COOK_SURFACE_ONE_ENDPOINT, "Cook Surface One Endpoint must be 2")
     assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT, "Cook Surface Two Endpoint must be 3")
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -112,6 +115,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, COOK_TOP_ENDPOINT)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -149,6 +155,9 @@ test.register_message_test(
         clusters.TemperatureControl.server.commands.SetTemperature(mock_device, COOK_SURFACE_TWO_ENDPOINT, nil, 0) --0 is the index where Level1 is stored.
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -181,6 +190,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("cookSurfaceTwo", capabilities.temperatureMeasurement.temperature({ value = 20.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

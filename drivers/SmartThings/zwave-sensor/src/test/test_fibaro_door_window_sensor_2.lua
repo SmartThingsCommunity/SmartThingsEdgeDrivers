@@ -67,6 +67,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -86,6 +89,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -105,6 +111,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -124,6 +133,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -143,6 +155,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -162,6 +177,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -181,6 +199,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_door_window_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.freeze())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -295,7 +316,10 @@ test.register_coroutine_test(
         mock_fibaro_door_window_sensor,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -333,7 +357,10 @@ test.register_coroutine_test(
         mock_fibaro_door_window_sensor,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.TEMPERATURE})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -366,6 +393,9 @@ test.register_message_test(
       direction = "receive",
       message = {mock_fibaro_door_window_sensor.id, "added"}
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

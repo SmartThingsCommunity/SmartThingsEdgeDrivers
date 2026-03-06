@@ -80,7 +80,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -118,7 +121,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -168,7 +174,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -193,7 +202,10 @@ test.register_coroutine_test(
           Level.server.commands.MoveToLevelWithOnOff(mock_device)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -222,7 +234,10 @@ test.register_coroutine_test(
           WindowCovering.server.commands.DownOrClose(mock_device)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -247,7 +262,10 @@ test.register_coroutine_test(
           Level.server.commands.MoveToLevelWithOnOff(mock_device, 0xFE)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -276,7 +294,10 @@ test.register_coroutine_test(
           WindowCovering.server.commands.UpOrOpen(mock_device, 0x64)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -313,7 +334,10 @@ test.register_coroutine_test(
         mock_device.id,
         Level.attributes.CurrentLevel:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -352,7 +376,10 @@ test.register_coroutine_test(
         mock_device.id,
         WindowCovering.server.commands.Stop(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -377,7 +404,10 @@ test.register_coroutine_test(
           Level.server.commands.MoveToLevelWithOnOff(mock_device, 84)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -409,7 +439,10 @@ test.register_coroutine_test(
           WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 33)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -434,7 +467,10 @@ test.register_coroutine_test(
           Level.server.commands.MoveToLevelWithOnOff(mock_device, 127)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -468,7 +504,10 @@ test.register_coroutine_test(
           WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 50)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -500,7 +539,10 @@ test.register_coroutine_test(
           WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 50)
         }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -542,7 +584,10 @@ test.register_coroutine_test(
         mock_device.id,
         Basic.attributes.SWBuildID:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -577,7 +622,10 @@ test.register_coroutine_test(
         mock_device.id,
         Basic.attributes.SWBuildID:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -629,7 +677,10 @@ test.register_coroutine_test(
       })
       test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
       test.socket.zigbee:__expect_send({ mock_device.id, WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device) })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

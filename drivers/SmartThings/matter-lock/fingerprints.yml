@@ -72,6 +72,11 @@ matterManufacturer:
     vendorId: 0x1421
     productId: 0x0042
     deviceProfileName: lock-user-pin-battery
+  - id: "5153/65"
+    deviceLabel: Halo Select Plus
+    vendorId: 0x1421
+    productId: 0x0041
+    deviceProfileName: lock-user-pin-battery
   - id: "5153/129"
     deviceLabel: Kwikset Aura Reach
     vendorId: 0x1421

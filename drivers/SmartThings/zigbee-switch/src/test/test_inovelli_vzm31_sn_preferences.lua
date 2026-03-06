@@ -50,7 +50,10 @@ test.register_coroutine_test(
         new_param_value
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test parameter9 preference change
@@ -72,7 +75,10 @@ test.register_coroutine_test(
         expected_value
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test parameter52 preference change
@@ -93,7 +99,10 @@ test.register_coroutine_test(
         new_param_value
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test parameter258 preference change
@@ -114,7 +123,10 @@ test.register_coroutine_test(
         new_param_value
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test parameter11 preference change (VZM31-only)
@@ -135,7 +147,10 @@ test.register_coroutine_test(
         new_param_value
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test parameter17 preference change (VZM31-only)
@@ -156,7 +171,10 @@ test.register_coroutine_test(
         new_param_value
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test parameter22 preference change (VZM31-only)
@@ -177,7 +195,10 @@ test.register_coroutine_test(
         new_param_value
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test notificationChild preference change
@@ -193,7 +214,10 @@ test.register_coroutine_test(
     })
 
     test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzm31_sn:generate_info_changed({preferences = {notificationChild = true}}))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
