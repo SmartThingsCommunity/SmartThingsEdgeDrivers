@@ -120,6 +120,8 @@ jobs:
         with:
           script: |
               core.setFailed('Library cache missed. ${{steps.cached_libs.outputs.cache-hit}} ')
+      - name: Check libs API version
+        run: cat /home/runner/work/lua_libs_${{ matrix.version }}/version.lua | grep -oP "\s*api = \d+"
       - name: Install lua
         run: |
           sudo apt-get update
