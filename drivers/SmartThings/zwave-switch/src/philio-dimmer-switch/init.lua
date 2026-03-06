@@ -1,19 +1,12 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
---- @type st.zwave.Driver
-local ZwaveDriver = require "st.zwave.driver"
---- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
---- @type st.utils
 local utils = require "st.utils"
---- @type st.zwave.constants
 local constants = require "st.zwave.constants"
---- @type st.zwave.CommandClass.Basic
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
---- @type st.zwave.CommandClass.SwitchMultilevel
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ version = 4 })
-
-
--- print("DEBUG: philio-dimmer-switch/init.lua loaded")
 
 local function dimmer_event(driver, device, cmd)
   local raw = cmd.args.value or cmd.args.target_value or 0
@@ -95,20 +88,13 @@ end
 -------------------------------------------------------------------
 -- Lifecycle
 -------------------------------------------------------------------
-local function device_init(driver, device)
-  -- print("DEBUG: PAD19 device_init called")
-end
-
 local function device_added(driver, device)
-  -- print("DEBUG: PAD19 device_added - init state off")
+  if device == nil then
+       return   -- 安全跳出，不做任何操作
+  end
+
   device:emit_event(capabilities.switch.switch.off())
   device:emit_event(capabilities.switchLevel.level(0))
-  -- print("DEBUG: PAD19 Initial switchlevel = 0")
-end
-
--- NEW: 修正 driverSwitched 崩潰
-local function device_driver_switched(driver, device, event, args)
-  -- print("DEBUG: PAD19 driverSwitched - ignored")
 end
 
 local pad19_driver_template = {
@@ -137,17 +123,9 @@ local pad19_driver_template = {
   },
 
   lifecycle_handlers = {
-	init = device_init,
-    added = device_added,
-	driverSwitched = device_driver_switched
-  },
-
-  -- 設置 Z-Wave 設備配置
-  zwave_config = {}
---  zwave_config = {},
-
-  -- 指定can_handle腳本, 讓上層可以先檢查這台Device是否能用這個子驅動控制,可以才載入
---  can_handle = require("philio-dimmer-switch.can_handle")
+    added = device_added
+  }
+  
 }
 
 -- 回傳驅動範本
