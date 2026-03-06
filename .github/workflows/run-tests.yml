@@ -14,9 +14,6 @@ jobs:
     strategy:
       matrix:
         version: ["52", "60"]
-
-    outputs:
-      cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
     steps:
       - name: Find the lua lib release version for 0.${{ matrix.version}}
         id: lib-version
@@ -45,9 +42,9 @@ jobs:
         if: steps.cached-libs.outputs.cache-hit != 'true'
         working-directory: '/home/runner/work/lua_libs_${{ matrix.version }}'
         run: tar -xf *.tar.gz --wildcards -C . --strip-components=1 '*.lua'
-      - name: Set output
+      - name: Write output
         id: cache_key
-        run: echo "CACHE_KEY=${{ steps.lib-version.outputs.url }}" >> $GITHUB_OUTPUT
+        run: echo "${{ steps.lib-version.outputs.url }}" >> version_${{ matrix.version }}_link.log
 
   get-dev-artifact:
     runs-on: ubuntu-latest
@@ -109,8 +106,7 @@ jobs:
       - name: Set cache key
         id: cache_key
         run: |
-          echo "${{ join(needs.*.outputs.cache_key) }}"
-          echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
+          echo "CACHE_KEY=$(cat version_${{ matrix.version }}_link.log)" >> $GITHUB_OUTPUT
       - name: Try to retrieve cache
         id: cached_libs
         uses: actions/cache@v3
