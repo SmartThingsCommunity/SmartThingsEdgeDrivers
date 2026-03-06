@@ -7,6 +7,11 @@ on:
 
 jobs:
   publish-test-results:
+    strategy:
+      matrix:
+        version: ["52", "60"]
+      fail-fast: false
+      
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
@@ -21,10 +26,10 @@ jobs:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: event-file/event.json
           event_name: ${{ github.event.workflow_run.event }}
-          files: "tests/*.xml"
+          files: "tests-${{ matrix.version }}/*.xml"
       - name: Publish coverage results
         uses: 5monkeys/cobertura-action@master
         with:
           pull_request_number: ${{ env.pr_number }}
-          path: "coverage/*.xml"
+          path: "coverage-${{ matrix.version }}/*.xml"
           minimum_coverage: 90
