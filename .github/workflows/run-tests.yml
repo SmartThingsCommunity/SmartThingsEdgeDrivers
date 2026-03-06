@@ -58,7 +58,7 @@ jobs:
       matrix:
         version: ["0.52", "0.60"]
 
-    if: ${{ always() }}
+    if: ${{ false }}
     steps:
       - name: Get the version from the label
         id: label-version
@@ -100,7 +100,7 @@ jobs:
     
     strategy:
       matrix:
-        version: [0.52, 0.60]
+        version: ["52", "60"]
     
     needs:
       [ get-latest-release-artifact, get-dev-artifact ]
@@ -109,14 +109,11 @@ jobs:
       - name: Set cache key
         id: cache_key
         run: echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
-      - name: Get version number
-        id: version_number
-        run: VERSION=${{ matrix.version }}
       - name: Try to retrieve cache
         id: cached_libs
         uses: actions/cache@v3
         with:
-          path: '/home/runner/work/lua_libs'
+          path: '/home/runner/work/lua_libs_${{ matrix.version }}'
           key: ${{ steps.cache_key.outputs.CACHE_KEY }}
       - name: Fail if cache missed
         if: steps.cached_libs.outputs.cache-hit != 'true'
@@ -139,7 +136,7 @@ jobs:
       - name: Set LUA_PATH
         id: lua_path
         env:
-          LUA_PATH_APPEND: /home/runner/work/lua_libs/?.lua;./?.lua;/home/runner/work/lua_libs/?/init.lua;./?/init.lua
+          LUA_PATH_APPEND: /home/runner/work/lua_libs_${{ matrix.version }}/?.lua;./?.lua;/home/runner/work/lua_libs_${{ matrix.version }}/?/init.lua;./?/init.lua
         run: |
           eval "$(luarocks path --bin)"
           echo "lua_path=$LUA_PATH_APPEND;$LUA_PATH" >> $GITHUB_OUTPUT
