@@ -108,7 +108,9 @@ jobs:
     steps:
       - name: Set cache key
         id: cache_key
-        run: echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
+        run: |
+          echo "${{ join(needs.*.outputs.cache_key) }}"
+          echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
       - name: Try to retrieve cache
         id: cached_libs
         uses: actions/cache@v3
