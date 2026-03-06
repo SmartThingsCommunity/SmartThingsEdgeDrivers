@@ -82,9 +82,14 @@ jobs:
 
   run-driver-tests:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        version: [0.52, 0.60]
+    
     needs:
       [ get-latest-release-artifact, get-dev-artifact ]
-    if: ${{ always() && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure') }}
+    if: ${{ always() }}
     steps:
       - name: Set cache key
         id: cache_key
