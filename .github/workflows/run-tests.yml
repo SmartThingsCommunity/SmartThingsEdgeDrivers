@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        version: [0.52, 0.60]
+        version: ["0.52", "0.60"]
 
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
@@ -27,7 +27,7 @@ jobs:
         id: cached-libs
         uses: actions/cache@v3
         with:
-          path: '/home/runner/work/lua_libs'
+          path: '/home/runner/work/lua_libs_${{ matrix.version }}'
           key: ${{ steps.lib-version.outputs.url }}-v1
       - name: Get the latest release artifact
         if: steps.cached-libs.outputs.cache-hit != 'true'
@@ -35,10 +35,10 @@ jobs:
         with:
           file: 'lua_libs.*'
           regex: true
-          target: '/home/runner/work/lua_libs/'
+          target: '/home/runner/work/lua_libs_${{ matrix.version }}/'
       - name: Extract the lua libraries
         if: steps.cached-libs.outputs.cache-hit != 'true'
-        working-directory: '/home/runner/work/lua_libs'
+        working-directory: '/home/runner/work/lua_libs_${{ matrix.version }}'
         run: tar -xf *.tar.gz --wildcards -C . --strip-components=1 '*.lua'
       - name: Set output
         id: cache_key
@@ -49,11 +49,7 @@ jobs:
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
 
-    strategy:
-      matrix:
-        version: [0.52, 0.60]
-
-    if: ${{ always() }}
+    if: ${{ @always() }}
     steps:
       - name: Get the version from the label
         id: label-version
