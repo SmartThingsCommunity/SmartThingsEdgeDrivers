@@ -145,7 +145,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, SimpleMetering.attributes.Divisor:build_test_attr_report(mock_device, 0) })
     test.wait_for_events()
     assert(mock_device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) == 1000,
-      "SIMPLE_METERING_DIVISOR_KEY should be 1000"))
+      "SIMPLE_METERING_DIVISOR_KEY should be 1000")
   end
 )
 
