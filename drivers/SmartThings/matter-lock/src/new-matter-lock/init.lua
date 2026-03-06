@@ -131,6 +131,12 @@ end
 
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
+  end
+  if device:get_field(profiling_data.BATTERY_SUPPORT) == nil then
+    device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
+  end
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
@@ -150,12 +156,6 @@ local function device_init(driver, device)
 
 local function device_added(driver, device)
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-  else
-    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
-  end
 end
 
 local function match_profile_modular(driver, device)
@@ -246,6 +246,9 @@ local function info_changed(driver, device, event, args)
     return
   end
   device:set_field(MODULAR_PROFILE_UPDATED, nil)
+  if device:get_field(profiling_data.BATTERY_SUPPORT) == nil then
+    device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
+  end
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
@@ -588,23 +591,20 @@ end
 -- Power Source Attribute List --
 ---------------------------------
 local function handle_power_source_attribute_list(driver, device, ib, response)
-  for _, attr in ipairs(ib.data.elements) do
-    -- mark if the device if BatPercentRemaining (Attribute ID 0x0C) or
-    -- BatChargeLevel (Attribute ID 0x0E) is present and try profiling.
-    if attr.value == 0x0C then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, { persist = true })
-      match_profile(driver, device)
-      return
-    elseif attr.value == 0x0E then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, { persist = true })
-      match_profile(driver, device)
-      return
+  local previous_battery_support = device:get_field(profiling_data.BATTERY_SUPPORT)
+  device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist=true})
+  for _, attr in ipairs(ib.data.elements or {}) do
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, {persist=true})
+      break
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID and
+      device:get_field(profiling_data.BATTERY_SUPPORT) ~= battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, {persist=true})
     end
   end
-
-  -- neither BatChargeLevel nor BatPercentRemaining were found. Re-profiling without battery.
-  device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
-  match_profile(driver, device)
+  if not previous_battery_support or previous_battery_support ~= device:get_field(profiling_data.BATTERY_SUPPORT) then
+    match_profile(driver, device)
+  end
 end
 
 -------------------------------
