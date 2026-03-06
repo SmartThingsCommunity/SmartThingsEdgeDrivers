@@ -39,7 +39,7 @@ jobs:
         if: steps.cached-libs.outputs.cache-hit != 'true'
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          version: 'tag/apiv${{ steps.lib-version.outputs.api_version }}_${{ matrix.version }}'
+          version: 'tags/apiv${{ steps.lib-version.outputs.api_version }}_${{ matrix.version }}'
           file: 'lua_libs.*'
           regex: true
           target: '/home/runner/work/lua_libs_${{ matrix.version }}/'
