@@ -9,7 +9,7 @@ jobs:
   # Two separate jobs for finding the right artifact to run tests with
   get-latest-release-artifact:
     runs-on: ubuntu-latest
-    if: ${{ !contains(join(github.event.pull_request.labels.*.name), 'release') }}
+    if: ${{ always() }}
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
     steps:
@@ -43,7 +43,12 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
-    if: ${{ contains(join(github.event.pull_request.labels.*.name), 'release-') && github.event.pull_request.head.repo.fork != 'true' }}
+
+    strategy:
+      matrix:
+        version: [0.52, 0.60]
+
+    if: ${{ always() }}
     steps:
       - name: Get the version from the label
         id: label-version
@@ -94,6 +99,9 @@ jobs:
       - name: Set cache key
         id: cache_key
         run: echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
+      - name: Get version number
+        id: version_number
+        run: VERSION=${{ matrix.version }}
       - name: Try to retrieve cache
         id: cached_libs
         uses: actions/cache@v3
@@ -148,14 +156,14 @@ jobs:
         with:
           name: tests
           path: |
-            tools/test_output/*.xml
+            tools/test_output/$VERSION/*.xml
       - name: Upload coverage artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: |
-            tools/coverage_output/*_coverage.xml
+            tools/coverage_output/$VERSION/*_coverage.xml
 
   event-file:
     runs-on: ubuntu-latest
