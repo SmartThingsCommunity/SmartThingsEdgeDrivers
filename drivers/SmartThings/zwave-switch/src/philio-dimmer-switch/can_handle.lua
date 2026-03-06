@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 -- can_handle.lua
 -- 判斷是否為 Philio PAD19 裝置
 
