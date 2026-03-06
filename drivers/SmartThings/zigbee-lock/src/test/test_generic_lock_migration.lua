@@ -31,7 +31,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:read(mock_device)})
     test.socket.zigbee:__queue_receive({mock_device.id, DoorLock.attributes.NumberOfPINUsersSupported:build_test_attr_report(mock_device, 8)})
     mock_device:expect_metadata_update({profile = "base-lock"})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

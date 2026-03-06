@@ -61,7 +61,10 @@ test.register_coroutine_test(
       )
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -79,7 +82,10 @@ test.register_coroutine_test(
       mock_datastore.__assert_device_store_contains(mock_device.id, "__state_cache", nil)
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", nil)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -121,7 +127,10 @@ test.register_coroutine_test(
       )
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -163,7 +172,10 @@ test.register_coroutine_test(
       )
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "migrationComplete", true)
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -226,7 +238,10 @@ test.register_coroutine_test(
       -- Verify the timer doesn't fire as it wasn't created
       test.mock_time.advance_time(4)
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 

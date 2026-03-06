@@ -162,7 +162,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       aqara_mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -184,7 +187,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       aqara_mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = 5.00, maximum = 40.00 }, unit = "C" }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -209,7 +215,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       aqara_mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 41 }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -225,7 +234,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       aqara_mock_device:generate_test_message("main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5)))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -247,7 +259,10 @@ test.register_coroutine_test(
         clusters.Switch.events.ShortRelease:build_test_event_report(aqara_mock_device, 3, {previous_position = 0})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -269,7 +284,10 @@ test.register_coroutine_test(
         clusters.Switch.events.ShortRelease:build_test_event_report(aqara_mock_device, 3, {previous_position = 0})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -307,7 +325,10 @@ test.register_coroutine_test(
         }
       )
       test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.button.double({state_change = true})))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -333,7 +354,10 @@ test.register_coroutine_test(
         clusters.Switch.events.LongRelease:build_test_event_report(aqara_mock_device, 3, {previous_position = 0})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -359,7 +383,10 @@ test.register_coroutine_test(
         clusters.Switch.events.LongRelease:build_test_event_report(aqara_mock_device, 5, {previous_position = 0})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -375,7 +402,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       aqara_mock_device:generate_test_message("button1", capabilities.button.button.double({state_change = true}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -391,7 +421,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         aqara_mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed", "double", "held"}, {visibility = {displayed = false}}))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -413,7 +446,10 @@ test.register_coroutine_test(
         clusters.Switch.events.ShortRelease:build_test_event_report(aqara_mock_device, 4, {previous_position = 0})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -433,7 +469,10 @@ test.register_coroutine_test(
         "button3", capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -453,7 +492,10 @@ test.register_coroutine_test(
         "button1", capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

@@ -54,6 +54,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -73,6 +76,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -92,6 +98,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -111,6 +120,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -130,6 +142,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -149,6 +164,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -168,6 +186,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -182,6 +203,9 @@ test.register_message_test(
           alarm_level = 1
         })) }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -228,7 +252,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -248,6 +273,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -267,6 +295,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -286,6 +317,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -305,6 +339,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -324,6 +361,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -366,7 +406,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 

@@ -145,7 +145,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, SimpleMetering.attributes.Divisor:build_test_attr_report(mock_device, 0) })
     test.wait_for_events()
     assert(mock_device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) == 1000,
-      "SIMPLE_METERING_DIVISOR_KEY should be 1000 when divisor reports 0")
+      "SIMPLE_METERING_DIVISOR_KEY should be 1000"))
   end
 )
 
@@ -191,7 +191,10 @@ test.register_coroutine_test(
       SimpleMetering.attributes.Multiplier:read(mock_device)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

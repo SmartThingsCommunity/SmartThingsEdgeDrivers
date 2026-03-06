@@ -97,7 +97,10 @@ test.register_coroutine_test(
         data_types.Uint8, 1) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -118,7 +121,10 @@ test.register_coroutine_test(
     { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -142,7 +148,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_base_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_base_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -153,7 +162,10 @@ test.register_coroutine_test(
       { capability = "refresh", component = "main", command = "refresh", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.attributes.OnOff:read(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -163,7 +175,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -173,7 +188,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, true):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.on()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -183,7 +201,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x01) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -193,7 +214,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id,
       OnOff.attributes.OnOff:build_test_attr_report(mock_device, false):from_endpoint(0x02) })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.off()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -204,7 +228,10 @@ test.register_coroutine_test(
     mock_device:expect_native_cmd_handler_registration("switch", "on")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -215,7 +242,10 @@ test.register_coroutine_test(
     mock_child:expect_native_cmd_handler_registration("switch", "on")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x02) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -226,7 +256,10 @@ test.register_coroutine_test(
     mock_device:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -237,7 +270,10 @@ test.register_coroutine_test(
     mock_child:expect_native_cmd_handler_registration("switch", "off")
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x02) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -251,7 +287,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.button.button.pushed({ state_change = true })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -265,7 +304,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main",
       capabilities.button.button.pushed({ state_change = true })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -279,7 +321,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -291,7 +336,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
