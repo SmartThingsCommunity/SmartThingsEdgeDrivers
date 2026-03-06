@@ -107,7 +107,7 @@ jobs:
     if: ${{ always() }}
     steps:
       - name: Set cache key
-        id: cache_key
+        id: cache_key_${{ matrix.version }}
         run: echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
       - name: Try to retrieve cache
         id: cached_libs
