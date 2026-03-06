@@ -26,7 +26,7 @@ jobs:
           echo "https://github.com$(cat version_${{ matrix.version }}_link.log)" > version_${{ matrix.version }}_link.log
           echo "Found release at $(cat version_${{ matrix.version }}_link.log)"
           echo "url=$(cat version_${{ matrix.version }}_link.log)" >> $GITHUB_OUTPUT
-          grep -oP 'apiv\K\d+_\d+' urls.txt | while IFS='_' read -r api_version hc_version; do
+          grep -oP 'apiv\K\d+_\d+' version_${{ matrix.version }}_link.log | while IFS='_' read -r api_version hc_version; do
             echo "api_version=$api_version" >> $GITHUB_OUTPUT
           done
       - name: Try to retrieve cache
