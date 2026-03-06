@@ -41,6 +41,7 @@ local zigbee_power_meter_driver_template = {
     capabilities.powerMeter,
     capabilities.energyMeter,
     capabilities.powerConsumptionReport,
+    capabilities.battery,
   },
   zigbee_handlers = {
     global = {
