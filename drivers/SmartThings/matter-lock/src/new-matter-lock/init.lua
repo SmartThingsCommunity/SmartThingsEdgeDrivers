@@ -1609,17 +1609,6 @@ local function set_pin_response_handler(driver, device, ib, response)
       add_credential_to_table(device, userIdx, credIdx, "pin")
     end
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-
     -- If User Type is Guest and device support schedule, add default schedule
     local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
     local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
@@ -1643,6 +1632,16 @@ local function set_pin_response_handler(driver, device, ib, response)
         )
       )
     else
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
       device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     end
     return
@@ -2318,6 +2317,20 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
   end
 
   if cmdName == "defaultSchedule" then
+    local cmdName = "addCredential"
+    local credIdx = device:get_field(lock_utils.CRED_INDEX)
+
+    -- Update commandResult
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      credentialIndex = credIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     return
   end
 
