@@ -13,16 +13,21 @@ jobs:
 
     strategy:
       matrix:
-        version: ["0.52", "0.60"]
+        version: ["52", "60"]
 
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
     steps:
-      - name: Find the lua lib release version
+      - name: Find the lua lib release version for 0.${{ matrix.version}}
         id: lib-version
         run: |
-          curl "https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/releases/latest" -s -L -I -o /dev/null -w '%{url_effective}' > test.log
-          echo "url=$(cat test.log)" >> $GITHUB_OUTPUT
+          curl \
+            -L https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/releases \
+            -L https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/releases?page=2 \
+            -L https://github.com/SmartThingsCommunity/SmartThingsEdgeDrivers/releases?page=3 -s \
+            | grep -oP "/.*/releases/tag/apiv\d+_${{ matrix.version }}(_beta)?" > version_${{ matrix.version }}_link.log
+          echo "Found release at https://github.com$(cat version_${{ matrix.version }}_link.log)"
+          echo "url=https://github.com$(cat version_${{ matrix.version }}_link.log)" >> $GITHUB_OUTPUT
       - name: Try to retrieve cache
         id: cached-libs
         uses: actions/cache@v3
@@ -49,6 +54,10 @@ jobs:
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
 
+    strategy:
+      matrix:
+        version: ["0.52", "0.60"]
+
     if: ${{ @always() }}
     steps:
       - name: Get the version from the label
@@ -56,7 +65,7 @@ jobs:
         run: |
           echo "${{ join(github.event.pull_request.labels.*.name) }}" | grep -oP "release-\d+.\d+" | xargs > out
           echo "LIBRARY_VERSION=$(cat out)" >> $GITHUB_OUTPUT
-          mkdir /home/runner/work/lua_libs
+          mkdir /home/runner/work/lua_libs_${{ matrix.version }}
       - name: Find latest artifact
         id: latest
         env:
