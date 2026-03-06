@@ -26,8 +26,10 @@ jobs:
           echo "https://github.com$(cat version_${{ matrix.version }}_link.log)" > version_${{ matrix.version }}_link.log
           echo "Found release at $(cat version_${{ matrix.version }}_link.log)"
           echo "url=$(cat version_${{ matrix.version }}_link.log)" >> $GITHUB_OUTPUT
-          grep -oP 'apiv\K\d+_\d+' version_${{ matrix.version }}_link.log | while IFS='_' read -r api_version hc_version; do
-            echo "api_version=$api_version" >> $GITHUB_OUTPUT
+          grep -oP 'apiv\K\d+_\d+(_beta)?' version_${{ matrix.version }}_link.log | while IFS='_' read -r api_version hc_version rest; do
+              echo "api_version=$api_version" >> $GITHUB_OUTPUT
+              [[ -n $rest ]] && hc_version="${hc_version}_${rest}"
+              echo "hc_version=$hc_version" >> $GITHUB_OUTPUT
           done
       - name: Try to retrieve cache
         id: cached-libs
@@ -39,7 +41,7 @@ jobs:
         if: steps.cached-libs.outputs.cache-hit != 'true'
         uses: dsaltares/fetch-gh-release-asset@master
         with:
-          version: 'tags/apiv${{ steps.lib-version.outputs.api_version }}_${{ matrix.version }}'
+          version: 'tags/apiv${{ steps.lib-version.outputs.api_version }}_${{ steps.lib-version.outputs.hc_version }}'
           file: 'lua_libs.*'
           regex: true
           target: '/home/runner/work/lua_libs_${{ matrix.version }}/'
