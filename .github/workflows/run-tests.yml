@@ -107,14 +107,14 @@ jobs:
     if: ${{ always() }}
     steps:
       - name: Set cache key
-        id: cache_key_${{ matrix.version }}
-        run: echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key) }}" >> $GITHUB_OUTPUT
+        id: cache_key
+        run: echo "CACHE_KEY=${{ join(needs.*.outputs.cache_key_${{ matrix.version }} ) }}" >> $GITHUB_OUTPUT
       - name: Try to retrieve cache
         id: cached_libs
         uses: actions/cache@v3
         with:
           path: '/home/runner/work/lua_libs_${{ matrix.version }}'
-          key: ${{ steps.cache_key.outputs.CACHE_KEY }}
+          key: ${{ steps.cache_key_${{ matrix.version }}.outputs.CACHE_KEY }}
       - name: Fail if cache missed
         if: steps.cached_libs.outputs.cache-hit != 'true'
         uses: actions/github-script@v3
