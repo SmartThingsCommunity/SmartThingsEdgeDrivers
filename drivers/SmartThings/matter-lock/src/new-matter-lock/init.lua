@@ -340,6 +340,7 @@ local function lock_state_handler(driver, device, ib, response)
 end
 
 local function door_state_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
   local DoorStateEnum = DoorLock.types.DoorStateEnum
   local doorState = capabilities.doorState.doorState
   local DOOR_STATE_MAP = {
