@@ -327,11 +327,11 @@ function utils.create_multi_press_values_list(size, supportsHeld)
 end
 
 --- Deeply compare two values.
---- Handles cycles, metatables, and optional function ignoring.
+--- Handles metatables. Optionally handles cycles and function ignoring.
 ---
 --- @param a any
 --- @param b any
---- @param opts table|nil { ignore_functions = boolean }
+--- @param opts table|nil { ignore_functions = boolean, track_cycles = boolean }
 --- @param seen table|nil
 --- @return boolean
 function utils.deep_equals(a, b, opts, seen)
@@ -341,11 +341,13 @@ function utils.deep_equals(a, b, opts, seen)
   if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
 
   -- check for cycles in table references and preserve reference topology.
-  seen = seen or { a_to_b = {}, b_to_a = {} }
-  if seen.a_to_b[a] ~= nil then return seen.a_to_b[a] == b end
-  if seen.b_to_a[b] ~= nil then return seen.b_to_a[b] == a end
-  seen.a_to_b[a] = b
-  seen.b_to_a[b] = a
+  if opts and opts.track_cycles then
+    seen = seen or { a_to_b = {}, b_to_a = {} }
+    if seen.a_to_b[a] ~= nil then return seen.a_to_b[a] == b end
+    if seen.b_to_a[b] ~= nil then return seen.b_to_a[b] == a end
+    seen.a_to_b[a] = b
+    seen.b_to_a[b] = a
+  end
 
   -- Compare keys/values from a
   for k, v in next, a do
