@@ -11,8 +11,20 @@ local DoorLock = clusters.DoorLock
 local types = DoorLock.types
 local lock_utils = require "lock_utils"
 
+local enabled_optional_component_capability_pairs = {{
+  "main",
+  {
+    capabilities.doorState.ID,
+    capabilities.lockUsers.ID,
+    capabilities.lockCredentials.ID,
+    capabilities.lockSchedules.ID
+  }
+}}
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("lock-user-pin-schedule.yml"),
+  profile = t_utils.get_profile_definition(
+    "lock-modular.yml",
+    {enabled_optional_capabilities = enabled_optional_component_capability_pairs}
+  ),
   manufacturer_info = {
     vendor_id = 0x115f,
     product_id = 0x2802,
@@ -34,7 +46,7 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_id = DoorLock.ID,
           cluster_type = "SERVER",
           cluster_revision = 1,
-          feature_map = 0x0181, -- PIN & USR & COTA
+          feature_map = 0x01A1, -- PIN & DPS & USR & COTA
         }
       },
       device_types = {
@@ -48,6 +60,7 @@ local function test_init()
   test.disable_startup_messages()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
+  subscribe_request:merge(DoorLock.attributes.DoorState:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfPINUsersSupported:subscribe(mock_device))
@@ -604,6 +617,126 @@ test.register_coroutine_test(
   {
      min_api_version = 19
   }
+)
+
+test.register_coroutine_test(
+  "Handle received DoorState.DOOR_CLOSED from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.DoorState:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.DoorState.DOOR_CLOSED
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.closed())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"closed"}, {visibility={displayed=false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received DoorState.DOOR_JAMMED from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.DoorState:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.DoorState.DOOR_JAMMED
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.jammed())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"jammed"}, {visibility={displayed=false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received DoorState.DOOR_FORCED_OPEN from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.DoorState:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.DoorState.DOOR_FORCED_OPEN
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.forcedOpen())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"forcedOpen"}, {visibility={displayed=false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received DoorState.DOOR_UNSPECIFIED_ERROR from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.DoorState:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.DoorState.DOOR_UNSPECIFIED_ERROR
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.unspecifiedError())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"unspecifiedError"}, {visibility={displayed=false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received DoorState.DOOR_AJAR from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.DoorState:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.DoorState.DOOR_AJAR
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.ajar())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"ajar"}, {visibility={displayed=false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle received DoorState.DOOR_OPEN from Matter device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.DoorState:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.DoorState.DOOR_OPEN
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.open())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"open"}, {visibility={displayed=false}}))
+    )
+  end
 )
 
 local function refresh_commands(dev)
