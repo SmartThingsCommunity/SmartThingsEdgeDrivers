@@ -261,6 +261,10 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
+  if device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
+    device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
+    device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
+  end
 end
 
 local function profiling_data_still_required(device)
