@@ -46,7 +46,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -71,7 +72,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -99,6 +101,7 @@ test.register_message_test(
     }
   },
   {
+     min_api_version = 19
   }
 )
 
@@ -131,7 +134,11 @@ do
         direction = "send",
         message = mock_inovelli_dimmer:generate_test_message("main", capabilities.switchLevel.level(level))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -160,7 +167,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -188,7 +198,10 @@ test.register_coroutine_test(
         SwitchMultilevel:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 do
@@ -218,7 +231,10 @@ do
           SwitchMultilevel:Get({})
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
   )
 end
 

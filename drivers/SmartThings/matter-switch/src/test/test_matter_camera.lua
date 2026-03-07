@@ -239,6 +239,7 @@ local expected_metadata = {
       {
         "videoCapture2",
         "cameraViewportSettings",
+        "videoStreamSettings",
         "localMediaStorage",
         "audioRecording",
         "cameraPrivacyMode",
@@ -246,7 +247,6 @@ local expected_metadata = {
         "hdr",
         "nightVision",
         "mechanicalPanTiltZoom",
-        "videoStreamSettings",
         "zoneManagement",
         "webrtc",
         "motionSensor",
@@ -392,7 +392,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", v.capability("disabled"))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -432,7 +435,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", v.capability("auto"))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -458,7 +464,10 @@ test.register_coroutine_test(
         first_value = false
       end
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -499,7 +508,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.webrtc.talkback(false))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -527,7 +539,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message(v.component, capabilities.audioMute.mute("unmuted"))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -574,7 +589,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message(v.component, capabilities.audioVolume.volume(32))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -596,7 +614,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("statusLed", capabilities.switch.switch.off())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -646,7 +667,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("statusLed", capabilities.mode.mode("auto"))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 local function receive_rate_distortion_trade_off_points()
@@ -683,6 +707,18 @@ local function receive_max_encoded_pixel_rate()
   })
 end
 
+local function receive_min_viewport()
+  test.socket.matter:__queue_receive({
+    mock_device.id,
+    clusters.CameraAvStreamManagement.attributes.MinViewportResolution:build_test_report_data(
+      mock_device, CAMERA_EP, clusters.CameraAvStreamManagement.types.VideoResolutionStruct({
+        width = 1920,
+        height = 1080
+      })
+    )
+  })
+end
+
 local function receive_video_sensor_params()
   test.socket.matter:__queue_receive({
     mock_device.id,
@@ -695,6 +731,15 @@ local function receive_video_sensor_params()
       })
     )
   })
+end
+
+local function emit_min_viewport()
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.cameraViewportSettings.minViewportResolution({
+      width = 1920,
+      height = 1080,
+    }))
+  )
 end
 
 local function emit_video_sensor_parameters()
@@ -719,6 +764,11 @@ local function emit_supported_resolutions()
         width = 3840,
         height = 2160,
         fps = 15
+      },
+      {
+        width = 7360,
+        height = 4912,
+        fps = 0
       }
     }))
   )
@@ -730,42 +780,57 @@ end
 -- videoStreamSettings.supportedResolutions is emitted after all three attributes are received.
 
 test.register_coroutine_test(
-  "Rate Distortion Trade Off Points, MaxEncodedPixelRate, VideoSensorParams reports should generate appropriate events",
+  "Rate Distortion Trade Off Points, MaxEncodedPixelRate, MinViewport, VideoSensorParams reports should generate appropriate events",
   function()
     update_device_profile()
     test.wait_for_events()
     receive_rate_distortion_trade_off_points()
     receive_max_encoded_pixel_rate()
+    receive_min_viewport()
+    emit_min_viewport()
     receive_video_sensor_params()
     emit_video_sensor_parameters()
     emit_supported_resolutions()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
-  "Rate Distortion Trade Off Points, VideoSensorParams, MaxEncodedPixelRate reports should generate appropriate events",
+  "Rate Distortion Trade Off Points, MinViewport, VideoSensorParams, MaxEncodedPixelRate reports should generate appropriate events",
   function()
     update_device_profile()
     test.wait_for_events()
     receive_rate_distortion_trade_off_points()
+    receive_min_viewport()
+    emit_min_viewport()
     receive_video_sensor_params()
     emit_video_sensor_parameters()
     receive_max_encoded_pixel_rate()
     emit_supported_resolutions()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
-  "MaxEncodedPixelRate, VideoSensorParams, Rate Distortion Trade Off Points reports should generate appropriate events",
+  "MaxEncodedPixelRate, MinViewport, VideoSensorParams, Rate Distortion Trade Off Points reports should generate appropriate events",
   function()
     update_device_profile()
     test.wait_for_events()
     receive_max_encoded_pixel_rate()
+    receive_min_viewport()
+    emit_min_viewport()
     receive_video_sensor_params()
     emit_video_sensor_parameters()
     receive_rate_distortion_trade_off_points()
     emit_supported_resolutions()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -817,7 +882,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.zoom(30))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -838,7 +906,10 @@ test.register_coroutine_test(
         { id = 2, label = "Preset 2", pan = -55, tilt = 80, zoom = 60}
       }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -853,7 +924,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.maxPresets(10))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -868,7 +942,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.zoneManagement.maxZones(10))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -913,7 +990,10 @@ test.register_coroutine_test(
         }
       }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -948,7 +1028,10 @@ test.register_coroutine_test(
         }
       }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -971,7 +1054,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.zoneManagement.sensitivity(5, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -997,7 +1083,10 @@ test.register_coroutine_test(
       clusters.Chime.attributes.SelectedChime:build_test_report_data(mock_device, CAMERA_EP, 2)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.sounds.selectedSound(2)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Event Handler UTs
@@ -1037,7 +1126,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.zoneManagement.triggeredZones({{zoneId = 3}}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1060,7 +1152,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("doorbell", capabilities.button.button.double({state_change = true}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Capability Handler UTs
@@ -1097,7 +1192,10 @@ test.register_coroutine_test(
         mock_device.id, attr:write(mock_device, CAMERA_EP, clusters.CameraAvStreamManagement.types.TriStateAutoEnum.AUTO)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1130,7 +1228,10 @@ test.register_coroutine_test(
         mock_device.id, v.attr:write(mock_device, CAMERA_EP, false)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1152,7 +1253,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvStreamManagement.attributes.ImageRotation:write(mock_device, CAMERA_EP, 257)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1216,7 +1320,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvStreamManagement.attributes.MicrophoneMuted:write(mock_device, CAMERA_EP, false)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1321,7 +1428,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("microphone", capabilities.audioVolume.volume(99))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1344,7 +1454,10 @@ test.register_coroutine_test(
         mock_device.id, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(mock_device, CAMERA_EP, v)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1366,7 +1479,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled:write(mock_device, CAMERA_EP, false)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1395,7 +1511,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 0, 0, 80)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1473,7 +1592,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.zoom(5))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1502,7 +1624,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZMoveToPreset(mock_device, CAMERA_EP, 2)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1524,7 +1649,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.Chime.server.commands.PlayChimeSound(mock_device, CAMERA_EP)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1541,7 +1669,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive({
         mock_device.id,
         { capability = "zoneManagement", component = "main", command = "newZone", args = {
-          i .. " zone", {{value = {x = 0, y = 0}}, {value = {x = 1920, y = 1080}} }, i, "blue"
+          i .. " zone", {{value = {x = 0, y = 0}}, {value = {x = 1920, y = 1080}} }, i, "#FFFFFF"
         }}
       })
       test.socket.matter:__expect_send({
@@ -1554,7 +1682,7 @@ test.register_coroutine_test(
                 clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 0, y = 0}),
                 clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 1920, y = 1080})
               },
-              color = "blue"
+              color = "#FFFFFF"
             }
           )
         )
@@ -1595,7 +1723,10 @@ test.register_coroutine_test(
         mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, i)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1665,7 +1796,10 @@ test.register_coroutine_test(
         mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, i)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1738,7 +1872,102 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.ZoneManagement.server.commands.RemoveTrigger(mock_device, CAMERA_EP, 1)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Removing a zone with an existing trigger should send RemoveTrigger followed by RemoveZone",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    -- Create a zone
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "zoneManagement", component = "main", command = "newZone", args = {
+        "motion zone", {{value = {x = 0, y = 0}}, {value = {x = 1920, y = 1080}}}, "motion", "#FFFFFF"
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.CreateTwoDCartesianZone(mock_device, CAMERA_EP,
+        clusters.ZoneManagement.types.TwoDCartesianZoneStruct({
+          name = "motion zone",
+          use = clusters.ZoneManagement.types.ZoneUseEnum.MOTION,
+          vertices = {
+            clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 0, y = 0}),
+            clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 1920, y = 1080})
+          },
+          color = "#FFFFFF"
+        })
+      )
+    })
+
+    -- Create a trigger
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "zoneManagement", component = "main", command = "createOrUpdateTrigger", args = {
+        1, 10, 3, 15, 3, 5
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.CreateOrUpdateTrigger(mock_device, CAMERA_EP, {
+        zone_id = 1,
+        initial_duration = 10,
+        augmentation_duration = 3,
+        max_duration = 15,
+        blind_duration = 3,
+        sensitivity = 5
+      })
+    })
+
+    -- Receive the Triggers attribute update from the device reflecting the new trigger
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.attributes.Triggers:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.ZoneManagement.types.ZoneTriggerControlStruct({
+            zone_id = 1, initial_duration = 10, augmentation_duration = 3,
+            max_duration = 15, blind_duration = 3, sensitivity = 5
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.triggers({{
+        zoneId = 1, initialDuration = 10, augmentationDuration = 3,
+        maxDuration = 15, blindDuration = 3, sensitivity = 5
+      }}))
+    )
+    test.wait_for_events()
+
+    -- Receive removeZone command: since a trigger exists for zone 1, RemoveTrigger is sent first, then RemoveZone
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "zoneManagement", component = "main", command = "removeZone", args = { 1 } }
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.RemoveTrigger(mock_device, CAMERA_EP, 1)
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, 1)
+    })
+    test.wait_for_events()
+
+    -- Receive the updated Zones attribute from the device with the zone removed
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.attributes.Zones:build_test_report_data(mock_device, CAMERA_EP, {})
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.zones({value = {}}))
+    )
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1763,7 +1992,10 @@ test.register_coroutine_test(
         3, true, false
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1828,7 +2060,10 @@ test.register_coroutine_test(
         1, false, true
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1843,7 +2078,10 @@ test.register_coroutine_test(
         uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
       })
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1857,11 +2095,11 @@ test.register_coroutine_test(
         uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
       })
     })
-    local expected_metadata = {
+    local updated_expected_metadata = {
       optional_component_capabilities = {
         { "main",
-          { "videoCapture2", "cameraViewportSettings", "localMediaStorage", "audioRecording", "cameraPrivacyMode",
-            "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "videoStreamSettings", "zoneManagement",
+          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
             "webrtc", "motionSensor", "sounds", }
         },
         { "statusLed",
@@ -1879,10 +2117,13 @@ test.register_coroutine_test(
       },
       profile = "camera"
     }
-    mock_device:expect_metadata_update(expected_metadata)
+    mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- run the tests

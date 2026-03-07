@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -184,6 +174,9 @@ test.register_message_test(
         clusters.FanControl.attributes.PercentSetting:write(mock_device, 1, 50)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -255,6 +248,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("auto"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -341,6 +337,9 @@ test.register_message_test(
         clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.types.FanModeEnum.AUTO)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 test.register_message_test(
@@ -451,6 +450,9 @@ test.register_message_test(
         capabilities.fanMode.fanMode.high.NAME
       }, {visibility={displayed=false}}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -486,6 +488,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.windMode.windMode.naturalWind())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -524,6 +529,9 @@ test.register_message_test(
         clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -582,6 +590,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("hepaFilter", capabilities.filterStatus.filterStatus.replace())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -640,6 +651,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.replace())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -650,7 +664,10 @@ test.register_coroutine_test(
     mock_device_onoff:expect_metadata_update({ profile = "extractor-hood-wind-light" })
     mock_device_onoff:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
-  { test_init = test_init_onoff }
+  {
+    test_init = test_init_onoff,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -673,7 +690,10 @@ test.register_coroutine_test(
       clusters.OnOff.server.commands.Off(mock_device_onoff, 2)
     })
   end,
-  { test_init = test_init_onoff }
+  {
+    test_init = test_init_onoff,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -694,7 +714,10 @@ test.register_coroutine_test(
       mock_device_onoff:generate_test_message("light", capabilities.switch.switch.off())
     )
   end,
-  { test_init = test_init_onoff }
+  {
+    test_init = test_init_onoff,
+    min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

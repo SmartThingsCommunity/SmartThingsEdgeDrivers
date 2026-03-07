@@ -1,0 +1,55 @@
+name: frient-smoke-co-temperature-battery
+components:
+- id: main
+  capabilities:
+  - id: smokeDetector
+    version: 1
+  - id: carbonMonoxideDetector
+    version: 1
+  - id: carbonMonoxideMeasurement
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: temperatureMeasurement
+    version: 1
+  - id: battery
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  - id: alarm
+    version: 1
+    config:
+      values:
+        - key: "alarm.value"
+          enabledValues:
+            - off
+            - siren
+        - key: "{{enumCommands}}"
+          enabledValues:
+            - off
+            - siren
+  categories:
+  - name: SmokeDetector
+preferences:
+- title: "Max alarm duration (s)"
+  name: maxWarningDuration
+  description: "After how many seconds should the alarm turn off"
+  required: false
+  preferenceType: integer
+  definition:
+    minimum: 0
+    maximum: 65534
+    default: 240
+- preferenceId: tempOffset
+  explicit: true
+- title: "Temperature Sensitivity (°C)"
+  name: temperatureSensitivity
+  description: "Minimum change in temperature to report"
+  required: false
+  preferenceType: number
+  definition:
+    minimum: 0.1
+    maximum: 2.0
+    default: 1.0
