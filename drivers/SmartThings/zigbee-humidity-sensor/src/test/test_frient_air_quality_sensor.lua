@@ -84,7 +84,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -101,6 +102,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -117,12 +121,16 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
 test.register_coroutine_test(
   "Configure should configure all necessary attributes",
   function()
+    test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zigbee:__set_channel_ordering("relaxed")
 
@@ -191,7 +199,30 @@ test.register_coroutine_test(
 
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+    test.wait_for_events()
+
+    --refresh happens after configure
+    test.mock_time.advance_time(5)
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      cluster_base.read_manufacturer_specific_attribute(mock_device, Frient_VOCMeasurement.ID, Frient_VOCMeasurement.attributes.MeasuredValue.ID, Frient_VOCMeasurement.ManufacturerSpecificCode):to_endpoint(0x26)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      TemperatureMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(0x26)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      HumidityMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(0x26)
+    })
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+    })
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -210,6 +241,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 65 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -226,6 +260,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -259,7 +296,10 @@ test.register_coroutine_test(
                                            )
         })
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -287,7 +327,25 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Added handler should initialize VOC and air quality state",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.airQualitySensor.airQuality({ value = 0 })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.tvocHealthConcern.tvocHealthConcern({ value = "good" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.tvocMeasurement.tvocLevel({ value = 0, unit = "ppb" })))
+    test.wait_for_events()
+  end,
+  {
+     min_api_version = 19
   }
 )
 

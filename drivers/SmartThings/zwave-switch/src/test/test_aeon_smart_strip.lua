@@ -150,6 +150,9 @@ test.register_message_test(
           {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {6}})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -236,6 +239,9 @@ test.register_message_test(
           {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {6}})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -284,6 +290,9 @@ test.register_message_test(
           {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {3}})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -332,6 +341,9 @@ test.register_message_test(
           {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {4}})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -363,6 +375,9 @@ test.register_message_test(
       direction = "send",
       message = mock_metering_switch:generate_test_message("switch1", capabilities.energyMeter.energy({ value = 50.0, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -394,6 +409,9 @@ test.register_message_test(
       direction = "send",
       message = mock_metering_switch:generate_test_message("switch2", capabilities.energyMeter.energy({ value = 50.0, unit = "kVAh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -425,6 +443,9 @@ test.register_message_test(
       direction = "send",
       message = mock_metering_switch:generate_test_message("switch3", capabilities.powerMeter.power({ value = 50, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -492,6 +513,9 @@ test.register_message_test(
           {encap = zw.ENCAP.AUTO, src_channel = 0, dst_channels = {6}})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -523,6 +547,9 @@ test.register_message_test(
       direction = "send",
       message = mock_metering_switch:generate_test_message("main", capabilities.powerMeter.power({ value = 50, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -592,7 +619,10 @@ test.register_coroutine_test(
           Configuration:Set({parameter_number = 112, size = 4, configuration_value = 90})
       ))
       mock_metering_switch:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -723,7 +753,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -854,7 +887,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -942,7 +978,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1030,7 +1069,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1118,7 +1160,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1206,7 +1251,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

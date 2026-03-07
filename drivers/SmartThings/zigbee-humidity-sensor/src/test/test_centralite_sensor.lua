@@ -94,7 +94,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -183,7 +184,10 @@ test.register_coroutine_test(
       )
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 local function build_test_attr_report(device, value)
@@ -225,6 +229,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 75 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

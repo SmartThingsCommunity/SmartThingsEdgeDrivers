@@ -9,7 +9,7 @@ local st_utils = require "st.utils"
 local clusters = require "st.matter.clusters"
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("switch-color-level.yml"),
@@ -263,13 +263,19 @@ end
 test.register_message_test(
   "Test that Color Temperature Light device does not switch profiles",
   {},
-  { test_init = test_init_color_temp }
+  {
+    test_init = test_init_color_temp,
+    min_api_version = 19
+  }
 )
 
 test.register_message_test(
   "Test that Extended Color Light device does not switch profiles",
   {},
-  { test_init = test_init_extended_color }
+  {
+    test_init = test_init_extended_color,
+    min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -299,6 +305,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.On(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -329,6 +338,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -410,6 +422,9 @@ test.register_message_test(
       }
     },
 
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -437,6 +452,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -451,7 +469,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send(
       {
         mock_device_no_hue_sat.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device_no_hue_sat, 1, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     )
     test.socket.matter:__queue_receive(
@@ -483,7 +501,10 @@ test.register_coroutine_test(
       )
     )
   end,
-  { test_init = test_init_no_hue_sat }
+  {
+    test_init = test_init_no_hue_sat,
+    min_api_version = 19
+  }
 )
 
 local hue = math.floor((50 * 0xFE) / 100.0 + 0.5)
@@ -513,7 +534,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -566,6 +587,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -595,7 +619,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToHueAndSaturation(mock_device, 1, hue, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -648,6 +672,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "colorControl", capability_attr_id = "saturation" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -669,9 +696,12 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToHue(mock_device, 1, hue, 0, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -691,9 +721,12 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToSaturation(mock_device, 1, sat, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -713,7 +746,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -737,6 +770,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -766,7 +802,10 @@ test.register_coroutine_test(
       )
     )
   end,
-  { test_init = test_init_x_y_color_mode }
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -795,7 +834,10 @@ test.register_coroutine_test(
       )
     )
   end,
-  { test_init = test_init_x_y_color_mode }
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -824,7 +866,10 @@ test.register_coroutine_test(
       )
     )
   end,
-  { test_init = test_init_x_y_color_mode }
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -838,6 +883,9 @@ test.register_message_test(
         clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, 1, 0)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -865,6 +913,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -892,6 +943,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2800, maximum = 6000}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -945,6 +999,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperature(2800))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -985,7 +1042,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 165, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 165, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -1001,9 +1058,12 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 365, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, 1, 365, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1026,6 +1086,9 @@ test.register_message_test(
         clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 555)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1048,6 +1111,9 @@ test.register_message_test(
         clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_report_data(mock_device, 1, 1100)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1075,6 +1141,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 2, maximum = 4}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1097,6 +1166,9 @@ test.register_message_test(
         clusters.LevelControl.attributes.MaxLevel:build_test_report_data(mock_device, 1, 10)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1152,7 +1224,10 @@ test.register_coroutine_test(
       }
     )
   end,
-  { test_init = test_init_x_y_color_mode }
+  {
+    test_init = test_init_x_y_color_mode,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1194,7 +1269,10 @@ test.register_coroutine_test(
         "main", capabilities.colorControl.saturation(72)
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -1209,7 +1287,10 @@ test.register_coroutine_test(
     end
     test.socket.matter:__expect_send({mock_device.id, read_request})
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

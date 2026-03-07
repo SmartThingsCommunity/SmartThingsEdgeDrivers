@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -359,7 +349,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
     mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {}}} })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -390,7 +383,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
     mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"batteryLevel"}}} })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -422,7 +418,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
     mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"battery"}}} })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -453,7 +452,10 @@ test.register_coroutine_test(
     )
     mock_device_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {}}} })
   end,
-  { test_init = test_init_unlatch }
+  {
+    test_init = test_init_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -485,7 +487,10 @@ test.register_coroutine_test(
     )
     mock_device_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"batteryLevel"}}} })
   end,
-  { test_init = test_init_unlatch }
+  {
+    test_init = test_init_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -518,7 +523,10 @@ test.register_coroutine_test(
     )
     mock_device_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"battery"}}} })
   end,
-  { test_init = test_init_unlatch }
+  {
+    test_init = test_init_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -551,7 +559,10 @@ test.register_coroutine_test(
     )
     mock_device_user_pin:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "battery"}}} })
   end,
-  { test_init = test_init_user_pin }
+  {
+    test_init = test_init_user_pin,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -585,7 +596,10 @@ test.register_coroutine_test(
     mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}}} })
 
   end,
-  { test_init = test_init_user_pin_schedule_unlatch }
+  {
+    test_init = test_init_user_pin_schedule_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -648,7 +662,10 @@ test.register_coroutine_test(
       mock_device_modular:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
     )
   end,
-  { test_init = test_init_modular }
+  {
+    test_init = test_init_modular,
+    min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

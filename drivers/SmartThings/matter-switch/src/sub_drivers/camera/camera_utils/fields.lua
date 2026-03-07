@@ -10,6 +10,8 @@ CameraFields.MAX_FRAMES_PER_SECOND = "__max_frames_per_second"
 CameraFields.MAX_VOLUME_LEVEL = "__max_volume_level"
 CameraFields.MIN_VOLUME_LEVEL = "__min_volume_level"
 CameraFields.SUPPORTED_RESOLUTIONS = "__supported_resolutions"
+CameraFields.MAX_RESOLUTION = "__max_resolution"
+CameraFields.MIN_RESOLUTION = "__min_resolution"
 CameraFields.TRIGGERED_ZONES = "__triggered_zones"
 CameraFields.VIEWPORT = "__viewport"
 

@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -56,7 +45,10 @@ test.register_coroutine_test(
     function()
       test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
       expect_reload_all_codes_messages()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -95,7 +87,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     expect_reload_all_codes_messages()
 
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -142,7 +137,10 @@ test.register_coroutine_test(
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false }})))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -189,7 +187,10 @@ test.register_coroutine_test(
       )
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["0"] = "test"}), { visibility = { displayed = false }})))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 
@@ -215,6 +216,9 @@ test.register_message_test(
         message = mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("0 unset",
                                                                                        { data = { codeName = "Code 0" }, state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -270,7 +274,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
       test.socket.capability:__expect_send(mock_device:generate_test_message("main",
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -312,7 +319,10 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockCodes.codeChanged("1 failed", { state_change = true  })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -327,7 +337,113 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+    "Setting a user code for a slot that is empty should indicate failure and unset",
+    function()
+      test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
+      test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "1234", "test" } } })
+      test.socket.zigbee:__expect_send(
+          {
+            mock_device.id,
+            DoorLock.server.commands.SetPINCode(mock_device,
+                                                   1,
+                                                   DoorLockUserStatus.OCCUPIED_ENABLED,
+                                                   DoorLockUserType.UNRESTRICTED,
+                                                   "1234"
+            )
+          }
+      )
+      test.wait_for_events()
+      test.mock_time.advance_time(4)
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.server.commands.GetPINCode(mock_device, 1) })
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive(
+          {
+            mock_device.id,
+            DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+                mock_device,
+                1,
+                DoorLockUserStatus.OCCUPIED_DISABLED,
+                DoorLockUserType.UNRESTRICTED,
+                ""
+            )
+          }
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+          capabilities.lockCodes.codeChanged("1 failed", { state_change = true })))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+          capabilities.lockCodes.codeChanged("1 is not set", { state_change = true })))
+    end,
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_coroutine_test(
+    "Pin response for already-set slot without pending operation should use changed change type",
+    function()
+      init_code_slot(1, "initialName", mock_device)
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}), { visibility = { displayed = false }})))
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive(
+          {
+            mock_device.id,
+            DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+                mock_device,
+                1,
+                DoorLockUserStatus.OCCUPIED_ENABLED,
+                DoorLockUserType.UNRESTRICTED,
+                "1234"
+            )
+          }
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+          capabilities.lockCodes.codeChanged("1 changed", { data = { codeName = "initialName" }, state_change = true })))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}), { visibility = { displayed = false }})))
+    end,
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_coroutine_test(
+    "Pin response for already-set slot that is now empty should delete the code",
+    function()
+      init_code_slot(1, "initialName", mock_device)
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}), { visibility = { displayed = false }})))
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive(
+          {
+            mock_device.id,
+            DoorLock.client.commands.GetPINCodeResponse.build_test_rx(
+                mock_device,
+                1,
+                DoorLockUserStatus.OCCUPIED_DISABLED,
+                DoorLockUserType.UNRESTRICTED,
+                ""
+            )
+          }
+      )
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+          capabilities.lockCodes.codeChanged("1 deleted", { data = { codeName = "initialName" }, state_change = true })))
+      test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({}), { visibility = { displayed = false }})))
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

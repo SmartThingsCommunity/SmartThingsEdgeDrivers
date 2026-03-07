@@ -26,6 +26,7 @@ local zb_const = require "st.zigbee.constants"
 local zcl_messages = require "st.zigbee.zcl"
 local data_types = require "st.zigbee.data_types"
 local Status = require "st.zigbee.generated.types.ZclStatus"
+local constants = require "st.zigbee.constants"
 
 
 local mock_device = test.mock_device.build_test_zigbee_device(
@@ -97,6 +98,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -139,7 +143,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 2.0, unit = "kWh"}))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -200,7 +207,10 @@ test.register_coroutine_test(
                                         ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
                                       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -225,8 +235,50 @@ test.register_coroutine_test(
     {
       test_init = function()
         -- no op to override auto device add on startup
-      end
+      end,
+      min_api_version = 19
     }
+)
+test.register_coroutine_test(
+  "energy handler resets shinasystems offset when reading is below stored offset",
+  function()
+    -- divisor=1000; raw_value=100 -> 0.1 kWh; offset=0.5 -> 0.1 < 0.5 triggers reset
+    mock_device:set_field(constants.ENERGY_METER_OFFSET, 0.5, {persist = true})
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 100)
+    })
+    -- offset resets to 0; raw_value_kilowatts = 0.1; no powerConsumptionReport (delta_tick < 15 min)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 0.1, unit = "kWh"}))
+    )
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "shinasystems energy handler resets save tick when timer has slipped beyond 30 minutes",
+  function()
+    -- Advance time > 30 min so that curr_save_tick + 15*60 < os.time() is true
+    test.timer.__create_and_queue_test_time_advance_timer(40*60, "oneshot")
+    test.mock_time.advance_time(40*60)
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 1500)
+    })
+    -- raw_value=1500, divisor=1000, kWh=1.5, watts=1500.0; first report: deltaEnergy=0.0
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({energy = 1500.0, deltaEnergy = 0.0}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.5, unit = "kWh"}))
+    )
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 

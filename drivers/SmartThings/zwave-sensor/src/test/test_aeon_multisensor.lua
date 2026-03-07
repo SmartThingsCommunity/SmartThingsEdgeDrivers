@@ -15,7 +15,9 @@
 local test = require "integration_test"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
+local capabilities = require "st.capabilities"
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
+local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 5 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
@@ -89,7 +91,35 @@ test.register_coroutine_test(
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.RELATIVE_HUMIDITY})
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_message_test(
+  "Notification HOME_SECURITY MOTION_DETECTION should be handled as motion active",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+          notification_type = Notification.notification_type.HOME_SECURITY,
+          event = Notification.event.home_security.MOTION_DETECTION
+        }))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
+    }
+  },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

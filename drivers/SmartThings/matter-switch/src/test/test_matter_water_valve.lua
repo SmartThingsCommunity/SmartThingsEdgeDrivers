@@ -85,6 +85,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Open(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -107,6 +110,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Close(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -129,6 +135,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Open(mock_device, 1, nil, 25)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -151,6 +160,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Close(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -170,6 +182,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.closed())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -189,6 +204,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -208,6 +226,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -227,6 +248,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.level.level(50))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
