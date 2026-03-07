@@ -1,16 +1,6 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 test.set_rpc_version(0)
@@ -301,7 +291,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
     mock_device:expect_metadata_update({ profile = "lock" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -329,7 +322,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
     mock_device:expect_metadata_update({ profile = "lock-batteryLevel" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -358,7 +354,10 @@ test.register_coroutine_test(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
     )
     mock_device:expect_metadata_update({ profile = "lock-battery" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -386,7 +385,10 @@ test.register_coroutine_test(
     )
     mock_device_unlatch:expect_metadata_update({ profile = "lock-unlatch" })
   end,
-  { test_init = test_init_unlatch }
+  {
+    test_init = test_init_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -415,7 +417,10 @@ test.register_coroutine_test(
     )
     mock_device_unlatch:expect_metadata_update({ profile = "lock-unlatch-batteryLevel" })
   end,
-  { test_init = test_init_unlatch }
+  {
+    test_init = test_init_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -445,7 +450,10 @@ test.register_coroutine_test(
     )
     mock_device_unlatch:expect_metadata_update({ profile = "lock-unlatch-battery" })
   end,
-  { test_init = test_init_unlatch }
+  {
+    test_init = test_init_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -473,7 +481,10 @@ test.register_coroutine_test(
     )
     mock_device_user_pin:expect_metadata_update({ profile = "lock-user-pin" })
   end,
-  { test_init = test_init_user_pin }
+  {
+    test_init = test_init_user_pin,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -502,7 +513,10 @@ test.register_coroutine_test(
     )
     mock_device_user_pin:expect_metadata_update({ profile = "lock-user-pin-batteryLevel" })
   end,
-  { test_init = test_init_user_pin }
+  {
+    test_init = test_init_user_pin,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -532,7 +546,10 @@ test.register_coroutine_test(
     )
     mock_device_user_pin:expect_metadata_update({ profile = "lock-user-pin-battery" })
   end,
-  { test_init = test_init_user_pin }
+  {
+    test_init = test_init_user_pin,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -560,7 +577,10 @@ test.register_coroutine_test(
     )
     mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-user-pin-schedule-unlatch" })
   end,
-  { test_init = test_init_user_pin_schedule_unlatch }
+  {
+    test_init = test_init_user_pin_schedule_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -589,7 +609,10 @@ test.register_coroutine_test(
     )
     mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-user-pin-schedule-unlatch-batteryLevel" })
   end,
-  { test_init = test_init_user_pin_schedule_unlatch }
+  {
+    test_init = test_init_user_pin_schedule_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -619,7 +642,10 @@ test.register_coroutine_test(
     )
     mock_device_user_pin_schedule_unlatch:expect_metadata_update({ profile = "lock-user-pin-schedule-unlatch-battery" })
   end,
-  { test_init = test_init_user_pin_schedule_unlatch }
+  {
+    test_init = test_init_user_pin_schedule_unlatch,
+    min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

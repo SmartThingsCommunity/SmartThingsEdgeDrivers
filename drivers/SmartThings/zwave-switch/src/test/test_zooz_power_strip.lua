@@ -83,6 +83,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -119,6 +122,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -155,6 +161,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -191,6 +200,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -227,6 +239,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -263,6 +278,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -299,6 +317,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -336,6 +357,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -373,6 +397,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -410,6 +437,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -451,6 +481,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -491,6 +524,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -531,6 +567,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -571,6 +610,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -611,6 +653,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -651,6 +696,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -691,6 +739,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -731,6 +782,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -771,6 +825,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -811,6 +868,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -870,7 +930,10 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(mock_device:generate_test_message("switch1", capabilities.switch.switch.off()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -947,7 +1010,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1025,7 +1089,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1060,7 +1125,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1095,7 +1161,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1130,7 +1197,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1165,7 +1233,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1200,7 +1269,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1235,7 +1305,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1270,7 +1341,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1305,7 +1377,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1340,7 +1413,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -1375,7 +1449,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 

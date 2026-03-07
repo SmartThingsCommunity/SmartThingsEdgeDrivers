@@ -77,7 +77,11 @@ do
         })
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
