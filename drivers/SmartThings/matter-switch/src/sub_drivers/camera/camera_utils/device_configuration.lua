@@ -72,7 +72,9 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
           table.insert(main_component_capabilities, capabilities.localMediaStorage.ID)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.AUDIO) then
-          table.insert(main_component_capabilities, capabilities.audioRecording.ID)
+          if switch_utils.find_cluster_on_ep(camera_ep, clusters.PushAvStreamTransport.ID, "SERVER") then
+            table.insert(main_component_capabilities, capabilities.audioRecording.ID)
+          end
           table.insert(microphone_component_capabilities, capabilities.audioMute.ID)
           table.insert(microphone_component_capabilities, capabilities.audioVolume.ID)
         end
