@@ -87,7 +87,7 @@ local function notification_report_handler(self, device, cmd)
     if cmd.args.event == Notification.event.power_management.AC_MAINS_DISCONNECTED then
       event = PowerSource.powerSource.battery()
     elseif cmd.args.event == Notification.event.power_management.AC_MAINS_RE_CONNECTED then
-      event = PowerSource.powerSource.mains()
+      event = PowerSource.powerSource.dc()
     elseif cmd.args.event == Notification.event.power_management.POWER_HAS_BEEN_APPLIED then
       device:send(Battery:Get({}))
     end

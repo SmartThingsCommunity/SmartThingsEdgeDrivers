@@ -19,6 +19,12 @@ components:
   - id: tamperAlert
     version: 1
   - id: powerSource
+    config:
+        values:
+          - key: "powerSource.value"
+            enabledValues:
+              - battery
+              - dc
     version: 1
   - id: threeAxis
     version: 1
