@@ -128,29 +128,29 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         end
       end
     end
-	  if #doorbell_endpoints > 0 then
-	    table.insert(doorbell_component_capabilities, capabilities.button.ID)
-	    CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1], camera_fields.profile_components.doorbell)
-	  end
-	  if status_light_enabled_present then
-	    table.insert(status_led_component_capabilities, capabilities.switch.ID)
-	  end
-	  if status_light_brightness_present then
-	    table.insert(status_led_component_capabilities, capabilities.mode.ID)
-	  end
+    if #doorbell_endpoints > 0 then
+      table.insert(doorbell_component_capabilities, capabilities.button.ID)
+      CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1], camera_fields.profile_components.doorbell)
+    end
+    if status_light_enabled_present then
+      table.insert(status_led_component_capabilities, capabilities.switch.ID)
+    end
+    if status_light_brightness_present then
+      table.insert(status_led_component_capabilities, capabilities.mode.ID)
+    end
 
-	  if #status_led_component_capabilities > 0 then
-	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})
-	  end
-	  if #speaker_component_capabilities > 0 then
-	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.speaker, speaker_component_capabilities})
-	  end
-	  if #microphone_component_capabilities > 0 then
-	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.microphone, microphone_component_capabilities})
-	  end
-	  if #doorbell_component_capabilities > 0 then
-	    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.doorbell, doorbell_component_capabilities})
-	  end
+    if #status_led_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})
+    end
+    if #speaker_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.speaker, speaker_component_capabilities})
+    end
+    if #microphone_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.microphone, microphone_component_capabilities})
+    end
+    if #doorbell_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.doorbell, doorbell_component_capabilities})
+    end
   elseif #chime_endpoints > 0 then
     profile = "chime"
   elseif #doorbell_endpoints > 0 then
