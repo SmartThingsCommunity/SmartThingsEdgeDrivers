@@ -156,4 +156,4 @@ deviceConfig:
       dpUri: "plugin://com.samsung.android.plugin.camera"
 metadata:
   mnmn: SmartThingsEdge
-  vid: matter-camera
+  vid: matter-av-doorbell

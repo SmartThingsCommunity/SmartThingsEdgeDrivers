@@ -119,9 +119,15 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         table.insert(main_component_capabilities, capabilities.webrtc.ID)
       end
     end
-	  if #device:get_endpoints(clusters.Chime.ID, {cluster_type = "SERVER"}) > 0 then
-	    table.insert(main_component_capabilities, capabilities.sounds.ID)
-	  end
+    if #chime_endpoints > 0 then
+      local chime_ep_info = switch_utils.get_endpoint_info(device, chime_endpoints[1])
+      for _, cluster in pairs(chime_ep_info.clusters or {}) do
+        if cluster.cluster_id == clusters.Chime.ID and has_server_cluster_type(cluster) then
+          table.insert(main_component_capabilities, capabilities.sounds.ID)
+          break
+        end
+      end
+    end
 	  if #doorbell_endpoints > 0 then
 	    table.insert(doorbell_component_capabilities, capabilities.button.ID)
 	    CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1], camera_fields.profile_components.doorbell)
