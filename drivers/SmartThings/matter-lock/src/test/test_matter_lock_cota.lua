@@ -113,6 +113,17 @@ local function expect_kick_off_cota_process(device)
       ),
     }
   )
+  test.socket.matter:__queue_receive(
+    {
+      mock_device.id,
+      DoorLock.attributes.MaxPINCodeLength:build_test_report_data(
+        mock_device, 1, DoorLock.attributes.MaxPINCodeLength(8)
+      ),
+    }
+  )
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(8, {visibility = {displayed = false}}))
+  )
   test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
   test.mock_time.advance_time(1) --trigger remote pin handling
   test.wait_for_events()
