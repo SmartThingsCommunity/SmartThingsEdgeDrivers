@@ -57,9 +57,10 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
   local chime_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CHIME)
   local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL)
+  local av_stream_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
 
   if #camera_endpoints > 0 then
-    local camera_ep = switch_utils.get_endpoint_info(device, camera_endpoints[1])
+    local camera_ep = switch_utils.get_endpoint_info(device, av_stream_ep_ids[1] or camera_endpoints[1])
     for _, ep_cluster in pairs(camera_ep.clusters or {}) do
       if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID and has_server_cluster_type(ep_cluster) then
         local clus_has_feature = function(feature_bitmap)
