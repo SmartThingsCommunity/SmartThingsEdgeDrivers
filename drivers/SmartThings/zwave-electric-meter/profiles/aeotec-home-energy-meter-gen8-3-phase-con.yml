@@ -12,7 +12,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: clamp1
   label: "Clamp 1"
   capabilities:
@@ -21,7 +21,7 @@ components:
   - id: energyMeter
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: clamp3
   label: "Clamp 2"
   capabilities:
@@ -30,7 +30,7 @@ components:
   - id: energyMeter
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: clamp5
   label: "Clamp 3"
   capabilities:
@@ -39,7 +39,7 @@ components:
   - id: energyMeter
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 preferences:
   - name: thresholdCheck
     title: "3. Threshold Check Enable/Disable"

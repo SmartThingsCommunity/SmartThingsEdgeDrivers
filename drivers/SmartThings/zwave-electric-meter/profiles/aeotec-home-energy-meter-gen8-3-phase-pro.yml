@@ -10,7 +10,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: clamp2
   label: "Clamp 1"
   capabilities:
@@ -19,7 +19,7 @@ components:
   - id: energyMeter
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: clamp4
   label: "Clamp 2"
   capabilities:
@@ -28,7 +28,7 @@ components:
   - id: energyMeter
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 - id: clamp6
   label: "Clamp 3"
   capabilities:
@@ -37,4 +37,4 @@ components:
   - id: energyMeter
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
