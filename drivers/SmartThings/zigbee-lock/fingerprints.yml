@@ -212,6 +212,11 @@ zigbeeManufacturer:
     manufacturer: Zhenchen
     model: SG20
     deviceProfileName: lock-battery
+  - id: GELUBU/G30
+    deviceLabel: GELUBU Door Lock G30
+    manufacturer: GELUBU
+    model: G30
+    deviceProfileName: lock-battery
 zigbeeGeneric:
   - id: "genericLock"
     deviceLabel: Zigbee Lock
