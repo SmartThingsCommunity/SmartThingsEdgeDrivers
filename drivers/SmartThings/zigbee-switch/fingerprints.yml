@@ -615,6 +615,11 @@ zigbeeManufacturer:
     manufacturer: ubisys
     model: "1151"
     deviceProfileName: switch-power
+  - id: "ubisys/D1-R (5603)"
+    deviceLabel: Dimmer D1-R
+    manufacturer: ubisys
+    model: "D1-R (5603)"
+    deviceProfileName: switch-level-power
   - id: "Megaman/AD-DimmableLight3001"
     deviceLabel: INGENIUM Light
     manufacturer: Megaman

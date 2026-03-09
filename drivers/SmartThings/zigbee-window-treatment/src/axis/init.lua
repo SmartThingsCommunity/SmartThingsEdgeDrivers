@@ -1,16 +1,7 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 
 local capabilities = require "st.capabilities"
 local device_management = require "st.zigbee.device_management"
@@ -26,12 +17,6 @@ local WindowCovering = zcl_clusters.WindowCovering
 local SOFTWARE_VERSION = "software_version"
 local DEFAULT_LEVEL = 0
 
-local is_zigbee_window_shade = function(opts, driver, device)
-  if device:get_manufacturer() == "AXIS" then
-    return true
-  end
-  return false
-end
 
 -- Commands
 local function window_shade_set_level(device, command, level)
@@ -151,8 +136,8 @@ local axis_handler = {
     added = device_added,
     doConfigure = do_configure,
   },
-  sub_drivers = { require("axis.axis_version") },
-  can_handle = is_zigbee_window_shade,
+  sub_drivers = require("axis.sub_drivers"),
+  can_handle = require("axis.can_handle"),
 }
 
 return axis_handler

@@ -294,7 +294,10 @@ test.register_coroutine_test(
     )
     mock_device_configure:expect_metadata_update({ profile = "room-air-conditioner" })
   end,
-  { test_init = test_init_configure }
+  {
+    test_init = test_init_configure,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -312,7 +315,10 @@ test.register_coroutine_test(
     )
     mock_device_nostate:expect_metadata_update({ profile = "room-air-conditioner-fan-heating-cooling-nostate" })
   end,
-  { test_init = test_init_nostate }
+  {
+    test_init = test_init_nostate,
+    min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -347,6 +353,9 @@ test.register_message_test(
         clusters.FanControl.attributes.PercentSetting:write(mock_device, 1, 50)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -400,6 +409,9 @@ test.register_message_test(
         clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -445,6 +457,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.fanMode("high"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -478,7 +493,100 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.airConditionerFanMode.supportedAcFanModes({"off", "low", "medium", "high", "auto"}, {visibility={displayed=false}}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
+
+local ControlSequenceOfOperation = clusters.Thermostat.attributes.ControlSequenceOfOperation
+test.register_message_test(
+  "Room AC control sequence reports should generate correct messages",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        ControlSequenceOfOperation:build_test_report_data(mock_device, 1, ControlSequenceOfOperation.COOLING_AND_HEATING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"cool", "heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        ControlSequenceOfOperation:build_test_report_data(mock_device, 1, ControlSequenceOfOperation.HEATING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"heat"}, {visibility={displayed=false}}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        ControlSequenceOfOperation:build_test_report_data(mock_device, 1, ControlSequenceOfOperation.COOLING_WITH_REHEAT)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"cool"}, {visibility={displayed=false}}))
+    },
+  },
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_message_test(
+  "Additional mode reports should extend the supported modes",
+  {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.ControlSequenceOfOperation:build_test_report_data(mock_device, 1, 5)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"cool", "heat"}, {visibility={displayed=false}}))
+    },
+		{
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.Thermostat.server.attributes.SystemMode:build_test_report_data(mock_device, 1, 5)
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"cool", "heat", "emergency heat"}, {visibility={displayed=false}}))
+    },
+		{
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat())
+    }
+  },
+  {
+     min_api_version = 19
+  }
+)
+
 
 test.run_registered_tests()

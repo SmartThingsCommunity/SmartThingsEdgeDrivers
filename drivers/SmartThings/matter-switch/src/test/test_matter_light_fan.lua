@@ -9,7 +9,7 @@ local version = require "version"
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device_ep1 = 1
 local mock_device_ep2 = 2
@@ -159,7 +159,10 @@ test.register_coroutine_test(
         "main", capabilities.switch.switch.on()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -178,7 +181,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep1, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep1, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -202,6 +205,9 @@ test.register_message_test(
       direction = "send",
       message = mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -248,6 +254,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("medium"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -281,6 +290,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "medium", "high", "auto"}, {visibility={displayed=false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -303,6 +315,9 @@ test.register_message_test(
         clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.LOW)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -325,6 +340,9 @@ test.register_message_test(
         clusters.FanControl.attributes.PercentSetting:write(mock_device, mock_device_ep2, 64)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

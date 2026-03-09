@@ -83,7 +83,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -116,7 +117,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -139,7 +141,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -162,7 +165,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -188,7 +192,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -257,7 +262,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -288,7 +294,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -324,7 +331,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm32_sn:generate_test_message("button1", capabilities.button.button.pushed_2x({ state_change = true }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test illuminance measurement
@@ -344,6 +354,9 @@ test.register_message_test(
       direction = "send",
       message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({value = 13}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -364,6 +377,9 @@ test.register_message_test(
       direction = "send",
       message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.motionSensor.motion.active())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -384,6 +400,9 @@ test.register_message_test(
       direction = "send",
       message = mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -404,7 +423,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.powerMeter.power({value = 200.0, unit = "W"}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test energy meter
@@ -421,7 +443,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm32_sn:generate_test_message("main", capabilities.energyMeter.energy({value = 0.212, unit = "kWh"}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test energy meter reset command
@@ -468,7 +493,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -521,7 +547,11 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm32_sn.id, clusters.IlluminanceMeasurement.attributes.MeasuredValue:configure_reporting(mock_inovelli_vzm32_sn, 10, 600, 11761) })
 
     mock_inovelli_vzm32_sn:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
+

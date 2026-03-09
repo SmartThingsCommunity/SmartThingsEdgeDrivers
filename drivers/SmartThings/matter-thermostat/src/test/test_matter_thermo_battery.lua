@@ -105,7 +105,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ profile = "thermostat-cooling-only-nostate" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -124,7 +127,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ profile = "thermostat-cooling-only-nostate-batteryLevel" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -136,7 +142,10 @@ test.register_coroutine_test(
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(10)})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

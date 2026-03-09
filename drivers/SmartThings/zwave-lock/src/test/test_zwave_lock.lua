@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -82,7 +72,10 @@ test.register_coroutine_test(
       )
     )
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -92,7 +85,10 @@ test.register_coroutine_test(
                                         DoorLock:OperationReport({door_lock_mode = DoorLock.door_lock_mode.DOOR_SECURED})
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.locked()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -108,6 +104,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -129,6 +128,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -159,7 +161,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -182,6 +185,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -196,7 +202,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(4.2)
     test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -212,6 +221,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(16, { visibility = { displayed = false } }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -220,7 +232,10 @@ test.register_coroutine_test(
   function()
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {} } })
     expect_reload_all_codes_messages()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -236,6 +251,9 @@ test.register_message_test(
       direction = "send",
       message = UserCode:Get({user_identifier = 1}):build_test_tx(mock_device.id)
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -249,7 +267,10 @@ test.register_coroutine_test(
 
     test.mock_time.advance_time(4.2)
     test.socket.zwave:__expect_send(UserCode:Get( {user_identifier = 1}):build_test_tx(mock_device.id))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -266,7 +287,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
             capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 local function init_code_slot(slot_number, name, device)
@@ -288,7 +312,10 @@ test.register_coroutine_test(
     ))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed",
             {state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -312,7 +339,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zwave:__expect_send(UserCode:Get({user_identifier = 4}):build_test_tx(mock_device.id))
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -334,6 +364,9 @@ test.register_message_test(
               capabilities.lockCodes.codeChanged("0 set", { data = { codeName = "Master Code"}, state_change = true  })
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -362,7 +395,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -384,7 +418,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
             capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -424,7 +461,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -446,7 +486,10 @@ test.register_coroutine_test(
               capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Superb Owl" } })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -468,7 +511,10 @@ test.register_coroutine_test(
               capabilities.lock.lock.unlocked({ data = { method = "keypad", codeId = "1", codeName = "Code 1" } })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -496,7 +542,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
             capabilities.lockCodes.scanCodes("Complete", { visibility = { displayed = false } })
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -728,6 +777,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -750,7 +802,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
             capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true  }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -770,7 +825,10 @@ test.register_coroutine_test(
       )
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
