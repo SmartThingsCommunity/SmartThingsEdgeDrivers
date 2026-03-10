@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.matter.clusters"
-local switch_fields = require "switch_utils.fields"
 
 local CameraFields = {}
 
