@@ -182,14 +182,35 @@ end
 
 function CameraAttributeHandlers.allocated_video_streams_handler(driver, device, ib, response)
   if not ib.data.elements then return end
+
+  local dptz_viewports = device:get_field(camera_fields.DPTZ_VIEWPORTS) or {}
   local streams = {}
+
+  local previous_streams = device:get_latest_state(
+    camera_fields.profile_components.main,
+    capabilities.videoStreamSettings.ID,
+    capabilities.videoStreamSettings.videoStreams.NAME
+  ) or {}
+
+  local previous_stream_labels = {}
+
+  for _, stream in pairs(previous_streams) do
+    previous_stream_labels[stream.streamId] = stream.data.label
+  end
+
   for i, v in ipairs(ib.data.elements) do
     local stream = v.elements
+    local stream_id = stream.video_stream_id.value
+
+    -- Use label from existing capability state, if available
+    local capability_label = previous_stream_labels[stream_id]
+
     local video_stream = {
-      streamId = stream.video_stream_id.value,
+      streamId = stream_id,
       data = {
-        label = "Stream " .. i,
-        type = stream.stream_usage.value == clusters.Global.types.StreamUsageEnum.LIVE_VIEW and "liveStream" or "clipRecording",
+        label = capability_label or "Stream " .. i,
+        type = stream.stream_usage.value ==
+          clusters.Global.types.StreamUsageEnum.LIVE_VIEW and "liveStream" or "clipRecording",
         resolution = {
           width = stream.min_resolution.elements.width.value,
           height = stream.min_resolution.elements.height.value,
@@ -197,21 +218,31 @@ function CameraAttributeHandlers.allocated_video_streams_handler(driver, device,
         }
       }
     }
-    local viewport = device:get_field(camera_fields.VIEWPORT)
-    if viewport then
-      video_stream.data.viewport = viewport
+
+    if dptz_viewports[stream_id] ~= nil then
+      video_stream.data.viewport = dptz_viewports[stream_id]
+    else
+      video_stream.data.viewport = {
+        upperLeftVertex = { x = 0, y = 0 },
+        lowerRightVertex = {
+          x = stream.min_resolution.elements.width.value,
+          y = stream.min_resolution.elements.height.value
+        }
+      }
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
+
+    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+      clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
       video_stream.data.watermark = stream.watermark_enabled.value and "enabled" or "disabled"
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
+    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+      clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
       video_stream.data.onScreenDisplay = stream.osd_enabled.value and "enabled" or "disabled"
     end
     table.insert(streams, video_stream)
   end
-  if #streams > 0 then
-    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(streams))
-  end
+
+  device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(streams))
 end
 
 function CameraAttributeHandlers.viewport_handler(driver, device, ib, response)
@@ -219,6 +250,45 @@ function CameraAttributeHandlers.viewport_handler(driver, device, ib, response)
     upperLeftVertex = { x = ib.data.elements.x1.value, y = ib.data.elements.y1.value },
     lowerRightVertex = { x = ib.data.elements.x2.value, y = ib.data.elements.y2.value },
   }))
+end
+
+function CameraAttributeHandlers.dptz_streams_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
+
+  local dptz_viewports = {}
+  for _, v in ipairs(ib.data.elements) do
+    local dptz_struct = v.elements
+    local stream_id = dptz_struct.video_stream_id.value
+    local viewport = dptz_struct.viewport.elements
+
+    dptz_viewports[stream_id] = {
+      upperLeftVertex = { x = viewport.x1.value, y = viewport.y1.value },
+      lowerRightVertex = { x = viewport.x2.value, y = viewport.y2.value }
+    }
+  end
+
+  device:set_field(camera_fields.DPTZ_VIEWPORTS, dptz_viewports)
+
+  local current_streams = device:get_latest_state(
+    camera_fields.profile_components.main,
+    capabilities.videoStreamSettings.ID,
+    capabilities.videoStreamSettings.videoStreams.NAME
+  ) or {}
+  local updated_streams = {}
+  for _, stream in pairs(current_streams) do
+    local updated_stream = {
+      streamId = stream.streamId,
+      data = stream.data
+    }
+    if dptz_viewports[stream.streamId] ~= nil then
+      updated_stream.data.viewport = dptz_viewports[stream.streamId]
+    end
+    table.insert(updated_streams, updated_stream)
+  end
+
+  if #updated_streams > 0 then
+    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(updated_streams))
+  end
 end
 
 function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, response)
