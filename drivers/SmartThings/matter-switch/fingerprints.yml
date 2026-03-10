@@ -753,6 +753,17 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6094
     deviceProfileName: light-color-level
+# Hager
+  - id: "4741/8"
+    deviceLabel: Hager matter 2 buttons (battery)
+    vendorId: 0x1285
+    productId: 0x0008
+    deviceProfileName: 2-button-batteryLevel
+  - id: "4741/9"
+    deviceLabel: Hager matter 4 buttons (battery)
+    vendorId: 0x1285
+    productId: 0x0009
+    deviceProfileName: 4-button-batteryLevel
 # Hue
   - id: "4107/2049"
     deviceLabel: Hue W 1600 A21 E26 1P NAM
