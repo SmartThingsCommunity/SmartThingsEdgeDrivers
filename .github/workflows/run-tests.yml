@@ -17,7 +17,7 @@ jobs:
     needs: [ get-versions ]
     strategy:
       matrix:
-        version: ${{ fromJSON(needs.setup.outputs.versions) }}
+        version: ${{ fromJSON(needs.define-versions.outputs.versions) }}
       max-parallel: 1
       fail-fast: false
 
@@ -73,7 +73,7 @@ jobs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
     strategy:
       matrix:
-        version: ${{ fromJSON(needs.setup.outputs.versions) }}
+        version: ${{ fromJSON(needs.define-versions.outputs.versions) }}
       fail-fast: false
     steps:
       - name: Make lua_libs_${{ matrix.version }} directory
@@ -123,7 +123,7 @@ jobs:
       [ get-versions, get-latest-release-artifact, get-dev-artifacts ]
     strategy:
       matrix:
-        version: ${{ fromJSON(needs.setup.outputs.versions) }}
+        version: ${{ fromJSON(needs.define-versions.outputs.versions) }}
       fail-fast: false
     
     if: ${{ always() && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure') }}
