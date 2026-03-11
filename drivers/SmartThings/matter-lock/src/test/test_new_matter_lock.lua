@@ -1309,7 +1309,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
@@ -1397,7 +1397,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
@@ -1450,7 +1450,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
@@ -1510,7 +1510,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
