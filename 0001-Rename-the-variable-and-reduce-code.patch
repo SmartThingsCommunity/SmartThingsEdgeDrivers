@@ -1,0 +1,77 @@
+From f19da9191362d70a020ab6852233eb327c19f906 Mon Sep 17 00:00:00 2001
+From: Hunsup Jung <hunsup.jung@samsung.com>
+Date: Sat, 7 Mar 2026 15:36:45 +0900
+Subject: [PATCH] Rename the variable and reduce code
+
+Signed-off-by: Hunsup Jung <hunsup.jung@samsung.com>
+---
+ .../matter-lock/src/new-matter-lock/init.lua  | 25 +++++++++----------
+ 1 file changed, 12 insertions(+), 13 deletions(-)
+
+diff --git a/drivers/SmartThings/matter-lock/src/new-matter-lock/init.lua b/drivers/SmartThings/matter-lock/src/new-matter-lock/init.lua
+index d9b9c9f6..37a9493a 100644
+--- a/drivers/SmartThings/matter-lock/src/new-matter-lock/init.lua
++++ b/drivers/SmartThings/matter-lock/src/new-matter-lock/init.lua
+@@ -29,7 +29,8 @@ local PowerSource = clusters.PowerSource
+ 
+ local INITIAL_CREDENTIAL_INDEX = 1
+ local ALL_INDEX = 0xFFFE
+-local NAME_MAX_L = 10
++-- maximum as defined by the Matter specification
++local MAX_USER_NAME_LENGTH = 10
+ local MIN_EPOCH_S = 0
+ local MAX_EPOCH_S = 0xffffffff
+ local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
+@@ -1274,10 +1275,7 @@ local function handle_update_user(driver, device, command)
+   local cmdName = "updateUser"
+   local userIdx = command.args.userIndex
+   local userName = command.args.userName
+-  local userNameMatter = userName
+-  if #userNameMatter > NAME_MAX_L then
+-    userNameMatter = string.sub(userNameMatter, 1, NAME_MAX_L)
+-  end
++  local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
+   local userType = command.args.userType
+   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+   if userType == "guest" then
+@@ -1307,7 +1305,7 @@ local function handle_update_user(driver, device, command)
+   device:send(
+     DoorLock.server.commands.SetUser(
+       device, ep,
+-      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Operation Type: Add(0), Modify(2)
++      DoorLock.types.DataOperationTypeEnum.MODIFY,
+       userIdx,
+       userNameMatter,
+       nil, -- Unique ID
+@@ -1355,6 +1353,7 @@ local function get_user_response_handler(driver, device, ib, response)
+   -- Found available user index
+   if status == nil or status == DoorLock.types.UserStatusEnum.AVAILABLE then
+     local userName = device:get_field(lock_utils.USER_NAME)
++    local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
+     local userType = device:get_field(lock_utils.USER_TYPE)
+     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
+     if userType == "guest" then
+@@ -1368,13 +1367,13 @@ local function get_user_response_handler(driver, device, ib, response)
+     device:send(
+       DoorLock.server.commands.SetUser(
+         device, ep,
+-        DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
+-        userIdx,          -- User Index
+-        userName,         -- User Name
+-        nil,              -- Unique ID
+-        nil,              -- User Status
+-        userTypeMatter,   -- User Type
+-        nil               -- Credential Rule
++        DoorLock.types.DataOperationTypeEnum.ADD,
++        userIdx,
++        userNameMatter,
++        nil, -- Unique ID
++        nil, -- User Status
++        userTypeMatter,
++        nil  -- Credential Rule
+       )
+     )
+   elseif userIdx >= maxUser then -- There's no available user index
+-- 
+2.39.5 (Apple Git-154)
+
