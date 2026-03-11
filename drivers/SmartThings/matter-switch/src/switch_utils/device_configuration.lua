@@ -132,6 +132,9 @@ function ButtonDeviceConfiguration.update_button_profile(device, default_endpoin
   if switch_utils.get_product_override_field(device, "is_climate_sensor_w100") then
     profile_name = "3-button-battery-temperature-humidity"
   end
+  if switch_utils.get_product_override_field(device, "is_ikea_dual_button") then
+    profile_name = "ikea-2-button-battery"
+  end
   return profile_name
 end
 
@@ -238,6 +241,7 @@ function DeviceConfiguration.match_profile(driver, device)
   local fan_device_type_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_device_type_ep_ids > 0 then
     updated_profile, optional_component_capabilities = FanDeviceConfiguration.assign_profile_for_fan_ep(device, default_endpoint_id)
+    device:set_field(fields.MODULAR_PROFILE_UPDATED, true)
   end
 
   -- initialize the main device card with buttons if applicable

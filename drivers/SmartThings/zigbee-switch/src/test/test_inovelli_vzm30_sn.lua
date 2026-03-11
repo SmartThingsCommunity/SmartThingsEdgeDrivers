@@ -104,7 +104,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -142,7 +143,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -165,7 +167,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -188,7 +191,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -214,7 +218,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -283,7 +288,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -314,7 +320,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -350,7 +357,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm30_sn:generate_test_message("button1", capabilities.button.button.pushed_2x({ state_change = true }))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test temperature measurement
@@ -370,6 +380,9 @@ test.register_message_test(
       direction = "send",
       message = mock_inovelli_vzm30_sn:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 25.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -390,6 +403,9 @@ test.register_message_test(
       direction = "send",
       message = mock_inovelli_vzm30_sn:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity(65))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -409,7 +425,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm30_sn:generate_test_message("main", capabilities.powerMeter.power({value = 200.0, unit = "W"}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test energy meter
@@ -427,7 +446,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm30_sn:generate_test_message("main", capabilities.energyMeter.energy({value = 0.212, unit = "kWh"}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- Test energy meter reset command
@@ -474,7 +496,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -531,7 +554,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm30_sn.id, RelativeHumidity.attributes.MeasuredValue:configure_reporting(mock_inovelli_vzm30_sn, 30, 3600, 50) })
 
     mock_inovelli_vzm30_sn:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

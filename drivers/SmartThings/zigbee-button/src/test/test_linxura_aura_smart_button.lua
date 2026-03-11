@@ -55,7 +55,10 @@ test.register_coroutine_test(
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -71,7 +74,10 @@ test.register_coroutine_test(
         )
         test.wait_for_events()
       end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -87,7 +93,10 @@ test.register_coroutine_test(
           )
           test.wait_for_events()
         end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 
@@ -104,7 +113,10 @@ test.register_coroutine_test(
           )
           test.wait_for_events()
         end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 

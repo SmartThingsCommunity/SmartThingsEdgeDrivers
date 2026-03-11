@@ -1,6 +1,16 @@
--- Copyright 2022 SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0
-
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -56,6 +66,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -76,6 +89,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -100,7 +116,10 @@ test.register_coroutine_test(
       test.wait_for_events()
       test.mock_time.advance_time(10)
       test.socket.capability:__expect_send(mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -119,6 +138,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -139,6 +161,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -186,7 +211,10 @@ test.register_coroutine_test(
           mock_sensor,
           Battery:Get({})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

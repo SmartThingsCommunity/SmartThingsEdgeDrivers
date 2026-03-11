@@ -72,7 +72,9 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
           table.insert(main_component_capabilities, capabilities.localMediaStorage.ID)
         end
         if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.AUDIO) then
-          table.insert(main_component_capabilities, capabilities.audioRecording.ID)
+          if switch_utils.find_cluster_on_ep(camera_ep, clusters.PushAvStreamTransport.ID, "SERVER") then
+            table.insert(main_component_capabilities, capabilities.audioRecording.ID)
+          end
           table.insert(microphone_component_capabilities, capabilities.audioMute.ID)
           table.insert(microphone_component_capabilities, capabilities.audioVolume.ID)
         end
@@ -108,8 +110,7 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
         table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
       elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.motionSensor.ID)
-      elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) and
-        #device:get_endpoints(clusters.WebRTCTransportRequestor.ID, {cluster_type = "CLIENT"}) > 0 then
+      elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.webrtc.ID)
       end
     end

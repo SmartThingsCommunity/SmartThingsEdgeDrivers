@@ -1,6 +1,16 @@
--- Copyright 2022 SmartThings, Inc.
--- Licensed under the Apache License, Version 2.0
-
+-- Copyright 2022 SmartThings
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--     http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -106,7 +116,10 @@ test.register_coroutine_test(
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET})
       ))
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -154,7 +167,10 @@ test.register_coroutine_test(
       ))
 
 
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 test.register_coroutine_test(
     "Configuration value should be updated and device refreshed, when wakeup notification received",
@@ -223,7 +239,10 @@ test.register_coroutine_test(
           Configuration:Get({parameter_number = 9})
       ))
 
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -242,6 +261,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.ultravioletIndex.ultravioletIndex({value = 10}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -274,6 +296,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -306,6 +331,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -325,6 +353,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -346,7 +377,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -379,7 +413,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -400,7 +437,35 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_message_test(
+  "Notification HOME_SECURITY MOTION_DETECTION should be handled as motion active",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = {
+        mock_sensor.id,
+        zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+          notification_type = Notification.notification_type.HOME_SECURITY,
+          event = Notification.event.home_security.MOTION_DETECTION
+        }))
+      }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
+    }
+  },
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

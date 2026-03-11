@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
@@ -133,6 +136,7 @@ local function ikea_scroll_subscribe()
     clusters.Switch.server.events.MultiPressComplete,
   }
   local CLUSTER_SUBSCRIBE_LIST_SCROLL = {
+    clusters.Switch.events.InitialPress,
     clusters.Switch.server.events.MultiPressOngoing,
     clusters.Switch.server.events.MultiPressComplete,
   }
@@ -231,11 +235,30 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group3",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
 test.register_message_test(
   "Ikea Scroll Positive rotateAmount events on main are emitted correctly", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[1], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("main",
+        capabilities.knob.rotateAmount(6, {state_change = true}))
+    },
     {
       channel = "matter",
       direction = "receive",
@@ -250,7 +273,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(12, {state_change = true}))
+        capabilities.knob.rotateAmount(6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -283,6 +306,22 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[1], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("main",
+        capabilities.knob.rotateAmount(6, {state_change = true}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
         clusters.Switch.events.MultiPressOngoing:build_test_event_report(
           mock_ikea_scroll, ENDPOINTS_SCROLL[1], {current_number_of_presses_counted = 2, new_position = 2}
         )
@@ -292,7 +331,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(12, {state_change = true}))
+        capabilities.knob.rotateAmount(6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -320,11 +359,30 @@ test.register_message_test(
         )
       },
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
 test.register_message_test(
   "Ikea Scroll Negative rotateAmount events on main are emitted correctly", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[2], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("main",
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
+    },
     {
       channel = "matter",
       direction = "receive",
@@ -339,7 +397,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(-12, {state_change = true}))
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -372,6 +430,22 @@ test.register_message_test(
       direction = "receive",
       message = {
         mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[2], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("main",
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
+    },
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
         clusters.Switch.events.MultiPressOngoing:build_test_event_report(
           mock_ikea_scroll, ENDPOINTS_SCROLL[2], {current_number_of_presses_counted = 2, new_position = 2}
         )
@@ -381,7 +455,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(-12, {state_change = true}))
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -409,11 +483,30 @@ test.register_message_test(
         )
       },
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
 test.register_message_test(
   "Ikea Scroll Positive rotateAmount events on group2 are emitted correctly", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[3], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("group2",
+        capabilities.knob.rotateAmount(6, {state_change = true}))
+    },
     {
       channel = "matter",
       direction = "receive",
@@ -428,7 +521,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group2",
-        capabilities.knob.rotateAmount(12, {state_change = true}))
+        capabilities.knob.rotateAmount(6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -446,11 +539,30 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group2",
         capabilities.knob.rotateAmount(18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
 test.register_message_test(
   "Ikea Scroll Negative rotateAmount events on group2 are emitted correctly", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[4], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("group2",
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
+    },
     {
       channel = "matter",
       direction = "receive",
@@ -465,7 +577,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group2",
-        capabilities.knob.rotateAmount(-12, {state_change = true}))
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -483,11 +595,30 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group2",
         capabilities.knob.rotateAmount(-18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
 test.register_message_test(
   "Ikea Scroll Positive rotateAmount events on group3 are emitted correctly", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[5], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("group3",
+        capabilities.knob.rotateAmount(6, {state_change = true}))
+    },
     {
       channel = "matter",
       direction = "receive",
@@ -502,7 +633,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group3",
-        capabilities.knob.rotateAmount(12, {state_change = true}))
+        capabilities.knob.rotateAmount(6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -520,11 +651,30 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group3",
         capabilities.knob.rotateAmount(18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
 test.register_message_test(
   "Ikea Scroll Negative rotateAmount events on group3 are emitted correctly", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_ikea_scroll.id,
+        clusters.Switch.events.InitialPress:build_test_event_report(
+          mock_ikea_scroll, ENDPOINTS_SCROLL[6], {new_position = 1}
+        )
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_ikea_scroll:generate_test_message("group3",
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
+    },
     {
       channel = "matter",
       direction = "receive",
@@ -539,7 +689,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group3",
-        capabilities.knob.rotateAmount(-12, {state_change = true}))
+        capabilities.knob.rotateAmount(-6, {state_change = true}))
     },
     {
       channel = "matter",
@@ -557,6 +707,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group3",
         capabilities.knob.rotateAmount(-18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -588,6 +741,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("main",
         capabilities.button.button.held({state_change = true}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -619,6 +775,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group2",
         capabilities.button.button.pushed({state_change = true}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 

@@ -69,6 +69,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, clusters.DoorLock.server.commands.LockDoor(mock_device, 10)},
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -90,6 +93,9 @@ test.register_message_test(
         clusters.DoorLock.server.commands.UnlockDoor(mock_device, 10),
       },
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -110,6 +116,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.locked()),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -130,6 +139,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -150,6 +162,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked()),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -170,6 +185,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -192,6 +210,9 @@ test.register_message_test(
         "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
       ),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -216,6 +237,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, refresh_commands(mock_device)},
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -282,6 +306,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -319,6 +346,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -331,7 +361,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     )
-end
+end,
+{
+   min_api_version = 19
+}
 )
 
 test.run_registered_tests()

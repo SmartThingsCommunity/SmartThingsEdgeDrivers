@@ -69,6 +69,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.flowMeasurement.flow({ value = 20.0, unit = "m^3/h" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -96,6 +99,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.flowMeasurement.flowRange({ value = { minimum = 2.0, maximum = 500.0 }, unit = "m^3/h" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -125,6 +131,9 @@ test.register_message_test(
         refresh_commands(mock_device)
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
