@@ -9,7 +9,7 @@ jobs:
   # Two separate jobs for finding the right artifact to run tests with
   get-latest-release-artifact:
     runs-on: ubuntu-latest
-    if: ${{ false }}
+    if: ${{ always() }}
 
     strategy:
       matrix:
@@ -63,7 +63,7 @@ jobs:
 
   get-dev-artifacts:
     runs-on: ubuntu-latest
-    if: ${{ always() }}
+    if: ${{ false }}
     outputs:
       cache_key: ${{ steps.cache_key.outputs.CACHE_KEY }}
     strategy:
