@@ -227,13 +227,9 @@ test.register_coroutine_test(
                 mock_child_sald_prod:generate_test_message(component, capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
             )
           elseif (device["child_key"] == "sald-con") then
-            test.socket.capability:__expect_send(
+              test.socket.capability:__expect_send(
                 mock_child_sald_con:generate_test_message(component, capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
-            )
-            test.socket.capability:__expect_send(
-                mock_parent:generate_test_message("main",
-                capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 5000 }))
-            )
+              )
           end
         else
           test.socket.capability:__expect_send(

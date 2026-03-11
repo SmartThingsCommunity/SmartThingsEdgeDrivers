@@ -61,7 +61,7 @@ local function emit_power_consumption_report_event(device, value, channel)
   if current_power_consumption ~= nil then
     delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
   end
-  device:emit_event_for_endpoint(channel, capabilities.powerConsumptionReport.powerConsumption({
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
     energy = raw_value,
     deltaEnergy = delta_energy
   }))
@@ -91,7 +91,6 @@ local function meter_report_handler(driver, device, cmd, zb_rx)
     if endpoint == 7 then
       -- powerConsumptionReport
       emit_power_consumption_report_event(device, { value = event_arguments.value })
-     --emit_power_consumption_report_event(device, { value = event_arguments.value }, endpoint)
     end
   elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
     local event_arguments = {
