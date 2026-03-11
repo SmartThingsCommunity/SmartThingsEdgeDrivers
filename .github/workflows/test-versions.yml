@@ -6,7 +6,7 @@ jobs:
   define-versions:
     runs-on: ubuntu-latest
     outputs:
-      versions: ${{ steps.set.outputs.versions}}
+      versions: ${{ steps.set.outputs.versions }}
     steps:
       - id: set
         run: echo 'versions=["60","52"]' >> "GITHUB_OUTPUT"
