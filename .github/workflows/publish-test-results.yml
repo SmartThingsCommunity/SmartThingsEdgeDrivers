@@ -29,7 +29,7 @@ jobs:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: event-file/event.json
           event_name: ${{ github.event.workflow_run.event }}
-          files: "tests-${{ matrix.version}}/*.xml"
+          files: "tests-${{ matrix.version }}/*.xml"
       - name: Publish coverage results
         uses: 5monkeys/cobertura-action@master
         with:
