@@ -2449,11 +2449,11 @@ local function lock_op_event_handler(driver, device, ib, response)
   elseif opSource.value == Source.RFID then
     opSource = "rfid"
   elseif opSource.value == Source.BIOMETRIC then
-    opSource = "keypad"
+    opSource = nil -- It will be updated R2
   elseif opSource.value == Source.ALIRO then
-    opSource = nil
+    opSource = "digitalKey"
   else
-    opSource =nil
+    opSource = nil
   end
 
   if userIdx ~= nil then
