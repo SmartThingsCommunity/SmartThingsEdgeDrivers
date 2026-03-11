@@ -921,7 +921,7 @@ test.register_message_test(
       message = mock_device:generate_test_message(
         "main",
         capabilities.lock.lock.unlocked(
-          {data = {method = "keypad", userIndex = 1}, state_change = true}
+          {data = {userIndex = 1}, state_change = true}
         )
       ),
     },
@@ -948,7 +948,7 @@ test.register_message_test(
       message = mock_device:generate_test_message(
         "main",
         capabilities.lock.lock.unlocked(
-          {data = {userIndex = 1}, state_change = true}
+          {data = {method = "digitalKey", userIndex = 1}, state_change = true}
         )
       ),
     }
