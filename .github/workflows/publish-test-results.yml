@@ -6,14 +6,11 @@ on:
       - completed
 
 jobs:
+  get-versions:
+    uses: ./.github/workflows/test-versions.yml
+
   publish-test-results:
     runs-on: ubuntu-latest
-
-    permissions:
-      checks: write
-      pull-requests: write
-      actions: read
-
     steps:
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
@@ -27,10 +24,10 @@ jobs:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: event-file/event.json
           event_name: ${{ github.event.workflow_run.event }}
-          files: "tests-*/*.xml"
+          files: "tests-60/*.xml"
       - name: Publish coverage results
         uses: 5monkeys/cobertura-action@master
         with:
           pull_request_number: ${{ env.pr_number }}
-          path: "coverage-*/*.xml"
+          path: "coverage/*.xml"
           minimum_coverage: 90
