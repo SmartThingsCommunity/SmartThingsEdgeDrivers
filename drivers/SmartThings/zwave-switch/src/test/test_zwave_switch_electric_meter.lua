@@ -55,6 +55,9 @@ test.register_message_test(
           { device_uuid = mock_switch.id, capability_id = "powerMeter", capability_attr_id = "power" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -74,6 +77,9 @@ test.register_message_test(
         direction = "send",
         message = mock_switch:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -111,7 +117,8 @@ test.register_message_test(
       },
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -152,7 +159,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 

@@ -97,7 +97,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message(COMP_LIST[i],
         capabilities.button.button.pushed({ state_change = false })))
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -126,7 +129,10 @@ test.register_coroutine_test(
         MFG_CODE,
         data_types.Uint8, 2) })
     mock_device_e1:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -158,7 +164,10 @@ test.register_coroutine_test(
         PRIVATE_ATTRIBUTE_ID_T1, MFG_CODE,
         data_types.Uint8, 1) })
     mock_device_h1_double_rocker:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -176,7 +185,10 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
     test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message("button1",
       capabilities.button.button.pushed({ state_change = true })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -194,7 +206,10 @@ test.register_coroutine_test(
       capabilities.button.button.double({ state_change = true })))
     test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message("button1",
       capabilities.button.button.double({ state_change = true })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -212,7 +227,10 @@ test.register_coroutine_test(
       capabilities.button.button.held({ state_change = true })))
     test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message("button1",
       capabilities.button.button.held({ state_change = true })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -228,6 +246,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device_e1:generate_test_message("main", capabilities.batteryLevel.battery("normal"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 test.register_message_test(
@@ -243,6 +264,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device_e1:generate_test_message("main", capabilities.batteryLevel.battery("warning"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 test.register_message_test(
@@ -258,6 +282,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device_e1:generate_test_message("main", capabilities.batteryLevel.battery("critical"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -299,7 +326,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message(COMP_LIST[i],
         capabilities.button.button.pushed({ state_change = false })))
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -318,7 +348,10 @@ test.register_coroutine_test(
       capabilities.batteryLevel.type("CR2450")))
     test.socket.capability:__expect_send(mock_device_h1_single:generate_test_message("main",
       capabilities.batteryLevel.quantity(1)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

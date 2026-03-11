@@ -143,7 +143,10 @@ test.register_coroutine_test(
   "Added should kick off cota cred process", function()
     test.socket.matter:__set_channel_ordering("relaxed")
     expect_kick_off_cota_process(mock_device)
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -157,7 +160,10 @@ test.register_coroutine_test(
         mock_device.id,
         clusters.DoorLock.server.commands.UnlockDoor(mock_device, 10, "1111"),
       })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -171,7 +177,10 @@ test.register_coroutine_test(
         mock_device.id,
         clusters.DoorLock.server.commands.LockDoor(mock_device, 10, "1111"),
       })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -203,7 +212,10 @@ test.register_coroutine_test(
         DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -224,7 +236,10 @@ test.register_coroutine_test(
       profile = "nonfunctional-lock",
       provisioning_state = "NONFUNCTIONAL"
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -323,7 +338,10 @@ test.register_coroutine_test(
     )
     local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -418,7 +436,10 @@ test.register_coroutine_test(
     )
     local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -506,7 +527,10 @@ test.register_coroutine_test(
     )
     local read_attribute_list = clusters.PowerSource.attributes.AttributeList:read()
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -563,7 +587,10 @@ test.register_coroutine_test(
         DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -600,7 +627,10 @@ test.register_coroutine_test(
       )
     })
     test.mock_time.advance_time(2)
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 
@@ -678,7 +708,10 @@ test.register_coroutine_test(
         DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -710,12 +743,18 @@ test.register_coroutine_test(
         DoorLock.types.DlUserType.REMOTE_ONLY_USER -- user_type
       )
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Delay setting COTA cred if another cred is already being set.", function()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

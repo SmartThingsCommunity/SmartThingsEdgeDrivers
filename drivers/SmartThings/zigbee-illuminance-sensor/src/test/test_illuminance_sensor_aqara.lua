@@ -57,7 +57,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -95,7 +98,10 @@ test.register_coroutine_test(
         , data_types.Uint8, 1) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -115,6 +121,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -134,6 +143,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -169,7 +181,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID,
         MFG_CODE, data_types.Uint16, frequency) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -180,7 +195,10 @@ test.register_coroutine_test(
       build_write_attr_res(PRIVATE_CLUSTER_ID, 0x00) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       detectionFrequency.detectionFrequency(FREQUENCY_DEFAULT_VALUE, { visibility = { displayed = false } })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

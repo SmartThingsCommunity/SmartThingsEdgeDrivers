@@ -67,6 +67,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -93,6 +96,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -120,6 +126,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -146,6 +155,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -172,6 +184,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -198,6 +213,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -224,6 +242,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -250,6 +271,9 @@ test.register_message_test(
       direction = "send",
       message = mock_aeotec_minimote:generate_test_message("main", capabilities.button.button.held({state_change = true}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -307,7 +331,10 @@ test.register_coroutine_test(
         Configuration:Set({parameter_number = 140, size = 4, configuration_value = 26017792}) --payload="��  "
     ))
     mock_aeotec_minimote:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -345,7 +372,10 @@ test.register_coroutine_test(
         )
       end
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

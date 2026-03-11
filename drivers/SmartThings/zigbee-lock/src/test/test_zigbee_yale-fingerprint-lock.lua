@@ -32,6 +32,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lockCodes.maxCodes(30))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
