@@ -11,7 +11,7 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-
+local log = require "log"
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass.Configuration
@@ -45,23 +45,24 @@ local function find_hem8_child_device_key_by_endpoint(endpoint)
   end
 end
 
-local function emit_power_consumption_report_event(device, value, channel)
+local function emit_power_consumption_report_event(device, value)
   -- powerConsumptionReport report interval
   local current_time = os.time()
   local last_time = device:get_field(LAST_REPORT_TIME) or 0
   local next_time = last_time + 60 * 15 -- 15 mins, the minimum interval allowed between reports
-  if current_time < next_time then
+ --[[ if current_time < next_time then
     return
-  end
+  end]]
   device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
   local raw_value = value.value * 1000 -- 'Wh'
-
   local delta_energy = 0.0
   local current_power_consumption = device:get_latest_state('main', capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME)
   if current_power_consumption ~= nil then
     delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
   end
-  device:emit_event_for_endpoint(channel, capabilities.powerConsumptionReport.powerConsumption({
+  log.trace('TEST: right before emit_event')
+  --device:emit_event_for_endpoint(channel, capabilities.powerConsumptionReport.powerConsumption({
+  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
     energy = raw_value,
     deltaEnergy = delta_energy
   }))
@@ -90,7 +91,8 @@ local function meter_report_handler(driver, device, cmd, zb_rx)
 
     if endpoint == 5 then
       -- powerConsumptionReport
-      emit_power_consumption_report_event(device, { value = event_arguments.value }, endpoint)
+      emit_power_consumption_report_event(device, { value = event_arguments.value })
+      --emit_power_consumption_report_event(device_to_emit_with, { value = event_arguments.value }, endpoint)
     end
   elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
     local event_arguments = {

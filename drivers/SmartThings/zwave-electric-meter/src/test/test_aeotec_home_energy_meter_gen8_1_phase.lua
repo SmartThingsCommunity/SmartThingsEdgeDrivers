@@ -230,6 +230,10 @@ test.register_coroutine_test(
             test.socket.capability:__expect_send(
                 mock_child_sald_con:generate_test_message(component, capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
             )
+            test.socket.capability:__expect_send(
+                mock_parent:generate_test_message("main",
+                capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 5000 }))
+            )
           end
         else
           test.socket.capability:__expect_send(
@@ -245,11 +249,13 @@ test.register_coroutine_test(
   "Report consumption and power consumption report after 15 minutes", function()
     -- set time to trigger power consumption report
     local current_time = os.time() - 60 * 20
-    mock_child_sald_con:set_field(LAST_REPORT_TIME, current_time)
+    --mock_child_sald_con:set_field(LAST_REPORT_TIME, current_time)
+    mock_parent:set_field(LAST_REPORT_TIME, current_time)
 
     test.socket.zwave:__queue_receive(
       {
-        mock_child_sald_con.id,
+        --mock_child_sald_con.id,
+        mock_parent.id,
         zw_test_utils.zwave_test_build_receive_command(Meter:Report(
           {
             scale = Meter.scale.electric_meter.KILOWATT_HOURS,
@@ -269,6 +275,7 @@ test.register_coroutine_test(
     )
 
     test.socket.capability:__expect_send(
+        -- mock_parent
         mock_parent:generate_test_message("main",
         capabilities.powerConsumptionReport.powerConsumption({ deltaEnergy = 0.0, energy = 5000 }))
     )
