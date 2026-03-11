@@ -6,15 +6,8 @@ on:
       - completed
 
 jobs:
-  get-versions:
-    uses: ./.github/workflows/test-versions.yml
-
   publish-test-results:
     runs-on: ubuntu-latest
-    needs: [ get-versions ]
-    strategy:
-      matrix:
-        version: ${{ fromJSON(needs.get-versions.outputs.versions) }}
     steps:
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
@@ -28,7 +21,7 @@ jobs:
           commit: ${{ github.event.workflow_run.head_sha }}
           event_file: event-file/event.json
           event_name: ${{ github.event.workflow_run.event }}
-          files: "tests-${{ matrix.version }}/*.xml"
+          files: "tests-60/*.xml"
       - name: Publish coverage results
         uses: 5monkeys/cobertura-action@master
         with:
