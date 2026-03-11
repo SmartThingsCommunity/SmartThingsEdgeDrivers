@@ -1,6 +1,11 @@
 name: Define test versions
+
 on:
-  workflow_call
+  workflow_call:
+    outputs:
+      versions:
+        description: "Test versions"
+        value: ${{ jobs.define-versions.outputs.versions }}
 
 jobs:
   define-versions:
@@ -9,4 +14,4 @@ jobs:
       versions: ${{ steps.set.outputs.versions }}
     steps:
       - id: set
-        run: echo 'versions=["60","52"]' >> "GITHUB_OUTPUT"
+        run: echo 'versions=["60","52"]' >> "$GITHUB_OUTPUT"
