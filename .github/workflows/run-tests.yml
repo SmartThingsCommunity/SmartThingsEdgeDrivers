@@ -121,7 +121,7 @@ jobs:
       fail-fast: false
     
     needs:
-      [ get-dev-artifacts ]
+      [ get-latest-release-artifact, get-dev-artifacts ]
     if: ${{ always() && contains(needs.*.result, 'success') && !contains(needs.*.result, 'failure') }}
     steps:
       - name: Restore lua_libs cache
