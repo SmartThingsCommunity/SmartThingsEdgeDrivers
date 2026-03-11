@@ -27,9 +27,10 @@ local function energy_meter_handler(driver, device, value, zb_rx)
   )
 end
 
-local function do_configure(driver, device)
-  device:configure()
-  device:refresh()
+local function device_init(driver, device)
+  -- Set default multiplier and divisor values as suggested by SmartThings
+  device:set_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY, 1, {persist = true})
+  device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 100, {persist = true})
 end
 
 local simple_metering_config_subdriver = {
@@ -46,7 +47,7 @@ local simple_metering_config_subdriver = {
     }
   },
   lifecycle_handlers = {
-    doConfigure = do_configure
+    init = device_init
   },
   can_handle = require("simple-metering-config.can_handle")
 }
