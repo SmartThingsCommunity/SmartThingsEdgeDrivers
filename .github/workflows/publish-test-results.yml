@@ -1,7 +1,11 @@
 name: Publish test results
 on:
-  workflow_call:
-
+  workflow_run:
+    workflows: [Run driver tests]
+    types:
+      - completed
+    branches: [ matrix-testing-dev ]
+    
 jobs:
   get-versions:
     uses: ./.github/workflows/test-versions.yml
