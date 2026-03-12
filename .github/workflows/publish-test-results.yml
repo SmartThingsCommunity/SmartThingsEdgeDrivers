@@ -5,6 +5,12 @@ on:
       run_id:
         required: true
         type: string
+      commit:
+        required: true
+        type: string
+      event_name:
+        required: true
+        type: string
 
 
 jobs:
@@ -23,9 +29,9 @@ jobs:
       - name: Publish test results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          commit: ${{ github.event.pull_request.head.sha }}
+          commit: ${{ inputs.commit }}
           event_file: event-file/event.json
-          event_name: ${{ github.event_name }}
+          event_name: ${{ inputs.event_name }}
           files: "tests-*/*.xml"
       - name: Publish coverage results
         uses: 5monkeys/cobertura-action@master
