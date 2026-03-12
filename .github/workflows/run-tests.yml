@@ -193,11 +193,6 @@ jobs:
           path: |
             tools/coverage_output/*_coverage.xml
 
-  publish-test-results:
-    if: ${{ always() }}
-    needs: [ run-driver-tests ]
-    uses: ./.github/workflows/publish-test-results.yml
-
   event-file:
     runs-on: ubuntu-latest
     steps:
