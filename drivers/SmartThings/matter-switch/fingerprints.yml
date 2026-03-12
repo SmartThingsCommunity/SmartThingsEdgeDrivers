@@ -753,6 +753,16 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6094
     deviceProfileName: light-color-level
+  - id: "4999/24646"
+    deviceLabel: Govee TV Light Bar
+    vendorId: 0x1387
+    productId: 0x6046
+    deviceProfileName: light-color-level
+  - id: "4999/24662"
+    deviceLabel: Govee RGBICWW Light Bar
+    vendorId: 0x1387
+    productId: 0x6056
+    deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
     deviceLabel: Hager matter 2 buttons (battery)
