@@ -518,11 +518,11 @@ local expected_metadata = {
         "imageControl",
         "hdr",
         "nightVision",
+        "sounds",
         "mechanicalPanTiltZoom",
         "zoneManagement",
-        "webrtc",
         "motionSensor",
-        "sounds",
+        "webrtc",
       }
     },
     {
@@ -3042,8 +3042,8 @@ test.register_coroutine_test(
       optional_component_capabilities = {
         { "main",
           { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
-            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
-            "webrtc", "motionSensor", "sounds", }
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "sounds", "mechanicalPanTiltZoom",
+            "zoneManagement", "motionSensor", "webrtc" }
         },
         { "statusLed",
           { "switch" } -- only switch capability remains
@@ -3100,11 +3100,11 @@ test.register_coroutine_test(
             "imageControl",
             "hdr",
             "nightVision",
+            "sounds",
             "mechanicalPanTiltZoom",
             "zoneManagement",
-            "webrtc",
             "motionSensor",
-            "sounds",
+            "webrtc",
           }
         },
         {
