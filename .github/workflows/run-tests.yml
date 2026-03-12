@@ -197,6 +197,9 @@ jobs:
     uses: ./.github/workflows/publish-test-results.yml
     if: ${{ always() }}
     needs: [ run-driver-tests ]
+    with:
+      run_id: ${{ github.run_id }}
+
 
   event-file:
     runs-on: ubuntu-latest
