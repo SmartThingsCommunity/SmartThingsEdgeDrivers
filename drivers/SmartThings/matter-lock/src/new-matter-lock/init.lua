@@ -18,6 +18,8 @@ local PowerSource = clusters.PowerSource
 
 local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
+-- maximum as defined by the Matter specification
+local MAX_USER_NAME_LENGTH = 10
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
@@ -1220,6 +1222,7 @@ local function handle_update_user(driver, device, command)
   local cmdName = "updateUser"
   local userIdx = command.args.userIndex
   local userName = command.args.userName
+  local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
@@ -1249,13 +1252,13 @@ local function handle_update_user(driver, device, command)
   device:send(
     DoorLock.server.commands.SetUser(
       device, ep,
-      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Operation Type: Add(0), Modify(2)
-      userIdx,        -- User Index
-      userName,       -- User Name
-      nil,            -- Unique ID
-      nil,            -- User Status
-      userTypeMatter, -- User Type
-      nil             -- Credential Rule
+      DoorLock.types.DataOperationTypeEnum.MODIFY,
+      userIdx,
+      userNameMatter,
+      nil, -- Unique ID
+      nil, -- User Status
+      userTypeMatter,
+      nil  -- Credential Rule
     )
   )
 end
@@ -1297,6 +1300,7 @@ local function get_user_response_handler(driver, device, ib, response)
   -- Found available user index
   if status == nil or status == DoorLock.types.UserStatusEnum.AVAILABLE then
     local userName = device:get_field(lock_utils.USER_NAME)
+    local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
     local userType = device:get_field(lock_utils.USER_TYPE)
     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
     if userType == "guest" then
@@ -1310,13 +1314,13 @@ local function get_user_response_handler(driver, device, ib, response)
     device:send(
       DoorLock.server.commands.SetUser(
         device, ep,
-        DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
-        userIdx,          -- User Index
-        userName,         -- User Name
-        nil,              -- Unique ID
-        nil,              -- User Status
-        userTypeMatter,   -- User Type
-        nil               -- Credential Rule
+        DoorLock.types.DataOperationTypeEnum.ADD,
+        userIdx,
+        userNameMatter,
+        nil, -- Unique ID
+        nil, -- User Status
+        userTypeMatter,
+        nil  -- Credential Rule
       )
     )
   elseif userIdx >= maxUser then -- There's no available user index
@@ -1477,13 +1481,15 @@ local function handle_add_credential(driver, device, command)
   -- Get parameters
   local cmdName = "addCredential"
   local userIdx = command.args.userIndex
-  if userIdx == 0 then
-    userIdx = nil
-  end
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
     userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
+  end
+  if userIdx == 0 then
+    userIdx = nil
+  else
+    userTypeMatter = nil
   end
   local credential = {
     credential_type = DoorLock.types.CredentialTypeEnum.PIN,
@@ -1609,17 +1615,6 @@ local function set_pin_response_handler(driver, device, ib, response)
       add_credential_to_table(device, userIdx, credIdx, "pin")
     end
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-
     -- If User Type is Guest and device support schedule, add default schedule
     local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
     local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
@@ -1643,6 +1638,16 @@ local function set_pin_response_handler(driver, device, ib, response)
         )
       )
     else
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
       device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     end
     return
@@ -2318,6 +2323,20 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
   end
 
   if cmdName == "defaultSchedule" then
+    local cmdName = "addCredential"
+    local credIdx = device:get_field(lock_utils.CRED_INDEX)
+
+    -- Update commandResult
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      credentialIndex = credIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     return
   end
 
@@ -2449,11 +2468,11 @@ local function lock_op_event_handler(driver, device, ib, response)
   elseif opSource.value == Source.RFID then
     opSource = "rfid"
   elseif opSource.value == Source.BIOMETRIC then
-    opSource = "keypad"
+    opSource = nil -- It will be updated R2
   elseif opSource.value == Source.ALIRO then
-    opSource = nil
+    opSource = "digitalKey"
   else
-    opSource =nil
+    opSource = nil
   end
 
   if userIdx ~= nil then
