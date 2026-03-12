@@ -309,6 +309,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
+      }
+    },
+    {
       channel = "zigbee",
       direction = "send",
       message = {
@@ -325,6 +333,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
+      }
+    },
+    {
       channel = "zigbee",
       direction = "send",
       message = {
@@ -338,6 +354,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { -50 } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
       }
     },
     {
@@ -363,6 +387,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
+      }
+    },
+    {
       channel = "zigbee",
       direction = "send",
       message = {
@@ -379,6 +411,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
+      }
+    },
+    {
       channel = "zigbee",
       direction = "send",
       message = {
@@ -392,6 +432,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 100 } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
       }
     },
     {

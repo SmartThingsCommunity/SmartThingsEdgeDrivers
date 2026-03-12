@@ -157,6 +157,7 @@ test.register_coroutine_test(
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } } })
+    mock_device:expect_native_cmd_handler_registration("statelessColorTemperatureStep", "stepColorTemperatureByPercent")
 
     test.socket.zigbee:__expect_send(
       {
@@ -173,6 +174,7 @@ test.register_coroutine_test(
   function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } } })
+    mock_device:expect_native_cmd_handler_registration("statelessSwitchLevelStep", "stepLevel")
 
     test.socket.zigbee:__expect_send(
       {
