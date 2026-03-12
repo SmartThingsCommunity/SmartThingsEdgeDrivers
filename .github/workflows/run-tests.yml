@@ -199,6 +199,8 @@ jobs:
     needs: [ run-driver-tests ]
     with:
       run_id: ${{ github.run_id }}
+      commit: ${{ github.event.pull_request.head.sha }}
+      event_name: ${{ github.event_name }}
 
 
   event-file:
