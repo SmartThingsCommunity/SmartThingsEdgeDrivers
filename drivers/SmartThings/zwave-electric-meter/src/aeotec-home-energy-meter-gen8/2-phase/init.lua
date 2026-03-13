@@ -1,28 +1,15 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local st_device = require "st.device"
 local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass.Configuration
-local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=1 })
 --- @type st.zwave.CommandClass.Meter
 local Meter = (require "st.zwave.CommandClass.Meter")({ version=4 })
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
 local utils = require "st.utils"
+local power_consumption = require("aeotec-home-energy-meter-gen8.power_consumption")
 
-local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
 
@@ -43,28 +30,6 @@ local function find_hem8_child_device_key_by_endpoint(endpoint)
       end
     end
   end
-end
-
-local function emit_power_consumption_report_event(device, value, channel)
-  -- powerConsumptionReport report interval
-  local current_time = os.time()
-  local last_time = device:get_field(LAST_REPORT_TIME) or 0
-  local next_time = last_time + 60 * 15 -- 15 mins, the minimum interval allowed between reports
-  if current_time < next_time then
-    return
-  end
-  device:set_field(LAST_REPORT_TIME, current_time, { persist = true })
-  local raw_value = value.value * 1000 -- 'Wh'
-
-  local delta_energy = 0.0
-  local current_power_consumption = device:get_latest_state('main', capabilities.powerConsumptionReport.ID, capabilities.powerConsumptionReport.powerConsumption.NAME)
-  if current_power_consumption ~= nil then
-    delta_energy = math.max(raw_value - current_power_consumption.energy, 0.0)
-  end
-  device:emit_event(capabilities.powerConsumptionReport.powerConsumption({
-    energy = raw_value,
-    deltaEnergy = delta_energy
-  }))
 end
 
 local function meter_report_handler(driver, device, cmd, zb_rx)
@@ -90,7 +55,7 @@ local function meter_report_handler(driver, device, cmd, zb_rx)
 
     if endpoint == 7 then
       -- powerConsumptionReport
-      emit_power_consumption_report_event(device, { value = event_arguments.value })
+      power_consumption.emit_power_consumption_report_event(device, { value = event_arguments.value })
     end
   elseif cmd.args.scale == Meter.scale.electric_meter.WATTS then
     local event_arguments = {
@@ -114,22 +79,6 @@ local function do_refresh(self, device)
   end
 end
 
-local function component_to_endpoint(device, component_id)
-  local ep_num = component_id:match("clamp(%d)")
-  return { ep_num and tonumber(ep_num) }
-end
-local function endpoint_to_component(device, ep)
-  local meter_comp = string.format("clamp%d", ep)
-  if device.profile.components[meter_comp] ~= nil then
-    return meter_comp
-  else
-    return "main"
-  end
-end
-local device_init = function(self, device)
-  device:set_component_to_endpoint_fn(component_to_endpoint)
-  device:set_endpoint_to_component_fn(endpoint_to_component)
-end
 local function device_added(driver, device)
   if device.network_type == st_device.NETWORK_TYPE_ZWAVE and not (device.child_ids and utils.table_size(device.child_ids) ~= 0) then
     for i, hem8_child in ipairs(HEM8_DEVICES) do
@@ -150,31 +99,23 @@ local function device_added(driver, device)
   do_refresh(driver, device)
 end
 
-local do_configure = function (self, device)
-  device:send(Configuration:Set({parameter_number = 111, configuration_value = 300, size = 4})) -- ...every 5 min
-  device:send(Configuration:Set({parameter_number = 112, configuration_value = 300, size = 4})) -- ...every 5 min
-  device:send(Configuration:Set({parameter_number = 113, configuration_value = 300, size = 4})) -- ...every 5 min
-end
-
 local aeotec_home_energy_meter_gen8_2_phase = {
   NAME = "Aeotec Home Energy Meter Gen8",
   supported_capabilities = {
-      capabilities.powerConsumptionReport
-    },
-    capability_handlers = {
-      [capabilities.refresh.ID] = {
-          [capabilities.refresh.commands.refresh.NAME] = do_refresh
-      }
-    },
-    zwave_handlers = {
-      [cc.METER] = {
-        [Meter.REPORT] = meter_report_handler
-      }
-    },
+    capabilities.powerConsumptionReport
+  },
+  capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    }
+  },
+  zwave_handlers = {
+    [cc.METER] = {
+      [Meter.REPORT] = meter_report_handler
+    }
+  },
   lifecycle_handlers = {
-    doConfigure = do_configure,
-    added = device_added,
-    init = device_init
+    added = device_added
   },
   can_handle = require("aeotec-home-energy-meter-gen8.2-phase.can_handle")
 }
