@@ -4,6 +4,7 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
+local switch_utils = require "switch_utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
@@ -149,6 +150,38 @@ test.register_coroutine_test(
   {
      min_api_version = 19
   }
+)
+
+test.register_coroutine_test(
+  "Step Color Temperature command test",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } } })
+
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.server.commands.StepColorTemperature(mock_device, ColorControl.types.CcStepMode.DOWN, 187, 3, switch_utils.COLOR_TEMPERATURE_MIRED_MIN, switch_utils.COLOR_TEMPERATURE_MIRED_MAX, 0x01, 0x00)
+      }
+    )
+    test.wait_for_events()
+  end
+)
+
+test.register_coroutine_test(
+  "Step Level command test",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } } })
+
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Level.commands.Step(mock_device, Level.types.MoveStepMode.UP, 64, 3, 0x01, 0x00)
+       }
+     )
+    test.wait_for_events()
+  end
 )
 
 test.run_registered_tests()
