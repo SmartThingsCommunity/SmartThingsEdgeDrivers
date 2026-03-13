@@ -9,7 +9,7 @@ return function(opts, driver, device, ...)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     local version = require "version"
     if version.rpc >= 10 and version.api >= 16 and
-      #device:get_endpoints(clusters.CameraAvStreamManagement.ID) > 0 or
+      #device:get_endpoints(clusters.CameraAvStreamManagement.ID, {cluster_type = "SERVER"}) > 0 or
       #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CHIME) > 0 or
       #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
       return true, require("sub_drivers.camera")
