@@ -24,10 +24,6 @@ local EVENT_MAP = {
   [0x04] = capabilities.button.button.pushed_3x
 }
 
-local function can_handle(opts, driver, device, ...)
-  return device:get_manufacturer() == "SONOFF"
-end
-
 local function sonoff_attr_handler(driver, device, value, zb_rx)
   local attr_val = value.value
   local endpoint = zb_rx.address_header.src_endpoint.value
@@ -50,7 +46,7 @@ local sonoff_handler = {
       }
     }
   },
-  can_handle = can_handle
+  can_handle = require("zigbee-multi-button.sonoff.can_handle")
 }
 
 return sonoff_handler

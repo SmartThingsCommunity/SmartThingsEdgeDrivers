@@ -234,4 +234,4 @@ test.register_coroutine_test(
   end
 )
 
-return test
+test.run_registered_tests()
