@@ -20,7 +20,6 @@ local function dimmer_event(driver, device, cmd)
   end
 
   local level = utils.clamp_value(raw, 0, 99)
-  
   device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
   device:emit_event(capabilities.switchLevel.level(level))
 end
@@ -57,7 +56,7 @@ local function switch_level_set(driver, device, cmd)
   ------------------------------------------------------------------
   -- 修正：SmartThings 可能送出 rate="default"，不是數字 → 會造成崩潰
   ------------------------------------------------------------------
-  local raw_rate = cmd.args.rate  
+  local raw_rate = cmd.args.rate
   local dimmingDuration = tonumber(raw_rate)  -- dimming duration in seconds
     if dimmingDuration == nil then
     dimmingDuration = 0   -- Z-Wave duration=0 = 快速/立即
@@ -89,12 +88,12 @@ end
 -- Lifecycle
 -------------------------------------------------------------------
 local function device_added(driver, device)
-  if device == nil then
-       return   -- 安全跳出，不做任何操作
-  end
+--  if device == nil then
+--       return   -- 安全跳出，不做任何操作
+--  end
 
-  device:emit_event(capabilities.switch.switch.off())
-  device:emit_event(capabilities.switchLevel.level(0))
+--  device:emit_event(capabilities.switch.switch.off())
+--  device:emit_event(capabilities.switchLevel.level(0))
 end
 
 local pad19_driver_template = {
@@ -119,13 +118,12 @@ local pad19_driver_template = {
     },
 	[capabilities.refresh.ID] = {
 	  [capabilities.refresh.commands.refresh.NAME] = refresh_cmd
-	}	
+	}
   },
 
   lifecycle_handlers = {
     added = device_added
   }
-  
 }
 
 -- 回傳驅動範本

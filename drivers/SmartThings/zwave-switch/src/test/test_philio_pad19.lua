@@ -10,16 +10,21 @@ local zw = require "st.zwave"
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=1})
 
-local mock_device = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("philio-dimmer-switch.yml"),
-  zwave_endpoints = {
+local zwave_endpoints = {
     {
       command_classes = {
         {value = zw.BASIC},
         {value = zw.SWITCH_MULTILEVEL}
       }
     }
-  }
+}
+
+local mock_device = test.mock_device.build_test_zwave_device({
+  profile = t_utils.get_profile_definition("philio-dimmer-switch.yml"),
+  zwave_endpoints = zwave_endpoints,
+  zwave_manufacturer_id = 0x013C,
+  zwave_product_type = 0x0005,
+  zwave_product_id = 0x008A
 })
 
 local function test_init()
