@@ -1296,6 +1296,27 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00CD
     deviceProfileName: light-level-colorTemperature
+  - id: "5155/265"
+    deviceLabel: Ceiling 13
+    vendorId: 0x1423
+    productId: 0x0109
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/266"
+    deviceLabel: LIFX Ceiling 13
+    vendorId: 0x1423
+    productId: 0x010A
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/267"
+    deviceLabel: LIFX Mirror
+    vendorId: 0x1423
+    productId: 0x010B
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/268"
+    deviceLabel: LIFX Mirror
+    vendorId: 0x1423
+    productId: 0x010C
+    deviceProfileName: light-level-colorTemperature
+
 #LG
   - id: "4142/8784"
     deviceLabel: LG Smart Button (1 Button)
