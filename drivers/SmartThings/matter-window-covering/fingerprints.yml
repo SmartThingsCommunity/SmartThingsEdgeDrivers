@@ -36,6 +36,12 @@ matterManufacturer:
     vendorId: 0x153B
     productId: 0x3801
     deviceProfileName: window-covering-tilt
+# HooRii
+  - id: "4945/61171"
+    deviceLabel: HooRii Window Covering
+    vendorId: 0x1351
+    productId: 0xEEF3
+    deviceProfileName: window-covering-battery
 # Meross
   - id: "4933/61453"
     deviceLabel: Smart Wi-Fi Roller Shutter Timer
@@ -101,6 +107,12 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xFA17
     deviceProfileName: window-covering
+#WINDOWSTORY
+  - id: "5496/6657"
+    deviceLabel: GATEWAY-MT
+    vendorId: 0x1578
+    productId: 0x1A01
+    deviceProfileName: window-covering-tilt
 #WISTAR
   - id: "5207/3"
     deviceLabel: WISTAR WSERD16-B Smart Tubular Motor
@@ -176,7 +188,7 @@ matterManufacturer:
     deviceLabel: WISTAR WSCMXF-LED Smart Vertical Blind Motor
     vendorId: 0x1457
     productId: 0x0018
-    deviceProfileName: window-covering-tilt  
+    deviceProfileName: window-covering-tilt
   - id: "5207/20"
     deviceLabel: WISTAR WSCMQ Smart Curtain Motor
     vendorId: 0x1457

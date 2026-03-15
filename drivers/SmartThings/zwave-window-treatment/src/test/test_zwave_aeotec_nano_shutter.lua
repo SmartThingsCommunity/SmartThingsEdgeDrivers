@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local zw = require "st.zwave"
@@ -56,7 +46,10 @@ test.register_coroutine_test(
           Basic:Set({ value = 0x00 })
         )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -74,7 +67,10 @@ test.register_coroutine_test(
           Basic:Set({ value = 0xFF })
         )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -104,7 +100,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0x00 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -140,7 +139,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0xFF })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -166,7 +168,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0xFF })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -192,7 +197,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0x00 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -230,7 +238,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0xFF })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -274,7 +285,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0x00 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -285,7 +299,10 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(mock_window_button, Configuration:Set({parameter_number = 80, size = 1, configuration_value = 1})))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(mock_window_button, Configuration:Set({parameter_number = 85, size = 1, configuration_value = 1})))
     mock_window_button:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -315,6 +332,9 @@ test.register_message_test(
         Basic:Get({})
       )
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -327,7 +347,10 @@ test.register_coroutine_test(
       capabilities.statelessCurtainPowerButton.availableCurtainPowerButtons({"open", "close", "pause"},
       {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -344,7 +367,10 @@ test.register_coroutine_test(
       mock_window_button,
       Configuration:Set({parameter_number = 35, size = 1, configuration_value = 100})
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

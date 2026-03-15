@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Zigbee Spec Utils
 local zcl_messages     = require "st.zigbee.zcl"
@@ -41,10 +31,6 @@ local presence_utils = require "presence_utils"
 
 local CHECKIN_INTERVAL = 20 -- seconds
 
-local function arrival_sensor_v1_can_handle(opts, driver, device, ...)
-  -- excluding Aqara device and tagv4
-  return device:get_manufacturer() ~= "aqara" and device:get_model() ~= "tagv4"
-end
 
 local function legacy_battery_handler(self, device, zb_rx)
   local battery_value = string.byte(zb_rx.body.zcl_body.body_bytes)
@@ -144,7 +130,7 @@ local arrival_sensor_v1 = {
     added = added_handler,
     init = init_handler
   },
-  can_handle = arrival_sensor_v1_can_handle
+  can_handle = require("arrival-sensor-v1.can_handle"),
 }
 
 return arrival_sensor_v1

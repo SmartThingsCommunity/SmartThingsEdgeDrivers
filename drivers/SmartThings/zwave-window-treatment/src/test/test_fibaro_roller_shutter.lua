@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -76,6 +66,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -99,6 +92,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -122,6 +118,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -152,6 +151,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -182,6 +184,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -212,6 +217,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -243,7 +251,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -274,7 +285,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -293,7 +307,10 @@ test.register_coroutine_test(
             SwitchMultilevel:StopLevelChange({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -324,7 +341,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -355,7 +375,10 @@ test.register_coroutine_test(
             SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -380,6 +403,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_roller_shutter_venetian:generate_test_message("venetianBlind", capabilities.windowShadeLevel.shadeLevel(50))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -403,7 +429,10 @@ test.register_coroutine_test(
       test.socket.zwave:__queue_receive({mock_fibaro_roller_shutter.id, Configuration:Report({ parameter_number = 150, configuration_value = 1 }) })
       test.wait_for_events()
       assert(mock_fibaro_roller_shutter:get_field("calibration") == "done", "Calibration should be done")
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 do
@@ -425,7 +454,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -448,7 +481,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -471,7 +508,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -494,7 +535,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -517,7 +562,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -540,7 +589,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -563,7 +616,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -586,7 +643,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -609,7 +670,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -632,7 +697,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -655,7 +724,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -678,7 +751,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -701,7 +778,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -724,7 +805,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -747,7 +832,43 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
+test.register_coroutine_test(
+  "Configuration:Report for OPERATING_MODE=1 should update to roller shutter profile",
+  function()
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_roller_shutter_venetian.id,
+      zw_test_utils.zwave_test_build_receive_command(
+        Configuration:Report({ parameter_number = 151, configuration_value = 1 })
+      )
+    })
+    mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter" })
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Configuration:Report for OPERATING_MODE=2 should update to venetian profile",
+  function()
+    test.socket.zwave:__queue_receive({
+      mock_fibaro_roller_shutter_venetian.id,
+      zw_test_utils.zwave_test_build_receive_command(
+        Configuration:Report({ parameter_number = 151, configuration_value = 2 })
+      )
+    })
+    mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter-venetian" })
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
 test.run_registered_tests()

@@ -1,18 +1,7 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
-local device_lib = require "st.device"
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
@@ -29,6 +18,8 @@ local PowerSource = clusters.PowerSource
 
 local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
+-- maximum as defined by the Matter specification
+local MAX_USER_NAME_LENGTH = 10
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
@@ -60,32 +51,6 @@ local ALIRO_KEY_TYPE_TO_CRED_ENUM_MAP = {
   ["nonEvictableEndpointKey"] = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY
 }
 
-local NEW_MATTER_LOCK_PRODUCTS = {
-  {0x115f, 0x2802}, -- AQARA, U200
-  {0x115f, 0x2801}, -- AQARA, U300
-  {0x115f, 0x2807}, -- AQARA, U200 Lite
-  {0x147F, 0x0001}, -- U-tec
-  {0x147F, 0x0008}, -- Ultraloq, Bolt Smart Matter Door Lock
-  {0x144F, 0x4002}, -- Yale, Linus Smart Lock L2
-  {0x101D, 0x8110}, -- Yale, New Lock
-  {0x1533, 0x0001}, -- eufy, E31
-  {0x1533, 0x0002}, -- eufy, E30
-  {0x1533, 0x0003}, -- eufy, C34
-  {0x1533, 0x000F}, -- eufy, FamiLock S3 Max
-  {0x1533, 0x0010}, -- eufy, FamiLock S3
-  {0x1533, 0x0011}, -- eufy, FamiLock E34
-  {0x1533, 0x0012}, -- eufy, FamiLock E35
-  {0x1533, 0x0016}, -- eufy, FamiLock E32
-  {0x135D, 0x00B1}, -- Nuki, Smart Lock Pro
-  {0x135D, 0x00B2}, -- Nuki, Smart Lock
-  {0x135D, 0x00C1}, -- Nuki, Smart Lock
-  {0x135D, 0x00A1}, -- Nuki, Smart Lock
-  {0x135D, 0x00B0}, -- Nuki, Smart Lock
-  {0x15F2, 0x0001}, -- Viomi, AiSafety Smart Lock E100
-  {0x158B, 0x0001}, -- Deasino, DS-MT01
-  {0x10E1, 0x2002}, -- VDA
-  {0x1421, 0x0042}, -- Kwikset Halo Select Plus
-}
 
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
@@ -148,18 +113,6 @@ local subscribed_events = {
   }
 }
 
-local function is_new_matter_lock_products(opts, driver, device)
-  if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
-    return false
-  end
-  for _, p in ipairs(NEW_MATTER_LOCK_PRODUCTS) do
-    if device.manufacturer_info.vendor_id == p[1] and
-      device.manufacturer_info.product_id == p[2] then
-        return true
-    end
-  end
-  return false
-end
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -180,6 +133,11 @@ end
 
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
+  elseif device:get_field(profiling_data.BATTERY_SUPPORT) == nil then
+    device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
+  end
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
@@ -199,12 +157,6 @@ local function device_init(driver, device)
 
 local function device_added(driver, device)
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-  else
-    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
-  end
 end
 
 local function match_profile_modular(driver, device)
@@ -637,23 +589,22 @@ end
 -- Power Source Attribute List --
 ---------------------------------
 local function handle_power_source_attribute_list(driver, device, ib, response)
-  for _, attr in ipairs(ib.data.elements) do
-    -- mark if the device if BatPercentRemaining (Attribute ID 0x0C) or
-    -- BatChargeLevel (Attribute ID 0x0E) is present and try profiling.
-    if attr.value == 0x0C then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, { persist = true })
-      match_profile(driver, device)
-      return
-    elseif attr.value == 0x0E then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, { persist = true })
-      match_profile(driver, device)
-      return
+  local latest_battery_support = device:get_field(profiling_data.BATTERY_SUPPORT)
+  for _, attr in ipairs(ib.data.elements or {}) do
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, {persist=true})
+      break -- BATTERY_PERCENTAGE is highest priority. break early if found
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, {persist=true})
     end
   end
-
-  -- neither BatChargeLevel nor BatPercentRemaining were found. Re-profiling without battery.
-  device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
-  match_profile(driver, device)
+  -- in the case that 1) no battery has been set, and 2) the returned ib does not include battery attributes, ignore battery
+  if latest_battery_support == nil and not device:get_field(profiling_data.BATTERY_SUPPORT) then
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist=true})
+  end
+  if latest_battery_support == nil or latest_battery_support ~= device:get_field(profiling_data.BATTERY_SUPPORT) then
+    match_profile(driver, device)
+  end
 end
 
 -------------------------------
@@ -1269,6 +1220,7 @@ local function handle_update_user(driver, device, command)
   local cmdName = "updateUser"
   local userIdx = command.args.userIndex
   local userName = command.args.userName
+  local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
@@ -1298,13 +1250,13 @@ local function handle_update_user(driver, device, command)
   device:send(
     DoorLock.server.commands.SetUser(
       device, ep,
-      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Operation Type: Add(0), Modify(2)
-      userIdx,        -- User Index
-      userName,       -- User Name
-      nil,            -- Unique ID
-      nil,            -- User Status
-      userTypeMatter, -- User Type
-      nil             -- Credential Rule
+      DoorLock.types.DataOperationTypeEnum.MODIFY,
+      userIdx,
+      userNameMatter,
+      nil, -- Unique ID
+      nil, -- User Status
+      userTypeMatter,
+      nil  -- Credential Rule
     )
   )
 end
@@ -1346,6 +1298,7 @@ local function get_user_response_handler(driver, device, ib, response)
   -- Found available user index
   if status == nil or status == DoorLock.types.UserStatusEnum.AVAILABLE then
     local userName = device:get_field(lock_utils.USER_NAME)
+    local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
     local userType = device:get_field(lock_utils.USER_TYPE)
     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
     if userType == "guest" then
@@ -1359,13 +1312,13 @@ local function get_user_response_handler(driver, device, ib, response)
     device:send(
       DoorLock.server.commands.SetUser(
         device, ep,
-        DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
-        userIdx,          -- User Index
-        userName,         -- User Name
-        nil,              -- Unique ID
-        nil,              -- User Status
-        userTypeMatter,   -- User Type
-        nil               -- Credential Rule
+        DoorLock.types.DataOperationTypeEnum.ADD,
+        userIdx,
+        userNameMatter,
+        nil, -- Unique ID
+        nil, -- User Status
+        userTypeMatter,
+        nil  -- Credential Rule
       )
     )
   elseif userIdx >= maxUser then -- There's no available user index
@@ -1526,13 +1479,15 @@ local function handle_add_credential(driver, device, command)
   -- Get parameters
   local cmdName = "addCredential"
   local userIdx = command.args.userIndex
-  if userIdx == 0 then
-    userIdx = nil
-  end
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
     userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
+  end
+  if userIdx == 0 then
+    userIdx = nil
+  else
+    userTypeMatter = nil
   end
   local credential = {
     credential_type = DoorLock.types.CredentialTypeEnum.PIN,
@@ -1658,17 +1613,6 @@ local function set_pin_response_handler(driver, device, ib, response)
       add_credential_to_table(device, userIdx, credIdx, "pin")
     end
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-
     -- If User Type is Guest and device support schedule, add default schedule
     local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
     local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
@@ -1692,6 +1636,16 @@ local function set_pin_response_handler(driver, device, ib, response)
         )
       )
     else
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
       device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     end
     return
@@ -2367,6 +2321,20 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
   end
 
   if cmdName == "defaultSchedule" then
+    local cmdName = "addCredential"
+    local credIdx = device:get_field(lock_utils.CRED_INDEX)
+
+    -- Update commandResult
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      credentialIndex = credIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     return
   end
 
@@ -2498,11 +2466,11 @@ local function lock_op_event_handler(driver, device, ib, response)
   elseif opSource.value == Source.RFID then
     opSource = "rfid"
   elseif opSource.value == Source.BIOMETRIC then
-    opSource = "keypad"
+    opSource = nil -- It will be updated R2
   elseif opSource.value == Source.ALIRO then
-    opSource = nil
+    opSource = "digitalKey"
   else
-    opSource =nil
+    opSource = nil
   end
 
   if userIdx ~= nil then
@@ -2967,7 +2935,7 @@ local new_matter_lock_handler = {
     capabilities.battery,
     capabilities.batteryLevel
   },
-  can_handle = is_new_matter_lock_products
+  can_handle = require("new-matter-lock.can_handle"),
 }
 
 return new_matter_lock_handler

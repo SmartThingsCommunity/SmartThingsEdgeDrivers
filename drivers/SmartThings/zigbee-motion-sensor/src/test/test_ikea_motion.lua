@@ -58,6 +58,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -97,7 +100,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -117,13 +123,16 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.mock_time.advance_time(180)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "ZDO Message handler and adding hub to group",
   function()
-    local binding_table = mgmt_bind_response.BindingTableListRecord("jù¿˛ˇ^œ–", 0x01, 0x0006, 0x01, 0xB9F2)
+    local binding_table = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x01, 0xB9F2)
     local response = mgmt_bind_response.MgmtBindResponse({
       status = 0x00,
       total_binding_table_entry_count = 0x01,
@@ -138,13 +147,16 @@ test.register_coroutine_test(
       }
     )
     test.socket.zigbee:__expect_add_hub_to_group(0xB9F2)
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
   "Request all binding table entries and fall back to group 0x0000",
   function()
-    local binding_table_long = mgmt_bind_response.BindingTableListRecord("jù¿˛ˇ^œ–", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
+    local binding_table_long = mgmt_bind_response.BindingTableListRecord("\x6A\x9D\xC0\xFE\xFF\x5E\xCF\xD0", 0x01, 0x0006, 0x03, "DEADBEEF", 0x01)
     local response = mgmt_bind_response.MgmtBindResponse({
       status = 0x00,
       total_binding_table_entry_count = 0x02,
@@ -197,7 +209,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id,
       Groups.commands.AddGroup(mock_device, 0x0000)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -220,7 +235,38 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id,
       Groups.commands.AddGroup(mock_device, 0x0000)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Second OnWithTimedOff cancels existing timer and resets motion",
+  function()
+    local frm_ctrl = FrameCtrl(0x01)
+    -- Pre-register two timers: first will be cancelled, second will fire
+    test.timer.__create_and_queue_test_time_advance_timer(0x0708/10, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(0x0708/10, "oneshot")
+    -- First motion event
+    local first_cmd = OnOff.server.commands.OnWithTimedOff.build_test_rx(mock_device, 0x00, 0x0708, 0x0000)
+    first_cmd.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({mock_device.id, first_cmd})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+    test.wait_for_events()
+    -- Second motion event before first timer fires - cancels first timer
+    local second_cmd = OnOff.server.commands.OnWithTimedOff.build_test_rx(mock_device, 0x00, 0x0708, 0x0000)
+    second_cmd.body.zcl_header.frame_ctrl = frm_ctrl
+    test.socket.zigbee:__queue_receive({mock_device.id, second_cmd})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
+    test.wait_for_events()
+    -- Only the second timer fires
+    test.mock_time.advance_time(180)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

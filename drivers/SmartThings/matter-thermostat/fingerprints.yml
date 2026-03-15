@@ -33,6 +33,11 @@ matterManufacturer:
     vendorId: 0x130A
     productId: 0x007D
     deviceProfileName: thermostat-heating-only-nostate
+  - id: "4874/127"
+    deviceLabel: Eve Thermostat (Europe)
+    vendorId: 0x130A
+    productId: 0x007F
+    deviceProfileName: thermostat-heating-only-nostate-nobattery
   #Habi
   - id: "5415/1"
     deviceLabel: habi Matter Wireless Room Thermostat

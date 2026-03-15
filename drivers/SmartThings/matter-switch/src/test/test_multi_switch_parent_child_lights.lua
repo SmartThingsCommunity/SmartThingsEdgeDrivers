@@ -10,7 +10,7 @@ test.disable_startup_messages()
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 
 local parent_ep = 10
 local child1_ep = 20
@@ -22,6 +22,10 @@ local mock_device = test.mock_device.build_test_matter_device({
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
+  },
+  matter_version = {
+    hardware = 1,
+    software = 1,
   },
   endpoints = {
     {
@@ -162,7 +166,8 @@ local function test_init()
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -239,7 +244,8 @@ local function test_init_parent_child_endpoints_non_sequential()
     clusters.ColorControl.attributes.CurrentHue,
     clusters.ColorControl.attributes.CurrentSaturation,
     clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(unsup_mock_device)
   for i, cluster in ipairs(cluster_subscribe_list) do
@@ -259,7 +265,7 @@ local function test_init_parent_child_endpoints_non_sequential()
   test.socket.matter:__expect_send({unsup_mock_device.id, clusters.LevelControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
   test.socket.matter:__expect_send({unsup_mock_device.id, clusters.ColorControl.attributes.Options:write(unsup_mock_device, child2_ep_non_sequential, clusters.ColorControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
 
-  unsup_mock_device:expect_metadata_update({ profile = "light-binary" })
+  unsup_mock_device:expect_metadata_update({ profile = "switch-binary" })
   unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
   for _, child in pairs(mock_children_non_sequential) do
@@ -342,6 +348,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -393,6 +402,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -444,6 +456,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -471,6 +486,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switchLevel", capability_attr_id = "level" }
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -490,7 +508,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, child2_ep, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -514,6 +532,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -546,6 +567,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.saturation(72))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -565,7 +589,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device, child2_ep, 15182, 21547, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -602,6 +626,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorControl.saturation(72))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -650,6 +677,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.switchLevel.levelRange({minimum = 50, maximum = 80}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -677,6 +707,9 @@ test.register_message_test(
       direction = "send",
       message = mock_children[child2_ep]:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 1800, maximum = 6500}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -684,7 +717,24 @@ test.register_coroutine_test(
   "Test child devices are created in order of their endpoints",
   function()
   end,
-  { test_init = test_init_parent_child_endpoints_non_sequential }
+  {
+    test_init = test_init_parent_child_endpoints_non_sequential,
+    min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Test info changed event with matter_version update",
+  function()
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })) -- bump to 2
+    mock_children[child1_ep]:expect_metadata_update({ profile = "light-level" })
+    mock_children[child2_ep]:expect_metadata_update({ profile = "light-color-level" })
+    mock_device:expect_metadata_update({ profile = "light-binary" })
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
+

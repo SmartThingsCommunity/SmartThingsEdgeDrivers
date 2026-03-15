@@ -65,6 +65,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -89,6 +92,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -106,7 +112,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected()))
     test.mock_time.advance_time(10)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
