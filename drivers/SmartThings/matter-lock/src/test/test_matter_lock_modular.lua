@@ -208,6 +208,8 @@ local function test_init()
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
+  subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device))
+
   -- add test device
   test.mock_device.add_test_device(mock_device)
   -- actual onboarding flow
@@ -215,7 +217,6 @@ local function test_init()
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
   )
-  test.socket.matter:__expect_send({mock_device.id, clusters.PowerSource.attributes.AttributeList:read()})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
@@ -229,6 +230,7 @@ local function test_init_unlatch()
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_unlatch))
+  subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_unlatch))
   -- add test device, handle initial subscribe
   test.mock_device.add_test_device(mock_device_unlatch)
   -- actual onboarding flow
@@ -236,7 +238,6 @@ local function test_init_unlatch()
   test.socket.capability:__expect_send(
     mock_device_unlatch:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
   )
-  test.socket.matter:__expect_send({mock_device_unlatch.id, clusters.PowerSource.attributes.AttributeList:read()})
   test.socket.device_lifecycle:__queue_receive({ mock_device_unlatch.id, "init" })
   test.socket.matter:__expect_send({mock_device_unlatch.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_unlatch.id, "doConfigure" })
@@ -256,6 +257,7 @@ local function test_init_user_pin()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin))
+  subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_user_pin))
   -- add test device
   test.mock_device.add_test_device(mock_device_user_pin)
   -- actual onboarding flow
@@ -263,7 +265,6 @@ local function test_init_user_pin()
   test.socket.capability:__expect_send(
     mock_device_user_pin:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
   )
-  test.socket.matter:__expect_send({mock_device_user_pin.id, clusters.PowerSource.attributes.AttributeList:read()})
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin.id, "init" })
   test.socket.matter:__expect_send({mock_device_user_pin.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin.id, "doConfigure" })
@@ -285,6 +286,7 @@ local function test_init_user_pin_schedule_unlatch()
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin_schedule_unlatch))
+  subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_user_pin_schedule_unlatch))
   -- add test device
   test.mock_device.add_test_device(mock_device_user_pin_schedule_unlatch)
   -- actual onboarding flow
@@ -292,7 +294,6 @@ local function test_init_user_pin_schedule_unlatch()
   test.socket.capability:__expect_send(
     mock_device_user_pin_schedule_unlatch:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
   )
-  test.socket.matter:__expect_send({mock_device_user_pin_schedule_unlatch.id, clusters.PowerSource.attributes.AttributeList:read()})
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin_schedule_unlatch.id, "init" })
   test.socket.matter:__expect_send({mock_device_user_pin_schedule_unlatch.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin_schedule_unlatch.id, "doConfigure" })
@@ -306,6 +307,7 @@ local function test_init_modular()
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_modular))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
+  subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_modular))
   -- add test device
   test.mock_device.add_test_device(mock_device_modular)
   -- actual onboarding flow
@@ -313,7 +315,6 @@ local function test_init_modular()
   test.socket.capability:__expect_send(
     mock_device_modular:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
   )
-  test.socket.matter:__expect_send({mock_device_modular.id, clusters.PowerSource.attributes.AttributeList:read()})
   test.socket.device_lifecycle:__queue_receive({ mock_device_modular.id, "init" })
   test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_modular.id, "doConfigure" })
@@ -654,6 +655,7 @@ test.register_coroutine_test(
     subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_modular))
     subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device_modular))
+    subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_modular))
     test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
     test.socket.capability:__expect_send(
       mock_device_modular:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
