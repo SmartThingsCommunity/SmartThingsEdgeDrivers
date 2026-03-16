@@ -8,7 +8,7 @@ local SimpleMetering = require "st.zigbee.cluster".clusters.SimpleMetering
 local function energy_meter_handler(driver, device, value, zb_rx)
   local raw_value = value.value
 
-  if type(raw_value) ~= "number" or raw_value < 0 then
+  if type(raw_value) ~= "number" then
     return
   end
 

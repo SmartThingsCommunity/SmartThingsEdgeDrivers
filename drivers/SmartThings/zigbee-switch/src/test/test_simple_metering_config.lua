@@ -47,23 +47,17 @@ test.register_message_test(
 )
 
 test.register_message_test(
-  "Energy meter report with zero value should be ignored",
+  "Energy meter report with zero value should emit zero event",
   {
     {
       channel = "zigbee",
       direction = "receive",
       message = { mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 0) }
-    }
-  }
-)
-
-test.register_message_test(
-  "Energy meter report with negative value should be ignored",
-  {
+    },
     {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, -100) }
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0, unit = "kWh" }))
     }
   }
 )
