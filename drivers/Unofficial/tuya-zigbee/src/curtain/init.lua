@@ -19,6 +19,7 @@ local device_management = require "st.zigbee.device_management"
 local tuya_utils = require "tuya_utils"
 local Basic = clusters.Basic
 local packet_id = 0
+local log = require "log"
 
 local PRESET_LEVEL = 50
 local PRESET_LEVEL_KEY = "_presetLevel"
@@ -109,6 +110,7 @@ local function window_shade_level(driver, device, command)
   if level > 100 then
     level = 100
   end
+  log.info("capability handler level ------------->", level)
   level = utils.round(level)
   if device:get_manufacturer() == "_TZE284_nladmfvf" then
     level = 100 - level   -- specific for _TZE284_nladmfvf
@@ -153,6 +155,28 @@ local function tuya_cluster_handler(driver, device, zb_rx)
   end
 end
 
+local function knob_to_window_shade_step_cmd(driver, device, command)
+  -- step1: get the rotateAmount
+  local step = command.args.stepSize
+  -- step2: get the current_level
+  local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+  -- calcultate the target_level
+  -- Tuya curtain devices use INVERTED position logic,
+  -- if we want to set to "target level" = "current_level" + "step" 
+  -- we should send (100 - target level) to device
+  local target_level = 100-(current_level + step)
+  if target_level > 100 then
+    target_level = 100
+  elseif target_level < 0 then
+    target_level = 0
+  end
+  target_level = utils.round(target_level)
+  tuya_utils.send_tuya_command(device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00'..string.pack(">I2", target_level), packet_id)
+  packet_id = increase_packet_id(packet_id)
+  log.info("-------------------target_level", 100-target_level)
+  device:emit_event(capabilities.windowShadeLevel.shadeLevel(100-target_level))
+end
+
 local tuya_curtain_driver = {
   NAME = "tuya curtain",
   lifecycle_handlers = {
@@ -173,6 +197,9 @@ local tuya_curtain_driver = {
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_preset,
       [capabilities.windowShadePreset.commands.setPresetPosition.NAME] = set_preset_position_cmd
+    },
+    [capabilities.statelessSwitchLevelStep.ID] = {
+      [capabilities.statelessSwitchLevelStep.commands.stepLevel.NAME] = knob_to_window_shade_step_cmd
     }
   },
   zigbee_handlers = {

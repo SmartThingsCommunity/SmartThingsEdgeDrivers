@@ -4,6 +4,8 @@ components:
   capabilities:
   - id: windowShade
     version: 1
+  - id: statelessSwitchLevelStep
+    version: 1
   - id: windowShadeLevel
     version: 1
   - id: windowShadePreset
