@@ -1,0 +1,21 @@
+name: fireavert-appliance-shutoff-electric
+components:
+- id: main
+  capabilities:
+  - id: soundDetection
+    version: 1
+    config:
+      values:
+        - key: supportedSoundTypes.value
+          enabledValues:
+            - fireAlarm
+  - id: powerMeter
+    version: 1
+  categories:
+    - name: SmokeDetector
+- id: switch2
+  capabilities:
+  - id: switch
+    version: 1
+  categories: 
+    - name: SmokeDetector
