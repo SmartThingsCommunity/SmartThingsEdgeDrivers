@@ -272,6 +272,7 @@ local function info_changed(driver, device, event, args)
   device:subscribe()
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
   device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is madatory
+  device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
 end
 
 local function profiling_data_still_required(device)
