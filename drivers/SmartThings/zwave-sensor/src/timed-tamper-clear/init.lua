@@ -43,7 +43,7 @@ local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)
   -- check exclusion list: if device matches any entry, skip auto-clear
   for _, excluded_device in pairs(excluded_devices) do
     local mfrs          = excluded_device.mfrs
-    local product_types = excluded_device.product_types or nil   
+    local product_types = excluded_device.product_types or nil
     local product_ids   = excluded_device.product_ids   or nil
 
     if mfrs ~= nil then
