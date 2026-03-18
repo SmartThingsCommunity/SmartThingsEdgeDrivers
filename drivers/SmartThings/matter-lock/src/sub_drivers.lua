@@ -3,6 +3,6 @@
 
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
-   lazy_load_if_possible("new-matter-lock"),
+   lazy_load_if_possible("unmigrated-matter-lock"),
 }
 return sub_drivers
