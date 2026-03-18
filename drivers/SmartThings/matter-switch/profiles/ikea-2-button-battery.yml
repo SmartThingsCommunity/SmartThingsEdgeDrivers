@@ -36,6 +36,9 @@ deviceConfig:
     - component: main
       capability: battery
       version: 1
+    - component: main
+      capability: refresh
+      version: 1
     - component: button2
       capability: button
       version: 1
