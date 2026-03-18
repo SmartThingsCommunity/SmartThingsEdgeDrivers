@@ -87,15 +87,6 @@ end
 -------------------------------------------------------------------
 -- Lifecycle
 -------------------------------------------------------------------
-local function device_added(driver, device)
---  if device == nil then
---       return   -- 安全跳出，不做任何操作
---  end
-
---  device:emit_event(capabilities.switch.switch.off())
---  device:emit_event(capabilities.switchLevel.level(0))
-end
-
 local pad19_driver_template = {
   NAME = "Philio PAD19 Dimmer Switch",
   zwave_handlers = {
@@ -122,7 +113,6 @@ local pad19_driver_template = {
   },
 
   lifecycle_handlers = {
-    added = device_added
   }
 }
 
