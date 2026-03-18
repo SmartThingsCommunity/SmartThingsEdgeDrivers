@@ -5,6 +5,10 @@ components:
   capabilities:
   - id: lockCodes
     version: 1
+  - id: lockUsers
+    version: 1
+  - id: lockCredentials
+    version: 1
   - id: tamperAlert
     version: 1
   - id: batteryLevel
