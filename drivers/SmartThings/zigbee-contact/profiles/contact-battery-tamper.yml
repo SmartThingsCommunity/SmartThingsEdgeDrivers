@@ -6,8 +6,8 @@ components:
     version: 1
   - id: battery
     version: 1
-  - id: samplereturn62595.tamperStatus
-    version: 1  
+  - id: tamperAlert
+    version: 1
   - id: firmwareUpdate
     version: 1
   - id: refresh
