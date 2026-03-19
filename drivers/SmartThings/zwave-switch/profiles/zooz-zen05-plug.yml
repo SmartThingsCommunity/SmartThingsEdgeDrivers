@@ -15,14 +15,12 @@ components:
   categories:
   - name: SmartPlug
 preferences:
-  - name: "customInfo"
-    title: "Driver Info:"
+  - name: "driverInfo"
+    title: "Driver Info"
     description: "This driver may have limited features, check the online Zooz documentation for information about custom drivers."
-    required: false
     preferenceType: string
     definition:
       stringType: paragraph
-      default: ""
   #param 1
   - name: "ledMode"
     title: "LED Indicator Behavior"
