@@ -982,11 +982,6 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1010
     deviceProfileName: switch-level
-  - id: "4251/4101"
-    deviceLabel: Decora Smart Wi-Fi (2ndGen) Fan Speed Controller
-    vendorId: 0x109B
-    productId: 0x1005
-    deviceProfileName: fan-modular
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
