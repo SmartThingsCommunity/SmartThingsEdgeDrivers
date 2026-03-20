@@ -1,7 +1,6 @@
 -- Copyright 2023 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-
 local test = require "integration_test"
 test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
@@ -170,9 +169,9 @@ local function test_init()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device))
 
   -- add test device, handle initial subscribe
@@ -194,9 +193,9 @@ local function test_init_unlatch()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_unlatch)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_unlatch))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_unlatch))
-  subscribe_request:merge(cluster_base.subscribe(mock_device_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_unlatch))
 
   -- add test device, handle initial subscribe
@@ -223,10 +222,10 @@ local function test_init_user_pin()
   subscribe_request:merge(DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.attributes.MinPINCodeLength:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_user_pin))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin))
-  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_user_pin))
 
   -- add test device, handle initial subscribe
@@ -255,10 +254,10 @@ local function test_init_user_pin_schedule_unlatch()
   subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device_user_pin_schedule_unlatch))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin_schedule_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin_schedule_unlatch))
-  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin_schedule_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_user_pin_schedule_unlatch))
 
   -- add test device, handle initial subscribe

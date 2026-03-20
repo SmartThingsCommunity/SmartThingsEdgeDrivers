@@ -1,13 +1,11 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local im = require "st.matter.interaction_model"
 local utils = require "st.utils"
 local lock_utils = require "lock_utils"
-local security = require "st.security"
 
 local version = require "version"
 if version.api < 10 then
@@ -24,7 +22,6 @@ local MAX_USER_NAME_LENGTH = 10
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
-local PUB_KEY_PREFIX = "04"
 
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
@@ -65,8 +62,7 @@ local profiling_data = {
 local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local subscribed_attributes = {
   [capabilities.lock.ID] = {
-    DoorLock.attributes.LockState,
-    DoorLockFeatureMapAttr
+    DoorLock.attributes.LockState
   },
   [capabilities.remoteControlStatus.ID] = {
     DoorLock.attributes.OperatingMode
@@ -147,6 +143,7 @@ local function device_init(driver, device)
       end
     end
   end
+  device:add_subscribed_attribute(DoorLockFeatureMapAttr)
   for cap_id, events in pairs(subscribed_events) do
     if device:supports_capability_by_id(cap_id) then
       for _, e in ipairs(events) do
@@ -161,135 +158,18 @@ local function device_added(driver, device)
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
 end
 
--- This function check busy_state and if busy_state is false, set it to true(current time)
-local function is_busy_state_set(device)
-  local c_time = os.time()
-  local busy_state = device:get_field(lock_utils.BUSY_STATE) or false
-  if busy_state == false or c_time - busy_state > 10 then
-    device:set_field(lock_utils.BUSY_STATE, c_time, {persist = true})
-    return false
-  else
-    return true
-  end
-end
-
-local function hex_string_to_octet_string(hex_string)
-  if hex_string == nil then
-    return nil
-  end
-  local octet_string = ""
-  for i = 1, #hex_string, 2 do
-      local hex = hex_string:sub(i, i + 1)
-      octet_string = octet_string .. string.char(tonumber(hex, 16))
-  end
-  return octet_string
-end
-
-local function create_group_id_resolving_key()
-  math.randomseed(os.time())
-  local result = string.format("%02x", math.random(0, 255))
-  for i = 1, 15 do
-    result = result .. string.format("%02x", math.random(0, 255))
-  end
-  return result
-end
-
-local function generate_keypair(device)
-  local request_opts = {
-    key_algorithm = {
-      type = "ec",
-      curve = "prime256v1"
-    },
-    signature_algorithm = "sha256",
-    return_formats = {
-      pem = true,
-      der = true
-    },
-    subject = {
-      common_name = "reader config"
-    },
-    validity_days = 36500,
-    x509_extensions = {
-      key_usage = {
-        critical = true,
-        digital_signature = true
-      },
-      certificate_policies = {
-        critical = true,
-        policy_2030_5_self_signed_client = true
-      }
-    }
-  }
-  local status = security.generate_self_signed_cert(request_opts)
-  if not status or not status.key_der then
-    device.log.error("generate_self_signed_cert returned no data")
-    return nil, nil
-  end
-
-  local der = status.key_der
-  local privKey, pubKey = nil, nil
-  -- Helper: Parse ASN.1 length (handles 1-byte and multi-byte lengths)
-  local function get_length(data, start_pos)
-    local b = string.byte(data, start_pos)
-    if not b then return nil, start_pos end
-
-    if b < 0x80 then
-      return b, start_pos + 1
-    else
-      local num_bytes = b - 0x80
-      local len = 0
-      for i = 1, num_bytes do
-        len = (len * 256) + string.byte(data, start_pos + i)
-      end
-      return len, start_pos + 1 + num_bytes
-    end
-  end
-  -- Start parsing after the initial SEQUENCE tag (0x30)
-  -- Most keys start: [0x30][Length]. We find the first length to find the start of content.
-  local _, pos = get_length(der, 2)
-
-  while pos < #der do
-    local tag = string.byte(der, pos)
-    local len, content_start = get_length(der, pos + 1)
-    if not len then break end
-    if tag == 0x04 then
-      -- PRIVATE KEY: Octet String
-      privKey = utils.bytes_to_hex_string(string.sub(der, content_start, content_start + len - 1))
-    elseif tag == 0xA1 then
-      -- PUBLIC KEY Wrapper: Explicit Tag [1]
-      -- Inside 0xA1 is a BIT STRING (0x03)
-      local inner_tag = string.byte(der, content_start)
-      if inner_tag == 0x03 then
-        local bit_len, bit_start = get_length(der, content_start + 1)
-        -- BIT STRINGS have a "leading null byte" (unused bits indicator)
-        -- We skip that byte (bit_start) and the 0x04 EC prefix to get the raw X/Y coordinates
-        local actual_key_start = bit_start + 2
-        local actual_key_len = bit_len - 2
-        pubKey = PUB_KEY_PREFIX .. utils.bytes_to_hex_string(string.sub(der, actual_key_start, actual_key_start + actual_key_len - 1))
-      end
-    end
-    -- Move pointer to the next tag
-    pos = content_start + len
-  end
-
-  if not privKey or not pubKey then
-    device.log.error("Failed to extract keys from DER")
-  end
-  return privKey, pubKey
-end
-
 local function set_reader_config(device)
   local reader_config_updated = device:get_field(lock_utils.ALIRO_READER_CONFIG_UPDATED) or nil
   if reader_config_updated == "TRUE" or reader_config_updated == "IN_PROGRESS" then return end
 
   local cmdName = "setReaderConfig"
-  local groupId = create_group_id_resolving_key()
+  local groupId = lock_utils.create_group_id_resolving_key()
   local groupResolvingKey = nil
   local aliro_ble_uwb_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.ALIROBLEUWB})
   if #aliro_ble_uwb_eps > 0 then
-    groupResolvingKey = create_group_id_resolving_key()
+    groupResolvingKey = lock_utils.create_group_id_resolving_key()
   end
-  local privKey, pubKey = generate_keypair(device)
+  local privKey, pubKey = lock_utils.generate_keypair(device)
   if not privKey or not pubKey then
     local command_result_info = {
       commandName = cmdName,
@@ -302,7 +182,7 @@ local function set_reader_config(device)
   end
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -324,10 +204,10 @@ local function set_reader_config(device)
   device:send(
     DoorLock.server.commands.SetAliroReaderConfig(
       device, ep,
-      hex_string_to_octet_string(privKey),
-      hex_string_to_octet_string(pubKey),
-      hex_string_to_octet_string(groupId),
-      hex_string_to_octet_string(groupResolvingKey)
+      lock_utils.hex_string_to_octet_string(privKey),
+      lock_utils.hex_string_to_octet_string(pubKey),
+      lock_utils.hex_string_to_octet_string(groupId),
+      lock_utils.hex_string_to_octet_string(groupResolvingKey)
     )
   )
   device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS")
@@ -337,12 +217,15 @@ local function match_profile_modular(driver, device)
   local enabled_optional_component_capability_pairs = {}
   local main_component_capabilities = {}
   local modular_profile_name = "lock-modular"
-  local is_support_aliro = false
   for _, device_ep in pairs(device.endpoints) do
     for _, ep_cluster in pairs(device_ep.clusters) do
       if ep_cluster.cluster_id == DoorLock.ID then
         local clus_has_feature = function(feature_bitmap)
-          return DoorLock.are_features_supported(feature_bitmap, ep_cluster.feature_map)
+          return DoorLock.are_features_supported(
+            feature_bitmap,
+            lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, device_ep.endpoint_id) or
+            ep_cluster.feature_map
+          )
         end
         if clus_has_feature(DoorLock.types.Feature.USER) then
           table.insert(main_component_capabilities, capabilities.lockUsers.ID)
@@ -364,7 +247,6 @@ local function match_profile_modular(driver, device)
         end
         if clus_has_feature(DoorLock.types.Feature.ALIRO_PROVISIONING) then
           table.insert(main_component_capabilities, capabilities.lockAliro.ID)
-          is_support_aliro = true
         end
         break
       end
@@ -379,13 +261,9 @@ local function match_profile_modular(driver, device)
   end
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
-  device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
-  device:set_field(lock_utils.MODULAR_PROFILE_UPDATED, true)
-
-  if is_support_aliro == true then
-    device.thread:call_with_delay(5, function(t)
-      set_reader_config(device)
-    end)
+  if lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
+    device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
+    device:set_field(lock_utils.MODULAR_PROFILE_UPDATED, true)
   end
 end
 
@@ -444,6 +322,9 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
+  if #device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.ALIRO_PROVISIONING}) > 0 then
+    set_reader_config(device)
+  end
   if device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
     device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
@@ -579,7 +460,7 @@ local function set_cota_credential(device, credential_index)
   end
 
   -- Check Busy State
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     device.log.debug("delaying setting COTA credential since a credential is currently being set")
     device.thread:call_with_delay(2, function(t)
       set_cota_credential(device, credential_index)
@@ -747,23 +628,18 @@ local function max_aliro_endpoint_key_handler(driver, device, ib, response)
   end
 end
 
----------------------------------------------
+------------------------------
 -- Feature Map of Door Lock --
----------------------------------------------
+------------------------------
 local function door_lock_feature_map_handler(driver, device, ib, response)
-  for _, device_ep in pairs(device.endpoints) do
-    if ib.endpoint_id == device_ep.endpoint_id then
-      for _, ep_cluster in pairs(device_ep.clusters) do
-        if ep_cluster.cluster_id == DoorLock.ID then
-          if ep_cluster.feature_map == ib.data.value then
-            return
-          end
-          ep_cluster.feature_map = ib.data.value
-        end
-      end
-    end
+  if ib.data.value ~= nil then return end
+  local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
+  if feature_map == nil or feature_map ~= ib.data.value then
+    lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
   end
-  match_profile(driver, device)
+  if device:get_field(lock_utils.IS_MODULAR_PROFILE) == true then
+    match_profile_modular(driver, device)
+  end
 end
 
 ---------------------------------
@@ -1371,7 +1247,7 @@ local function handle_add_user(driver, device, command)
   local userType = command.args.userType
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -1409,7 +1285,7 @@ local function handle_update_user(driver, device, command)
   end
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -1568,7 +1444,7 @@ local function handle_delete_user(driver, device, command)
   local userIdx = command.args.userIndex
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -1596,7 +1472,7 @@ local function handle_delete_all_users(driver, device, command)
   local cmdName = "deleteAllUsers"
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -1677,7 +1553,7 @@ local function handle_add_credential(driver, device, command)
   local credData = command.args.credentialData
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -1725,7 +1601,7 @@ local function handle_update_credential(driver, device, command)
   local credData = command.args.credentialData
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -1970,7 +1846,7 @@ local function set_issuer_key_response_handler(driver, device, ib, response)
         device, ep,
         DoorLock.types.DataOperationTypeEnum.ADD,
         credential, -- Credential
-        hex_string_to_octet_string(credData), -- Credential Data
+        lock_utils.hex_string_to_octet_string(credData), -- Credential Data
         userIdx, -- User Index
         nil,     -- User Status
         userType -- User Type
@@ -2069,7 +1945,7 @@ local function set_endpoint_key_response_handler(driver, device, ib, response)
         device, ep,
         DoorLock.types.DataOperationTypeEnum.ADD,
         credential, -- Credential
-        hex_string_to_octet_string(credData), -- Credential Data
+        lock_utils.hex_string_to_octet_string(credData), -- Credential Data
         userIdx, -- User Index
         nil,     -- User Status
         userType -- User Type
@@ -2118,7 +1994,7 @@ local function handle_delete_credential(driver, device, command)
   }
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -2150,7 +2026,7 @@ local function handle_delete_all_credentials(driver, device, command)
   }
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -2263,7 +2139,7 @@ local function handle_set_week_day_schedule(driver, device, command)
   local endMinute = schedule.endMinute
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -2357,7 +2233,7 @@ local function handle_clear_week_day_schedule(driver, device, command)
   local userIdx = command.args.userIndex
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -2453,7 +2329,7 @@ local function handle_set_year_day_schedule(driver, device, command)
   local localEndTime = command.args.schedule.localEndTime
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -2552,7 +2428,7 @@ local function handle_clear_year_day_schedule(driver, device, command)
   local userIdx = command.args.userIndex
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -2680,7 +2556,7 @@ local function handle_set_reader_config(driver, device, command)
   end
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       statusCode = "busy"
@@ -2718,10 +2594,10 @@ local function handle_set_reader_config(driver, device, command)
   device:send(
     DoorLock.server.commands.SetAliroReaderConfig(
       device, ep,
-      hex_string_to_octet_string(signingKey),
-      hex_string_to_octet_string(verificationKey),
-      hex_string_to_octet_string(groupId),
-      hex_string_to_octet_string(groupResolvingKey)
+      lock_utils.hex_string_to_octet_string(signingKey),
+      lock_utils.hex_string_to_octet_string(verificationKey),
+      lock_utils.hex_string_to_octet_string(groupId),
+      lock_utils.hex_string_to_octet_string(groupResolvingKey)
     )
   )
   device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS")
@@ -2774,7 +2650,7 @@ local function handle_set_issuer_key(driver, device, command)
   end
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       userIndex = userIdx,
@@ -2801,7 +2677,7 @@ local function handle_set_issuer_key(driver, device, command)
       device, ep,
       DoorLock.types.DataOperationTypeEnum.ADD, -- Data Operation Type: Add(0), Modify(2)
       credential, -- Credential
-      hex_string_to_octet_string(issuerKey), -- Credential Data
+      lock_utils.hex_string_to_octet_string(issuerKey), -- Credential Data
       userIdx, -- User Index
       nil, -- User Status
       userType -- User Type
@@ -2816,7 +2692,7 @@ local function handle_clear_issuer_key(driver, device, command)
   local reqId = command.args.requestId
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       userIndex = userIdx,
@@ -2877,7 +2753,7 @@ local function handle_set_endpoint_key(driver, device, command)
   end
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       userIndex = userIdx,
@@ -2935,7 +2811,7 @@ local function handle_set_endpoint_key(driver, device, command)
       device, ep,
       dataOpType, -- Data Operation Type: Add(0), Modify(2)
       credential, -- Credential
-      hex_string_to_octet_string(endpointKey), -- Credential Data
+      lock_utils.hex_string_to_octet_string(endpointKey), -- Credential Data
       userIdx,    -- User Index
       nil,        -- User Status
       userType    -- User Type
@@ -2952,7 +2828,7 @@ local function handle_clear_endpoint_key(driver, device, command)
   local reqId = command.args.requestId
 
   -- Check busy state
-  if is_busy_state_set(device) then
+  if lock_utils.is_busy_state_set(device) then
     local command_result_info = {
       commandName = cmdName,
       userIndex = userIdx,
