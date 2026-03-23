@@ -9,11 +9,7 @@ components:
         - key: supportedSoundTypes.value
           enabledValues:
             - fireAlarm
-  categories:
-    - name: SmokeDetector
-- id: switch2
-  capabilities:
   - id: switch
     version: 1
-  categories: 
+  categories:
     - name: SmokeDetector
