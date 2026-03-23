@@ -72,7 +72,6 @@ local function test_init()
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
   )
-
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))

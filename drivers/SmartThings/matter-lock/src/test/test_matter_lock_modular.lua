@@ -4,10 +4,9 @@
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local cluster_base = require "st.matter.cluster_base"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
+local cluster_base = require "st.matter.cluster_base"
 local DoorLock = clusters.DoorLock
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -576,8 +575,7 @@ test.register_coroutine_test(
     mock_device_modular:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}}} })
 
     local updated_device_profile = t_utils.get_profile_definition("lock-modular-embedded-unlatch.yml",
-      {enabled_optional_capabilities = {{ "main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}},
-  },}
+      {enabled_optional_capabilities = {{ "main", {"lockUsers", "lockCredentials", "lockSchedules", "battery"}}}}
     )
     updated_device_profile.id = "00000000-1111-2222-3333-000000000010"
 

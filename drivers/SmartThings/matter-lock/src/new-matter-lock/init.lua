@@ -48,7 +48,6 @@ local ALIRO_KEY_TYPE_TO_CRED_ENUM_MAP = {
   ["nonEvictableEndpointKey"] = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY
 }
 
-
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
   BATTERY_LEVEL = "BATTERY_LEVEL",
@@ -110,7 +109,6 @@ local subscribed_events = {
     DoorLock.events.LockUserChange
   }
 }
-
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -210,7 +208,7 @@ local function set_reader_config(device)
       lock_utils.hex_string_to_octet_string(groupResolvingKey)
     )
   )
-  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS")
+  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS", {persist = true})
 end
 
 local function match_profile_modular(driver, device)
@@ -322,7 +320,7 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
-  if #device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.ALIRO_PROVISIONING}) > 0 then
+  if device:supports_capability_by_id(capabilities.lockAliro.ID) then
     set_reader_config(device)
   end
   if device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
@@ -340,18 +338,17 @@ local function profiling_data_still_required(device)
   return false
 end
 
-local function match_profile(driver, device)
+local function match_profile(driver, device, ignore_static_profiling)
   if profiling_data_still_required(device) then return end
-
   if version.api >= 15 and version.rpc >= 9 then
     match_profile_modular(driver, device)
-  else
+  elseif ignore_static_profiling ~= true then
     match_profile_switch(driver, device)
   end
 end
 
 local function do_configure(driver, device)
-  match_profile(driver, device)
+  match_profile(driver, device, false)
   device.thread:call_with_delay(5, function()
     device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
@@ -359,7 +356,7 @@ local function do_configure(driver, device)
 end
 
 local function driver_switched(driver, device)
-  match_profile(driver, device)
+  match_profile(driver, device, false)
 end
 
 -- Matter Handler
@@ -543,7 +540,7 @@ local function aliro_reader_verification_key_handler(driver, device, ib, respons
     device:emit_event(capabilities.lockAliro.readerVerificationKey(
       utils.bytes_to_hex_string(ib.data.value), {visibility = {displayed = false}}
     ))
-    device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "TRUE")
+    device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "TRUE", {persist = true})
   end
 end
 
@@ -632,14 +629,12 @@ end
 -- Feature Map of Door Lock --
 ------------------------------
 local function door_lock_feature_map_handler(driver, device, ib, response)
-  if ib.data.value ~= nil then return end
+  if ib.data.value == nil then return end
   local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
   if feature_map == nil or feature_map ~= ib.data.value then
     lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
   end
-  if device:get_field(lock_utils.IS_MODULAR_PROFILE) == true then
-    match_profile_modular(driver, device)
-  end
+  match_profile(driver, device, true)
 end
 
 ---------------------------------
@@ -660,7 +655,7 @@ local function handle_power_source_attribute_list(driver, device, ib, response)
     device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist=true})
   end
   if latest_battery_support == nil or latest_battery_support ~= device:get_field(profiling_data.BATTERY_SUPPORT) then
-    match_profile(driver, device)
+    match_profile(driver, device, false)
   end
 end
 
@@ -2600,7 +2595,7 @@ local function handle_set_reader_config(driver, device, command)
       lock_utils.hex_string_to_octet_string(groupResolvingKey)
     )
   )
-  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS")
+  device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "IN_PROGRESS", {persist = true})
 end
 
 local function set_aliro_reader_config_handler(driver, device, ib, response)
@@ -2609,8 +2604,12 @@ local function set_aliro_reader_config_handler(driver, device, ib, response)
   local status = "failure"
   if ib.status == DoorLock.types.DlStatus.SUCCESS then
     status = "success"
-  elseif ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
-    status = "invalidCommand"
+    device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, "TRUE", {persist = true})
+  else
+    if ib.status == DoorLock.types.DlStatus.INVALID_FIELD then
+      status = "invalidCommand"
+    end
+    device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, nil, {persist = true})
   end
 
   -- Update commandResult

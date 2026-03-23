@@ -5,10 +5,9 @@ local test = require "integration_test"
 test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local cluster_base = require "st.matter.cluster_base"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
+local cluster_base = require "st.matter.cluster_base"
 local DoorLock = clusters.DoorLock
 
 local mock_device = test.mock_device.build_test_matter_device({
