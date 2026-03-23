@@ -19,17 +19,36 @@ local function dimmer_event(driver, device, cmd)
     raw = 0
   end
 
-  local level = utils.clamp_value(raw, 0, 99)
-  device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
-  device:emit_event(capabilities.switchLevel.level(level))
+  -- 將 Z-Wave 0-99 映射到 App 0-100
+  local zwave_level = utils.clamp_value(raw, 0, 99)
+  local app_level
+  if zwave_level <= 0 then
+    app_level = 0
+  elseif zwave_level >= 99 then
+    app_level = 100
+  else
+    app_level = zwave_level
+  end
+
+  device:emit_event(app_level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
+  device:emit_event(capabilities.switchLevel.level(app_level))
 end
 
 local function basic_report_handler(driver, device, cmd)
   local basic_level = cmd.args.value or 0
-  local level = utils.clamp_value(basic_level, 0, 99)
+  local zwave_level = utils.clamp_value(basic_level, 0, 99)
 
-  device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
-  device:emit_event(capabilities.switchLevel.level(level))
+  local app_level
+  if zwave_level <= 0 then
+    app_level = 0
+  elseif zwave_level >= 99 then
+    app_level = 100
+  else
+    app_level = zwave_level
+  end
+
+  device:emit_event(app_level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
+  device:emit_event(capabilities.switchLevel.level(app_level))
 end
 
 local function switch_on_handler(driver, device)
@@ -48,10 +67,9 @@ end
 
 local function switch_level_set(driver, device, cmd)
   local level = utils.round(cmd.args.level)
-  level = utils.clamp_value(level, 0, 99)
+  level = utils.clamp_value(level, 1, 100)
 
-  device:emit_event(level > 0 and capabilities.switch.switch.on() or capabilities.switch.switch.off())
-  device:emit_event(capabilities.switchLevel.level(level))
+  local z_wave_level = math.min(level, 99)  -- 避免 device fail
 
   ------------------------------------------------------------------
   -- 修正：SmartThings 可能送出 rate="default"，不是數字 → 會造成崩潰
@@ -62,7 +80,7 @@ local function switch_level_set(driver, device, cmd)
     dimmingDuration = 0   -- Z-Wave duration=0 = 快速/立即
   end
 
-  device:send(SwitchMultilevel:Set({ value=level, duration=dimmingDuration }))
+  device:send(SwitchMultilevel:Set({ value=z_wave_level, duration=dimmingDuration }))
   local function query_level()
     device:send(SwitchMultilevel:Get({}))
   end

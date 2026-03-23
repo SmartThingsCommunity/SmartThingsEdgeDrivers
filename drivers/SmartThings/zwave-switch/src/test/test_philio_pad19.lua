@@ -20,7 +20,7 @@ local zwave_endpoints = {
 }
 
 local mock_device = test.mock_device.build_test_zwave_device({
-  profile = t_utils.get_profile_definition("philio-dimmer-switch.yml"),
+  profile = t_utils.get_profile_definition("switch-level.yml"),
   zwave_endpoints = zwave_endpoints,
   zwave_manufacturer_id = 0x013C,
   zwave_product_type = 0x0005,
