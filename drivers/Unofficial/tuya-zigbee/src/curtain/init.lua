@@ -139,7 +139,19 @@ local function tuya_cluster_handler(driver, device, zb_rx)
   -- dp means data point in tuya payload format
   local dp = raw:byte(3)
   local dp_data = raw:byte(10)
-  if dp == 0x03  then
+  if dp == 0x03  then    
+    local knob_target = device:get_field("knob_target_level")
+    log.info("---------->tuya curtain report dp_data:", dp_data)
+    log.info("---------->knob_target:", knob_target)
+    if knob_target then
+      -- Allow ±1 degree tolerance for reaching target
+      if math.abs(knob_target - dp_data) <= 1 then
+        device:set_field("knob_target_level", nil)
+        log.info("tuya curtain reached target, clearing knob_target")
+      end
+    end
+    
+    -- Emit events with device-reported level (dp_data)
     window_shade_level_event = capabilities.windowShadeLevel.shadeLevel(dp_data)
     if dp_data == 0 then
       window_shade_val_event = capabilities.windowShade.windowShade("open")
@@ -156,25 +168,31 @@ local function tuya_cluster_handler(driver, device, zb_rx)
 end
 
 local function knob_to_window_shade_step_cmd(driver, device, command)
-  -- step1: get the rotateAmount
   local step = command.args.stepSize
-  -- step2: get the current_level
-  local current_level = device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
-  -- calcultate the target_level
-  -- Tuya curtain devices use INVERTED position logic,
-  -- if we want to set to "target level" = "current_level" + "step" 
-  -- we should send (100 - target level) to device
-  local target_level = 100-(current_level + step)
-  if target_level > 100 then
-    target_level = 100
-  elseif target_level < 0 then
-    target_level = 0
+  log.info("------------->knob step size:", step)
+  
+  -- Priority: use knob_target_level if exists
+  local knob_target = device:get_field("knob_target_level")
+  local current_level = knob_target or 
+    device:get_latest_state("main", capabilities.windowShadeLevel.ID, 
+      capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+  
+  -- Calculate new target (user level: 0-100, 0=closed, 100=open)
+  log.info("------------->current_level:", current_level)
+  local target_level = current_level + step
+  if target_level > 100 then target_level = 100
+  elseif target_level < 0 then target_level = 0
   end
-  target_level = utils.round(target_level)
+  log.info("------------->target_level:", target_level)
+  
+  -- Update tracking state
+  device:set_field("knob_target_level", target_level)
+  
+  target_level = utils.round(100 - target_level)
+  log.info("------------->sending level:", target_level)
+  
   tuya_utils.send_tuya_command(device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00'..string.pack(">I2", target_level), packet_id)
   packet_id = increase_packet_id(packet_id)
-  log.info("-------------------target_level", 100-target_level)
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(100-target_level))
 end
 
 local tuya_curtain_driver = {

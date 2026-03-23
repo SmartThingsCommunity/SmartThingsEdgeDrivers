@@ -8,6 +8,8 @@ components:
     version: 1
   - id: windowShadeLevel
     version: 1
+  - id: statelessSwitchLevelStep
+    version: 1
   - id: battery
     version: 1
   - id: firmwareUpdate
