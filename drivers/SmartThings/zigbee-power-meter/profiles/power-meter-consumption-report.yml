@@ -13,7 +13,7 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: CurbPowerMeter
+  - name: PowerMeasurementSensor
 metadata:
   mnmn: SmartThingsEdge
   vid: STES-1-EZEX-Zigbee_Power_Meter
