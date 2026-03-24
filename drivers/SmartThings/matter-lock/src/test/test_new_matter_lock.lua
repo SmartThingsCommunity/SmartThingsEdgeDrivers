@@ -1054,7 +1054,7 @@ test.register_message_test(
       message = mock_device:generate_test_message(
         "main",
         capabilities.lock.lock.unlocked(
-          {data = {method = "keypad", userIndex = 1}, state_change = true}
+          {data = {userIndex = 1}, state_change = true}
         )
       ),
     },
@@ -1081,7 +1081,7 @@ test.register_message_test(
       message = mock_device:generate_test_message(
         "main",
         capabilities.lock.lock.unlocked(
-          {data = {userIndex = 1}, state_change = true}
+          {data = {method = "digitalKey", userIndex = 1}, state_change = true}
         )
       ),
     }
@@ -1535,7 +1535,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
@@ -1629,7 +1629,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
@@ -1685,7 +1685,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )
@@ -1748,7 +1748,7 @@ test.register_coroutine_test(
           "654123", -- credential_data
           1, -- user_index
           nil, -- user_status
-          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+          nil -- user_type
         ),
       }
     )

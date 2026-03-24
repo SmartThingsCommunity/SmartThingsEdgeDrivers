@@ -18,6 +18,8 @@ local PowerSource = clusters.PowerSource
 
 local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
+-- maximum as defined by the Matter specification
+local MAX_USER_NAME_LENGTH = 10
 local MIN_EPOCH_S = 0
 local MAX_EPOCH_S = 0xffffffff
 local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
@@ -134,6 +136,11 @@ end
 
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
+  elseif device:get_field(profiling_data.BATTERY_SUPPORT) == nil then
+    device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
+  end
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
@@ -153,12 +160,6 @@ local function device_init(driver, device)
 
 local function device_added(driver, device)
   device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
-  else
-    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
-  end
 end
 
 local function match_profile_modular(driver, device)
@@ -270,9 +271,11 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
-  device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
-  device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is madatory
   device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
+  if device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
+    device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
+    device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
+  end
 end
 
 local function profiling_data_still_required(device)
@@ -296,6 +299,10 @@ end
 
 local function do_configure(driver, device)
   match_profile(driver, device)
+  device.thread:call_with_delay(5, function()
+    device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
+    device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
+  end)
 end
 
 local function driver_switched(driver, device)
@@ -622,23 +629,22 @@ end
 -- Power Source Attribute List --
 ---------------------------------
 local function handle_power_source_attribute_list(driver, device, ib, response)
-  for _, attr in ipairs(ib.data.elements) do
-    -- mark if the device if BatPercentRemaining (Attribute ID 0x0C) or
-    -- BatChargeLevel (Attribute ID 0x0E) is present and try profiling.
-    if attr.value == 0x0C then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, { persist = true })
-      match_profile(driver, device)
-      return
-    elseif attr.value == 0x0E then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, { persist = true })
-      match_profile(driver, device)
-      return
+  local latest_battery_support = device:get_field(profiling_data.BATTERY_SUPPORT)
+  for _, attr in ipairs(ib.data.elements or {}) do
+    if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, {persist=true})
+      break -- BATTERY_PERCENTAGE is highest priority. break early if found
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, {persist=true})
     end
   end
-
-  -- neither BatChargeLevel nor BatPercentRemaining were found. Re-profiling without battery.
-  device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, { persist = true })
-  match_profile(driver, device)
+  -- in the case that 1) no battery has been set, and 2) the returned ib does not include battery attributes, ignore battery
+  if latest_battery_support == nil and not device:get_field(profiling_data.BATTERY_SUPPORT) then
+    device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist=true})
+  end
+  if latest_battery_support == nil or latest_battery_support ~= device:get_field(profiling_data.BATTERY_SUPPORT) then
+    match_profile(driver, device)
+  end
 end
 
 -------------------------------
@@ -1254,6 +1260,7 @@ local function handle_update_user(driver, device, command)
   local cmdName = "updateUser"
   local userIdx = command.args.userIndex
   local userName = command.args.userName
+  local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
@@ -1283,13 +1290,13 @@ local function handle_update_user(driver, device, command)
   device:send(
     DoorLock.server.commands.SetUser(
       device, ep,
-      DoorLock.types.DataOperationTypeEnum.MODIFY, -- Operation Type: Add(0), Modify(2)
-      userIdx,        -- User Index
-      userName,       -- User Name
-      nil,            -- Unique ID
-      nil,            -- User Status
-      userTypeMatter, -- User Type
-      nil             -- Credential Rule
+      DoorLock.types.DataOperationTypeEnum.MODIFY,
+      userIdx,
+      userNameMatter,
+      nil, -- Unique ID
+      nil, -- User Status
+      userTypeMatter,
+      nil  -- Credential Rule
     )
   )
 end
@@ -1331,6 +1338,7 @@ local function get_user_response_handler(driver, device, ib, response)
   -- Found available user index
   if status == nil or status == DoorLock.types.UserStatusEnum.AVAILABLE then
     local userName = device:get_field(lock_utils.USER_NAME)
+    local userNameMatter = string.sub(userName, 1, MAX_USER_NAME_LENGTH)
     local userType = device:get_field(lock_utils.USER_TYPE)
     local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
     if userType == "guest" then
@@ -1344,13 +1352,13 @@ local function get_user_response_handler(driver, device, ib, response)
     device:send(
       DoorLock.server.commands.SetUser(
         device, ep,
-        DoorLock.types.DataOperationTypeEnum.ADD, -- Operation Type: Add(0), Modify(2)
-        userIdx,          -- User Index
-        userName,         -- User Name
-        nil,              -- Unique ID
-        nil,              -- User Status
-        userTypeMatter,   -- User Type
-        nil               -- Credential Rule
+        DoorLock.types.DataOperationTypeEnum.ADD,
+        userIdx,
+        userNameMatter,
+        nil, -- Unique ID
+        nil, -- User Status
+        userTypeMatter,
+        nil  -- Credential Rule
       )
     )
   elseif userIdx >= maxUser then -- There's no available user index
@@ -1511,13 +1519,15 @@ local function handle_add_credential(driver, device, command)
   -- Get parameters
   local cmdName = "addCredential"
   local userIdx = command.args.userIndex
-  if userIdx == 0 then
-    userIdx = nil
-  end
   local userType = command.args.userType
   local userTypeMatter = DoorLock.types.UserTypeEnum.UNRESTRICTED_USER
   if userType == "guest" then
     userTypeMatter = DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER
+  end
+  if userIdx == 0 then
+    userIdx = nil
+  else
+    userTypeMatter = nil
   end
   local credential = {
     credential_type = DoorLock.types.CredentialTypeEnum.PIN,
@@ -1643,17 +1653,6 @@ local function set_pin_response_handler(driver, device, ib, response)
       add_credential_to_table(device, userIdx, credIdx, "pin")
     end
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-
     -- If User Type is Guest and device support schedule, add default schedule
     local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
     local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
@@ -1677,6 +1676,16 @@ local function set_pin_response_handler(driver, device, ib, response)
         )
       )
     else
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
       device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     end
     return
@@ -2352,6 +2361,20 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
   end
 
   if cmdName == "defaultSchedule" then
+    local cmdName = "addCredential"
+    local credIdx = device:get_field(lock_utils.CRED_INDEX)
+
+    -- Update commandResult
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      credentialIndex = credIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
     return
   end
 
@@ -2483,11 +2506,11 @@ local function lock_op_event_handler(driver, device, ib, response)
   elseif opSource.value == Source.RFID then
     opSource = "rfid"
   elseif opSource.value == Source.BIOMETRIC then
-    opSource = "keypad"
+    opSource = nil -- It will be updated R2
   elseif opSource.value == Source.ALIRO then
-    opSource = nil
+    opSource = "digitalKey"
   else
-    opSource =nil
+    opSource = nil
   end
 
   if userIdx ~= nil then
