@@ -237,7 +237,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Handle received DoorState.DOOR_OPEN from Matter device.",
+  "Handle received DoorState.DOOR_OPEN from Matter device, and then DoorState.DOOR_AJAR, ensuring supportedDoorStates is updated to include both states.",
   function()
     test.socket.matter:__queue_receive(
       {
@@ -252,6 +252,21 @@ test.register_coroutine_test(
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"open"}, {visibility={displayed=false}}))
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.attributes.DoorState:build_test_report_data(
+          mock_device, 1, DoorLock.attributes.DoorState.DOOR_AJAR
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.doorState.ajar())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.doorState.supportedDoorStates({"open", "ajar"}, {visibility={displayed=false}}))
     )
   end
 )

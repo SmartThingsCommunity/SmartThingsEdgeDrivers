@@ -273,8 +273,10 @@ local function info_changed(driver, device, event, args)
     end
   end
   device:subscribe()
-  device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
-  if device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
+  if device:supports_capability(capabilities.doorState) and device:get_latest_state("main", capabilities.doorState.ID, capabilities.doorState.supportedDoorStates.NAME) == nil then
+    device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
+  end
+  if device:supports_capability(capabilities.lockAlarm) and device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
     device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
   end
@@ -374,16 +376,13 @@ local function door_state_handler(driver, device, ib, response)
     [DoorStateEnum.DOOR_UNSPECIFIED_ERROR] = doorState.unspecifiedError,
     [DoorStateEnum.DOOR_AJAR] = doorState.ajar
   }
-  device:emit_event(DOOR_STATE_MAP[ib.data.value]())
+  local door_state = DOOR_STATE_MAP[ib.data.value] or doorState.unspecifiedError -- fallback to unspecifiedError if we receive a value we don't recognize
+  device:emit_event(door_state())
 
-  local supportedDoorStates = device:get_latest_state("main", capabilities.doorState.ID, capabilities.doorState.supportedDoorStates.NAME) or {}
-  for _, state in pairs(supportedDoorStates) do
-    if state == DOOR_STATE_MAP[ib.data.value].NAME then
-      return
-    end
-  end
-  table.insert(supportedDoorStates, DOOR_STATE_MAP[ib.data.value].NAME);
-  device:emit_event(capabilities.doorState.supportedDoorStates(supportedDoorStates, {visibility = {displayed = false}}))
+  -- add new door states to supportedDoorStates list if not already present.
+  local supported_door_states = utils.deep_copy(device:get_latest_state("main", capabilities.doorState.ID, capabilities.doorState.supportedDoorStates.NAME) or {})
+  table.insert(supported_door_states, door_state.NAME)
+  device:emit_event(capabilities.doorState.supportedDoorStates(supported_door_states, {visibility = {displayed = false}}))
 end
 
 ---------------------
