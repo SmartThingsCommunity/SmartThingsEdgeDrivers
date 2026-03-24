@@ -54,7 +54,7 @@ matterManufacturer:
     deviceLabel: Decora Smart Wi-Fi (2ndGen) Fan Speed Controller
     vendorId: 0x109B
     productId: 0x1005
-    deviceProfileName: fan-modular
+    deviceProfileName: fan-generic
   #Lux
   - id: "4614/1"
     deviceLabel: LUX TQ1 Smart Thermostat
