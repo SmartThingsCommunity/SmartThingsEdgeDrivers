@@ -24,6 +24,11 @@ local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({ 
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
+-- State storage for certain asynchronous events.
+local _deviceState = {
+  ["switch_state"] = true
+}
+
 local function lazy_load_if_possible(sub_driver_name)
   -- gets the current lua libs api version
   local version = require "version"
@@ -55,18 +60,34 @@ end
 --- @param device st.zwave.Device
 --- @param cmd st.zwave.CommandClass.ApplicationStatus.ApplicationRejectedRequest
 local function app_rejected_handler(driver, device, cmd)
+  print("Application rejected received from device, unable to rearm")
+  if false == _deviceState["switch_state"] then 
+    --- Switch is currently off and must stay off. 
+    --- Platform assumed that the switch will turn on, so we have to 
+    --- feed it a switch ON handler so it doesn't panic. 
+    device:emit_event(capabilities.switch.switch.on())
+  else
+    --- Switch is currently on but received a reject - This should never happen
+    --- so the state needs to be updated to reflect this. We know the switch is off
+    --- in this case.
+    _deviceState["switch_state"] = false
+  end 
+  --- Reset the UI switch to match the current relay state.
   device:emit_event(capabilities.switch.switch.off())
 end
 
 local function device_init(self, device)
+  print("Device init: Z-Wave Appliance Safety Shutoff")
   -- TODO: What to do on device initalization
+  -- Get binary switch information, Report should handle asynchronously
+  -- Get current notification status for smoke
 end
 
 local function info_changed(self, device)
-  -- TODO: What to do when info changes - what does this do?
+  device_init(self, device)
 end
 
---- Handle a Z-Wave Command Class Switch Binary report, translate this to
+--- Handle a Z-Wave Command Class Binary Switch report, translate this to
 --- an equivalent SmartThings Capability event, and emit this to the
 --- SmartThings infrastructure.
 ---
@@ -74,9 +95,12 @@ end
 --- @param device st.zwave.Device
 --- @param cmd st.zwave.CommandClass.SwitchBinary.Report
 local function switch_report_handler(driver, device, cmd)
+  -- This is the only place the switch_state mirror should change value.
   if cmd.args.value == SwitchBinary.value.OFF_DISABLE then
+    _deviceState["switch_state"] = false;
     device:emit_event(capabilities.switch.switch.off())
   else
+    _deviceState["switch_state"] = true;
     device:emit_event(capabilities.switch.switch.on())
   end
 end
@@ -87,9 +111,29 @@ end
 --- 
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
---- @param command ST level capabilitiy command
+--- @param command ST level capability command
 local function st_switch_off_handler(driver, device, command)
-  device:send(SwitchBinary:Set({value = 0x00}))
+  device:send(SwitchBinary:Set({
+      target_value = SwitchBinary.value.OFF_DISABLE,
+      duration = 0
+    })
+  )
+end
+
+--- Handle a Switch ON command from the application.
+--- Switching on is not allowed in many cases so that behavior
+--- is inherited by the subdriver as needed. 
+--- 
+--- @param driver st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param command ST level capability command
+local function st_switch_on_handler(driver, device, command)
+  device:send(SwitchBinary:Set({
+      target_value = SwitchBinary.value.ON_ENABLE,
+      duration = 0
+    })
+  )
+  print("Switch on sent, waiting for reply")
 end
 
 local driver_template = {
@@ -100,11 +144,12 @@ local driver_template = {
   lifecycle_handlers = {
     added = added_handler,
     init = device_init,
-    infoChanged = info_changed,
+    infoChanged = info_changed
   },
   capability_handlers = {
     [capabilities.switch.ID] = {
-      [capabilities.switch.commands.off.NAME] = st_switch_off_handler
+      [capabilities.switch.commands.off.NAME] = st_switch_off_handler,
+      [capabilities.switch.commands.on.NAME] = st_switch_on_handler
     }
   },
   zwave_handlers = {

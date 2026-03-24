@@ -46,20 +46,11 @@ local function notification_report_handler(self, device, cmd)
   --- Z-Wave's closest match is a smoke detection notification, but this more
   --- cleanly maps to Sound Detection in SmartThings.
   if cmd.args.notification_type == Notification.notification_type.SMOKE then
-    if cmd.args.event == Notification.smoke.DETECTED then
+    if cmd.args.event == Notification.event.smoke.DETECTED then
       event = capabilities.soundDetection.soundDetected.fireAlarm()
-    elseif cmd.args.event == Notification.smoke.STATE_IDLE then
+    elseif cmd.args.event == Notification.event.smoke.STATE_IDLE then
       event = capabilities.soundDetection.soundDetected.noSound()
     end
-  end
-  if cmd.args.notification_type == Notification.notification_type.APPLIANCE then
-    -- This event is not supported by the SmartThings API yet
-    -- Eventually this will be implemented as the Appliance::SafetyInterlock notification
-    -- if cmd.args.event == 0x16 then
-    --   event = capabilities.remoteControlStatus.remoteControlEnabled.false()
-    -- elseif cmd.args.event == Notification..STATE_IDLE then
-    --   event = capabilities.remoteControlStatus.remoteControlEnabled.true()
-    -- end
   end
   if event ~= nil then device:emit_event(event) end
 end

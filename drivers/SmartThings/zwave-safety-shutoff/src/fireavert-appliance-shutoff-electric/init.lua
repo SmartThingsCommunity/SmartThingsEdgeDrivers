@@ -15,12 +15,11 @@
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
 local cc = require "st.zwave.CommandClass"
--- --- @type st.zwave.CommandClass.Configuration
--- local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 1 })
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
--- --- @type st.zwave.CommandClass.BinarySwitch
--- local BinarySwitch = (require "st.zwave.CommandClass.BinarySwitch")({ version = 1})
+
+--- This is a notification type that is not available in SmartThings but does exist in the Z-Wave Specification (2025B +).
+local APPLIANCE_SAFETY_INTERLOCK_ENGAGED = 0x16
 
 local FIREAVERT_APPLIANCE_SHUTOFF_FINGERPRINTS = {
     { manufacturerId = 0x045D, productType = 0x0004, productId = 0x0601 }, -- FireAvert Appliance Shutoff - 120V
@@ -49,22 +48,27 @@ end
 --- @param cmd st.zwave.CommandClass.Notification.Report
 local function notification_report_handler(self, device, cmd)
   local event = nil
---   if cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
---     if cmd.args.event == Notification.event.home_security.MOTION_DETECTION then
---       event = capabilities.motionSensor.motion.active()
---     elseif cmd.args.event == Notification.event.home_security.STATE_IDLE then
---       if cmd.args.event_parameter:byte(1) ~= 3 then
---         event = capabilities.motionSensor.motion.inactive()
---       end
---     end
---   elseif cmd.args.alarm_type == Alarm.z_wave_alarm_type.BURGLAR then
---     if cmd.args.alarm_level == 0xFF then
---       event = capabilities.motionSensor.motion.active()
---     elseif cmd.args.alarm_level == 0 then
---       event = capabilities.motionSensor.motion.inactive()
---     end
---   end
-  if event ~= nil then device:emit_event(event) end
+  if cmd.args.notification_type == Notification.notification_type.SMOKE then
+    if cmd.args.event == Notification.event.smoke.DETECTED then
+      event = capabilities.soundDetection.soundDetected.fireAlarm()
+    elseif cmd.args.event == Notification.event.smoke.STATE_IDLE then
+      event = capabilities.soundDetection.soundDetected.noSound()
+    end
+  elseif cmd.args.notification_type == Notification.notification_type.APPLIANCE then
+    if cmd.args.event == APPLIANCE_SAFETY_INTERLOCK_ENGAGED then
+      -- event = capabilities.remoteControlStatus.remoteControlEnabled.false()
+      print("Device cannot be remote controlled")
+    else
+      -- event = capabilities.remoteControlStatus.remoteControlEnabled.true()
+      print("Device can be remote controlled")
+
+    end
+
+  end
+  if event ~= nil then 
+    print("notification event: %s", event)
+    device:emit_event(event) 
+    end
 end
 
 --- Configuration lifecycle event handler.
