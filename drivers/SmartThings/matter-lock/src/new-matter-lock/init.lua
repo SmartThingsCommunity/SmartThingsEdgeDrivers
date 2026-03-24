@@ -51,7 +51,6 @@ local ALIRO_KEY_TYPE_TO_CRED_ENUM_MAP = {
   ["nonEvictableEndpointKey"] = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY
 }
 
-
 local battery_support = {
   NO_BATTERY = "NO_BATTERY",
   BATTERY_LEVEL = "BATTERY_LEVEL",
@@ -60,6 +59,7 @@ local battery_support = {
 
 local profiling_data = {
   BATTERY_SUPPORT = "__BATTERY_SUPPORT",
+  ENABLE_DOOR_STATE = "__ENABLE_DOOR_STATE"
 }
 
 local subscribed_attributes = {
@@ -116,7 +116,6 @@ local subscribed_events = {
   }
 }
 
-
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
   local eps = device:get_endpoints(cluster)
@@ -136,6 +135,11 @@ end
 
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  if #device:get_endpoints(clusters.DoorLock.ID, {feature_bitmap = clusters.DoorLock.types.Feature.DOOR_POSITION_SENSOR}) == 0 then
+    device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
+  else
+    device:add_subscribed_attribute(clusters.DoorLock.attributes.DoorState)
+  end
   if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
     device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
   elseif device:get_field(profiling_data.BATTERY_SUPPORT) == nil then
@@ -172,12 +176,6 @@ local function match_profile_modular(driver, device)
         local clus_has_feature = function(feature_bitmap)
           return DoorLock.are_features_supported(feature_bitmap, ep_cluster.feature_map)
         end
-        if clus_has_feature(DoorLock.types.Feature.DOOR_POSITION_SENSOR) then
-          table.insert(main_component_capabilities, capabilities.doorState.ID)
-          device.thread:call_with_delay(5, function(t)
-            device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
-          end)
-        end
         if clus_has_feature(DoorLock.types.Feature.USER) then
           table.insert(main_component_capabilities, capabilities.lockUsers.ID)
         end
@@ -209,6 +207,10 @@ local function match_profile_modular(driver, device)
     table.insert(main_component_capabilities, capabilities.batteryLevel.ID)
   elseif supported_battery_type == battery_support.BATTERY_PERCENTAGE then
     table.insert(main_component_capabilities, capabilities.battery.ID)
+  end
+
+  if device:get_field(profiling_data.ENABLE_DOOR_STATE) then
+    table.insert(main_component_capabilities, capabilities.doorState.ID)
   end
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
@@ -303,6 +305,9 @@ local function do_configure(driver, device)
     device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
   end)
+  if device:get_field(profiling_data.ENABLE_DOOR_STATE) or device:supports_capability(capabilities.doorState) then
+    table.insert(main_component_capabilities, capabilities.doorState.ID)
+  end
 end
 
 local function driver_switched(driver, device)
@@ -348,7 +353,16 @@ local function lock_state_handler(driver, device, ib, response)
 end
 
 local function door_state_handler(driver, device, ib, response)
-  if ib.data.value == nil then return end
+  if ib.data.value == nil then
+    device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
+    match_profile(driver, device)
+    return
+  elseif device:supports_capability(capabilities.doorState) == false then
+    device:set_field(profiling_data.ENABLE_DOOR_STATE, true, {persist = true})
+    match_profile(driver, device)
+    return
+  end
+
   local DoorStateEnum = DoorLock.types.DoorStateEnum
   local doorState = capabilities.doorState.doorState
   local DOOR_STATE_MAP = {
