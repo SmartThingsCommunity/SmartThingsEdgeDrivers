@@ -305,9 +305,6 @@ local function do_configure(driver, device)
     device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
   end)
-  if device:get_field(profiling_data.ENABLE_DOOR_STATE) or device:supports_capability(capabilities.doorState) then
-    table.insert(main_component_capabilities, capabilities.doorState.ID)
-  end
 end
 
 local function driver_switched(driver, device)
@@ -354,10 +351,14 @@ end
 
 local function door_state_handler(driver, device, ib, response)
   if ib.data.value == nil then
-    device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
-    match_profile(driver, device)
+    -- early return on nil data. Also, if ENABLE_DOOR_STATE is unset, set it to false and attempt profile matching.
+    if device:get_field(profiling_data.ENABLE_DOOR_STATE) == nil then
+      device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
+      match_profile(driver, device)
+    end
     return
   elseif device:supports_capability(capabilities.doorState) == false then
+    -- if a non-nil report comes in and the doorState capability is unsupported, set ENABLE_DOOR_STATE to true and attempt profile matching.
     device:set_field(profiling_data.ENABLE_DOOR_STATE, true, {persist = true})
     match_profile(driver, device)
     return
