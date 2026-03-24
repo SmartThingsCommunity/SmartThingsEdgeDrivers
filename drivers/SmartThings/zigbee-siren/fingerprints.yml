@@ -4,15 +4,25 @@ zigbeeManufacturer :
     manufacturer: ClimaxTechnology
     model: SRAC_00.00.00.16TC
     deviceProfileName: switch-alarm-generic-siren-7
+  - id: "frient/SIRZB-110"
+    deviceLabel: frient Smart Siren
+    manufacturer: frient A/S
+    model: SIRZB-110
+    deviceProfileName: frient-siren-battery-source-tamper
+  - id: "frient/SIRZB-111"
+    deviceLabel: frient Smart Siren
+    manufacturer: frient A/S
+    model: SIRZB-111
+    deviceProfileName: frient-siren-battery-source
+  - id: "frient/SIRZB-112"
+    deviceLabel: frient Smart Siren
+    manufacturer: frient A/S
+    model: SIRZB-112
+    deviceProfileName: frient-siren-battery-source-tamper
   - id : Heiman/WarningDevice
     deviceLabel : HEIMAN Siren
     manufacturer : Heiman
     model : WarningDevice
-    deviceProfileName : switch-alarm-generic-siren-7
-  - id : frient/SIRZB-110
-    deviceLabel : frient Siren
-    manufacturer : frient A/S
-    model : SIRZB-110
     deviceProfileName : switch-alarm-generic-siren-7
   - id: "Sercomm Corp./SZ-SRN12N"
     deviceLabel: SmartThings Siren

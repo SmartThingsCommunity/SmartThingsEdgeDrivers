@@ -63,6 +63,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -87,6 +90,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -106,6 +112,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -125,6 +134,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -144,6 +156,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 400, unit = "lux" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -163,6 +178,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -182,6 +200,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -206,6 +227,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -231,7 +255,10 @@ test.register_coroutine_test(
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE, scale = SensorMultilevel.scale.luminance.LUX})
       ))
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

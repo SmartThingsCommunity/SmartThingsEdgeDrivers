@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -62,7 +51,10 @@ test.register_coroutine_test(
       mock_device.id,
       FanControl.attributes.FanMode:configure_reporting(mock_device, 5, 1800, nil):to_endpoint(ENDPOINT)})
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -76,7 +68,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device):to_endpoint(ENDPOINT) })
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device):to_endpoint(ENDPOINT) })
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.LocalTemperature:read(mock_device):to_endpoint(ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -84,7 +79,10 @@ test.register_coroutine_test(
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.LocalTemperature:build_test_attr_report(mock_device, 2100) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 21.0, unit = "C"})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -92,7 +90,10 @@ test.register_coroutine_test(
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, Thermostat.attributes.SystemMode.OFF) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.off()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -101,7 +102,10 @@ test.register_coroutine_test(
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.ControlSequenceOfOperation:build_test_attr_report(mock_device, 0x02)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({"auto", "cool", "heat", "emergency heat"},{visibility = {displayed = false }})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -109,7 +113,10 @@ test.register_coroutine_test(
   function ()
     test.socket.zigbee:__queue_receive({ mock_device.id, FanControl.attributes.FanMode:build_test_attr_report(mock_device, FanControl.attributes.FanMode.AUTO) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode.auto()))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -121,7 +128,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device, 2100) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = 21.0, unit = "C"})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -133,7 +143,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:build_test_attr_report(mock_device, 2100) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -144,7 +157,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, Thermostat.attributes.SystemMode.COOL)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:build_test_attr_report(mock_device, 2100) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -155,7 +171,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, Thermostat.attributes.SystemMode.EMERGENCY_HEATING)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.emergency_heat()))
     test.socket.zigbee:__queue_receive({ mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device, 2100) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -164,7 +183,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { component = "main", capability = capabilities.thermostatHeatingSetpoint.ID, command = "setHeatingSetpoint", args = {21} } })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 21.0, unit = "C"})))
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2100):to_endpoint(ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -173,7 +195,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { component = "main", capability = capabilities.thermostatCoolingSetpoint.ID, command = "setCoolingSetpoint", args = {21} } })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = 21.0, unit = "C"})))
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2100):to_endpoint(ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -181,7 +206,10 @@ test.register_coroutine_test(
   function ()
     test.socket.capability:__queue_receive({ mock_device.id, { component = "main", capability = capabilities.thermostatMode.ID, command = "setThermostatMode", args = {"cool"} } })
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.SystemMode:write(mock_device, 3):to_endpoint(ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -189,7 +217,10 @@ test.register_coroutine_test(
   function ()
     test.socket.capability:__queue_receive({ mock_device.id, { component = "main", capability = capabilities.thermostatFanMode.ID, command = "setThermostatFanMode", args = {"auto"} } })
     test.socket.zigbee:__expect_send( { mock_device.id, FanControl.attributes.FanMode:write(mock_device, 5):to_endpoint(ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -220,7 +251,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedCoolingSetpoint:read(mock_device):to_endpoint(ENDPOINT) })
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.OccupiedHeatingSetpoint:read(mock_device):to_endpoint(ENDPOINT) })
     test.socket.zigbee:__expect_send( { mock_device.id, Thermostat.attributes.LocalTemperature:read(mock_device):to_endpoint(ENDPOINT) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 

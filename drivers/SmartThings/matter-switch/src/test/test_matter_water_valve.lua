@@ -57,6 +57,10 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_device))
     end
   end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+
+  -- the following subscribe is due to the init event sent by the test framework.
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
 end
@@ -81,6 +85,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Open(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -103,6 +110,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Close(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -125,6 +135,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Open(mock_device, 1, nil, 25)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -147,6 +160,9 @@ test.register_message_test(
         clusters.ValveConfigurationAndControl.server.commands.Close(mock_device, 1)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -166,6 +182,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.closed())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -185,6 +204,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -204,6 +226,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.valve.valve.open())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -223,6 +248,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.level.level(50))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 

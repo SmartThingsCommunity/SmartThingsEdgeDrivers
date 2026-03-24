@@ -122,7 +122,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -144,7 +145,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 19
   }
 )
 
@@ -168,6 +170,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -186,6 +191,9 @@ test.register_message_test(
                   )
                 }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -203,6 +211,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode({ value = "heat" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -227,6 +238,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 21.5, unit = 'C' }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -251,6 +265,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device_cooling:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 21.5, unit = 'C' }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -305,7 +322,10 @@ test.register_coroutine_test(
         Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -354,7 +374,10 @@ test.register_coroutine_test(
         Meter:Get({scale = Meter.scale.electric_meter.KILOWATT_HOURS})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -379,7 +402,10 @@ test.register_coroutine_test(
         ThermostatMode:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -409,7 +435,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -434,6 +463,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState.heating())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -453,6 +485,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -480,6 +515,9 @@ test.register_message_test(
           { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -530,7 +568,10 @@ test.register_coroutine_test(
         Configuration:Get({ parameter_number = 59 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

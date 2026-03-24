@@ -67,7 +67,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -81,7 +84,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -95,7 +101,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -109,7 +118,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -122,7 +134,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -135,7 +150,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.active()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -149,7 +167,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(50)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -159,7 +180,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.lqi(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({value = -100, unit = 'dBm'})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()
