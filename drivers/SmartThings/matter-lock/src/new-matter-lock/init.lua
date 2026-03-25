@@ -631,10 +631,10 @@ end
 local function door_lock_feature_map_handler(driver, device, ib, response)
   if ib.data.value == nil then return end
   local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
-  if feature_map == nil or feature_map ~= ib.data.value then
+  if feature_map ~= ib.data.value then
     lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
+    match_profile(driver, device, true)
   end
-  match_profile(driver, device, true)
 end
 
 ---------------------------------
