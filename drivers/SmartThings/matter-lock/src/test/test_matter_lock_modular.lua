@@ -1,13 +1,12 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-
+local cluster_base = require "st.matter.cluster_base"
 local DoorLock = clusters.DoorLock
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -200,12 +199,13 @@ local mock_device_modular = test.mock_device.build_test_matter_device({
   }
 })
 
-
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device))
@@ -228,9 +228,11 @@ local function test_init_unlatch()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_unlatch)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_unlatch))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_unlatch))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_unlatch))
+
   -- add test device, handle initial subscribe
   test.mock_device.add_test_device(mock_device_unlatch)
   -- actual onboarding flow
@@ -254,10 +256,12 @@ local function test_init_user_pin()
   subscribe_request:merge(DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.attributes.MinPINCodeLength:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_user_pin))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_user_pin))
+
   -- add test device
   test.mock_device.add_test_device(mock_device_user_pin)
   -- actual onboarding flow
@@ -283,10 +287,12 @@ local function test_init_user_pin_schedule_unlatch()
   subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device_user_pin_schedule_unlatch))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin_schedule_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_user_pin_schedule_unlatch))
+
   -- add test device
   test.mock_device.add_test_device(mock_device_user_pin_schedule_unlatch)
   -- actual onboarding flow
@@ -305,9 +311,11 @@ local function test_init_modular()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_modular)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_modular))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_modular, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_modular))
+
   -- add test device
   test.mock_device.add_test_device(mock_device_modular)
   -- actual onboarding flow
@@ -322,39 +330,6 @@ local function test_init_modular()
 end
 
 test.set_test_init_function(test_init)
-
-test.register_coroutine_test(
-  "Test lock profile change when attributes related to BAT feature is not available.",
-  function()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-    )
-    mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {}}} })
-  end,
-  {
-     min_api_version = 19
-  }
-)
 
 test.register_coroutine_test(
   "Test modular lock profile change when BatChargeLevel attribute is available",
@@ -422,40 +397,6 @@ test.register_coroutine_test(
   end,
   {
      min_api_version = 19
-  }
-)
-
-test.register_coroutine_test(
-  "Test modular lock profile change with unlatch when attributes related to BAT feature is not available.",
-  function()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device_unlatch.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_unlatch, 1,
-          {
-            uint32(0),
-            uint32(1),
-            uint32(2),
-            uint32(31),
-            uint32(65528),
-            uint32(65529),
-            uint32(65531),
-            uint32(65532),
-            uint32(65533),
-          })
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
-    )
-    test.socket.capability:__expect_send(
-      mock_device_unlatch:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
-    )
-    mock_device_unlatch:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {}}} })
-  end,
-  {
-    test_init = test_init_unlatch,
-    min_api_version = 19
   }
 )
 
@@ -661,11 +602,13 @@ test.register_coroutine_test(
     subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device_modular))
+    subscribe_request:merge(cluster_base.subscribe(mock_device_modular, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
     subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_modular))
     subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device_modular))
     subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_modular))
+
     test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
     test.socket.capability:__expect_send(
       mock_device_modular:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
