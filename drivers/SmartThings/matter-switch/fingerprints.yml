@@ -896,12 +896,12 @@ matterManufacturer:
     deviceProfileName: plug-binary
 #Ikea
   - id: "4476/32768"
-    deviceLabel: BILRESA scroll wheel
+    deviceLabel: BILRESA Scroll Wheel
     vendorId: 0x117C
     productId: 0x8000
     deviceProfileName: ikea-scroll
   - id: "4476/32769"
-    deviceLabel: BILRESA dual button
+    deviceLabel: BILRESA Dual Button
     vendorId: 0x117C
     productId: 0x8001
     deviceProfileName: ikea-2-button-battery
