@@ -6,6 +6,7 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+local cluster_base = require "st.matter.cluster_base"
 local DoorLock = clusters.DoorLock
 
 local mock_device_door_state_disabled = test.mock_device.build_test_matter_device({
@@ -78,11 +79,13 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.DoorState:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_door_state_disabled, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   test.mock_device.add_test_device(mock_device)
@@ -103,6 +106,7 @@ local function test_init_door_state_disabled()
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_door_state_disabled)
   subscribe_request:merge(DoorLock.attributes.DoorState:subscribe(mock_device_door_state_disabled))
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_door_state_disabled))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_door_state_disabled, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_door_state_disabled))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_door_state_disabled))
   test.mock_device.add_test_device(mock_device_door_state_disabled)

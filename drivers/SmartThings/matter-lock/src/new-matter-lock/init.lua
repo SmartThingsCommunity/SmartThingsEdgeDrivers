@@ -473,6 +473,11 @@ local function door_state_handler(driver, device, ib, response)
 
   -- add new door states to supportedDoorStates list if not already present.
   local supported_door_states = utils.deep_copy(device:get_latest_state("main", capabilities.doorState.ID, capabilities.doorState.supportedDoorStates.NAME) or {})
+  for _, state in pairs(supported_door_states) do
+    if state == door_state.NAME then
+      return
+    end
+  end
   table.insert(supported_door_states, door_state.NAME)
   device:emit_event(capabilities.doorState.supportedDoorStates(supported_door_states, {visibility = {displayed = false}}))
 end
@@ -725,6 +730,12 @@ local function door_lock_feature_map_handler(driver, device, ib, response)
   local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
   if feature_map ~= ib.data.value then
     lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
+    -- If the DPS feature is changed, check the DoorState value and call the match_profile.
+    if ib.data.value & clusters.DoorLock.types.Feature.DOOR_POSITION_SENSOR == 0 then
+      device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
+    else
+      device:set_field(profiling_data.ENABLE_DOOR_STATE, true, {persist = true})
+    end
     match_profile(driver, device, true)
   end
 end
