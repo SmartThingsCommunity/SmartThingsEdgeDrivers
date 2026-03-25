@@ -116,7 +116,7 @@ function ThermostatLifecycleHandlers.info_changed(driver, device, event, args)
     device:extend_device("supports_capability_by_id", thermostat_utils.supports_capability_by_id_modular)
   end
 
-  if device.profile.id ~= args.old_st_store.profile.id then
+  if not thermostat_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     thermostat_utils.handle_thermostat_operating_state_info(device)
     device:subscribe()
   end

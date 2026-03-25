@@ -47,6 +47,43 @@ local mock_device_basic = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_modular = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("thermostat-modular.yml"),
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        device_type_id = 0x0016, device_type_revision = 1, -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.FanControl.ID, cluster_type = "SERVER", feature_map = 0},
+        {
+          cluster_id = clusters.Thermostat.ID,
+          cluster_revision=5,
+          cluster_type="SERVER",
+          feature_map=3, -- Heat and Cool features
+        },
+        {cluster_id = clusters.TemperatureMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.RelativeHumidityMeasurement.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x0301, device_type_revision = 1} -- Thermostat
+      }
+    }
+  }
+})
+
 -- create test_init functions
 local function initialize_mock_device(generic_mock_device, generic_subscribed_attributes)
   local subscribe_request = generic_subscribed_attributes[1]:subscribe(generic_mock_device)
@@ -144,6 +181,79 @@ test.register_coroutine_test(
     test_init = test_init,
     min_api_version = 19
   }
+)
+
+local function initialize_subscribe_request(mock_device, subscribed_attributes)
+  local subscribe_request = nil
+  for _, attributes in pairs(subscribed_attributes) do
+    for _, attribute in pairs(attributes) do
+      if subscribe_request == nil then
+        subscribe_request = attribute:subscribe(mock_device)
+      else
+        subscribe_request:merge(attribute:subscribe(mock_device))
+      end
+    end
+  end
+  return subscribe_request
+end
+
+
+local function test_init_modular_fingerprint()
+  test.mock_device.add_test_device(mock_device_modular)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_modular.id, "init" })
+  local subscribe_request = initialize_subscribe_request(mock_device_modular, {
+    [clusters.Thermostat.ID] = {
+      clusters.Thermostat.attributes.LocalTemperature,
+      clusters.Thermostat.attributes.SystemMode,
+      clusters.Thermostat.attributes.ControlSequenceOfOperation,
+    },
+    [clusters.TemperatureMeasurement.ID] = {
+      clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MeasuredValue,
+      clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+    },
+  })
+  test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
+end
+
+test.register_coroutine_test(
+"Component-capability update without profile ID update should cause re-subscribe in infoChanged handler", function()
+    local subscribe_request = initialize_subscribe_request(mock_device_modular, {
+      [clusters.Thermostat.ID] = {
+        clusters.Thermostat.attributes.LocalTemperature,
+        clusters.Thermostat.attributes.SystemMode,
+        clusters.Thermostat.attributes.ControlSequenceOfOperation,
+      },
+      [clusters.TemperatureMeasurement.ID] = {
+        clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
+        clusters.TemperatureMeasurement.attributes.MeasuredValue,
+        clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
+      },
+      [clusters.FanControl.ID] = {
+        clusters.FanControl.attributes.FanMode,
+        clusters.FanControl.attributes.FanModeSequence,
+      },
+    })
+    local expected_metadata_modular = {
+      optional_component_capabilities={{"main", {"fanMode"}}},
+      profile="thermostat-modular",
+    }
+    local updated_device_profile = t_utils.get_profile_definition("thermostat-modular.yml",
+      {enabled_optional_capabilities = expected_metadata_modular.optional_component_capabilities}
+    )
+    updated_device_profile.id = "00000000-1111-2222-3333-000000000003"
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({ profile = updated_device_profile }))
+    test.socket.matter:__expect_send({mock_device_modular.id, subscribe_request})
+  end,
+  { test_init = test_init_modular_fingerprint }
+)
+
+test.register_coroutine_test(
+  "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler", function()
+    -- simulate no actual change
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular:generate_info_changed({}))
+  end,
+  { test_init = function() test.mock_device.add_test_device(mock_device_modular) end }
 )
 
 -- run tests
