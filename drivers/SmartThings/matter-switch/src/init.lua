@@ -32,6 +32,8 @@ end
 local SwitchLifecycleHandlers = {}
 
 function SwitchLifecycleHandlers.device_added(driver, device)
+  device.log.info_with({ hub_logs = true }, string.format("parent driver - added handler"))
+
   -- refresh child devices to get an initial attribute state for OnOff in case child device
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
@@ -43,6 +45,8 @@ function SwitchLifecycleHandlers.device_added(driver, device)
 end
 
 function SwitchLifecycleHandlers.do_configure(driver, device)
+  device.log.info_with({ hub_logs = true }, string.format("parent driver - do_configure handler"))
+
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
@@ -60,6 +64,8 @@ function SwitchLifecycleHandlers.driver_switched(driver, device)
 end
 
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
+  device.log.info_with({ hub_logs = true }, string.format("parent driver - info_changed handler"))
+
   if not switch_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     if device.network_type == device_lib.NETWORK_TYPE_MATTER then
       device:subscribe()
@@ -91,6 +97,10 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
 end
 
 function SwitchLifecycleHandlers.device_init(driver, device)
+  device.log.info_with({ hub_logs = true }, string.format("parent driver - device_init handler"))
+  local version = require "version"
+  device.log.info_with({ hub_logs = true }, string.format("parent driver - device_init: rpc: %d, api version: %d, # camera endpoints: %d", version.rpc, version.api, #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)))
+
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.check_field_name_updates(device)
     device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)

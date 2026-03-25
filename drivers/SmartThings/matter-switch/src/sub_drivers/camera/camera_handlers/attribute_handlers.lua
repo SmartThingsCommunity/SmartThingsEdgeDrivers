@@ -181,6 +181,7 @@ function CameraAttributeHandlers.min_viewport_handler(driver, device, ib, respon
 end
 
 function CameraAttributeHandlers.allocated_video_streams_handler(driver, device, ib, response)
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - allocated video streams handler"))
   if not ib.data.elements then return end
 
   local dptz_viewports = device:get_field(camera_fields.DPTZ_VIEWPORTS) or {}
