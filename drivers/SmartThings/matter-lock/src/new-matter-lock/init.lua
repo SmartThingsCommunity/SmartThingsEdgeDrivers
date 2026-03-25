@@ -261,7 +261,6 @@ local function match_profile_modular(driver, device)
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   if lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
     device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
-    device:set_field(lock_utils.MODULAR_PROFILE_UPDATED, true)
   end
 end
 
@@ -300,11 +299,54 @@ local function match_profile_switch(driver, device)
   device:try_update_metadata({profile = profile_name})
 end
 
+--- Deeply compare two values.
+--- Handles metatables. Can optionally ignore cycle checking and/or function differences.
+---
+--- @param a any
+--- @param b any
+--- @param opts table|nil { ignore_functions = boolean, ignore_cycles = boolean }
+--- @param seen table|nil
+--- @return boolean
+local function deep_equals(a, b, opts, seen)
+  if a == b then return true end -- same object
+  if type(a) ~= type(b) then return false end -- different type
+  if type(a) == "function" and opts and opts.ignore_functions then return true end
+  if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+
+  -- check for cycles in table references and preserve reference topology.
+  if not (opts and opts.ignore_cycles) then
+    seen = seen or {}
+    seen[a] = seen[a] or {}
+    if seen[a][b] then
+      return seen[a][b]
+    end
+    seen[a][b] = true
+  end
+
+  -- Compare keys/values from a
+  for k, v in next, a do
+    if not deep_equals(v, rawget(b, k), opts, seen) then
+      return false
+    end
+  end
+
+  -- Ensure b doesn't have extra keys
+  for k in next, b do
+    if rawget(a, k) == nil then
+      return false
+    end
+  end
+
+  -- Compare metatables
+  local mt_a = getmetatable(a)
+  local mt_b = getmetatable(b)
+  return deep_equals(mt_a, mt_b, opts, seen)
+end
+
 local function info_changed(driver, device, event, args)
-  if device.profile.id == args.old_st_store.profile.id and not device:get_field(lock_utils.MODULAR_PROFILE_UPDATED) then
+  if deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     return
   end
-  device:set_field(lock_utils.MODULAR_PROFILE_UPDATED, nil)
   for cap_id, attributes in pairs(subscribed_attributes) do
     if device:supports_capability_by_id(cap_id) then
       for _, attr in ipairs(attributes) do
