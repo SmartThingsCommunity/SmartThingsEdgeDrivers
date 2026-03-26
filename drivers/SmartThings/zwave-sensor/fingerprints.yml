@@ -558,6 +558,11 @@ zwaveManufacturer:
     manufacturerId: 0x0371
     productId: 0x0039
     deviceProfileName: aeotec-aerq-8
+  - id: "aeotec/water/8"
+    deviceLabel: Aeotec Water Sensor 8
+    manufacturerId: 0x0371
+    productId: 0x0038
+    deviceProfileName: aeotec-water-sensor-8
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor
