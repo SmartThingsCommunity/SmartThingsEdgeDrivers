@@ -15,8 +15,14 @@ SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 -- These values are a "sanity check" to check that values we are getting are reasonable
 local COLOR_TEMPERATURE_KELVIN_MAX = 15000
 local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN)
-SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX)
+SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN) -- 1000 Mireds
+SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX) -- 67 Mireds
+
+-- These values are the config bounds in the default Matter profiles (e.g. light-level-colorTemperature, light-color-level)
+local DEFAULT_KELVIN_MIN = 2200
+local DEFAULT_KELVIN_MAX = 6500
+SwitchFields.DEFAULT_MIRED_MIN = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/DEFAULT_KELVIN_MAX) -- 154 Mireds
+SwitchFields.DEFAULT_MIRED_MAX = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/DEFAULT_KELVIN_MIN) -- 455 Mireds
 
 SwitchFields.SWITCH_LEVEL_LIGHTING_MIN = 1
 SwitchFields.CURRENT_HUESAT_ATTR_MIN = 0
