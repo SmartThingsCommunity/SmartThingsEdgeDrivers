@@ -148,8 +148,6 @@ SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 --- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 
-SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
-
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
   BATTERY_SUPPORT = "__battery_support",
