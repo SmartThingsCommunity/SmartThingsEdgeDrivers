@@ -553,6 +553,11 @@ zwaveManufacturer:
     manufacturerId: 0x0371
     productId: 0x0037
     deviceProfileName: aeotec-door-window-sensor-8
+  - id: aeotec/aerq/8
+    deviceLabel: Aeotec aerQ 8
+    manufacturerId: 0x0371
+    productId: 0x0039
+    deviceProfileName: aeotec-aerq-8
 zwaveGeneric:
   - id: "GenericSensorAlarm"
     deviceLabel: Z-Wave Sensor

@@ -162,7 +162,26 @@ local devices = {
       motionNotdetRepT = {parameter_number = 160, size = 2},
     },
   },
-  AEOTEC_DOOR_WINDOW_SENSOR_8 = {
+  AEOTEC_AERQ_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = 0x0018
+    },
+    PARAMETERS = {
+      parameter1 = {parameter_number = 1, size = 1},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter4 = {parameter_number = 4, size = 1},
+      parameter13 = {parameter_number = 13, size = 1},
+      parameter23 = {parameter_number = 23, size = 1},
+      parameter24 = {parameter_number = 24, size = 4},
+      parameter25 = {parameter_number = 25, size = 2},
+      parameter26 = {parameter_number = 26, size = 2},
+      parameter64 = {parameter_number = 64, size = 1},
+    }
+  },
+   AEOTEC_DOOR_WINDOW_SENSOR_8 = {
     MATCHING_MATRIX = {
       mfrs = 0x0371,
       product_types = {0x0000, 0x0001, 0x0002},
@@ -186,7 +205,7 @@ local devices = {
       parameter36 = {parameter_number = 36, size = 1},
       parameter64 = {parameter_number = 64, size = 1},
     },
-  },
+  }
 }
 
 local preferences = {}
