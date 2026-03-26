@@ -16,10 +16,17 @@ local clusters = require "st.matter.clusters"
 local event_handlers = require "sub_drivers.camera.camera_handlers.event_handlers"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
+local utils = require "st.utils"
 
 local CameraLifecycleHandlers = {}
 
 function CameraLifecycleHandlers.device_init(driver, device)
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - camera device_init handler"))
+  local version = require "version"
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - device_init: rpc: %d, api version: %d, # camera endpoints: %d", version.rpc, version.api, #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)))
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - device: %s", utils.stringify_table(device)))
+
+
   device:set_component_to_endpoint_fn(camera_utils.component_to_endpoint)
   device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
   device:extend_device("emit_event_for_endpoint", switch_utils.emit_event_for_endpoint)
@@ -31,6 +38,7 @@ function CameraLifecycleHandlers.device_init(driver, device)
 end
 
 function CameraLifecycleHandlers.do_configure(driver, device)
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - camera do_configure handler"))
   camera_utils.update_camera_component_map(device)
   if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
     camera_cfg.match_profile(device, false, false)
@@ -47,6 +55,8 @@ function CameraLifecycleHandlers.driver_switched(driver, device)
 end
 
 function CameraLifecycleHandlers.info_changed(driver, device, event, args)
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - camera info_changed handler"))
+
   if not switch_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     camera_cfg.initialize_camera_capabilities(device)
     device:subscribe()
@@ -56,7 +66,9 @@ function CameraLifecycleHandlers.info_changed(driver, device, event, args)
   end
 end
 
-function CameraLifecycleHandlers.added() end
+function CameraLifecycleHandlers.added(driver, device)
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - camera added handler"))
+end
 
 local camera_handler = {
   NAME = "Camera Handler",
