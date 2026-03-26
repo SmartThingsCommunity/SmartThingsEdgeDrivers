@@ -637,6 +637,8 @@ test.register_coroutine_test(
                                               zigbee_test_utils.mock_hub_eui,
                                               PowerConfiguration.ID)
       })
+      test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device) })
     end
 )
 

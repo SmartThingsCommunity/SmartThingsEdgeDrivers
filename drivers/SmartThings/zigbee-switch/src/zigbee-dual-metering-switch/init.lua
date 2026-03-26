@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 local capabilities = require "st.capabilities"
 local st_device = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -20,20 +9,6 @@ local utils = require "st.utils"
 local configurations = require "configurations"
 
 local CHILD_ENDPOINT = 2
-
-local ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT = {
-  {mfr = "Aurora", model = "DoubleSocket50AU"}
-}
-
-local function can_handle_zigbee_dual_metering_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("zigbee-dual-metering-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
@@ -80,7 +55,7 @@ local zigbee_dual_metering_switch = {
     init = configurations.power_reconfig_wrapper(device_init),
     added = device_added
   },
-  can_handle = can_handle_zigbee_dual_metering_switch
+  can_handle = require("zigbee-dual-metering-switch.can_handle"),
 }
 
 return zigbee_dual_metering_switch

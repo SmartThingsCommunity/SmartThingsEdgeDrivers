@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -20,7 +9,7 @@ local clusters = require "st.matter.clusters"
 test.set_rpc_version(7)
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("thermostat-humidity-fan.yml"),
+  profile = t_utils.get_profile_definition("thermostat-humidity-fan-nostate.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -57,7 +46,7 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_simple = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("thermostat.yml"),
+  profile = t_utils.get_profile_definition("thermostat-nostate.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -92,7 +81,7 @@ local mock_device_simple = test.mock_device.build_test_matter_device({
 })
 
 local mock_device_no_battery = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("thermostat.yml"),
+  profile = t_utils.get_profile_definition("thermostat-nostate.yml"),
   manufacturer_info = {
     vendor_id = 0x0000,
     product_id = 0x0000,
@@ -134,7 +123,6 @@ local cluster_subscribe_list = {
   clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
   clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
-  clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
@@ -153,7 +141,6 @@ local cluster_subscribe_list_simple = {
   clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
   clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
-  clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
@@ -169,7 +156,6 @@ local cluster_subscribe_list_no_battery = {
   clusters.Thermostat.attributes.AbsMinHeatSetpointLimit,
   clusters.Thermostat.attributes.AbsMaxHeatSetpointLimit,
   clusters.Thermostat.attributes.SystemMode,
-  clusters.Thermostat.attributes.ThermostatRunningState,
   clusters.Thermostat.attributes.ControlSequenceOfOperation,
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.TemperatureMeasurement.attributes.MinMeasuredValue,

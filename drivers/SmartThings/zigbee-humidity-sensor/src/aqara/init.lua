@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
@@ -11,9 +14,6 @@ local PRIVATE_CLUSTER_ID = 0xFCC0
 local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.sensor_ht.agl02" }
-}
 
 -- temperature: 0.5C, humidity: 2%
 local configuration = {
@@ -43,14 +43,6 @@ local configuration = {
   }
 }
 
-local is_aqara_products = function(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function battery_level_handler(driver, device, value, zb_rx)
   local voltage = value.value
@@ -98,7 +90,7 @@ local aqara_humidity_handler = {
     init = device_init,
     added = added_handler
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_humidity_handler

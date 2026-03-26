@@ -65,7 +65,7 @@ function CapEventHandlers.handle_group_update(device, group_info)
 end
 
 function CapEventHandlers.handle_audio_clip_status(device, clips)
-  for _, clip in ipairs(clips) do
+  for _, clip in ipairs(clips or {}) do
     if clip.status == "ACTIVE" then
       log.debug(st_utils.stringify_table(clip, "Playing Audio Clip: ", false))
     elseif clip.status == "DONE" then

@@ -1,4 +1,6 @@
-local api_version = require "version".api
+local version = require "version"
+local api_version = version.api
+local rpc_version = version.rpc
 local capabilities = require "st.capabilities"
 local cosock = require "cosock"
 local json = require "st.json"
@@ -134,7 +136,7 @@ function SonosDriver:oauth_info_event_subscribe()
 end
 
 function SonosDriver:update_after_startup_state_received()
-  for k, v in pairs(self.hub_augmented_driver_data) do
+  for k, v in pairs(self.hub_augmented_driver_data or {}) do
     local decode_success, decoded = pcall(json.decode, v)
     if decode_success then
       self:handle_augmented_data_change(k, decoded)
@@ -212,7 +214,7 @@ function SonosDriver:handle_startup_state_received()
     token_refresher.spawn_token_refresher(self)
   end
   self.startup_state_received = true
-  for _, device in pairs(self.devices_waiting_for_startup_state) do
+  for _, device in pairs(self.devices_waiting_for_startup_state or {}) do
     SonosDriverLifecycleHandlers.initialize_device(self, device)
   end
   self.devices_waiting_for_startup_state = {}
@@ -291,7 +293,7 @@ function SonosDriver:check_auth(info_or_device)
   end
 
   local unauthorized = false
-  for _, api_key in pairs(SonosApi.api_keys) do
+  for _, api_key in pairs(SonosApi.api_keys or {}) do
     local headers = SonosApi.make_headers(api_key, maybe_token and maybe_token.accessToken)
     local response, response_err = SonosApi.RestApi.get_groups_info(rest_url, household_id, headers)
 
@@ -422,13 +424,13 @@ local function make_ssdp_event_handler(
       local recv_ready, _, select_err = cosock.socket.select(receivers, nil, nil)
 
       if recv_ready then
-        for _, receiver in ipairs(recv_ready) do
+        for _, receiver in ipairs(recv_ready or {}) do
           if oauth_token_subscription ~= nil and receiver == oauth_token_subscription then
             local token_evt, receive_err = oauth_token_subscription:receive()
             if not token_evt then
               log.warn(string.format("Error on token event bus receive: %s", receive_err))
             else
-              for _, event in pairs(unauthorized) do
+              for _, event in pairs(unauthorized or {}) do
                 -- shouldn't need a nil check on the ssdp_task here since this whole function
                 -- won't get called unless the task is successfully spawned.
                 driver.ssdp_task:publish(event)
@@ -479,6 +481,17 @@ local function make_ssdp_event_handler(
 end
 
 function SonosDriver:start_ssdp_event_task()
+  if self.ssdp_task ~= nil then
+    return
+  end
+  cosock.spawn(function ()
+    while self:start_ssdp_event_task_inner() == false do
+      cosock.socket.sleep(30)
+    end
+  end)
+end
+
+function SonosDriver:start_ssdp_event_task_inner()
   local ssdp_task, err = sonos_ssdp.spawn_persistent_ssdp_task()
   if err then
     log.error_with({ hub_logs = true }, string.format("Unable to create SSDP task: %s", err))
@@ -492,7 +505,9 @@ function SonosDriver:start_ssdp_event_task()
     end
     self.ssdp_event_thread_handle =
       cosock.spawn(make_ssdp_event_handler(self, ssdp_task_subscription, oauth_token_subscription))
+    return true
   end
+  return false
 end
 
 ---@param api_key string
@@ -638,6 +653,59 @@ local function do_refresh(driver, device, cmd)
   sonos_conn:refresh_subscriptions()
 end
 
+--- In RPC version 100, the events for augmented driver store were changed
+--- to no longer match the parsing done in API version 18 and below.
+---
+--- API version 19 will handle both before and after RPC 100 changes so this only needs
+--- to be applied for RPC version >= 100 and API version <= 18.
+if rpc_version >= 100 and api_version <= 18 then
+  log.info_with({ hub_logs = true }, "Overriding environment info handler for RPC >= 100 and API <= 18")
+  function SonosDriver:environment_info_handler(channel)
+    log.info_with({ hub_logs = true }, "Starting environment info handler for RPC >= 100 and API <= 18")
+    local msg_type, msg_val = channel:receive()
+    -- This driver only cares about augmentDriverStore messages currently.
+    -- Previously, this was augmentDatastore msg_type.
+    if msg_type == "augmentDriverStore" then
+      if type(msg_val.payload) ~= "table" then
+        log.warn(
+          string.format(
+            "Unexpected augmentDriverStore payload type: %s",
+            type(msg_val.payload)
+          )
+        )
+        return
+      end
+      -- The field evt_kind was renamed to kind and is a string of the enum rather than
+      -- the integer value of the enum.
+      if msg_val.kind == "Upsert" then
+        -- This type was changed to table of u8s instead of a string
+        local data = ""
+        for _, v in pairs(msg_val.payload.data_value) do
+          data = data .. string.char(v)
+        end
+        self.hub_augmented_driver_data[msg_val.payload.data_key] = data
+        -- notify with the updated record
+        if self.notify_augmented_data_changed ~= nil then
+          self:notify_augmented_data_changed("upsert", msg_val.payload.data_key, data)
+        end
+      elseif msg_val.kind == "Delete" then
+        self.hub_augmented_driver_data[msg_val.payload.data_key] = nil
+        -- notify with just the key that got deleted
+        if self.notify_augmented_data_changed ~= nil then
+          self:notify_augmented_data_changed("delete", msg_val.payload.data_key)
+        end
+      else
+        log.warn(
+          string.format(
+            "Unexpected augmentDriverStore kind: %s",
+            msg_val.kind
+          )
+        )
+      end
+    end
+  end
+end
+
 function SonosDriver.new_driver_template()
   local oauth_token_bus = cosock.bus()
   local oauth_info_bus = cosock.bus()
@@ -654,6 +722,8 @@ function SonosDriver.new_driver_template()
     bonded_devices = utils.new_mac_address_keyed_table(),
     dni_to_device_id = utils.new_mac_address_keyed_table(),
     lifecycle_handlers = SonosDriverLifecycleHandlers,
+    -- Only overriden in the case of RPC version 100+ with API version <= 18
+    environment_info_handler = SonosDriver.environment_info_handler,
     capability_handlers = {
       [capabilities.refresh.ID] = {
         [capabilities.refresh.commands.refresh.NAME] = do_refresh,
@@ -696,7 +766,7 @@ function SonosDriver.new_driver_template()
     },
   }
 
-  for k, v in pairs(SonosDriver) do
+  for k, v in pairs(SonosDriver or {}) do
     template[k] = v
   end
 

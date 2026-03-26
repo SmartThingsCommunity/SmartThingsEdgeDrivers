@@ -15,6 +15,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2807
     deviceProfileName: lock-battery
+  - id: "4447/10346"
+    deviceLabel: Aqara Smart Lock U200 US
+    vendorId: 0x115F
+    productId: 0x286A
+    deviceProfileName: lock-user-pin
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
@@ -50,6 +55,27 @@ matterManufacturer:
     deviceLabel: eufy FamiLock E35
     vendorId: 0x1533
     productId: 0x0012
+    deviceProfileName: lock-user-pin-battery
+  - id: "5427/22"
+    deviceLabel: eufy FamiLock E32
+    vendorId: 0x1533
+    productId: 0x0016
+    deviceProfileName: lock-user-pin-battery
+  - id: 5427/20
+    deviceLabel: eufy FamiLock E40
+    vendorId: 0x1533
+    productId: 0x0014
+    deviceProfileName: lock-user-pin-battery
+  #Kwikset
+  - id: "5153/66"
+    deviceLabel: Kwikset Halo Select Plus
+    vendorId: 0x1421
+    productId: 0x0042
+    deviceProfileName: lock-user-pin-battery
+  - id: "5153/129"
+    deviceLabel: Kwikset Aura Reach
+    vendorId: 0x1421
+    productId: 0x0081
     deviceProfileName: lock-user-pin-battery
   #Level
   - id: "4767/1"

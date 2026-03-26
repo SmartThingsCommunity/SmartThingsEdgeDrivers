@@ -36,7 +36,7 @@ end
 
 local function process_control_attr_factory(cmd)
   return function(driver, device, value, zb_rx)
-    device:emit_event(cmd.idle())
+    device:emit_event(cmd("idle", { visibility = { displayed = false }}))
   end
 end
 
@@ -129,7 +129,7 @@ local function process_capabilities_hardness_factory(cap,attrs,cap_attr)
     )
     --A button that can be triggered continuously
     local evt_ctrl = cap_attr.soft()
-    local evt_idle = cap_attr.idle()
+    local evt_idle = cap_attr("idle", { visibility = { displayed = false }})
     if cmd.args[cap] == "hard" then
       evt_ctrl = cap_attr.hard()
     end
@@ -148,7 +148,7 @@ local function device_init(driver, device)
 end
 
 local function device_added(driver, device)
-   device:emit_event(custom_capabilities.yoga.supportedYogaState({"stop", "left", "right"}))
+   device:emit_event(custom_capabilities.yoga.supportedYogaState({"stop", "left", "right"}, { visibility = { displayed = false }}))
    do_refresh(driver, device)
 end
 

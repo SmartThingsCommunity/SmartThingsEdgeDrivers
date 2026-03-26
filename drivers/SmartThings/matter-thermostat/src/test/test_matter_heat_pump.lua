@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.matter.clusters"
@@ -27,8 +16,8 @@ local HEAT_PUMP_DEVICE_TYPE_ID = 0x0309
 local THERMOSTAT_DEVICE_TYPE_ID = 0x0301
 
 if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
 end
 
 local device_desc = {
@@ -633,7 +622,7 @@ test.register_message_test(
         clusters.ElectricalEnergyMeasurement.attributes
             .CumulativeEnergyImported:build_test_report_data(mock_device,
           HEAT_PUMP_EP,
-          clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 15000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 }))
+          clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 15000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 }))
       }
     },
     {
@@ -651,7 +640,7 @@ test.register_coroutine_test(
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 20Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 20Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -675,7 +664,7 @@ test.register_coroutine_test(
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 30000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 30Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 30000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 30Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -698,7 +687,7 @@ test.register_coroutine_test(
 
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 20Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 20Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
@@ -722,12 +711,12 @@ test.register_coroutine_test(
     -- do not expect energyMeter event for this report.
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 800, start_systime = 0, end_systime = 0 })) }) -- 20Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 20000, start_timestamp = 0, end_timestamp = 800, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 20Wh
 
     -- do not expect a powerConsumptionReport to be emitted
     test.socket.matter:__queue_receive({ mock_device.id, clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported:build_test_report_data(mock_device,
     HEAT_PUMP_EP,
-    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 50000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0 })) }) -- 50Wh
+    clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 50000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) }) -- 50Wh
 
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",

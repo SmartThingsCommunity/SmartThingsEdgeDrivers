@@ -1,23 +1,14 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
-local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local CentralScene = (require "st.zwave.CommandClass.CentralScene")({version=1})
+local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
+local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({version=4})
+local Meter = (require "st.zwave.CommandClass.Meter")({ version = 3 })
 local t_utils = require "integration_test.utils"
 
 local INOVELLI_MANUFACTURER_ID = 0x031E
@@ -66,8 +57,8 @@ end
 test.set_test_init_function(test_init)
 
 local supported_button_values = {
-  ["button1"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
-  ["button2"] = {"pushed", "pushed_2x", "pushed_3x", "pushed_4x", "pushed_5x"},
+  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
   ["button3"] = {"pushed"}
 }
 
@@ -100,9 +91,44 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_inovelli_dimmer,
-        Basic:Get({})
+        Association:Set({ grouping_identifier = 1, node_ids = {}, payload = "\x01" })
       )
     )
+
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_dimmer,
+        SwitchMultilevel:Get({})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_dimmer,
+        Meter:Get({ scale = Meter.scale.electric_meter.WATTS })
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_inovelli_dimmer,
+        Meter:Get({ scale = Meter.scale.electric_meter.KILOWATT_HOURS })
+      )
+    )
+
+    local ledBarComponent = mock_inovelli_dimmer.profile.components[LED_BAR_COMPONENT_NAME]
+    if ledBarComponent ~= nil then
+      test.socket.capability:__expect_send(
+        mock_inovelli_dimmer:generate_test_message(
+          LED_BAR_COMPONENT_NAME,
+          capabilities.colorControl.hue(1)
+        )
+      )
+      test.socket.capability:__expect_send(
+        mock_inovelli_dimmer:generate_test_message(
+          LED_BAR_COMPONENT_NAME,
+          capabilities.colorControl.saturation(1)
+        )
+      )
+    end
   end
 )
 
@@ -126,7 +152,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed({state_change = true}))
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed({state_change = true}))
     }
   }
 )
@@ -150,7 +176,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_4x({ state_change = true }))
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_4x({ state_change = true }))
     }
   }
 )

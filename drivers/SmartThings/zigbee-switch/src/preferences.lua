@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -18,7 +7,10 @@ local data_types = require "st.zigbee.data_types"
 
 local devices = {
   AQARA_LIGHT = {
-    MATCHING_MATRIX = { mfr = "LUMI", model = "lumi.light.acn004" },
+    MATCHING_MATRIX = {
+        { mfr = "LUMI", model = "lumi.light.acn004" },
+        { mfr = "LUMI", model = "lumi.light.cwacn1" }
+      },
     PARAMETERS = {
       ["stse.restorePowerState"] = function(device, value)
         return cluster_base.write_manufacturer_specific_attribute(device, 0xFCC0,
@@ -39,7 +31,7 @@ local devices = {
     }
   },
   AQARA_LIGHT_BULB = {
-    MATCHING_MATRIX = { mfr = "Aqara", model = "lumi.light.acn014" },
+    MATCHING_MATRIX = {{ mfr = "Aqara", model = "lumi.light.acn014" }},
     PARAMETERS = {
       ["stse.restorePowerState"] = function(device, value)
         return cluster_base.write_manufacturer_specific_attribute(device, 0xFCC0,
@@ -75,12 +67,17 @@ preferences.sync_preferences = function(driver, device)
 end
 
 preferences.get_device_parameters = function(zigbee_device)
+  local mfr   = zigbee_device:get_manufacturer()
+  local model = zigbee_device:get_model()
+
   for _, device in pairs(devices) do
-    if zigbee_device:get_manufacturer() == device.MATCHING_MATRIX.mfr and
-        zigbee_device:get_model() == device.MATCHING_MATRIX.model then
-      return device.PARAMETERS
+    for _, fp in ipairs(device.MATCHING_MATRIX) do
+      if fp.mfr == mfr and fp.model == model then
+        return device.PARAMETERS
+      end
     end
   end
+
   return nil
 end
 

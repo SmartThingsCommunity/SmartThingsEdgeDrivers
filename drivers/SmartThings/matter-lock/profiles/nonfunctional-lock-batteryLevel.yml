@@ -1,3 +1,4 @@
+# Deprecated: do not use this profile for device fingerprinting.
 name: nonfunctional-lock-batteryLevel
 components:
 - id: main

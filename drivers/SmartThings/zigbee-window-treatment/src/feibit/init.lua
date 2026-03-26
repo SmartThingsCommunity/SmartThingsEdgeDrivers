@@ -61,6 +61,7 @@ end
 local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, Level.ID, self.environment_info.hub_zigbee_eui))
   device:send(Level.attributes.CurrentLevel:configure_reporting(device, 1, 3600, 1))
+  device:refresh()
 end
 
 local feibit_handler = {

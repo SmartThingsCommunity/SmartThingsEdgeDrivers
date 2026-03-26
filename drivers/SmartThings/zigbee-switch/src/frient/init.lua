@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -27,20 +16,6 @@ local VOLTAGE_MEASUREMENT_DIVISOR_KEY    = "_voltage_measurement_divisor"
 local CURRENT_MEASUREMENT_MULTIPLIER_KEY = "_current_measurement_multiplier"
 local CURRENT_MEASUREMENT_DIVISOR_KEY    = "_current_measurement_divisor"
 
-local FRIENT_SMART_PLUG_FINGERPRINTS = {
-  { mfr = "frient A/S", model = "SPLZB-131" },
-  { mfr = "frient A/S", model = "SPLZB-132" },
-  { mfr = "frient A/S", model = "SPLZB-134" },
-  { mfr = "frient A/S", model = "SPLZB-137" },
-  { mfr = "frient A/S", model = "SPLZB-141" },
-  { mfr = "frient A/S", model = "SPLZB-142" },
-  { mfr = "frient A/S", model = "SPLZB-144" },
-  { mfr = "frient A/S", model = "SPLZB-147" },
-  { mfr = "frient A/S", model = "SMRZB-143" },
-  { mfr = "frient A/S", model = "SMRZB-153" },
-  { mfr = "frient A/S", model = "SMRZB-332" },
-  { mfr = "frient A/S", model = "SMRZB-342" },
-}
 
 local POWER_FAILURE_ALARM_CODE = 0x03
 
@@ -156,17 +131,6 @@ local function do_configure(driver, device)
   device:refresh()
 end
 
--- Function to determine if the driver can handle this device
-local function can_handle_frient_smart_plug(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FRIENT_SMART_PLUG_FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("frient")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 -- Main driver definition
 local frient_smart_plug = {
   NAME = "frient Smart Plug",
@@ -192,7 +156,7 @@ local frient_smart_plug = {
     doConfigure = do_configure,
     added = device_added,
   },
-  can_handle = can_handle_frient_smart_plug
+  can_handle = require("frient.can_handle"),
 }
 
 return frient_smart_plug

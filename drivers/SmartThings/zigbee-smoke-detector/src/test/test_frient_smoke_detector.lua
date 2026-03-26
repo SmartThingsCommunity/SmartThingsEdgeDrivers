@@ -258,6 +258,24 @@ test.register_message_test(
         }
 )
 
+test.register_coroutine_test(
+        "ZoneStatusChangeNotification should be handled: clear",
+        function()
+            test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
+            test.socket.zigbee:__queue_receive({
+                mock_device.id,
+                IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0000, 0x00)
+            })
+
+            test.mock_time.advance_time(6)
+            test.socket.capability:__expect_send(
+                    mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
+            )
+
+            test.wait_for_events()
+        end
+)
+
 test.register_message_test(
         "Temperature report should be handled (C) for the temperature cluster",
         {

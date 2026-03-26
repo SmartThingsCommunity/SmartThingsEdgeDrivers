@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -26,23 +15,6 @@ local Y_TRISTIMULUS_VALUE = "y_tristimulus_value" -- Y tristimulus value which i
 local HUESAT_TIMER = "huesat_timer"
 local TARGET_HUE = "target_hue"
 local TARGET_SAT = "target_sat"
-
-local IKEA_XY_COLOR_BULB_FINGERPRINTS = {
-  ["IKEA of Sweden"] = {
-    ["TRADFRI bulb E27 CWS opal 600lm"] = true,
-    ["TRADFRI bulb E26 CWS opal 600lm"] = true
-  }
-}
-
-local function can_handle_ikea_xy_color_bulb(opts, driver, device)
-  local can_handle = (IKEA_XY_COLOR_BULB_FINGERPRINTS[device:get_manufacturer()] or {})[device:get_model()]
-  if can_handle then
-    local subdriver = require("ikea-xy-color-bulb")
-    return true, subdriver
-  else
-    return false
-  end
-end
 
 local device_init = function(self, device)
   device:remove_configured_attribute(ColorControl.ID, ColorControl.attributes.CurrentHue.ID)
@@ -192,7 +164,7 @@ local ikea_xy_color_bulb = {
       }
     }
   },
-  can_handle = can_handle_ikea_xy_color_bulb
+  can_handle = require("ikea-xy-color-bulb.can_handle")
 }
 
 return ikea_xy_color_bulb

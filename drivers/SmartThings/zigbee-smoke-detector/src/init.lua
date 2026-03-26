@@ -22,7 +22,8 @@ local zigbee_smoke_driver_template = {
     capabilities.smokeDetector,
     capabilities.battery,
     capabilities.alarm,
-    capabilities.temperatureMeasurement
+    capabilities.temperatureMeasurement,
+    capabilities.temperatureAlarm
   },
   sub_drivers = {
     require("frient"),

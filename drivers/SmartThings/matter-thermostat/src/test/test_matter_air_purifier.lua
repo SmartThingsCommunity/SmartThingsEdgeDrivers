@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
@@ -20,19 +10,19 @@ local clusters = require "st.matter.clusters"
 local version = require "version"
 
 if version.api < 10 then
-  clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
-  clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
-  clusters.AirQuality = require "AirQuality"
-  clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
-  clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
-  clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
-  clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
-  clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
-  clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
-  clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
-  clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
-  clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+  clusters.HepaFilterMonitoring = require "embedded_clusters.HepaFilterMonitoring"
+  clusters.ActivatedCarbonFilterMonitoring = require "embedded_clusters.ActivatedCarbonFilterMonitoring"
+  clusters.AirQuality = require "embedded_clusters.AirQuality"
+  clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
+  clusters.CarbonDioxideConcentrationMeasurement = require "embedded_clusters.CarbonDioxideConcentrationMeasurement"
+  clusters.FormaldehydeConcentrationMeasurement = require "embedded_clusters.FormaldehydeConcentrationMeasurement"
+  clusters.NitrogenDioxideConcentrationMeasurement = require "embedded_clusters.NitrogenDioxideConcentrationMeasurement"
+  clusters.OzoneConcentrationMeasurement = require "embedded_clusters.OzoneConcentrationMeasurement"
+  clusters.Pm1ConcentrationMeasurement = require "embedded_clusters.Pm1ConcentrationMeasurement"
+  clusters.Pm10ConcentrationMeasurement = require "embedded_clusters.Pm10ConcentrationMeasurement"
+  clusters.Pm25ConcentrationMeasurement = require "embedded_clusters.Pm25ConcentrationMeasurement"
+  clusters.RadonConcentrationMeasurement = require "embedded_clusters.RadonConcentrationMeasurement"
+  clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "embedded_clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement"
 end
 
 local mock_device = test.mock_device.build_test_matter_device({

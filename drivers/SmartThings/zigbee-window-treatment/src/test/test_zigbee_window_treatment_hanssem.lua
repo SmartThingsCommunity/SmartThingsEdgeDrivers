@@ -88,6 +88,7 @@ end
 test.register_coroutine_test(
   "Device Added ",
   function()
+    SeqNum = 0
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(
@@ -106,6 +107,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Open handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x00")
@@ -147,6 +149,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Close handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x64")
@@ -189,6 +192,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Pause handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x64")
@@ -243,6 +247,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Set Level handler",
   function()
+    SeqNum = 0
     test.socket.zigbee:__queue_receive({
       mock_device.id,
       build_rx_message(mock_device,"\x03\x02\x00\x04\x00\x00\x00\x64")
@@ -285,6 +290,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Preset position handler",
   function()
+    SeqNum = 0
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
@@ -336,6 +342,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Information changed : Reverse",
   function()
+    SeqNum = 0
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.zigbee:__queue_receive({
       mock_device.id,
