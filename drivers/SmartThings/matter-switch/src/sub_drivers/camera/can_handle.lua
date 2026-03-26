@@ -8,3 +8,4 @@ return function(opts, driver, device, ...)
   local switch_utils = require "switch_utils.utils"
   return true, require("sub_drivers.camera")
 end
+  

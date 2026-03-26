@@ -70,6 +70,11 @@ function CameraLifecycleHandlers.added(driver, device)
   device.log.info_with({ hub_logs = true }, string.format("camera driver - camera added handler"))
 end
 
+function can_handle_matter_camera(opts, driver, device, ...)
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - calling can_handle, network type: %s", device.network_type))
+  return true
+end
+
 local camera_handler = {
   NAME = "Camera Handler",
   lifecycle_handlers = {
@@ -214,7 +219,7 @@ local camera_handler = {
       [capabilities.localMediaStorage.commands.setLocalVideoRecording.NAME] = capability_handlers.set_enabled_factory(clusters.CameraAvStreamManagement.attributes.LocalVideoRecordingEnabled)
     }
   },
-  can_handle = require("sub_drivers.camera.can_handle")
+  can_handle = can_handle_matter_camera,
 }
 
 return camera_handler
