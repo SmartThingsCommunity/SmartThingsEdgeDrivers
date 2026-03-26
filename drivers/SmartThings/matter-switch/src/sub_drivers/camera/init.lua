@@ -16,6 +16,7 @@ local clusters = require "st.matter.clusters"
 local event_handlers = require "sub_drivers.camera.camera_handlers.event_handlers"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
+local utils = require "st.utils"
 
 local CameraLifecycleHandlers = {}
 
@@ -23,6 +24,7 @@ function CameraLifecycleHandlers.device_init(driver, device)
   device.log.info_with({ hub_logs = true }, string.format("camera driver - camera device_init handler"))
   local version = require "version"
   device.log.info_with({ hub_logs = true }, string.format("camera driver - device_init: rpc: %d, api version: %d, # camera endpoints: %d", version.rpc, version.api, #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)))
+  device.log.info_with({ hub_logs = true }, string.format("camera driver - device: %s", utils.stringify_table(device)))
 
 
   device:set_component_to_endpoint_fn(camera_utils.component_to_endpoint)

@@ -16,6 +16,7 @@ local switch_utils = require "switch_utils.utils"
 local attribute_handlers = require "switch_handlers.attribute_handlers"
 local event_handlers = require "switch_handlers.event_handlers"
 local capability_handlers = require "switch_handlers.capability_handlers"
+local utils = require "st.utils"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -100,6 +101,8 @@ function SwitchLifecycleHandlers.device_init(driver, device)
   device.log.info_with({ hub_logs = true }, string.format("parent driver - device_init handler"))
   local version = require "version"
   device.log.info_with({ hub_logs = true }, string.format("parent driver - device_init: rpc: %d, api version: %d, # camera endpoints: %d", version.rpc, version.api, #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)))
+  device.log.info_with({ hub_logs = true }, string.format("parent driver - device: %s", utils.stringify_table(device)))
+
 
   if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_utils.check_field_name_updates(device)
