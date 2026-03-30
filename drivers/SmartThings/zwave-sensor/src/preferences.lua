@@ -197,7 +197,7 @@ local devices = {
    AEOTEC_DOOR_WINDOW_SENSOR_8 = {
     MATCHING_MATRIX = {
       mfrs = 0x0371,
-      product_types = {0x002, 0x0102, 0x0202},
+      product_types = {0x0002, 0x0102, 0x0202},
       product_ids = {0x0037}
     },
     PARAMETERS = {
