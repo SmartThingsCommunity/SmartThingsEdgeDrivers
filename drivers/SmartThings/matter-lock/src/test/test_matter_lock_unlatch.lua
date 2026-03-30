@@ -7,7 +7,10 @@ test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local cluster_base = require "st.matter.cluster_base"
+local version = require "version"
+if version.api < 20 then
+  clusters.DoorLock = require "DoorLock"
+end
 local DoorLock = clusters.DoorLock
 local types = DoorLock.types
 
@@ -44,13 +47,12 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe_request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(DoorLock.attributes.FeatureMap:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   -- add test device, handle initial subscribe

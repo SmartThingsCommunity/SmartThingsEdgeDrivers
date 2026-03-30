@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local data_types = require "st.matter.data_types"
 local StructureABC = require "st.matter.data_types.base_defs.StructureABC"
 

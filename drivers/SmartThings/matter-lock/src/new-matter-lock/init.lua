@@ -8,7 +8,7 @@ local utils = require "st.utils"
 local lock_utils = require "lock_utils"
 
 local version = require "version"
-if version.api < 10 then
+if version.api < 20 then
   clusters.DoorLock = require "DoorLock"
 end
 
@@ -59,7 +59,6 @@ local profiling_data = {
   ENABLE_DOOR_STATE = "__ENABLE_DOOR_STATE"
 }
 
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local subscribed_attributes = {
   [capabilities.lock.ID] = {
     DoorLock.attributes.LockState
@@ -150,7 +149,7 @@ local function device_init(driver, device)
       end
     end
   end
-  device:add_subscribed_attribute(DoorLockFeatureMapAttr)
+  device:add_subscribed_attribute(DoorLock.attributes.FeatureMap)
   for cap_id, events in pairs(subscribed_events) do
     if device:supports_capability_by_id(cap_id) then
       for _, e in ipairs(events) do
@@ -3009,7 +3008,7 @@ local new_matter_lock_handler = {
         [DoorLock.attributes.AliroBLEAdvertisingVersion.ID] = aliro_ble_advertising_version_handler,
         [DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported.ID] = max_aliro_credential_issuer_key_handler,
         [DoorLock.attributes.NumberOfAliroEndpointKeysSupported.ID] = max_aliro_endpoint_key_handler,
-        [DoorLockFeatureMapAttr.ID] = door_lock_feature_map_handler,
+        [DoorLock.attributes.FeatureMap.ID] = door_lock_feature_map_handler,
       },
       [PowerSource.ID] = {
         [PowerSource.attributes.AttributeList.ID] = handle_power_source_attribute_list,
@@ -3025,15 +3024,15 @@ local new_matter_lock_handler = {
     },
     cmd_response = {
       [DoorLock.ID] = {
-        [DoorLock.server.commands.SetUser.ID] = set_user_response_handler,
         [DoorLock.client.commands.GetUserResponse.ID] = get_user_response_handler,
-        [DoorLock.server.commands.ClearUser.ID] = clear_user_response_handler,
         [DoorLock.client.commands.SetCredentialResponse.ID] = set_credential_response_handler,
         [DoorLock.server.commands.ClearCredential.ID] = clear_credential_response_handler,
-        [DoorLock.server.commands.SetWeekDaySchedule.ID] = set_week_day_schedule_handler,
+        [DoorLock.server.commands.ClearUser.ID] = clear_user_response_handler,
         [DoorLock.server.commands.ClearWeekDaySchedule.ID] = clear_week_day_schedule_handler,
-        [DoorLock.server.commands.SetYearDaySchedule.ID] = set_year_day_schedule_handler,
         [DoorLock.server.commands.SetAliroReaderConfig.ID] = set_aliro_reader_config_handler,
+        [DoorLock.server.commands.SetUser.ID] = set_user_response_handler,
+        [DoorLock.server.commands.SetWeekDaySchedule.ID] = set_week_day_schedule_handler,
+        [DoorLock.server.commands.SetYearDaySchedule.ID] = set_year_day_schedule_handler,
       },
     },
   },

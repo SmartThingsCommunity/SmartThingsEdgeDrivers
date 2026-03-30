@@ -4,28 +4,21 @@
 local data_types = require "st.matter.data_types"
 local TLVParser = require "st.matter.TLV.TLVParser"
 
-local ClearWeekDaySchedule = {}
+local UnboltDoor = {}
 
-ClearWeekDaySchedule.NAME = "ClearWeekDaySchedule"
-ClearWeekDaySchedule.ID = 0x000D
-ClearWeekDaySchedule.field_defs = {
+UnboltDoor.NAME = "UnboltDoor"
+UnboltDoor.ID = 0x0027
+UnboltDoor.field_defs = {
   {
-    name = "week_day_index",
+    name = "pin_code",
     field_id = 0,
     is_nullable = false,
-    is_optional = false,
-    data_type = require "st.matter.data_types.Uint8",
-  },
-  {
-    name = "user_index",
-    field_id = 1,
-    is_nullable = false,
-    is_optional = false,
-    data_type = require "st.matter.data_types.Uint16",
+    is_optional = true,
+    data_type = require "st.matter.data_types.OctetString1",
   },
 }
 
-function ClearWeekDaySchedule:build_test_command_response(device, endpoint_id, status)
+function UnboltDoor:build_test_command_response(device, endpoint_id, status)
   return self._cluster:build_test_command_response(
     device,
     endpoint_id,
@@ -36,9 +29,9 @@ function ClearWeekDaySchedule:build_test_command_response(device, endpoint_id, s
   )
 end
 
-function ClearWeekDaySchedule:init(device, endpoint_id, week_day_index, user_index)
+function UnboltDoor:init(device, endpoint_id, pin_code)
   local out = {}
-  local args = {week_day_index, user_index}
+  local args = {pin_code}
   if #args > #self.field_defs then
     error(self.NAME .. " received too many arguments")
   end
@@ -57,24 +50,25 @@ function ClearWeekDaySchedule:init(device, endpoint_id, week_day_index, user_ind
     end
   end
   setmetatable(out, {
-    __index = ClearWeekDaySchedule,
-    __tostring = ClearWeekDaySchedule.pretty_print
+    __index = UnboltDoor,
+    __tostring = UnboltDoor.pretty_print
   })
   return self._cluster:build_cluster_command(
     device,
     out,
     endpoint_id,
     self._cluster.ID,
-    self.ID
+    self.ID,
+    true
   )
 end
 
-function ClearWeekDaySchedule:set_parent_cluster(cluster)
+function UnboltDoor:set_parent_cluster(cluster)
   self._cluster = cluster
   return self
 end
 
-function ClearWeekDaySchedule:augment_type(base_type_obj)
+function UnboltDoor:augment_type(base_type_obj)
   local elems = {}
   for _, v in ipairs(base_type_obj.elements) do
     for _, field_def in ipairs(self.field_defs) do
@@ -96,12 +90,12 @@ function ClearWeekDaySchedule:augment_type(base_type_obj)
   base_type_obj.elements = elems
 end
 
-function ClearWeekDaySchedule:deserialize(tlv_buf)
+function UnboltDoor:deserialize(tlv_buf)
   local data = TLVParser.decode_tlv(tlv_buf)
   self:augment_type(data)
   return data
 end
 
-setmetatable(ClearWeekDaySchedule, {__call = ClearWeekDaySchedule.init})
+setmetatable(UnboltDoor, {__call = UnboltDoor.init})
 
-return ClearWeekDaySchedule
+return UnboltDoor
