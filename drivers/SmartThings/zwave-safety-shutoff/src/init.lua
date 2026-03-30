@@ -61,26 +61,19 @@ end
 --- @param cmd st.zwave.CommandClass.ApplicationStatus.ApplicationRejectedRequest
 local function app_rejected_handler(driver, device, cmd)
   print("Application rejected received from device, unable to rearm")
-  if false == _deviceState["switch_state"] then 
-    --- Switch is currently off and must stay off. 
-    --- Platform assumed that the switch will turn on, so we have to 
-    --- feed it a switch ON handler so it doesn't panic. 
-    device:emit_event(capabilities.switch.switch.on())
-  else
-    --- Switch is currently on but received a reject - This should never happen
-    --- so the state needs to be updated to reflect this. We know the switch is off
-    --- in this case.
-    _deviceState["switch_state"] = false
-  end 
+  _deviceState["switch_state"] = false
   --- Reset the UI switch to match the current relay state.
-  device:emit_event(capabilities.switch.switch.off())
+  device:emit_event(capabilities.switch.switch.off({state_change = true}))
 end
 
 local function device_init(self, device)
   print("Device init: Z-Wave Appliance Safety Shutoff")
   -- TODO: What to do on device initalization
   -- Get binary switch information, Report should handle asynchronously
-  -- Get current notification status for smoke
+  device:send(SwitchBinary:Get({}))
+  _deviceState["switch_state"] = "startup"
+  -- if (device:supports_capability(capabilities.powerMeter)) then
+  --   device:send(Notification:Get({notification_type = Notification.notification_type.power_management}))
 end
 
 local function info_changed(self, device)
@@ -96,12 +89,24 @@ end
 --- @param cmd st.zwave.CommandClass.SwitchBinary.Report
 local function switch_report_handler(driver, device, cmd)
   -- This is the only place the switch_state mirror should change value.
+  local isDeviceChanging = false;
   if cmd.args.value == SwitchBinary.value.OFF_DISABLE then
-    _deviceState["switch_state"] = false;
-    device:emit_event(capabilities.switch.switch.off())
+    if (_deviceState["switch_state"] ~= "off") then 
+      _deviceState["switch_state"] = "off";
+      isDeviceChanging = true;
+    end
+    device:emit_event(capabilities.switch.switch.off({state_change = isDeviceChanging}))
+    --- Also turn off power meter UI element, appliance is obviously not drawing power if
+    --- the switch is off
+    if (device:supports_capability(capabilities.powerMeter)) then
+      device:emit_event(capabilities.powerMeter.power({value = 0, units = "W"}))
+    end
   else
-    _deviceState["switch_state"] = true;
-    device:emit_event(capabilities.switch.switch.on())
+    if (_deviceState["switch_state"] ~= "on") then 
+      _deviceState["switch_state"] = "on";
+      isDeviceChanging = true;
+    end
+    device:emit_event(capabilities.switch.switch.on({state_change = isDeviceChanging}))
   end
 end
 
@@ -118,6 +123,7 @@ local function st_switch_off_handler(driver, device, command)
       duration = 0
     })
   )
+  device:send(SwitchBinary:Get({}))
 end
 
 --- Handle a Switch ON command from the application.
@@ -133,7 +139,7 @@ local function st_switch_on_handler(driver, device, command)
       duration = 0
     })
   )
-  print("Switch on sent, waiting for reply")
+  device:send(SwitchBinary:Get({}))
 end
 
 local driver_template = {
