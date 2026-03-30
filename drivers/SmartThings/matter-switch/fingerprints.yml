@@ -3928,7 +3928,22 @@ matterManufacturer:
     vendorId: 0x141E
     productId: 0x0001
     deviceProfileName: "button-battery"
-
+#HAGER
+  - id: "4741/6"
+    deviceLabel: "Hager Switch 2G"
+    vendorId: 0x1285
+    productId: 0x0006
+    deviceProfileName: "matter-bridge"
+  - id: "4741/5"
+    deviceLabel: "Hager Switch 1G"
+    vendorId: 0x1285
+    productId: 0x0005
+    deviceProfileName: "matter-bridge"
+  - id: "4741/7"
+    deviceLabel: "Hager PIR"
+    vendorId: 0x1285
+    productId: 0x0007
+    deviceProfileName: "matter-bridge"
 
 #Bridge devices need manufacturer specific fingerprints until
 #bridge support is released to all hubs. This is because of the way generic
