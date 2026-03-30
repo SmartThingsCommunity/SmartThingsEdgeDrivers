@@ -34,7 +34,9 @@ SwitchFields.DEVICE_TYPE_ID = {
   ELECTRICAL_SENSOR = 0x0510,
   FAN = 0x002B,
   GENERIC_SWITCH = 0x000F,
+  LIGHT_SENSOR = 0x0106,
   IRRIGATION_SYSTEM = 0x0040,
+  OCCUPANCY_SENSOR = 0x0107,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
@@ -50,6 +52,7 @@ SwitchFields.DEVICE_TYPE_ID = {
     COLOR_DIMMER = 0x0105,
   },
   WATER_VALVE = 0x0042,
+  WINDOW_COVERING = 0x0202
 }
 
 SwitchFields.device_type_profile_map = {
@@ -64,6 +67,7 @@ SwitchFields.device_type_profile_map = {
   [SwitchFields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT] = "plug-level",
   [SwitchFields.DEVICE_TYPE_ID.MOUNTED_ON_OFF_CONTROL] = "switch-binary",
   [SwitchFields.DEVICE_TYPE_ID.MOUNTED_DIMMABLE_LOAD_CONTROL] = "switch-level",
+  [SwitchFields.DEVICE_TYPE_ID.WINDOW_COVERING] = "window-covering"
 }
 
 -- COMPONENT_TO_ENDPOINT_MAP is here to preserve the endpoint mapping for
@@ -115,6 +119,12 @@ SwitchFields.vendor_overrides = {
   },
   [0x1189] = { -- LEDVANCE_MANUFACTURER_ID
     [0x0891] = { target_profile = "switch-binary", initial_profile = "light-binary" },
+  },
+  [0x1285] = { -- HAGER_MANUFACTURER_ID
+    [0x0005] = { needs_hager_subdriver = true }, -- Hager HBnet 1g switch
+    [0x0006] = { needs_hager_subdriver = true }, -- Hager HBnet 2g switch
+    [0x0007] = { needs_hager_subdriver = true }, -- Hager HBnet PIR 1.1M
+    [0x000A] = { needs_hager_subdriver = true }, -- Hager HBnet PIR 2.2M
   },
   [0x1321] = { -- SONOFF_MANUFACTURER_ID
     [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
