@@ -24,7 +24,19 @@ local TAMPER_CLEAR = 10
 local excluded_devices = {
   FIBARO_DOOR_WINDOW = {
     mfrs = 0x010F
-  }
+  },
+  AEOTEC_AERQ_8 = {
+    mfrs = 0x0371,
+    product_ids = 0x0018
+  },
+  AEOTEC_DOOR_WINDOW_SENSOR_8 = {
+    mfrs = 0x0371,
+    product_ids = 0x0037
+  },
+  AEOTEC_WATER_SENSOR_8 = {
+    mfrs = 0x0371,
+    product_ids = 0x0038
+  },
 }
 
 local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)

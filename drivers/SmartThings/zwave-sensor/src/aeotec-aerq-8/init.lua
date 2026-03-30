@@ -19,8 +19,6 @@ local cc = require "st.zwave.CommandClass"
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
---- @type st.zwave.CommandClass.SensorBinary
-local SensorBinary = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
@@ -28,6 +26,8 @@ local log = require "log"
 local utils = require "st.utils"
 
 local MoldHealthConcern = capabilities.moldHealthConcern
+local PowerSource = capabilities.powerSource
+local TamperAlert = capabilities.tamperAlert
 
 local AEOTEC_AERQ_FINGERPRINTS = {
   { manufacturerId = 0x0371, productId = 0x0039 } -- Aeotec aerQ 8 EU/US/AU
@@ -36,7 +36,7 @@ local AEOTEC_AERQ_FINGERPRINTS = {
 local function can_handle_aeotec_aerq(opts, driver, device, ...)
   for _, fingerprint in ipairs(AEOTEC_AERQ_FINGERPRINTS) do
     if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      local subdriver = require("aeotec-aerq")
+      local subdriver = require("aeotec-aerq-8")
       return true, subdriver
     end
   end
@@ -55,6 +55,10 @@ local function added_handler(driver, device)
   device:emit_event(PowerSource.powerSource.battery())
   
   device:send(Battery:Get({}))
+
+  device:register_native_capability_attr_handler("temperatureMeasurement", "temperature")
+  -- device:register_native_capability_attr_handler("colorControl", "hue")
+
 end
 
 local function do_refresh(driver, device)
@@ -69,7 +73,7 @@ local function notification_report_handler(self, device, cmd)
     if cmd.args.event == Notification.event.power_management.AC_MAINS_DISCONNECTED then
       event = capabilities.powerSource.powerSource.battery()
     elseif cmd.args.event == Notification.event.power_management.AC_MAINS_RE_CONNECTED then
-      event = capabilities.powerSource.powerSource.mains()
+      event = capabilities.powerSource.powerSource.dc()
     elseif cmd.args.event == Notification.event.power_management.POWER_HAS_BEEN_APPLIED then
       device:send(Battery:Get({}))
     end
@@ -78,9 +82,18 @@ local function notification_report_handler(self, device, cmd)
   -- MOLD
   if cmd.args.notification_type == Notification.notification_type.WEATHER_ALARM then
     if cmd.args.event == Notification.event.weather_alarm.STATE_IDLE then
-      event = capabilities.moldHealthConcern.moldHealthConcern.good()
+      event = MoldHealthConcern.moldHealthConcern.good()
     elseif cmd.args.event == Notification.event.weather_alarm.MOISTURE_ALARM then
-      event = capabilities.moldHealthConcern.moldHealthConcern.moderate()
+      event = MoldHealthConcern.moldHealthConcern.moderate()
+    end
+  end
+
+  -- TAMPER
+  if cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
+    if cmd.args.event == Notification.event.home_security.STATE_IDLE then
+      event = TamperAlert.tamper.clear()
+    elseif cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED then
+      event = TamperAlert.tamper.detected()
     end
   end
 

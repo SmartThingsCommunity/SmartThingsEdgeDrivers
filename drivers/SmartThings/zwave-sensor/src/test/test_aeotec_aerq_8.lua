@@ -20,8 +20,8 @@ local zw_test_utils = require "integration_test.zwave_test_utils"
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
---- @type st.zwave.CommandClass.SensorBinary
-local SensorMultilevel = (require "st.zwave.CommandClass.SensorBinary")({ version = 2 })
+--- @type st.zwave.CommandClass.SensorMultilevel
+local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ version = 11 })
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local t_utils = require "integration_test.utils"
@@ -31,7 +31,7 @@ local sensor_endpoints = {
     command_classes = {
       {value = zw.BATTERY},
       {value = zw.NOTIFICATION},
-      {value = zw.SENSOR_BINARY},
+      {value = zw.SENSOR_MULTILEVEL},
       {value = zw.CONFIGURATION}
     }
   }
@@ -202,6 +202,14 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
     },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_attr_handler",
+        { device_uuid = mock_sensor.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
+      }
+    }
   }
 )
 
@@ -277,7 +285,7 @@ test.register_message_test(
       {
         channel = "capability",
         direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
+        message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.moderate())
       }
     }
 )

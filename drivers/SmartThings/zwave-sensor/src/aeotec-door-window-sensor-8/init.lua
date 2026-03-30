@@ -31,6 +31,9 @@ local ContactSensor = capabilities.contactSensor
 local PowerSource = capabilities.powerSource
 local ThreeAxis = capabilities.threeAxis
 local TamperAlert = capabilities.tamperAlert
+local TemperatureMeasurement = capabilities.temperatureMeasurement
+local RelativeHumidityMeasurement = capabilities.relativeHumidityMeasurement
+local DewPoint = capabilities.dewPoint
 
 local AEOTEC_DOOR_WINDOW_SENSOR_8_FINGERPRINTS = {
   { manufacturerId = 0x0371, productId = 0x0037 } -- Aeotec Door Window Sensor 8 EU/US/AU
@@ -105,10 +108,8 @@ local function notification_report_handler(self, device, cmd)
   -- TAMPER
   if cmd.args.notification_type == Notification.notification_type.HOME_SECURITY then
     if cmd.args.event == Notification.event.home_security.STATE_IDLE then
-      log.info("STATE_IDLE")
       event = TamperAlert.tamper.clear()
     elseif cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED then
-      log.info("TAMPERING_PRODUCT_COVER_REMOVED")
       event = TamperAlert.tamper.detected()
     end
   end
@@ -118,7 +119,7 @@ local function notification_report_handler(self, device, cmd)
   end
 end
 
-local function sensor_multilevel_report_handler(self, device, cmd) 
+local function sensor_multilevel_report_handler(self, device, cmd)
   local event
   local sensor_type = cmd.args.sensor_type
   local value = cmd.args.sensor_value
@@ -129,26 +130,45 @@ local function sensor_multilevel_report_handler(self, device, cmd)
 
   local MIN_VAL = -10000
   local MAX_VAL = 10000
-  -- log.info(string.format("SensorMultilevel: type=%d, raw=%.1f", sensor_type, value))
   value = math.max(MIN_VAL, math.min(MAX_VAL, value))
-  -- log.info(string.format("Clamped: %.1f", value))
 
   if (sensor_type == SensorMultilevel.sensor_type.ACCELERATION_X_AXIS) then
     x = value
     device:set_field("three_axis_x", x)
-    event = ThreeAxis.threeAxis(x, y, z)
+    event = ThreeAxis.threeAxis({value = {x, y, z}, unit = 'mG'})
   elseif (sensor_type == SensorMultilevel.sensor_type.ACCELERATION_Y_AXIS) then
     y = value
     device:set_field("three_axis_y", y)
-    event = ThreeAxis.threeAxis(x, y, z)
+    event = ThreeAxis.threeAxis({value = {x, y, z}, unit = 'mG'})
   elseif (sensor_type == SensorMultilevel.sensor_type.ACCELERATION_Z_AXIS) then
     z = value
     device:set_field("three_axis_z", z)
-    event = ThreeAxis.threeAxis(x, y, z)
+    event = ThreeAxis.threeAxis({value = {x, y, z}, unit = 'mG'})
+  end
+
+  if (sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
+    local scale = 'C'
+    if (SensorMultilevel.scale.temperature.FAHRENHEIT == cmd.args.scale) then
+      scale = 'F'
+    end
+    event = TemperatureMeasurement.temperature({value = value, unit = scale})
+  end
+
+  if (sensor_type == SensorMultilevel.sensor_type.RELATIVE_HUMIDITY) then
+    event = RelativeHumidityMeasurement.humidity({value = value, unit = "%"})
+  end
+
+  if (sensor_type == SensorMultilevel.sensor_type.DEW_POINT) then
+    local scale = 'C'
+    if (SensorMultilevel.scale.dew_point.FAHRENHEIT == cmd.args.scale) then
+      scale = 'F'
+    end
+    event = DewPoint.dewpoint({value = value, unit = scale})
   end
 
   if (event ~= nil) then
     device:emit_event(event)
+    return;
   end
 end
 
@@ -161,9 +181,9 @@ local aeotec_door_window_sensor_8 = {
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = notification_report_handler
     },
-    -- [cc.SENSOR_MULTILEVEL] = {
-    --   [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
-    -- }
+    [cc.SENSOR_MULTILEVEL] = {
+      [SensorMultilevel.REPORT] = sensor_multilevel_report_handler
+    }
   },
   capability_handlers = {
     [capabilities.refresh.ID] = {

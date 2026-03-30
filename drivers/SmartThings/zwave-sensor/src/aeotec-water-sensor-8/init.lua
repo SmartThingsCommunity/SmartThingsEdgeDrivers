@@ -115,9 +115,7 @@ end
 local function notification_report_handler(self, device, cmd)
   local active_profile = device:get_field("active_profile")
   local event
-
   local event_parameter
-  log.info("event_parameter", utils.stringify_table(cmd.args.event_parameter))
 
   if (0 ~= string.len(cmd.args.event_parameter)) then
     event_parameter = string.byte(cmd.args.event_parameter)
@@ -128,6 +126,8 @@ local function notification_report_handler(self, device, cmd)
     -- TAMPER
     if cmd.args.event == Notification.event.home_security.STATE_IDLE and event_parameter == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED then
       event = TamperAlert.tamper.clear()
+    elseif cmd.args.event == Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED and event_parameter == Notification.event.home_security.STATE_IDLE then
+      event = TamperAlert.tamper.detected()
     elseif active_profile == 'aeotec-water-sensor-8-motion' then -- MOTION
       if cmd.args.event == Notification.event.home_security.STATE_IDLE and event_parameter == Notification.event.home_security.MOTION_DETECTION then
         event = MotionSensor.motion.inactive()

@@ -230,16 +230,12 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_water_sensor:generate_test_message("main", capabilities.moldHealthConcern.supportedMoldValues({"good", "moderate"}))
     )
-
     test.socket.capability:__expect_send(
       mock_water_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
     )
-
     test.socket.capability:__expect_send(
       mock_water_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
     )
-
-
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_water_sensor,
@@ -294,24 +290,24 @@ test.register_message_test(
     }
 )
 
-test.register_coroutine_test(
-    "Notification report TAMPERING_PRODUCT_COVER_REMOVED event should be handled as tamperAlert detected",
-    function()
-      test.timer.__create_and_queue_test_time_advance_timer(10, "oneshot")
-      test.socket.zwave:__queue_receive(
-        {
-          mock_water_sensor.id,
-          zw_test_utils.zwave_test_build_receive_command(
-            Notification:Report(
-              {
-                notification_type = Notification.notification_type.HOME_SECURITY,
-                event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED
-              })
-          )
-        }
-      )
-      test.socket.capability:__expect_send(mock_water_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected()))
-    end
+test.register_message_test(
+  "Notification report STATE_IDLE event should be handled tamper alert state clear",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED,
+        event_parameter = string.char(Notification.event.home_security.STATE_IDLE)
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_water_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+    }
+  }
 )
 
 test.register_message_test(
@@ -427,7 +423,6 @@ test.register_message_test(
       }
     }
 )
-
 
 for param_value, data in pairs(DEVICE_PROFILES) do
   local value = param_value
