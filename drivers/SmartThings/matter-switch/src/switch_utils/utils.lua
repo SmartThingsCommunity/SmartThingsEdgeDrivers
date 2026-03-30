@@ -161,6 +161,14 @@ function utils.find_default_endpoint(device)
     return nil
   end
 
+    -- Hager vendor special handling
+    if device.manufacturer_info.vendor_id == 0x1285 then
+      if #momentary_switch_ep_ids > 0 then
+        log.info("Hager device with buttons detected, using default endpoint")
+        return device.MATTER_DEFAULT_ENDPOINT
+      end
+    end
+
   -- Return the first fan endpoint as the default endpoint if any is found
   local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_endpoint_ids > 0 then
