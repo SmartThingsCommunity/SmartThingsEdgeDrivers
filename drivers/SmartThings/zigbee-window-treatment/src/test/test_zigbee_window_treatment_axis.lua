@@ -92,7 +92,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -133,7 +133,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -186,7 +186,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -214,7 +214,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -246,7 +246,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -274,7 +274,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -306,7 +306,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -346,7 +346,7 @@ test.register_coroutine_test(
       })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -388,7 +388,7 @@ test.register_coroutine_test(
       })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -416,7 +416,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -451,7 +451,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -479,7 +479,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -516,7 +516,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -551,7 +551,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -596,7 +596,7 @@ test.register_coroutine_test(
       })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -634,7 +634,7 @@ test.register_coroutine_test(
       })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -689,7 +689,7 @@ test.register_coroutine_test(
       test.socket.zigbee:__expect_send({ mock_device.id, WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device) })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 

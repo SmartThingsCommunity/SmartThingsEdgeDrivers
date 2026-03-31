@@ -51,7 +51,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -82,7 +82,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -100,7 +100,7 @@ test.register_coroutine_test(
     capabilities.smokeDetector.smoke.detected()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -118,7 +118,7 @@ test.register_coroutine_test(
       capabilities.audioMute.mute.muted()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -132,7 +132,7 @@ test.register_coroutine_test(
       PRIVATE_MUTE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -150,7 +150,7 @@ test.register_coroutine_test(
     selfCheck.selfCheckState.selfCheckCompleted()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -165,7 +165,7 @@ test.register_coroutine_test(
       PRIVATE_SELF_CHECK_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -183,7 +183,7 @@ test.register_coroutine_test(
       capabilities.smokeDetector.smoke.clear()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -201,7 +201,7 @@ test.register_coroutine_test(
       capabilities.audioMute.mute.unmuted()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -219,7 +219,7 @@ test.register_coroutine_test(
       selfCheck.selfCheckState.idle()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -238,7 +238,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

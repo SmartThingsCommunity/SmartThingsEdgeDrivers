@@ -82,7 +82,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -120,7 +120,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -168,7 +168,7 @@ test.register_message_test(
             },
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -192,7 +192,7 @@ test.register_message_test(
             },
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -232,7 +232,7 @@ test.register_message_test(
 
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -257,7 +257,7 @@ test.register_message_test(
             },
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -292,7 +292,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 

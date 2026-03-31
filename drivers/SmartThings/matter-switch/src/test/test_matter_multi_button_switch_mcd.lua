@@ -282,7 +282,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -305,7 +305,7 @@ test.register_message_test(
   }
 },
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -338,7 +338,7 @@ test.register_message_test(
   }
 },
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -363,7 +363,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -392,7 +392,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -457,7 +457,7 @@ test.register_coroutine_test(
     end,
   {
     test_init = test_init_mcd_unsupported_switch_device_type,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -477,7 +477,7 @@ test.register_coroutine_test(
     expect_configure_buttons()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -495,7 +495,7 @@ test.register_coroutine_test(
     expect_configure_buttons()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -509,7 +509,7 @@ test.register_coroutine_test(
     expect_configure_buttons()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -529,7 +529,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
