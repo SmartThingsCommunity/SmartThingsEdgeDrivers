@@ -22,9 +22,6 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
-local log = require "log"
-local utils = require "st.utils"
-
 local MoldHealthConcern = capabilities.moldHealthConcern
 local PowerSource = capabilities.powerSource
 local TamperAlert = capabilities.tamperAlert
@@ -47,13 +44,13 @@ local function added_handler(driver, device)
   device:send(Configuration:Get({ parameter_number = 10 }))
 
   device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "moderate"}))
-  
+
   -- Default value
   device:emit_event(MoldHealthConcern.moldHealthConcern.good())
 
   -- Default value
   device:emit_event(PowerSource.powerSource.battery())
-  
+
   device:send(Battery:Get({}))
 
   device:register_native_capability_attr_handler("temperatureMeasurement", "temperature")

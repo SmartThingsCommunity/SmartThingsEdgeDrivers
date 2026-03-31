@@ -22,9 +22,6 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
-local log = require "log"
-local utils = require "st.utils"
-
 local MoldHealthConcern = capabilities.moldHealthConcern
 local CarbonDioxideHealthConcern = capabilities.carbonDioxideHealthConcern
 local SoundDetection = capabilities.soundDetection
@@ -41,7 +38,7 @@ local AEOTEC_WATER_SENSOR_8_FINGERPRINTS = {
   { manufacturerId = 0x0371, productId = 0x0038 } -- Aeotec Water Sensor 8 EU/US/AU
 }
 
-DEVICE_PROFILES = {
+local DEVICE_PROFILES = {
   [0] = { profile = "aeotec-water-sensor-8"},
   [1] = { profile = "aeotec-water-sensor-8-smoke"},
   [2] = { profile = "aeotec-water-sensor-8-co"},
@@ -66,8 +63,6 @@ end
 local function set_profile(device, profile)
   local current = device:get_field("active_profile")
   if current ~= profile.profile then
-    log.info(string.format("Switching profile to: %s", profile.profile))
-
     device:try_update_metadata({ profile = profile.profile })
     device:set_field("active_profile", profile.profile)
 
@@ -224,7 +219,6 @@ end
 local function configuration_report_handler(self, device, cmd)
   local param_number = cmd.args.parameter_number
   local value = cmd.args.configuration_value
-  log.info(string.format("Received Configuration Report #%d = %d", param_number, value))
 
   if param_number == 10 then
     local mapping =  DEVICE_PROFILES[value]

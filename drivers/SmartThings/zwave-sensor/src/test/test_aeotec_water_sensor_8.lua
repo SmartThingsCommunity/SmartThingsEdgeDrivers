@@ -99,7 +99,7 @@ local mock_smoke_sensor = test.mock_device.build_test_zwave_device({
   zwave_product_id = 0x0038,
 })
 
-DEVICE_PROFILES = {
+local DEVICE_PROFILES = {
   [0] = {
     profile = "aeotec-water-sensor-8",
     mock_device = mock_water_sensor,

@@ -24,8 +24,6 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 
-local log = require "log"
-
 local MoldHealthConcern = capabilities.moldHealthConcern
 local ContactSensor = capabilities.contactSensor
 local PowerSource = capabilities.powerSource
@@ -53,13 +51,13 @@ local function added_handler(driver, device)
   device:send(Configuration:Get({ parameter_number = 10 }))
 
   device:emit_event(MoldHealthConcern.supportedMoldValues({"good", "moderate"}))
-  
+
   -- Default value
   device:emit_event(MoldHealthConcern.moldHealthConcern.good())
 
   -- Default value
   device:emit_event(PowerSource.powerSource.battery())
-  
+
   device:send(Battery:Get({}))
 end
 
@@ -123,7 +121,7 @@ local function sensor_multilevel_report_handler(self, device, cmd)
   local event
   local sensor_type = cmd.args.sensor_type
   local value = cmd.args.sensor_value
-  
+
   local x = device:get_field("three_axis_x") or 0
   local y = device:get_field("three_axis_y") or 0
   local z = device:get_field("three_axis_z") or 0

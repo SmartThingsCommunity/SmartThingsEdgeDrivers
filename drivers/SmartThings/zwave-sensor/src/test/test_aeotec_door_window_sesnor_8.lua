@@ -88,7 +88,7 @@ test.register_coroutine_test(
   "Device init lifecycle event",
   function()
     test.socket.device_lifecycle:__queue_receive({ mock_sensor.id, "init" })
-    
+
     mock_sensor:set_field("three_axis_x", 0)
     mock_sensor:set_field("three_axis_y", 0)
     mock_sensor:set_field("three_axis_z", 0)
