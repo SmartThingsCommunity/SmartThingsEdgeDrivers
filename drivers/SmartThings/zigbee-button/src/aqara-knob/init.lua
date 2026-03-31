@@ -7,6 +7,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local utils = require "st.utils"
+local button_utils = require "button_utils"
 
 local PowerConfiguration = clusters.PowerConfiguration
 local PRIVATE_CLUSTER_ID = 0xFCC0
@@ -16,30 +17,26 @@ local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
 local PRESENT_ATTRIBUTE_ID = 0x0055
 local ROTATION_MONITOR_ID = 0x0232
 
-local SENSITIVITY = "stse.knobSensitivity"
-local SENSITIVITY_FACTORS = {0.5, 1.0, 2.0}
-
 local AQARA_KNOB = {
   ["lumi.remote.rkba01"] = { mfr = "LUMI", type = "CR2032", quantity = 2 },   -- Aqara Wireless Knob Switch H1
 }
 
-local configuration = {
-  {
-    cluster = PowerConfiguration.ID,
-    attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
-    minimum_interval = 30,
-    maximum_interval = 3600,
-    data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
-    reportable_change = 1
-  }
-}
 
 local function device_init(driver, device)
+  local configuration = {
+    {
+      cluster = PowerConfiguration.ID,
+      attribute = PowerConfiguration.attributes.BatteryVoltage.ID,
+      minimum_interval = 30,
+      maximum_interval = 3600,
+      data_type = PowerConfiguration.attributes.BatteryVoltage.base_type,
+      reportable_change = 1
+    }
+  }
+
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
-  if configuration ~= nil then
-    for _, attribute in ipairs(configuration) do
+  for _, attribute in ipairs(configuration) do
       device:add_configured_attribute(attribute)
-    end
   end
 end
 
@@ -50,9 +47,8 @@ local function device_added(self, device)
 
   device:emit_event(capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
-  if device:get_latest_state("main", capabilities.button.ID, capabilities.button.button.NAME) == nil then
-    device:emit_event(capabilities.button.button.pushed({ state_change = false }))
-  end
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, 
+    capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
   device:emit_event(capabilities.batteryLevel.battery.normal())
   device:emit_event(capabilities.batteryLevel.type(type))
   device:emit_event(capabilities.batteryLevel.quantity(quantity))
@@ -80,9 +76,15 @@ local function button_monitor_handler(driver, device, value, zb_rx)
 end
 
 local function rotation_monitor_per_handler(driver, device, value, zb_rx)
+  local SENSITIVITY_KEY = "stse.knobSensitivity"
+  local SENSITIVITY_FACTORS = {0.5, 1.0, 2.0}
+
   local end_point = zb_rx.address_header.src_endpoint.value
   local raw_val = utils.round(value.value)
-  local sensitivity = tonumber(device.preferences[SENSITIVITY])
+  if raw_val > 0x7FFF then
+    raw_val = raw_val - 0x10000
+  end
+  local sensitivity = tonumber(device.preferences[SENSITIVITY_KEY])
   local factor = SENSITIVITY_FACTORS[sensitivity] or 1.0
   local intermediate_val = raw_val * factor
   local sign = (intermediate_val > 0 and 1) or (intermediate_val < 0 and -1) or 0

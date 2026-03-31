@@ -32,6 +32,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
     }
   }
 )
+mock_device:set_field("preferences", {["stse.knobSensitivity"] = 2}, {persist = true})
 
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
@@ -98,6 +99,79 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.knob.rotateAmount({value = 1, unit = "%"}, {state_change = true})))
+  end
+)
+
+test.register_coroutine_test(
+  "rotation_monitor_per_handler - max clamp at 100",
+  function()
+    local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 200 }}
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      attr_report_data, MFG_CODE):from_endpoint(0x47)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.knob.rotateAmount({value = 100, unit = "%"}, {state_change = true})))
+  end
+)
+
+test.register_coroutine_test(
+  "rotation_monitor_per_handler - min clamp at -100",
+  function()
+    local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 65386 }}
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      attr_report_data, MFG_CODE):from_endpoint(0x47)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.knob.rotateAmount({value = -100, unit = "%"}, {state_change = true})))
+  end
+)
+
+test.register_coroutine_test(
+  "rotation_monitor_per_handler - sensitivity 0.5x",
+  function()
+    mock_device:set_field("preferences", {["stse.knobSensitivity"] = 1})
+    local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 3 }}
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      attr_report_data, MFG_CODE):from_endpoint(0x47)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.knob.rotateAmount({value = 3, unit = "%"}, {state_change = true})))
+  end
+)
+
+test.register_coroutine_test(
+  "rotation_monitor_per_handler - sensitivity 2.0x",
+  function()
+    mock_device:set_field("preferences", {["stse.knobSensitivity"] = 3})
+    local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 5 }}
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      attr_report_data, MFG_CODE):from_endpoint(0x47)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.knob.rotateAmount({value = 5, unit = "%"}, {state_change = true})))
+  end
+)
+
+test.register_coroutine_test(
+  "rotation_monitor_per_handler - held rotate amount",
+  function()
+    mock_device:set_field("preferences", {["stse.knobSensitivity"] = 2})
+    local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 15 }}
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      attr_report_data, MFG_CODE):from_endpoint(0x48)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.knob.heldRotateAmount({value = 15, unit = "%"}, {state_change = true})))
   end
 )
 
