@@ -13,11 +13,8 @@ local st_device = require "st.device"
 local cc = require "st.zwave.CommandClass"
 
 
-local supported_button_values = {
-  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
-  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
-  ["button3"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
-}
+local supported_button_values = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
+
 
 local function refresh_handler(driver, device)
   device:send(SwitchMultilevel:Get({}))
@@ -33,7 +30,7 @@ local function device_added(driver, device)
         device:emit_component_event(
           component,
           capabilities.button.supportedButtonValues(
-            supported_button_values[component.id],
+            supported_button_values,
             { visibility = { displayed = false } }
           )
         )

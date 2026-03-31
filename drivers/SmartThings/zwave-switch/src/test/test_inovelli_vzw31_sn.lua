@@ -48,11 +48,7 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
-local supported_button_values = {
-  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
-  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
-  ["button3"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
-}
+local supported_button_values = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
 
 -- Test device initialization
 test.register_coroutine_test(
@@ -67,7 +63,7 @@ test.register_coroutine_test(
           mock_inovelli_vzw31_sn:generate_test_message(
             button_name,
             capabilities.button.supportedButtonValues(
-              supported_button_values[button_name],
+              supported_button_values,
               { visibility = { displayed = false } }
             )
           )
