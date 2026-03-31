@@ -9,7 +9,7 @@ local clusters = require "st.matter.generated.zap_clusters"
 
 local TRANSITION_TIME = 0
 local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
+local HANDLE_COMMAND_IF_OFF = 0x01
 local button_attr = capabilities.button.button
 
 
@@ -280,6 +280,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -300,6 +303,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("button1", button_attr.pushed({state_change = true})) --should send initial press
   }
+},
+{
+   min_api_version = 19
 }
 )
 
@@ -330,6 +336,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("button2", button_attr.pushed({state_change = true}))
   }
+},
+{
+   min_api_version = 19
 }
 )
 
@@ -352,7 +361,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -366,7 +378,7 @@ test.register_coroutine_test(
     })
     test.socket.matter:__expect_send({
       mock_device.id,
-      clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
+      clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
     })
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -378,7 +390,10 @@ test.register_coroutine_test(
       clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, mock_device_ep5, 556)
     })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -440,7 +455,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
     end,
-  { test_init = test_init_mcd_unsupported_switch_device_type }
+  {
+    test_init = test_init_mcd_unsupported_switch_device_type,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -457,7 +475,10 @@ test.register_coroutine_test(
     mock_child:expect_metadata_update({ profile = "light-color-level" })
     mock_device:expect_metadata_update({ profile = "light-level-3-button" })
     expect_configure_buttons()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -472,7 +493,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     expect_configure_buttons()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -483,7 +507,10 @@ test.register_coroutine_test(
     mock_child:expect_metadata_update({ profile = "light-color-level" })
     mock_device:expect_metadata_update({ profile = "light-level-3-button" })
     expect_configure_buttons()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -500,7 +527,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     mock_child:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- run the tests

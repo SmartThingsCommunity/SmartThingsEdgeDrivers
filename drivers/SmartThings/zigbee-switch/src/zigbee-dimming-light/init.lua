@@ -48,7 +48,7 @@ end
 local zigbee_dimming_light = {
   NAME = "Zigbee Dimming Light",
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(device_init),
+    init = configurations.reconfig_wrapper(device_init),
     added = device_added,
     doConfigure = do_configure
   },

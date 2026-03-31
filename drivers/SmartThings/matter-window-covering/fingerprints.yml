@@ -107,6 +107,12 @@ matterManufacturer:
     vendorId: 0x139C
     productId: 0xFA17
     deviceProfileName: window-covering
+#WINDOWSTORY
+  - id: "5496/6657"
+    deviceLabel: GATEWAY-MT
+    vendorId: 0x1578
+    productId: 0x1A01
+    deviceProfileName: window-covering-tilt
 #WISTAR
   - id: "5207/3"
     deviceLabel: WISTAR WSERD16-B Smart Tubular Motor

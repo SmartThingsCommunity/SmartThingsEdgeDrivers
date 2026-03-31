@@ -37,6 +37,9 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("switch1",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -54,6 +57,9 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("switch2",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 test.register_message_test(
@@ -70,6 +76,9 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("switch3",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -87,6 +96,9 @@ test.register_message_test(
         direction = "send",
         message = mock_simple_device:generate_test_message("switch1",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -103,6 +115,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_simple_device.id, OnOff.server.commands.On(mock_simple_device):to_endpoint(0x03) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

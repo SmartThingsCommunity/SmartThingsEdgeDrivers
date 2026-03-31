@@ -300,6 +300,11 @@ matterManufacturer:
     vendorId: 0x1434
     productId: 0x1000
     deviceProfileName: matter-bridge
+  - id: "5172/4352"
+    deviceLabel: Wi-Fi Relay
+    vendorId: 0x1434
+    productId: 0x1100
+    deviceProfileName: plug-binary
 
 #GE
   - id: "4921/177"
@@ -753,6 +758,38 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6094
     deviceProfileName: light-color-level
+  - id: "4999/24646"
+    deviceLabel: Govee TV Light Bar
+    vendorId: 0x1387
+    productId: 0x6046
+    deviceProfileName: light-color-level
+  - id: "4999/24662"
+    deviceLabel: Govee RGBICWW Light Bar
+    vendorId: 0x1387
+    productId: 0x6056
+    deviceProfileName: light-color-level
+# Hager
+  - id: "4741/8"
+    deviceLabel: Hager matter 2 buttons (battery)
+    vendorId: 0x1285
+    productId: 0x0008
+    deviceProfileName: 2-button-batteryLevel
+  - id: "4741/9"
+    deviceLabel: Hager matter 4 buttons (battery)
+    vendorId: 0x1285
+    productId: 0x0009
+    deviceProfileName: 4-button-batteryLevel
+# HAOJAI
+  - id: "5530/4113"
+    deviceLabel: HAOJAI Smart Switch 3-key
+    vendorId: 0x159A
+    productId: 0x1011
+    deviceProfileName: 3-button-motion
+  - id: "5530/4098"
+    deviceLabel: HAOJAI Smart Switch 6-key
+    vendorId: 0x159A
+    productId: 0x1002
+    deviceProfileName: 6-button-motion
 # Hue
   - id: "4107/2049"
     deviceLabel: Hue W 1600 A21 E26 1P NAM
@@ -859,15 +896,15 @@ matterManufacturer:
     deviceProfileName: plug-binary
 #Ikea
   - id: "4476/32768"
-    deviceLabel: BILRESA scroll wheel
+    deviceLabel: BILRESA Scroll Wheel
     vendorId: 0x117C
     productId: 0x8000
     deviceProfileName: ikea-scroll
   - id: "4476/32769"
-    deviceLabel: BILRESA dual button
+    deviceLabel: BILRESA Dual Button
     vendorId: 0x117C
     productId: 0x8001
-    deviceProfileName: 2-button-battery
+    deviceProfileName: ikea-2-button-battery
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
@@ -972,6 +1009,16 @@ matterManufacturer:
     vendorId: 0x109B
     productId: 0x1007
     deviceProfileName: 3-button
+  - id: "4251/4113"
+    deviceLabel: "Decora Smart Wi-Fi (3rd Gen) 15A Switch"
+    vendorId: 0x109B
+    productId: 0x1011
+    deviceProfileName: switch-binary
+  - id: "4251/4112"
+    deviceLabel: "Decora Smart Wi-Fi (3rd Gen) 600W Dimmer"
+    vendorId: 0x109B
+    productId: 0x1010
+    deviceProfileName: switch-level
 #LeTianPai
   - id: "5163/4097"
     deviceLabel: LeTianPai Smart Light Bulb
@@ -1275,6 +1322,27 @@ matterManufacturer:
     vendorId: 0x1423
     productId: 0x00CD
     deviceProfileName: light-level-colorTemperature
+  - id: "5155/265"
+    deviceLabel: Ceiling 13
+    vendorId: 0x1423
+    productId: 0x0109
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/266"
+    deviceLabel: LIFX Ceiling 13
+    vendorId: 0x1423
+    productId: 0x010A
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/267"
+    deviceLabel: LIFX Mirror
+    vendorId: 0x1423
+    productId: 0x010B
+    deviceProfileName: light-level-colorTemperature
+  - id: "5155/268"
+    deviceLabel: LIFX Mirror
+    vendorId: 0x1423
+    productId: 0x010C
+    deviceProfileName: light-level-colorTemperature
+
 #LG
   - id: "4142/8784"
     deviceLabel: LG Smart Button (1 Button)
@@ -1354,6 +1422,12 @@ matterManufacturer:
     vendorId: 0x137F
     productId: 0x027B
     deviceProfileName: plug-binary
+#Netatmo
+  - id: "4129/8"
+    deviceLabel: Netatmo Thermo Hub
+    vendorId: 0x1021
+    productId: 0x0008
+    deviceProfileName: matter-bridge
 #Onvis
   - id: "5181/4097"
     deviceLabel: Onvis Smart Plug S4EU
@@ -1831,6 +1905,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0B93
     deviceProfileName: light-color-level
+  - id: "4489/2194"
+    deviceLabel: SMART WIFI MATTER WALL SWITCH 1G
+    vendorId: 0x1189
+    productId: 0x0892
+    deviceProfileName: switch-binary
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
