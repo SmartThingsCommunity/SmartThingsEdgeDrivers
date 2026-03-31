@@ -105,7 +105,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -138,7 +138,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -171,7 +171,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -204,7 +204,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -237,7 +237,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -270,7 +270,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -297,7 +297,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -324,7 +324,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -351,7 +351,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -378,7 +378,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -405,7 +405,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -432,7 +432,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -511,7 +511,7 @@ test.register_coroutine_test(
     mock_base_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -553,7 +553,7 @@ test.register_coroutine_test(
     test_init = function()
       test.mock_device.add_test_device(mock_non_mns_device)
     end,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 

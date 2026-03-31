@@ -145,7 +145,7 @@ test.register_coroutine_test(
     expect_kick_off_cota_process(mock_device)
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -162,7 +162,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -179,7 +179,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -214,7 +214,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -238,7 +238,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -340,7 +340,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -438,7 +438,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -529,7 +529,7 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, read_attribute_list})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -589,7 +589,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -629,7 +629,7 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -710,7 +710,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -745,7 +745,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -753,7 +753,7 @@ test.register_coroutine_test(
   "Delay setting COTA cred if another cred is already being set.", function()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

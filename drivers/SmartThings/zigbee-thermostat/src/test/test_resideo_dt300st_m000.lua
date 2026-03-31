@@ -102,7 +102,7 @@ test.register_coroutine_test("Configure should configure all necessary attribute
   })
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -125,7 +125,7 @@ test.register_coroutine_test("Refresh should read all necessary attributes", fun
   end
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -139,7 +139,7 @@ test.register_coroutine_test("Temperature reporting should create the appropriat
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -156,7 +156,7 @@ test.register_coroutine_test("Thermostat mode reporting should create the approp
     .thermostatMode.heat()))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -172,7 +172,7 @@ test.register_coroutine_test("ControlSequenceOfOperation reporting should create
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -187,7 +187,7 @@ test.register_coroutine_test("OccupiedHeatingSetpoint reporting shoulb create th
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -202,7 +202,7 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
                                     Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 2100)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -218,7 +218,7 @@ test.register_coroutine_test("Setting the thermostat mode to away should generat
     Thermostat.attributes.SystemMode.OFF)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -234,7 +234,7 @@ test.register_coroutine_test("Setting the thermostat mode to heat should generat
     Thermostat.attributes.SystemMode.HEAT)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -257,7 +257,7 @@ test.register_coroutine_test("Refresh should read all necessary attributes with 
   end
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -271,7 +271,7 @@ test.register_coroutine_test("Temperature reporting should create the appropriat
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -288,7 +288,7 @@ test.register_coroutine_test("Thermostat mode reporting should create the approp
     .thermostatMode.heat()))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -304,7 +304,7 @@ test.register_coroutine_test("ControlSequenceOfOperation reporting should create
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -319,7 +319,7 @@ test.register_coroutine_test("OccupiedHeatingSetpoint reporting shoulb create th
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -334,7 +334,7 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
                                     Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_first_child, 2100)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -350,7 +350,7 @@ test.register_coroutine_test("Setting the thermostat mode to away should generat
     Thermostat.attributes.SystemMode.OFF)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -366,7 +366,7 @@ test.register_coroutine_test("Setting the thermostat mode to heat should generat
     Thermostat.attributes.SystemMode.HEAT)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -389,7 +389,7 @@ test.register_coroutine_test("Refresh should read all necessary attributes with 
   end
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -403,7 +403,7 @@ test.register_coroutine_test("Temperature reporting should create the appropriat
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -420,7 +420,7 @@ test.register_coroutine_test("Thermostat mode reporting should create the approp
     .thermostatMode.heat()))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -436,7 +436,7 @@ test.register_coroutine_test("ControlSequenceOfOperation reporting should create
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -451,7 +451,7 @@ test.register_coroutine_test("OccupiedHeatingSetpoint reporting shoulb create th
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -466,7 +466,7 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
                                     Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_second_child, 2100)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -482,7 +482,7 @@ test.register_coroutine_test("Setting the thermostat mode to away should generat
     Thermostat.attributes.SystemMode.OFF)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -498,7 +498,7 @@ test.register_coroutine_test("Setting the thermostat mode to heat should generat
     Thermostat.attributes.SystemMode.HEAT)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -521,7 +521,7 @@ test.register_coroutine_test("Refresh should read all necessary attributes with 
   end
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -535,7 +535,7 @@ test.register_coroutine_test("Temperature reporting should create the appropriat
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -552,7 +552,7 @@ test.register_coroutine_test("Thermostat mode reporting should create the approp
     .thermostatMode.heat()))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -568,7 +568,7 @@ test.register_coroutine_test("ControlSequenceOfOperation reporting should create
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -583,7 +583,7 @@ test.register_coroutine_test("OccupiedHeatingSetpoint reporting shoulb create th
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -598,7 +598,7 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
                                     Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_third_child, 2100)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -614,7 +614,7 @@ test.register_coroutine_test("Setting the thermostat mode to away should generat
     Thermostat.attributes.SystemMode.OFF)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -630,7 +630,7 @@ test.register_coroutine_test("Setting the thermostat mode to heat should generat
     Thermostat.attributes.SystemMode.HEAT)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -653,7 +653,7 @@ test.register_coroutine_test("Refresh should read all necessary attributes with 
   end
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -667,7 +667,7 @@ test.register_coroutine_test("Temperature reporting should create the appropriat
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -684,7 +684,7 @@ test.register_coroutine_test("Thermostat mode reporting should create the approp
     .thermostatMode.heat()))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -700,7 +700,7 @@ test.register_coroutine_test("ControlSequenceOfOperation reporting should create
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -715,7 +715,7 @@ test.register_coroutine_test("OccupiedHeatingSetpoint reporting shoulb create th
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -730,7 +730,7 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
                                     Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_forth_child, 2100)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -746,7 +746,7 @@ test.register_coroutine_test("Setting the thermostat mode to away should generat
     Thermostat.attributes.SystemMode.OFF)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -762,7 +762,7 @@ test.register_coroutine_test("Setting the thermostat mode to heat should generat
     Thermostat.attributes.SystemMode.HEAT)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -785,7 +785,7 @@ test.register_coroutine_test("Refresh should read all necessary attributes with 
   end
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -799,7 +799,7 @@ test.register_coroutine_test("Temperature reporting should create the appropriat
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -816,7 +816,7 @@ test.register_coroutine_test("Thermostat mode reporting should create the approp
     .thermostatMode.heat()))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -832,7 +832,7 @@ test.register_coroutine_test("ControlSequenceOfOperation reporting should create
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -847,7 +847,7 @@ test.register_coroutine_test("OccupiedHeatingSetpoint reporting shoulb create th
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -862,7 +862,7 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
                                     Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_fifth_child, 2100)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -878,7 +878,7 @@ test.register_coroutine_test("Setting the thermostat mode to away should generat
     Thermostat.attributes.SystemMode.OFF)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -894,7 +894,7 @@ test.register_coroutine_test("Setting the thermostat mode to heat should generat
     Thermostat.attributes.SystemMode.HEAT)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -913,7 +913,7 @@ test.register_coroutine_test("ThermostatRunningState reporting shoulb create the
     capabilities.thermostatOperatingState.thermostatOperatingState({value="fan only"})))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 

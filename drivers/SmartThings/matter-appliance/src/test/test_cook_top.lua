@@ -91,7 +91,7 @@ test.register_coroutine_test(
     assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT, "Cook Surface Two Endpoint must be 3")
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -117,7 +117,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -157,7 +157,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -192,7 +192,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

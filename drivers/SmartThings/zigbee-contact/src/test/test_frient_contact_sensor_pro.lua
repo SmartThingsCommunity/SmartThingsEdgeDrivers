@@ -56,7 +56,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -178,7 +178,7 @@ test.register_coroutine_test(
             mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -205,7 +205,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -224,7 +224,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -243,7 +243,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -322,7 +322,7 @@ test.register_message_test(
         },
         {
             inner_block_ordering = "relaxed",
-            min_api_version = 19
+            min_api_version = 17
         }
 )
 
@@ -346,7 +346,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -370,7 +370,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -394,7 +394,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -418,7 +418,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -446,7 +446,7 @@ test.register_coroutine_test(
             })
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
