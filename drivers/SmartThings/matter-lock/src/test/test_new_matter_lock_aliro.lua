@@ -16,9 +16,12 @@ local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local cluster_base = require "st.matter.cluster_base"
-local DoorLock = clusters.DoorLock
 local OctetString1 = require "st.matter.data_types.OctetString1"
+local version = require "version"
+if version.api < 20 then
+  clusters.DoorLock = require "DoorLock"
+end
+local DoorLock = clusters.DoorLock
 
 local enabled_optional_component_capability_pairs = {{
   "main",
@@ -64,7 +67,6 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
@@ -87,7 +89,7 @@ local function test_init()
   subscribe_request:merge(DoorLock.attributes.AliroBLEAdvertisingVersion:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfAliroEndpointKeysSupported:subscribe(mock_device))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(DoorLock.attributes.FeatureMap:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))

@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
@@ -357,5 +360,10 @@ Feature.augment_type = function(cls, val)
 end
 
 setmetatable(Feature, new_mt)
+
+local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.DoorLock.types.Feature")
+if has_aliases then
+  aliases:add_to_class(Feature)
+end
 
 return Feature

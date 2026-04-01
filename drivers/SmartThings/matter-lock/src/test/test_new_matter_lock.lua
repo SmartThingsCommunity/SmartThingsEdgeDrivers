@@ -7,10 +7,13 @@ test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local cluster_base = require "st.matter.cluster_base"
+local lock_utils = require "lock_utils"
+local version = require "version"
+if version.api < 20 then
+  clusters.DoorLock = require "DoorLock"
+end
 local DoorLock = clusters.DoorLock
 local types = DoorLock.types
-local lock_utils = require "lock_utils"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("lock-user-pin-schedule.yml"),
@@ -45,7 +48,6 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe request
@@ -58,7 +60,7 @@ local function test_init()
   subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device))
   subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(DoorLock.attributes.FeatureMap:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))

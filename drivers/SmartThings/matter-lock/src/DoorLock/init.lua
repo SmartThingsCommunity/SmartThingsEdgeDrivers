@@ -1,6 +1,5 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
-
 
 local cluster_base = require "st.matter.cluster_base"
 local DoorLockServerAttributes = require "DoorLock.server.attributes"
@@ -69,8 +68,8 @@ function DoorLock:get_attribute_by_id(attr_id)
     [0x0087] = "NumberOfAliroCredentialIssuerKeysSupported",
     [0x0088] = "NumberOfAliroEndpointKeysSupported",
     [0xFFF9] = "AcceptedCommandList",
-    [0xFFFA] = "EventList",
     [0xFFFB] = "AttributeList",
+    [0xFFFC] = "FeatureMap",
   }
   local attr_name = attr_id_map[attr_id]
   if attr_name ~= nil then
@@ -185,9 +184,18 @@ DoorLock.attribute_direction_map = {
   ["NumberOfAliroCredentialIssuerKeysSupported"] = "server",
   ["NumberOfAliroEndpointKeysSupported"] = "server",
   ["AcceptedCommandList"] = "server",
-  ["EventList"] = "server",
   ["AttributeList"] = "server",
+  ["FeatureMap"] = "server",
 }
+
+do
+  local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.DoorLock.server.attributes")
+  if has_aliases then
+    for alias, _ in pairs(aliases) do
+      DoorLock.attribute_direction_map[alias] = "server"
+    end
+  end
+end
 
 DoorLock.command_direction_map = {
   ["LockDoor"] = "server",
@@ -218,6 +226,16 @@ DoorLock.command_direction_map = {
   ["SetCredentialResponse"] = "client",
   ["GetCredentialStatusResponse"] = "client",
 }
+
+do
+  local has_aliases, aliases = pcall(require, "st.matter.clusters.aliases.DoorLock.server.commands")
+  if has_aliases then
+    for alias, _ in pairs(aliases) do
+      DoorLock.command_direction_map[alias] = "server"
+    end
+  end
+end
+
 
 DoorLock.FeatureMap = DoorLock.types.Feature
 
@@ -260,3 +278,4 @@ setmetatable(DoorLock.events, event_helper_mt)
 setmetatable(DoorLock, {__index = cluster_base})
 
 return DoorLock
+

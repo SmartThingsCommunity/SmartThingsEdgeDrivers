@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local types_mt = {}
@@ -13,5 +13,10 @@ end
 local DoorLockTypes = {}
 
 setmetatable(DoorLockTypes, types_mt)
+
+local status, aliases = pcall(require, "st.matter.clusters.aliases.DoorLock.types")
+if status then
+  aliases:add_to_class(DoorLockTypes)
+end
 
 return DoorLockTypes

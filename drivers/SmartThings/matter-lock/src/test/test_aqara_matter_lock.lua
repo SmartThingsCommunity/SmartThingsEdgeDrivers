@@ -7,7 +7,10 @@ test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
-local cluster_base = require "st.matter.cluster_base"
+local version = require "version"
+if version.api < 20 then
+  clusters.DoorLock = require "DoorLock"
+end
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("lock-user-pin.yml"),
@@ -43,7 +46,6 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = clusters.DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe request
@@ -54,7 +56,7 @@ local function test_init()
   subscribe_request:merge(clusters.DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.attributes.MinPINCodeLength:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(clusters.DoorLock.attributes.FeatureMap:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockUserChange:subscribe(mock_device))

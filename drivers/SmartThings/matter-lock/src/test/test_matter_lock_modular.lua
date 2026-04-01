@@ -6,7 +6,10 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
-local cluster_base = require "st.matter.cluster_base"
+local version = require "version"
+if version.api < 20 then
+  clusters.DoorLock = require "DoorLock"
+end
 local DoorLock = clusters.DoorLock
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -199,13 +202,12 @@ local mock_device_modular = test.mock_device.build_test_matter_device({
   }
 })
 
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(clusters.DoorLock.attributes.FeatureMap:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device))
@@ -228,7 +230,7 @@ local function test_init_unlatch()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_unlatch)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_unlatch))
-  subscribe_request:merge(cluster_base.subscribe(mock_device_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(clusters.DoorLock.attributes.FeatureMap:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_unlatch))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_unlatch))
@@ -256,7 +258,7 @@ local function test_init_user_pin()
   subscribe_request:merge(DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.attributes.MinPINCodeLength:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_user_pin))
-  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(clusters.DoorLock.attributes.FeatureMap:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin))
@@ -287,7 +289,7 @@ local function test_init_user_pin_schedule_unlatch()
   subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device_user_pin_schedule_unlatch))
-  subscribe_request:merge(cluster_base.subscribe(mock_device_user_pin_schedule_unlatch, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(clusters.DoorLock.attributes.FeatureMap:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_user_pin_schedule_unlatch))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_user_pin_schedule_unlatch))
@@ -311,7 +313,7 @@ local function test_init_modular()
   -- subscribe request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_modular)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_modular))
-  subscribe_request:merge(cluster_base.subscribe(mock_device_modular, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(clusters.DoorLock.attributes.FeatureMap:subscribe(mock_device_modular))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
   subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_modular))
@@ -602,7 +604,7 @@ test.register_coroutine_test(
     subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device_modular))
-    subscribe_request:merge(cluster_base.subscribe(mock_device_modular, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+    subscribe_request:merge(DoorLock.attributes.FeatureMap:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_modular))
     subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device_modular))

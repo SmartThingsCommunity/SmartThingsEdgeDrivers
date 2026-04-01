@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
@@ -12,7 +15,7 @@ new_mt.__index.pretty_print = function(self)
     [self.DOOR_UNSPECIFIED_ERROR] = "DOOR_UNSPECIFIED_ERROR",
     [self.DOOR_AJAR] = "DOOR_AJAR",
   }
-  return string.format("%s: %s", self.field_name or self.NAME, name_lookup[self.value] or string.format("%d", self.value))
+  return string.format("%s: %s", self.field_name or self.NAME, name_lookup[self.value])
 end
 new_mt.__tostring = new_mt.__index.pretty_print
 

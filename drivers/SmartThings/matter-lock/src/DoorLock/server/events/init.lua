@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local event_mt = {}
 event_mt.__event_cache = {}
 event_mt.__index = function(self, key)
