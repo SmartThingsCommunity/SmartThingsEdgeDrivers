@@ -456,5 +456,40 @@ test.register_coroutine_test(
   { test_init = test_init_modular_fingerprint }
 )
 
+test.register_coroutine_test(
+  "Component-capability update without profile ID update should cause re-subscribe in infoChanged handler",
+  function()
+    local expected_metadata_modular_disabled = {
+      optional_component_capabilities={
+        {
+          "main",
+          {
+            "tvocMeasurement",
+          },
+        },
+      },
+      profile="aqs-modular",
+    }
+    local subscribe_request_tvoc = get_subscribe_request_tvoc()
+    local updated_device_profile = t_utils.get_profile_definition("aqs-modular.yml",
+      {enabled_optional_capabilities = expected_metadata_modular_disabled.optional_component_capabilities}
+    )
+    updated_device_profile.id = "00000000-1111-2222-3333-000000000006"
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({ profile = updated_device_profile }))
+    test.socket.capability:__expect_send(mock_device_modular_fingerprint:generate_test_message("main", capabilities.airQualityHealthConcern.supportedAirQualityValues({"unknown", "good", "unhealthy", "moderate", "slightlyUnhealthy"}, {visibility={displayed=false}})))
+    test.socket.matter:__expect_send({mock_device_modular_fingerprint.id, subscribe_request_tvoc})
+  end,
+  { test_init = test_init_modular_fingerprint }
+)
+
+test.register_coroutine_test(
+  "No component-capability update and no profile ID update should not cause a re-subscribe in infoChanged handler",
+  function()
+    -- simulate no actual change
+    test.socket.device_lifecycle:__queue_receive(mock_device_modular_fingerprint:generate_info_changed({}))
+  end,
+  { test_init = test_init_modular_fingerprint }
+)
+
 -- run tests
 test.run_registered_tests()
