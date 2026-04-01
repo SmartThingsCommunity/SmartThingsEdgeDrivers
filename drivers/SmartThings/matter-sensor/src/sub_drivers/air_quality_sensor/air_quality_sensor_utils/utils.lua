@@ -121,10 +121,4 @@ function AirQualitySensorUtils.deep_equals(a, b, opts, seen)
   return AirQualitySensorUtils.deep_equals(mt_a, mt_b, opts, seen)
 end
 
-  -- Compare metatables
-  local mt_a = getmetatable(a)
-  local mt_b = getmetatable(b)
-  return AirQualitySensorUtils.deep_equals(mt_a, mt_b, opts, seen)
-end
-
 return AirQualitySensorUtils
