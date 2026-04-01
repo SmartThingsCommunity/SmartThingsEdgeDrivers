@@ -181,6 +181,8 @@ function CameraUtils.optional_capabilities_list_changed(new_component_capability
 end
 
 function CameraUtils.subscribe(device)
+  local im = require "st.matter.interaction_model"
+
   local camera_subscribed_attributes = {
     [capabilities.hdr.ID] = {
       clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
@@ -214,7 +216,8 @@ function CameraUtils.subscribe(device)
     },
     [capabilities.audioMute.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerMuted,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted,
+      clusters.Chime.attributes.Enabled
     },
     [capabilities.audioVolume.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel,
@@ -293,8 +296,6 @@ function CameraUtils.subscribe(device)
     }
   }
 
-  local im = require "st.matter.interaction_model"
-
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
   local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
 
@@ -306,7 +307,7 @@ function CameraUtils.subscribe(device)
   for _, endpoint_info in ipairs(device.endpoints) do
     local checked_device = switch_utils.find_child(device, endpoint_info.endpoint_id) or device
     if not devices_seen[checked_device.id] then
-      switch_utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+      switch_utils.populate_subscribe_request_for_device(checked_device, device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
         camera_subscribed_attributes, camera_subscribed_events
       )
       devices_seen[checked_device.id] = true -- only loop through any device once

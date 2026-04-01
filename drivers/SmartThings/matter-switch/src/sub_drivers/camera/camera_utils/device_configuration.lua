@@ -48,106 +48,122 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   local speaker_component_capabilities = {}
   local microphone_component_capabilities = {}
   local doorbell_component_capabilities = {}
+  local profile = "camera"
 
-  local function has_server_cluster_type(cluster)
-    return cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH"
+  local av_stream_endpoints = device:get_endpoints(clusters.CameraAvStreamManagement.ID, {cluster_type = "SERVER"})
+  local av_settings_endpoints = device:get_endpoints(clusters.CameraAvSettingsUserLevelManagement.ID, {cluster_type = "SERVER"})
+  local chime_endpoints = device:get_endpoints(clusters.Chime.ID, {cluster_type = "SERVER"})
+  local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL)
+
+  if #av_stream_endpoints > 0 then
+    local av_stream_ep = switch_utils.get_endpoint_info(device, av_stream_endpoints[1])
+    local av_stream_cluster = switch_utils.find_cluster_on_ep(av_stream_ep, clusters.CameraAvStreamManagement.ID, "SERVER")
+    local clus_has_feature = function(feature_bitmap)
+      return clusters.CameraAvStreamManagement.are_features_supported(feature_bitmap, av_stream_cluster.feature_map)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
+      if #device:get_endpoints(clusters.PushAvStreamTransport.ID, {cluster_type = "SERVER"}) > 0 then
+        table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
+      end
+      table.insert(main_component_capabilities, capabilities.cameraViewportSettings.ID)
+      table.insert(main_component_capabilities, capabilities.videoStreamSettings.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE) then
+      table.insert(main_component_capabilities, capabilities.localMediaStorage.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.AUDIO) then
+      if #device:get_endpoints(clusters.PushAvStreamTransport.ID, {cluster_type = "SERVER"}) > 0 then
+        table.insert(main_component_capabilities, capabilities.audioRecording.ID)
+      end
+      table.insert(microphone_component_capabilities, capabilities.audioMute.ID)
+      table.insert(microphone_component_capabilities, capabilities.audioVolume.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SNAPSHOT) then
+      table.insert(main_component_capabilities, capabilities.imageCapture.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.PRIVACY) then
+      table.insert(main_component_capabilities, capabilities.cameraPrivacyMode.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SPEAKER) then
+      table.insert(speaker_component_capabilities, capabilities.audioMute.ID)
+      table.insert(speaker_component_capabilities, capabilities.audioVolume.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.IMAGE_CONTROL) then
+      table.insert(main_component_capabilities, capabilities.imageControl.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.HIGH_DYNAMIC_RANGE) then
+      table.insert(main_component_capabilities, capabilities.hdr.ID)
+    end
+    if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.NIGHT_VISION) then
+      table.insert(main_component_capabilities, capabilities.nightVision.ID)
+    end
+    if #chime_endpoints > 0 then
+      table.insert(main_component_capabilities, capabilities.sounds.ID)
+    end
+    if #doorbell_endpoints > 0 then
+      table.insert(doorbell_component_capabilities, capabilities.button.ID)
+      CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1], camera_fields.profile_components.doorbell)
+    end
+    if status_light_enabled_present then
+      table.insert(status_led_component_capabilities, capabilities.switch.ID)
+    end
+    if status_light_brightness_present then
+      table.insert(status_led_component_capabilities, capabilities.mode.ID)
+    end
+
+    if #status_led_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})
+    end
+    if #speaker_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.speaker, speaker_component_capabilities})
+    end
+    if #microphone_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.microphone, microphone_component_capabilities})
+    end
+    if #doorbell_component_capabilities > 0 then
+      table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.doorbell, doorbell_component_capabilities})
+    end
+  elseif #chime_endpoints > 0 then
+    profile = "chime"
+  elseif #doorbell_endpoints > 0 then
+    CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1], camera_fields.profile_components.main)
+    profile = "doorbell"
   end
 
-  local camera_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
-  if #camera_endpoints > 0 then
-    local camera_ep = switch_utils.get_endpoint_info(device, camera_endpoints[1])
-    for _, ep_cluster in pairs(camera_ep.clusters or {}) do
-      if ep_cluster.cluster_id == clusters.CameraAvStreamManagement.ID and has_server_cluster_type(ep_cluster) then
-        local clus_has_feature = function(feature_bitmap)
-          return clusters.CameraAvStreamManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
-          if switch_utils.find_cluster_on_ep(camera_ep, clusters.PushAvStreamTransport.ID, "SERVER") then
-            table.insert(main_component_capabilities, capabilities.videoCapture2.ID)
-          end
-          table.insert(main_component_capabilities, capabilities.cameraViewportSettings.ID)
-          table.insert(main_component_capabilities, capabilities.videoStreamSettings.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE) then
-          table.insert(main_component_capabilities, capabilities.localMediaStorage.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.AUDIO) then
-          if switch_utils.find_cluster_on_ep(camera_ep, clusters.PushAvStreamTransport.ID, "SERVER") then
-            table.insert(main_component_capabilities, capabilities.audioRecording.ID)
-          end
-          table.insert(microphone_component_capabilities, capabilities.audioMute.ID)
-          table.insert(microphone_component_capabilities, capabilities.audioVolume.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SNAPSHOT) then
-          table.insert(main_component_capabilities, capabilities.imageCapture.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.PRIVACY) then
-          table.insert(main_component_capabilities, capabilities.cameraPrivacyMode.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.SPEAKER) then
-          table.insert(speaker_component_capabilities, capabilities.audioMute.ID)
-          table.insert(speaker_component_capabilities, capabilities.audioVolume.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.IMAGE_CONTROL) then
-          table.insert(main_component_capabilities, capabilities.imageControl.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.HIGH_DYNAMIC_RANGE) then
-          table.insert(main_component_capabilities, capabilities.hdr.ID)
-        end
-        if clus_has_feature(clusters.CameraAvStreamManagement.types.Feature.NIGHT_VISION) then
-          table.insert(main_component_capabilities, capabilities.nightVision.ID)
-        end
-      elseif ep_cluster.cluster_id == clusters.CameraAvSettingsUserLevelManagement.ID and has_server_cluster_type(ep_cluster) then
-        local clus_has_feature = function(feature_bitmap)
-          return clusters.CameraAvSettingsUserLevelManagement.are_features_supported(feature_bitmap, ep_cluster.feature_map)
-        end
-        if clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) or
-          clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) or
-          clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
-          table.insert(main_component_capabilities, capabilities.mechanicalPanTiltZoom.ID)
-        end
-      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) then
-        table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
-      elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
-        table.insert(main_component_capabilities, capabilities.motionSensor.ID)
-      elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) then
-        table.insert(main_component_capabilities, capabilities.webrtc.ID)
-      end
+  if #av_settings_endpoints > 0 then
+    local av_settings_ep = switch_utils.get_endpoint_info(device, av_settings_endpoints[1])
+    local av_settings_cluster = switch_utils.find_cluster_on_ep(av_settings_ep, clusters.CameraAvSettingsUserLevelManagement.ID, "SERVER")
+    local clus_has_feature = function(feature_bitmap)
+      return clusters.CameraAvSettingsUserLevelManagement.are_features_supported(feature_bitmap, av_settings_cluster.feature_map)
+    end
+    if clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN) or
+      clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT) or
+      clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
+      table.insert(main_component_capabilities, capabilities.mechanicalPanTiltZoom.ID)
     end
   end
-  local chime_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CHIME)
-  if #chime_endpoints > 0 then
-    table.insert(main_component_capabilities, capabilities.sounds.ID)
-  end
-  local doorbell_endpoints = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL)
-  if #doorbell_endpoints > 0 then
-    table.insert(doorbell_component_capabilities, capabilities.button.ID)
-  end
-  if status_light_enabled_present then
-    table.insert(status_led_component_capabilities, capabilities.switch.ID)
-  end
-  if status_light_brightness_present then
-    table.insert(status_led_component_capabilities, capabilities.mode.ID)
+
+  if #device:get_endpoints(clusters.ZoneManagement.ID, {cluster_type = "SERVER"}) > 0 then
+    table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
   end
 
-  table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.main, main_component_capabilities})
-  if #status_led_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.statusLed, status_led_component_capabilities})
+  if #device:get_endpoints(clusters.OccupancySensing.ID, {cluster_type = "SERVER"}) > 0 then
+    table.insert(main_component_capabilities, capabilities.motionSensor.ID)
   end
-  if #speaker_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.speaker, speaker_component_capabilities})
+
+  if #device:get_endpoints(clusters.WebRTCTransportProvider.ID, {cluster_type = "SERVER"}) > 0 then
+    table.insert(main_component_capabilities, capabilities.webrtc.ID)
   end
-  if #microphone_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.microphone, microphone_component_capabilities})
-  end
-  if #doorbell_component_capabilities > 0 then
-    table.insert(optional_supported_component_capabilities, {camera_fields.profile_components.doorbell, doorbell_component_capabilities})
-  end
+
+  table.insert(optional_supported_component_capabilities, 1, {camera_fields.profile_components.main, main_component_capabilities})
 
   if camera_utils.optional_capabilities_list_changed(optional_supported_component_capabilities, device.profile.components) then
-    device:try_update_metadata({profile = "camera", optional_component_capabilities = optional_supported_component_capabilities})
+    if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA_VIDEO_DOORBELL) > 0 or
+      #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA_AUDIO_DOORBELL) > 0 then
+      profile = "av-doorbell"
+    end
+    device:try_update_metadata({profile = profile, optional_component_capabilities = optional_supported_component_capabilities})
     if #doorbell_endpoints > 0 then
-      CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
       button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
     end
   end
@@ -275,9 +291,13 @@ function CameraDeviceConfiguration.initialize_camera_capabilities(device)
   init_camera_privacy_mode(device)
 end
 
-function CameraDeviceConfiguration.update_doorbell_component_map(device, ep)
+function CameraDeviceConfiguration.update_doorbell_component_map(device, ep, component)
   local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  component_map.doorbell = ep
+  if component == camera_fields.profile_components.main then
+    component_map.main = ep
+  elseif component == camera_fields.profile_components.doorbell then
+    component_map.doorbell = ep
+  end
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 

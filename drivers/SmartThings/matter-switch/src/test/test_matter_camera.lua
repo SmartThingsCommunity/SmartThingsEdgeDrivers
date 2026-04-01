@@ -111,7 +111,186 @@ local mock_device = test.mock_device.build_test_matter_device({
         }
       },
       device_types = {
-        {device_type_id = 0x0143, device_type_revision = 1} -- Doorbell
+        {device_type_id = 0x0148, device_type_revision = 1} -- DoorBell
+      }
+    }
+  }
+})
+
+local mock_device_chime = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("chime.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = CHIME_EP,
+      clusters = {
+        {
+          cluster_id = clusters.Chime.ID,
+          cluster_type = "SERVER"
+        },
+      },
+      device_types = {
+        {device_type_id = 0x0146, device_type_revision = 1} -- Chime
+      }
+    }
+  }
+})
+
+local mock_device_doorbell = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("doorbell.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = DOORBELL_EP,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+          cluster_type = "SERVER",
+        }
+      },
+      device_types = {
+        {device_type_id = 0x0148, device_type_revision = 1} -- DoorBell
+      }
+    }
+  }
+})
+
+local VD_VIDEO_DOORBELL_EP, VD_CAMERA_EP, VD_FLOODLIGHT_EP, VD_CHIME_EP, VD_DOORBELL_EP = 1, 2, 3, 4, 5
+
+local mock_device_video_doorbell = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("av-doorbell.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = VD_VIDEO_DOORBELL_EP,
+      clusters = {},
+      device_types = {
+        { device_type_id = 0x0143, device_type_revision = 1 } -- Video Doorbell
+      }
+    },
+    {
+      endpoint_id = VD_CAMERA_EP,
+      clusters = {
+        {
+          cluster_id = clusters.CameraAvStreamManagement.ID,
+          feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO |
+            clusters.CameraAvStreamManagement.types.Feature.PRIVACY |
+            clusters.CameraAvStreamManagement.types.Feature.AUDIO |
+            clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE |
+            clusters.CameraAvStreamManagement.types.Feature.PRIVACY |
+            clusters.CameraAvStreamManagement.types.Feature.SPEAKER |
+            clusters.CameraAvStreamManagement.types.Feature.IMAGE_CONTROL |
+            clusters.CameraAvStreamManagement.types.Feature.SPEAKER |
+            clusters.CameraAvStreamManagement.types.Feature.HIGH_DYNAMIC_RANGE |
+            clusters.CameraAvStreamManagement.types.Feature.NIGHT_VISION |
+            clusters.CameraAvStreamManagement.types.Feature.WATERMARK |
+            clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.CameraAvSettingsUserLevelManagement.ID,
+          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.PushAvStreamTransport.ID,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.ZoneManagement.ID,
+          feature_map = clusters.ZoneManagement.types.Feature.TWO_DIMENSIONAL_CARTESIAN_ZONE |
+            clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.WebRTCTransportProvider.ID,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.WebRTCTransportRequestor.ID,
+          cluster_type = "CLIENT"
+        },
+        {
+          cluster_id = clusters.OccupancySensing.ID,
+          cluster_type = "SERVER"
+        }
+      },
+      device_types = {
+        {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+      }
+    },
+    {
+      endpoint_id = VD_FLOODLIGHT_EP,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
+        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30}
+      },
+      device_types = {
+        {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
+      }
+    },
+    {
+      endpoint_id = VD_CHIME_EP,
+      clusters = {
+        {
+          cluster_id = clusters.Chime.ID,
+          cluster_type = "SERVER"
+        },
+      },
+      device_types = {
+        {device_type_id = 0x0146, device_type_revision = 1} -- Chime
+      }
+    },
+    {
+      endpoint_id = VD_DOORBELL_EP,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
+            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
+          cluster_type = "SERVER",
+        }
+      },
+      device_types = {
+        {device_type_id = 0x0148, device_type_revision = 1} -- DoorBell
       }
     }
   }
@@ -164,6 +343,100 @@ end
 
 test.set_test_init_function(test_init)
 
+local function test_init_chime()
+  test.mock_device.add_test_device(mock_device_chime)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_chime.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_chime.id, "init" })
+  local subscribed_attributes_chime = {
+    clusters.Chime.attributes.InstalledChimeSounds,
+    clusters.Chime.attributes.SelectedChime,
+    clusters.Chime.attributes.Enabled,
+  }
+  subscribe_request = subscribed_attributes_chime[1]:subscribe(mock_device_chime)
+  for i, attr in ipairs(subscribed_attributes_chime) do
+    if i > 1 then subscribe_request:merge(attr:subscribe(mock_device_chime)) end
+  end
+  test.socket.matter:__expect_send({mock_device_chime.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_chime.id, "doConfigure" })
+  local expected_metadata = { optional_component_capabilities = { { "main", {} } }, profile = "chime" }
+  mock_device_chime:expect_metadata_update(expected_metadata)
+  local updated_device_profile = t_utils.get_profile_definition("chime.yml")
+  test.socket.device_lifecycle:__queue_receive(mock_device_chime:generate_info_changed({ profile = updated_device_profile }))
+  test.socket.matter:__expect_send({mock_device_chime.id, subscribe_request})
+  mock_device_chime:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_doorbell()
+  test.mock_device.add_test_device(mock_device_doorbell)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_doorbell.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_doorbell.id, "init" })
+  local subscribed_attributes_doorbell = {
+    clusters.Switch.server.events.InitialPress,
+    clusters.Switch.server.events.LongPress,
+    clusters.Switch.server.events.ShortRelease,
+    clusters.Switch.server.events.MultiPressComplete
+  }
+  subscribe_request = subscribed_attributes_doorbell[1]:subscribe(mock_device_doorbell)
+  for i, attr in ipairs(subscribed_attributes_doorbell) do
+    if i > 1 then subscribe_request:merge(attr:subscribe(mock_device_doorbell)) end
+  end
+  test.socket.matter:__expect_send({mock_device_doorbell.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_doorbell.id, "doConfigure" })
+  test.socket.matter:__expect_send({mock_device_doorbell.id, clusters.Switch.attributes.MultiPressMax:read(mock_device_doorbell, DOORBELL_EP)})
+  test.socket.capability:__expect_send(mock_device_doorbell:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
+  local expected_metadata = { optional_component_capabilities = { { "main", {} } }, profile = "doorbell" }
+  mock_device_doorbell:expect_metadata_update(expected_metadata)
+  local updated_device_profile = t_utils.get_profile_definition("doorbell.yml")
+  test.socket.device_lifecycle:__queue_receive(mock_device_doorbell:generate_info_changed({ profile = updated_device_profile }))
+  test.socket.matter:__expect_send({mock_device_doorbell.id, subscribe_request})
+  test.socket.matter:__expect_send({mock_device_doorbell.id, clusters.Switch.attributes.MultiPressMax:read(mock_device_doorbell, DOORBELL_EP)})
+  test.socket.capability:__expect_send(mock_device_doorbell:generate_test_message("main", capabilities.button.button.pushed({state_change = false})))
+  mock_device_doorbell:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_video_doorbell()
+  test.mock_device.add_test_device(mock_device_video_doorbell)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_video_doorbell.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_video_doorbell.id, "init" })
+  local floodlight_child_device_data = {
+    profile = t_utils.get_profile_definition("light-color-level.yml"),
+    device_network_id = string.format("%s:%d", mock_device_video_doorbell.id, VD_FLOODLIGHT_EP),
+    parent_device_id = mock_device_video_doorbell.id,
+    parent_assigned_child_key = string.format("%d", VD_FLOODLIGHT_EP)
+  }
+  test.mock_device.add_test_device(test.mock_device.build_test_child_device(floodlight_child_device_data))
+  mock_device_video_doorbell:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Floodlight 1",
+    profile = "light-color-level",
+    parent_device_id = mock_device_video_doorbell.id,
+    parent_assigned_child_key = string.format("%d", VD_FLOODLIGHT_EP)
+  })
+  local subscribed_attributes_vd = {
+    clusters.CameraAvStreamManagement.attributes.AttributeList,
+    clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel,
+    clusters.ColorControl.attributes.ColorTemperatureMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
+    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
+    clusters.ColorControl.attributes.CurrentHue,
+    clusters.ColorControl.attributes.CurrentSaturation,
+    clusters.ColorControl.attributes.CurrentX,
+    clusters.ColorControl.attributes.CurrentY,
+    clusters.ColorControl.attributes.ColorMode,
+  }
+  subscribe_request = subscribed_attributes_vd[1]:subscribe(mock_device_video_doorbell)
+  for i, attr in ipairs(subscribed_attributes_vd) do
+    if i > 1 then subscribe_request:merge(attr:subscribe(mock_device_video_doorbell)) end
+  end
+  test.socket.matter:__expect_send({mock_device_video_doorbell.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_video_doorbell.id, "doConfigure" })
+  mock_device_video_doorbell:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
 local additional_subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
   clusters.CameraAvStreamManagement.attributes.ImageRotation,
@@ -203,6 +476,7 @@ local additional_subscribed_attributes = {
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
   clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams,
+  clusters.Chime.attributes.Enabled,
   clusters.Chime.attributes.InstalledChimeSounds,
   clusters.Chime.attributes.SelectedChime,
   clusters.ZoneManagement.attributes.MaxZones,
@@ -244,11 +518,11 @@ local expected_metadata = {
         "imageControl",
         "hdr",
         "nightVision",
+        "sounds",
         "mechanicalPanTiltZoom",
         "zoneManagement",
-        "webrtc",
         "motionSensor",
-        "sounds",
+        "webrtc",
       }
     },
     {
@@ -2827,8 +3101,8 @@ test.register_coroutine_test(
       optional_component_capabilities = {
         { "main",
           { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
-            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
-            "webrtc", "motionSensor", "sounds", }
+            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "sounds", "mechanicalPanTiltZoom",
+            "zoneManagement", "motionSensor", "webrtc" }
         },
         { "statusLed",
           { "switch" } -- only switch capability remains
@@ -2852,6 +3126,138 @@ test.register_coroutine_test(
   {
      min_api_version = 19
   }
+)
+
+test.register_coroutine_test(
+  "Test init for chime device type",
+  function()
+  end,
+  { test_init = test_init_chime }
+)
+
+test.register_coroutine_test(
+  "Test init for doorbell device type",
+  function()
+  end,
+  { test_init = test_init_doorbell }
+)
+
+test.register_coroutine_test(
+  "Test init for video doorbell device type",
+  function()
+    local expected_metadata_av_doorbell = {
+      optional_component_capabilities = {
+        {
+          "main",
+          {
+            "videoCapture2",
+            "cameraViewportSettings",
+            "videoStreamSettings",
+            "localMediaStorage",
+            "audioRecording",
+            "cameraPrivacyMode",
+            "imageControl",
+            "hdr",
+            "nightVision",
+            "sounds",
+            "mechanicalPanTiltZoom",
+            "zoneManagement",
+            "motionSensor",
+            "webrtc",
+          }
+        },
+        {
+          "statusLed",
+          {
+            "switch",
+            "mode"
+          }
+        },
+        {
+          "speaker",
+          {
+            "audioMute",
+            "audioVolume"
+          }
+        },
+        {
+          "microphone",
+          {
+            "audioMute",
+            "audioVolume"
+          }
+        },
+        {
+          "doorbell",
+          {
+            "button"
+          }
+        }
+      },
+      profile = "av-doorbell"
+    }
+
+    test.socket.matter:__queue_receive({
+      mock_device_video_doorbell.id,
+      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device_video_doorbell, VD_CAMERA_EP, {
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
+        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+      })
+    })
+    mock_device_video_doorbell:expect_metadata_update(expected_metadata_av_doorbell)
+    test.socket.matter:__expect_send({mock_device_video_doorbell.id, clusters.Switch.attributes.MultiPressMax:read(mock_device_video_doorbell, VD_DOORBELL_EP)})
+    test.wait_for_events()
+    local updated_device_profile = t_utils.get_profile_definition(
+      "av-doorbell.yml", {enabled_optional_capabilities = expected_metadata_av_doorbell.optional_component_capabilities}
+    )
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive(mock_device_video_doorbell:generate_info_changed({ profile = updated_device_profile }))
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.webrtc.supportedFeatures(
+        {audio="sendrecv", bundle=true, order="audio/video", supportTrickleICE=true, turnSource="player", video="recvonly"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.mechanicalPanTiltZoom.supportedAttributes(
+        {"pan", "panRange", "tilt", "tiltRange", "zoom", "zoomRange", "presets", "maxPresets"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.zoneManagement.supportedFeatures(
+        {"triggerAugmentation", "perZoneSensitivity"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.localMediaStorage.supportedAttributes(
+        {"localVideoRecording"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.audioRecording.audioRecording("enabled"))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.videoStreamSettings.supportedFeatures(
+        {"liveStreaming", "clipRecording", "perStreamViewports", "watermark", "onScreenDisplay"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes(
+        {"softRecordingPrivacyMode", "softLivestreamPrivacyMode"}
+      ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device_video_doorbell:generate_test_message("main", capabilities.cameraPrivacyMode.supportedCommands(
+        {"setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode"}
+      ))
+    )
+    for _, attr in ipairs(additional_subscribed_attributes) do
+      subscribe_request:merge(attr:subscribe(mock_device_video_doorbell))
+    end
+    test.socket.matter:__expect_send({mock_device_video_doorbell.id, subscribe_request})
+    test.socket.matter:__expect_send({mock_device_video_doorbell.id, clusters.Switch.attributes.MultiPressMax:read(mock_device_video_doorbell, VD_DOORBELL_EP)})
+    test.socket.capability:__expect_send(mock_device_video_doorbell:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
+  end,
+  { test_init = test_init_video_doorbell }
 )
 
 -- run the tests

@@ -4093,11 +4093,6 @@ matterGeneric:
       - id: 0x0101 # Dimmable Light
       - id: 0x0107 # Occupancy Sensor
     deviceProfileName: light-level-motion
-  - id: "matter/camera"
-    deviceLabel: Matter Camera
-    deviceTypes:
-      - id: 0x0142 # Camera
-    deviceProfileName: camera
   - id: "matter/on-off/fan/light"
     deviceLabel: Matter OnOff Fan Light
     deviceTypes:
@@ -4146,6 +4141,50 @@ matterGeneric:
       - id: 0x002B # Fan
       - id: 0x0110 # Mounted Dimmable Load Control
     deviceProfileName: fan-modular
+  - id: "matter/camera"
+    deviceLabel: Matter Camera
+    deviceTypes:
+      - id: 0x0142 # Camera
+    deviceProfileName: camera
+  - id: "matter/intercom"
+    deviceLabel: Matter Intercom
+    deviceTypes:
+      - id: 0x0140 # Intercom
+    deviceProfileName: camera
+  - id: "matter/audio/doorbell"
+    deviceLabel: Matter Audio DoorBell
+    deviceTypes:
+      - id: 0x0141 # Audio DoorBell
+      - id: 0x0142 # Camera
+      - id: 0x0148 # DoorBell
+    deviceProfileName: av-doorbell
+  - id: "matter/video/doorbell"
+    deviceLabel: Matter Video DoorBell
+    deviceTypes:
+      - id: 0x0143 # Video DoorBell
+      - id: 0x0142 # Camera
+      - id: 0x0148 # DoorBell
+    deviceProfileName: av-doorbell
+  - id: "matter/floodlight/camera"
+    deviceLabel: Matter Floodlight Camera
+    deviceTypes:
+      - id: 0x0144 # Floodlight Camera
+    deviceProfileName: camera
+  - id: "matter/snapshot/camera"
+    deviceLabel: Matter Snapshot Camera
+    deviceTypes:
+      - id: 0x0145 # Snapshot Camera
+    deviceProfileName: camera
+  - id: "matter/chime"
+    deviceLabel: Matter Chime
+    deviceTypes:
+      - id: 0x0146 # Chime
+    deviceProfileName: chime
+  - id: "matter/doorbell"
+    deviceLabel: Matter DoorBell
+    deviceTypes:
+      - id: 0x0148 # DoorBell
+    deviceProfileName: doorbell
 
 matterThing:
   - id: SmartThings/MatterThing
