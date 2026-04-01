@@ -4,6 +4,9 @@ on:
     paths:
       - 'drivers/**'
 
+permissions:
+  statuses: write
+
 jobs:
   trigger-driver-test:
     strategy:
