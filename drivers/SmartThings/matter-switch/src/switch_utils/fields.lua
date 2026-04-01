@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright © 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local st_utils = require "st.utils"
@@ -115,8 +115,9 @@ SwitchFields.vendor_overrides = {
   },
   [0x1285] = { -- HAGER_MANUFACTURER_ID
     [0x0005] = {}, -- Hager WAASYS 1g switch
-    [0x0006] = {}, -- Hager WAASYS Hager 2g switch
-    [0x0007] = {}, -- Hager WAASYS PIR sensor
+    [0x0006] = {}, -- Hager WAASYS 2g switch
+    [0x0007] = {}, -- Hager WAASYS PIR 1.1M
+    [0x000A] = {}, -- Hager WAASYS PIR 2.2M
   },
   [0x1321] = { -- SONOFF_MANUFACTURER_ID
     [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },

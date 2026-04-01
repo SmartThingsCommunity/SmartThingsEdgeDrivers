@@ -3929,20 +3929,25 @@ matterManufacturer:
     productId: 0x0001
     deviceProfileName: "button-battery"
 #HAGER
-  - id: "4741/6"
-    deviceLabel: "Hager Switch 2G"
-    vendorId: 0x1285
-    productId: 0x0006
-    deviceProfileName: "matter-bridge"
   - id: "4741/5"
     deviceLabel: "Hager Switch 1G"
     vendorId: 0x1285
     productId: 0x0005
     deviceProfileName: "matter-bridge"
+  - id: "4741/6"
+    deviceLabel: "Hager Switch 2G"
+    vendorId: 0x1285
+    productId: 0x0006
+    deviceProfileName: "matter-bridge"
   - id: "4741/7"
-    deviceLabel: "Hager PIR"
+    deviceLabel: "Hager PIR 1.1M"
     vendorId: 0x1285
     productId: 0x0007
+    deviceProfileName: "matter-bridge"
+  - id: "4741/10"
+    deviceLabel: "Hager PIR 2.2M"
+    vendorId: 0x1285
+    productId: 0x000A
     deviceProfileName: "matter-bridge"
 
 #Bridge devices need manufacturer specific fingerprints until

@@ -25,12 +25,9 @@ local REVERSE_POLARITY = "__reverse_polarity"
 local PRESET_LEVEL_KEY = "__preset_level_key"
 local BUTTON_EPS = "__button_eps"
 
-local DEFAULT_PRESET_LEVEL = 50
-local descriptor_cluster_id = 0x001D
-local part_list_attr_id = 0x0003
 
 local function subscribe_descriptor (device, endpoint_id)
-    local req = cluster_base.subscribe(device, endpoint_id, descriptor_cluster_id, part_list_attr_id, nil)
+    local req = cluster_base.subscribe(device, endpoint_id, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID, nil)
     device:send(req)
 end
 
@@ -56,14 +53,11 @@ end
 
 local function build_lux_to_motion_map(occ_eps, lux_eps)
     local map = {}
-
     if #occ_eps == 0 or #lux_eps == 0 then
         return map
     end
-
     table.sort(occ_eps)
     table.sort(lux_eps)
-
     if #occ_eps == #lux_eps then
         for i, lux_ep in ipairs(lux_eps) do
             map[lux_ep] = occ_eps[i]
@@ -80,11 +74,9 @@ local function build_lux_to_motion_map(occ_eps, lux_eps)
                     best_ep = occ_ep
                 end
             end
-
             map[lux_ep] = best_ep
         end
     end
-
     return map
 end
 
@@ -411,7 +403,7 @@ local function handle_preset(driver, device, cmd)
     if not subhub or not ep then
         return
     end
-    local lift_value = device:get_field(PRESET_LEVEL_KEY) or DEFAULT_PRESET_LEVEL
+    local lift_value = device:get_field(PRESET_LEVEL_KEY) or 50
     local hundredths_lift_percent = (100 - tonumber(lift_value)) * 100
     subhub:send(clusters.WindowCovering.server.commands.GoToLiftPercentage(subhub, ep, hundredths_lift_percent))
 end
@@ -645,7 +637,6 @@ local function info_changed(driver, device, event, args)
         end
     elseif args.old_st_store.preferences.presetPosition ~= device.preferences.presetPosition then
         local new_preset_value = device.preferences.presetPosition
-        log.info(new_preset_value, " To new preset vlaue ")
         device:set_field(PRESET_LEVEL_KEY, new_preset_value, { persist = true })
     end
 end
@@ -701,11 +692,10 @@ local function device_type_handler (driver, device, ib)
             if ep == 3 and device.manufacturer_info.product_id == 0x0005 then
                 return
             elseif ep == 4 and device.manufacturer_info.product_id == 0x0006 then
-                local flag = false
-
+                local has3 = false
                 for _, eps in ipairs(active_eps) do
                     if eps == 3 then
-                        flag = true
+                        has3 = true
                         local ep3 = subhub:get_child_by_parent_assigned_key("3") or nil
                         if ep3 then
                             driver:try_delete_device(ep3.id)
@@ -714,7 +704,7 @@ local function device_type_handler (driver, device, ib)
                     end
                 end
 
-                if not flag then
+                if not has3 then
                     create_child_for_ep(driver, subhub, 4, "light-binary")
                     return
                 end
@@ -737,7 +727,6 @@ local function device_type_handler (driver, device, ib)
                 return
             end
             create_child_for_ep(driver, subhub, ib.endpoint_id, "light-binary")
-
         elseif device_type_id == 257 then
             subhub:send(cluster_base.subscribe(subhub, ep, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID, nil))
             subhub:send(cluster_base.subscribe(subhub, ep, clusters.LevelControl.ID, clusters.LevelControl.attributes.CurrentLevel.ID, nil))
@@ -758,10 +747,8 @@ local function device_type_handler (driver, device, ib)
             end
         elseif device_type_id == 263 then
             subhub:send(cluster_base.subscribe(subhub, ep, clusters.OccupancySensing.ID, clusters.OccupancySensing.attributes.Occupancy.ID, nil))
-
         elseif device_type_id == 262 then
             subhub:send(cluster_base.subscribe(subhub, ep, clusters.IlluminanceMeasurement.ID, clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID, nil))
-
         end
     end
 end
@@ -776,7 +763,7 @@ local Hager_switch = {
     matter_handlers = {
         attr = {
             [clusters.Descriptor.ID] = {
-                [part_list_attr_id] = handle_descriptor_report,
+                [clusters.Descriptor.attributes.PartsList.ID] = handle_descriptor_report,
                 [clusters.Descriptor.attributes.DeviceTypeList.ID] = device_type_handler
             },
             [clusters.IlluminanceMeasurement.ID] = {
@@ -803,7 +790,6 @@ local Hager_switch = {
                 [clusters.Switch.events.MultiPressComplete.ID] = multi_press_complete_handler,
             }
         },
-
     },
     capability_handlers = {
         [capabilities.windowShadePreset.ID] = {
