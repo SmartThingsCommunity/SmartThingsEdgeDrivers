@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -58,7 +47,10 @@ test.register_coroutine_test(
         test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
         test.wait_for_events()
       end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -75,6 +67,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState("cooling"))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 test.register_message_test(
@@ -91,6 +86,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -108,6 +106,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -146,7 +147,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -205,7 +209,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool" }, { visibility = { displayed = false } }))
       )
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -282,7 +289,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
       )
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -414,7 +424,10 @@ test.register_coroutine_test(
       )
       test.mock_time.advance_time(2)
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -446,7 +459,10 @@ test.register_coroutine_test(
     )
     test.mock_time.advance_time(2)
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -458,6 +474,52 @@ test.register_message_test(
         message = { mock_device.id, Thermostat.attributes.ThermostatRunningMode:build_test_attr_report(mock_device,
                                                                                                         3), }
       }
+    },
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_coroutine_test(
+    "Setting cooling setpoint while in heat mode should re-emit the current cooling setpoint",
+    function()
+      -- Put device in heat mode
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x04) -- HEAT
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat())
+      )
+      test.wait_for_events()
+
+      -- Set a known cooling setpoint state
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device, 2500)
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
+      )
+      test.wait_for_events()
+
+      -- Try to set cooling setpoint while in heat mode; driver defers and re-emits current
+      test.timer.__create_and_queue_test_time_advance_timer(10, "oneshot")
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 27 } }
+      })
+      test.wait_for_events()
+
+      test.mock_time.advance_time(10)
+      -- After the delay, update_device_setpoint re-emits the unchanged cooling setpoint (25.0 C)
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
+      )
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 19
     }
 )
 

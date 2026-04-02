@@ -1,16 +1,5 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version=1 })
@@ -27,22 +16,6 @@ local utils = require "st.utils"
 local LAST_REPORT_TIME = "LAST_REPORT_TIME"
 local POWER_UNIT_WATT = "W"
 local ENERGY_UNIT_KWH = "kWh"
-
-local FINGERPRINTS = {
-  {mfr = 0x0086, prodId = 0x0060},
-  {mfr = 0x0371, prodId = 0x00AF}, -- Smart Switch 7 EU
-  {mfr = 0x0371, prodId = 0x0017}  -- Smart Switch 7 US
-}
-
-local function can_handle(opts, driver, device, ...)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, nil, fingerprint.prodId) then
-      local subdriver = require("aeotec-smart-switch")
-      return true, subdriver
-    end
-  end
-  return false
-end
 
 local function emit_power_consumption_report_event(device, value, channel)
   -- powerConsumptionReport report interval
@@ -144,7 +117,7 @@ local aeotec_smart_switch = {
       [Meter.REPORT] = meter_report_handler
     }
   },
-  can_handle = can_handle
+  can_handle = require("aeotec-smart-switch.can_handle")
 }
 
 return aeotec_smart_switch

@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 
 local CONFIGURATION_VERSION_KEY = "_configuration_version"
@@ -95,12 +84,24 @@ configurations.handle_reporting_config_response = function(driver, device, zb_me
   end
 end
 
-configurations.power_reconfig_wrapper = function(orig_function)
+configurations.reconfig_wrapper = function(orig_function)
   local new_init = function(driver, device)
     local config_version = device:get_field(CONFIGURATION_VERSION_KEY)
     if config_version == nil or config_version < driver.current_config_version then
       if driver._reconfig_timer == nil then
         driver._reconfig_timer = driver:call_with_delay(5*60, configurations.check_and_reconfig_devices, "reconfig_power_devices")
+      end
+    end
+
+    local capabilities = require "st.capabilities"
+    for id, _ in pairs(device.profile.components) do
+      if device:supports_capability(capabilities.colorTemperature, id) and
+       device:get_latest_state(id, capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperatureRange.NAME) == nil then
+        local clusters = require "st.zigbee.zcl.clusters"
+        driver:call_with_delay(5*60, function()
+          device:send_to_component(id, clusters.ColorControl.attributes.ColorTempPhysicalMinMireds:read(device))
+          device:send_to_component(id, clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds:read(device))
+        end)
       end
     end
     orig_function(driver, device)

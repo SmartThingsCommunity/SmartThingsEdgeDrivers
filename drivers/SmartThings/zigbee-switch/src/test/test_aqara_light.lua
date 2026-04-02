@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -18,6 +7,7 @@ local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local capabilities = require "st.capabilities"
 
 local OnOff = clusters.OnOff
 local Level = clusters.Level
@@ -63,7 +53,11 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({
       mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
       PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
-  end
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6000 })))
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -118,7 +112,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -142,7 +139,10 @@ test.register_coroutine_test(
         ColorControl.commands.MoveToColorTemperature(mock_device, temp_in_mired, 0x0000)
       }
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -154,7 +154,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -166,7 +169,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
         TURN_OFF_INDICATOR_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -176,7 +182,10 @@ test.register_coroutine_test(
       preferences = { ["stse.lightFadeInTimeInSec"] = 1 }
     }))
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnTransitionTime:write(mock_device, 10) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -186,7 +195,45 @@ test.register_coroutine_test(
       preferences = { ["stse.lightFadeOutTimeInSec"] = 1 }
     }))
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OffTransitionTime:write(mock_device, 10) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+local mock_device_cwacn1 = test.mock_device.build_test_zigbee_device(
+  {
+    profile = t_utils.get_profile_definition("aqara-light.yml"),
+    preferences = { ["stse.lightFadeInTimeInSec"] = 0, ["stse.lightFadeOutTimeInSec"] = 0 },
+    fingerprinted_endpoint_id = 0x01,
+    zigbee_endpoints = {
+      [1] = {
+        id = 1,
+        manufacturer = "LUMI",
+        model = "lumi.light.cwacn1",
+        server_clusters = { 0x0006, 0x0008, 0x0300 }
+      }
+    }
+  }
+)
+
+test.register_coroutine_test(
+  "Handle added lifecycle for lumi.light.cwacn1 model (colorTemperatureRange max = 6500)",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.socket.device_lifecycle:__queue_receive({ mock_device_cwacn1.id, "added" })
+
+    test.socket.zigbee:__expect_send({
+      mock_device_cwacn1.id, cluster_base.write_manufacturer_specific_attribute(mock_device_cwacn1, PRIVATE_CLUSTER_ID,
+      PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
+    test.socket.capability:__expect_send(mock_device_cwacn1:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6500 })))
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_device_cwacn1)
+    end,
+    min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

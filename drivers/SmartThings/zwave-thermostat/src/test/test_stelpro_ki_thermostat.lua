@@ -66,7 +66,10 @@ test.register_coroutine_test(
           })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -102,6 +105,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 33, unit = 'C'}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -138,6 +144,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 55, unit = 'F'}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -179,6 +188,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 30, unit = 'F'}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -220,6 +232,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 122, unit = 'F'}))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -256,6 +271,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.freeze())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -292,6 +310,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -307,6 +328,9 @@ test.register_message_test(
         energy_save_heat = true
       })) }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -325,6 +349,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode({ value = "eco" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -348,7 +375,10 @@ test.register_coroutine_test(
         ThermostatMode:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 

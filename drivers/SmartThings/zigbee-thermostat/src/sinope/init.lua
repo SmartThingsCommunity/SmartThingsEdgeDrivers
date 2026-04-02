@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local device_management                    = require "st.zigbee.device_management"
 local clusters                             = require "st.zigbee.zcl.clusters"
@@ -25,8 +15,6 @@ local ThermostatMode            = capabilities.thermostatMode
 local ThermostatOperatingState  = capabilities.thermostatOperatingState
 local ThermostatHeatingSetpoint = capabilities.thermostatHeatingSetpoint
 local TemperatureMeasurement    = capabilities.temperatureMeasurement
-
-local SINOPE_TECHNOLOGIES_MFR_STRING = "Sinope Technologies"
 
 local SINOPE_CUSTOM_CLUSTER = 0xFF01
 local MFR_TIME_FORMAT_ATTRIBUTE = 0x0114
@@ -91,13 +79,6 @@ local PREFERENCE_TABLES = {
   }
 }
 
-local is_sinope_thermostat = function(opts, driver, device)
-  if device:get_manufacturer() == SINOPE_TECHNOLOGIES_MFR_STRING then
-    return true
-  else
-    return false
-  end
-end
 
 local do_refresh = function(self, device)
   local attributes = {
@@ -176,7 +157,7 @@ local sinope_thermostat = {
     doConfigure = do_configure,
     infoChanged = info_changed
   },
-  can_handle = is_sinope_thermostat
+  can_handle = require("sinope.can_handle"),
 }
 
 return sinope_thermostat

@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
@@ -21,19 +11,19 @@ local version = require "version"
 version.api = 9
 
 -- include driver-side cluster definitions to test embedded clusters on lower api versions
-clusters.HepaFilterMonitoring = require "HepaFilterMonitoring"
-clusters.ActivatedCarbonFilterMonitoring = require "ActivatedCarbonFilterMonitoring"
-clusters.AirQuality = require "AirQuality"
-clusters.CarbonMonoxideConcentrationMeasurement = require "CarbonMonoxideConcentrationMeasurement"
-clusters.CarbonDioxideConcentrationMeasurement = require "CarbonDioxideConcentrationMeasurement"
-clusters.FormaldehydeConcentrationMeasurement = require "FormaldehydeConcentrationMeasurement"
-clusters.NitrogenDioxideConcentrationMeasurement = require "NitrogenDioxideConcentrationMeasurement"
-clusters.OzoneConcentrationMeasurement = require "OzoneConcentrationMeasurement"
-clusters.Pm1ConcentrationMeasurement = require "Pm1ConcentrationMeasurement"
-clusters.Pm10ConcentrationMeasurement = require "Pm10ConcentrationMeasurement"
-clusters.Pm25ConcentrationMeasurement = require "Pm25ConcentrationMeasurement"
-clusters.RadonConcentrationMeasurement = require "RadonConcentrationMeasurement"
-clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "TotalVolatileOrganicCompoundsConcentrationMeasurement"
+clusters.HepaFilterMonitoring = require "embedded_clusters.HepaFilterMonitoring"
+clusters.ActivatedCarbonFilterMonitoring = require "embedded_clusters.ActivatedCarbonFilterMonitoring"
+clusters.AirQuality = require "embedded_clusters.AirQuality"
+clusters.CarbonMonoxideConcentrationMeasurement = require "embedded_clusters.CarbonMonoxideConcentrationMeasurement"
+clusters.CarbonDioxideConcentrationMeasurement = require "embedded_clusters.CarbonDioxideConcentrationMeasurement"
+clusters.FormaldehydeConcentrationMeasurement = require "embedded_clusters.FormaldehydeConcentrationMeasurement"
+clusters.NitrogenDioxideConcentrationMeasurement = require "embedded_clusters.NitrogenDioxideConcentrationMeasurement"
+clusters.OzoneConcentrationMeasurement = require "embedded_clusters.OzoneConcentrationMeasurement"
+clusters.Pm1ConcentrationMeasurement = require "embedded_clusters.Pm1ConcentrationMeasurement"
+clusters.Pm10ConcentrationMeasurement = require "embedded_clusters.Pm10ConcentrationMeasurement"
+clusters.Pm25ConcentrationMeasurement = require "embedded_clusters.Pm25ConcentrationMeasurement"
+clusters.RadonConcentrationMeasurement = require "embedded_clusters.RadonConcentrationMeasurement"
+clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement = require "embedded_clusters.TotalVolatileOrganicCompoundsConcentrationMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("air-purifier-hepa-ac-wind.yml"),
@@ -440,7 +430,10 @@ test.register_coroutine_test(
     mock_device_ap_aqs:expect_metadata_update({ profile = "air-purifier-hepa-ac-aqs-co2-tvoc-meas-co2-radon-level" })
     mock_device_ap_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
-  { test_init = test_init_ap_aqs }
+  {
+    test_init = test_init_ap_aqs,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -453,7 +446,10 @@ test.register_coroutine_test(
     mock_device_ap_thermo_aqs:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     print(mock_device_ap_thermo_aqs.profile)
   end,
-  { test_init = test_init_ap_thermo_aqs }
+  {
+    test_init = test_init_ap_thermo_aqs,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -475,7 +471,10 @@ test.register_coroutine_test(
       mock_device_ap_thermo_aqs_preconfigured:generate_test_message("main", capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 14, unit = "ppm"}))
     )
   end,
-  { test_init = test_init_ap_thermo_aqs_preconfigured }
+  {
+    test_init = test_init_ap_thermo_aqs_preconfigured,
+    min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -529,6 +528,9 @@ test.register_message_test(
         clusters.FanControl.attributes.FanMode:write(mock_device, 1, clusters.FanControl.attributes.FanMode.AUTO)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -570,6 +572,9 @@ test.register_message_test(
         capabilities.airPurifierFanMode.airPurifierFanMode.high.NAME
       }, {visibility={displayed=false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -605,6 +610,9 @@ test.register_message_test(
         clusters.FanControl.attributes.PercentSetting:write(mock_device, 1, 50)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -650,6 +658,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.airPurifierFanMode.airPurifierFanMode.high())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -708,6 +719,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("activatedCarbonFilter", capabilities.filterStatus.filterStatus.replace())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -762,6 +776,9 @@ test.register_message_test(
         clusters.FanControl.attributes.WindSetting:write(mock_device, 1, clusters.FanControl.types.WindSettingMask.NATURAL_WIND)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -781,6 +798,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanSpeedPercent.percent(100))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -850,6 +870,9 @@ test.register_message_test(
         clusters.FanControl.attributes.RockSetting:write(mock_device_rock, 1, clusters.FanControl.types.RockBitmap.ROCK_UP_DOWN)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -865,7 +888,10 @@ test.register_coroutine_test(
       clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device_ap_thermo_aqs_preconfigured, 7, 2100)
     })
   end,
-  { test_init = test_init_ap_thermo_aqs_preconfigured }
+  {
+    test_init = test_init_ap_thermo_aqs_preconfigured,
+    min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -888,7 +914,10 @@ test.register_coroutine_test(
       clusters.ActivatedCarbonFilterMonitoring.server.commands.ResetCondition(mock_device_ap_thermo_aqs_preconfigured, 1)
     })
   end,
-  { test_init = test_init_ap_thermo_aqs_preconfigured }
+  {
+    test_init = test_init_ap_thermo_aqs_preconfigured,
+    min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

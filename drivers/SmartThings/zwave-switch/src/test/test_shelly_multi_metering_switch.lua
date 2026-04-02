@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -124,7 +113,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -173,7 +165,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -222,7 +217,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -247,6 +245,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -272,6 +273,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -297,6 +301,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -322,6 +329,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -362,6 +372,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -402,6 +415,9 @@ test.register_message_test(
         )
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -429,7 +445,11 @@ do
         message = mock_parent_device:generate_test_message(
           "main", capabilities.energyMeter.energy({ value = energy, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -459,7 +479,11 @@ do
           "main", capabilities.energyMeter.energy({ value = energy, unit = "kWh" })
         )
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -487,7 +511,11 @@ do
         message = mock_parent_device:generate_test_message(
           "main", capabilities.powerMeter.power({ value = power, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -515,7 +543,11 @@ do
         message = mock_child_device:generate_test_message(
           "main", capabilities.powerMeter.power({ value = power, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 19
     }
+
   )
 end
 
@@ -546,7 +578,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -576,7 +611,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 do
@@ -667,7 +705,11 @@ do
           )
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+
   )
 end
 
@@ -680,7 +722,10 @@ test.register_coroutine_test(
         current_value = 0xFF
       })
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

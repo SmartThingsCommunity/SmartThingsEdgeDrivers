@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -85,7 +74,10 @@ test.register_coroutine_test(
                             capabilities.switch.switch.off()
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -124,7 +116,10 @@ test.register_coroutine_test(
                             capabilities.switch.switch.on()
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -150,7 +145,10 @@ test.register_coroutine_test(
                     )
             )
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -235,7 +233,10 @@ test.register_coroutine_test(
                             })
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -270,7 +271,10 @@ test.register_coroutine_test(
             )
             test.wait_for_events()
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -327,7 +331,10 @@ test.register_coroutine_test(
                             })
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -372,7 +379,10 @@ test.register_coroutine_test(
                     }
             )
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -386,7 +396,10 @@ test.register_coroutine_test(
                         )
                     }
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -443,7 +456,10 @@ test.register_coroutine_test(
                     }
             )
             -- if group_id and scene_id are same, do nothing.
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -465,7 +481,10 @@ test.register_coroutine_test(
                             })
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -480,7 +499,10 @@ test.register_coroutine_test(
                     }
             )
             -- driver should do nothing.
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -497,7 +519,10 @@ test.register_coroutine_test(
                             Indicator:Get({})
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -514,7 +539,10 @@ test.register_coroutine_test(
                             Indicator:Get({})
                     )
             )
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 

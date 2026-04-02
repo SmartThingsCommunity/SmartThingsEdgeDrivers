@@ -1,3 +1,6 @@
+-- Copyright © 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 test.add_package_capability("cubeAction.yml")
 test.add_package_capability("cubeFace.yml")
@@ -230,7 +233,10 @@ test.register_coroutine_test(
           "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
         )
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -262,7 +268,10 @@ test.register_coroutine_test(
         mock_device_exhausted:generate_test_message("main", cubeFace.cubeFace({value = "face1Up"}))
       )
     end,
-    { test_init = test_init_exhausted }
+    {
+      test_init = test_init_exhausted,
+      min_api_version = 19
+    }
 )
 
 -- run the tests

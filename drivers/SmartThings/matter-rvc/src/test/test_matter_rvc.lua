@@ -228,7 +228,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.RvcOperationalState.attributes.AcceptedCommandList:read()
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -256,7 +259,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -281,7 +287,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -306,7 +315,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -330,7 +342,10 @@ test.register_coroutine_test(
         )
       )
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -348,7 +363,10 @@ test.register_coroutine_test(
         clusters.RvcCleanMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, cleanMode.mode)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -386,7 +404,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.RvcRunMode.server.commands.ChangeToMode(mock_device, APPLICATION_ENDPOINT, CLEANING_MODE.mode)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -421,7 +442,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.RvcOperationalState.commands.GoHome(mock_device, APPLICATION_ENDPOINT)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -482,7 +506,10 @@ test.register_coroutine_test(
       mock_device.id,
       clusters.RvcOperationalState.commands.Pause(mock_device, APPLICATION_ENDPOINT)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -533,7 +560,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -587,7 +617,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -641,7 +674,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -692,7 +728,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -743,7 +782,10 @@ test.register_coroutine_test(
         )
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -975,7 +1017,10 @@ test.register_coroutine_test(
         capabilities.robotCleanerOperatingState.operatingState.mopCleaningPadMissing()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 local locationDescriptorStruct = require "Global.types.LocationDescriptorStruct"
@@ -1008,6 +1053,9 @@ test.register_message_test(
         {["areaId"] = 1, ["areaName"] = "0F Balcony" },
       }, { visibility = { displayed = false } }))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1031,6 +1079,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
       capabilities.serviceArea.selectedAreas({ 1,2,5 }, { visibility = { displayed = false } }))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1054,6 +1105,9 @@ test.register_message_test(
         clusters.ServiceArea.server.commands.SelectAreas(mock_device, APPLICATION_ENDPOINT, {uint32_dt(1),uint32_dt(2)})
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1136,6 +1190,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
       capabilities.serviceArea.selectedAreas({ 1,2,5 },{ state_change=true}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 

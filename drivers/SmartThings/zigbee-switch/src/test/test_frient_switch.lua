@@ -1,16 +1,5 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
@@ -90,6 +79,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -124,7 +116,11 @@ test.register_message_test("Current divisor, multiplier, summation should be han
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.currentMeasurement.current({ value = 200.0, unit = "A" }))
             },
-        })
+        },
+        {
+           min_api_version = 19
+        }
+)
 
 test.register_coroutine_test("Refresh command should read all necessary attributes", function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -155,7 +151,11 @@ test.register_coroutine_test("Refresh command should read all necessary attribut
     test.socket.zigbee:__expect_send(
             {mock_device.id, OnOff.attributes.OnOff:read(mock_device) }
     )
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_message_test(
   "Handle switch ON report",
@@ -178,6 +178,9 @@ test.register_message_test(
             { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
         }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -202,6 +205,9 @@ test.register_message_test(
               { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
           }
       },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -231,6 +237,9 @@ test.register_message_test(
             { device_uuid = mock_device.id, capability_id = "powerMeter", capability_attr_id = "power" }
         }
         }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -253,6 +262,9 @@ test.register_message_test(
             message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.027, unit = "kWh" }))
 
         }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -263,7 +275,10 @@ test.register_coroutine_test(
             assert(mock_device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
             assert(mock_device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) == 1000)
             test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.powerSource.powerSource.mains()))
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test("doConfigure should send bind request, read attributes and configure reporting", function()
@@ -324,7 +339,11 @@ test.register_coroutine_test("doConfigure should send bind request, read attribu
     test.socket.zigbee:__expect_send({mock_device.id, Alarms.attributes.AlarmCount:read(mock_device)})
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test(
         "Alarm report should be handled",
@@ -336,7 +355,10 @@ test.register_coroutine_test(
             test.mock_time.advance_time(2)
 
             test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.powerSource.powerSource.unknown()))
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.run_registered_tests()

@@ -6,6 +6,31 @@ local lockCredentialInfo = capabilities["stse.lockCredentialInfo"]
 
 local credential_utils = {}
 local HOST_COUNT = "__host_count"
+local PERSIST_DATA = "__persist_area"
+
+credential_utils.eventResource = function(table)
+  local credentialResource = {}
+  for key, value in pairs(table) do
+    credentialResource[key] = value
+  end
+  return credentialResource
+end
+
+credential_utils.backup_data = function(device) -- Back up data the persistent
+  local credentialInfoTable = utils.deep_copy(device:get_latest_state("main", lockCredentialInfo.ID,
+    lockCredentialInfo.credentialInfo.NAME, {}))
+  device:set_field(PERSIST_DATA, credentialInfoTable, { persist = true })
+end
+
+credential_utils.sync = function(driver, device)
+  local table = device:get_field(PERSIST_DATA) or nil
+  if table ~= nil then
+    device:emit_event(lockCredentialInfo.credentialInfo(credential_utils.eventResource(table),
+    { visibility = { displayed = false } }))
+  else
+    credential_utils.backup_data(device)
+  end
+end
 
 credential_utils.save_data = function(driver)
   driver.datastore:save()
@@ -28,6 +53,7 @@ credential_utils.update_remote_control_status = function(driver, device, added)
   end
 
   device:set_field(HOST_COUNT, host_cnt, { persist = true })
+  credential_utils.backup_data(device)
   credential_utils.save_data(driver)
 end
 
@@ -38,6 +64,7 @@ credential_utils.sync_all_credential_info = function(driver, device, command)
     end
   end
   device:emit_event(lockCredentialInfo.credentialInfo(command.args.credentialInfo, { visibility = { displayed = false } }))
+  credential_utils.backup_data(device)
   credential_utils.save_data(driver)
 end
 
@@ -73,6 +100,7 @@ credential_utils.upsert_credential_info = function(driver, device, command)
   end
 
   device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
+  credential_utils.backup_data(device)
   credential_utils.save_data(driver)
 end
 
@@ -95,6 +123,7 @@ credential_utils.delete_user = function(driver, device, command)
   end
 
   device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
+  credential_utils.backup_data(device)
   credential_utils.save_data(driver)
 end
 
@@ -116,6 +145,7 @@ credential_utils.delete_credential = function(driver, device, command)
   end
 
   device:emit_event(lockCredentialInfo.credentialInfo(credentialInfoTable, { visibility = { displayed = false } }))
+  credential_utils.backup_data(device)
   credential_utils.save_data(driver)
 end
 

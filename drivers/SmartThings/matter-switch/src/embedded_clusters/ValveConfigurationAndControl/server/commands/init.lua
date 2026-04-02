@@ -1,3 +1,6 @@
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local command_mt = {}
 command_mt.__command_cache = {}
 command_mt.__index = function(self, key)

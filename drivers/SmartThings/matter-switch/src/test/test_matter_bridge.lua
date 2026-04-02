@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
@@ -70,38 +59,106 @@ local mock_bridge = test.mock_device.build_test_matter_device({
   }
 })
 
-local cluster_subscribe_list = {
-  clusters.OnOff.attributes.OnOff
-}
+local mock_basic_bridge = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("matter-bridge.yml"),
+  matter_version = { hardware = 1, software = 1 },
+  manufacturer_info = {
+    vendor_id = 0x0000,
+    product_id = 0x0000,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x000E, device_type_revision = 1 } -- Aggregator
+      }
+    }
+  }
+})
 
 local function test_init_mock_bridge()
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_bridge)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_bridge))
-    end
-  end
-  test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
   test.mock_device.add_test_device(mock_bridge)
+  test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "init" })
+  test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "doConfigure" })
+  mock_bridge:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_mock_basic_bridge()
+  test.mock_device.add_test_device(mock_basic_bridge)
+  test.socket.device_lifecycle:__queue_receive({ mock_basic_bridge.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_basic_bridge.id, "init" })
+  test.socket.device_lifecycle:__queue_receive({ mock_basic_bridge.id, "doConfigure" })
+  mock_basic_bridge:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.register_coroutine_test(
   "Profile should not change for devices with aggregator device type (bridges)",
   function()
-    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_bridge)
-    for i, cluster in ipairs(cluster_subscribe_list) do
-      if i > 1 then
-        subscribe_request:merge(cluster:subscribe(mock_bridge))
-      end
-    end
-    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "added" })
-    test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
-    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "init" })
-    test.socket.matter:__expect_send({mock_bridge.id, subscribe_request})
-    test.socket.device_lifecycle:__queue_receive({ mock_bridge.id, "doConfigure" })
-    mock_bridge:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
-  { test_init = test_init_mock_bridge }
+  {
+    test_init = test_init_mock_bridge,
+    min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Camera reprofiling should happen after software version change when camera endpoint appears",
+  function()
+    local updated_endpoints = {
+      {
+        endpoint_id = 0,
+        clusters = {
+          { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+        },
+        device_types = {
+          { device_type_id = 0x000E, device_type_revision = 1 } -- Aggregator
+        }
+      },
+      {
+        endpoint_id = 1,
+        clusters = {
+          {
+            cluster_id = clusters.CameraAvStreamManagement.ID,
+            feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO,
+            cluster_type = "SERVER"
+          },
+          { cluster_id = clusters.PushAvStreamTransport.ID, cluster_type = "SERVER" }
+        },
+        device_types = {
+          { device_type_id = 0x0142, device_type_revision = 1 } -- Camera
+        }
+      }
+    }
+
+    test.socket.device_lifecycle:__queue_receive(
+      mock_basic_bridge:generate_info_changed({
+        matter_version = { hardware = 1, software = 2 },
+        endpoints = updated_endpoints
+      })
+    )
+
+    mock_basic_bridge:expect_metadata_update({
+      profile = "camera",
+      optional_component_capabilities = {
+        {
+          "main",
+          {
+            "videoCapture2",
+            "cameraViewportSettings",
+            "videoStreamSettings"
+          }
+        }
+      }
+    })
+  end,
+  {
+    test_init = test_init_mock_basic_bridge,
+    min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

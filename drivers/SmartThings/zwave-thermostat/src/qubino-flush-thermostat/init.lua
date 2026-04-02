@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 --- @type st.zwave.defaults.switch
 local TemperatureMeasurementDefaults = require "st.zwave.defaults.temperatureMeasurement"
@@ -31,9 +21,6 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 --- @type st.zwave.CommandClass.ThermostatOperatingState
 local ThermostatOperatingState = (require "st.zwave.CommandClass.ThermostatOperatingState")({version=1})
 
-local QUBINO_FINGERPRINTS = {
-  {mfr = 0x0159, prod = 0x0005, model = 0x0054},  -- Qubino Flush On/Off Thermostat 2
-}
 
 -- parameter which tells whether device is configured heat or cool thermostat mode
 local DEVICE_MODE_PARAMETER = 59
@@ -47,14 +34,6 @@ local CONFIGURED_MODE = "configured_mode"
 local COOL_MODE = "cool"
 local HEAT_MODE = "heat"
 
-local function can_handle_qubino_thermostat(opts, driver, device, ...)
-  for _, fingerprint in ipairs(QUBINO_FINGERPRINTS) do
-    if device:id_match(fingerprint.mfr, fingerprint.prod, fingerprint.model) then
-      return true
-    end
-  end
-  return false
-end
 
 local function info_changed(self, device, event, args)
   local new_parameter_value
@@ -137,7 +116,7 @@ local qubino_thermostat = {
     infoChanged = info_changed
   },
   NAME = "qubino thermostat",
-  can_handle = can_handle_qubino_thermostat
+  can_handle = require("qubino-flush-thermostat.can_handle"),
 }
 
 return qubino_thermostat

@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
@@ -178,6 +167,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -212,6 +204,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -246,6 +241,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -280,6 +278,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -327,6 +328,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -369,6 +373,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -411,6 +418,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -458,6 +468,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -505,6 +518,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -547,6 +563,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -589,6 +608,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -636,6 +658,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -676,6 +701,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -716,6 +744,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -756,6 +787,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -796,6 +830,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -849,6 +886,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -889,6 +929,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -942,6 +985,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1009,6 +1055,9 @@ test.register_message_test(
             SwitchMultilevel:Get({}, { dst_channels = { 5 } })
         )
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1049,7 +1098,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -1090,7 +1140,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -1131,7 +1182,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -1175,6 +1227,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switch", capability_attr_id = "switch" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1226,6 +1281,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "switchLevel", capability_attr_id = "level" }
         }
       },
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1252,6 +1310,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1278,6 +1339,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1309,6 +1373,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1340,6 +1407,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1461,6 +1531,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1582,6 +1655,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1708,6 +1784,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1734,6 +1813,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1760,6 +1842,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1786,6 +1871,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1812,6 +1900,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1838,6 +1929,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1864,6 +1958,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1890,6 +1987,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1916,6 +2016,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1942,6 +2045,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1968,6 +2074,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -1994,6 +2103,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.wet())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2020,6 +2132,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_4:generate_test_message("main", capabilities.waterSensor.water.dry())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2055,6 +2170,9 @@ test.register_message_test(
           { device_uuid = mock_parent.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2081,6 +2199,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_5:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 70 }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2108,6 +2229,9 @@ test.register_message_test(
         direction = "send",
         message = mock_child_5:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 400, unit = "lux" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2156,7 +2280,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -2211,7 +2336,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -2338,7 +2464,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -2381,7 +2508,8 @@ test.register_message_test(
       }
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 19
     }
 )
 
@@ -2401,6 +2529,9 @@ test.register_message_test(
           )
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2417,7 +2548,10 @@ test.register_coroutine_test(
       base_parent:expect_device_create(
           prepare_metadata(base_parent, 1, "metering-switch")
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -2436,6 +2570,9 @@ test.register_message_test(
           )
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2452,7 +2589,10 @@ test.register_coroutine_test(
       base_parent:expect_device_create(
           prepare_metadata(base_parent, 3, "metering-dimmer")
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -2471,6 +2611,9 @@ test.register_message_test(
           )
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2487,7 +2630,10 @@ test.register_coroutine_test(
       base_parent:expect_device_create(
           prepare_metadata(base_parent, 4, "generic-sensor")
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -2506,6 +2652,9 @@ test.register_message_test(
           )
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -2522,7 +2671,10 @@ test.register_coroutine_test(
       base_parent:expect_device_create(
           prepare_metadata(base_parent, 5, "generic-multi-sensor")
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

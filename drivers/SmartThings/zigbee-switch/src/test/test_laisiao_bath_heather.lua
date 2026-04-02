@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local clusters = require "st.zigbee.zcl.clusters"
@@ -59,6 +48,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -76,6 +68,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch2",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -93,6 +88,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch3",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -110,6 +108,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch4",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -127,6 +128,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch5",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -144,6 +148,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch6",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -161,6 +168,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch7",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -178,6 +188,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch8",  capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -197,6 +210,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -214,6 +230,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch2",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -231,6 +250,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch3",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -248,6 +270,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch4",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -265,6 +290,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch5",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -282,6 +310,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch6",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -299,6 +330,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch7",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -316,6 +350,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("switch8",  capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -326,7 +363,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch2", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x02) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -336,7 +376,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch3", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x03) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -346,7 +389,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch4", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x04) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -356,7 +402,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch5", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x05) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -366,7 +415,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch6", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x06) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -376,7 +428,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch7", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x07) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -386,7 +441,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch8", command = "on", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.On(mock_device):to_endpoint(0x08) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -396,7 +454,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "main", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x01) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -406,7 +467,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch2", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x02) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -416,7 +480,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch3", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x03) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -426,7 +493,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch4", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x04) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -436,7 +506,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch5", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x05) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -446,7 +519,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch6", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x06) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -456,7 +532,10 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch7", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x07) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -466,7 +545,30 @@ test.register_coroutine_test(
       { capability = "switch", component = "switch8", command = "off", args = {} } })
     test.socket.zigbee:__expect_send({ mock_device.id,
       OnOff.server.commands.Off(mock_device):to_endpoint(0x08) })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "component main Capability on command emits on then off after delay",
+  function()
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = "switch", component = "main", command = "on", args = {} } })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch.on())
+    )
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.switch.switch.off())
+    )
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

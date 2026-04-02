@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings
+-- Copyright 2022 SmartThings, Inc.
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ local devices = {
   FRIENT_HUMIDITY_TEMP_SENSOR = {
     FINGERPRINTS = {
       { mfr = "frient A/S", model = "HMSZB-110" },
-      { mfr = "frient A/S", model = "HMSZB-120" }
+      { mfr = "frient A/S", model = "HMSZB-120" },
+      { mfr = "frient A/S", model = "AQSZB-110" }
     },
     CONFIGURATION = {
       {
