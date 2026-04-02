@@ -46,7 +46,10 @@ test.register_coroutine_test(
           Basic:Set({ value = 0x00 })
         )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -64,7 +67,10 @@ test.register_coroutine_test(
           Basic:Set({ value = 0xFF })
         )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -94,7 +100,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0x00 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -130,7 +139,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0xFF })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -156,7 +168,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0xFF })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -182,7 +197,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0x00 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -220,7 +238,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0xFF })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -264,7 +285,10 @@ test.register_coroutine_test(
         Basic:Set({ value = 0x00 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -275,7 +299,10 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(mock_window_button, Configuration:Set({parameter_number = 80, size = 1, configuration_value = 1})))
     test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(mock_window_button, Configuration:Set({parameter_number = 85, size = 1, configuration_value = 1})))
     mock_window_button:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -305,6 +332,9 @@ test.register_message_test(
         Basic:Get({})
       )
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -317,7 +347,10 @@ test.register_coroutine_test(
       capabilities.statelessCurtainPowerButton.availableCurtainPowerButtons({"open", "close", "pause"},
       {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -334,7 +367,10 @@ test.register_coroutine_test(
       mock_window_button,
       Configuration:Set({parameter_number = 35, size = 1, configuration_value = 100})
     ))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

@@ -118,7 +118,10 @@ test.register_coroutine_test(
       ))
 
       mock_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -164,7 +167,10 @@ test.register_coroutine_test(
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET})
       ))
 
-      end
+      end,
+      {
+         min_api_version = 19
+      }
 )
 test.register_coroutine_test(
     "Configuration value should be updated and device refreshed, when wakeup notification received",
@@ -231,7 +237,10 @@ test.register_coroutine_test(
           mock_sensor,
           SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.ULTRAVIOLET})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -250,6 +259,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.ultravioletIndex.ultravioletIndex({value = 10}))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -282,6 +294,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -314,6 +329,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 

@@ -102,6 +102,7 @@ local driver_template = {
     capabilities.battery,
     capabilities.energyMeter,
     capabilities.powerMeter,
+    capabilities.voltageMeasurement,
     capabilities.colorControl,
     capabilities.button,
     capabilities.temperatureMeasurement,

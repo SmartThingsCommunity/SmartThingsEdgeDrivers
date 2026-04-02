@@ -86,6 +86,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -108,7 +111,11 @@ test.register_message_test("Refresh should read all necessary attributes", {
         direction = "send",
         message = {mock_device.id, BasicInput.attributes.PresentValue:read(mock_device)}
     },
-})
+},
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test("panicAlarm should be triggered and cleared", function()
 
@@ -140,7 +147,11 @@ test.register_coroutine_test("panicAlarm should be triggered and cleared", funct
     test.socket.capability:__expect_send(mock_device_panic:generate_test_message("main", panicAlarm.clear({value = "clear", state_change = true})))
     test.wait_for_events()
 
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test(
     "Battery Voltage test cases",
@@ -171,7 +182,10 @@ test.register_coroutine_test(
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = { displayed = false }})))
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({value = 1})))
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -210,7 +224,10 @@ test.register_coroutine_test(
         test.socket.zigbee:__expect_send({mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device, BasicInput.ID, 0x8000, DEVELCO_MANUFACTURER_CODE, data_types.Uint16, 65535):to_endpoint(0x20)})
 
         mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test("info_changed for OnOff cluster attributes should run properly",
@@ -234,7 +251,11 @@ function()
     buttonDelay_msg.body.zcl_header.frame_ctrl.value = 0x0C
     buttonDelay_msg.address_header.dest_endpoint.value = 0x20
     test.socket.zigbee:__expect_send({mock_device.id, buttonDelay_msg})
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test(" Configuration and Switching to button-profile-panic-frient deviceProfile should be triggered", function()
     test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
@@ -263,7 +284,11 @@ test.register_coroutine_test(" Configuration and Switching to button-profile-pan
     end
     -- Unable to check if the emit went through successfully due to the framework limitations in swapping mock device's deviceProfile
     --test.socket.capability:__expect_send({mock_device.id, capabilities.panicAlarm.panicAlarm.clear({state_change = true})})
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test("Switching from button-profile-panic-frient to button-profile-frient should work", function()
     test.socket.device_lifecycle:__queue_receive(mock_device_panic:generate_info_changed(
@@ -275,7 +300,11 @@ test.register_coroutine_test("Switching from button-profile-panic-frient to butt
     ))
     mock_device_panic:expect_metadata_update({ profile = "button-profile-frient" })
     test.socket.zigbee:__expect_send({mock_device_panic.id, cluster_base.write_manufacturer_specific_attribute(mock_device_panic,BasicInput.ID,0x8000,DEVELCO_MANUFACTURER_CODE,data_types.Uint16,0xFFFF)})
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.register_coroutine_test("New preferences after switching the profile should work", function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
@@ -293,6 +322,10 @@ test.register_coroutine_test("New preferences after switching the profile should
     test.socket.zigbee:__expect_send({mock_device_panic.id, cluster_base.write_manufacturer_specific_attribute(mock_device_panic, IASZone.ID,0x8003,DEVELCO_MANUFACTURER_CODE,data_types.Uint16, 300)})
     test.socket.zigbee:__expect_send({mock_device_panic.id, cluster_base.write_manufacturer_specific_attribute(mock_device_panic, IASZone.ID,0x8004,DEVELCO_MANUFACTURER_CODE,data_types.Uint16, 20)})
     test.socket.zigbee:__expect_send({mock_device_panic.id, cluster_base.write_manufacturer_specific_attribute(mock_device_panic, IASZone.ID,0x8005,DEVELCO_MANUFACTURER_CODE,data_types.Enum8, 1)})
-end)
+end,
+{
+   min_api_version = 19
+}
+)
 
 test.run_registered_tests()

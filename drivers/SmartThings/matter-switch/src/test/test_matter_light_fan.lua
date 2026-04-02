@@ -216,7 +216,10 @@ test.register_coroutine_test(
         "main", capabilities.switch.switch.on()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -259,6 +262,9 @@ test.register_message_test(
       direction = "send",
       message = mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -305,6 +311,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanMode.fanMode("medium"))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -338,6 +347,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.fanMode.supportedFanModes({"off", "low", "medium", "high", "auto"}, {visibility={displayed=false}}))
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -360,6 +372,9 @@ test.register_message_test(
         clusters.FanControl.attributes.FanMode:write(mock_device, mock_device_ep2, FanMode.LOW)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -382,6 +397,9 @@ test.register_message_test(
         clusters.FanControl.attributes.PercentSetting:write(mock_device, mock_device_ep2, 64)
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 

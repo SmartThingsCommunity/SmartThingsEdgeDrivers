@@ -93,6 +93,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, clusters.DoorLock.server.commands.LockDoor(mock_device, 1)},
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -114,6 +117,9 @@ test.register_message_test(
         clusters.DoorLock.server.commands.UnlockDoor(mock_device, 1),
       },
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -133,7 +139,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.locked())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -152,7 +161,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -171,7 +183,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 local function refresh_commands(dev)
@@ -194,6 +209,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, refresh_commands(mock_device)},
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -290,6 +308,9 @@ test.register_message_test(
         capabilities.lockAlarm.alarm.forcedOpeningAttempt({state_change = true})
       ),
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -304,7 +325,10 @@ test.register_coroutine_test(
         capabilities.lockAlarm.alarm.clear({state_change = true})
       )
     )
-end
+end,
+{
+   min_api_version = 19
+}
 )
 
 test.run_registered_tests()

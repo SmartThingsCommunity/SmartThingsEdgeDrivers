@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -22,17 +11,6 @@ local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 --   manufacturerId = 0x0138, productType = 0x0001, productId = 0x0001 -- First Alert Smoke Detector
 --   manufacturerId = 0x0138, productType = 0x0001, productId = 0x0002 -- First Alert Smoke & CO Detector
 --   manufacturerId = 0x0138, productType = 0x0001, productId = 0x0003 -- First Alert Smoke & CO Detector
-
---- Determine whether the passed device only supports V1 or V2 of the Alarm command class
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @return boolean true if the device is smoke co alarm
-local function can_handle_v1_alarm(opts, driver, device, cmd, ...)
-  -- The default handlers for the Alarm/Notification command class(es) for the
-  -- Smoke Detector and Carbon Monoxide Detector only handles V3 and up.
-  return opts.dispatcher_class == "ZwaveDispatcher" and cmd ~= nil and cmd.version ~= nil and cmd.version < 3
-end
 
 --- Default handler for alarm command class reports
 ---
@@ -75,7 +53,7 @@ local zwave_alarm = {
     }
   },
   NAME = "Z-Wave smoke and CO alarm V1",
-  can_handle = can_handle_v1_alarm,
+  can_handle = require("zwave-smoke-co-alarm-v1.can_handle"),
 }
 
 return zwave_alarm

@@ -916,6 +916,13 @@ zwaveManufacturer:
     manufacturerId: 0x010F
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
+#Zooz
+  - id: "Zooz/ZEN05"
+    deviceLabel: Zooz Outdoor Plug ZEN05
+    manufacturerId: 0x027A
+    productType: 0x7000
+    productId: 0xB001
+    deviceProfileName: zooz-zen05-plug
 #Shelly/Qubino
   - id: 1120/2/137
     deviceLabel: Wave Plug UK

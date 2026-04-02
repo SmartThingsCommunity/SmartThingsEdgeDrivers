@@ -53,7 +53,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -71,7 +74,10 @@ test.register_coroutine_test(
         })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -101,6 +107,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -131,6 +140,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -161,6 +173,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -191,6 +206,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -218,6 +236,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.button.button.pushed({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -244,6 +265,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -264,6 +288,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.button.button.held({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -290,6 +317,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -310,6 +340,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.button.button.down_hold({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -336,6 +369,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -356,6 +392,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.button.button.double({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -382,6 +421,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -402,6 +444,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main", capabilities.button.button.pushed_3x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -428,6 +473,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -447,6 +495,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -473,6 +524,9 @@ test.register_message_test(
         )
       }
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -492,6 +546,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -518,6 +575,9 @@ test.register_message_test(
         )
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -629,7 +689,10 @@ test.register_coroutine_test(
           )
       )
 
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

@@ -104,7 +104,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -152,7 +155,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -170,6 +176,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, DoorLock.server.commands.LockDoor(mock_device, 1)},
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -191,6 +200,9 @@ test.register_message_test(
         DoorLock.server.commands.UnboltDoor(mock_device, 1),
       },
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -212,6 +224,9 @@ test.register_message_test(
         DoorLock.server.commands.UnlockDoor(mock_device, 1),
       },
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -231,7 +246,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.locked())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -250,7 +268,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -269,7 +290,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlatched())
     )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_message_test(
@@ -355,6 +379,9 @@ test.register_message_test(
         )
       ),
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 test.run_registered_tests()

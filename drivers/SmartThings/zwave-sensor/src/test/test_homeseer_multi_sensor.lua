@@ -59,6 +59,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -75,6 +78,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -94,6 +100,9 @@ test.register_message_test(
         WakeUp:IntervalSet({node_id = 0x00, seconds = 1200})
       )
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -136,7 +145,10 @@ test.register_coroutine_test(
         mock_sensor,
         SensorMultilevel:Get({sensor_type = SensorMultilevel.sensor_type.LUMINANCE}, {dst_channels={2}})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 test.register_coroutine_test(
     "Receiving wakeup notification should generate proper messages",
@@ -164,6 +176,9 @@ test.register_coroutine_test(
         mock_sensor,
         Battery:Get({})
       ))
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 test.run_registered_tests()
