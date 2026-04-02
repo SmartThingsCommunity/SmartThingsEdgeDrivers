@@ -1,6 +1,7 @@
 name: fireavert-appliance-shutoff-gas
 components:
 - id: main
+  label: "Appliance Control"
   capabilities:
   - id: soundDetection
     version: 1

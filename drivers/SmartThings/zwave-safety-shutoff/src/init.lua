@@ -24,11 +24,6 @@ local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({ 
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
--- State storage for certain asynchronous events.
-local _deviceState = {
-  ["switch_state"] = true
-}
-
 local function lazy_load_if_possible(sub_driver_name)
   -- gets the current lua libs api version
   local version = require "version"
@@ -39,11 +34,12 @@ local function lazy_load_if_possible(sub_driver_name)
   else
     return require(sub_driver_name)
   end
-
 end
 
 local initial_events_map = {
   [capabilities.soundDetection.ID] = capabilities.soundDetection.soundDetected.noSound(),
+  [capabilities.applianceUtilization.ID] = capabilities.applianceUtilization.status.notInUse(),
+  [capabilities.remoteControlStatus.ID] = capabilities.remoteControlStatus.remoteControlEnabled("false"),
   [capabilities.switch.ID] = capabilities.switch.switch.off()
 }
 
@@ -71,7 +67,6 @@ local function device_init(self, device)
   -- TODO: What to do on device initalization
   -- Get binary switch information, Report should handle asynchronously
   device:send(SwitchBinary:Get({}))
-  _deviceState["switch_state"] = "startup"
   -- if (device:supports_capability(capabilities.powerMeter)) then
   --   device:send(Notification:Get({notification_type = Notification.notification_type.power_management}))
 end
@@ -89,23 +84,16 @@ end
 --- @param cmd st.zwave.CommandClass.SwitchBinary.Report
 local function switch_report_handler(driver, device, cmd)
   -- This is the only place the switch_state mirror should change value.
+  -- TODO: fix device changing value
   local isDeviceChanging = false;
   if cmd.args.value == SwitchBinary.value.OFF_DISABLE then
-    if (_deviceState["switch_state"] ~= "off") then 
-      _deviceState["switch_state"] = "off";
-      isDeviceChanging = true;
-    end
     device:emit_event(capabilities.switch.switch.off({state_change = isDeviceChanging}))
     --- Also turn off power meter UI element, appliance is obviously not drawing power if
     --- the switch is off
-    if (device:supports_capability(capabilities.powerMeter)) then
-      device:emit_event(capabilities.powerMeter.power({value = 0, units = "W"}))
+    if (device:supports_capability(capabilities.applianceUtilization)) then
+      device:emit_event(capabilities.applianceUtilization.status.notInUse())
     end
   else
-    if (_deviceState["switch_state"] ~= "on") then 
-      _deviceState["switch_state"] = "on";
-      isDeviceChanging = true;
-    end
     device:emit_event(capabilities.switch.switch.on({state_change = isDeviceChanging}))
   end
 end

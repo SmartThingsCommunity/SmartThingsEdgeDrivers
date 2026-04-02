@@ -61,14 +61,13 @@ local function notification_report_handler(self, device, cmd)
     else
       event = capabilities.remoteControlStatus.remoteControlEnabled("true")
       print("Device can be remote controlled")
-
     end
   elseif cmd.args.notification_type == Notification.notification_type.POWER_MANAGEMENT then
     print("Power Notification: Notification payload: ", cmd.args.event_parameter)
     if (cmd.args.event == Notification.event.power_management.POWER_HAS_BEEN_APPLIED) then
-      event = capabilities.powerMeter.power({value = 1, unit = "W"}) 
+      event = capabilities.applianceUtilization.status.inUse()
     elseif (cmd.args.event == Notification.event.power_management.STATE_IDLE) then
-      event = capabilities.powerMeter.power({value = 0, unit = "W"})
+      event = capabilities.applianceUtilization.status.notInUse()
     end
   end
   if event ~= nil then 
