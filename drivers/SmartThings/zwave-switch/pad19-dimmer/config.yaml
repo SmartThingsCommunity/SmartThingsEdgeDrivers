@@ -1,7 +1,0 @@
-name: 'Philio Zwave PAD19'
-packageKey: 'Philio-Zwave-PAD19'
-author: "Philio"
-permissions:
-  zwave: {}
-description: "Philio Z-Wave dimmer switch driver"
-vendorSupportInformation: "https://www.zwavetaiwan.com.tw/"
