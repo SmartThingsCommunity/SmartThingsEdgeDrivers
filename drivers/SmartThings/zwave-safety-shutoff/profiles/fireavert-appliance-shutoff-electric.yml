@@ -11,43 +11,43 @@ components:
           enabledValues:
             - noSound
             - fireAlarm
+  - id: switch
+    version: 1
   - id: applianceUtilization
     version: 1
   - id: remoteControlStatus
     version: 1
-  - id: switch
-    version: 1
   categories:
     - name: SmokeDetector
-deviceConfig:
-  dashboard:
-    states:
-      - component: main
-        capability: soundDetection
-        label: " {{soundDetection.soundDetected.value}}"
-        version: 1
-  detailView:
-    - component: main
-      capability: switch
-      version: 1
-    - component: main
-      capability: soundDetection
-      version: 1
-    - component: main
-      capability: applianceUtilization
-      version: 1
-      # label: "Appliance Power State"
-      # displayType: state
-      # state:
-      #   value: " {{applianceUtilization.status.value}}"
-      #   valueType: string
-      #   alternatives:
-      #     - key: "inUse"
-      #       value: "Appliance Powered On"
-      #       type: active
-      #     - key: "notInUse"
-      #       value: "Appliance Powered Off"
-      #       type: inactive
-    - component: main
-      capability: remoteControlStatus
-      version: 1
+# deviceConfig:
+#   dashboard:
+#     states:
+#       - component: main
+#         capability: soundDetection
+#         label: " {{soundDetection.soundDetected.value}}"
+#         version: 1
+#   detailView:
+#     - component: main
+#       capability: switch
+#       version: 1
+#     - component: main
+#       capability: soundDetection
+#       version: 1
+#     - component: main
+#       capability: applianceUtilization
+#       version: 1
+#       # label: "Appliance Power State"
+#       # displayType: state
+#       # state:
+#       #   value: " {{applianceUtilization.status.value}}"
+#       #   valueType: string
+#       #   alternatives:
+#       #     - key: "inUse"
+#       #       value: "Appliance Powered On"
+#       #       type: active
+#       #     - key: "notInUse"
+#       #       value: "Appliance Powered Off"
+#       #       type: inactive
+#     - component: main
+#       capability: remoteControlStatus
+#       version: 1
