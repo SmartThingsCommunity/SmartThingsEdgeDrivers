@@ -14,11 +14,15 @@
 
 --Note: Currently only support for window shades with the PositionallyAware Feature
 --Note: No support for setting device into calibration mode, it must be done manually
+
 local capabilities = require "st.capabilities"
 local im = require "st.matter.interaction_model"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
+
+clusters.ClosureControl = require "embedded_clusters.ClosureControl"
+clusters.ClosureDimension = require "embedded_clusters.ClosureDimension"
 
 local CURRENT_LIFT = "__current_lift"
 local CURRENT_TILT = "__current_tilt"
@@ -30,6 +34,21 @@ local battery_support = {
 local REVERSE_POLARITY = "__reverse_polarity"
 local PRESET_LEVEL_KEY = "__preset_level_key"
 local DEFAULT_PRESET_LEVEL = 50
+-- ClosureControl state cache key. A table is stored for each endpoint:
+--   { main = <MainStateEnum>, current = <CurrentPositionEnum>, target = <TargetPositionEnum> }
+local CLOSURE_CONTROL_STATE_CACHE = "__closure_control_state_cache"
+local CLOSURE_BATTERY_SUPPORT = "__closure_battery_support"
+local CLOSURE_TAG = "__closure_tag"
+local closure_tag_list = {
+  NA          = "N/A",
+  COVERING    = "COVERING",
+  WINDOW      = "WINDOW",
+  BARRIER     = "BARRIER",
+  CABINET     = "CABINET",
+  GATE        = "GATE",
+  GARAGE_DOOR = "GARAGE_DOOR",
+  DOOR        = "DOOR",
+}
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -44,9 +63,46 @@ local function find_default_endpoint(device, cluster)
   return res
 end
 
+local function get_closure_dimension_eps(device)
+  local eps = device:get_endpoints(clusters.ClosureDimension.ID) or {}
+  table.sort(eps)
+  local result = {}
+  for _, ep in ipairs(eps) do
+    if ep ~= 0 then
+      table.insert(result, ep)
+      if #result >= 4 then break end
+    end
+  end
+  return result
+end
+
+local function endpoint_to_component(device, ep_id)
+  local dim_eps = get_closure_dimension_eps(device)
+  if #dim_eps > 1 then
+    local is_door_type = device:supports_capability_by_id(capabilities.doorControl.ID)
+    local prefix = is_door_type and "door" or "windowShade"
+    for i, ep in ipairs(dim_eps) do
+      if ep == ep_id then
+        return prefix .. i
+      end
+    end
+  end
+  return "main"
+end
+
 local function component_to_endpoint(device, component_name)
   -- Use the find_default_endpoint function to return the first endpoint that
   -- supports a given cluster.
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    local dim_eps = get_closure_dimension_eps(device)
+    if #dim_eps > 1 then
+      local comp_num = tonumber(component_name:match("(%d+)$"))
+      if comp_num and dim_eps[comp_num] then
+        return dim_eps[comp_num]
+      end
+    end
+    return find_default_endpoint(device, clusters.ClosureControl.ID)
+  end
   return find_default_endpoint(device, clusters.WindowCovering.ID)
 end
 
@@ -69,8 +125,70 @@ local function match_profile(device, battery_supported)
   device:try_update_metadata({profile = profile_name})
 end
 
+local function match_profile_for_closure(device)
+  if not device:get_field(CLOSURE_TAG) or not device:get_field(CLOSURE_BATTERY_SUPPORT) then
+    log.warn("Closure tag or battery support not set yet, cannot match profile")
+    return
+  end
+  local tag = device:get_field(CLOSURE_TAG)
+  local profile_name
+  local is_door_type = true
+  if tag == closure_tag_list.GATE then
+    profile_name = "gate"
+  elseif tag == closure_tag_list.GARAGE_DOOR then
+    profile_name = "garage-door"
+  elseif tag == closure_tag_list.DOOR then
+    profile_name = "door"
+  else
+    -- COVERING, WINDOW, BARRIER, CABINET, NA -> generic covering profile
+    profile_name = "covering"
+    is_door_type = false
+  end
+
+  local optional_caps = {}
+
+  local closure_battery = device:get_field(CLOSURE_BATTERY_SUPPORT)
+  if closure_battery == battery_support.BATTERY_PERCENTAGE then
+    table.insert(optional_caps, {"main", {capabilities.battery.ID}})
+  elseif closure_battery == battery_support.BATTERY_LEVEL then
+    table.insert(optional_caps, {"main", {capabilities.batteryLevel.ID}})
+  end
+
+  -- ClosureDimension capabilities: windowShadeLevel (covering) or level (door types)
+  local dim_eps = get_closure_dimension_eps(device)
+  if #dim_eps > 0 then
+    local dim_cap = is_door_type and capabilities.level.ID or capabilities.windowShadeLevel.ID
+    if #dim_eps == 1 then
+      -- Single ClosureDimension: enable the capability on the main component.
+      local found_main = false
+      for _, entry in ipairs(optional_caps) do
+        if entry[1] == "main" then
+          table.insert(entry[2], dim_cap)
+          found_main = true
+          break
+        end
+      end
+      if not found_main then
+        table.insert(optional_caps, {"main", {dim_cap}})
+      end
+    else
+      -- Multiple ClosureDimensions: enable one optional component+capability per closure panel.
+      local prefix = is_door_type and "door" or "windowShade"
+      for i = 1, math.min(#dim_eps, 4) do
+        table.insert(optional_caps, {prefix .. i, {dim_cap}})
+      end
+    end
+  end
+
+  device:try_update_metadata({
+    profile = profile_name,
+    optional_component_capabilities = #optional_caps > 0 and optional_caps or nil,
+  })
+end
+
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
+  device:set_endpoint_to_component_fn(endpoint_to_component)
   if device:supports_capability_by_id(capabilities.windowShadePreset.ID) and
     device:get_latest_state("main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME) == nil then
     -- These should only ever be nil once (and at the same time) for already-installed devices
@@ -86,13 +204,30 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-  if #battery_feature_eps > 0 then
-    local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-    device:send(attribute_list_read)
-  else
-    match_profile(device, battery_support.NO_BATTERY)
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    -- read TagList to determine the closure type
+    local tag_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+    tag_list_read:merge(clusters.Descriptor.attributes.TagList:read())
+    device:send(tag_list_read)
+    local battery_feature_eps = device:get_endpoints(
+      clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}
+    )
+    if #battery_feature_eps > 0 then
+      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+      device:send(attribute_list_read)
+    end
+  else -- #device:get_endpoints(clusters.WindowCovering.ID) > 0
+    local battery_feature_eps = device:get_endpoints(
+      clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}
+    )
+    if #battery_feature_eps > 0 then
+      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+      device:send(attribute_list_read)
+    else
+      match_profile(device, battery_support.NO_BATTERY)
+    end
   end
 end
 
@@ -109,21 +244,27 @@ local function info_changed(driver, device, event, args)
   else
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
-    local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-    if #battery_feature_eps > 0 then
-      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-      device:send(attribute_list_read)
+    if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+      match_profile_for_closure(device)
     else
-      match_profile(device, battery_support.NO_BATTERY)
+      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+      if #battery_feature_eps > 0 then
+        local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+        attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+        device:send(attribute_list_read)
+      else
+        match_profile(device, battery_support.NO_BATTERY)
+      end
     end
   end
 end
 
 local function device_added(driver, device)
-  device:emit_event(
-    capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}})
-  )
+  if device:supports_capability_by_id(capabilities.windowShade.ID) then
+    device:emit_event(
+      capabilities.windowShade.supportedWindowShadeCommands({"open", "close", "pause"}, {visibility = {displayed = false}})
+    )
+  end
   device:set_field(REVERSE_POLARITY, false, { persist = true })
 end
 
@@ -150,9 +291,15 @@ end
 -- close covering
 local function handle_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
-  if device:get_field(REVERSE_POLARITY) then
-    req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
+  local reverse = device:get_field(REVERSE_POLARITY)
+  local req = reverse and clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id) or
+    clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    req = reverse and clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
+    ) or clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
+    )
   end
   device:send(req)
 end
@@ -160,9 +307,15 @@ end
 -- open covering
 local function handle_open(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  local req = clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
-  if device:get_field(REVERSE_POLARITY) then
-    req = clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id)
+  local reverse = device:get_field(REVERSE_POLARITY)
+  local req = reverse and clusters.WindowCovering.server.commands.DownOrClose(device, endpoint_id) or
+    clusters.WindowCovering.server.commands.UpOrOpen(device, endpoint_id)
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    req = reverse and clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED
+    ) or clusters.ClosureControl.server.commands.MoveTo(
+      device, endpoint_id, clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN
+    )
   end
   device:send(req)
 end
@@ -171,18 +324,32 @@ end
 local function handle_pause(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local req = clusters.WindowCovering.server.commands.StopMotion(device, endpoint_id)
+  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+    req = clusters.ClosureControl.server.commands.Stop(device, endpoint_id)
+  end
   device:send(req)
 end
 
 -- move to shade level between 0-100
 local function handle_shade_level(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
-  local lift_percentage_value = 100 - cmd.args.shadeLevel
-  local hundredths_lift_percentage = lift_percentage_value * 100
-  local req = clusters.WindowCovering.server.commands.GoToLiftPercentage(
-                device, endpoint_id, hundredths_lift_percentage
-              )
-  device:send(req)
+  if #device:get_endpoints(clusters.ClosureDimension.ID) > 0 then
+    local dim_ep = device:component_to_endpoint(cmd.component)
+    if dim_ep then
+      device:send(clusters.ClosureDimension.server.commands.SetTarget(device, dim_ep, cmd.args.shadeLevel * 100))
+      return
+    end
+  else
+    local endpoint_id = device:component_to_endpoint(cmd.component)
+    local hundredths_lift_percentage = (100 - cmd.args.shadeLevel) * 100
+    device:send(clusters.WindowCovering.server.commands.GoToLiftPercentage(device, endpoint_id, hundredths_lift_percentage))
+  end
+end
+
+-- move to level between 0-100 (for door/gate/garage-door Closure devices)
+local function handle_level(driver, device, cmd)
+  local dim_ep = device:component_to_endpoint(cmd.component)
+  if #device:get_endpoints(clusters.ClosureDimension.ID) == 0 or not dim_ep then return end
+  device:send(clusters.ClosureDimension.server.commands.SetTarget(device, dim_ep, cmd.args.level * 100))
 end
 
 -- move to shade tilt level between 0-100
@@ -293,14 +460,136 @@ local function battery_charge_level_attr_handler(driver, device, ib, response)
 end
 
 local function power_source_attribute_list_handler(driver, device, ib, response)
+  local is_closure = #device:get_endpoints(clusters.ClosureControl.ID) > 0
   for _, attr in ipairs(ib.data.elements) do
     -- Re-profile the device if BatPercentRemaining (Attribute ID 0x0C) is present.
     if attr.value == 0x0C then
-      match_profile(device, battery_support.BATTERY_PERCENTAGE)
+      if is_closure then
+        device:set_field(CLOSURE_BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, {persist = true})
+        match_profile_for_closure(device)
+      else
+        match_profile(device, battery_support.BATTERY_PERCENTAGE)
+      end
       return
     elseif attr.value == 0x0E then
-      match_profile(device, battery_support.BATTERY_LEVEL)
+      if is_closure then
+        device:set_field(CLOSURE_BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, {persist = true})
+        match_profile_for_closure(device)
+      else
+        match_profile(device, battery_support.BATTERY_LEVEL)
+      end
       return
+    end
+  end
+end
+
+local function tag_list_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
+  local tag_value
+  for _, v in ipairs(ib.data.elements) do
+    local tag = v.elements
+    if tag and tag.namespace_id and tag.namespace_id.value == 0x44 then
+      tag_value = tag.tag and tag.tag.value
+      break
+    end
+  end
+  local closure_tags = {
+    [0] = closure_tag_list.COVERING,
+    [1] = closure_tag_list.WINDOW,
+    [2] = closure_tag_list.BARRIER,
+    [3] = closure_tag_list.CABINET,
+    [4] = closure_tag_list.GATE,
+    [5] = closure_tag_list.GARAGE_DOOR,
+    [6] = closure_tag_list.DOOR,
+  }
+  if closure_tags[tag_value] then
+    device:set_field(CLOSURE_TAG, closure_tags[tag_value], {persist = true})
+  else
+    device:set_field(CLOSURE_TAG, closure_tag_list.NA, {persist = true})
+  end
+  match_profile_for_closure(device)
+end
+
+local function closure_dimension_current_state_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
+  local pos_field = ib.data.elements.position
+  if not pos_field or pos_field.value == nil then return end
+  local level = math.floor(pos_field.value / 100)
+  if device:supports_capability_by_id(capabilities.doorControl.ID) then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.level.level(level))
+  else
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.windowShadeLevel.shadeLevel(level))
+  end
+end
+
+local function set_closure_control_state(device, endpoint_id, field)
+  local cache = device:get_field(CLOSURE_CONTROL_STATE_CACHE) or {}
+  if not cache[endpoint_id] then cache[endpoint_id] = {} end
+  for k, v in pairs(field) do
+    cache[endpoint_id][k] = v
+  end
+  device:set_field(CLOSURE_CONTROL_STATE_CACHE, cache)
+end
+
+local function emit_closure_control_capability(device, endpoint_id)
+  local closure_control_state = device:get_field(CLOSURE_CONTROL_STATE_CACHE)[endpoint_id] or {}
+  local reverse = device:get_field(REVERSE_POLARITY)
+
+  local main = closure_control_state.main
+  local current = closure_control_state.current
+  local target = closure_control_state.target
+
+  local closure_capability = capabilities.windowShade.windowShade
+  if device:supports_capability_by_id(capabilities.doorControl.ID) then
+    closure_capability = capabilities.doorControl.door
+  end
+
+  if main == clusters.ClosureControl.types.MainStateEnum.MOVING then
+    if target == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_CLOSED then
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.opening() or closure_capability.closing())
+    elseif target == clusters.ClosureControl.types.TargetPositionEnum.MOVE_TO_FULLY_OPEN then
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.closing() or closure_capability.opening())
+    end
+  elseif main == clusters.ClosureControl.types.MainStateEnum.STOPPED or main == nil then
+    if current == nil then return end
+    if current == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED then
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.open() or closure_capability.closed())
+    elseif current == clusters.ClosureControl.types.CurrentPositionEnum.FULLY_OPENED or
+      device:supports_capability_by_id(capabilities.doorControl.ID) then
+      -- doorControl does not support partially open; treat any not- fully closed as open
+      device:emit_event_for_endpoint(endpoint_id, reverse and closure_capability.closed() or closure_capability.open())
+    else
+      device:emit_event_for_endpoint(endpoint_id, closure_capability.partially_open())
+    end
+  end
+end
+
+local function main_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  set_closure_control_state(device, ib.endpoint_id, { main = ib.data.value })
+  emit_closure_control_capability(device, ib.endpoint_id)
+end
+
+local function overall_current_state_attr_handler(driver, device, ib, response)
+  clusters.ClosureControl.types.OverallCurrentState:augment_type(ib.data)
+  for _, v in pairs(ib.data.elements or {}) do
+    if v.field_id == 0 then
+      local current = v.value
+      set_closure_control_state(device, ib.endpoint_id, { current = current })
+      emit_closure_control_capability(device, ib.endpoint_id)
+      break
+    end
+  end
+end
+
+local function overall_target_state_attr_handler(driver, device, ib, response)
+  clusters.ClosureControl.types.OverallTargetState:augment_type(ib.data)
+  for _, v in pairs(ib.data.elements or {}) do
+    if v.field_id == 0 then
+      local target = v.value
+      set_closure_control_state(device, ib.endpoint_id, { target = target })
+      emit_closure_control_capability(device, ib.endpoint_id)
+      break
     end
   end
 end
@@ -326,6 +615,17 @@ local matter_driver_template = {
         [clusters.WindowCovering.attributes.CurrentPositionTiltPercent100ths.ID] = current_pos_handler(capabilities.windowShadeTiltLevel.shadeTiltLevel),
         [clusters.WindowCovering.attributes.OperationalStatus.ID] = current_status_handler,
       },
+      [clusters.ClosureControl.ID] = {
+        [clusters.ClosureControl.attributes.MainState.ID] = main_state_attr_handler,
+        [clusters.ClosureControl.attributes.OverallCurrentState.ID] = overall_current_state_attr_handler,
+        [clusters.ClosureControl.attributes.OverallTargetState.ID] = overall_target_state_attr_handler,
+      },
+      [clusters.ClosureDimension.ID] = {
+        [clusters.ClosureDimension.attributes.CurrentState.ID] = closure_dimension_current_state_handler,
+      },
+      [clusters.Descriptor.ID] = {
+        [clusters.Descriptor.attributes.TagList.ID] = tag_list_handler,
+      },
       [clusters.PowerSource.ID] = {
         [clusters.PowerSource.attributes.AttributeList.ID] = power_source_attribute_list_handler,
         [clusters.PowerSource.attributes.BatChargeLevel.ID] = battery_charge_level_attr_handler,
@@ -335,11 +635,23 @@ local matter_driver_template = {
   },
   subscribed_attributes = {
     [capabilities.windowShade.ID] = {
-      clusters.WindowCovering.attributes.OperationalStatus
+      clusters.WindowCovering.attributes.OperationalStatus,
+      clusters.ClosureControl.attributes.MainState,
+      clusters.ClosureControl.attributes.OverallCurrentState,
+      clusters.ClosureControl.attributes.OverallTargetState,
+    },
+    [capabilities.doorControl.ID] = {
+      clusters.ClosureControl.attributes.MainState,
+      clusters.ClosureControl.attributes.OverallCurrentState,
+      clusters.ClosureControl.attributes.OverallTargetState,
     },
     [capabilities.windowShadeLevel.ID] = {
       clusters.LevelControl.attributes.CurrentLevel,
       clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths,
+      clusters.ClosureDimension.attributes.CurrentState,
+    },
+    [capabilities.level.ID] = {
+      clusters.ClosureDimension.attributes.CurrentState,
     },
     [capabilities.windowShadeTiltLevel.ID] = {
       clusters.WindowCovering.attributes.CurrentPositionTiltPercent100ths,
@@ -361,8 +673,15 @@ local matter_driver_template = {
       [capabilities.windowShade.commands.open.NAME] = handle_open,
       [capabilities.windowShade.commands.pause.NAME] = handle_pause,
     },
+    [capabilities.doorControl.ID] = {
+      [capabilities.doorControl.commands.open.NAME] = handle_open,
+      [capabilities.doorControl.commands.close.NAME] = handle_close,
+    },
     [capabilities.windowShadeLevel.ID] = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = handle_shade_level,
+    },
+    [capabilities.level.ID] = {
+      [capabilities.level.commands.setLevel.NAME] = handle_level,
     },
     [capabilities.windowShadeTiltLevel.ID] = {
       [capabilities.windowShadeTiltLevel.commands.setShadeTiltLevel.NAME] = handle_shade_tilt_level,
@@ -373,6 +692,8 @@ local matter_driver_template = {
     capabilities.windowShadeTiltLevel,
     capabilities.windowShade,
     capabilities.windowShadePreset,
+    capabilities.doorControl,
+    capabilities.level,
     capabilities.battery,
     capabilities.batteryLevel,
   },

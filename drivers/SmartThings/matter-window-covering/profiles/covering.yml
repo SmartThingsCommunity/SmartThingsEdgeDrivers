@@ -1,0 +1,56 @@
+name: covering
+components:
+- id: main
+  capabilities:
+  - id: windowShade
+    version: 1
+  - id: windowShadeLevel
+    version: 1
+    optional: true
+  - id: battery
+    version: 1
+    optional: true
+  - id: batteryLevel
+    version: 1
+    optional: true
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: Blind
+- id: windowShade1
+  optional: true
+  capabilities:
+    - id: windowShadeLevel
+      version: 1
+      optional: true
+  categories:
+    - name: Blind
+- id: windowShade2
+  optional: true
+  capabilities:
+    - id: windowShadeLevel
+      version: 1
+      optional: true
+  categories:
+    - name: Blind
+- id: windowShade3
+  optional: true
+  capabilities:
+    - id: windowShadeLevel
+      version: 1
+      optional: true
+  categories:
+    - name: Blind
+- id: windowShade4
+  optional: true
+  capabilities:
+    - id: windowShadeLevel
+      version: 1
+      optional: true
+  categories:
+    - name: Blind
+preferences:
+  - preferenceId: reverse
+    explicit: true
