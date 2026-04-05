@@ -1,22 +1,13 @@
--- Copyright 2023 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2023 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+local cluster_base = require "st.matter.cluster_base"
 local DoorLock = clusters.DoorLock
 local types = DoorLock.types
 
@@ -53,11 +44,13 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe_request
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   -- add test device, handle initial subscribe
@@ -111,7 +104,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -159,7 +155,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({}, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -177,6 +176,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, DoorLock.server.commands.LockDoor(mock_device, 1)},
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -198,6 +200,9 @@ test.register_message_test(
         DoorLock.server.commands.UnboltDoor(mock_device, 1),
       },
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -219,6 +224,9 @@ test.register_message_test(
         DoorLock.server.commands.UnlockDoor(mock_device, 1),
       },
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -238,7 +246,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.locked())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -257,7 +268,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -276,7 +290,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlatched())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -362,6 +379,9 @@ test.register_message_test(
         )
       ),
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 test.run_registered_tests()

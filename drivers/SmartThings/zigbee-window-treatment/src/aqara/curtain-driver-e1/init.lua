@@ -1,16 +1,6 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -29,10 +19,10 @@ local PRIVATE_CURTAIN_LOCKING_SETTING_ATTRIBUTE_ID = 0x0427
 local PRIVATE_CURTAIN_LOCKING_STATUS_ATTRIBUTE_ID = 0x0428
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
-local reverseCurtainDirection = capabilities["stse.reverseCurtainDirection"]
+local reverseCurtainDirection = "stse.reverseCurtainDirection"
 local hookLockState = capabilities["stse.hookLockState"]
 local chargingState = capabilities["stse.chargingState"]
-local softTouch = capabilities["stse.softTouch"]
+local softTouch = "stse.softTouch"
 local hookUnlockCommandName = "hookUnlock"
 local hookLockCommandName = "hookLock"
 
@@ -82,12 +72,12 @@ end
 
 local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection.ID]
-    local softTouchPrefValue = device.preferences[softTouch.ID]
+    local reverseCurtainDirectionPrefValue = device.preferences[reverseCurtainDirection]
+    local softTouchPrefValue = device.preferences[softTouch]
 
     -- reverse direction
     if reverseCurtainDirectionPrefValue ~= nil and
-        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection.ID] then
+        reverseCurtainDirectionPrefValue ~= args.old_st_store.preferences[reverseCurtainDirection] then
       local raw_value = reverseCurtainDirectionPrefValue and 0x01 or 0x00
         device:send(aqara_utils.custom_write_attribute(device, WindowCovering.ID, WindowCovering.attributes.Mode.ID,
           data_types.Bitmap8, raw_value, nil))
@@ -95,7 +85,7 @@ local function device_info_changed(driver, device, event, args)
 
     -- soft touch
     if softTouchPrefValue ~= nil and
-        softTouchPrefValue ~= args.old_st_store.preferences[softTouch.ID] then
+        softTouchPrefValue ~= args.old_st_store.preferences[softTouch] then
       device:send(cluster_base.write_manufacturer_specific_attribute(device,
         aqara_utils.PRIVATE_CLUSTER_ID, PRIVATE_CURTAIN_MANUAL_ATTRIBUTE_ID, aqara_utils.MFG_CODE, data_types.Boolean, (not softTouchPrefValue)))
     end
@@ -224,9 +214,7 @@ local aqara_curtain_driver_e1_handler = {
       }
     }
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "lumi.curtain.agl001"
-  end
+  can_handle = require("aqara.curtain-driver-e1.can_handle"),
 }
 
 return aqara_curtain_driver_e1_handler

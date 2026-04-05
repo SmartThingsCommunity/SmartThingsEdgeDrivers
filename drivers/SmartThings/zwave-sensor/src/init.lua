@@ -152,6 +152,7 @@ local driver_template = {
     lazy_load_if_possible("v1-contact-event"),
     lazy_load_if_possible("timed-tamper-clear"),
     lazy_load_if_possible("wakeup-no-poll"),
+    lazy_load_if_possible("firmware-version"),
     lazy_load_if_possible("apiv6_bugfix"),
   },
   lifecycle_handlers = {

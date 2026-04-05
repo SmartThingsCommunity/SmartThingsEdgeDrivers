@@ -145,6 +145,10 @@ local function test_init_mock_3switch()
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch)
+  test.socket.device_lifecycle:__queue_receive({ mock_3switch.id, "added" })
+  test.socket.matter:__expect_send({mock_3switch.id, subscribe_request})
+
+  -- the following subscribe is due to the init event sent by the test framework.
   test.socket.matter:__expect_send({mock_3switch.id, subscribe_request})
   test.mock_device.add_test_device(mock_3switch)
 end
@@ -157,6 +161,9 @@ local function test_init_mock_2switch()
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_2switch)
+  test.socket.device_lifecycle:__queue_receive({ mock_2switch.id, "added" })
+  test.socket.matter:__expect_send({mock_2switch.id, subscribe_request})
+
   test.socket.matter:__expect_send({mock_2switch.id, subscribe_request})
   test.mock_device.add_test_device(mock_2switch)
 end
@@ -169,6 +176,9 @@ local function test_init_mock_3switch_non_sequential()
   }
   test.socket.matter:__set_channel_ordering("relaxed")
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_3switch_non_sequential)
+  test.socket.device_lifecycle:__queue_receive({ mock_3switch_non_sequential.id, "added" })
+  test.socket.matter:__expect_send({mock_3switch_non_sequential.id, subscribe_request})
+
   test.socket.matter:__expect_send({mock_3switch_non_sequential.id, subscribe_request})
   test.mock_device.add_test_device(mock_3switch_non_sequential)
 end
@@ -194,7 +204,10 @@ test.register_message_test(
       }
     }
   },
-  { test_init = test_init_mock_3switch }
+  {
+    test_init = test_init_mock_3switch,
+    min_api_version = 17
+  }
 )
 
 -- The custom "test_init" function also checks that the appropriate profile is switched on init
@@ -218,7 +231,10 @@ test.register_message_test(
       }
     }
   },
-  { test_init = test_init_mock_2switch }
+  {
+    test_init = test_init_mock_2switch,
+    min_api_version = 17
+  }
 )
 
 -- The custom "test_init" function also checks that the appropriate profile is switched on init
@@ -242,7 +258,11 @@ test.register_message_test(
       }
     }
   },
-  { test_init = test_init_mock_3switch_non_sequential }
+  {
+    test_init = test_init_mock_3switch_non_sequential,
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
+

@@ -362,6 +362,21 @@ local devices = {
       dimmerPaddleControl = {parameter_number = 27, size = 1}
     }
   },
+  ZOOZ_ZEN05 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x027A,
+      product_types = 0x7000,
+      product_ids = 0xB001
+    },
+    PARAMETERS = {
+      ledMode = { parameter_number = 1, size = 1 },
+      autoTurnOff = { parameter_number = 2, size = 4 },
+      autoTurnOn = { parameter_number = 4, size = 4 },
+      powerRecovery = { parameter_number = 6, size = 1 },
+      ledBrightness = { parameter_number = 7, size = 1 },
+      manualControl = { parameter_number = 8, size = 1 },
+    }
+  },
   AEOTEC_HEAVY_DUTY = {
     MATCHING_MATRIX = {
       mfrs = 0x0086,

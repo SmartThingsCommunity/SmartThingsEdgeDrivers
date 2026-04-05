@@ -14,7 +14,8 @@ local mock_device = test.mock_device.build_test_matter_device(
   {
     profile = t_utils.get_profile_definition("6-button-motion.yml"), -- on a real device we would switch to this, rather than fingerprint to it
     manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
-    endpoints = {
+    matter_version = {hardware = 1, software = 1},
+      endpoints = {
     {
       endpoint_id = 0,
       clusters = {},
@@ -194,6 +195,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true})) --should send initial press
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -224,6 +228,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("button2", button_attr.pushed({state_change = true})) --should send initial press
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -246,7 +253,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.held({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -268,7 +278,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -289,7 +302,10 @@ test.register_coroutine_test(
         mock_device, 50, {previous_position = 0}
       )
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -326,7 +342,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button6", button_attr.double({state_change = true})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -351,7 +370,10 @@ test.register_coroutine_test(
         mock_device, 40, {previous_position = 0}
       )
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -367,7 +389,10 @@ test.register_coroutine_test(
       clusters.OccupancySensing.attributes.Occupancy:build_test_report_data(mock_device, 70, 0)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -392,7 +417,10 @@ test.register_coroutine_test(
         mock_device, 60, {previous_position = 0}
       )
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -427,6 +455,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.held({state_change = true}))
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -463,6 +494,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("main", button_attr.pushed({state_change = true}))
   },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -508,6 +542,9 @@ test.register_message_test(
       )
     }
   },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -529,6 +566,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -550,6 +590,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("button6",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -571,6 +614,9 @@ test.register_message_test(
       message = mock_device:generate_test_message("main",
         capabilities.button.supportedButtonValues({"pushed", "double", "pushed_3x", "pushed_4x", "pushed_5x", "pushed_6x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -608,6 +654,9 @@ test.register_message_test(
     message = mock_device:generate_test_message("main", button_attr.double({state_change = true}))
   },
 
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -645,6 +694,9 @@ test.register_message_test(
     message = mock_device:generate_test_message("main", button_attr.pushed_4x({state_change = true}))
   },
 
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -666,6 +718,9 @@ test.register_message_test(
         message = mock_device:generate_test_message("button5",
             capabilities.button.supportedButtonValues({"pushed", "double"}, {visibility = {displayed = false}}))
       },
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -707,6 +762,9 @@ test.register_message_test(
     }
   }
   -- no double event
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -762,6 +820,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("button6", button_attr.pushed({state_change = true}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 -- run the tests

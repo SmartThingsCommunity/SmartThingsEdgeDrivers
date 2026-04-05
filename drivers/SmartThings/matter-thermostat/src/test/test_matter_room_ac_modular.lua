@@ -87,6 +87,9 @@ local function initialize_mock_device(generic_mock_device, generic_subscribed_at
       end
     end
   end
+  test.socket.capability:__expect_send(
+    generic_mock_device:generate_test_message("main", capabilities.thermostatOperatingState.supportedThermostatOperatingStates({"idle", "heating", "cooling"}, {visibility = {displayed = false}}))
+  )
   test.socket.matter:__expect_send({generic_mock_device.id, subscribe_request})
   return subscribe_request
 end
@@ -309,7 +312,10 @@ test.register_coroutine_test(
   function()
     test_room_ac_device_type_update_modular_profile(mock_device_basic, expected_metadata_basic, subscribe_request_basic, uint32(0x29))
   end,
-  { test_init = test_init_basic }
+  {
+    test_init = test_init_basic,
+    min_api_version = 17
+  }
 )
 
 local expected_metadata_no_state = {
@@ -334,6 +340,9 @@ test.register_coroutine_test(
   function()
     test_room_ac_device_type_update_modular_profile(mock_device_no_state, expected_metadata_no_state, subscribe_request_no_state, uint32(0))
   end,
-  { test_init = test_init_no_state }
+  {
+    test_init = test_init_no_state,
+    min_api_version = 17
+  }
 )
 test.run_registered_tests()

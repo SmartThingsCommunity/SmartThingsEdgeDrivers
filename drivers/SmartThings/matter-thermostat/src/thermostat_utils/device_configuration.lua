@@ -200,7 +200,14 @@ function DeviceConfiguration.match_modular_profile_thermostat(device)
   local wind_eps = device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.FanControlFeature.WIND})
 
   if #fan_eps > 0 then
-    table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    if #device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.MULTI_SPEED}) > 0 then
+      table.insert(main_component_capabilities, capabilities.fanSpeedPercent.ID)
+      if #device:get_endpoints(clusters.FanControl.ID, {feature_bitmap = clusters.FanControl.types.Feature.AUTO}) > 0 then
+        table.insert(main_component_capabilities, capabilities.fanMode.ID)
+      end
+    else
+      table.insert(main_component_capabilities, capabilities.fanMode.ID)
+    end
   end
   if #rock_eps > 0 then
     table.insert(main_component_capabilities, capabilities.fanOscillationMode.ID)
