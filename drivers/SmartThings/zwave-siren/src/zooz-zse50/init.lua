@@ -1,16 +1,5 @@
 -- Copyright 2026 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Licensed under the Apache License, Version 2.0
 
 local preferencesMap = require "preferences"
 
@@ -25,22 +14,6 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 8 })
 local SoundSwitch = (require "st.zwave.CommandClass.SoundSwitch")({ version = 1 })
 local Version = (require "st.zwave.CommandClass.Version")({ version = 1 })
-
-local ZSE50_FINGERPRINTS = {
-  { manufacturerId = 0x027A, productType = 0x0004, productId = 0x0369 } -- Zooz ZSE50 Siren & Chime
-}
-
---- @param driver Driver driver instance
---- @param device Device device instance
---- @return boolean true if the device proper, else false
-local function can_handle_zooz_zse50(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZSE50_FINGERPRINTS) do
-    if device:id_match(fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-  return false
-end
 
 --- @param self st.zwave.Driver
 --- @param device st.zwave.Device
@@ -65,14 +38,20 @@ local function updateFirmwareVersion(self, device)
   end
 end
 
+local function getModeName(toneId, toneInfo)
+  return string.format("%s: %s (%ss)", toneId, toneInfo.name, toneInfo.duration)
+end
+
 local function playTone(device, tone_id)
-  local tones_duration = device:get_field("TONES_DURATION")
+  local tones_list = device:get_field("TONES_LIST")
   local default_tone = device:get_field("TONE_DEFAULT")
-  local duration = tones_duration[tonumber(tone_id)]
   local playbackMode = tonumber(device.preferences.playbackMode)
+  local duration
   if tone_id > 0 then
     if tone_id == 0xFF then
-      duration = tones_duration[tonumber(default_tone)]
+      duration = tones_list[tonumber(default_tone)].duration
+    else
+      duration = tones_list[tonumber(tone_id)].duration
     end
     if playbackMode == 1 then
       duration = device.preferences.playbackDuration
@@ -80,7 +59,7 @@ local function playTone(device, tone_id)
       duration = duration * device.preferences.playbackLoop
     end
   end
-  log.debug(string.format("Playing Tone: %s, playbackMode %s, duration %ss", tone_id, playbackMode, duration))
+  log.info(string.format("Playing Tone: %s, playbackMode %s, duration %ss", tone_id, playbackMode, duration))
 
   device:send(SoundSwitch:TonePlaySet({ tone_identifier = tone_id }))
   device:send(SoundSwitch:TonePlayGet({}))
@@ -88,7 +67,7 @@ local function playTone(device, tone_id)
   local soundSwitch_refresh = function()
     local chime = device:get_latest_state("main", capabilities.chime.ID, capabilities.chime.chime.NAME)
     local mode = device:get_latest_state("main", capabilities.mode.ID, capabilities.mode.mode.NAME)
-    log.debug(string.format("soundSwitch_refresh: %s | %s", chime, mode))
+    log.info(string.format("Running SoundSwitch Refresh: %s | %s", chime, mode))
     if chime ~= "off" or mode ~= "Off" then
       device:send(SoundSwitch:TonePlayGet({}))
     end
@@ -108,7 +87,6 @@ local function rebuildTones(device)
 end
 
 local function refresh_handler(self, device)
-  log.debug("***DEBUG*** refresh_handler (zse50)")
   device:default_refresh()
   device:send(Version:Get({}))
   device:send(Notification:Get({
@@ -127,7 +105,7 @@ local function setMode_handler(self, device, command)
   if mode_split ~= nil then
     mode_value = string.sub(mode_value, 1, mode_split - 1)
   end
-  log.debug(string.format("***DEBUG*** setMode_handler (%s)", mode_value))
+  log.info(string.format("Command: setMode (%s)", mode_value))
 
   if mode_value == 'Rebuild List' then
     rebuildTones(device)
@@ -165,7 +143,6 @@ end
 
 local function tones_number_report_handler(self, device, cmd)
   local total_tones = cmd.args.supported_tones
-  log.debug("***DEBUG*** tones_number_report_handler... " .. total_tones)
 
   --Max 50 tones per Zooz settings
   if total_tones > 50 then
@@ -173,10 +150,8 @@ local function tones_number_report_handler(self, device, cmd)
   end
 
   local tones_list = { }
-  local tones_duration = { }
   device:set_field("TOTAL_TONES", total_tones)
   device:set_field("TONES_LIST_TMP", tones_list)
-  device:set_field("TONES_DURATION_TMP", tones_duration)
 
   --Get info on all tones
   for tone = 1, total_tones do
@@ -190,37 +165,28 @@ local function tone_info_report_handler(self, device, cmd)
   local duration = cmd.args.tone_duration
   local total_tones = device:get_field("TOTAL_TONES")
   local tones_list = device:get_field("TONES_LIST_TMP") or {}
-  local tones_duration = device:get_field("TONES_DURATION_TMP") or {}
-  log.debug(string.format("***DEBUG*** tone_info_report_handler... %s:%s (%ss)", tone_id, tone_name, duration))
 
-  --table.insert(tones_list, string.format("%s: %s (%ss)", tone_id, tone_name, duration))
-  tones_list[tone_id] = string.format("%s: %s (%ss)", tone_id, tone_name, duration)
-  tones_duration[tone_id] = duration
+  tones_list[tone_id] = { name = tone_name, duration = duration }
   device:set_field("TONES_LIST_TMP", tones_list)
-  device:set_field("TONES_DURATION_TMP", tones_duration)
 
-  if tone_id >= total_tones or #tones_duration >= total_tones then
-    log.debug(string.format("Got info on all tones... #tones_duration %s, #tones_list %s, total_tones %s", #tones_duration, #tones_list, total_tones))
+  if tone_id >= total_tones or #tones_list >= total_tones then
+    log.info(string.format("Received info on all tones: tone_id %s, #tones_list %s, total_tones %s", tone_id, #tones_list, total_tones))
     device:set_field("TONES_LIST", tones_list, { persist = true })
-    device:set_field("TONES_DURATION", tones_duration, { persist = true })
 
     local tones_arguments = { "Off" }
     for il, vl in ipairs(tones_list) do
-      --log.debug(string.format("#%s:: '%s' // '%s'", il, tones_list[il], vl))
-      table.insert(tones_arguments, vl)
+      table.insert(tones_arguments, getModeName(il, vl))
     end
 
     device:emit_event(capabilities.mode.supportedModes({ "Rebuild List", table.unpack(tones_arguments) }))
     device:emit_event(capabilities.mode.supportedArguments(tones_arguments))
     device:send(SoundSwitch:TonePlayGet({}))
-
   end
 end
 
 --- Handle when tone is played (TONE_PLAY_REPORT or BASIC_REPORT)
 local function tone_playing(self, device, tone_id)
   local tones_list = device:get_field("TONES_LIST")
-  log.debug(string.format("***DEBUG*** tone_playing... id: %s", tone_id))
 
   if device:get_latest_state("main", capabilities.mode.ID, capabilities.mode.supportedModes.NAME) == nil then
     rebuildTones(device)
@@ -231,23 +197,21 @@ local function tone_playing(self, device, tone_id)
     device:emit_event(capabilities.chime.chime.off())
     device:emit_event(capabilities.mode.mode("Off"))
   else
-    local tone_name = tones_list[tone_id] or tostring(tone_id)
+    local toneInfo = tones_list[tone_id] or { name = "Unknown", duration = "0" }
+    local modeName = getModeName(tone_id, toneInfo)
     device:emit_event(capabilities.alarm.alarm.both())
     device:emit_event(capabilities.chime.chime.chime())
-    device:emit_event(capabilities.mode.mode(tone_name))
+    device:emit_event(capabilities.mode.mode(modeName))
   end
 end
 
 local function tone_play_report_handler(self, device, cmd)
   local tone_id = tonumber(cmd.args.tone_identifier)
-  local tone_volume = cmd.args.play_command_tone_volume
-  log.debug(string.format("***DEBUG*** tone_play_report_handler... id: %s, vol: %s", tone_id, tone_volume))
   tone_playing(self, device, tone_id)
 end
 
 local function basic_report_handler(self, device, cmd)
   local tone_id = tonumber(cmd.args.value)
-  log.debug(string.format("***DEBUG*** basic_report_handler... value: %s", tone_id))
   tone_playing(self, device, tone_id)
 end
 
@@ -255,7 +219,6 @@ end
 local function soundSwitch_configuration_report(self, device, cmd)
   local volume = st_utils.clamp_value(cmd.args.volume, 0, 100)
   local default_tone = cmd.args.default_tone_identifer
-  log.debug(string.format("***DEBUG*** soundSwitch_configuration_report... vol: %s", volume))
   device:emit_event(capabilities.audioVolume.volume(volume))
   device:set_field("TONE_DEFAULT", default_tone, { persist = true })
 end
@@ -278,7 +241,6 @@ end
 --- @param device st.zwave.Device
 --- @param cmd st.zwave.CommandClass.Version.Report
 local function version_report_handler(driver, device, cmd)
-  log.debug("***DEBUG*** version_report_handler...")
   local major = cmd.args.application_version
   local minor = cmd.args.application_sub_version
 
@@ -291,7 +253,7 @@ end
 local function device_init(driver, device)
   device:send(Version:Get({}))
 
-  if (device:get_field("TONES_DURATION") == nil or device:get_field("TONE_DEFAULT") == nil) then
+  if (device:get_field("TONES_LIST") == nil or device:get_field("TONE_DEFAULT") == nil) then
     rebuildTones(device)
   end
 end
@@ -305,7 +267,6 @@ local function device_added(driver, device)
 end
 
 --- Handle preference changes (same as default but added hack for unsigned parameters)
----
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 --- @param event table
@@ -341,7 +302,7 @@ end
 
 local zooz_zse50 = {
   NAME = "Zooz ZSE50",
-  can_handle = can_handle_zooz_zse50,
+  can_handle = require("zooz-zse50.can_handle"),
 
   supported_capabilities = {
     capabilities.battery,
