@@ -122,13 +122,13 @@ local function setVolume_handler(self, device, cmd)
 end
 
 local function volumeUp_handler(self, device, cmd)
-  local volume = device:get_latest_state("main", capabilities.audioVolume.ID, capabilities.audioVolume.volume.NAME)
+  local volume = device:get_latest_state("main", capabilities.audioVolume.ID, capabilities.audioVolume.volume.NAME) or 50
   volume = st_utils.clamp_value(volume + 2, 0, 100)
   device:send(SoundSwitch:ConfigurationSet({ volume = volume }))
 end
 
 local function volumeDown_handler(self, device, cmd)
-  local volume = device:get_latest_state("main", capabilities.audioVolume.ID, capabilities.audioVolume.volume.NAME)
+  local volume = device:get_latest_state("main", capabilities.audioVolume.ID, capabilities.audioVolume.volume.NAME) or 50
   volume = st_utils.clamp_value(volume - 2, 0, 100)
   device:send(SoundSwitch:ConfigurationSet({ volume = volume }))
 end
@@ -171,13 +171,13 @@ local function tone_info_report_handler(self, device, cmd)
 
   if tone_id >= total_tones or #tones_list >= total_tones then
     log.info(string.format("Received info on all tones: tone_id %s, #tones_list %s, total_tones %s", tone_id, #tones_list, total_tones))
-    device:set_field("TONES_LIST", tones_list, { persist = true })
 
     local tones_arguments = { "Off" }
     for il, vl in ipairs(tones_list) do
       table.insert(tones_arguments, getModeName(il, vl))
     end
 
+    device:set_field("TONES_LIST", tones_list, { persist = true })
     device:emit_event(capabilities.mode.supportedModes({ "Rebuild List", table.unpack(tones_arguments) }))
     device:emit_event(capabilities.mode.supportedArguments(tones_arguments))
     device:send(SoundSwitch:TonePlayGet({}))
@@ -188,7 +188,7 @@ end
 local function tone_playing(self, device, tone_id)
   local tones_list = device:get_field("TONES_LIST")
 
-  if device:get_latest_state("main", capabilities.mode.ID, capabilities.mode.supportedModes.NAME) == nil then
+  if tones_list == nil or tones_list == {} then
     rebuildTones(device)
   end
 
@@ -251,8 +251,6 @@ end
 --- @param driver st.zwave.Driver
 --- @param device st.zwave.Device
 local function device_init(driver, device)
-  device:send(Version:Get({}))
-
   if (device:get_field("TONES_LIST") == nil or device:get_field("TONE_DEFAULT") == nil) then
     rebuildTones(device)
   end
