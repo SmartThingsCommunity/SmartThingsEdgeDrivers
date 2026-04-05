@@ -6,6 +6,7 @@ local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
+local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 4 })
 local SoundSwitch = (require "st.zwave.CommandClass.SoundSwitch")({ version = 1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 8 })
 local Version = (require "st.zwave.CommandClass.Version")({ version = 1 })
@@ -46,6 +47,138 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+      "init should rebuild tones when tone cache is missing",
+      function()
+        mock_siren:set_field("TONES_LIST", nil)
+        mock_siren:set_field("TONE_DEFAULT", nil)
+
+        test.socket.device_lifecycle:__queue_receive({ mock_siren.id, "init" })
+        test.socket.capability:__expect_send(
+              mock_siren:generate_test_message("main", capabilities.mode.mode("Rebuild List"))
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    SoundSwitch:TonesNumberGet({})
+              )
+        )
+      end,
+      {
+        min_api_version = 17
+      }
+)
+
+test.register_coroutine_test(
+      "added should set startup volume and refresh",
+      function()
+        test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+        test.socket.zwave:__set_channel_ordering("relaxed")
+
+        test.socket.device_lifecycle:__queue_receive({ mock_siren.id, "added" })
+
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    SoundSwitch:ConfigurationSet({ volume = 10 })
+              )
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    Basic:Get({})
+              )
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    Version:Get({})
+              )
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    Notification:Get({
+                      notification_type = Notification.notification_type.POWER_MANAGEMENT,
+                      event = Notification.event.power_management.STATE_IDLE,
+                      v1_alarm_type = 0
+                    })
+              )
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    SoundSwitch:ConfigurationGet({})
+              )
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    SoundSwitch:TonePlayGet({})
+              )
+        )
+      end,
+      {
+        min_api_version = 17
+      }
+)
+
+test.register_coroutine_test(
+      "infoChanged should update config and send delayed Basic Set",
+      function()
+        test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+
+        test.socket.device_lifecycle:__queue_receive(
+              mock_siren:generate_info_changed({ preferences = { ledColor = 255 } })
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    Configuration:Set({ parameter_number = 7, size = 1, configuration_value = -1 })
+              )
+        )
+
+        test.mock_time.advance_time(1)
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    Basic:Set({ value = 0x00 })
+              )
+        )
+      end,
+      {
+        min_api_version = 17
+      }
+)
+
+test.register_coroutine_test(
+      "infoChanged should update playbackDuration and send delayed Basic Set",
+      function()
+        test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
+
+        test.socket.device_lifecycle:__queue_receive(
+              mock_siren:generate_info_changed({ preferences = { playbackDuration = 90 } })
+        )
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    Configuration:Set({ parameter_number = 2, size = 2, configuration_value = 90 })
+              )
+        )
+
+        test.mock_time.advance_time(1)
+        test.socket.zwave:__expect_send(
+              zw_test_utils.zwave_test_build_send_command(
+                    mock_siren,
+                    Basic:Set({ value = 0x00 })
+              )
+        )
+      end,
+      {
+        min_api_version = 17
+      }
+)
 
 test.register_message_test(
       "Version report should update firmware version",
