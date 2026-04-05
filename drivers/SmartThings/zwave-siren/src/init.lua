@@ -81,8 +81,7 @@ local driver_template = {
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement,
     capabilities.chime,
-    capabilities.powerSource,
-    capabilities.audioVolume,
+    capabilities.powerSource
   },
   sub_drivers = require("sub_drivers"),
   lifecycle_handlers = {
