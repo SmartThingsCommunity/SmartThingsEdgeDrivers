@@ -71,7 +71,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_tvoc_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_carbonDioxide_messge})
     test.socket.zigbee:__expect_send({mock_device.id, read_AQI_messge})
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -90,6 +93,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 40 }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -109,6 +115,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 25.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -126,7 +135,10 @@ test.register_coroutine_test(
       capabilities.carbonDioxideMeasurement.carbonDioxide({value = 1400, unit = "ppm"})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern({value = "good"})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -143,7 +155,10 @@ test.register_coroutine_test(
       capabilities.fineDustSensor.fineDustLevel({value = 74 })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.fineDustHealthConcern.fineDustHealthConcern.good()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -160,7 +175,10 @@ test.register_coroutine_test(
       capabilities.veryFineDustSensor.veryFineDustLevel({value = 69 })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern.good()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -177,7 +195,10 @@ test.register_coroutine_test(
       capabilities.dustSensor.dustLevel({value = 69 })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
      capabilities.dustHealthConcern.dustHealthConcern.good()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -192,7 +213,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.formaldehydeMeasurement.formaldehydeLevel({value = 1000.0, unit = "mg/m^3"})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -209,7 +233,10 @@ test.register_coroutine_test(
       capabilities.tvocMeasurement.tvocLevel({value = 1000.0, unit = "ug/m3"})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.tvocHealthConcern.tvocHealthConcern({value = "unhealthy"})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -224,7 +251,240 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "good"})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "AQI moderate (51-100) emits moderate airQualityHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 75 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC5, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "moderate"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "AQI slightlyUnhealthy (101-150) emits slightlyUnhealthy airQualityHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 125 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC5, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "slightlyUnhealthy"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "AQI unhealthy (151-200) emits unhealthy airQualityHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 175 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC5, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "unhealthy"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "AQI veryUnhealthy (201-300) emits veryUnhealthy airQualityHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 250 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC5, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "veryUnhealthy"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "AQI hazardous (>=301) emits hazardous airQualityHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 350 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC5, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.airQualityHealthConcern.airQualityHealthConcern({value = "hazardous"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "carbonDioxide moderate (1501-2500) emits moderate carbonDioxideHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 2000 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC3, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.carbonDioxideMeasurement.carbonDioxide({value = 2000, unit = "ppm"})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern({value = "moderate"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "carbonDioxide unhealthy (>2500) emits unhealthy carbonDioxideHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 3000 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC3, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.carbonDioxideMeasurement.carbonDioxide({value = 3000, unit = "ppm"})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.carbonDioxideHealthConcern.carbonDioxideHealthConcern({value = "unhealthy"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "pm2.5 moderate emits moderate fineDustHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 90 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC1, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.fineDustSensor.fineDustLevel({value = 90})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.fineDustHealthConcern.fineDustHealthConcern({value = "moderate"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "pm2.5 unhealthy (>=115) emits unhealthy fineDustHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0000, data_types.Uint16.ID, 120 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC1, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.fineDustSensor.fineDustLevel({value = 120})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.fineDustHealthConcern.fineDustHealthConcern({value = "unhealthy"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "pm1.0 unhealthy (>100) emits unhealthy veryFineDustHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0001, data_types.Uint16.ID, 150 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC1, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.veryFineDustSensor.veryFineDustLevel({value = 150})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.veryFineDustHealthConcern.veryFineDustHealthConcern({value = "unhealthy"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "pm10 unhealthy (>150) emits unhealthy dustHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0002, data_types.Uint16.ID, 200 }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC1, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.dustSensor.dustLevel({value = 200})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.dustHealthConcern.dustHealthConcern({value = "unhealthy"})))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "tvoc good (<600) emits good tvocHealthConcern",
+  function()
+    local attr_report_data = {
+      { 0x0001, data_types.SinglePrecisionFloat.ID, SinglePrecisionFloat(0, 8, 0.953125) }
+    }
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, 0xFCC2, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.tvocMeasurement.tvocLevel({value = 500.0, unit = "ug/m3"})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.tvocHealthConcern.tvocHealthConcern({value = "good"})))
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -19,23 +19,11 @@ end
 local smoke_co_alarm_utils = {}
 
 local CARBON_MONOXIDE_MEASUREMENT_UNIT = "CarbonMonoxideConcentrationMeasurement_unit"
-local SMOKE_CO_ALARM_DEVICE_TYPE_ID = 0x0076
 
 local HardwareFaultAlert = "__HardwareFaultAlert"
 local BatteryAlert = "__BatteryAlert"
 local BatteryLevel = "__BatteryLevel"
 
-function smoke_co_alarm_utils.is_matter_smoke_co_alarm(opts, driver, device)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == SMOKE_CO_ALARM_DEVICE_TYPE_ID then
-        return true
-      end
-    end
-  end
-
-  return false
-end
 
 local supported_profiles =
 {
@@ -271,7 +259,7 @@ local matter_smoke_co_alarm_handler = {
       },
     },
   },
-  can_handle = smoke_co_alarm_utils.is_matter_smoke_co_alarm
+  can_handle = require("sub_drivers.smoke_co_alarm.can_handle")
 }
 
 return matter_smoke_co_alarm_handler

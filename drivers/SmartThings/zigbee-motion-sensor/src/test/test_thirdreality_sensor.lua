@@ -68,7 +68,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device1:generate_test_message("main", capabilities.battery.battery(55))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -91,7 +94,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
         mock_device1:generate_test_message("main", capabilities.battery.battery(100))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -114,7 +120,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device2:generate_test_message("main", capabilities.battery.battery(55))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -137,7 +146,32 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device2:generate_test_message("main", capabilities.battery.battery(100))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_message_test(
+  "Handle added lifecycle - reads ApplicationVersion",
+  {
+    {
+      channel = "device_lifecycle",
+      direction = "receive",
+      message = {mock_device1.id, "added"}
+    },
+    {
+      channel = "zigbee",
+      direction = "send",
+      message = {
+        mock_device1.id,
+        Basic.attributes.ApplicationVersion:read(mock_device1)
+      }
+    }
+  },
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

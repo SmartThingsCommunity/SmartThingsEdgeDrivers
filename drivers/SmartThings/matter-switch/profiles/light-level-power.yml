@@ -10,6 +10,8 @@ components:
           values:
             - key: "level.value"
               range: [1, 100]
+      - id: statelessSwitchLevelStep
+        version: 1
       - id: powerMeter
         version: 1
       - id: firmwareUpdate

@@ -80,7 +80,10 @@ test.register_coroutine_test(
                     mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
             )
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_message_test(
@@ -96,6 +99,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(14))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -113,6 +119,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -130,6 +139,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -154,6 +166,9 @@ test.register_message_test(
                 { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
             }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -173,53 +188,11 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({ value = 137 }))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
-
--- test.register_coroutine_test(
---         "Health check should check all relevant attributes",
---         function()
---             test.wait_for_events()
---             test.mock_time.advance_time(50000)
---             test.socket.zigbee:__set_channel_ordering("relaxed")
---             test.socket.zigbee:__expect_send(
---                 {
---                     mock_device.id,
---                     IASZone.attributes.ZoneStatus:read(mock_device):to_endpoint(TAMPER_ENDPOINT)
---                 }
---             )
---             test.socket.zigbee:__expect_send(
---                 {
---                     mock_device.id,
---                     IlluminanceMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(ILLUMINANCE_ENDPOINT)
---                 }
---             )
---             test.socket.zigbee:__expect_send(
---                 {
---                     mock_device.id,
---                     OccupancySensing.attributes.Occupancy:read(mock_device):to_endpoint(OCCUPANCY_ENDPOINT)
---                 }
---             )
---             test.socket.zigbee:__expect_send(
---                 {
---                     mock_device.id,
---                     PowerConfiguration.attributes.BatteryVoltage:read(mock_device):to_endpoint(POWER_CONFIGURATION_ENDPOINT)
---                 }
---             )
---             test.socket.zigbee:__expect_send(
---                 {
---                     mock_device.id,
---                     TemperatureMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT)
---                 }
---             )
---         end,
---         {
---             test_init = function()
---                 test.mock_device.add_test_device(mock_device)
---                 test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
---             end
---         }
--- )
 
 test.register_coroutine_test(
         "Refresh should read all necessary attributes",
@@ -231,7 +204,10 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send({mock_device.id, OccupancySensing.attributes.Occupancy:read(mock_device):to_endpoint(OCCUPANCY_ENDPOINT)})
             test.socket.zigbee:__expect_send({mock_device.id, TemperatureMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT)})
             test.socket.zigbee:__expect_send({mock_device.id, IlluminanceMeasurement.attributes.MeasuredValue:read(mock_device):to_endpoint(ILLUMINANCE_ENDPOINT)})
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_coroutine_test(
@@ -389,7 +365,10 @@ test.register_coroutine_test(
             })
 
             mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_coroutine_test(
@@ -429,7 +408,50 @@ test.register_coroutine_test(
                                                        temperatureSensitivity
                                                ):to_endpoint(TEMPERATURE_MEASUREMENT_ENDPOINT)
             })
-        end
+        end,
+        {
+           min_api_version = 17
+        }
+)
+
+test.register_message_test(
+        "IASZone attribute status handler: tamper detected",
+        {
+            {
+                channel = "zigbee",
+                direction = "receive",
+                -- ZoneStatus | Bit2: Tamper set to 1
+                message = { mock_device.id, IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0004) }
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
+            }
+        },
+        {
+           min_api_version = 17
+        }
+)
+
+test.register_message_test(
+        "IASZone attribute status handler: tamper clear",
+        {
+            {
+                channel = "zigbee",
+                direction = "receive",
+                -- ZoneStatus | Bit2: Tamper set to 0
+                message = { mock_device.id, IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0000) }
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
+            }
+        },
+        {
+           min_api_version = 17
+        }
 )
 
 test.run_registered_tests()

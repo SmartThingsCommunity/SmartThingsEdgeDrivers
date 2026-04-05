@@ -10,6 +10,10 @@ local data_types = require "st.zigbee.data_types"
 local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
+local messages = require "st.zigbee.messages"
+local zb_const = require "st.zigbee.constants"
+local write_attribute_response = require "st.zigbee.zcl.global_commands.write_attribute_response"
+local zcl_messages = require "st.zigbee.zcl"
 test.add_package_capability("sensitivityAdjustment.yaml")
 test.add_package_capability("detectionFrequency.yaml")
 
@@ -46,6 +50,29 @@ local function test_init()
 
 test.set_test_init_function(test_init)
 
+local function build_write_attr_res(cluster, status)
+  local addr_header = messages.AddressHeader(
+    mock_device:get_short_address(),
+    mock_device.fingerprinted_endpoint_id,
+    zb_const.HUB.ADDR,
+    zb_const.HUB.ENDPOINT,
+    zb_const.HA_PROFILE_ID,
+    cluster
+  )
+  local write_attribute_body = write_attribute_response.WriteAttributeResponse(status, {})
+  local zcl_header = zcl_messages.ZclHeader({
+    cmd = data_types.ZCLCommandId(write_attribute_body.ID)
+  })
+  local message_body = zcl_messages.ZclMessageBody({
+    zcl_header = zcl_header,
+    zcl_body = write_attribute_body
+  })
+  return messages.ZigbeeMessageRx({
+    address_header = addr_header,
+    body = message_body
+  })
+end
+
 test.register_coroutine_test(
   "Handle added lifecycle",
   function()
@@ -59,7 +86,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       detectionFrequency.detectionFrequency(PREF_FREQUENCY_VALUE_DEFAULT, {visibility = {displayed = false}})))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -79,7 +109,10 @@ test.register_coroutine_test(
         ,
         data_types.Uint8, 1) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -104,7 +137,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(detect_duration)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.motionSensor.motion.inactive()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -120,7 +156,71 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, FREQUENCY_ATTRIBUTE_ID, MFG_CODE
         , data_types.Uint8, PREF_FREQUENCY_VALUE_DEFAULT)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Motion detected twice cancels existing timer and creates a new one",
+  function()
+    local detect_duration = PREF_FREQUENCY_VALUE_DEFAULT
+    -- Pre-register two timers: first will be cancelled, second will fire
+    test.timer.__create_and_queue_test_time_advance_timer(detect_duration, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(detect_duration, "oneshot")
+    local attr_report_data = {
+      { MOTION_ILLUMINANCE_ATTRIBUTE_ID, data_types.Int32.ID, 0x0001006E } -- 65646
+    }
+    -- First motion event
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance(110))
+    )
+    test.wait_for_events()
+    -- Second motion event before first timer fires - cancels first timer
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, attr_report_data, MFG_CODE)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance(110))
+    )
+    test.wait_for_events()
+    -- Only the second timer fires
+    test.mock_time.advance_time(detect_duration)
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.motionSensor.motion.inactive()))
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "WriteAttributeResponse with PREF_FREQUENCY_KEY updates detection frequency",
+  function()
+    mock_device:set_field(PREF_CHANGED_KEY, PREF_FREQUENCY_KEY)
+    mock_device:set_field(PREF_CHANGED_VALUE, PREF_FREQUENCY_VALUE_DEFAULT)
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      build_write_attr_res(PRIVATE_CLUSTER_ID, 0x00)
+    })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      detectionFrequency.detectionFrequency(PREF_FREQUENCY_VALUE_DEFAULT, {visibility = {displayed = false}})))
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

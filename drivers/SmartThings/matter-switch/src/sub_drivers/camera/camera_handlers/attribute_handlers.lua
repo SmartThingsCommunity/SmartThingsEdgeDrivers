@@ -113,9 +113,6 @@ end
 function CameraAttributeHandlers.rate_distortion_trade_off_points_handler(driver, device, ib, response)
   if not ib.data.elements then return end
   local resolutions = {}
-  local max_encoded_pixel_rate = device:get_field(camera_fields.MAX_ENCODED_PIXEL_RATE)
-  local max_fps = device:get_field(camera_fields.MAX_FRAMES_PER_SECOND)
-  local emit_capability = max_encoded_pixel_rate ~= nil and max_fps ~= nil
   for _, v in ipairs(ib.data.elements) do
     local rate_distortion_trade_off_points = v.elements
     local width = rate_distortion_trade_off_points.resolution.elements.width.value
@@ -124,89 +121,96 @@ function CameraAttributeHandlers.rate_distortion_trade_off_points_handler(driver
       width = width,
       height = height
     })
-    if emit_capability then
-      local fps = camera_utils.compute_fps(max_encoded_pixel_rate, width, height, max_fps)
-      if fps > 0 then
-        resolutions[#resolutions].fps = fps
-      end
-    end
-  end
-  if emit_capability then
-    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.supportedResolutions(resolutions))
   end
   device:set_field(camera_fields.SUPPORTED_RESOLUTIONS, resolutions)
+  local max_encoded_pixel_rate = device:get_field(camera_fields.MAX_ENCODED_PIXEL_RATE)
+  local max_fps = device:get_field(camera_fields.MAX_FRAMES_PER_SECOND)
+  if max_encoded_pixel_rate and max_fps and device:get_field(camera_fields.MAX_RESOLUTION) and device:get_field(camera_fields.MIN_RESOLUTION) then
+    local supported_resolutions = camera_utils.build_supported_resolutions(device, max_encoded_pixel_rate, max_fps)
+    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.supportedResolutions(supported_resolutions))
+  end
 end
 
 function CameraAttributeHandlers.max_encoded_pixel_rate_handler(driver, device, ib, response)
-  local resolutions = device:get_field(camera_fields.SUPPORTED_RESOLUTIONS)
-  local max_fps = device:get_field(camera_fields.MAX_FRAMES_PER_SECOND)
-  local emit_capability = resolutions ~= nil and max_fps ~= nil
-  if emit_capability then
-    for _, v in pairs(resolutions or {}) do
-      local fps = camera_utils.compute_fps(ib.data.value, v.width, v.height, max_fps)
-      if fps > 0 then
-        v.fps = fps
-      end
-    end
-    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.supportedResolutions(resolutions))
-  end
   device:set_field(camera_fields.MAX_ENCODED_PIXEL_RATE, ib.data.value)
+  local max_fps = device:get_field(camera_fields.MAX_FRAMES_PER_SECOND)
+  if max_fps and device:get_field(camera_fields.SUPPORTED_RESOLUTIONS) and device:get_field(camera_fields.MAX_RESOLUTION) and device:get_field(camera_fields.MIN_RESOLUTION) then
+    local supported_resolutions = camera_utils.build_supported_resolutions(device, ib.data.value, max_fps)
+    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.supportedResolutions(supported_resolutions))
+  end
 end
 
 function CameraAttributeHandlers.video_sensor_parameters_handler(driver, device, ib, response)
   if not ib.data.elements then return end
-  local resolutions = device:get_field(camera_fields.SUPPORTED_RESOLUTIONS)
+  local sensor_width = ib.data.elements.sensor_width.value
+  local sensor_height = ib.data.elements.sensor_height.value
+  local max_fps = ib.data.elements.max_fps.value
+  device:set_field(camera_fields.MAX_RESOLUTION, {
+    width = sensor_width,
+    height = sensor_height
+  })
+  device:set_field(camera_fields.MAX_FRAMES_PER_SECOND, max_fps)
+  device:emit_event_for_endpoint(ib, capabilities.cameraViewportSettings.videoSensorParameters({
+    width = sensor_width,
+    height = sensor_height,
+    maxFPS = max_fps
+  }))
   local max_encoded_pixel_rate = device:get_field(camera_fields.MAX_ENCODED_PIXEL_RATE)
-  local emit_capability = resolutions ~= nil and max_encoded_pixel_rate ~= nil
-  local sensor_width, sensor_height, max_fps
-  for _, v in pairs(ib.data.elements) do
-    if v.field_id == 0 then
-      sensor_width = v.value
-    elseif v.field_id == 1 then
-      sensor_height = v.value
-    elseif v.field_id == 2 then
-      max_fps = v.value
-    end
-  end
-
-  if max_fps then
-    if sensor_width and sensor_height then
-      device:emit_event_for_endpoint(ib, capabilities.cameraViewportSettings.videoSensorParameters({
-        width = sensor_width,
-        height = sensor_height,
-        maxFPS = max_fps
-      }))
-    end
-    if emit_capability then
-      for _, v in pairs(resolutions or {}) do
-        local fps = camera_utils.compute_fps(max_encoded_pixel_rate, v.width, v.height, max_fps)
-        if fps > 0 then
-          v.fps = fps
-        end
-      end
-      device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.supportedResolutions(resolutions))
-    end
-    device:set_field(camera_fields.MAX_FRAMES_PER_SECOND, max_fps)
+  if max_encoded_pixel_rate and max_fps and device:get_field(camera_fields.SUPPORTED_RESOLUTIONS) and device:get_field(camera_fields.MIN_RESOLUTION) then
+    local supported_resolutions = camera_utils.build_supported_resolutions(device, max_encoded_pixel_rate, max_fps)
+    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.supportedResolutions(supported_resolutions))
   end
 end
 
 function CameraAttributeHandlers.min_viewport_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
   device:emit_event_for_endpoint(ib, capabilities.cameraViewportSettings.minViewportResolution({
     width = ib.data.elements.width.value,
     height = ib.data.elements.height.value
   }))
+  device:set_field(camera_fields.MIN_RESOLUTION, {
+    width = ib.data.elements.width.value,
+    height = ib.data.elements.height.value
+  })
+  local max_encoded_pixel_rate = device:get_field(camera_fields.MAX_ENCODED_PIXEL_RATE)
+  local max_fps = device:get_field(camera_fields.MAX_FRAMES_PER_SECOND)
+  if max_encoded_pixel_rate and max_fps and device:get_field(camera_fields.SUPPORTED_RESOLUTIONS) and device:get_field(camera_fields.MAX_RESOLUTION) then
+    local supported_resolutions = camera_utils.build_supported_resolutions(device, max_encoded_pixel_rate, max_fps)
+    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.supportedResolutions(supported_resolutions))
+  end
 end
 
 function CameraAttributeHandlers.allocated_video_streams_handler(driver, device, ib, response)
   if not ib.data.elements then return end
+
+  local dptz_viewports = device:get_field(camera_fields.DPTZ_VIEWPORTS) or {}
   local streams = {}
+
+  local previous_streams = device:get_latest_state(
+    camera_fields.profile_components.main,
+    capabilities.videoStreamSettings.ID,
+    capabilities.videoStreamSettings.videoStreams.NAME
+  ) or {}
+
+  local previous_stream_labels = {}
+
+  for _, stream in pairs(previous_streams) do
+    previous_stream_labels[stream.streamId] = stream.data.label
+  end
+
   for i, v in ipairs(ib.data.elements) do
     local stream = v.elements
+    local stream_id = stream.video_stream_id.value
+
+    -- Use label from existing capability state, if available
+    local capability_label = previous_stream_labels[stream_id]
+
     local video_stream = {
-      streamId = stream.video_stream_id.value,
+      streamId = stream_id,
       data = {
-        label = "Stream " .. i,
-        type = stream.stream_usage.value == clusters.Global.types.StreamUsageEnum.LIVE_VIEW and "liveStream" or "clipRecording",
+        label = capability_label or "Stream " .. i,
+        type = stream.stream_usage.value ==
+          clusters.Global.types.StreamUsageEnum.LIVE_VIEW and "liveStream" or "clipRecording",
         resolution = {
           width = stream.min_resolution.elements.width.value,
           height = stream.min_resolution.elements.height.value,
@@ -214,21 +218,31 @@ function CameraAttributeHandlers.allocated_video_streams_handler(driver, device,
         }
       }
     }
-    local viewport = device:get_field(camera_fields.VIEWPORT)
-    if viewport then
-      video_stream.data.viewport = viewport
+
+    if dptz_viewports[stream_id] ~= nil then
+      video_stream.data.viewport = dptz_viewports[stream_id]
+    else
+      video_stream.data.viewport = {
+        upperLeftVertex = { x = 0, y = 0 },
+        lowerRightVertex = {
+          x = stream.min_resolution.elements.width.value,
+          y = stream.min_resolution.elements.height.value
+        }
+      }
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
+
+    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+      clusters.CameraAvStreamManagement.types.Feature.WATERMARK) then
       video_stream.data.watermark = stream.watermark_enabled.value and "enabled" or "disabled"
     end
-    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
+    if camera_utils.feature_supported(device, clusters.CameraAvStreamManagement.ID,
+      clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY) then
       video_stream.data.onScreenDisplay = stream.osd_enabled.value and "enabled" or "disabled"
     end
     table.insert(streams, video_stream)
   end
-  if #streams > 0 then
-    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(streams))
-  end
+
+  device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(streams))
 end
 
 function CameraAttributeHandlers.viewport_handler(driver, device, ib, response)
@@ -236,6 +250,45 @@ function CameraAttributeHandlers.viewport_handler(driver, device, ib, response)
     upperLeftVertex = { x = ib.data.elements.x1.value, y = ib.data.elements.y1.value },
     lowerRightVertex = { x = ib.data.elements.x2.value, y = ib.data.elements.y2.value },
   }))
+end
+
+function CameraAttributeHandlers.dptz_streams_handler(driver, device, ib, response)
+  if not ib.data.elements then return end
+
+  local dptz_viewports = {}
+  for _, v in ipairs(ib.data.elements) do
+    local dptz_struct = v.elements
+    local stream_id = dptz_struct.video_stream_id.value
+    local viewport = dptz_struct.viewport.elements
+
+    dptz_viewports[stream_id] = {
+      upperLeftVertex = { x = viewport.x1.value, y = viewport.y1.value },
+      lowerRightVertex = { x = viewport.x2.value, y = viewport.y2.value }
+    }
+  end
+
+  device:set_field(camera_fields.DPTZ_VIEWPORTS, dptz_viewports)
+
+  local current_streams = device:get_latest_state(
+    camera_fields.profile_components.main,
+    capabilities.videoStreamSettings.ID,
+    capabilities.videoStreamSettings.videoStreams.NAME
+  ) or {}
+  local updated_streams = {}
+  for _, stream in pairs(current_streams) do
+    local updated_stream = {
+      streamId = stream.streamId,
+      data = stream.data
+    }
+    if dptz_viewports[stream.streamId] ~= nil then
+      updated_stream.data.viewport = dptz_viewports[stream.streamId]
+    end
+    table.insert(updated_streams, updated_stream)
+  end
+
+  if #updated_streams > 0 then
+    device:emit_event_for_endpoint(ib, capabilities.videoStreamSettings.videoStreams(updated_streams))
+  end
 end
 
 function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, response)

@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local ZigbeeDriver = require "st.zigbee"
@@ -46,29 +36,17 @@ local zigbee_window_treatment_driver_template = {
     capabilities.powerSource,
     capabilities.battery
   },
-  sub_drivers = {
-    require("vimar"),
-    require("aqara"),
-    require("feibit"),
-    require("somfy"),
-    require("invert-lift-percentage"),
-    require("rooms-beautiful"),
-    require("axis"),
-    require("yoolax"),
-    require("hanssem"),
-    require("screen-innovations"),
-    require("VIVIDSTORM"),
-    require("HOPOsmart")},
-  lifecycle_handlers = {
-    init = init_handler,
-    added = added_handler
-  },
   capability_handlers = {
     [capabilities.windowShadePreset.ID] = {
       [capabilities.windowShadePreset.commands.setPresetPosition.NAME] = window_shade_utils.set_preset_position_cmd,
       [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_utils.window_shade_preset_cmd,
     }
   },
+  lifecycle_handlers = {
+    init = init_handler,
+    added = added_handler
+  },
+  sub_drivers = require("sub_drivers"),
   health_check = false,
 }
 

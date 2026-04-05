@@ -1,25 +1,12 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local device_lib = require "st.device"
 local lua_socket = require "socket"
 local log = require "log"
 
 local START_BUTTON_PRESS = "__start_button_press"
-
-local BOSCH_VENDOR_ID =  0x1209
-local BOSCH_PRODUCT_ID = 0x3015
-
-local function is_bosch_button_contact(opts, driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and
-    device.manufacturer_info.vendor_id == BOSCH_VENDOR_ID and
-    device.manufacturer_info.product_id == BOSCH_PRODUCT_ID then
-      return true
-    end
-    return false
-end
 
 local function get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
@@ -145,7 +132,7 @@ local Bosch_Button_Contact_Sensor = {
       }
     },
   },
-  can_handle = is_bosch_button_contact,
+  can_handle = require("sub_drivers.bosch_button_contact.can_handle"),
 }
 
 return Bosch_Button_Contact_Sensor
