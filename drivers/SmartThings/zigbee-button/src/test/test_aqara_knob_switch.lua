@@ -1,7 +1,6 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-package.path = package.path .. ";./src/?.lua;./src/?/init.lua"
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -58,9 +57,9 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.batteryLevel.quantity(2)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({ value = 0, unit = "%" })))
+      capabilities.knob.rotateAmount(0)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.heldRotateAmount({ value = 0, unit = "%" })))
+      capabilities.knob.heldRotateAmount(0)))
   end
 )
 
@@ -98,7 +97,7 @@ test.register_coroutine_test(
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({value = 1, unit = "%"}, {state_change = true})))
+      capabilities.knob.rotateAmount({value = 1}, {state_change = true})))
   end
 )
 
@@ -112,7 +111,7 @@ test.register_coroutine_test(
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({value = 100, unit = "%"}, {state_change = true})))
+      capabilities.knob.rotateAmount({value = 100}, {state_change = true})))
   end
 )
 
@@ -126,7 +125,7 @@ test.register_coroutine_test(
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({value = -100, unit = "%"}, {state_change = true})))
+      capabilities.knob.rotateAmount({value = -100}, {state_change = true})))
   end
 )
 
@@ -141,7 +140,7 @@ test.register_coroutine_test(
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({value = 3, unit = "%"}, {state_change = true})))
+      capabilities.knob.rotateAmount({value = 3}, {state_change = true})))
   end
 )
 
@@ -156,7 +155,7 @@ test.register_coroutine_test(
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.rotateAmount({value = 5, unit = "%"}, {state_change = true})))
+      capabilities.knob.rotateAmount({value = 5}, {state_change = true})))
   end
 )
 
@@ -171,7 +170,7 @@ test.register_coroutine_test(
       attr_report_data, MFG_CODE):from_endpoint(0x48)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.heldRotateAmount({value = 15, unit = "%"}, {state_change = true})))
+      capabilities.knob.heldRotateAmount({value = 15}, {state_change = true})))
   end
 )
 
@@ -187,7 +186,7 @@ test.register_coroutine_test(
       attr_report_data, MFG_CODE):from_endpoint(0x48)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.knob.heldRotateAmount({value = 1, unit = "%"}, {state_change = true})))
+      capabilities.knob.heldRotateAmount({value = 1}, {state_change = true})))
   end
 )
 

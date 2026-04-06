@@ -21,7 +21,6 @@ local AQARA_KNOB = {
   ["lumi.remote.rkba01"] = { mfr = "LUMI", type = "CR2032", quantity = 2 },   -- Aqara Wireless Knob Switch H1
 }
 
-
 local function device_init(driver, device)
   local configuration = {
     {
@@ -36,7 +35,7 @@ local function device_init(driver, device)
 
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
   for _, attribute in ipairs(configuration) do
-      device:add_configured_attribute(attribute)
+    device:add_configured_attribute(attribute)
   end
 end
 
@@ -52,12 +51,13 @@ local function device_added(self, device)
   device:emit_event(capabilities.batteryLevel.battery.normal())
   device:emit_event(capabilities.batteryLevel.type(type))
   device:emit_event(capabilities.batteryLevel.quantity(quantity))
-  device:emit_event(capabilities.knob.rotateAmount({value = 0, unit = "%"}))
-  device:emit_event(capabilities.knob.heldRotateAmount({value = 0, unit = "%"}))
+  device:emit_event(capabilities.knob.rotateAmount(0))
+  device:emit_event(capabilities.knob.heldRotateAmount(0))
 end
 
 local function do_configure(driver, device)
   device:configure()
+  -- Set manufacturer-specific attribute to enable "Operation Mode" for rotation reports
   device:send(cluster_base.write_manufacturer_specific_attribute(device,
     PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1))
   device:emit_event(capabilities.knob.supportedAttributes({"rotateAmount", "heldRotateAmount"}, {state_change = true}))
@@ -68,7 +68,7 @@ local function button_monitor_handler(driver, device, value, zb_rx)
 
   if val == 1 then     -- push
     device:emit_event(capabilities.button.button.pushed({ state_change = true }))
-  elseif val == 2 then -- dobule push
+  elseif val == 2 then -- double push
     device:emit_event(capabilities.button.button.double({ state_change = true }))
   elseif val == 0 then -- down_hold
     device:emit_event(capabilities.button.button.held({ state_change = true }))
@@ -81,9 +81,11 @@ local function rotation_monitor_per_handler(driver, device, value, zb_rx)
 
   local end_point = zb_rx.address_header.src_endpoint.value
   local raw_val = utils.round(value.value)
+
   if raw_val > 0x7FFF then
     raw_val = raw_val - 0x10000
   end
+
   local sensitivity = tonumber(device.preferences[SENSITIVITY_KEY])
   local factor = SENSITIVITY_FACTORS[sensitivity] or 1.0
   local intermediate_val = raw_val * factor
@@ -94,9 +96,9 @@ local function rotation_monitor_per_handler(driver, device, value, zb_rx)
   if val == 0 then
     return
   elseif end_point == 0x47 then -- normal
-    device:emit_event(capabilities.knob.rotateAmount({value = val, unit = "%"}, {state_change = true}))
-elseif end_point == 0x48 then -- press
-    device:emit_event(capabilities.knob.heldRotateAmount({value = val, unit = "%"}, {state_change = true}))
+    device:emit_event(capabilities.knob.rotateAmount({value = val}, {state_change = true}))
+  elseif end_point == 0x48 then -- press
+    device:emit_event(capabilities.knob.heldRotateAmount({value = val}, {state_change = true}))
   end
 end
 
@@ -133,7 +135,6 @@ local aqara_knob_switch_handler = {
       },
     }
   },
-
   can_handle = require("aqara-knob.can_handle"),
 }
 
