@@ -11,8 +11,8 @@ SwitchFields.HUESAT_SUPPORT = "huesatSupport"
 SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 
 -- These values are a "sanity check" to check that values we are getting are reasonable
-SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = 1000 -- 15000 Kelvin
-SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = 67 -- 1000 Kelvin
+SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = 67   -- 15000 Kelvin
+SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = 1000 --  1000 Kelvin
 
 -- These values are the config bounds in the default Matter profiles (e.g. light-level-colorTemperature, light-color-level)
 SwitchFields.DEFAULT_MIRED_MIN = 154 -- 6500 Kelvin
