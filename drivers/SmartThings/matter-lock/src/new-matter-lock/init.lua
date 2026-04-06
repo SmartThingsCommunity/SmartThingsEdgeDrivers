@@ -1550,6 +1550,19 @@ local function clear_user_response_handler(driver, device, ib, response)
     delete_aliro_from_table_as_user(device, userIdx)
     delete_week_schedule_from_table_as_user(device, userIdx)
     delete_year_schedule_from_table_as_user(device, userIdx)
+    if cmdName == "defaultSchedule" then
+      -- Update commandResult
+      local command_result_info = {
+        commandName = "addCredential",
+        userIndex = userIdx,
+        statusCode = "failure"
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+      return
+    end
   else
     device.log.warn(string.format("Failed to clear user: %s", status))
   end
@@ -2418,17 +2431,22 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
     local cmdName = "addCredential"
     local credIdx = device:get_field(lock_utils.CRED_INDEX)
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    if status == "success" then
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    else
+      local ep = find_default_endpoint(device, clusters.DoorLock.ID)
+      device:send(DoorLock.server.commands.ClearUser(device, ep, userIdx))
+    end
     return
   end
 
