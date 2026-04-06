@@ -67,7 +67,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 187, fields.TRANSITION_TIME_FAST, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 60, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -83,7 +83,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 840, fields.TRANSITION_TIME_FAST, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 271, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -99,12 +99,12 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 467, fields.TRANSITION_TIME_FAST, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 151, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -162,7 +162,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

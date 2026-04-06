@@ -86,27 +86,27 @@ matterManufacturer:
     deviceProfileName: temperature-humidity-battery
   # Ikea
   - id: "4476/32773"
-    deviceLabel: TIMMERFLOTTE temp/hmd sensor
+    deviceLabel: TIMMERFLOTTE Temperature/Humidity Sensor
     vendorId: 0x117C
     productId: 0x8005
     deviceProfileName: temperature-humidity-battery
   - id: "4476/32774"
-    deviceLabel: KLIPPBOK Matter water leak sensor smart
+    deviceLabel: KLIPPBOK Water Leak Sensor
     vendorId: 0x117C
     productId: 0x8006
     deviceProfileName: leak-battery
   - id: "4476/12288"
-    deviceLabel: MYGGSPRAY wrlss mtn sensor
+    deviceLabel: MYGGSPRAY Motion Sensor
     vendorId: 0x117C
     productId: 0x3000
     deviceProfileName: motion-illuminance-battery
   - id: "4476/12289"
-    deviceLabel: ALPSTUGA Matter air quality sensor smart
+    deviceLabel: ALPSTUGA Air Quality Sensor
     vendorId: 0x117C
     productId: 0x3001
     deviceProfileName: aqs-modular-temp-humidity
   - id: "4476/32775"
-    deviceLabel: MYGGBETT Matter door/window sensor smart
+    deviceLabel: MYGGBETT Door/Window Sensor
     vendorId: 0x117C
     productId: 0x8007
     deviceProfileName: contact-battery

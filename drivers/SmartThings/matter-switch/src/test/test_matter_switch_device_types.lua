@@ -676,7 +676,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_onoff,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -686,7 +686,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_dimmer,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -696,7 +696,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_color_dimmer,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -706,7 +706,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_onoff_client,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -716,7 +716,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_switch_vendor_override,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -726,7 +726,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_mounted_on_off_control,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -736,7 +736,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_mounted_dimmable_load_control,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -746,7 +746,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_water_valve,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -756,7 +756,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_parent_client_child_server,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -766,7 +766,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_parent_child_switch_types,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -776,7 +776,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_parent_child_different_types,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -786,7 +786,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_parent_child_unsupported_device_type,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -796,7 +796,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_light_level_motion,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 

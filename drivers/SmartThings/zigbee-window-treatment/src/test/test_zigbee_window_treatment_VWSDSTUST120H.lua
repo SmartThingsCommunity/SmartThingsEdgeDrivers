@@ -51,7 +51,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0001_messge})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -70,7 +70,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0001_messge})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -94,7 +94,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -121,7 +121,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -143,7 +143,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -160,7 +160,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -177,7 +177,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -194,7 +194,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -211,7 +211,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -229,7 +229,7 @@ test.register_coroutine_test(
       capabilities.mode.mode("Delete upper limit")))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -247,7 +247,7 @@ test.register_coroutine_test(
       capabilities.mode.mode("Set the upper limit")))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -265,7 +265,7 @@ test.register_coroutine_test(
       capabilities.mode.mode("Delete lower limit")))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -283,7 +283,7 @@ test.register_coroutine_test(
       capabilities.mode.mode("Set the lower limit")))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -301,7 +301,7 @@ test.register_coroutine_test(
       capabilities.hardwareFault.hardwareFault.clear()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -319,7 +319,7 @@ test.register_coroutine_test(
       capabilities.hardwareFault.hardwareFault.detected()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -340,7 +340,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -361,7 +361,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 

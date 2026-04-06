@@ -432,7 +432,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_aqs,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -448,7 +448,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -473,7 +473,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs_preconfigured,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -530,7 +530,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -574,7 +574,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -612,7 +612,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -660,7 +660,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -721,7 +721,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -777,7 +777,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -799,7 +799,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -870,7 +870,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -888,7 +888,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs_preconfigured,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -914,7 +914,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs_preconfigured,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 

@@ -350,7 +350,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -404,7 +404,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -458,7 +458,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -488,7 +488,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -534,7 +534,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -569,7 +569,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -628,7 +628,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -679,7 +679,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -709,7 +709,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -719,7 +719,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_parent_child_endpoints_non_sequential,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -732,7 +732,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "light-binary" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

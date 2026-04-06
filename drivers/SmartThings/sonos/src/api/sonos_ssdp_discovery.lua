@@ -421,12 +421,11 @@ function sonos_ssdp.spawn_persistent_ssdp_task()
 
     if is_new_information then
       local headers = SonosApi.make_headers()
-      local discovery_info, err = SonosApi.RestApi.get_player_info(
-        net_url.parse(
-          string.format("https://%s:%s", sonos_ssdp_info.ip, SonosApi.DEFAULT_SONOS_PORT)
-        ),
-        headers
+      local parsed_wss_url = net_url.parse(sonos_ssdp_info.wss_url) or {}
+      local base_url = net_url.parse(
+        string.format("https://%s:%s", parsed_wss_url.host, parsed_wss_url.port or SonosApi.DEFAULT_SONOS_PORT)
       )
+      local discovery_info, err = SonosApi.RestApi.get_player_info(base_url, headers)
       if not discovery_info then
         log.error(string.format("Error getting discovery info from SSDP response: %s", err))
       elseif discovery_info._objectType == "globalError" then

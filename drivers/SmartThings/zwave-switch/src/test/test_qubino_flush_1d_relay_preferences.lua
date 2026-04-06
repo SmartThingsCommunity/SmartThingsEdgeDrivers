@@ -48,7 +48,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -72,7 +72,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -96,7 +96,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
