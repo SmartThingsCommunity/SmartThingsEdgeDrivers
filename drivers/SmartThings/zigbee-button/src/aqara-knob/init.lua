@@ -46,7 +46,7 @@ local function device_added(self, device)
 
   device:emit_event(capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } }))
   device:emit_event(capabilities.button.numberOfButtons({ value = 1 }))
-  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, 
+  button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button,
     capabilities.button.button.NAME, capabilities.button.button.pushed({state_change = false}))
   device:emit_event(capabilities.batteryLevel.battery.normal())
   device:emit_event(capabilities.batteryLevel.type(type))

@@ -93,7 +93,7 @@ test.register_coroutine_test(
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -107,7 +107,7 @@ test.register_coroutine_test(
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 200 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -121,7 +121,7 @@ test.register_coroutine_test(
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 65386 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -136,7 +136,7 @@ test.register_coroutine_test(
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 3 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -151,7 +151,7 @@ test.register_coroutine_test(
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 5 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x47)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -166,7 +166,7 @@ test.register_coroutine_test(
     local attr_report_data = {{ 0x0232, data_types.Uint16.ID, 15 }}
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x48)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -182,7 +182,7 @@ test.register_coroutine_test(
     }
     test.socket.zigbee:__queue_receive({
       mock_device.id,
-      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID, 
+      zigbee_test_utils.build_attribute_report(mock_device, PRIVATE_CLUSTER_ID,
       attr_report_data, MFG_CODE):from_endpoint(0x48)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
