@@ -917,7 +917,7 @@ zwaveManufacturer:
     productType: 0x0102
     deviceProfileName: fibaro-dimmer-2
   - id: 013C/0005/008A
-    deviceLabel: Philio Dimmer Switch
+    deviceLabel: Philio Dimmer Switch PAD19
     manufacturerId: 0x013C
     productType: 0x0005
     productId: 0x008A
