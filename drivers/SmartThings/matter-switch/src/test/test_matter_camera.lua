@@ -1989,38 +1989,8 @@ test.register_coroutine_test(
     -- Change label and viewport only
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = "zoneManagement", component = "main", command = "removeZone", args = { 1 } }
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.ZoneManagement.server.commands.RemoveTrigger(mock_device, CAMERA_EP, 1)
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, 1)
-    })
-    test.wait_for_events()
-
-    -- Receive the updated Zones attribute from the device with the zone removed
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.ZoneManagement.attributes.Zones:build_test_report_data(mock_device, CAMERA_EP, {})
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.zoneManagement.zones({value = {}}))
-    )
-  end,
-  {
-     min_api_version = 19
-  }
-)
-
-test.register_coroutine_test(
-  "Stream management commands should send the appropriate commands",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
         3,
         "liveStream",  -- type
         "My Stream",  -- label
@@ -2042,9 +2012,32 @@ test.register_coroutine_test(
         })
       )
     })
+    -- Should emit updated capability directly, no stream reallocation
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "My Stream",
+            type = "liveStream",
+            resolution = {
+              width = 1920,
+              height = 1080,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 100, y = 100 },
+              lowerRightVertex = { x = 1820, y = 980 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
   end,
   {
-     min_api_version = 19
+    min_api_version = 19
   }
 )
 

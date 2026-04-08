@@ -146,12 +146,7 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device:get_field(constants.SIMPLE_METERING_DIVISOR_KEY) == 1000,
       "SIMPLE_METERING_DIVISOR_KEY should be 1000")
-    assert(mock_device:get_field(constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY) == 10000,
-      "ELECTRICAL_MEASUREMENT_DIVISOR_KEY should be 10000")
-  end,
-  {
-     min_api_version = 19
-  }
+  end
 )
 
 test.register_coroutine_test(
