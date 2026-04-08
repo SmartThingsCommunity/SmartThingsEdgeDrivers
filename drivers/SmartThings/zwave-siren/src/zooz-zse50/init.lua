@@ -44,21 +44,22 @@ end
 
 local function playTone(device, tone_id)
   local tones_list = device:get_field("TONES_LIST")
-  local default_tone = device:get_field("TONE_DEFAULT")
+  local default_tone = device:get_field("TONE_DEFAULT") or 1
   local playbackMode = tonumber(device.preferences.playbackMode)
-  local duration
-  if tone_id > 0 then
+  local duration = 0
+
+  if playbackMode == 1 then
+    duration = device.preferences.playbackDuration
+  elseif playbackMode == 2 then
+    duration = duration * device.preferences.playbackLoop
+  elseif tones_list ~= nil and tone_id > 0 then
     if tone_id == 0xFF then
       duration = tones_list[tonumber(default_tone)].duration
     else
       duration = tones_list[tonumber(tone_id)].duration
     end
-    if playbackMode == 1 then
-      duration = device.preferences.playbackDuration
-    elseif playbackMode == 2 then
-      duration = duration * device.preferences.playbackLoop
-    end
   end
+
   log.info(string.format("Playing Tone: %s, playbackMode %s, duration %ss", tone_id, playbackMode, duration))
 
   device:send(SoundSwitch:TonePlaySet({ tone_identifier = tone_id }))
@@ -197,7 +198,7 @@ local function tone_playing(self, device, tone_id)
     device:emit_event(capabilities.chime.chime.off())
     device:emit_event(capabilities.mode.mode("Off"))
   else
-    local toneInfo = tones_list[tone_id] or { name = "Unknown", duration = "0" }
+    local toneInfo = (tones_list or {})[tone_id] or { name = "Unknown", duration = "0" }
     local modeName = getModeName(tone_id, toneInfo)
     device:emit_event(capabilities.alarm.alarm.both())
     device:emit_event(capabilities.chime.chime.chime())
