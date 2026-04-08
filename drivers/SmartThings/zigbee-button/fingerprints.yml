@@ -272,7 +272,7 @@ zigbeeManufacturer:
     deviceLabel: SNZB-01M
     manufacturer: SONOFF
     model: SNZB-01M
-    deviceProfileName: sonoff-buttons-battery
+    deviceProfileName: four-buttons-battery
 zigbeeGeneric:
   - id: "generic-button-sensor"
     deviceLabel: "Zigbee Generic Button"

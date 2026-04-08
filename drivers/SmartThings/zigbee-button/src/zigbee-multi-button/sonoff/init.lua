@@ -21,7 +21,9 @@ local function sonoff_attr_handler(driver, device, value, zb_rx)
   if event_func then
     local comp = device.profile.components[button_name]
     if comp then
-        device:emit_component_event(comp, event_func({state_change = true}))
+      local event = event_func({ state_change = true })
+      device:emit_component_event(comp, event)
+      device:emit_event(event)
     end
   end
 end

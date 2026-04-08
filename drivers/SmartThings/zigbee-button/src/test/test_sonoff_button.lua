@@ -11,7 +11,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
-    profile = t_utils.get_profile_definition("sonoff-buttons-battery.yml"),
+    profile = t_utils.get_profile_definition("four-buttons-battery.yml"),
     zigbee_endpoints = {
       [1] = {
         id = 1,
@@ -130,6 +130,9 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.pushed({ state_change = true }))
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
+    )
   end
 )
 
@@ -148,6 +151,9 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.double({ state_change = true }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.button.button.double({ state_change = true }))
     )
   end
 )
@@ -168,6 +174,9 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.held({ state_change = true }))
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.button.button.held({ state_change = true }))
+    )
   end
 )
 
@@ -186,6 +195,9 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button1", capabilities.button.button.pushed_3x({ state_change = true }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.button.button.pushed_3x({ state_change = true }))
     )
   end
 )
@@ -207,6 +219,9 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("button2", capabilities.button.button.pushed({ state_change = true }))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
     )
   end
 )
