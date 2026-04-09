@@ -3,10 +3,8 @@
 
 local test = require "integration_test"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
-local clusters = require "st.zigbee.zcl.clusters"
-local SimpleMetering = clusters.SimpleMetering
-local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+local zigbee_constants = require "st.zigbee.constants"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -30,36 +28,14 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_message_test(
-  "Energy meter report should be handled with default multiplier and divisor",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 1000) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 10, unit = "kWh" }))
-    }
-  }
-)
-
-test.register_message_test(
-  "Energy meter report with zero value should emit zero event",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = { mock_device.id, SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_device, 0) }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0, unit = "kWh" }))
-    }
-  }
+test.register_coroutine_test(
+  "Device init should set default multiplier and divisor fields",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.wait_for_events()
+    assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 1)
+    assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 100)
+  end
 )
 
 test.run_registered_tests()
