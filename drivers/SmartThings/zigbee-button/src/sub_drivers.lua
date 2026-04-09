@@ -4,6 +4,7 @@
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
    lazy_load_if_possible("aqara"),
+   lazy_load_if_possible("aqara-knob"),
    lazy_load_if_possible("pushButton"),
    lazy_load_if_possible("frient"),
    lazy_load_if_possible("zigbee-multi-button"),

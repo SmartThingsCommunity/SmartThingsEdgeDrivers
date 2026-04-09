@@ -99,7 +99,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -131,7 +131,7 @@ test.register_coroutine_test(
     mock_device_e1:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -166,7 +166,7 @@ test.register_coroutine_test(
     mock_device_h1_double_rocker:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -187,7 +187,7 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -208,7 +208,7 @@ test.register_coroutine_test(
       capabilities.button.button.double({ state_change = true })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -229,7 +229,7 @@ test.register_coroutine_test(
       capabilities.button.button.held({ state_change = true })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -248,7 +248,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 test.register_message_test(
@@ -266,7 +266,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 test.register_message_test(
@@ -284,7 +284,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -328,7 +328,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -350,7 +350,7 @@ test.register_coroutine_test(
       capabilities.batteryLevel.quantity(1)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

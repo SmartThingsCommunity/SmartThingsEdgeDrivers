@@ -92,7 +92,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "smoke-co-temp-humidity-comeas-battery" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -107,7 +107,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -127,7 +127,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
