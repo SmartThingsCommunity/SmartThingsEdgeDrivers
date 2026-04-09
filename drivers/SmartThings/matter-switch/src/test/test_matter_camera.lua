@@ -406,6 +406,71 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Software version change should initialize camera capabilities when profile is unchanged",
+  function()
+    local camera_handler = require "sub_drivers.camera"
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+    local button_cfg = require("switch_utils.device_configuration").ButtonCfg
+
+    local match_profile_called = false
+    local init_called = false
+    local subscribe_called = false
+    local configure_buttons_called = false
+
+    local fake_device = {
+      matter_version = { hardware = 1, software = 3 },
+      profile = { id = "camera" },
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          device_types = {
+            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+          }
+        },
+        {
+          endpoint_id = DOORBELL_EP,
+          device_types = {
+            {device_type_id = 0x0143, device_type_revision = 1} -- Doorbell
+          }
+        }
+      },
+      subscribe = function() subscribe_called = true end,
+      get_endpoints = function() return { DOORBELL_EP } end,
+    }
+
+    local original_match_profile = camera_cfg.match_profile
+    local original_init = camera_cfg.initialize_camera_capabilities
+    local original_configure_buttons = button_cfg.configure_buttons
+
+    camera_cfg.match_profile = function()
+      match_profile_called = true
+      return false
+    end
+    camera_cfg.initialize_camera_capabilities = function() init_called = true end
+    button_cfg.configure_buttons = function() configure_buttons_called = true end
+
+    camera_handler.lifecycle_handlers.infoChanged(nil, fake_device, nil, {
+      old_st_store = {
+        matter_version = { hardware = 1, software = 1 },
+        profile = fake_device.profile,
+      }
+    })
+
+    camera_cfg.match_profile = original_match_profile
+    camera_cfg.initialize_camera_capabilities = original_init
+    button_cfg.configure_buttons = original_configure_buttons
+
+    assert(match_profile_called, "match_profile should be called on software version change")
+    assert(init_called, "initialize_camera_capabilities should be called")
+    assert(subscribe_called, "subscribe should be called")
+    assert(configure_buttons_called, "configure_buttons should be called")
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
   "Reports mapping to EnabledState capability data type should generate appropriate events",
   function()
     update_device_profile()
