@@ -57,7 +57,10 @@ test.register_coroutine_test(
       mock_device.id,
       Basic.attributes.PowerSource:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -102,7 +105,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_bind_request(mock_device, zigbee_test_utils.mock_hub_eui, Basic.ID)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -122,7 +128,10 @@ test.register_coroutine_test(
       mock_device.id,
       Basic.attributes.PowerSource:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -130,7 +139,10 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 55) })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(20)) )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -138,7 +150,21 @@ test.register_coroutine_test(
   function()
     test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 0) })
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(0)) )
-  end
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Battery voltage above max should clamp to 100 percent",
+  function()
+    test.socket.zigbee:__queue_receive({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:build_test_attr_report(mock_device, 65) })
+    test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(100)) )
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

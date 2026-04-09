@@ -49,6 +49,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 18.5, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -70,6 +73,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.freeze())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -91,6 +97,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -122,7 +131,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -153,7 +165,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -173,7 +188,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.freeze())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -193,7 +211,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.freeze())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -214,7 +235,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -230,6 +254,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState("idle"))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -246,6 +273,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState("heating"))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -262,6 +292,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 18.5, unit = "C" }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -278,6 +311,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 25 }))
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -317,7 +353,10 @@ test.register_coroutine_test(
       test.wait_for_events()
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -359,7 +398,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -396,7 +438,10 @@ test.register_coroutine_test(
       test.wait_for_events()
 
       test.socket.zigbee:__set_channel_ordering("relaxed")
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -438,7 +483,10 @@ test.register_coroutine_test(
                                        })
 
       mock_device_maestro:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -450,7 +498,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     -- Event not to be handled by driver
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({preferences = { lock = 1 } }))
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -460,7 +511,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({preferences = { lock = 0 } }))
     test.socket.zigbee:__expect_send({mock_device.id, ThermostatUserInterfaceConfiguration.attributes.KeypadLockout:write(mock_device, 0x00)})
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -495,7 +549,10 @@ test.register_coroutine_test(
       mock_device.id,
       RelativeHumidity.attributes.MeasuredValue:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.run_registered_tests()

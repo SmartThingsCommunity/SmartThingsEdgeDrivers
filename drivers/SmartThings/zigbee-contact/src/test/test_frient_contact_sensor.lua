@@ -46,7 +46,10 @@ test.register_coroutine_test(
             test.socket.capability:__queue_receive({ mock_device.id, { capability = "refresh", component = "main", command = "refresh", args = {} } })
             test.socket.zigbee:__expect_send({ mock_device.id, IASZone.attributes.ZoneStatus:read(mock_device) })
             test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryVoltage:read(mock_device) })
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -130,7 +133,10 @@ test.register_coroutine_test(
             })
 
             mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -146,6 +152,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(0))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -162,38 +171,11 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
-
--- test.register_coroutine_test(
---         "Health check should check all relevant attributes",
---         function()
---             test.wait_for_events()
-
---             test.mock_time.advance_time(50000) -- battery is 21600 for max reporting interval
---             test.socket.zigbee:__set_channel_ordering("relaxed")
-
---             test.socket.zigbee:__expect_send(
---                     {
---                         mock_device.id,
---                         PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
---                     }
---             )
-
---             test.socket.zigbee:__expect_send(
---                     {
---                         mock_device.id,
---                         IASZone.attributes.ZoneStatus:read(mock_device)
---                     }
---             )
---         end,
---         {
---             test_init = function()
---                 test.mock_device.add_test_device(mock_device)
---                 test.timer.__create_and_queue_test_time_advance_timer(30, "interval", "health_check")
---             end
---         }
--- )
 
 test.register_message_test(
         "Refresh should read all necessary attributes",
@@ -224,7 +206,8 @@ test.register_message_test(
             }
         },
         {
-            inner_block_ordering = "relaxed"
+            inner_block_ordering = "relaxed",
+            min_api_version = 19
         }
 )
 
@@ -241,6 +224,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -257,6 +243,47 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
             }
+        },
+        {
+           min_api_version = 19
+        }
+)
+
+test.register_message_test(
+        "ZoneStatusChangeNotification should be handled: contact/open",
+        {
+            {
+                channel = "zigbee",
+                direction = "receive",
+                message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0001, 0x00) }
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.open())
+            }
+        },
+        {
+           min_api_version = 19
+        }
+)
+
+test.register_message_test(
+        "ZoneStatusChangeNotification should be handled: contact/closed",
+        {
+            {
+                channel = "zigbee",
+                direction = "receive",
+                message = { mock_device.id, IASZone.client.commands.ZoneStatusChangeNotification.build_test_rx(mock_device, 0x0000, 0x00) }
+            },
+            {
+                channel = "capability",
+                direction = "send",
+                message = mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed())
+            }
+        },
+        {
+           min_api_version = 19
         }
 )
 

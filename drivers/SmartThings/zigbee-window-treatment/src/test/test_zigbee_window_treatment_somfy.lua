@@ -76,7 +76,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -126,7 +129,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -163,7 +169,10 @@ test.register_coroutine_test(
       })
       test.mock_time.advance_time(3)
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -242,7 +251,10 @@ test.register_coroutine_test(
           }
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_message_test(
@@ -263,6 +275,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, WindowCovering.server.commands.UpOrOpen(mock_device) }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -287,6 +302,9 @@ test.register_message_test(
           WindowCovering.server.commands.DownOrClose(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -306,6 +324,9 @@ test.register_message_test(
           WindowCovering.server.commands.Stop(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -331,6 +352,9 @@ test.register_message_test(
           WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100 - 33)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -356,6 +380,9 @@ test.register_message_test(
           WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
         }
       }
+    },
+    {
+       min_api_version = 19
     }
 )
 
@@ -381,7 +408,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 99)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -405,7 +435,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -423,7 +456,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -447,7 +483,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
     })
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 test.register_coroutine_test(
@@ -469,7 +508,10 @@ test.register_coroutine_test(
         mock_device.id,
         WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -502,7 +544,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.CurrentPositionLiftPercentage:read(mock_device)
       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -524,7 +569,111 @@ test.register_coroutine_test(
             }
           }
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_message_test(
+    "Attribute handler reports closed when level is 0",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 100)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 0 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
+      }
+    },
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_message_test(
+    "Attribute handler reports open when level is 100",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device.id,
+          WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 0)
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = {
+          mock_device.id,
+          { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 100 } }
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
+      }
+    },
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_coroutine_test(
+    "Cancel existing poll timer when a new partial level report arrives",
+    function()
+      -- First attr: level 90 creates T1 via overwrite_existing_timer_if_needed
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
+      )
+      -- Second attr before T1 fires: overwrite_existing_timer_if_needed cancels T1 and stores T2
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 15)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 85 } }
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
+      )
+      -- T2 fires; T1 was cancelled so only one partially_open
+      test.mock_time.advance_time(2)
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
+      )
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

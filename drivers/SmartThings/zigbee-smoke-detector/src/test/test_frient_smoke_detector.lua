@@ -28,6 +28,12 @@ local DEVELCO_BASIC_PRIMARY_SW_VERSION_ATTR = 0x8000
 local DEVELCO_MANUFACTURER_CODE = 0x1015
 local cluster_base = require "st.zigbee.cluster_base"
 local defaultWarningDuration = 240
+local messages = require "st.zigbee.messages"
+local default_response = require "st.zigbee.zcl.global_commands.default_response"
+local zb_const = require "st.zigbee.constants"
+local Status = require "st.zigbee.generated.types.ZclStatus"
+local zcl_messages = require "st.zigbee.zcl"
+local ALARM_COMMAND = "alarmCommand"
 
 
 local mock_device = test.mock_device.build_test_zigbee_device(
@@ -75,7 +81,10 @@ test.register_coroutine_test(
             })
 
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -194,7 +203,10 @@ test.register_coroutine_test(
             })
 
             mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -210,6 +222,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(14))
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -227,6 +242,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -244,6 +262,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -262,7 +283,10 @@ test.register_coroutine_test(
             )
 
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_message_test(
@@ -286,6 +310,9 @@ test.register_message_test(
                 { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
             }
             }
+        },
+        {
+           min_api_version = 19
         }
 )
 
@@ -363,7 +390,8 @@ test.register_message_test(
             }
         },
         {
-            inner_block_ordering = "relaxed"
+            inner_block_ordering = "relaxed",
+            min_api_version = 19
         }
 )
 
@@ -398,7 +426,10 @@ test.register_coroutine_test(
 
             test.socket.zigbee:__set_channel_ordering("relaxed")
 
-        end
+        end,
+        {
+           min_api_version = 19
+        }
 )
 
 test.register_coroutine_test(
@@ -431,7 +462,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -465,7 +499,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -498,7 +535,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -532,7 +572,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -606,7 +649,106 @@ test.register_coroutine_test(
                   string.format("Version mismatch! Expected '%s' but got '%s'",
                   expected_hex, stored_version or "nil"))
         end
-    end
+    end,
+    {
+       min_api_version = 19
+    }
+)
+
+local function build_default_response_msg(device, cluster, command, status)
+  local addr_header = messages.AddressHeader(
+    device:get_short_address(),
+    device.fingerprinted_endpoint_id,
+    zb_const.HUB.ADDR,
+    zb_const.HUB.ENDPOINT,
+    zb_const.HA_PROFILE_ID,
+    cluster
+  )
+  local default_response_body = default_response.DefaultResponse(command, status)
+  local zcl_header = zcl_messages.ZclHeader({
+    cmd = data_types.ZCLCommandId(default_response_body.ID)
+  })
+  local message_body = zcl_messages.ZclMessageBody({
+    zcl_header = zcl_header,
+    zcl_body = default_response_body
+  })
+  return messages.ZigbeeMessageRx({
+    address_header = addr_header,
+    body = message_body
+  })
+end
+
+test.register_message_test(
+    "IASZone attribute report should be handled: detected",
+    {
+        {
+            channel = "zigbee",
+            direction = "receive",
+            message = { mock_device.id, IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0001) }
+        },
+        {
+            channel = "capability",
+            direction = "send",
+            message = mock_device:generate_test_message("main", smokeDetector.smoke.detected())
+        }
+    },
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_coroutine_test(
+    "IASZone attribute report should be handled: clear",
+    function()
+        test.timer.__create_and_queue_test_time_advance_timer(6, "oneshot")
+        test.socket.zigbee:__queue_receive({
+            mock_device.id,
+            IASZone.attributes.ZoneStatus:build_test_attr_report(mock_device, 0x0000)
+        })
+        test.mock_time.advance_time(6)
+        test.socket.capability:__expect_send(
+                mock_device:generate_test_message("main", smokeDetector.smoke.clear())
+        )
+        test.wait_for_events()
+    end,
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_coroutine_test(
+    "default_response_handler: siren active, emit siren then off after delay",
+    function()
+        mock_device:set_field(ALARM_COMMAND, 1)
+        test.timer.__create_and_queue_test_time_advance_timer(ALARM_DEFAULT_MAX_DURATION, "oneshot")
+        test.socket.zigbee:__queue_receive({
+            mock_device.id,
+            build_default_response_msg(mock_device, IASWD.ID, IASWD.server.commands.StartWarning.ID, Status.SUCCESS)
+        })
+        test.socket.capability:__expect_send(mock_device:generate_test_message("main", alarm.alarm.siren()))
+        test.mock_time.advance_time(ALARM_DEFAULT_MAX_DURATION)
+        test.socket.capability:__expect_send(mock_device:generate_test_message("main", alarm.alarm.off()))
+        test.wait_for_events()
+    end,
+    {
+       min_api_version = 19
+    }
+)
+
+test.register_coroutine_test(
+    "default_response_handler: alarm off, emit off",
+    function()
+        mock_device:set_field(ALARM_COMMAND, 0)
+        test.socket.zigbee:__queue_receive({
+            mock_device.id,
+            build_default_response_msg(mock_device, IASWD.ID, IASWD.server.commands.StartWarning.ID, Status.SUCCESS)
+        })
+        test.socket.capability:__expect_send(mock_device:generate_test_message("main", alarm.alarm.off()))
+        test.wait_for_events()
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()

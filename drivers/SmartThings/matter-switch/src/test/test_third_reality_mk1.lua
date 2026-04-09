@@ -232,7 +232,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message(key == 1 and "main" or "F" .. key, capabilities.button.button.pushed({state_change = true}))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 19
+  }
 )
 
 -- run the tests

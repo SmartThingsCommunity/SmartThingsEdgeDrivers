@@ -267,7 +267,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         aqara_mock_children[aqara_child2_ep]:generate_test_message("main", capabilities.switch.switch.on())
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.register_coroutine_test(
@@ -344,7 +347,10 @@ test.register_coroutine_test(
           energy = 39.0
         }))
       )
-    end
+    end,
+    {
+       min_api_version = 19
+    }
 )
 
 test.run_registered_tests()
