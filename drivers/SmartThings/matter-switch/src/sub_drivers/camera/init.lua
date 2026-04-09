@@ -49,12 +49,14 @@ end
 function CameraLifecycleHandlers.info_changed(driver, device, event, args)
   local software_version_changed = device.matter_version ~= nil and args.old_st_store.matter_version ~= nil and
     device.matter_version.software ~= args.old_st_store.matter_version.software
+  local profile_update_requested = false
+  local profile_changed = not switch_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true })
 
   if software_version_changed then
-    camera_cfg.match_profile(device, false, false)
+    profile_update_requested = camera_cfg.match_profile(device, false, false)
   end
 
-  if not switch_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
+  if profile_changed or (software_version_changed and not profile_update_requested) then
     camera_cfg.initialize_camera_capabilities(device)
     device:subscribe()
     if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
