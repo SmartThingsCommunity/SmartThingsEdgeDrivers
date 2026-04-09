@@ -423,10 +423,155 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 17
+       min_api_version = 17,
+       max_api_version = 19
     }
 )
 
+test.register_coroutine_test(
+    "lifecycle configure event should configure device",
+    function ()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.device_lifecycle:__queue_receive({mock_device.id, "doConfigure"})
+
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
+
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         OnOff.attributes.OnOff:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         Level.attributes.CurrentLevel:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTemperatureMireds:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.CurrentHue:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.CurrentSaturation:read(mock_device)
+      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         zigbee_test_utils.build_bind_request(mock_device,
+                                                                              zigbee_test_utils.mock_hub_eui,
+                                                                              OnOff.ID)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         SimpleMetering.attributes.InstantaneousDemand:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         SimpleMetering.attributes.CurrentSummationDelivered:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ElectricalMeasurement.attributes.ActivePower:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 300)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         zigbee_test_utils.build_bind_request(mock_device,
+                                                                              zigbee_test_utils.mock_hub_eui,
+                                                                              Level.ID)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         Level.attributes.CurrentLevel:configure_reporting(mock_device, 1, 3600, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         zigbee_test_utils.build_bind_request(mock_device,
+                                                                              zigbee_test_utils.mock_hub_eui,
+                                                                              ColorControl.ID)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.ColorTemperatureMireds:configure_reporting(mock_device, 1, 3600, 0x0010)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.CurrentHue:configure_reporting(mock_device, 1, 3600, 0x0010)
+      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ColorControl.attributes.CurrentSaturation:configure_reporting(mock_device, 1, 3600, 0x0010)
+      })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ColorControl.attributes.ColorTempPhysicalMaxMireds:configure_reporting(mock_device, 1, 43200, 1)
+      })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ColorControl.attributes.ColorTempPhysicalMinMireds:configure_reporting(mock_device, 1, 43200, 1)
+      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         zigbee_test_utils.build_bind_request(mock_device,
+                                                                              zigbee_test_utils.mock_hub_eui,
+                                                                              SimpleMetering.ID)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         SimpleMetering.attributes.InstantaneousDemand:configure_reporting(mock_device, 5, 3600, 5)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         SimpleMetering.attributes.CurrentSummationDelivered:configure_reporting(mock_device, 5, 3600, 1)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         zigbee_test_utils.build_bind_request(mock_device,
+                                                                              zigbee_test_utils.mock_hub_eui,
+                                                                              ElectricalMeasurement.ID)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ElectricalMeasurement.attributes.ActivePower:configure_reporting(mock_device, 5, 3600, 5)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                        mock_device.id,
+                                        ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
+                                      })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         SimpleMetering.attributes.Multiplier:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({
+                                         mock_device.id,
+                                         SimpleMetering.attributes.Divisor:read(mock_device)
+                                       })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
+
+      mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    end,
+    {
+       min_api_version = 20
+    }
+)
 -- test.register_coroutine_test(
 --     "health check coroutine",
 --     function()
