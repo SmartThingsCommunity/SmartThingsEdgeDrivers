@@ -1,3 +1,10 @@
+zigbeeManufacturer:
+  #MultIR
+  - id: "MultIR/MIR-WA100"
+    deviceLabel: "Wireless Water Detector"
+    manufacturer: MultIR
+    model: MIR-WA100
+    deviceProfileName: generic-waterleak-sensor
 zigbeeGeneric:
   - id: "generic-sensor"
     deviceLabel: "Zigbee Generic Sensor"
