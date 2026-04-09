@@ -13,4 +13,6 @@ local function can_handle(opts, driver, device, cmd, ...)
   return false
 end
 
+-- Random comment to force a change for testing purposes 1
+
 return can_handle

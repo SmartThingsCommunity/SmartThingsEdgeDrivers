@@ -1,6 +1,6 @@
 name: Run Jenkins driver tests
 on:
-  pull_request:
+  pull_request_target:
     paths:
       - 'drivers/**'
 
