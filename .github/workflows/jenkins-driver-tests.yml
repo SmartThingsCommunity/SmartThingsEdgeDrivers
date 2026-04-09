@@ -3,6 +3,7 @@ on:
   pull_request_target:
     paths:
       - 'drivers/**'
+    types: [assigned, opened, synchronize, reopened]
 
 permissions:
   statuses: write
