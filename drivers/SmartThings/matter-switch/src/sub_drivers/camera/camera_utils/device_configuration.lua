@@ -42,6 +42,7 @@ function CameraDeviceConfiguration.create_child_devices(driver, device)
 end
 
 function CameraDeviceConfiguration.match_profile(device, status_light_enabled_present, status_light_brightness_present)
+  local profile_update_requested = false
   local optional_supported_component_capabilities = {}
   local main_component_capabilities = {}
   local status_led_component_capabilities = {}
@@ -145,12 +146,15 @@ function CameraDeviceConfiguration.match_profile(device, status_light_enabled_pr
   end
 
   if camera_utils.optional_capabilities_list_changed(optional_supported_component_capabilities, device.profile.components) then
+    profile_update_requested = true
     device:try_update_metadata({profile = "camera", optional_component_capabilities = optional_supported_component_capabilities})
     if #doorbell_endpoints > 0 then
       CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
       button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
     end
   end
+
+  return profile_update_requested
 end
 
 local function init_webrtc(device)
