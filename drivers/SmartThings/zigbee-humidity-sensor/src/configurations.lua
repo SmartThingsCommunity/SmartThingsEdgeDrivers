@@ -56,37 +56,7 @@ local devices = {
   EWELINK_HUMIDITY_TEMP_SENSOR = {
     FINGERPRINTS = {
       { mfr = "eWeLink", model = "TH01" },
-      { mfr = "eWeLink", model = "SNZB-02P" }
-    },
-    CONFIGURATION = {
-      {
-        cluster = TemperatureMeasurement.ID,
-        attribute = TemperatureMeasurement.attributes.MeasuredValue.ID,
-        minimum_interval = 10,
-        maximum_interval = 7200,
-        data_type = TemperatureMeasurement.attributes.MeasuredValue.base_type,
-        reportable_change = 50
-      },
-      {
-        cluster = PowerConfiguration.ID,
-        attribute = PowerConfiguration.attributes.BatteryPercentageRemaining.ID,
-        minimum_interval = 3600,
-        maximum_interval = 7200,
-        data_type = PowerConfiguration.attributes.BatteryPercentageRemaining.base_type,
-        reportable_change = 16
-      },
-      {
-        cluster = RelativeHumidity.ID,
-        attribute = RelativeHumidity.attributes.MeasuredValue.ID,
-        minimum_interval = 10,
-        maximum_interval = 7200,
-        data_type = RelativeHumidity.attributes.MeasuredValue.base_type,
-        reportable_change = 300
-      }
-    }
-  },
-  SONOFF_HUMIDITY_TEMP_SENSOR = {
-    FINGERPRINTS = {
+      { mfr = "eWeLink", model = "SNZB-02P" },
       { mfr = "SONOFF", model = "SNZB-02DR2" }
     },
     CONFIGURATION = {
