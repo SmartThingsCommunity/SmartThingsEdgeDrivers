@@ -35,5 +35,6 @@ return {
     lazy_load_if_possible("tuya-multi"),
     lazy_load_if_possible("frient"),
     lazy_load_if_possible("frient-IO"),
-    lazy_load_if_possible("color_temp_range_handlers")
+    lazy_load_if_possible("color_temp_range_handlers"),
+    lazy_load_if_possible("thirdreality-presence-sensor-r3")
 }
