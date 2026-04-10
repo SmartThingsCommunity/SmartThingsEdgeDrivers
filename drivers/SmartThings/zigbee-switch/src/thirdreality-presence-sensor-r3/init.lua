@@ -1,15 +1,13 @@
-local device_management = require "st.zigbee.device_management"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local OccupancySensing = zcl_clusters.OccupancySensing
 local log = require "log"
 
-THIRDREALITY_TVOC_CLUSTER = 0x042E
-THIRDREALITY_TVOC_VALUE = 0x0000
+local THIRDREALITY_TVOC_CLUSTER = 0x042E
+local THIRDREALITY_TVOC_VALUE = 0x0000
 
 local function occupancy_attr_handler(driver, device, occupancy, zb_rx)
-  device:emit_event(
-      occupancy.value == 1 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  device:emit_event(occupancy.value == 1 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
 local function tvoc_attr_handler(driver, device, value, zb_rx)
