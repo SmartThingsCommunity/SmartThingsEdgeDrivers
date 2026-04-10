@@ -146,7 +146,7 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 function utils.find_default_endpoint(device)
-  -- Buttons should not be set on the main component for the Aqara Climate Sensor W100,
+  -- Buttons should not be set on the main component for the Aqara Climate Sensor W100
   if utils.get_product_override_field(device, "is_climate_sensor_w100") then
     return device.MATTER_DEFAULT_ENDPOINT
   end
@@ -161,16 +161,30 @@ function utils.find_default_endpoint(device)
     return nil
   end
 
+  -- Return the first camera endpoint as the default endpoint if any is found
+  if version.rpc >= 10 and version.api >= 16 then
+    local camera_eps = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
+    if #camera_eps > 0 then
+      return get_first_non_zero_endpoint(camera_eps), fields.DEVICE_TYPE_ID.CAMERA
+    end
+  end
+
+  -- After camera, use aggregator as default if it is found
+  local aggregator_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.AGGREGATOR)
+  if #aggregator_ep_ids > 0 then
+    return aggregator_ep_ids[1], fields.DEVICE_TYPE_ID.AGGREGATOR
+  end
+
   -- Return the first fan endpoint as the default endpoint if any is found
   local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_endpoint_ids > 0 then
-    return get_first_non_zero_endpoint(fan_endpoint_ids)
+    return get_first_non_zero_endpoint(fan_endpoint_ids), fields.DEVICE_TYPE_ID.FAN
   end
 
   -- Return the first water valve endpoint as the default endpoint if any is found
   local water_valve_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
   if #water_valve_endpoint_ids > 0 then
-    return get_first_non_zero_endpoint(water_valve_endpoint_ids)
+    return get_first_non_zero_endpoint(water_valve_endpoint_ids), fields.DEVICE_TYPE_ID.WATER_VALVE
   end
 
   -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
@@ -183,25 +197,26 @@ function utils.find_default_endpoint(device)
   if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
     local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
     if utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
-      return default_endpoint_id
+      return default_endpoint_id, fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
-      return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+      return get_first_non_zero_endpoint(momentary_switch_ep_ids), fields.DEVICE_TYPE_ID.GENERIC_SWITCH
     end
   elseif #onoff_ep_ids > 0 then
-    return get_first_non_zero_endpoint(onoff_ep_ids)
+    return get_first_non_zero_endpoint(onoff_ep_ids), fields.DEVICE_TYPE_ID.LIGHT.ON_OFF
   elseif #momentary_switch_ep_ids > 0 then
-    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+    return get_first_non_zero_endpoint(momentary_switch_ep_ids), fields.DEVICE_TYPE_ID.GENERIC_SWITCH
   end
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
-  return device.MATTER_DEFAULT_ENDPOINT
+  return device.MATTER_DEFAULT_ENDPOINT, utils.find_primary_device_type(utils.get_endpoint_info(device, device.MATTER_DEFAULT_ENDPOINT))
 end
 
 function utils.component_to_endpoint(device, component)
   local map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
   if map[component] then
-    return map[component]
+    -- if it's not a number, it should be a table with at least an endpoint_id fields
+    return (type(map[component]) == "number") and map[component] or map[component].endpoint_id
   end
   return utils.find_default_endpoint(device)
 end
@@ -371,10 +386,6 @@ function utils.deep_equals(a, b, opts, seen)
   return utils.deep_equals(mt_a, mt_b, opts, seen)
 end
 
-function utils.detect_bridge(device)
-  return #utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.AGGREGATOR) > 0
-end
-
 --- Generalizes the 'get_latest_state' function to be callable with extra endpoint information, described below,
 --- without directly specifying the expected component. See the 'get_latest_state' definition for more
 --- information about parameters and expected functionality otherwise.
@@ -440,7 +451,7 @@ function utils.handle_electrical_sensor_info(device)
   local electrical_sensor_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR, { with_info = true })
   if #electrical_sensor_eps == 0 then
     -- no Electrical Sensor EPs are supported. Set profiling data to false and return
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, {persist=true})
+    utils.set_preprofiling_data(device, fields.profiling_data.POWER_TOPOLOGY, false)
     return
   end
 
@@ -465,12 +476,16 @@ function utils.handle_electrical_sensor_info(device)
       device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
     elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
       -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
-      device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
+      utils.set_preprofiling_data(device, fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY)
       if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
         device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
       end
     end
   end
+end
+
+function utils.set_preprofiling_data(device, profiling_field, value)
+  device:set_field(profiling_field, value, {persist=true})
 end
 
 function utils.lazy_load(sub_driver_name)
@@ -492,37 +507,93 @@ end
 --- helper for the switch subscribe override, which adds to a subscribed request for a checked device
 ---
 --- @param checked_device any a Matter device object, either a parent or child device, so not necessarily the same as device
+--- @param parent_device any the parent Matter device object; could be the same as checked_device if checked_device is the parent device
 --- @param subscribe_request table a subscribe request that will be appended to as needed for the device
 --- @param capabilities_seen table a list of capabilities that have already been checked by previously handled devices
 --- @param attributes_seen table a list of attributes that have already been checked
 --- @param events_seen table a list of events that have already been checked
 --- @param subscribed_attributes table key-value pairs mapping capability ids to subscribed attributes
 --- @param subscribed_events table key-value pairs mapping capability ids to subscribed events
-function utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
- for _, component in pairs(checked_device.st_store.profile.components) do
+local function populate_subscribe_request_for_device(checked_device, parent_device, subscribe_request, capabilities_seen, attributes_seen, events_seen, subscribed_attributes, subscribed_events)
+  for _, component in pairs(checked_device.st_store.profile.components) do
     for _, capability in pairs(component.capabilities) do
       if not capabilities_seen[capability.id] then
         for _, attr in ipairs(subscribed_attributes[capability.id] or {}) do
           local cluster_id = attr.cluster or attr._cluster.ID
-          local attr_id = attr.ID or attr.attribute
-          if not attributes_seen[cluster_id] or not attributes_seen[cluster_id][attr_id] then
-            local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
-            subscribe_request:with_info_block(ib)
-            attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
-            attributes_seen[cluster_id][attr_id] = ib
+          if #parent_device:get_endpoints(cluster_id) > 0 then
+            local attr_id = attr.ID or attr.attribute
+            if not attributes_seen[cluster_id] or not attributes_seen[cluster_id][attr_id] then
+              local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+              subscribe_request:with_info_block(ib)
+              attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
+              attributes_seen[cluster_id][attr_id] = ib
+            end
+          else
+            log.warn_with({ hub_logs = true }, string.format("Device does not support cluster 0x%04X, not adding subscribed attribute", cluster_id))
           end
         end
         for _, event in ipairs(subscribed_events[capability.id] or {}) do
           local cluster_id = event.cluster or event._cluster.ID
-          local event_id = event.ID or event.event
-          if not events_seen[cluster_id] or not events_seen[cluster_id][event_id] then
-            local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
-            subscribe_request:with_info_block(ib)
-            events_seen[cluster_id] = events_seen[cluster_id] or {}
-            events_seen[cluster_id][event_id] = ib
+          if #parent_device:get_endpoints(cluster_id) > 0 then
+            local event_id = event.ID or event.event
+            if not events_seen[cluster_id] or not events_seen[cluster_id][event_id] then
+              local ib = im.InteractionInfoBlock(nil, cluster_id, nil, event_id)
+              subscribe_request:with_info_block(ib)
+              events_seen[cluster_id] = events_seen[cluster_id] or {}
+              events_seen[cluster_id][event_id] = ib
+            end
+          else
+            log.warn_with({ hub_logs = true }, string.format("Device does not support cluster 0x%04X, not adding subscribed event", cluster_id))
           end
         end
         capabilities_seen[capability.id] = true -- only loop through any capability once
+      end
+    end
+  end
+end
+
+--- aggregate the subscribed_attributes and subscribed_events tables with capability-subscription tables found in sub-drivers
+---
+--- @param device any a Matter device object
+--- @param checked_device any a Matter device object, either a parent or child device, so not necessarily the same as device
+--- @param subscribe_request any a subscribe request that will be appended to as needed for the device
+--- @param subscribed_attributes any table key-value pairs mapping capability ids to subscribed attributes, which will be appended to as needed for the device
+--- @param subscribed_events any table key-value pairs mapping capability ids to subscribed events, which will be appended to as needed for the device
+local function aggregate_sub_driver_subscriptions(device, checked_device, subscribe_request, subscribed_attributes, subscribed_events)
+  for _, sub_driver in ipairs(device.driver.sub_drivers) do
+    if sub_driver.can_handle({}, device.driver, checked_device) then
+      local sub_driver_subscriptions = require(string.format("%s.%s_utils.subscriptions", sub_driver.NAME, string.gsub(sub_driver.NAME, "sub_drivers.", "")))
+      for capability, cluster_attributes in pairs(sub_driver_subscriptions.subscribed_attributes or {}) do
+        if subscribed_attributes[capability] then
+          for _, attr in pairs(cluster_attributes or {}) do
+            if not utils.tbl_contains(subscribed_attributes[capability], attr) then
+              table.insert(subscribed_attributes[capability], attr)
+            end
+          end
+        else
+          subscribed_attributes[capability] = cluster_attributes
+        end
+      end
+      for capability, cluster_events in pairs(sub_driver_subscriptions.subscribed_events or {}) do
+        if subscribed_events[capability] then
+          for _, event in pairs(cluster_events or {}) do
+            if not utils.tbl_contains(subscribed_events[capability], event) then
+              table.insert(subscribed_events[capability], event)
+            end
+          end
+        else
+          subscribed_events[capability] = cluster_events
+        end
+      end
+      for condition_fn, cluster_attributes in pairs(sub_driver_subscriptions.conditional_subscriptions or {}) do
+        if condition_fn(checked_device) then
+          for _, cluster_attribute in pairs(cluster_attributes or {}) do
+            local cluster_id = cluster_attribute.cluster or cluster_attribute._cluster.ID
+            local attr_id = cluster_attribute.ID or cluster_attribute.attribute
+            local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+            subscribe_request:with_info_block(ib)
+          end
+        end
       end
     end
   end
@@ -538,8 +609,10 @@ function utils.subscribe(device)
   for _, endpoint_info in ipairs(device.endpoints) do
     local checked_device = utils.find_child(device, endpoint_info.endpoint_id) or device
     if not devices_seen[checked_device.id] then
-      utils.populate_subscribe_request_for_device(checked_device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
-        device.driver.subscribed_attributes, device.driver.subscribed_events
+        local subscribed_attributes, subscribed_events = device.driver.subscribed_attributes, device.driver.subscribed_events
+        aggregate_sub_driver_subscriptions(device, checked_device, subscribe_request, subscribed_attributes, subscribed_events)
+        populate_subscribe_request_for_device(checked_device, device, subscribe_request, capabilities_seen, attributes_seen, events_seen,
+          subscribed_attributes, subscribed_events
       )
       devices_seen[checked_device.id] = true -- only loop through any device once
     end

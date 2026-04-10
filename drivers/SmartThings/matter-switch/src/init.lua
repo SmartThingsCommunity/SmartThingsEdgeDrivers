@@ -38,12 +38,15 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     device:send(clusters.OnOff.attributes.OnOff:read(device))
   end
 
-  -- call device init in case init is not called after added due to device caching
-  SwitchLifecycleHandlers.device_init(driver, device)
+  -- The device init event is guaranteed in FW versions 58+, so this is only needed for older hubs
+  if version.rpc < 10 then
+    -- call device init in case init is not called after added due to device caching
+    SwitchLifecycleHandlers.device_init(driver, device)
+  end
 end
 
 function SwitchLifecycleHandlers.do_configure(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
   elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
@@ -54,7 +57,7 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
 end
 
 function SwitchLifecycleHandlers.driver_switched(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     device_cfg.match_profile(driver, device)
   end
 end
@@ -66,12 +69,16 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       button_cfg.configure_buttons(device,
         device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
       )
+      if version.api >= 16 and version.rpc >= 10 then
+        local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+        camera_cfg.initialize_select_camera_capabilities(device)
+      end
     elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
       device:get_parent_device():subscribe() -- parent device required to send subscription requests
     end
   end
 
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     if device.matter_version.software ~= args.old_st_store.matter_version.software then
       device_cfg.match_profile(driver, device)
     end
@@ -95,11 +102,16 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     switch_utils.check_field_name_updates(device)
     device:set_component_to_endpoint_fn(switch_utils.component_to_endpoint)
     device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
+    device:extend_device("emit_event_for_endpoint", switch_utils.emit_event_for_endpoint)
     if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
       device:set_find_child(switch_utils.find_child)
     end
     if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
-      device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
+      switch_utils.set_preprofiling_data(device, fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY)
+    end
+    if version.api < 16 or version.rpc < 10 or #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
+      switch_utils.set_preprofiling_data(device, fields.profiling_data.STATUS_LIGHT_ENABLED_PRESENT, false)
+      switch_utils.set_preprofiling_data(device, fields.profiling_data.STATUS_LIGHT_BRIGHTNESS_PRESENT, false)
     end
     switch_utils.handle_electrical_sensor_info(device)
     device:extend_device("subscribe", switch_utils.subscribe)

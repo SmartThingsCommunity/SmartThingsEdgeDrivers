@@ -181,7 +181,6 @@ local function test_init()
 
   -- Test added -> doConfigure logic
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "added" })
-  test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "init" })
   test.socket.matter:__expect_send({aqara_mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ aqara_mock_device.id, "doConfigure" })

@@ -216,7 +216,6 @@ local function test_init()
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_CHILD) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
@@ -412,7 +411,6 @@ test.register_coroutine_test(
       subscribe_request:merge(cluster:subscribe(unsup_mock_device))
     end
     test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
-    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
     test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
     test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})

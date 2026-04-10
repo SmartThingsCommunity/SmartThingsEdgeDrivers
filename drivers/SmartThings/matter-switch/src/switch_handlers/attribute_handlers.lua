@@ -340,7 +340,7 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
     end
   end
   if #set_topology_eps == 0 then -- in other words, all AvailableEndpoints attribute responses have been handled
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY, {persist=true})
+    switch_utils.set_preprofiling_data(device, fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.SET_TOPOLOGY)
     device_cfg.match_profile(driver, device)
   end
 end
@@ -373,7 +373,7 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
     end
   end
   if #tree_topology_eps == 0 then -- in other words, all PartsList attribute responses for TREE Electrical Sensor EPs have been handled
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, {persist=true})
+    switch_utils.set_preprofiling_data(device, fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.TREE_TOPOLOGY)
     device_cfg.match_profile(driver, device)
   end
 end
@@ -398,18 +398,20 @@ function AttributeHandlers.bat_charge_level_handler(driver, device, ib, response
 end
 
 function AttributeHandlers.power_source_attribute_list_handler(driver, device, ib, response)
-  local previous_battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
-  device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
+  local latest_battery_support = device:get_field(fields.profiling_data.BATTERY_SUPPORT)
   for _, attr in ipairs(ib.data.elements or {}) do
     if attr.value == clusters.PowerSource.attributes.BatPercentRemaining.ID then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_PERCENTAGE, {persist=true})
-      break
-    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID and
-      device:get_field(fields.profiling_data.BATTERY_SUPPORT) ~= fields.battery_support.BATTERY_PERCENTAGE then -- don't overwrite if percentage support is already detected
+      break -- BATTERY_PERCENTAGE is highest priority. break early if found
+    elseif attr.value == clusters.PowerSource.attributes.BatChargeLevel.ID then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_LEVEL, {persist=true})
     end
   end
-  if not previous_battery_support or previous_battery_support ~= device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
+  -- in the case that 1) no battery has been set, and 2) the returned ib does not include battery attributes, ignore battery
+  if latest_battery_support == nil and not device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
+    device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
+  end
+  if latest_battery_support == nil or latest_battery_support ~= device:get_field(fields.profiling_data.BATTERY_SUPPORT) then
     device_cfg.match_profile(driver, device)
   end
 end

@@ -1,13 +1,11 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local camera_fields = require "sub_drivers.camera.camera_utils.fields"
-local camera_utils = require "sub_drivers.camera.camera_utils.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
-local fields = require "switch_utils.fields"
-local utils = require "st.utils"
+local camera_fields = require "sub_drivers.camera.camera_utils.fields"
+local camera_utils = require "sub_drivers.camera.camera_utils.utils"
+local st_utils = require "st.utils"
 
 local CameraAttributeHandlers = {}
 
@@ -37,7 +35,7 @@ CameraAttributeHandlers.night_vision_factory = function(attribute)
 end
 
 function CameraAttributeHandlers.image_rotation_handler(driver, device, ib, response)
-  local degrees = utils.clamp_value(ib.data.value, 0, 359)
+  local degrees = st_utils.clamp_value(ib.data.value, 0, 359)
   device:emit_event_for_endpoint(ib, capabilities.imageControl.imageRotation(degrees))
   camera_utils.update_supported_attributes(device, ib, capabilities.imageControl, "imageRotation")
 end
@@ -63,7 +61,7 @@ function CameraAttributeHandlers.volume_level_handler(driver, device, ib, respon
   local min_volume = device:get_field(camera_fields.MIN_VOLUME_LEVEL .. "_" .. component) or camera_fields.ABS_VOL_MIN
   -- Convert from [min_volume, max_volume] to [0, 100] before emitting capability
   local limited_range = max_volume - min_volume
-  local normalized_volume = utils.round((ib.data.value - min_volume) * 100.0 / limited_range)
+  local normalized_volume = st_utils.round((ib.data.value - min_volume) * 100.0 / limited_range)
   device:emit_event_for_endpoint(ib, capabilities.audioVolume.volume(normalized_volume))
 end
 
@@ -296,7 +294,7 @@ function CameraAttributeHandlers.ptz_position_handler(driver, device, ib, respon
   local emit_event = function(idx, value)
     if value ~= ptz_map[idx].current then
       device:emit_event_for_endpoint(ib, ptz_map[idx].attribute(
-        utils.clamp_value(value, ptz_map[idx].range.minimum, ptz_map[idx].range.maximum)
+        st_utils.clamp_value(value, ptz_map[idx].range.minimum, ptz_map[idx].range.maximum)
       ))
     end
   end
@@ -447,31 +445,35 @@ function CameraAttributeHandlers.selected_chime_handler(driver, device, ib, resp
 end
 
 function CameraAttributeHandlers.camera_av_stream_management_attribute_list_handler(driver, device, ib, response)
-  if not ib.data.elements then return end
   local status_light_enabled_present, status_light_brightness_present = false, false
-  local attribute_ids = {}
-  for _, attr in ipairs(ib.data.elements) do
+  local status_light_attribute_ids = {}
+  for _, attr in ipairs(ib.data.elements or {}) do
     if attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID then
       status_light_enabled_present = true
-      table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
+      table.insert(status_light_attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
     elseif attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID then
       status_light_brightness_present = true
-      table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+      table.insert(status_light_attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
     end
   end
-  local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  component_map.statusLed = {
-    endpoint_id = ib.endpoint_id,
-    cluster_id = ib.cluster_id,
-    attribute_ids = attribute_ids,
-  }
-  device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
-  camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
-  camera_cfg.reconcile_profile_and_capabilities(device)
+  if #status_light_attribute_ids > 0 then
+    camera_utils.update_component_to_endpoint_map(device, camera_fields.profile_components.statusLed, {
+      endpoint_id = ib.endpoint_id,
+      cluster_id = ib.cluster_id,
+      attribute_ids = status_light_attribute_ids,
+    })
+  end
+  local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+  local utils = require "switch_utils.utils"
+  local fields = require "switch_utils.fields"
+  utils.set_preprofiling_data(device, fields.profiling_data.STATUS_LIGHT_ENABLED_PRESENT, status_light_enabled_present)
+  utils.set_preprofiling_data(device, fields.profiling_data.STATUS_LIGHT_BRIGHTNESS_PRESENT, status_light_brightness_present)
+  camera_cfg.reconcile_profile_and_capabilities(driver, device)
 end
 
 function CameraAttributeHandlers.camera_feature_map_handler(driver, device, ib, response)
-  camera_cfg.reconcile_profile_and_capabilities(device)
+  local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+  camera_cfg.reconcile_profile_and_capabilities(driver, device)
 end
 
 return CameraAttributeHandlers
