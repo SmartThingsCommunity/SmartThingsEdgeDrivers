@@ -157,6 +157,8 @@ SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
   BATTERY_SUPPORT = "__battery_support",
+  STATUS_LIGHT_ENABLED_PRESENT = "__status_light_enabled_present",
+  STATUS_LIGHT_BRIGHTNESS_PRESENT = "__status_light_brightness_present",
 }
 
 SwitchFields.battery_support = {

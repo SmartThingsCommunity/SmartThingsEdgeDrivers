@@ -221,8 +221,6 @@ local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device) -- make sure the cache is populated
 
-  -- added sets a bunch of fields on the device, and calls init
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
   -- init results in subscription interaction
@@ -254,7 +252,6 @@ local function test_init_battery()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device_battery)
 
-  test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "added" })
 
   test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})

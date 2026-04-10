@@ -5,7 +5,6 @@ local camera_fields = require "sub_drivers.camera.camera_utils.fields"
 local camera_utils = require "sub_drivers.camera.camera_utils.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
 local fields = require "switch_utils.fields"
 local utils = require "st.utils"
 
@@ -459,19 +458,26 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
       table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
     end
   end
-  local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  component_map.statusLed = {
-    endpoint_id = ib.endpoint_id,
-    cluster_id = ib.cluster_id,
-    attribute_ids = attribute_ids,
-  }
-  device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
-  camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
-  camera_cfg.reconcile_profile_and_capabilities(device)
+  -- if associated status led attributes are found, update component map
+  if #attribute_ids > 0 then
+    local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
+    component_map.statusLed = {
+      endpoint_id = ib.endpoint_id,
+      cluster_id = ib.cluster_id,
+      attribute_ids = attribute_ids,
+    }
+    device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
+  end
+  -- set profiling data for status light capabilities and attempt profile matching afterwards
+  device:set_field(fields.profiling_data.STATUS_LIGHT_ENABLED_PRESENT, status_light_enabled_present, {persist = true})
+  device:set_field(fields.profiling_data.STATUS_LIGHT_BRIGHTNESS_PRESENT, status_light_brightness_present, {persist = true})
+  local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+  camera_cfg.reconcile_profile_and_capabilities(driver, device)
 end
 
 function CameraAttributeHandlers.camera_feature_map_handler(driver, device, ib, response)
-  camera_cfg.reconcile_profile_and_capabilities(device)
+  local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+  camera_cfg.reconcile_profile_and_capabilities(driver, device)
 end
 
 return CameraAttributeHandlers

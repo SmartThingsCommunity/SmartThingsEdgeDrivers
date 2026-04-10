@@ -127,7 +127,6 @@ local function test_init_electrical_sensor()
   end
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "added" })
-  test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "init" })
   test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
