@@ -1100,6 +1100,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSP02028BZ
     deviceProfileName: switch-power-energy
+  - id: "Third Reality/3RDP01072Z"
+    deviceLabel: ThirdReality Smart Dual Plug ZP1
+    manufacturer: Third Reality, Inc
+    model: 3RDP01072Z
+    deviceProfileName: switch-power-energy
   - id: "DAWON_DNS/PM-S140-ZB"
     deviceLabel: Dawon Switch
     manufacturer: DAWON_DNS
