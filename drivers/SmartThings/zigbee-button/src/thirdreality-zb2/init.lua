@@ -1,5 +1,4 @@
 local capabilities = require "st.capabilities"
-local data_types = require "st.zigbee.data_types"
 
 local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
 local PRESENT_VALUE_ATTR_ID = 0x0055
