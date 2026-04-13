@@ -44,9 +44,7 @@ local thirdreality_device_handler = {
             }
         }
     },
-    can_handle = function(opts, driver, device, ...)
-      return device:get_manufacturer() == "Third Reality, Inc" and device:get_model() == "3RPL01084Z"
-    end
+    can_handle = require("thirdreality-presence-sensor-r3.can_handle"),
 }
 
 return thirdreality_device_handler
