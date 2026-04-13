@@ -6,8 +6,14 @@ local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
+local zb_const = require "st.zigbee.constants"
+local messages = require "st.zigbee.messages"
 local data_types = require "st.zigbee.data_types"
-local cluster_base = require "st.zigbee.cluster_base"
+local zcl_messages = require "st.zigbee.zcl"
+local report_attr = require "st.zigbee.zcl.global_commands.report_attribute"
+
+local SONOFF_PRIVATE_BUTTON_CLUSTER = 0xFC12
+local SONOFF_PRIVATE_ATTR = 0x0000
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   {
@@ -43,6 +49,32 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 
 zigbee_test_utils.prepare_zigbee_env_info()
 
+local function build_test_attr_report(device, endpoint, value)
+  local report_body = report_attr.ReportAttribute({
+    report_attr.ReportAttributeAttributeRecord(SONOFF_PRIVATE_ATTR, data_types.Uint8.ID, value)
+  })
+  local zclh = zcl_messages.ZclHeader({
+    cmd = data_types.ZCLCommandId(report_body.ID)
+  })
+  local addrh = messages.AddressHeader(
+    device:get_short_address(),
+    endpoint,
+    zb_const.HUB.ADDR,
+    zb_const.HUB.ENDPOINT,
+    zb_const.HA_PROFILE_ID,
+    SONOFF_PRIVATE_BUTTON_CLUSTER
+  )
+  local message_body = zcl_messages.ZclMessageBody({
+    zcl_header = zclh,
+    zcl_body = report_body
+  })
+
+  return messages.ZigbeeMessageRx({
+    address_header = addrh,
+    body = message_body
+  })
+end
+
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
@@ -53,7 +85,18 @@ test.register_coroutine_test(
   "added lifecycle event",
   function()
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.supportedButtonValues({ "pushed", "double", "held", "pushed_3x" }, { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.button.numberOfButtons({ value = 4 }, { visibility = { displayed = false } })
+      )
+    )
 
     -- Check initial events for button 1
     test.socket.capability:__expect_send(
@@ -110,21 +153,23 @@ test.register_coroutine_test(
         capabilities.button.numberOfButtons({ value = 1 }, { visibility = { displayed = false } })
       )
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false }))
+    )
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Button pushed message should generate event",
   function()
     -- 0xFC12, 0x0000, 0x01 = pushed
-    local attr_report = cluster_base.build_custom_report_attribute(
-      mock_device,
-      0xFC12,
-      0x0000,
-      0x20, -- Uint8
-      data_types.Uint8(0x01)
-    )
+    local attr_report = build_test_attr_report(mock_device, 1, data_types.Uint8(0x01))
 
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
@@ -133,20 +178,17 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Button double message should generate event",
   function()
     -- 0xFC12, 0x0000, 0x02 = double
-    local attr_report = cluster_base.build_custom_report_attribute(
-      mock_device,
-      0xFC12,
-      0x0000,
-      0x20, -- Uint8
-      data_types.Uint8(0x02)
-    )
+    local attr_report = build_test_attr_report(mock_device, 1, data_types.Uint8(0x02))
 
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
@@ -155,20 +197,17 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.button.button.double({ state_change = true }))
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Button held message should generate event",
   function()
     -- 0xFC12, 0x0000, 0x03 = held
-    local attr_report = cluster_base.build_custom_report_attribute(
-      mock_device,
-      0xFC12,
-      0x0000,
-      0x20, -- Uint8
-      data_types.Uint8(0x03)
-    )
+    local attr_report = build_test_attr_report(mock_device, 1, data_types.Uint8(0x03))
 
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
@@ -177,20 +216,17 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.button.button.held({ state_change = true }))
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Button pushed_3x message should generate event",
   function()
     -- 0xFC12, 0x0000, 0x04 = pushed_3x
-    local attr_report = cluster_base.build_custom_report_attribute(
-      mock_device,
-      0xFC12,
-      0x0000,
-      0x20, -- Uint8
-      data_types.Uint8(0x04)
-    )
+    local attr_report = build_test_attr_report(mock_device, 1, data_types.Uint8(0x04))
 
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
@@ -199,22 +235,17 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.button.button.pushed_3x({ state_change = true }))
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Button 2 pushed message should generate event on button2 component",
   function()
     -- Endpoint 2 test
-    local attr_report = cluster_base.build_custom_report_attribute(
-      mock_device,
-      0xFC12,
-      0x0000,
-      0x20, -- Uint8
-      data_types.Uint8(0x01)
-    )
-    -- Modify endpoint to 2
-    attr_report.address_header.src_endpoint.value = 2
+    local attr_report = build_test_attr_report(mock_device, 2, data_types.Uint8(0x01))
 
     test.socket.zigbee:__queue_receive({ mock_device.id, attr_report })
     test.socket.capability:__expect_send(
@@ -223,7 +254,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -235,7 +269,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.battery.battery(90))
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
