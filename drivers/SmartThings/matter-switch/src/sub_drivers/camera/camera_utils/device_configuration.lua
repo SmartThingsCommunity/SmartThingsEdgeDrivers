@@ -6,6 +6,7 @@ local camera_fields = require "sub_drivers.camera.camera_utils.fields"
 local camera_utils = require "sub_drivers.camera.camera_utils.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
+local st_utils = require "st.utils"
 local device_cfg = require "switch_utils.device_configuration"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
@@ -108,32 +109,34 @@ local function build_camera_privacy_supported_commands()
 end
 
 local function capabilities_needing_reinit(device)
-  local main = camera_fields.profile_components.main
-
   local capabilities_to_reinit = {}
 
-  local function state_differs(capability, attribute_name, expected)
-    local current = device:get_latest_state(main, capability.ID, attribute_name)
-    return not switch_utils.deep_equals(current, expected, { ignore_functions = true })
+  local function should_init(capability, attribute, expected)
+    if device:supports_capability(capability) then
+      local current = st_utils.deep_copy(device:get_latest_state(
+        camera_fields.profile_components.main,
+        capability.ID,
+        attribute.NAME,
+        {}
+      ))
+      return not switch_utils.deep_equals(current, expected)
+    end
+    return false
   end
 
-  if device:supports_capability(capabilities.webrtc) and
-    state_differs(capabilities.webrtc, capabilities.webrtc.supportedFeatures.NAME, build_webrtc_supported_features()) then
+  if should_init(capabilities.webrtc, capabilities.webrtc.supportedFeatures, build_webrtc_supported_features()) then
     capabilities_to_reinit.webrtc = true
   end
 
-  if device:supports_capability(capabilities.mechanicalPanTiltZoom) and
-    state_differs(capabilities.mechanicalPanTiltZoom, capabilities.mechanicalPanTiltZoom.supportedAttributes.NAME, build_ptz_supported_attributes(device)) then
+  if should_init(capabilities.mechanicalPanTiltZoom, capabilities.mechanicalPanTiltZoom.supportedAttributes, build_ptz_supported_attributes(device)) then
     capabilities_to_reinit.ptz = true
   end
 
-  if device:supports_capability(capabilities.zoneManagement) and
-    state_differs(capabilities.zoneManagement, capabilities.zoneManagement.supportedFeatures.NAME, build_zone_management_supported_features(device)) then
+  if should_init(capabilities.zoneManagement, capabilities.zoneManagement.supportedFeatures, build_zone_management_supported_features(device)) then
     capabilities_to_reinit.zone_management = true
   end
 
-  if device:supports_capability(capabilities.localMediaStorage) and
-    state_differs(capabilities.localMediaStorage, capabilities.localMediaStorage.supportedAttributes.NAME, build_local_media_storage_supported_attributes(device)) then
+  if should_init(capabilities.localMediaStorage, capabilities.localMediaStorage.supportedAttributes, build_local_media_storage_supported_attributes(device)) then
     capabilities_to_reinit.local_media_storage = true
   end
 
@@ -144,14 +147,12 @@ local function capabilities_needing_reinit(device)
     end
   end
 
-  if device:supports_capability(capabilities.videoStreamSettings) and
-    state_differs(capabilities.videoStreamSettings, capabilities.videoStreamSettings.supportedFeatures.NAME, build_video_stream_settings_supported_features(device)) then
+  if should_init(capabilities.videoStreamSettings, capabilities.videoStreamSettings.supportedFeatures, build_video_stream_settings_supported_features(device)) then
     capabilities_to_reinit.video_stream_settings = true
   end
 
-  if device:supports_capability(capabilities.cameraPrivacyMode) and
-    (state_differs(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedAttributes.NAME, build_camera_privacy_supported_attributes()) or
-      state_differs(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedCommands.NAME, build_camera_privacy_supported_commands())) then
+  if should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedAttributes, build_camera_privacy_supported_attributes()) or
+    should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedCommands, build_camera_privacy_supported_commands()) then
     capabilities_to_reinit.camera_privacy_mode = true
   end
 
@@ -407,7 +408,7 @@ end
 local function profile_capability_set(profile)
   local capability_set = {}
   for _, component in pairs((profile or {}).components or {}) do
-    for _, capability in ipairs(component.capabilities or {}) do
+    for _, capability in pairs(component.capabilities or {}) do
       if capability.id ~= nil then
         capability_set[capability.id] = true
       end

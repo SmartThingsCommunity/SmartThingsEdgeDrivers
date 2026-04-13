@@ -504,6 +504,54 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Camera privacy mode state compare should ignore table metatable differences",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local init_event_count = 0
+    local original_match_profile = camera_cfg.match_profile
+
+    camera_cfg.match_profile = function()
+      return false
+    end
+
+    local fake_device = {
+      supports_capability = function(_, capability)
+        return capability == capabilities.cameraPrivacyMode
+      end,
+      get_latest_state = function(_, _, _, attribute_name)
+        if attribute_name == capabilities.cameraPrivacyMode.supportedAttributes.NAME then
+          return { "softRecordingPrivacyMode", "softLivestreamPrivacyMode" }
+        elseif attribute_name == capabilities.cameraPrivacyMode.supportedCommands.NAME then
+          local commands = { "setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode" }
+          setmetatable(commands, {
+            __index = function()
+              return nil
+            end
+          })
+          return commands
+        end
+        return nil
+      end,
+      get_endpoints = function()
+        return { CAMERA_EP }
+      end,
+      emit_event_for_endpoint = function()
+        init_event_count = init_event_count + 1
+      end
+    }
+
+    camera_cfg.reconcile_profile_and_capabilities(fake_device)
+    camera_cfg.match_profile = original_match_profile
+
+    assert(init_event_count == 0, "cameraPrivacyMode should not be reinitialized for equal values with metatable differences")
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
   "Reports mapping to EnabledState capability data type should generate appropriate events",
   function()
     update_device_profile()
