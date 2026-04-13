@@ -12,22 +12,24 @@ components:
     version: 1
   - id: refresh
     version: 1
+  - id: mode
+    version: 1
   categories:
   - name: SecurityPanel
 preferences:
   - name: mode
-    title: Control Security System or Lock
-    description: "Choose whether to use the keypad to control Security System Status (Arm/Disarm) or Lock Status (Lock/Unlock)."
+    title: Control Security System or Mode
+    description: "Choose whether to use the keypad to control Security System Status (Arm/Disarm) or Mode Status (Lock/Unlock)."
     required: false
     preferenceType: enumeration
     definition:
       options:
         0: "Security System Status"
-        1: "Lock Status"
+        1: "Mode Status"
       default: 0
   - name: pinMap
     title: Add PIN code(s)
-    description: "Format: 1234:Alice,4321:Bob (other format will not be accepted). Entries are added/updated; existing entries are kept."
+    description: "Format: 1234:Alice,4321:Bob (other format will not be accepted). Only PIN(s) present in this setting are recognized."
     required: false
     preferenceType: string
     definition:
@@ -35,7 +37,7 @@ preferences:
       default: ""
   - name: rfidMap
     title: Add RFID(s)
-    description: "Format: ABCD1234:Alice,EFGH5678:Bob (other format will not be accepted). Entries are added/updated; existing entries are kept."
+    description: "Format: +ABCD1234:Alice,+EFGH5678:Bob (other format will not be accepted, the + prefix is required). Only RFID(s) present in this setting are recognized."
     required: false
     preferenceType: string
     definition:
@@ -65,10 +67,10 @@ preferences:
     definition:
       minimum: 1
       maximum: 32
-      default: 10
+      default: 15
   - name: exitDelay
     title: Exit Delay
-    description: "Turn on exit delay when arming. Duration in seconds can be set in the 'Exit Delay Duration' setting."
+    description: "Turn on exit delay when arming away. Duration in seconds can be set in the 'Exit Delay Duration' setting."
     required: false
     preferenceType: boolean
     definition:

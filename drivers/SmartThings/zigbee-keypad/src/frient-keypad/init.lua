@@ -13,11 +13,11 @@ local data_types = require "st.zigbee.data_types"
 
 local PowerConfiguration = clusters.PowerConfiguration
 local IASACE = clusters.IASACE
+local IASZone = clusters.IASZone
 local SecuritySystem = capabilities.securitySystem
 local LockCodes = capabilities.lockCodes
-local IASZone = clusters.IASZone
 local tamperAlert = capabilities.tamperAlert
-local lock = capabilities.lock
+local mode = capabilities.mode
 
 local ArmMode = IASACE.types.ArmMode
 local ArmNotification = IASACE.types.ArmNotification
@@ -25,20 +25,8 @@ local PanelStatus = IASACE.types.IasacePanelStatus
 local AudibleNotification = IASACE.types.IasaceAudibleNotification
 local AlarmStatus = IASACE.types.IasaceAlarmStatus
 
-local LOCK_CODES_FIELD = "lockCodes"
-local LOCK_CODE_PINS_FIELD = "lockCodePins"
-local LOCK_CODES_MAX_LEN = 255
-local LOCK_CODES_CHUNK_MAX_LEN = 220
 local armCommandFromKeypad = false
 local DEVELCO_MANUFACTURER_CODE = 0x1015
-
--- Update these tables to match your local user map.
-local LOCAL_USER_MAP = {
-  pins = {
-  },
-  rfids = {
-  },
-}
 
 local SECURITY_STATUS_EVENTS = {
   armedAway = SecuritySystem.securitySystemStatus.armedAway,
@@ -46,19 +34,10 @@ local SECURITY_STATUS_EVENTS = {
   disarmed = SecuritySystem.securitySystemStatus.disarmed,
 }
 
-local LOCK_STATUS_EVENTS = {
-  locked = lock.lock.locked,
-  unlocked = lock.lock.unlocked,
+local MODE_STATUS_VALUES = {
+  Locked = "Locked",
+  Unlocked = "Unlocked",
 }
-
-local function should_use_lock_mode(device)
-  local mode = tonumber(device.preferences and device.preferences.mode)
-  if mode ~= nil then
-    return mode == 1
-  end
-
-  return device:supports_capability(capabilities.lock) and not device:supports_capability(capabilities.securitySystem)
-end
 
 local ARM_MODE_TO_STATUS = {
   [ArmMode.DISARM] = "disarmed",
@@ -89,18 +68,15 @@ local STATUS_TO_ACTIVITY = {
 }
 
 local LOCK_STATUS_TO_ACTIVITY = {
-  locked = "locked",
-  unlocked = "unlocked",
+  Locked = "Locked",
+  Unlocked = "Unlocked",
 }
 
 local function emit_supported(device)
-  if should_use_lock_mode(device) then
-    device:emit_event(lock.supportedLockValues({ "locked", "unlocked"}, { visibility = { displayed = false } }))
-    device:emit_event(lock.supportedLockCommands({ "lock", "unlock"}, { visibility = { displayed = false } }))
-  else
+    device:emit_event(mode.supportedModes({ "Locked", "Unlocked" }, { visibility = { displayed = false } }))
+    device:emit_event(mode.supportedArguments({ "Locked", "Unlocked" }, { visibility = { displayed = false } }))
     device:emit_event(SecuritySystem.supportedSecuritySystemStatuses({ "armedAway", "armedStay", "disarmed" }, { visibility = { displayed = false } }))
     device:emit_event(SecuritySystem.supportedSecuritySystemCommands({ "armAway", "armStay", "disarm" }, { visibility = { displayed = false } }))
-  end
 end
 
 local function emit_status_event(device, status, extra_data)
@@ -115,13 +91,13 @@ local function emit_status_event(device, status, extra_data)
       return keys
     end)(), ",")))
   end
-  device.log.info(string.format("Emitting securitySystemStatus=%s", status))
+  device.log.info(string.format("Emitting securitySystemStatus=%s", status, {visibility = { displayed = true }}))
   device:emit_event(event)
 end
 
-local function emit_lock_event(device, lock_state, extra_data)
-  local event_factory = LOCK_STATUS_EVENTS[lock_state] or lock.lock.unlocked
-  local event = event_factory({ state_change = true })
+local function emit_mode_event(device, lock_state, extra_data)
+  local mode_value = MODE_STATUS_VALUES[lock_state] or "Unlocked"
+  local event = mode.mode(mode_value, { state_change = true })
   if extra_data ~= nil then
     device.log.info(string.format("lockStatus extra data captured (keys=%s)", table.concat((function()
       local keys = {}
@@ -131,34 +107,17 @@ local function emit_lock_event(device, lock_state, extra_data)
       return keys
     end)(), ",")))
   end
-  device.log.info(string.format("Emitting lockStatus=%s", lock_state))
+  device.log.info(string.format("Emitting lockStatus=%s", lock_state, {visibility = { displayed = true }}))
   device:emit_event(event)
 end
 
 local function emit_mode_status_event(device, status, extra_data)
-  if should_use_lock_mode(device) then
-    emit_lock_event(device, status == "disarmed" and "unlocked" or "locked", extra_data)
-  else
+  if tonumber(device.preferences.mode) == 1 then
+    emit_mode_event(device, status == "disarmed" and "Unlocked" or "Locked", extra_data)
+  elseif tonumber(device.preferences.mode) == 0 then
     emit_status_event(device, status, extra_data)
   end
 end
-
---[[ local function get_pref_number(value)
-  if type(value) == "number" then
-    return value
-  end
-  if type(value) == "string" and value ~= "" then
-    local parsed = tonumber(value)
-    if parsed ~= nil then
-      return parsed
-    end
-    local numeric_fragment = value:match("[-+]?%d+%.?%d*")
-    if numeric_fragment ~= nil then
-      return tonumber(numeric_fragment)
-    end
-  end
-  return nil
-end ]]
 
 local function is_pin_length_valid(device, pin)
   local pinStr = tostring(pin)
@@ -181,7 +140,7 @@ local function is_pin_length_valid(device, pin)
   return true
 end
 
-local function parse_user_map(value, validator)
+local function parse_user_map(value)
   local map = {}
     if value == nil or value == "" then
       return map
@@ -190,25 +149,59 @@ local function parse_user_map(value, validator)
     for pair in string.gmatch(value, "[^,]+") do
       local code, name = pair:match("^%s*([^:]+)%s*:%s*(.+)%s*$")
       if code ~= nil and name ~= nil and code ~= "" and name ~= "" then
-        if validator == nil or validator(code) then
-          map[code] = name
-        end
+        map[code] = name
       end
     end
 
   return map
 end
 
-local function get_lock_codes(device)
-  return device:get_field(LOCK_CODES_FIELD) or {}
-end
-
-local function get_lock_code_pins(device)
-  return device:get_field(LOCK_CODE_PINS_FIELD) or {}
-end
-
 local function get_exit_delay_duration(device)
-  return device:get_field("exit_delay_duration") or 5
+  local duration = device.preferences.duration
+  return duration or 5
+end
+
+local function build_lock_code_state_from_prefs(device)
+  local pin_updates = parse_user_map(device.preferences.pinMap)
+  local rfid_updates = parse_user_map(device.preferences.rfidMap)
+
+  local lock_codes = {}
+  local lock_code_pins = {}
+  local pins = {}
+  local rfids = {}
+
+  for pin, _ in pairs(pin_updates) do
+    pins[#pins + 1] = pin
+  end
+
+  for rfid, _ in pairs(rfid_updates) do
+    rfids[#rfids + 1] = rfid
+  end
+
+  table.sort(pins)
+  table.sort(rfids)
+
+  for slot_index, pin in ipairs(pins) do
+    local slot_key = tostring(slot_index)
+    lock_code_pins[slot_key] = pin
+    lock_codes[slot_key] = pin_updates[pin]
+  end
+
+  local rfid_start = #pins + 1
+  for offset, rfid in ipairs(rfids) do
+    local slot_key = tostring(rfid_start + offset - 1)
+    lock_code_pins[slot_key] = rfid
+    lock_codes[slot_key] = rfid_updates[rfid]
+  end
+
+  return lock_codes, lock_code_pins
+end
+
+local function build_user_map_from_prefs(device)
+  return {
+    pins = parse_user_map(device.preferences.pinMap),
+    rfids = parse_user_map(device.preferences.rfidMap),
+  }
 end
 
 local function build_lock_codes_payload(device, lock_codes, lock_pins)
@@ -227,64 +220,6 @@ local function build_lock_codes_payload(device, lock_codes, lock_pins)
   return payload
 end
 
-local function get_sorted_slots(lock_codes)
-  local slots = {}
-  for slot, _ in pairs(lock_codes or {}) do
-    slots[#slots + 1] = tostring(slot)
-  end
-
-  table.sort(slots, function(left, right)
-    local left_num = tonumber(left)
-    local right_num = tonumber(right)
-    if left_num ~= nil and right_num ~= nil then
-      return left_num < right_num
-    end
-    if left_num ~= nil then
-      return true
-    end
-    if right_num ~= nil then
-      return false
-    end
-    return left < right
-  end)
-
-  return slots
-end
-
-local function emit_lock_codes_chunks(device, payload)
-  local chunks = {}
-  local current_chunk = {}
-  local slots = get_sorted_slots(payload)
-
-  local function encode_chunk(chunk)
-    local ok, encoded = pcall(json.encode, utils.deep_copy(chunk))
-    if ok and type(encoded) == "string" then
-      return encoded
-    end
-    return "{}"
-  end
-
-  for _, slot in ipairs(slots) do
-    current_chunk[slot] = tostring(payload[slot] or "")
-    local encoded = encode_chunk(current_chunk)
-    if #encoded > LOCK_CODES_CHUNK_MAX_LEN then
-      current_chunk[slot] = nil
-      if next(current_chunk) ~= nil then
-        chunks[#chunks + 1] = encode_chunk(current_chunk)
-      end
-      current_chunk = { [slot] = tostring(payload[slot] or "") }
-    end
-  end
-
-  if next(current_chunk) ~= nil then
-    chunks[#chunks + 1] = encode_chunk(current_chunk)
-  end
-
-  for _, chunk in ipairs(chunks) do
-    device:emit_event(LockCodes.lockCodes(chunk, { state_change = true }, { visibility = { displayed = true } }))
-  end
-end
-
 local function encode_payload(payload)
   local ok, encoded = pcall(json.encode, utils.deep_copy(payload))
   if ok and type(encoded) == "string" then
@@ -293,32 +228,10 @@ local function encode_payload(payload)
   return "{}"
 end
 
-local function build_partial_payload(payload)
-  local partial = {}
-  local slots = get_sorted_slots(payload)
-  for _, slot in ipairs(slots) do
-    partial[slot] = tostring(payload[slot] or "")
-    local encoded = encode_payload(partial)
-    if #encoded > LOCK_CODES_MAX_LEN then
-      partial[slot] = nil
-      break
-    end
-  end
-  return partial
-end
-
 local function emit_lock_codes(device, lock_codes, lock_pins)
   local full_payload = build_lock_codes_payload(device, lock_codes, lock_pins)
   local full_encoded = encode_payload(full_payload)
-  if #full_encoded <= LOCK_CODES_MAX_LEN then
-    device:emit_event(LockCodes.lockCodes(full_encoded, { state_change = true }, { visibility = { displayed = true } }))
-    return
-  end
-
-  local partial_payload = build_partial_payload(full_payload)
-  local partial_encoded = encode_payload(partial_payload)
-  device:emit_event(LockCodes.lockCodes(partial_encoded, { state_change = true }, { visibility = { displayed = true } }))
-  emit_lock_codes_chunks(device, full_payload)
+  device:emit_event(LockCodes.lockCodes(full_encoded, { state_change = true }, { visibility = { displayed = true } }))
 end
 
 local function emit_lock_code_limits(device)
@@ -348,113 +261,80 @@ local function normalize_user_name(value)
   return nil
 end
 
-local function normalize_user_entry(entry)
-  if type(entry) == "table" then
-    return {
-      name = normalize_user_name(entry.name) or normalize_user_name(entry),
-      index = tonumber(entry.index),
-    }
-  end
-  return {
-    name = normalize_user_name(entry),
-    index = nil,
-  }
-end
-
 local function get_user_map(device)
-  return device:get_field("securitySystem_user_map")
+  local map = device:get_field("user_map")
+  if map == nil then
+    map = build_user_map_from_prefs(device)
+  end
+  return map
 end
 
-local function emit_code_changed(device, code_slot, change_type, code_name)
-  local event = LockCodes.codeChanged(tostring(code_slot) .. change_type, { state_change = true })
-  if code_name ~= nil then
-    event.data = { codeName = code_name }
+local function resolve_user_from_code(device, code)
+  local user_map = get_user_map(device) or {}
+  local pin_map = user_map.pins or {}
+  local rfid_map = user_map.rfids or {}
+  local pins = {}
+  local rfids = {}
+
+  for pin, _ in pairs(pin_map) do
+    pins[#pins + 1] = pin
+  end
+  for rfid, _ in pairs(rfid_map) do
+    rfids[#rfids + 1] = rfid
+  end
+
+  table.sort(pins)
+  table.sort(rfids)
+
+  for index, pin in ipairs(pins) do
+    if pin == code then
+      return { name = normalize_user_name(pin_map[pin]), index = index }, "pin"
+    end
+  end
+
+  for offset, rfid in ipairs(rfids) do
+    if rfid == code then
+      return { name = normalize_user_name(rfid_map[rfid]), index = #pins + offset }, "rfid"
+    end
+  end
+
+  return nil, nil
+end
+
+local function emit_mode_activity(device, status, user_name)
+  local activity
+  if status == "Locked" or status == "Unlocked" then
+    activity = "Lock " .. (LOCK_STATUS_TO_ACTIVITY[status] or status)
+  else
+    activity =  "Lock " .. LOCK_STATUS_TO_ACTIVITY[status == "disarmed" and "Unlocked" or "Locked"]
+  end
+  local actor = user_name or "Unknown"
+  local event = LockCodes.codeChanged(string.format("%s by %s", activity, actor), { state_change = true })
+  if user_name ~= nil then
+    event.data = { codeName = user_name }
   end
   device:emit_event(event)
 end
 
-local function sync_lock_codes_from_user_map(device, map)
-  local previous_lock_codes = utils.deep_copy(get_lock_codes(device))
-  local previous_lock_pins = utils.deep_copy(get_lock_code_pins(device))
-  local lock_codes = {}
-  local lock_pins = {}
-  local used_slots = {}
-
-  local entries = {}
-  for pin, entry in pairs(map.pins or {}) do
-    local normalized = normalize_user_entry(entry)
-    entries[#entries + 1] = {
-      pin = pin,
-      name = normalized.name,
-      index = normalized.index,
-    }
+local function emit_security_activity(device, status, user_name)
+  local activity = "Security System " .. (STATUS_TO_ACTIVITY[status] or status)
+  local actor = user_name or "Unknown"
+  local event = LockCodes.codeChanged(string.format("%s by %s", activity, actor), { state_change = true })
+  if user_name ~= nil then
+    event.data = { codeName = user_name }
   end
-
-  table.sort(entries, function(left, right)
-    local left_index = left.index or math.huge
-    local right_index = right.index or math.huge
-    if left_index == right_index then
-      return tostring(left.pin) < tostring(right.pin)
-    end
-    return left_index < right_index
-  end)
-
-  local next_slot = 1
-  for _, entry in ipairs(entries) do
-    local slot_index = entry.index
-    if slot_index == nil or slot_index < 1 or used_slots[slot_index] then
-      while used_slots[next_slot] do
-        next_slot = next_slot + 1
-      end
-      slot_index = next_slot
-    end
-
-    used_slots[slot_index] = true
-    local existing_entry = map.pins[entry.pin]
-    if type(existing_entry) ~= "table" then
-      existing_entry = { name = normalize_user_name(existing_entry) }
-    end
-    existing_entry.index = slot_index
-    existing_entry.name = entry.name or existing_entry.name or ("Code " .. tostring(slot_index))
-    map.pins[entry.pin] = existing_entry
-
-    local slot = tostring(slot_index)
-    lock_pins[slot] = entry.pin
-    lock_codes[slot] = entry.name or normalize_user_name(previous_lock_codes[slot]) or ("Code " .. slot)
-  end
-
-  for slot, pin in pairs(previous_lock_pins or {}) do
-    if pin ~= nil and lock_pins[slot] == nil then
-      emit_code_changed(device, slot, " deleted", nil)
-    end
-  end
-
-  device:set_field("securitySystem_user_map", map, { persist = true })
-  device:set_field(LOCK_CODES_FIELD, lock_codes, { persist = true })
-  device:set_field(LOCK_CODE_PINS_FIELD, lock_pins, { persist = true })
-  emit_lock_codes(device, lock_codes, lock_pins)
-end
-
-local function resolve_user_from_code(device, code)
-  local map = get_user_map(device)
-  if map.pins ~= nil and map.pins[code] ~= nil then
-    return normalize_user_entry(map.pins[code]), "pin"
-  end
-  if map.rfids ~= nil and map.rfids[code] ~= nil then
-    return normalize_user_entry(map.rfids[code]), "rfid"
-  end
-  return nil, nil
+  device:emit_event(event)
 end
 
 local function emit_arm_activity(device, status, user_name)
   local activity
-  if should_use_lock_mode(device) then
-    if status == "locked" or status == "unlocked" then
+  if tonumber(device.preferences.mode) == 1 then
+    if status == "Locked" or status == "Unlocked" then
       activity = "Lock " .. (LOCK_STATUS_TO_ACTIVITY[status] or status)
     else
-      activity =  "Lock " .. LOCK_STATUS_TO_ACTIVITY[status == "disarmed" and "unlocked" or "locked"]
+      activity =  "Lock " .. LOCK_STATUS_TO_ACTIVITY[status == "disarmed" and "Unlocked" or "Locked"]
     end
-  else
+  elseif tonumber(device.preferences.mode) == 0 then
     activity = "Security System " .. (STATUS_TO_ACTIVITY[status] or status)
   end
   local actor = user_name or "Unknown"
@@ -465,12 +345,20 @@ local function emit_arm_activity(device, status, user_name)
   device:emit_event(event)
 end
 
+local function get_current_mode_status(device)
+  local lock_status = device:get_latest_state("main", mode.ID, mode.mode.NAME) or "Unlocked"
+  return lock_status == "Locked" and "armedAway" or "disarmed"
+end
+
+local function get_current_security_status(device)
+  return device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME) or "disarmed"
+end
+
 local function get_current_status(device)
-  if should_use_lock_mode(device) then
-    local lock_status = device:get_latest_state("main", lock.ID, lock.lock.NAME) or "unlocked"
-    return lock_status == "locked" and "armedAway" or "disarmed"
-  else
-    return device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME) or "disarmed"
+  if tonumber(device.preferences.mode) == 1 then
+    return get_current_mode_status(device)
+  elseif tonumber(device.preferences.mode) == 0 then
+    return get_current_security_status(device)
   end
 end
 
@@ -530,9 +418,9 @@ local function handle_arm_command(driver, device, zb_rx)
     userIndex = user.index,
     userName = user.name,
   }
-  device:set_field("securitySystem_last_user", data, { persist = false })
+
   if can_process_arm_command(status, get_current_status(device)) then
-    if device.preferences.exitDelay == true and status ~= "disarmed" then
+    if device.preferences.exitDelay == true and status == "armedAway" and tonumber(device.preferences.mode) == 0 then
       local duration = get_exit_delay_duration(device)
       send_panel_status(device, "exitDelay")
       device.thread:call_with_delay(duration, function()
@@ -558,6 +446,7 @@ local function handle_arm_command(driver, device, zb_rx)
       0xFF
     ))
   end
+  armCommandFromKeypad = false
 end
 
 local function handle_get_panel_status(driver, device, zb_rx)
@@ -571,27 +460,48 @@ local function handle_get_panel_status(driver, device, zb_rx)
     AlarmStatus.NO_ALARM
   ))
 end
-
 local function handle_arm(device, status)
   local duration = get_exit_delay_duration(device)
-  if not armCommandFromKeypad and can_process_arm_command(status, get_current_status(device)) then
-    if device.preferences.exitDelay == true then
+  if not armCommandFromKeypad and can_process_arm_command(status, get_current_security_status(device)) then
+    if device.preferences.exitDelay == true and status == "armedAway" and tonumber(device.preferences.mode) == 0 then
       send_panel_status(device, "exitDelay")
       device.thread:call_with_delay(duration, function()
-        emit_mode_status_event(device, status, { source = "app" })
-        emit_arm_activity(device, status, "App")
+        emit_status_event(device, status, { source = "app" })
+        emit_security_activity(device, status, "App")
         send_panel_status(device, status)
       end)
     else
-      emit_mode_status_event(device, status, { source = "app" })
-      emit_arm_activity(device, status, "App")
-      send_panel_status(device, status)
+      emit_status_event(device, status, { source = "app" })
+      emit_security_activity(device, status, "App")
+      if tonumber(device.preferences.mode) == 0 then
+        send_panel_status(device, status)
+      end
     end
   else
-    armCommandFromKeypad = false
     return
   end
-  armCommandFromKeypad = false
+end
+
+local function handle_lock(device, status)
+  --[[ local duration = get_exit_delay_duration(device) ]]
+  if not armCommandFromKeypad and can_process_arm_command(status, get_current_mode_status(device)) then
+    --[[ if device.preferences.exitDelay == true and tonumber(device.preferences.mode) == 1 then
+      send_panel_status(device, "exitDelay")
+      device.thread:call_with_delay(duration, function()
+        emit_mode_event(device, status, { source = "app" })
+        emit_mode_activity(device, status, "App")
+        send_panel_status(device, status)
+      end)
+    else ]]
+    emit_mode_event(device, status, { source = "app" })
+    emit_mode_activity(device, status, "App")
+    if tonumber(device.preferences.mode) == 1 then
+      send_panel_status(device, status)
+    end
+    --[[ end ]]
+  else
+    return
+  end
 end
 
 local function handle_arm_away(driver, device, command)
@@ -603,45 +513,89 @@ local function handle_arm_stay(driver, device, command)
 end
 
 local function handle_disarm(driver, device, command)
-  if can_process_arm_command("disarmed", get_current_status(device)) and not armCommandFromKeypad then
-    emit_mode_status_event(device, "disarmed", { source = "app" })
-    emit_arm_activity(device, "disarmed", "App")
-    send_panel_status(device, "disarmed")
-  else
-    armCommandFromKeypad = false
-    return
-  end
-  armCommandFromKeypad = false
+    if can_process_arm_command("disarmed", get_current_security_status(device)) and not armCommandFromKeypad then
+      emit_status_event(device, "disarmed", { source = "app" })
+      emit_security_activity(device, "disarmed", "App")
+      if tonumber(device.preferences.mode) == 0 then
+        send_panel_status(device, "disarmed")
+      end
+    else
+      return
+    end
 end
 
-local function refresh(driver, device, command)
+local function handle_unlock(driver, device, command)
+    if can_process_arm_command("Unlocked", get_current_mode_status(device)) and not armCommandFromKeypad then
+      emit_mode_event(device, "Unlocked", { source = "app" })
+      emit_mode_activity(device, "Unlocked", "App")
+      if tonumber(device.preferences.mode) == 1 then
+        send_panel_status(device, "Unlocked")
+      end
+    else
+      return
+    end
+end
+
+local function handle_set_mode(driver, device, command)
+  local desired = command.args.mode
+  if desired == "Locked" then
+    handle_lock(device, "Locked")
+    log.error("Locking")
+  elseif desired == "Unlocked" then
+    handle_unlock(driver, device, command)
+    log.error("Unlocking")
+  else
+    log.warn(string.format("Unsupported mode requested: %s", tostring(desired)))
+  end
+end
+
+local function update_user_map(device)
+  local map = build_user_map_from_prefs(device)
+  device:set_field("user_map", map, { persist = true })
+  local lock_codes, lock_code_pins = build_lock_code_state_from_prefs(device)
+  emit_lock_codes(device, lock_codes, lock_code_pins)
+end
+
+local function refresh(driver, device)
   device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
   send_panel_status(device, get_current_status(device))
 end
 
+local function set_states(device)
+  local current_mode = device:get_latest_state("main", mode.ID, mode.mode.NAME)
+  if current_mode == nil then
+    current_mode = "Unlocked"
+  end
+  emit_mode_event(device, current_mode, { source = "driver" })
+  emit_mode_activity(device, current_mode, "App")
+  local current_security_status = device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME)
+  if current_security_status == nil then
+    current_security_status = "disarmed"
+  end
+  emit_status_event(device, current_security_status, { source = "driver" })
+  emit_security_activity(device, current_security_status, "App")
+end
+
 local function get_and_update_state(device)
-  if should_use_lock_mode(device) then
-    if device:get_latest_state("main", lock.ID, lock.lock.NAME) == nil then
-      emit_lock_event(device, "unlocked", { source = "driver" })
-      emit_arm_activity(device, "unlocked", "App")
-    else
-      emit_lock_event(device, device:get_latest_state("main", lock.ID, lock.lock.NAME), { source = "driver" })
-      emit_arm_activity(device, device:get_latest_state("main", lock.ID, lock.lock.NAME), "App")
+  if tonumber(device.preferences.mode) == 1 then
+    local current_mode = device:get_latest_state("main", mode.ID, mode.mode.NAME)
+    if current_mode == nil then
+      current_mode = "Unlocked"
     end
-  else
-    if device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME) == nil then
-      emit_status_event(device, "disarmed", { source = "driver" })
-      emit_arm_activity(device, "disarmed", "App")
-    else
-      emit_status_event(device, device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME), { source = "driver" })
-      emit_arm_activity(device, device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME), "App")
+    emit_mode_event(device, current_mode, { source = "driver" })
+    emit_mode_activity(device, current_mode, "App")
+  elseif tonumber(device.preferences.mode) == 0 then
+    local current_security_status = device:get_latest_state("main", SecuritySystem.ID, SecuritySystem.securitySystemStatus.NAME)
+    if current_security_status == nil then
+      current_security_status = "disarmed"
     end
+    emit_status_event(device, current_security_status, { source = "driver" })
+    emit_security_activity(device, current_security_status, "App")
   end
 end
 
 local function device_added(driver, device)
   emit_supported(device)
-  get_and_update_state(device)
 end
 
 local function do_configure(self, device)
@@ -650,71 +604,27 @@ local function do_configure(self, device)
   device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
 end
 
-local function device_init(driver, device)
-  battery_defaults.build_linear_voltage_init(4.0, 6.0)(driver, device)
-  emit_supported(device)
-  local base_map = device:get_field("securitySystem_user_map") or LOCAL_USER_MAP
-  device:set_field("securitySystem_user_map", base_map, { persist = true })
-  sync_lock_codes_from_user_map(device, base_map)
-  emit_lock_code_limits(device)
-end
-
 local function send_iasace_mfg_write(device, attr_id, data_type, payload)
   local msg = cluster_base.write_manufacturer_specific_attribute(device, IASACE.ID, attr_id, DEVELCO_MANUFACTURER_CODE, data_type, payload)
   msg.body.zcl_header.frame_ctrl:set_direction_client()
   device:send(msg)
 end
 
-local function assign_preference_values(device)
-  local autoArmDisarmMode = tonumber(device.preferences.autoArmDisarmMode)
-  if autoArmDisarmMode ~= nil then
-    send_iasace_mfg_write(device, 0x8003, data_types.Enum8, autoArmDisarmMode)
-  end
-  local autoDisarmModeSetting = device.preferences.autoDisarmModeSetting
-  send_iasace_mfg_write(device, 0x8004, data_types.Boolean, autoDisarmModeSetting)
-  local autoArmModeSetting = tonumber(device.preferences.autoArmModeSetting)
-  if autoArmModeSetting ~= nil then
-    send_iasace_mfg_write(device, 0x8005, data_types.Enum8, autoArmModeSetting)
-  end
-  if should_use_lock_mode(device) then
-    if device.preferences.autoArmModeSettingBool == true then
-      send_iasace_mfg_write(device, 0x8005, data_types.Enum8, 1)
-    else
-      send_iasace_mfg_write(device, 0x8005, data_types.Enum8, 0)
-    end
-  end
-  local pinLengthSetting = tonumber(device.preferences.pinLengthSetting)
-  if pinLengthSetting ~= nil then
-    send_iasace_mfg_write(device, 0x8006, data_types.Uint8, pinLengthSetting)
-  end
+local function device_init(driver, device)
+  battery_defaults.build_linear_voltage_init(4.0, 6.0)(driver, device)
+  update_user_map(device)
+  emit_lock_code_limits(device)
+  set_states(device)
 end
 
 local function info_changed(driver, device, event, args)
-  local base_map = device:get_field("securitySystem_user_map") or LOCAL_USER_MAP
   emit_lock_code_limits(device)
   for name, value in pairs(device.preferences) do
     if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
       if (name == "pinMap") then
-        local pin_updates = parse_user_map(device.preferences.pinMap, function(pin)
-          if is_pin_length_valid(device, pin) then
-            return true
-          end
-          log.warn(string.format("Ignoring pinMap entry with invalid length (pin=%s)", tostring(pin)))
-          return false
-        end)
-        local map = {
-          pins = pin_updates,
-          rfids = base_map.rfids,
-        }
-        device:set_field("securitySystem_user_map", map, { persist = true })
-        sync_lock_codes_from_user_map(device, map)
+        update_user_map(device)
       elseif (name == "rfidMap") then
-        local rfid_updates = parse_user_map(device.preferences.rfidMap)
-        local map = {
-          pins = base_map.pins,
-          rfids = rfid_updates,
-        }
-        device:set_field("securitySystem_user_map", map, { persist = true })
+        update_user_map(device)
       elseif (name == "autoArmDisarmMode") then
         local autoArmDisarmMode = tonumber(device.preferences.autoArmDisarmMode)
         if autoArmDisarmMode ~= nil then
@@ -740,21 +650,9 @@ local function info_changed(driver, device, event, args)
         if pinLengthSetting ~= nil then
           send_iasace_mfg_write(device, 0x8006, data_types.Uint8, pinLengthSetting)
         end
-      elseif (name == "duration") then
-        local duration = tonumber(device.preferences.duration)
-        device:set_field("exit_delay_duration", duration, { persist = true })
       elseif (name == "mode") then
-        local mode = tonumber(device.preferences.mode)
-        if mode == 1 then
-          device:try_update_metadata({ profile = "frient-keypad-lock-status" })
-        else
-          device:try_update_metadata({ profile = "frient-keypad-security-system" })
-        end
-        device.thread:call_with_delay(3, function()
-          emit_supported(device)
-          get_and_update_state(device)
-          assign_preference_values(device)
-        end)
+        get_and_update_state(device)
+        refresh(driver, device)
       end
     end
   end
@@ -803,9 +701,8 @@ local frient_keypad = {
       [SecuritySystem.commands.armStay.NAME] = handle_arm_stay,
       [SecuritySystem.commands.disarm.NAME] = handle_disarm,
     },
-    [lock.ID] = {
-      [lock.commands.lock.NAME] = handle_arm_away,
-      [lock.commands.unlock.NAME] = handle_disarm,
+    [mode.ID] = {
+      [mode.commands.setMode.NAME] = handle_set_mode,
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = refresh,

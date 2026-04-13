@@ -12,7 +12,7 @@ local zigbee_keypad_driver = {
     capabilities.refresh,
     capabilities.tamperAlert,
     capabilities.lockCodes,
-    capabilities.lock,
+    capabilities.mode,
   },
   sub_drivers = require("sub_drivers"),
   health_check = false,

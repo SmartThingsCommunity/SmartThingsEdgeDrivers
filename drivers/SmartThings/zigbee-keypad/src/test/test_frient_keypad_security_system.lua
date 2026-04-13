@@ -40,7 +40,25 @@ zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
 	test.mock_device.add_test_device(mock_device)
 	test.socket.capability:__set_channel_ordering("relaxed")
+	--[[ test.socket.capability:__expect_send(
+		mock_device:generate_test_message(
+			"main",
+			capabilities.mode.supportedModes({ "Locked", "Unlocked" }, { visibility = { displayed = false } })
+		)
+	)
 	test.socket.capability:__expect_send(
+		mock_device:generate_test_message(
+			"main",
+			capabilities.mode.supportedArguments({ "Locked", "Unlocked" }, { visibility = { displayed = false } })
+		)
+	) ]]
+	test.socket.capability:__expect_send(
+		mock_device:generate_test_message(
+			"main",
+			capabilities.lockCodes.lockCodes(json.encode({}), { state_change = true }, { visibility = { displayed = true } })
+		)
+	)
+	--[[ test.socket.capability:__expect_send(
 		mock_device:generate_test_message(
 			"main",
 			capabilities.securitySystem.supportedSecuritySystemStatuses({ "armedAway", "armedStay", "disarmed" }, { visibility = { displayed = false } })
@@ -51,13 +69,7 @@ local function test_init()
 			"main",
 			capabilities.securitySystem.supportedSecuritySystemCommands({ "armAway", "armStay", "disarm" }, { visibility = { displayed = false } })
 		)
-	)
-	test.socket.capability:__expect_send(
-		mock_device:generate_test_message(
-			"main",
-			capabilities.lockCodes.lockCodes(json.encode({}), { state_change = true }, { visibility = { displayed = true } })
-		)
-	)
+	) ]]
 	test.socket.capability:__expect_send(
 		mock_device:generate_test_message(
 			"main",
@@ -67,7 +79,31 @@ local function test_init()
 	test.socket.capability:__expect_send(
 		mock_device:generate_test_message(
 			"main",
-			capabilities.lockCodes.maxCodeLength(10, { visibility = { displayed = true } })
+			capabilities.lockCodes.maxCodeLength(15, { visibility = { displayed = true } })
+		)
+	)
+	test.socket.capability:__expect_send(
+		mock_device:generate_test_message(
+			"main",
+			capabilities.mode.mode("Unlocked", { state_change = true })
+		)
+	)
+	test.socket.capability:__expect_send(
+		mock_device:generate_test_message(
+			"main",
+			capabilities.lockCodes.codeChanged("Lock Unlocked by App", { state_change = true, data = { codeName = "App" } })
+		)
+	)
+	test.socket.capability:__expect_send(
+		mock_device:generate_test_message(
+			"main",
+			capabilities.securitySystem.securitySystemStatus.disarmed({ state_change = true })
+		)
+	)
+	test.socket.capability:__expect_send(
+		mock_device:generate_test_message(
+			"main",
+			capabilities.lockCodes.codeChanged("Security System disarmed by App", { state_change = true, data = { codeName = "App" } })
 		)
 	)
 end
@@ -83,10 +119,22 @@ local function info_changed_device_data(preference_updates)
 end
 
 test.register_coroutine_test(
-	"Added lifecycle emits supported statuses only",
+	"Added lifecycle emits supported events",
 	function()
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message(
+				"main",
+				capabilities.mode.supportedModes({ "Locked", "Unlocked" }, { visibility = { displayed = false } })
+			)
+		)
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message(
+				"main",
+				capabilities.mode.supportedArguments({ "Locked", "Unlocked" }, { visibility = { displayed = false } })
+			)
+		)
 		test.socket.capability:__expect_send(
 			mock_device:generate_test_message(
 				"main",
@@ -99,7 +147,19 @@ test.register_coroutine_test(
 				capabilities.securitySystem.supportedSecuritySystemCommands({ "armAway", "armStay", "disarm" }, { visibility = { displayed = false } })
 			)
 		)
-    test.socket.capability:__expect_send(
+    --[[ test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.mode.mode("unlocked", { state_change = true })
+      )
+    ) ]]
+    --[[ test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCodes.codeChanged("Lock unlocked by App", { state_change = true, data = { codeName = "App" } })
+      )
+    ) ]]
+    --[[ test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
         capabilities.securitySystem.securitySystemStatus.disarmed({ state_change = true })
@@ -110,7 +170,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockCodes.codeChanged("Security System disarmed by App", { state_change = true, data = { codeName = "App" } })
       )
-    )
+    ) ]]
 	end
 )
 
@@ -268,7 +328,7 @@ test.register_coroutine_test(
 
 		test.socket.capability:__set_channel_ordering("relaxed")
 		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
-		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10, { visibility = { displayed = true } })))
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(15, { visibility = { displayed = true } })))
 		test.socket.capability:__expect_send(
 			mock_device:generate_test_message(
 				"main",
@@ -280,7 +340,113 @@ test.register_coroutine_test(
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", delete_data })
 
 		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
-		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10, { visibility = { displayed = true } })))
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(15, { visibility = { displayed = true } })))
+	end
+)
+
+test.register_coroutine_test(
+	"infoChanged mode to 1 emits mode activity and refresh",
+	function()
+		local update_data = info_changed_device_data({ mode = 1 })
+		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", update_data })
+
+		test.socket.capability:__set_channel_ordering("relaxed")
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(15, { visibility = { displayed = true } })))
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message("main", capabilities.mode.mode("Unlocked", { state_change = true }))
+		)
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message(
+				"main",
+				capabilities.lockCodes.codeChanged("Lock Unlocked by App", { state_change = true, data = { codeName = "App" } })
+			)
+		)
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+      }
+    )
+		test.socket.zigbee:__expect_send(
+			{
+				mock_device.id,
+				IASACE.client.commands.PanelStatusChanged(
+					mock_device,
+					PanelStatus.PANEL_DISARMED_READY_TO_ARM,
+					5,
+					AudibleNotification.DEFAULT_SOUND,
+					AlarmStatus.NO_ALARM
+				)
+			}
+		)
+	end
+)
+
+test.register_coroutine_test(
+	"Mode setMode locked emits mode and panel status",
+	function()
+		local update_data = info_changed_device_data({ mode = 1 })
+		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", update_data })
+
+		test.socket.capability:__set_channel_ordering("relaxed")
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(15, { visibility = { displayed = true } })))
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message("main", capabilities.mode.mode("Unlocked", { state_change = true }))
+		)
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message(
+				"main",
+				capabilities.lockCodes.codeChanged("Lock Unlocked by App", { state_change = true, data = { codeName = "App" } })
+			)
+		)
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
+      }
+    )
+		test.socket.zigbee:__expect_send(
+			{
+				mock_device.id,
+				IASACE.client.commands.PanelStatusChanged(
+					mock_device,
+					PanelStatus.PANEL_DISARMED_READY_TO_ARM,
+					5,
+					AudibleNotification.DEFAULT_SOUND,
+					AlarmStatus.NO_ALARM
+				)
+			}
+		)
+		test.wait_for_events()
+
+		test.socket.capability:__queue_receive({
+			mock_device.id,
+			{ capability = capabilities.mode.ID, component = "main", command = capabilities.mode.commands.setMode.NAME, args = { "Locked" }, named_args = { mode = "Locked" } }
+		})
+
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message("main", capabilities.mode.mode("Locked", { state_change = true }))
+		)
+		test.socket.capability:__expect_send(
+			mock_device:generate_test_message(
+				"main",
+				capabilities.lockCodes.codeChanged("Lock Locked by App", { state_change = true, data = { codeName = "App" } })
+			)
+		)
+		test.socket.zigbee:__expect_send(
+			{
+				mock_device.id,
+				IASACE.client.commands.PanelStatusChanged(
+					mock_device,
+					PanelStatus.PANEL_DISARMED_READY_TO_ARM,
+					5,
+					AudibleNotification.DEFAULT_SOUND,
+					AlarmStatus.NO_ALARM
+				)
+			}
+		)
 	end
 )
 
@@ -292,7 +458,7 @@ test.register_coroutine_test(
 
 		test.socket.capability:__set_channel_ordering("relaxed")
 		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
-		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10, { visibility = { displayed = true } })))
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(15, { visibility = { displayed = true } })))
 		test.socket.capability:__expect_send(
 			mock_device:generate_test_message(
 				"main",
@@ -348,13 +514,7 @@ test.register_coroutine_test(
 
 		test.socket.capability:__set_channel_ordering("relaxed")
 		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
-		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(10, { visibility = { displayed = true } })))
-		test.socket.capability:__expect_send(
-			mock_device:generate_test_message(
-				"main",
-				capabilities.lockCodes.lockCodes(json.encode({}), { state_change = true }, { visibility = { displayed = true } })
-			)
-		)
+		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.maxCodeLength(15, { visibility = { displayed = true } })))
 
 		test.socket.capability:__expect_send(
 			mock_device:generate_test_message(
