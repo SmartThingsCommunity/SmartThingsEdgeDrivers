@@ -4,6 +4,7 @@
 
 return function(opts, driver, device)
   local INOVELLI_FINGERPRINTS = {
+    { mfr = "Inovelli", model = "VZM30-SN" },
     { mfr = "Inovelli", model = "VZM31-SN" },
     { mfr = "Inovelli", model = "VZM32-SN" }
   }

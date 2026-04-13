@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Mock out globals
 local test = require "integration_test"
@@ -81,7 +71,10 @@ test.register_coroutine_test(
       sensitivityAdjustment.sensitivityAdjustment.Medium()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.battery.battery(100)))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -101,7 +94,10 @@ test.register_coroutine_test(
         ,
         data_types.Uint8, 1) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -122,7 +118,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -144,7 +143,10 @@ test.register_coroutine_test(
     test.mock_time.advance_time(detect_duration)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.motionSensor.motion.inactive()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 local function build_write_attr_res(cluster, status)
@@ -184,7 +186,10 @@ test.register_coroutine_test(
     local value = mock_device:get_field(PREF_CHANGED_VALUE) or 0
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     detectionFrequency.detectionFrequency(value, {visibility = {displayed = false}})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -198,7 +203,10 @@ test.register_coroutine_test(
     mock_device:set_field(PREF_CHANGED_VALUE, PREF_SENSITIVITY_VALUE_HIGH)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       sensitivityAdjustment.sensitivityAdjustment.High()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -212,7 +220,10 @@ test.register_coroutine_test(
     mock_device:set_field(PREF_CHANGED_VALUE, PREF_SENSITIVITY_VALUE_MEDIUM)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       sensitivityAdjustment.sensitivityAdjustment.Medium()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -226,7 +237,10 @@ test.register_coroutine_test(
     mock_device:set_field(PREF_CHANGED_VALUE, PREF_SENSITIVITY_VALUE_LOW)
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       sensitivityAdjustment.sensitivityAdjustment.Low()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -261,7 +275,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, SENSITIVITY_ATTRIBUTE_ID, MFG_CODE
         , data_types.Uint8, PREF_SENSITIVITY_VALUE_LOW)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

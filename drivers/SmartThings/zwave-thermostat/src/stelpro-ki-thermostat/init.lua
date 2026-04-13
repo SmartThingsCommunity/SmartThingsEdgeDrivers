@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local log = require "log"
 local capabilities = require "st.capabilities"
@@ -21,19 +11,7 @@ local SensorMultilevel = (require "st.zwave.CommandClass.SensorMultilevel")({ ve
 --- @type st.zwave.CommandClass.ThermostatMode
 local ThermostatMode = (require "st.zwave.CommandClass.ThermostatMode")({ version = 2 })
 
-local STELPRO_KI_THERMOSTAT_FINGERPRINTS = {
-  { manufacturerId = 0x0239, productType = 0x0001, productId = 0x0001 } -- Stelpro Ki Thermostat
-}
 
-local function can_handle_stelpro_ki_thermostat(opts, driver, device, cmd, ...)
-  for _, fingerprint in ipairs(STELPRO_KI_THERMOSTAT_FINGERPRINTS) do
-    if device:id_match( fingerprint.manufacturerId, fingerprint.productType, fingerprint.productId) then
-      return true
-    end
-  end
-
-  return false
-end
 
 local function sensor_multilevel_report_handler(self, device, cmd)
   if (cmd.args.sensor_type == SensorMultilevel.sensor_type.TEMPERATURE) then
@@ -138,7 +116,7 @@ local stelpro_ki_thermostat = {
   lifecycle_handlers = {
     added = device_added
   },
-  can_handle = can_handle_stelpro_ki_thermostat,
+  can_handle = require("stelpro-ki-thermostat.can_handle"),
 }
 
 return stelpro_ki_thermostat

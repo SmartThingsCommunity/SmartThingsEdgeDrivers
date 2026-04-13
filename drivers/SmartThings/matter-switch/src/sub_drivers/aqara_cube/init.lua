@@ -21,16 +21,6 @@ local INITIAL_PRESS_ONLY = "__initial_press_only" -- for devices that support MS
 local CUBEACTION_TIMER = "__cubeAction_timer"
 local CUBEACTION_TIME = 3
 
-local function is_aqara_cube(opts, driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-    local name = string.format("%s", device.manufacturer_info.product_name)
-    if string.find(name, "Aqara Cube T1 Pro") then
-      return true
-    end
-  end
-  return false
-end
-
 local callback_timer = function(device)
   return function()
     device:emit_event(cubeAction.cubeAction("noAction"))
@@ -240,7 +230,7 @@ local aqara_cube_handler = {
       }
     },
   },
-  can_handle = is_aqara_cube
+  can_handle = require("sub_drivers.aqara_cube.can_handle")
 }
 
 return aqara_cube_handler

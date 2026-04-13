@@ -86,7 +86,10 @@ test.register_coroutine_test(
         Association:Set({grouping_identifier = 4, node_ids = {}})
       ))
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -102,6 +105,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -118,6 +124,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -137,6 +146,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -156,6 +168,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -175,6 +190,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -194,6 +212,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -210,6 +231,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -229,6 +253,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -248,6 +275,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -267,6 +297,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -286,6 +319,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 

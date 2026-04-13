@@ -124,6 +124,11 @@ zigbeeManufacturer:
     manufacturer: Resideo Korea
     model: DT300ST-M000
     deviceProfileName: thermostat-resideo-dt300st-m000
+  - id: "Resideo Korea/MC200ST"
+    deviceLabel: Valve Controller
+    manufacturer: Resideo Korea
+    model: MC200ST
+    deviceProfileName: thermostat-resideo-dt300st-m000
   - id: "LUMI/lumi.airrtc.agl001"
     deviceLabel: Aqara Smart Radiator Thermostat E1
     manufacturer: LUMI

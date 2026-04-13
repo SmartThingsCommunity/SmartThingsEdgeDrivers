@@ -65,7 +65,10 @@ test.register_coroutine_test(
           Battery:Get({})
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

@@ -143,7 +143,8 @@ test.register_message_test(
     table.unpack(refresh_commands)
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -161,7 +162,8 @@ test.register_message_test(
     table.unpack(refresh_commands)
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -178,6 +180,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -194,6 +199,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.battery.battery(1))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -216,6 +224,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.supportedThermostatModes({ "off", "heat", "cool", "auto" }, {visibility={displayed=false}}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -237,6 +248,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.supportedThermostatFanModes({ "on", "auto", "circulate" }, {visibility={displayed=false}}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -265,6 +279,9 @@ test.register_message_test(
         { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -285,6 +302,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 22 }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -302,6 +322,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode({ value = "heat" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -319,6 +342,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatFanMode.thermostatFanMode({ value = "circulate" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -339,6 +365,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 21.5, unit = 'C' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -359,6 +388,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 68, unit = 'F' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -384,6 +416,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatOperatingState.thermostatOperatingState.heating())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -409,7 +444,10 @@ test.register_coroutine_test(
             ThermostatFanMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -434,7 +472,10 @@ test.register_coroutine_test(
             ThermostatFanMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -459,7 +500,10 @@ test.register_coroutine_test(
             ThermostatFanMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -484,7 +528,10 @@ test.register_coroutine_test(
             ThermostatMode:Get({})
         )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -509,7 +556,10 @@ test.register_coroutine_test(
         ThermostatMode:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -539,7 +589,10 @@ test.register_coroutine_test(
                               })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -590,7 +643,10 @@ test.register_coroutine_test(
                                 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -640,7 +696,10 @@ test.register_coroutine_test(
                                 })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -692,7 +751,10 @@ test.register_coroutine_test(
                               })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

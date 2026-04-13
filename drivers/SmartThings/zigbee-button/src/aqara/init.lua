@@ -1,16 +1,6 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local clusters = require "st.zigbee.zcl.clusters"
@@ -34,14 +24,7 @@ local MULTISTATE_INPUT_CLUSTER_ID = 0x0012
 local PRESENT_ATTRIBUTE_ID = 0x0055
 
 local COMP_LIST = { "button1", "button2", "all" }
-local FINGERPRINTS = {
-  ["lumi.remote.b1acn02"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.acn003"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b186acn03"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b286acn03"] = { mfr = "LUMI", btn_cnt = 3 },
-  ["lumi.remote.b18ac1"] = { mfr = "LUMI", btn_cnt = 1 },
-  ["lumi.remote.b28ac1"] = { mfr = "LUMI", btn_cnt = 3 }
-}
+local FINGERPRINTS = require "aqara.fingerprints"
 
 local configuration = {
   {
@@ -102,6 +85,7 @@ local function battery_level_handler(driver, device, value, zb_rx)
     batteryLevel = "warning"
   end
 
+  -- Note that all aqara buttons use batteryLevel and not battery capability.
   if device:supports_capability_by_id(capabilities.battery.ID) then
     device:emit_event(capabilities.battery.battery(calc_battery_percentage(voltage)))
   elseif device:supports_capability_by_id(capabilities.batteryLevel.ID) then
@@ -139,14 +123,6 @@ local function mode_switching_handler(driver, device, value, zb_rx)
   end
 end
 
-local is_aqara_products = function(opts, driver, device)
-  local isAqaraProducts = false
-  if FINGERPRINTS[device:get_model()] and FINGERPRINTS[device:get_model()].mfr == device:get_manufacturer() then
-    isAqaraProducts = true
-  end
-  return isAqaraProducts
-end
-
 local function device_init(driver, device)
   battery_defaults.build_linear_voltage_init(2.6, 3.0)(driver, device)
   if configuration ~= nil then
@@ -160,6 +136,8 @@ local function added_handler(self, device)
   local btn_evt_cnt = FINGERPRINTS[device:get_model()].btn_cnt or 1
   local mode = device:get_field(MODE) or 0
   local model = device:get_model()
+  local type = FINGERPRINTS[device:get_model()].type or "CR2032"
+  local quantity = FINGERPRINTS[device:get_model()].quantity or 1
 
   if mode == 0 then
     if model == "lumi.remote.b18ac1" or model == "lumi.remote.b28ac1" then
@@ -175,8 +153,8 @@ local function added_handler(self, device)
   button_utils.emit_event_if_latest_state_missing(device, "main", capabilities.button, capabilities.button.button.NAME,
     capabilities.button.button.pushed({ state_change = false }))
   device:emit_event(capabilities.batteryLevel.battery.normal())
-  device:emit_event(capabilities.batteryLevel.type("CR2032"))
-  device:emit_event(capabilities.batteryLevel.quantity(1))
+  device:emit_event(capabilities.batteryLevel.type(type))
+  device:emit_event(capabilities.batteryLevel.quantity(quantity))
 
   if btn_evt_cnt > 1 then
     for i = 1, btn_evt_cnt do
@@ -231,7 +209,7 @@ local aqara_wireless_switch_handler = {
       }
     }
   },
-  can_handle = is_aqara_products
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_wireless_switch_handler

@@ -57,6 +57,9 @@ test.register_message_test(
         direction = "send",
         message = mock:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -73,6 +76,9 @@ test.register_message_test(
         direction = "send",
         message = mock:generate_test_message("main", capabilities.button.button.held({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -91,6 +97,9 @@ test.register_message_test(
         direction = "send",
         message = mock:generate_test_message("main", capabilities.button.button.pushed({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -109,7 +118,11 @@ test.register_message_test(
         direction = "send",
         message = mock:generate_test_message("main", capabilities.button.button.down_hold({ state_change = true }))
       }
+    },
+    {
+       min_api_version = 17
     }
+
   )
 
 test.register_coroutine_test(
@@ -136,7 +149,11 @@ test.register_coroutine_test(
           Battery:Get({})
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 
 
@@ -164,6 +181,9 @@ test.register_coroutine_test(
           Battery:Get({})
         )
       },
+    },
+    {
+       min_api_version = 17
     }
 )
 

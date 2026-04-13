@@ -4,7 +4,8 @@
 return function(opts, driver, device)
   local FINGERPRINTS = {
     { mfr = "LUMI", model = "lumi.light.acn004" },
-    { mfr = "Aqara", model = "lumi.light.acn014" }
+    { mfr = "Aqara", model = "lumi.light.acn014" },
+    { mfr = "LUMI", model = "lumi.light.cwacn1" }
   }
 
   for _, fingerprint in ipairs(FINGERPRINTS) do

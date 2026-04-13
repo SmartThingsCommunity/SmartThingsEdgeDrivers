@@ -54,9 +54,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed({
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -74,9 +77,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_2x({
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_2x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -94,9 +100,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_3x({
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_3x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -114,9 +123,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_4x({
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_4x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -134,9 +146,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_5x({
+      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_5x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -154,9 +169,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed({
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -174,9 +192,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_2x({
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_2x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -194,9 +215,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_3x({
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_3x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -214,9 +238,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_4x({
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_4x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -234,9 +261,12 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_dimmer:generate_test_message("button2", capabilities.button.button.pushed_5x({
+      message = mock_inovelli_dimmer:generate_test_message("button1", capabilities.button.button.pushed_5x({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -257,6 +287,9 @@ test.register_message_test(
       message = mock_inovelli_dimmer:generate_test_message("button3", capabilities.button.button.pushed({
         state_change = true }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 

@@ -61,6 +61,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.active())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -81,6 +84,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -105,7 +111,10 @@ test.register_coroutine_test(
       test.wait_for_events()
       test.mock_time.advance_time(10)
       test.socket.capability:__expect_send(mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -124,6 +133,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -144,6 +156,9 @@ test.register_message_test(
         direction = "send",
         message = mock_sensor:generate_test_message("main", capabilities.motionSensor.motion.inactive())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -162,6 +177,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({value = 131, unit = "lux"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -182,6 +200,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 80.25, unit = "F"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -201,6 +222,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 53 }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -224,7 +248,29 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
+  }
+)
+
+test.register_message_test(
+  "Sensor multilevel luminance report with value=0 uses default lux conversion",
+  {
+    {
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(SensorMultilevel:Report({
+        sensor_type = SensorMultilevel.sensor_type.LUMINANCE,
+        sensor_value = 0 })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.illuminanceMeasurement.illuminance({value = 0, unit = "lux"}))
+    }
+  },
+  {
+     min_api_version = 17
   }
 )
 

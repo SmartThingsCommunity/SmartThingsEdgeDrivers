@@ -1,24 +1,11 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local common_utils = require "common-utils"
 local embedded_cluster_utils = require "embedded-cluster-utils"
 local version = require "version"
-
-local DISHWASHER_DEVICE_TYPE_ID = 0x0075
 
 if version.api < 10 then
   clusters.DishwasherAlarm = require "DishwasherAlarm"
@@ -36,16 +23,6 @@ local OPERATIONAL_STATE_COMMAND_MAP = {
 
 local SUPPORTED_DISHWASHER_MODES = "__supported_dishwasher_modes"
 
-local function is_matter_dishwasher(opts, driver, device)
-  for _, ep in ipairs(device.endpoints) do
-    for _, dt in ipairs(ep.device_types) do
-      if dt.device_type_id == DISHWASHER_DEVICE_TYPE_ID then
-        return true
-      end
-    end
-  end
-  return false
-end
 
 -- Lifecycle Handlers --
 local function do_configure(driver, device)
@@ -267,7 +244,7 @@ local matter_dishwasher_handler = {
       [capabilities.operationalState.commands.resume.NAME] = handle_operational_state_resume
     }
   },
-  can_handle = is_matter_dishwasher
+  can_handle = require("matter-dishwasher.can_handle"),
 }
 
 return matter_dishwasher_handler

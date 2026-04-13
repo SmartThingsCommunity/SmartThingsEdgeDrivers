@@ -1,16 +1,5 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright © 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local clusters = require "st.matter.clusters"
@@ -27,8 +16,8 @@ local HEAT_PUMP_DEVICE_TYPE_ID = 0x0309
 local THERMOSTAT_DEVICE_TYPE_ID = 0x0301
 
 if version.api < 11 then
-  clusters.ElectricalEnergyMeasurement = require "ElectricalEnergyMeasurement"
-  clusters.ElectricalPowerMeasurement = require "ElectricalPowerMeasurement"
+  clusters.ElectricalEnergyMeasurement = require "embedded_clusters.ElectricalEnergyMeasurement"
+  clusters.ElectricalPowerMeasurement = require "embedded_clusters.ElectricalPowerMeasurement"
 end
 
 local device_desc = {
@@ -157,7 +146,10 @@ test.register_coroutine_test(
     local component_to_endpoint_map = mock_device:get_field("__component_to_endpoint_map")
     assert(component_to_endpoint_map["thermostatOne"] == THERMOSTAT_ONE_EP, string.format("Thermostat One Endpoint must be %d", THERMOSTAT_ONE_EP))
     assert(component_to_endpoint_map["thermostatTwo"] == THERMOSTAT_TWO_EP, string.format("Thermostat Two Endpoint must be %d", THERMOSTAT_TWO_EP))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -199,6 +191,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 23.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -241,6 +236,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 19.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -279,6 +277,9 @@ test.register_message_test(
         clusters.Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, THERMOSTAT_TWO_EP, 25*100)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -317,6 +318,9 @@ test.register_message_test(
         clusters.Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, THERMOSTAT_TWO_EP , 13*100)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -381,6 +385,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatMode.thermostatMode.heat())
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -466,6 +473,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatMode.supportedThermostatModes({"off", "cool"}, {visibility={displayed=false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -534,6 +544,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("thermostatTwo", capabilities.thermostatMode.thermostatMode.emergency_heat())
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -598,7 +611,10 @@ test.register_message_test(
       message = mock_device_with_auto:generate_test_message("thermostatTwo", capabilities.thermostatMode.thermostatMode.emergency_heat())
     },
   },
-  { test_init = test_init_auto }
+  {
+    test_init = test_init_auto,
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -619,6 +635,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 15.0, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -641,6 +660,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 15, unit = "Wh" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -687,7 +709,8 @@ test.register_coroutine_test(
   {
     test_init = function()
       test_init()
-    end
+    end,
+    min_api_version = 17
   }
 )
 
@@ -739,7 +762,8 @@ test.register_coroutine_test(
   {
     test_init = function()
       test_init()
-    end
+    end,
+    min_api_version = 17
   }
 )
 

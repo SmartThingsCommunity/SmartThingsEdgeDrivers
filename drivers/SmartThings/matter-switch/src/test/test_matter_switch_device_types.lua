@@ -13,6 +13,10 @@ local mock_device_onoff = test.mock_device.build_test_matter_device({
     vendor_id = 0x0000,
     product_id = 0x0000,
   },
+  matter_version = {
+    hardware = 1,
+    software = 1,
+  },
   endpoints = {
     {
       endpoint_id = 0,
@@ -91,6 +95,35 @@ local mock_device_dimmer = test.mock_device.build_test_matter_device({
     }
   }
 })
+
+local mock_device_switch_vendor_override = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  manufacturer_info = {
+    vendor_id = 0x109B,
+    product_id = 0x1001,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 1} -- OnOff PlugIn Unit
+      }
+    }
+  }
+})
+
 
 local mock_device_color_dimmer = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("matter-thing.yml"),
@@ -385,12 +418,7 @@ local mock_device_light_level_motion = test.mock_device.build_test_matter_device
     {
       endpoint_id = 1,
       clusters = {
-        {
-          cluster_id = clusters.OnOff.ID,
-          cluster_type = "SERVER",
-          cluster_revision = 1,
-          feature_map = 0, --u32 bitmap
-        },
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
         {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
       },
       device_types = {
@@ -411,14 +439,8 @@ local mock_device_light_level_motion = test.mock_device.build_test_matter_device
 
 local function test_init_parent_child_switch_types()
   test.mock_device.add_test_device(mock_device_parent_child_switch_types)
-  local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_child_switch_types)
-
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "added" })
-  test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
-
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "init" })
-  test.socket.matter:__expect_send({mock_device_parent_child_switch_types.id, subscribe_request})
-
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_switch_types.id, "doConfigure" })
   test.socket.matter:__expect_send({
     mock_device_parent_child_switch_types.id,
@@ -447,17 +469,18 @@ end
 
 local function test_init_onoff_client()
   test.mock_device.add_test_device(mock_device_onoff_client)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "init" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_onoff_client.id, "doConfigure" })
+  mock_device_onoff_client:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_parent_client_child_server()
   test.mock_device.add_test_device(mock_device_parent_client_child_server)
-  local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_parent_client_child_server)
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_client_child_server.id, "added" })
-  test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_client_child_server.id, "init" })
-  test.socket.matter:__expect_send({mock_device_parent_client_child_server.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_client_child_server.id, "doConfigure" })
   mock_device_parent_client_child_server:expect_metadata_update({ profile = "switch-binary" })
@@ -466,6 +489,8 @@ end
 
 local function test_init_dimmer()
   test.mock_device.add_test_device(mock_device_dimmer)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "init" })
   test.socket.device_lifecycle:__queue_receive({ mock_device_dimmer.id, "doConfigure" })
   test.socket.matter:__expect_send({
     mock_device_dimmer.id,
@@ -482,6 +507,18 @@ local function test_init_color_dimmer()
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_dimmer.id, "doConfigure" })
   mock_device_color_dimmer:expect_metadata_update({ profile = "switch-color-level" })
   mock_device_color_dimmer:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_switch_vendor_override()
+  test.mock_device.add_test_device(mock_device_switch_vendor_override)
+  local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_switch_vendor_override)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "added" })
+  test.socket.matter:__expect_send({mock_device_switch_vendor_override.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "init" })
+  test.socket.matter:__expect_send({mock_device_switch_vendor_override.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "doConfigure" })
+  mock_device_switch_vendor_override:expect_metadata_update({ profile = "switch-binary" })
+  mock_device_switch_vendor_override:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 local function test_init_mounted_on_off_control()
@@ -551,24 +588,9 @@ end
 local function test_init_parent_child_different_types()
   test.mock_device.add_test_device(mock_device_parent_child_different_types)
   local cluster_subscribe_list = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.LevelControl.attributes.CurrentLevel,
-    clusters.LevelControl.attributes.MaxLevel,
-    clusters.LevelControl.attributes.MinLevel,
-    clusters.ColorControl.attributes.ColorTemperatureMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-    clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-    clusters.ColorControl.attributes.CurrentHue,
-    clusters.ColorControl.attributes.CurrentSaturation,
-    clusters.ColorControl.attributes.CurrentX,
-    clusters.ColorControl.attributes.CurrentY
+    clusters.OnOff.attributes.OnOff
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_different_types)
-  for i, cluster in ipairs(cluster_subscribe_list) do
-    if i > 1 then
-      subscribe_request:merge(cluster:subscribe(mock_device_parent_child_different_types))
-    end
-  end
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "added" })
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
@@ -652,84 +674,131 @@ test.register_coroutine_test(
   "Test profile change on init for onoff parent cluster as server",
   function()
   end,
-  { test_init = test_init_onoff }
+  {
+    test_init = test_init_onoff,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for dimmer parent cluster as server",
   function()
   end,
-  { test_init = test_init_dimmer }
+  {
+    test_init = test_init_dimmer,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for color dimmer parent cluster as server",
   function()
   end,
-  { test_init = test_init_color_dimmer }
+  {
+    test_init = test_init_color_dimmer,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test init for onoff parent cluster as client",
   function()
   end,
-  { test_init = test_init_onoff_client }
+  {
+    test_init = test_init_onoff_client,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Test init for device with requiring the switch category as a vendor override",
+  function()
+  end,
+  {
+    test_init = test_init_switch_vendor_override,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test init for mounted onoff control parent cluster as server",
   function()
   end,
-  { test_init = test_init_mounted_on_off_control }
+  {
+    test_init = test_init_mounted_on_off_control,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test init for mounted dimmable load control parent cluster as server",
   function()
   end,
-  { test_init = test_init_mounted_dimmable_load_control }
+  {
+    test_init = test_init_mounted_dimmable_load_control,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for water valve parent cluster as server",
   function()
   end,
-  { test_init = test_init_water_valve }
+  {
+    test_init = test_init_water_valve,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for onoff parent cluster as client and onoff child as server",
   function()
   end,
-  { test_init = test_init_parent_client_child_server }
+  {
+    test_init = test_init_parent_client_child_server,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test profile change on init for onoff device when parent and child are both server",
   function()
   end,
-  { test_init = test_init_parent_child_switch_types }
+  {
+    test_init = test_init_parent_child_switch_types,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test child device attribute subscriptions when parent device has clusters that are not a superset of child device clusters",
   function()
   end,
-  { test_init = test_init_parent_child_different_types }
+  {
+    test_init = test_init_parent_child_different_types,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test child device attributes not subscribed to for unsupported device type for child device",
   function()
   end,
-  { test_init = test_init_parent_child_unsupported_device_type }
+  {
+    test_init = test_init_parent_child_unsupported_device_type,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test init for light with motion sensor",
   function()
   end,
-  { test_init = test_init_light_level_motion }
+  {
+    test_init = test_init_light_level_motion,
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
+

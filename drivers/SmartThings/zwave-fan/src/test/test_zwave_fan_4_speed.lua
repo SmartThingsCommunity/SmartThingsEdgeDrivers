@@ -71,6 +71,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fan:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -99,6 +102,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fan:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -129,6 +135,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fan:generate_test_message("main", capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -157,6 +166,9 @@ test.register_message_test(
         direction = "send",
         message = mock_fan:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -188,7 +200,10 @@ test.register_coroutine_test(
               SwitchMultilevel:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

@@ -10,6 +10,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local utils = require "st.utils"
 local OTAUpgrade = require("st.zigbee.zcl.clusters").OTAUpgrade
 local device_management = require "st.zigbee.device_management"
+local zigbee_constants = require "st.zigbee.constants"
 
 -- Inovelli VZM31-SN device identifiers
 local INOVELLI_MANUFACTURER_ID = "Inovelli"
@@ -38,6 +39,12 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
+local supported_button_values = {
+  ["button1"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button2"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"},
+  ["button3"] = {"pushed","held","down_hold","pushed_2x","pushed_3x","pushed_4x","pushed_5x"}
+}
+
 -- Test device initialization
 test.register_message_test(
   "Device should initialize properly on added lifecycle event",
@@ -65,7 +72,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -88,7 +96,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -111,7 +120,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -137,7 +147,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -181,7 +192,7 @@ end
 
 -- Test button1 pushed
 test.register_message_test(
-  "Button1 pushed should emit button event",
+  "Button1 pushed should emit button event and update supportedButtonValues",
   {
     {
       channel = "zigbee",
@@ -191,14 +202,29 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
+      message = mock_inovelli_vzm31_sn:generate_test_message(
+        "button1",
+        capabilities.button.supportedButtonValues(
+          supported_button_values["button1"],
+          { visibility = { displayed = false } }
+        )
+      )
+    },
+    {
+      channel = "capability",
+      direction = "send",
       message = mock_inovelli_vzm31_sn:generate_test_message("button1", capabilities.button.button.pushed({ state_change = true }))
     }
+  },
+  {
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
 -- Test button2 pressed 4 times
 test.register_message_test(
-  "Button2 pressed 4 times should emit button event",
+  "Button2 pressed 4 times should emit button event and update supportedButtonValues",
   {
     {
       channel = "zigbee",
@@ -208,68 +234,105 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_vzm31_sn:generate_test_message("button2", capabilities.button.button.pushed_4x({ state_change = true }))
-    }
-  }
-)
-
--- Test power meter from SimpleMetering
-test.register_message_test(
-  "Power meter from SimpleMetering should emit power events",
-  {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzm31_sn.id,
-        clusters.SimpleMetering.attributes.InstantaneousDemand:build_test_attr_report(mock_inovelli_vzm31_sn, 1500)
-      }
+      message = mock_inovelli_vzm31_sn:generate_test_message(
+        "button2",
+        capabilities.button.supportedButtonValues(
+          supported_button_values["button2"],
+          { visibility = { displayed = false } }
+        )
+      )
     },
     {
       channel = "capability",
       direction = "send",
-      message = mock_inovelli_vzm31_sn:generate_test_message("main", capabilities.powerMeter.power({value = 150.0, unit = "W"}))
+      message = mock_inovelli_vzm31_sn:generate_test_message("button2", capabilities.button.button.pushed_4x({ state_change = true }))
     }
+  },
+  {
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
+  }
+)
+
+-- Test consecutive button events - supportedButtonValues should only be sent on first event
+test.register_coroutine_test(
+  "Consecutive button events should only send supportedButtonValues on first event",
+  function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+
+    -- First button event: button1 pushed - should send supportedButtonValues + button event
+    test.socket.zigbee:__queue_receive({
+      mock_inovelli_vzm31_sn.id,
+      build_inovelli_button_message(mock_inovelli_vzm31_sn, 0x01, 0x00)
+    })
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm31_sn:generate_test_message(
+        "button1",
+        capabilities.button.supportedButtonValues(
+          supported_button_values["button1"],
+          { visibility = { displayed = false } }
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm31_sn:generate_test_message("button1", capabilities.button.button.pushed({ state_change = true }))
+    )
+
+    -- Second button event: button1 pushed_2x - should only send button event, NOT supportedButtonValues
+    test.socket.zigbee:__queue_receive({
+      mock_inovelli_vzm31_sn.id,
+      build_inovelli_button_message(mock_inovelli_vzm31_sn, 0x01, 0x03)
+    })
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm31_sn:generate_test_message("button1", capabilities.button.button.pushed_2x({ state_change = true }))
+    )
+  end,
+  {
+     min_api_version = 17
   }
 )
 
 -- Test power meter from ElectricalMeasurement
-test.register_message_test(
+test.register_coroutine_test(
   "Power meter from ElectricalMeasurement should emit power events",
+  function()
+    -- Set the divisor field (default handlers use 10 if not set, but we can set it for consistency)
+    -- The default handler will use 10 if ELECTRICAL_MEASUREMENT_DIVISOR_KEY is not set
+    -- Since the test expects 2000 -> 200.0 W, that means divisor of 10 is being used
+    mock_inovelli_vzm31_sn:set_field(zigbee_constants.ELECTRICAL_MEASUREMENT_DIVISOR_KEY, 10, {persist = true})
+
+    test.socket.zigbee:__queue_receive({
+      mock_inovelli_vzm31_sn.id,
+      clusters.ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_inovelli_vzm31_sn, 2000)
+    })
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm31_sn:generate_test_message("main", capabilities.powerMeter.power({value = 200.0, unit = "W"}))
+    )
+  end,
   {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzm31_sn.id,
-        clusters.ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_inovelli_vzm31_sn, 2000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_inovelli_vzm31_sn:generate_test_message("main", capabilities.powerMeter.power({value = 200.0, unit = "W"}))
-    }
+     min_api_version = 17
   }
 )
 
 -- Test energy meter
-test.register_message_test(
+test.register_coroutine_test(
   "Energy meter should emit energy events",
+  function()
+    -- Set the divisor field as the device reads during configuration
+    -- For VZM31, the divisor is read from the device, but for testing we need to set it
+    -- The test expects 50000 -> 500.0 kWh, which means divisor of 100
+    mock_inovelli_vzm31_sn:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 100, {persist = true})
+
+    test.socket.zigbee:__queue_receive({
+      mock_inovelli_vzm31_sn.id,
+      clusters.SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_inovelli_vzm31_sn, 50000)
+    })
+    test.socket.capability:__expect_send(
+      mock_inovelli_vzm31_sn:generate_test_message("main", capabilities.energyMeter.energy({value = 500.0, unit = "kWh"}))
+    )
+  end,
   {
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_inovelli_vzm31_sn.id,
-        clusters.SimpleMetering.attributes.CurrentSummationDelivered:build_test_attr_report(mock_inovelli_vzm31_sn, 50000)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_inovelli_vzm31_sn:generate_test_message("main", capabilities.energyMeter.energy({value = 500.0, unit = "kWh"}))
-    }
+     min_api_version = 17
   }
 )
 
@@ -317,7 +380,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -325,21 +389,52 @@ test.register_message_test(
 test.register_coroutine_test(
   "doConfigure runs base config (VZM31)",
   function()
+    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_inovelli_vzm31_sn.id, "doConfigure" })
-    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, OTAUpgrade.commands.ImageNotify(mock_inovelli_vzm31_sn, 0x00, 100, 0x122F, 0xFFFF, 0xFFFFFFFF) })
-    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, device_management.build_bind_request(mock_inovelli_vzm31_sn, 0xFC31, require("integration_test.zigbee_test_utils").mock_hub_eui, 2) })
-    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.SimpleMetering.attributes.Divisor:read(mock_inovelli_vzm31_sn) })
-    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.SimpleMetering.attributes.Multiplier:read(mock_inovelli_vzm31_sn) })
-    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_inovelli_vzm31_sn) })
-    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_inovelli_vzm31_sn) })
+
+    -- Button capability messages from base_device_configure
+    for _, component in pairs(mock_inovelli_vzm31_sn.profile.components) do
+      if component.id ~= "main" then
+        test.socket.capability:__expect_send(
+          mock_inovelli_vzm31_sn:generate_test_message(
+            component.id,
+            capabilities.button.supportedButtonValues(
+              supported_button_values[component.id],
+              { visibility = { displayed = false } }
+            )
+          )
+        )
+        test.socket.capability:__expect_send(
+          mock_inovelli_vzm31_sn:generate_test_message(
+            component.id,
+            capabilities.button.numberOfButtons({value = 1}, { visibility = { displayed = false } })
+          )
+        )
+      end
+    end
+
+    -- device:configure() sends bind requests and configure reporting (default handler)
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, require("integration_test.zigbee_test_utils").build_bind_request(mock_inovelli_vzm31_sn, require("integration_test.zigbee_test_utils").mock_hub_eui, clusters.OnOff.ID) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.OnOff.attributes.OnOff:configure_reporting(mock_inovelli_vzm31_sn, 0, 300) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, require("integration_test.zigbee_test_utils").build_bind_request(mock_inovelli_vzm31_sn, require("integration_test.zigbee_test_utils").mock_hub_eui, clusters.Level.ID) })
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.Level.attributes.CurrentLevel:configure_reporting(mock_inovelli_vzm31_sn, 1, 3600, 1) })
+
+    -- base_device_configure sends OTA ImageNotify and private cluster bind
+    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, OTAUpgrade.commands.ImageNotify(mock_inovelli_vzm31_sn, 0x00, 100, 0x122F, 0xFFFF, 0xFFFFFFFF) })
+    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, device_management.build_bind_request(mock_inovelli_vzm31_sn, 0xFC31, require("integration_test.zigbee_test_utils").mock_hub_eui, 2) })
+
+    -- Read divisors/multipliers
+    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.SimpleMetering.attributes.Divisor:read(mock_inovelli_vzm31_sn) })
+    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.SimpleMetering.attributes.Multiplier:read(mock_inovelli_vzm31_sn) })
+    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerDivisor:read(mock_inovelli_vzm31_sn) })
+    test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_inovelli_vzm31_sn) })
+
     mock_inovelli_vzm31_sn:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
-

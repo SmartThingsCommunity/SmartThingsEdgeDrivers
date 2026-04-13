@@ -65,6 +65,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.pestExterminated())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -84,6 +87,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.idle())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -103,6 +109,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.trapArmed())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -122,6 +131,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.trapArmed())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -141,6 +153,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.trapRearmRequired())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -160,6 +175,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.pestDetected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -179,6 +197,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.pestDetected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -198,6 +219,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.pestExterminated())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -217,6 +241,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.pestControl.pestControl.idle())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -233,6 +260,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.battery.battery(85))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -249,6 +279,9 @@ test.register_message_test(
       direction = "send",
       message = mock_mouse_trap:generate_test_message("main", capabilities.battery.battery(1))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -300,7 +333,10 @@ test.register_coroutine_test(
         )
       )
       mock_mouse_trap:expect_metadata_update({provisioning_state = "PROVISIONED"})
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()
