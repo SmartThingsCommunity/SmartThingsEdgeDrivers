@@ -6,7 +6,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
-local cluster_base = require "st.matter.cluster_base"
 
 local CameraUtils = {}
 
