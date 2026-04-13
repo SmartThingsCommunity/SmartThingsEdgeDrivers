@@ -155,7 +155,7 @@ matterManufacturer:
     deviceLabel: OREIN Bath Fan OLO5S
     vendorId: 0x1396
     productId: 0x1001
-    deviceProfileName: light-color-level-fan
+    deviceProfileName: fan-modular
   - id: "5014/4214"
     deviceLabel: Linkind Smart Light Bulb
     vendorId: 0x1396
