@@ -141,7 +141,11 @@ local function capabilities_needing_reinit(device)
   end
 
   if device:supports_capability(capabilities.audioRecording) then
-    local audio_enabled_state = device:get_latest_state(main, capabilities.audioRecording.ID, capabilities.audioRecording.audioRecording.NAME)
+    local audio_enabled_state = device:get_latest_state(
+      camera_fields.profile_components.main,
+      capabilities.audioRecording.ID,
+      capabilities.audioRecording.audioRecording.NAME
+    )
     if audio_enabled_state == nil then
       capabilities_to_reinit.audio_recording = true
     end
