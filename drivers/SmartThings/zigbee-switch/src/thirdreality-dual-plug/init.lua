@@ -20,20 +20,6 @@ local utils = require "st.utils"
 
 local CHILD_ENDPOINT = 2
 
-local ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT = {
-  {mfr = "Third Reality, Inc", model = "3RDP01072Z"}
-}
-
-local function can_handle_zigbee_dual_metering_switch(opts, driver, device, ...)
-  for _, fingerprint in ipairs(ZIGBEE_DUAL_METERING_SWITCH_FINGERPRINT) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      local subdriver = require("thirdreality-dual-plug")
-      return true, subdriver
-    end
-  end
-  return false
-end
-
 local function do_refresh(self, device)
   device:send(OnOff.attributes.OnOff:read(device))
   device:send(ElectricalMeasurement.attributes.ActivePower:read(device))
@@ -79,7 +65,7 @@ local zigbee_dual_metering_switch = {
     init = device_init,
     added = device_added
   },
-  can_handle = can_handle_zigbee_dual_metering_switch
+  can_handle = require("thirdreality-dual-plug.can_handle"),
 }
 
 return zigbee_dual_metering_switch
