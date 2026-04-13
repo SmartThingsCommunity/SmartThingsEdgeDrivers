@@ -1,0 +1,38 @@
+name: switch-alarm-tamper-warningduration-volume
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1    
+      - id: alarm
+        version: 1
+      - id: tamperAlert
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Siren
+preferences:
+  - title: "警报时长/秒(warning duration/sec)"
+    name: warningDuration
+    description: "警报持续时间(warning duration unit:seconds)"
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 30
+      maximum: 1800
+      default: 1800
+  - title: "警报音量(siren volume)"
+    name: sirenVolume
+    description: "警报音量大小(siren volume)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "低(low)"
+        1: "中(medium)"
+        2: "高(high)"
+        3: "最大(max)"
+      default: 3

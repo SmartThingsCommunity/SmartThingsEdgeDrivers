@@ -29,3 +29,8 @@ zigbeeManufacturer :
     manufacturer: Sercomm Corp.
     model: SZ-SRN12N
     deviceProfileName: basic-alarm
+  - id: "MultIR/MIR-SR100"
+    deviceLabel: MultiIR Siren MIR-SR100
+    manufacturer: MultIR
+    model: MIR-SR100
+    deviceProfileName: switch-alarm-tamper-warningduration-volume
