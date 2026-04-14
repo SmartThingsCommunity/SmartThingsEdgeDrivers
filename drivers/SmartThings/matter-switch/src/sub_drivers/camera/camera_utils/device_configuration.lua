@@ -375,14 +375,6 @@ function CameraDeviceConfiguration.initialize_camera_capabilities(device)
   init_camera_privacy_mode(device)
 end
 
-function CameraDeviceConfiguration.initialize_camera_capabilities_and_subscriptions(device)
-  CameraDeviceConfiguration.initialize_camera_capabilities(device)
-  device:subscribe()
-  if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
-    button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
-  end
-end
-
 local function initialize_selected_camera_capabilities(device, capabilities_to_reinit)
   local reinit_targets = capabilities_to_reinit or {}
 
