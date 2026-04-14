@@ -138,6 +138,11 @@ zigbeeManufacturer:
     manufacturer: HOPOsmart
     model: A2230011
     deviceProfileName: window-shade-only
+  - id: "Sombra Shades/WM25/L-Z"
+    deviceLabel: Sombra Shades Window Treatment
+    manufacturer: Sombra Shades
+    model: WM25/L-Z
+    deviceProfileName: window-treatment-battery
 
 zigbeeGeneric:
   - id: "genericShade"
