@@ -351,15 +351,15 @@ function utils.deep_equals(a, b, opts, seen)
   end
 
   -- Compare keys/values from a
-  for k, v in next, a do
-    if not utils.deep_equals(v, rawget(b, k), opts, seen) then
+  for k, v in pairs(a) do
+    if not utils.deep_equals(v, b[k], opts, seen) then
       return false
     end
   end
 
   -- Ensure b doesn't have extra keys
-  for k in next, b do
-    if rawget(a, k) == nil then
+  for k in pairs(b) do
+    if a[k] == nil then
       return false
     end
   end
