@@ -29,12 +29,26 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Device init should set default multiplier and divisor fields",
+  "Device init should set default multiplier and divisor only when not already set",
   function()
+    assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == nil)
+    assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == nil)
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
     test.wait_for_events()
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 1)
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 100)
+  end
+)
+
+test.register_coroutine_test(
+  "Device init should preserve device-reported multiplier and divisor",
+  function()
+    mock_device:set_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY, 5, {persist = true})
+    mock_device:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.wait_for_events()
+    assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 5)
+    assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
   end
 )
 
