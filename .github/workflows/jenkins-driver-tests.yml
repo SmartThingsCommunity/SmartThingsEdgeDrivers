@@ -4,12 +4,15 @@ on:
     paths:
       - 'drivers/**'
 
+permissions:
+  statuses: write
+
 jobs:
   trigger-driver-test:
     strategy:
       matrix:
         version:
-          [ 60 ]
+          [ 59, 60 ]
 
     runs-on: ubuntu-latest
     steps:

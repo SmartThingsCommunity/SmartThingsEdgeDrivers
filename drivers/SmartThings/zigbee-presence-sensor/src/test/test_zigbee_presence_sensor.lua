@@ -79,7 +79,7 @@ test.register_message_test(
     },
     {
       inner_block_ordering = "relaxed",
-      min_api_version = 19
+      min_api_version = 17
     }
 )
 
@@ -98,7 +98,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -152,7 +152,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -188,7 +188,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -199,7 +199,7 @@ test.register_coroutine_test(
       add_device_after_switch_over()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -214,7 +214,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     end,
     {
-      test_init = function()      end,      min_api_version = 19
+      test_init = function()      end,      min_api_version = 17
     }
 )
 
@@ -245,7 +245,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -280,7 +280,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -313,7 +313,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -334,7 +334,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -349,7 +349,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -397,7 +397,7 @@ test.register_coroutine_test(
       mock_device_str_interval:generate_test_message("main", capabilities.presenceSensor.presence("not present"))
     )
   end,
-  { test_init = function() end, min_api_version = 19
+  { test_init = function() end, min_api_version = 17
   }
 )
 
@@ -413,7 +413,7 @@ test.register_coroutine_test(
       mock_device_nil_interval:generate_test_message("main", capabilities.presenceSensor.presence("not present"))
     )
   end,
-  { test_init = function() end, min_api_version = 19
+  { test_init = function() end, min_api_version = 17
   }
 )
 

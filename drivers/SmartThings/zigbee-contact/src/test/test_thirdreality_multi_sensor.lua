@@ -54,7 +54,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.inactive()) )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -71,7 +71,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.accelerationSensor.acceleration.active()) )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -90,7 +90,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.threeAxis.threeAxis({200, 100, 300})) )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
