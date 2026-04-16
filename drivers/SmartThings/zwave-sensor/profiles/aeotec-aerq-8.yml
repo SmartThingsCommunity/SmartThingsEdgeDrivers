@@ -78,7 +78,7 @@ preferences:
       default: 0
   - name: "parameter13"
     title: "13 Mold alarm offset"
-    desccription: "Increase the humidity threshold."
+    description: "Increase the humidity threshold."
     required: false
     preferenceType: integer
     definition:
