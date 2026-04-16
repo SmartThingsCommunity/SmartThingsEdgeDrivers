@@ -30,7 +30,7 @@ function CameraLifecycleHandlers.device_init(driver, device)
 end
 
 function CameraLifecycleHandlers.do_configure(driver, device)
-  camera_utils.update_camera_component_map(device)
+  camera_cfg.update_camera_component_map(device)
   if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
     camera_cfg.match_profile(device)
   end
@@ -39,7 +39,7 @@ function CameraLifecycleHandlers.do_configure(driver, device)
 end
 
 function CameraLifecycleHandlers.driver_switched(driver, device)
-  camera_utils.update_camera_component_map(device)
+  camera_cfg.update_camera_component_map(device)
   if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
     camera_cfg.match_profile(device)
   end

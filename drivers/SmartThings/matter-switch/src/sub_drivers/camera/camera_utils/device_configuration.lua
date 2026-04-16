@@ -370,4 +370,35 @@ function CameraDeviceConfiguration.reinitialize_changed_camera_capabilities_and_
   end
 end
 
+function CameraDeviceConfiguration.update_camera_component_map(device)
+  -- An assumption here: there is only 1 CameraAvStreamManagement cluster on the device (which is all our profile supports)
+  local audio_camera_av_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID, {feature_bitmap=clusters.CameraAvStreamManagement.types.Feature.AUDIO})
+  if #audio_camera_av_ep_ids > 0 then
+    camera_utils.update_component_to_endpoint_map(device, camera_fields.profile_components.microphone, {
+      endpoint_id = audio_camera_av_ep_ids[1],
+      cluster_id = clusters.CameraAvStreamManagement.ID,
+      attribute_ids = {
+        clusters.CameraAvStreamManagement.attributes.MicrophoneMuted.ID,
+        clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel.ID,
+      },
+    })
+  end
+
+  local speaker_camera_av_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID, {feature_bitmap=clusters.CameraAvStreamManagement.types.Feature.SPEAKER})
+  if #speaker_camera_av_ep_ids > 0 then
+    camera_utils.update_component_to_endpoint_map(device, camera_fields.profile_components.speaker, {
+      endpoint_id = speaker_camera_av_ep_ids[1],
+      cluster_id = clusters.CameraAvStreamManagement.ID,
+      attribute_ids = {
+        clusters.CameraAvStreamManagement.attributes.SpeakerMuted.ID,
+        clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel.ID,
+      },
+    })
+  end
+end
+
 return CameraDeviceConfiguration
