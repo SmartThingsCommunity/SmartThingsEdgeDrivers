@@ -894,6 +894,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0633
     deviceProfileName: plug-binary
+  - id: "4489/2193"
+    deviceLabel: SMART WIFI MATTER WALL SWITCH 2G
+    vendorId: 0x1189
+    productId: 0x0891
+    deviceProfileName: switch-binary
 #Ikea
   - id: "4476/32768"
     deviceLabel: BILRESA Scroll Wheel
