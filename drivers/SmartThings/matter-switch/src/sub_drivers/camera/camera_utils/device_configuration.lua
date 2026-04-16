@@ -240,7 +240,7 @@ function CameraDeviceConfiguration.match_profile(device)
     profile_update_requested = true
     device:try_update_metadata({profile = "camera", optional_component_capabilities = optional_supported_component_capabilities})
     if #doorbell_endpoints > 0 then
-      CameraDeviceConfiguration.update_doorbell_component_map(device, doorbell_endpoints[1])
+      camera_utils.update_component_to_endpoint_map(device, camera_fields.profile_components.doorbell, doorbell_endpoints[1])
       button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
     end
   end
@@ -340,11 +340,11 @@ function CameraDeviceConfiguration.initialize_select_camera_capabilities(device)
 
   for _, capability in ipairs(ordered_managed_capabilities) do
     for attribute, functions in pairs(managed_capabilities[capability]) do
-      local init_function = functions[1]
-      local build_function = functions[2]
-      local expected = build_function(device)
-      if should_init(capability, attribute, expected) then
-        init_function(device, expected)
+      local cap_init_function = functions[1]
+      local cap_build_function = functions[2]
+      local expected_state = cap_build_function(device)
+      if should_init(capability, attribute, expected_state) then
+        cap_init_function(device, expected_state)
       end
     end
   end
@@ -368,12 +368,6 @@ function CameraDeviceConfiguration.reinitialize_changed_camera_capabilities_and_
   if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
     button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
   end
-end
-
-function CameraDeviceConfiguration.update_doorbell_component_map(device, ep)
-  local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  component_map.doorbell = ep
-  device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
 return CameraDeviceConfiguration

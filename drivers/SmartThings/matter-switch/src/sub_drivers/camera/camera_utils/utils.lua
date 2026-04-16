@@ -4,7 +4,6 @@
 local camera_fields = require "sub_drivers.camera.camera_utils.fields"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
-local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 
 local CameraUtils = {}
@@ -21,35 +20,33 @@ function CameraUtils.component_to_endpoint(device, component)
 end
 
 function CameraUtils.update_camera_component_map(device)
-  local camera_av_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
-  if #camera_av_ep_ids > 0 then
-    -- An assumption here: there is only 1 CameraAvStreamManagement cluster on the device (which is all our profile supports)
-    local component_map = {}
-    if CameraUtils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.AUDIO) then
-      component_map.microphone = {
-        endpoint_id = camera_av_ep_ids[1],
-        cluster_id = clusters.CameraAvStreamManagement.ID,
-        attribute_ids = {
-          clusters.CameraAvStreamManagement.attributes.MicrophoneMuted.ID,
-          clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel.ID,
-          clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel.ID,
-          clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel.ID,
-        },
-      }
-    end
-    if CameraUtils.feature_supported(device, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.types.Feature.VIDEO) then
-      component_map.speaker = {
-        endpoint_id = camera_av_ep_ids[1],
-        cluster_id = clusters.CameraAvStreamManagement.ID,
-        attribute_ids = {
-          clusters.CameraAvStreamManagement.attributes.SpeakerMuted.ID,
-          clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel.ID,
-          clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel.ID,
-          clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel.ID,
-        },
-      }
-    end
-    device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
+  -- An assumption here: there is only 1 CameraAvStreamManagement cluster on the device (which is all our profile supports)
+  local audio_camera_av_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID, {feature_bitmap=clusters.CameraAvStreamManagement.types.Feature.AUDIO})
+  if #audio_camera_av_ep_ids > 0 then
+    CameraUtils.update_component_to_endpoint_map(device, camera_fields.profile_components.microphone, {
+      endpoint_id = audio_camera_av_ep_ids[1],
+      cluster_id = clusters.CameraAvStreamManagement.ID,
+      attribute_ids = {
+        clusters.CameraAvStreamManagement.attributes.MicrophoneMuted.ID,
+        clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel.ID,
+      },
+    })
+  end
+
+  local speaker_camera_av_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID, {feature_bitmap=clusters.CameraAvStreamManagement.types.Feature.SPEAKER})
+  if #speaker_camera_av_ep_ids > 0 then
+    CameraUtils.update_component_to_endpoint_map(device, camera_fields.profile_components.speaker, {
+      endpoint_id = speaker_camera_av_ep_ids[1],
+      cluster_id = clusters.CameraAvStreamManagement.ID,
+      attribute_ids = {
+        clusters.CameraAvStreamManagement.attributes.SpeakerMuted.ID,
+        clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.SpeakerMaxLevel.ID,
+        clusters.CameraAvStreamManagement.attributes.SpeakerMinLevel.ID,
+      },
+    })
   end
 end
 
@@ -76,6 +73,13 @@ function CameraUtils.get_ptz_map(device)
     }
   }
   return ptz_map
+end
+
+function CameraUtils.update_component_to_endpoint_map(device, component, endpoint_mapping)
+  local fields = require "switch_utils.fields"
+  local component_endpoint_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
+  component_endpoint_map[component] = endpoint_mapping
+  device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_endpoint_map, { persist = true })
 end
 
 function CameraUtils.feature_supported(device, cluster_id, feature_flag)
