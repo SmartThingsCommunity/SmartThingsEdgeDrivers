@@ -35,7 +35,7 @@ function CameraLifecycleHandlers.do_configure(driver, device)
     camera_cfg.match_profile(device)
   end
   camera_cfg.create_child_devices(driver, device)
-  camera_cfg.initialize_camera_capabilities(device)
+  camera_cfg.initialize_select_camera_capabilities(device)
 end
 
 function CameraLifecycleHandlers.driver_switched(driver, device)
@@ -53,7 +53,7 @@ function CameraLifecycleHandlers.info_changed(driver, device, event, args)
   if software_version_changed then
     camera_cfg.reconcile_profile_and_capabilities(device)
   elseif profile_changed then
-    camera_cfg.reinitialize_changed_camera_capabilities_and_subscriptions(device, args.old_st_store.profile, device.profile)
+    camera_cfg.reinitialize_changed_camera_capabilities_and_subscriptions(device)
   end
 end
 

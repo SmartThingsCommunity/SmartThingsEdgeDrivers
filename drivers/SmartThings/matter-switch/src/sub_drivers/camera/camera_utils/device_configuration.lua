@@ -13,16 +13,6 @@ local switch_utils = require "switch_utils.utils"
 
 local CameraDeviceConfiguration = {}
 
-local managed_capability_map = {
-  { key = "webrtc", capability = capabilities.webrtc },
-  { key = "ptz", capability = capabilities.mechanicalPanTiltZoom },
-  { key = "zone_management", capability = capabilities.zoneManagement },
-  { key = "local_media_storage", capability = capabilities.localMediaStorage },
-  { key = "audio_recording", capability = capabilities.audioRecording },
-  { key = "video_stream_settings", capability = capabilities.videoStreamSettings },
-  { key = "camera_privacy_mode", capability = capabilities.cameraPrivacyMode },
-}
-
 local function get_status_light_presence(device)
   return device:get_field(camera_fields.STATUS_LIGHT_ENABLED_PRESENT),
     device:get_field(camera_fields.STATUS_LIGHT_BRIGHTNESS_PRESENT)
@@ -108,59 +98,8 @@ local function build_camera_privacy_supported_commands()
   return { "setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode" }
 end
 
-local function capabilities_needing_reinit(device)
-  local capabilities_to_reinit = {}
-
-  local function should_init(capability, attribute, expected)
-    if device:supports_capability(capability) then
-      local current = st_utils.deep_copy(device:get_latest_state(
-        camera_fields.profile_components.main,
-        capability.ID,
-        attribute.NAME,
-        {}
-      ))
-      return not switch_utils.deep_equals(current, expected)
-    end
-    return false
-  end
-
-  if should_init(capabilities.webrtc, capabilities.webrtc.supportedFeatures, build_webrtc_supported_features()) then
-    capabilities_to_reinit.webrtc = true
-  end
-
-  if should_init(capabilities.mechanicalPanTiltZoom, capabilities.mechanicalPanTiltZoom.supportedAttributes, build_ptz_supported_attributes(device)) then
-    capabilities_to_reinit.ptz = true
-  end
-
-  if should_init(capabilities.zoneManagement, capabilities.zoneManagement.supportedFeatures, build_zone_management_supported_features(device)) then
-    capabilities_to_reinit.zone_management = true
-  end
-
-  if should_init(capabilities.localMediaStorage, capabilities.localMediaStorage.supportedAttributes, build_local_media_storage_supported_attributes(device)) then
-    capabilities_to_reinit.local_media_storage = true
-  end
-
-  if device:supports_capability(capabilities.audioRecording) then
-    local audio_enabled_state = device:get_latest_state(
-      camera_fields.profile_components.main,
-      capabilities.audioRecording.ID,
-      capabilities.audioRecording.audioRecording.NAME
-    )
-    if audio_enabled_state == nil then
-      capabilities_to_reinit.audio_recording = true
-    end
-  end
-
-  if should_init(capabilities.videoStreamSettings, capabilities.videoStreamSettings.supportedFeatures, build_video_stream_settings_supported_features(device)) then
-    capabilities_to_reinit.video_stream_settings = true
-  end
-
-  if should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedAttributes, build_camera_privacy_supported_attributes()) or
-    should_init(capabilities.cameraPrivacyMode, capabilities.cameraPrivacyMode.supportedCommands, build_camera_privacy_supported_commands()) then
-    capabilities_to_reinit.camera_privacy_mode = true
-  end
-
-  return capabilities_to_reinit
+local function build_audio_recording()
+  return "enabled"
 end
 
 function CameraDeviceConfiguration.create_child_devices(driver, device)
@@ -309,130 +248,112 @@ function CameraDeviceConfiguration.match_profile(device)
   return profile_update_requested
 end
 
-local function init_webrtc(device)
-  if device:supports_capability(capabilities.webrtc) then
-    local transport_provider_ep_ids = device:get_endpoints(clusters.WebRTCTransportProvider.ID)
-    device:emit_event_for_endpoint(transport_provider_ep_ids[1], capabilities.webrtc.supportedFeatures(build_webrtc_supported_features()))
-  end
+local function init_webrtc(device, supported_features)
+  local transport_provider_ep_ids = device:get_endpoints(clusters.WebRTCTransportProvider.ID)
+  device:emit_event_for_endpoint(transport_provider_ep_ids[1], capabilities.webrtc.supportedFeatures(supported_features))
 end
 
-local function init_ptz(device)
-  if device:supports_capability(capabilities.mechanicalPanTiltZoom) then
-    local av_settings_ep_ids = device:get_endpoints(clusters.CameraAvSettingsUserLevelManagement.ID)
-    device:emit_event_for_endpoint(av_settings_ep_ids[1], capabilities.mechanicalPanTiltZoom.supportedAttributes(build_ptz_supported_attributes(device)))
-  end
+local function init_ptz(device, supported_attributes)
+  local av_settings_ep_ids = device:get_endpoints(clusters.CameraAvSettingsUserLevelManagement.ID)
+  device:emit_event_for_endpoint(av_settings_ep_ids[1], capabilities.mechanicalPanTiltZoom.supportedAttributes(supported_attributes))
 end
 
-local function init_zone_management(device)
-  if device:supports_capability(capabilities.zoneManagement) then
-    local zone_management_ep_ids = device:get_endpoints(clusters.ZoneManagement.ID)
-    device:emit_event_for_endpoint(zone_management_ep_ids[1], capabilities.zoneManagement.supportedFeatures(build_zone_management_supported_features(device)))
-  end
+local function init_zone_management(device, supported_features)
+  local zone_management_ep_ids = device:get_endpoints(clusters.ZoneManagement.ID)
+  device:emit_event_for_endpoint(zone_management_ep_ids[1], capabilities.zoneManagement.supportedFeatures(supported_features))
 end
 
-local function init_local_media_storage(device)
-  if device:supports_capability(capabilities.localMediaStorage) then
+local function init_local_media_storage(device, supported_attributes)
+  local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
+  device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.localMediaStorage.supportedAttributes(supported_attributes))
+end
+
+local function init_audio_recording(device, initial_audio_recording_state)
+  local audio_enabled_state = device:get_latest_state(
+    camera_fields.profile_components.main, capabilities.audioRecording.ID, capabilities.audioRecording.audioRecording.NAME
+  )
+  if audio_enabled_state == nil then
+    -- Initialize with enabled default if state is unset
     local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
-    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.localMediaStorage.supportedAttributes(build_local_media_storage_supported_attributes(device)))
+    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.audioRecording.audioRecording(initial_audio_recording_state))
   end
 end
 
-local function init_audio_recording(device)
-  if device:supports_capability(capabilities.audioRecording) then
-    local audio_enabled_state = device:get_latest_state(
-      camera_fields.profile_components.main, capabilities.audioRecording.ID, capabilities.audioRecording.audioRecording.NAME
-    )
-    if audio_enabled_state == nil then
-      -- Initialize with enabled default if state is unset
-      local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
-      device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.audioRecording.audioRecording("enabled"))
+local function init_video_stream_settings(device, supported_features)
+  local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
+  device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.videoStreamSettings.supportedFeatures(supported_features))
+end
+
+local function init_camera_privacy_mode_attributes(device, supported_attributes)
+  local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
+  device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedAttributes(supported_attributes))
+end
+
+local function init_camera_privacy_mode_commands(device, supported_commands)
+  local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
+  device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedCommands(supported_commands))
+end
+
+function CameraDeviceConfiguration.initialize_select_camera_capabilities(device)
+  local ordered_managed_capabilities = {
+    capabilities.webrtc,
+    capabilities.mechanicalPanTiltZoom,
+    capabilities.zoneManagement,
+    capabilities.localMediaStorage,
+    capabilities.audioRecording,
+    capabilities.videoStreamSettings,
+    capabilities.cameraPrivacyMode
+  }
+
+  local managed_capabilities = {
+    [capabilities.webrtc] = {
+      [capabilities.webrtc.supportedFeatures] = { init_webrtc, build_webrtc_supported_features}
+    },
+    [capabilities.mechanicalPanTiltZoom] = {
+      [capabilities.mechanicalPanTiltZoom.supportedAttributes] = { init_ptz, build_ptz_supported_attributes}
+    },
+    [capabilities.zoneManagement] = {
+      [capabilities.zoneManagement.supportedFeatures] = { init_zone_management, build_zone_management_supported_features}
+    },
+    [capabilities.localMediaStorage] = {
+      [capabilities.localMediaStorage.supportedAttributes] = { init_local_media_storage, build_local_media_storage_supported_attributes}
+    },
+    [capabilities.audioRecording] = {
+      [capabilities.audioRecording.audioRecording] = { init_audio_recording, build_audio_recording}
+    },
+    [capabilities.videoStreamSettings] = {
+      [capabilities.videoStreamSettings.supportedFeatures] = { init_video_stream_settings, build_video_stream_settings_supported_features}
+    },
+    [capabilities.cameraPrivacyMode] = {
+      [capabilities.cameraPrivacyMode.supportedAttributes] = { init_camera_privacy_mode_attributes, build_camera_privacy_supported_attributes},
+      [capabilities.cameraPrivacyMode.supportedCommands] = { init_camera_privacy_mode_commands, build_camera_privacy_supported_commands}
+    }
+  }
+
+  local function should_init(capability, attribute, expected)
+    if device:supports_capability(capability) then
+    local current = st_utils.deep_copy(device:get_latest_state(camera_fields.profile_components.main, capability.ID, attribute.NAME, {}))
+      return not switch_utils.deep_equals(current, expected)
     end
+    return false
   end
-end
 
-local function init_video_stream_settings(device)
-  if device:supports_capability(capabilities.videoStreamSettings) then
-    local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
-    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.videoStreamSettings.supportedFeatures(build_video_stream_settings_supported_features(device)))
-  end
-end
-
-local function init_camera_privacy_mode(device)
-  if device:supports_capability(capabilities.cameraPrivacyMode) then
-    local av_stream_management_ep_ids = device:get_endpoints(clusters.CameraAvStreamManagement.ID)
-    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedAttributes(build_camera_privacy_supported_attributes()))
-    device:emit_event_for_endpoint(av_stream_management_ep_ids[1], capabilities.cameraPrivacyMode.supportedCommands(build_camera_privacy_supported_commands()))
-  end
-end
-
-function CameraDeviceConfiguration.initialize_camera_capabilities(device)
-  init_webrtc(device)
-  init_ptz(device)
-  init_zone_management(device)
-  init_local_media_storage(device)
-  init_audio_recording(device)
-  init_video_stream_settings(device)
-  init_camera_privacy_mode(device)
-end
-
-local function initialize_selected_camera_capabilities(device, capabilities_to_reinit)
-  local reinit_targets = capabilities_to_reinit or {}
-
-  if reinit_targets.webrtc then
-    init_webrtc(device)
-  end
-  if reinit_targets.ptz then
-    init_ptz(device)
-  end
-  if reinit_targets.zone_management then
-    init_zone_management(device)
-  end
-  if reinit_targets.local_media_storage then
-    init_local_media_storage(device)
-  end
-  if reinit_targets.audio_recording then
-    init_audio_recording(device)
-  end
-  if reinit_targets.video_stream_settings then
-    init_video_stream_settings(device)
-  end
-  if reinit_targets.camera_privacy_mode then
-    init_camera_privacy_mode(device)
-  end
-end
-
-local function profile_capability_set(profile)
-  local capability_set = {}
-  for _, component in pairs((profile or {}).components or {}) do
-    for _, capability in pairs(component.capabilities or {}) do
-      if capability.id ~= nil then
-        capability_set[capability.id] = true
+  for _, capability in ipairs(ordered_managed_capabilities) do
+    for attribute, functions in pairs(managed_capabilities[capability]) do
+      local init_function = functions[1]
+      local build_function = functions[2]
+      local expected = build_function(device)
+      if should_init(capability, attribute, expected) then
+        init_function(device, expected)
       end
     end
   end
-  return capability_set
-end
-
-local function changed_capabilities_from_profiles(old_profile, new_profile)
-  local flags = {}
-  local old_set = profile_capability_set(old_profile)
-  local new_set = profile_capability_set(new_profile)
-
-  for _, managed in ipairs(managed_capability_map) do
-    local id = managed.capability.ID
-    if old_set[id] ~= new_set[id] and new_set[id] == true then
-      flags[managed.key] = true
-    end
-  end
-
-  return flags
 end
 
 function CameraDeviceConfiguration.reconcile_profile_and_capabilities(device)
   local profile_update_requested = CameraDeviceConfiguration.match_profile(device)
   if not profile_update_requested then
-    local capabilities_to_reinit = capabilities_needing_reinit(device)
-    initialize_selected_camera_capabilities(device, capabilities_to_reinit)
+    CameraDeviceConfiguration.initialize_select_camera_capabilities(device)
   end
   return profile_update_requested
 end
@@ -441,9 +362,8 @@ function CameraDeviceConfiguration.update_status_light_attribute_presence(device
   set_status_light_presence(device, status_light_enabled_present, status_light_brightness_present)
 end
 
-function CameraDeviceConfiguration.reinitialize_changed_camera_capabilities_and_subscriptions(device, old_profile, new_profile)
-  local changed_capabilities = changed_capabilities_from_profiles(old_profile, new_profile)
-  initialize_selected_camera_capabilities(device, changed_capabilities)
+function CameraDeviceConfiguration.reinitialize_changed_camera_capabilities_and_subscriptions(device)
+  CameraDeviceConfiguration.initialize_select_camera_capabilities(device)
   device:subscribe()
   if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.DOORBELL) > 0 then
     button_cfg.configure_buttons(device, device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH}))
