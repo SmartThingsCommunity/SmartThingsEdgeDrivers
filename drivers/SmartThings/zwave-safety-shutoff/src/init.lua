@@ -21,6 +21,8 @@ local ZwaveDriver = require "st.zwave.driver"
 local defaults = require "st.zwave.defaults"
 --- @type st.zwave.CommandClass.ApplicationStatus
 local ApplicationStatus = (require "st.zwave.CommandClass.ApplicationStatus")({ version = 1 })
+--- @type st.zwave.CommandClass.Notification
+local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 --- @type st.zwave.CommandClass.SwitchBinary
 local SwitchBinary = (require "st.zwave.CommandClass.SwitchBinary")({ version = 2 })
 
@@ -130,6 +132,44 @@ local function st_switch_on_handler(driver, device, command)
   device:send(SwitchBinary:Get({}))
 end
 
+--- Handle a 'Disable sound detection' command from SmartThings.
+--- 
+--- @param driver st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param command ST level capability command
+local function st_sound_detection_disable_handler(driver, device, command)
+  device:send(Notification:Set({
+      notification_type = Notification.notification_type.SMOKE,
+      notification_status = Notification.notification_status.OFF
+    })
+  )
+  device:send(Notification:Get({
+      v1_alarm_type = 0,
+      notification_type = Notification.notification_type.SMOKE,
+      event = Notification.event.smoke.DETECTED
+    })
+  )
+end
+
+--- Handle an 'Enable sound detection' command from SmartThings.
+--- 
+--- @param driver st.zwave.Driver
+--- @param device st.zwave.Device
+--- @param command ST level capability command
+local function st_sound_detection_enable_handler(driver, device, command)
+  device:send(Notification:Set({
+      notification_type = Notification.notification_type.SMOKE,
+      notification_status = Notification.notification_status.ON
+    })
+  )
+  device:send(Notification:Get({
+      v1_alarm_type = 0,
+      notification_type = Notification.notification_type.SMOKE,
+      event = Notification.event.smoke.DETECTED
+    })
+  )
+end
+
 local driver_template = {
   sub_drivers = {
     lazy_load_if_possible("fireavert-appliance-shutoff-gas"),
@@ -144,6 +184,10 @@ local driver_template = {
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.off.NAME] = st_switch_off_handler,
       [capabilities.switch.commands.on.NAME] = st_switch_on_handler
+    },
+    [capabilities.soundDetection.ID] = {
+      [capabilities.soundDetection.commands.disableSoundDetection.NAME] = st_sound_detection_disable_handler,
+      [capabilities.soundDetection.commands.enableSoundDetection.NAME] = st_sound_detection_enable_handler,
     }
   },
   zwave_handlers = {

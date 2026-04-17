@@ -90,7 +90,7 @@ end
 local fireavert_appliance_shutoff_e = {
   zwave_handlers = {
     [cc.NOTIFICATION] = {
-        [Notification.REPORT] = notification_report_handler
+      [Notification.REPORT] = notification_report_handler
     },
   },
   lifecycle_handlers = {

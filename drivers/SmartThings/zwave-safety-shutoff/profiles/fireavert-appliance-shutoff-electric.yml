@@ -19,35 +19,42 @@ components:
     version: 1
   categories:
     - name: SmokeDetector
-# deviceConfig:
-#   dashboard:
-#     states:
-#       - component: main
-#         capability: soundDetection
-#         label: " {{soundDetection.soundDetected.value}}"
-#         version: 1
-#   detailView:
-#     - component: main
-#       capability: switch
-#       version: 1
-#     - component: main
-#       capability: soundDetection
-#       version: 1
-#     - component: main
-#       capability: applianceUtilization
-#       version: 1
-#       # label: "Appliance Power State"
-#       # displayType: state
-#       # state:
-#       #   value: " {{applianceUtilization.status.value}}"
-#       #   valueType: string
-#       #   alternatives:
-#       #     - key: "inUse"
-#       #       value: "Appliance Powered On"
-#       #       type: active
-#       #     - key: "notInUse"
-#       #       value: "Appliance Powered Off"
-#       #       type: inactive
-#     - component: main
-#       capability: remoteControlStatus
-#       version: 1
+deviceConfig:
+  dashboard:
+    states:
+      - component: main
+        capability: soundDetection
+        version: 1
+  detailView:
+    - component: main
+      capability: soundDetection
+      version: 1
+    - component: main
+      capability: switch
+      version: 1
+    - component: main
+      capability: applianceUtilization
+      version: 1
+      label: "Appliance Power"
+      values:
+      - key: status.value
+        alternatives:
+          - key: inUse
+            value: "Appliance Powered On"
+            type: active
+          - key: notInUse
+            value: "Appliance Powered Off"
+            type: inactive
+    - component: main
+      capability: remoteControlStatus
+      version: 1
+      label: "Safety Control"
+      values:
+        - key: remoteControlStatus.value
+          alternatives:
+            - key: "true"
+              value: "Unlocked"
+              type: active
+            - key: "false"
+              value: "Device Locked"
+              type: inactive
