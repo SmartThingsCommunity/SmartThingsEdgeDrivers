@@ -1550,6 +1550,8 @@ local function clear_user_response_handler(driver, device, ib, response)
     delete_aliro_from_table_as_user(device, userIdx)
     delete_week_schedule_from_table_as_user(device, userIdx)
     delete_year_schedule_from_table_as_user(device, userIdx)
+    -- If the guest user's default schedule input fails, the created guest user is deleted.
+    -- Below is the logic executed when the deletion of the guest user information succeeds.
     if cmdName == "defaultSchedule" then
       -- Update commandResult
       local command_result_info = {
