@@ -1,0 +1,51 @@
+name: Run Jenkins driver tests
+on:
+  pull_request:
+    paths:
+      - 'drivers/**'
+
+  pull_request_target:
+    paths:
+      - 'drivers/**'
+
+permissions:
+  statuses: write
+
+jobs:
+  trigger-driver-test:
+    strategy:
+      matrix:
+        version:
+          [ 59, 60, dev]
+
+    runs-on: ubuntu-latest
+    steps:
+      
+      - name: Create Commit Status (Pending)
+        id: status
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            core.setOutput('status_url', (await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'pending',
+              description: 'Jenkins job triggered...',
+              context: 'Driver Tests (${{ matrix.version }})'
+            })).data.url);
+      - name: Trigger Jenkins Generic Webhook
+        env:
+          JENKINS_WEBHOOK_TOKEN: ${{ secrets.JENKINS_WEBHOOK_TOKEN }}
+          JENKINS_WEBHOOK_URL: ${{ secrets.JENKINS_WEBHOOK_URL }}
+          STATUS_URL: ${{ steps.status.outputs.status_url }}
+        run: |
+          set +x
+          curl -s -o /dev/null -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${JENKINS_WEBHOOK_TOKEN}" \
+            -d "{\"status_url\": \"$STATUS_URL\",
+              \"version\": ${{ matrix.version }},
+              \"commit\": ${{ github.event.pull_request.head.sha }} }" \
+            "${JENKINS_WEBHOOK_URL}"
+          set -x

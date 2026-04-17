@@ -47,7 +47,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -64,7 +64,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 50) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -79,7 +79,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(updates))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -112,7 +112,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -149,7 +149,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -169,7 +169,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 0) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -189,7 +189,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.OnOffTransitionTime:write(mock_device, 50) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

@@ -155,7 +155,7 @@ matterManufacturer:
     deviceLabel: OREIN Bath Fan OLO5S
     vendorId: 0x1396
     productId: 0x1001
-    deviceProfileName: light-color-level-fan
+    deviceProfileName: fan-modular
   - id: "5014/4214"
     deviceLabel: Linkind Smart Light Bulb
     vendorId: 0x1396
@@ -300,6 +300,11 @@ matterManufacturer:
     vendorId: 0x1434
     productId: 0x1000
     deviceProfileName: matter-bridge
+  - id: "5172/4352"
+    deviceLabel: Wi-Fi Relay
+    vendorId: 0x1434
+    productId: 0x1100
+    deviceProfileName: plug-binary
 
 #GE
   - id: "4921/177"
@@ -774,6 +779,17 @@ matterManufacturer:
     vendorId: 0x1285
     productId: 0x0009
     deviceProfileName: 4-button-batteryLevel
+# HAOJAI
+  - id: "5530/4113"
+    deviceLabel: HAOJAI Smart Switch 3-key
+    vendorId: 0x159A
+    productId: 0x1011
+    deviceProfileName: 3-button-motion
+  - id: "5530/4098"
+    deviceLabel: HAOJAI Smart Switch 6-key
+    vendorId: 0x159A
+    productId: 0x1002
+    deviceProfileName: 6-button-motion
 # Hue
   - id: "4107/2049"
     deviceLabel: Hue W 1600 A21 E26 1P NAM
@@ -878,14 +894,19 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0633
     deviceProfileName: plug-binary
+  - id: "4489/2193"
+    deviceLabel: SMART WIFI MATTER WALL SWITCH 2G
+    vendorId: 0x1189
+    productId: 0x0891
+    deviceProfileName: switch-binary
 #Ikea
   - id: "4476/32768"
-    deviceLabel: BILRESA scroll wheel
+    deviceLabel: BILRESA Scroll Wheel
     vendorId: 0x117C
     productId: 0x8000
     deviceProfileName: ikea-scroll
   - id: "4476/32769"
-    deviceLabel: BILRESA dual button
+    deviceLabel: BILRESA Dual Button
     vendorId: 0x117C
     productId: 0x8001
     deviceProfileName: ikea-2-button-battery
