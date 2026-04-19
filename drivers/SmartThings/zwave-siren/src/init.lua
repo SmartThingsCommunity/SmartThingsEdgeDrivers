@@ -80,7 +80,8 @@ local driver_template = {
     capabilities.tamperAlert,
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement,
-    capabilities.chime
+    capabilities.chime,
+    capabilities.powerSource
   },
   sub_drivers = require("sub_drivers"),
   lifecycle_handlers = {
