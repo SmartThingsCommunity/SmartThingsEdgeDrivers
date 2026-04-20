@@ -154,6 +154,8 @@ test.register_coroutine_test(
       clusters.ClosureControl.attributes.OverallCurrentState:build_test_report_data(mock_device, 10,
         clusters.ClosureControl.types.OverallCurrentStateStruct({
           position = clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED,
+          latch = false,
+          speed = clusters.Global.types.ThreeLevelAutoEnum.AUTO,
           secure_state = false
         }))
     })
@@ -173,6 +175,7 @@ test.register_coroutine_test(
         clusters.ClosureControl.types.OverallCurrentStateStruct({
           position = clusters.ClosureControl.types.CurrentPositionEnum.FULLY_OPENED,
           latch = true,
+          speed = clusters.Global.types.ThreeLevelAutoEnum.AUTO,
           secure_state = false
         }))
     })
@@ -191,6 +194,8 @@ test.register_coroutine_test(
       clusters.ClosureControl.attributes.OverallCurrentState:build_test_report_data(mock_device, 10,
         clusters.ClosureControl.types.OverallCurrentStateStruct({
           position = clusters.ClosureControl.types.CurrentPositionEnum.PARTIALLY_OPENED,
+          latch = false,
+          speed = clusters.Global.types.ThreeLevelAutoEnum.AUTO,
           secure_state = false
         }))
     })
@@ -223,7 +228,7 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
     -- device stops and reports fully closed
-    -- MainState STOPPED with no current position cached yet: no capability event emitted
+    -- MainState STOPPED with no current position cached yet. no capability event emitted
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ClosureControl.attributes.MainState:build_test_report_data(mock_device, 10, clusters.ClosureControl.types.MainStateEnum.STOPPED),
@@ -233,6 +238,8 @@ test.register_coroutine_test(
       clusters.ClosureControl.attributes.OverallCurrentState:build_test_report_data(mock_device, 10,
         clusters.ClosureControl.types.OverallCurrentStateStruct({
           position = clusters.ClosureControl.types.CurrentPositionEnum.FULLY_CLOSED,
+          latch = false,
+          speed = clusters.Global.types.ThreeLevelAutoEnum.AUTO,
           secure_state = false
         }))
     })

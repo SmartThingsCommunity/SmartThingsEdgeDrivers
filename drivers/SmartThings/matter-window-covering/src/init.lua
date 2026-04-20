@@ -571,7 +571,7 @@ local function main_state_attr_handler(driver, device, ib, response)
 end
 
 local function overall_current_state_attr_handler(driver, device, ib, response)
-  clusters.ClosureControl.types.OverallCurrentState:augment_type(ib.data)
+  clusters.ClosureControl.types.OverallCurrentStateStruct:augment_type(ib.data)
   for _, v in pairs(ib.data.elements or {}) do
     if v.field_id == 0 then
       local current = v.value
@@ -583,7 +583,7 @@ local function overall_current_state_attr_handler(driver, device, ib, response)
 end
 
 local function overall_target_state_attr_handler(driver, device, ib, response)
-  clusters.ClosureControl.types.OverallTargetState:augment_type(ib.data)
+  clusters.ClosureControl.types.OverallTargetStateStruct:augment_type(ib.data)
   for _, v in pairs(ib.data.elements or {}) do
     if v.field_id == 0 then
       local target = v.value
