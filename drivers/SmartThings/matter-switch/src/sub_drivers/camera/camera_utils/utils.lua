@@ -297,10 +297,19 @@ function CameraUtils.subscribe(device)
 
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
   local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
+  local additional_attributes = {}
 
   if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) > 0 then
-    local ib = im.InteractionInfoBlock(nil, clusters.CameraAvStreamManagement.ID, clusters.CameraAvStreamManagement.attributes.AttributeList.ID)
-    subscribe_request:with_info_block(ib)
+    table.insert(additional_attributes, clusters.CameraAvStreamManagement.attributes.AttributeList)
+    table.insert(additional_attributes, camera_fields.CameraAVSMFeatureMapAttr)
+  end
+
+  if #device:get_endpoints(clusters.CameraAvSettingsUserLevelManagement.ID) > 0 then
+    table.insert(additional_attributes, camera_fields.CameraAVSULMFeatureMapAttr)
+  end
+
+  if #device:get_endpoints(clusters.ZoneManagement.ID) > 0 then
+    table.insert(additional_attributes, camera_fields.ZoneManagementFeatureMapAttr)
   end
 
   for _, endpoint_info in ipairs(device.endpoints) do
@@ -310,6 +319,17 @@ function CameraUtils.subscribe(device)
         camera_subscribed_attributes, camera_subscribed_events
       )
       devices_seen[checked_device.id] = true -- only loop through any device once
+    end
+  end
+
+  for _, attr in ipairs(additional_attributes) do
+    local cluster_id = attr.cluster or attr._cluster.ID
+    local attr_id = attr.ID or attr.attribute
+    if not attributes_seen[cluster_id] or not attributes_seen[cluster_id][attr_id] then
+      local ib = im.InteractionInfoBlock(nil, cluster_id, attr_id)
+      subscribe_request:with_info_block(ib)
+      attributes_seen[cluster_id] = attributes_seen[cluster_id] or {}
+      attributes_seen[cluster_id][attr_id] = ib
     end
   end
 

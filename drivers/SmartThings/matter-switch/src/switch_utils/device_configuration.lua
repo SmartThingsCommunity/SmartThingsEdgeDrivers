@@ -23,7 +23,7 @@ local FanDeviceConfiguration = {}
 
 function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
-   return
+    return
   end
 
   table.sort(server_cluster_ep_ids)
@@ -209,14 +209,6 @@ function DeviceConfiguration.match_profile(driver, device)
   local optional_component_capabilities
   local updated_profile
 
-  if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID) > 0 then
-    updated_profile = "water-valve"
-    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
-      updated_profile = updated_profile .. "-level"
-    end
-  end
-
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
     ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
@@ -238,8 +230,15 @@ function DeviceConfiguration.match_profile(driver, device)
     end
   end
 
-  local fan_device_type_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
-  if #fan_device_type_ep_ids > 0 then
+  if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE) > 0 then
+    updated_profile = "water-valve"
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      updated_profile = updated_profile .. "-level"
+    end
+  end
+
+  if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN) > 0 then
     updated_profile, optional_component_capabilities = FanDeviceConfiguration.assign_profile_for_fan_ep(device, default_endpoint_id)
   end
 
