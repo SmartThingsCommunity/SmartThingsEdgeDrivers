@@ -206,16 +206,20 @@ end
 local function do_configure(driver, device)
   if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
     -- read TagList to determine the closure type
-    local tag_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-    tag_list_read:merge(clusters.Descriptor.attributes.TagList:read())
-    device:send(tag_list_read)
+    local descriptor_eps = device:get_endpoints(clusters.Descriptor.ID)
+    if #descriptor_eps > 0 then
+      device:send(clusters.Descriptor.attributes.TagList:read(device, descriptor_eps[1]))
+    else
+      log.warn("No Descriptor endpoint found, cannot read TagList to determine closure type")
+      device:set_field(CLOSURE_TAG, closure_tag_list.NA, {persist = true})
+    end
     local battery_feature_eps = device:get_endpoints(
       clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}
     )
     if #battery_feature_eps > 0 then
-      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-      device:send(attribute_list_read)
+      device:send(clusters.PowerSource.attributes.AttributeList:read(device, battery_feature_eps[1]))
+    else
+      device:set_field(CLOSURE_BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
     end
   else -- #device:get_endpoints(clusters.WindowCovering.ID) > 0
     local battery_feature_eps = device:get_endpoints(

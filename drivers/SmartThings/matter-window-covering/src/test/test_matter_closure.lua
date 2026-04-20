@@ -35,6 +35,7 @@ local mock_device = test.mock_device.build_test_matter_device(
             cluster_revision = 1,
             feature_map = 3,
           },
+          {cluster_id = clusters.Descriptor.ID, cluster_type = "SERVER", feature_map = 0},
           {cluster_id = clusters.PowerSource.ID, cluster_type = "SERVER", feature_map = 0x0002}
         },
         device_types = {
@@ -99,8 +100,8 @@ local function test_init()
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  test.socket.matter:__expect_send({mock_device.id, clusters.Descriptor.attributes.TagList:read(mock_device)})
-  test.socket.matter:__expect_send({mock_device.id, clusters.PowerSource.attributes.AttributeList:read(mock_device)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.Descriptor.attributes.TagList:read(mock_device, 10)})
+  test.socket.matter:__expect_send({mock_device.id, clusters.PowerSource.attributes.AttributeList:read(mock_device, 10)})
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
