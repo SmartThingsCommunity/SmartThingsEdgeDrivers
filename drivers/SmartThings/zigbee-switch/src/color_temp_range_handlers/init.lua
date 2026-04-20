@@ -3,56 +3,59 @@
 
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
-local utils = require "st.utils"
-local KELVIN_MAX = "_max_kelvin"
-local KELVIN_MIN = "_min_kelvin"
-local MIREDS_CONVERSION_CONSTANT = 1000000
-local COLOR_TEMPERATURE_KELVIN_MAX = 15000
-local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-local COLOR_TEMPERATURE_MIRED_MAX = utils.round(MIREDS_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN) -- 1000
-local COLOR_TEMPERATURE_MIRED_MIN = utils.round(MIREDS_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX) -- 67
+local switch_utils = require "switch_utils"
+
+-- These values are a "sanity check" to ensure that max/min values we are getting are reasonable
+local COLOR_TEMPERATURE_MIRED_MAX = 1000 -- 1000 Kelvin
+local COLOR_TEMPERATURE_MIRED_MIN = 67 -- 15000 Kelvin
 
 local function color_temp_min_mireds_handler(driver, device, value, zb_rx)
-  local temp_in_mired = value.value
-  local endpoint = zb_rx.address_header.src_endpoint.value
-  if temp_in_mired == nil then
+  -- if mired value is nil or outside of sane bounds, log and ignore. Else, save value
+  local min_mired_bound = value.value
+  if min_mired_bound == nil then
+    return
+  elseif (min_mired_bound < COLOR_TEMPERATURE_MIRED_MIN or min_mired_bound > COLOR_TEMPERATURE_MIRED_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", min_mired_bound, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
     return
   end
-  if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
-    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+  device:set_field(switch_utils.MIRED_MIN_BOUND, min_mired_bound, {persist = true})
+
+  -- if we have already received a valid max mired bound, emit a colorTemperatureRange event
+  local max_mired_bound = device:get_field(switch_utils.MIRED_MAX_BOUND)
+  if max_mired_bound == nil then
     return
-  end
-  local temp_in_kelvin = utils.round(MIREDS_CONVERSION_CONSTANT / temp_in_mired)
-  device:set_field(KELVIN_MAX..endpoint, temp_in_kelvin)
-  local min = device:get_field(KELVIN_MIN..endpoint)
-  if min ~= nil then
-    if temp_in_kelvin > min then
-      device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = temp_in_kelvin}}))
-    else
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a max color temperature %d K that is not higher than the reported min color temperature %d K", min, temp_in_kelvin))
-    end
+  elseif min_mired_bound < max_mired_bound then
+    local endpoint = zb_rx.address_header.src_endpoint.value
+    local max_kelvin_bound = switch_utils.convert_mired_to_kelvin(min_mired_bound)
+    local min_kelvin_bound = switch_utils.convert_mired_to_kelvin(max_mired_bound)
+    device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min_kelvin_bound, maximum = max_kelvin_bound}}))
+  else
+    device.log.warn_with({hub_logs = true}, string.format("Device reported a max color temperature %d Mireds that is not higher than the reported min color temperature %d Mireds", max_mired_bound, min_mired_bound))
   end
 end
 
 local function color_temp_max_mireds_handler(driver, device, value, zb_rx)
-  local temp_in_mired = value.value
-  local endpoint = zb_rx.address_header.src_endpoint.value
-  if temp_in_mired == nil then
+  -- if mired value is nil or outside of sane bounds, log and ignore. Else, save value
+  local max_mired_bound = value.value
+  if max_mired_bound == nil then
+    return
+  elseif (max_mired_bound < COLOR_TEMPERATURE_MIRED_MIN or max_mired_bound > COLOR_TEMPERATURE_MIRED_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", max_mired_bound, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
     return
   end
-  if (temp_in_mired < COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > COLOR_TEMPERATURE_MIRED_MAX) then
-    device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, COLOR_TEMPERATURE_MIRED_MIN, COLOR_TEMPERATURE_MIRED_MAX))
+  device:set_field(switch_utils.MIRED_MAX_BOUND, max_mired_bound, {persist = true})
+
+  -- if we have already received a valid min mired bound, emit a colorTemperatureRange event
+  local min_mired_bound = device:get_field(switch_utils.MIRED_MIN_BOUND)
+  if min_mired_bound == nil then
     return
-  end
-  local temp_in_kelvin = utils.round(MIREDS_CONVERSION_CONSTANT / temp_in_mired)
-  device:set_field(KELVIN_MIN..endpoint, temp_in_kelvin)
-  local max = device:get_field(KELVIN_MAX..endpoint)
-  if max ~= nil then
-    if temp_in_kelvin < max then
-      device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = temp_in_kelvin, maximum = max}}))
-    else
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d K that is not lower than the reported max color temperature %d K", temp_in_kelvin, max))
-    end
+  elseif max_mired_bound > min_mired_bound then
+    local endpoint = zb_rx.address_header.src_endpoint.value
+    local max_kelvin_bound = switch_utils.convert_mired_to_kelvin(min_mired_bound)
+    local min_kelvin_bound = switch_utils.convert_mired_to_kelvin(max_mired_bound)
+    device:emit_event_for_endpoint(endpoint, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min_kelvin_bound, maximum = max_kelvin_bound}}))
+  else
+    device.log.warn_with({hub_logs = true}, string.format("Device reported a min color temperature %d Mireds that is not lower than the reported max color temperature %d Mireds", min_mired_bound, max_mired_bound))
   end
 end
 
