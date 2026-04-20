@@ -512,6 +512,7 @@ end
 
 local function closure_dimension_current_state_handler(driver, device, ib, response)
   if not ib.data.elements then return end
+  clusters.ClosureDimension.types.DimensionStateStruct:augment_type(ib.data)
   local pos_field = ib.data.elements.position
   if not pos_field or pos_field.value == nil then return end
   local level = math.floor(pos_field.value / 100)
