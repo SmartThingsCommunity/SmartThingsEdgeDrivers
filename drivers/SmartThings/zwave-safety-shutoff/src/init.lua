@@ -59,7 +59,6 @@ end
 --- @param cmd st.zwave.CommandClass.ApplicationStatus.ApplicationRejectedRequest
 local function app_rejected_handler(driver, device, cmd)
   print("Application rejected received from device, unable to rearm")
-  _deviceState["switch_state"] = false
   --- Reset the UI switch to match the current relay state.
   device:emit_event(capabilities.switch.switch.off({state_change = true}))
 end
