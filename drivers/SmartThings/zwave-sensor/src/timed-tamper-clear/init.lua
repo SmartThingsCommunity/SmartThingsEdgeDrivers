@@ -27,7 +27,7 @@ local excluded_devices = {
   },
   AEOTEC_AERQ_8 = {
     mfrs = 0x0371,
-    product_ids = 0x0018
+    product_ids = 0x0039
   },
   AEOTEC_DOOR_WINDOW_SENSOR_8 = {
     mfrs = 0x0371,
