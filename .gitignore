@@ -6,8 +6,5 @@ lua_libs-api_*
 *.out
 tools/test_output/*
 tools/coverage_output/*
-tools/coverage_output_html/
-tools/__pycache__/
 .DS_Store
 .venv/
-

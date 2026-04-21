@@ -14,7 +14,7 @@ return {
     lazy_load_if_possible("sinope"),
     lazy_load_if_possible("sinope-dimmer"),
     lazy_load_if_possible("zigbee-dimmer-power-energy"),
-    lazy_load_if_possible("simple-metering-config"),
+    lazy_load_if_possible("ledvance-metering-plug"),
     lazy_load_if_possible("zigbee-metering-plug-power-consumption-report"),
     lazy_load_if_possible("jasco"),
     lazy_load_if_possible("multi-switch-no-master"),

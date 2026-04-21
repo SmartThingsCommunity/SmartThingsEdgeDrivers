@@ -1,7 +1,6 @@
 -- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local capabilities = require "st.capabilities"
 local zigbee_constants = require "st.zigbee.constants"
 
 local function device_init(driver, device)
@@ -13,16 +12,12 @@ local function device_init(driver, device)
   end
 end
 
-local simple_metering_config_subdriver = {
-  NAME = "Simple Metering Config",
-  supported_capabilities = {
-    capabilities.energyMeter,
-    capabilities.powerMeter
-  },
+local ledvance_metering_plug = {
+  NAME = "LEDVANCE Metering Plug",
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = require("simple-metering-config.can_handle")
+  can_handle = require("ledvance-metering-plug.can_handle")
 }
 
-return simple_metering_config_subdriver
+return ledvance_metering_plug
