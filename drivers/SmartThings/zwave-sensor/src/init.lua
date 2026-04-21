@@ -125,6 +125,7 @@ local driver_template = {
       [WakeUp.NOTIFICATION] = wakeup_notification
     }
   },
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(driver_template,

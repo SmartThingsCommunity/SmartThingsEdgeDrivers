@@ -58,6 +58,7 @@ local fibaro_door_window_sensor_2 = {
     added = device_added
   },
   can_handle = require("fibaro-door-window-sensor.fibaro-door-window-sensor-2.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return fibaro_door_window_sensor_2

@@ -45,6 +45,7 @@ local zwave_water_temp_humidity_sensor = {
   },
   NAME = "zwave water temp humidity sensor",
   can_handle = require("aeotec-water-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return zwave_water_temp_humidity_sensor

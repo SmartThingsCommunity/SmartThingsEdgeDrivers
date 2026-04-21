@@ -24,7 +24,8 @@ local fibaro_motion_sensor = {
       [SensorAlarm.REPORT] = sensor_alarm_report
     }
   },
-  can_handle = require("fibaro-motion-sensor.can_handle")
+  can_handle = require("fibaro-motion-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return fibaro_motion_sensor

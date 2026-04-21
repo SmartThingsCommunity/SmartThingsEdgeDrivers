@@ -18,6 +18,7 @@ local water_leak_sensor = {
     }
   },
   can_handle = require("zwave-water-leak-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return water_leak_sensor

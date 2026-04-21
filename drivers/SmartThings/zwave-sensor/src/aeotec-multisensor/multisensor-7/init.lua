@@ -49,6 +49,7 @@ local multisensor_7 = {
   },
   NAME = "aeotec multisensor 7",
   can_handle = require("aeotec-multisensor.multisensor-7.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return multisensor_7

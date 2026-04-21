@@ -62,6 +62,7 @@ local homeseer_multi_sensor = {
   },
   NAME = "homeseer multi sensor",
   can_handle = require("homeseer-multi-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return homeseer_multi_sensor

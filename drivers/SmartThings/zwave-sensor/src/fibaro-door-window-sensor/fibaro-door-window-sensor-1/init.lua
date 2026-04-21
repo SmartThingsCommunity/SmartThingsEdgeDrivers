@@ -69,6 +69,7 @@ local fibaro_door_window_sensor_1 = {
     [capabilities.refresh.commands.refresh.NAME] = do_refresh
   },
   can_handle = require("fibaro-door-window-sensor.fibaro-door-window-sensor-1.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return fibaro_door_window_sensor_1

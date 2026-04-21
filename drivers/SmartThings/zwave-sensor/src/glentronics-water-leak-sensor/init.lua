@@ -53,6 +53,7 @@ local glentronics_water_leak_sensor = {
   },
   NAME = "glentronics water leak sensor",
   can_handle = require("glentronics-water-leak-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return glentronics_water_leak_sensor

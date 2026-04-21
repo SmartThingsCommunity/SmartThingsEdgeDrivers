@@ -56,7 +56,8 @@ local sensative_strip = {
     doConfigure = do_configure
   },
   NAME = "sensative_strip",
-  can_handle = require("sensative-strip.can_handle")
+  can_handle = require("sensative-strip.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return sensative_strip

@@ -38,6 +38,7 @@ local aeotec_multisensor = {
   sub_drivers = require("aeotec-multisensor.sub_drivers"),
   NAME = "aeotec multisensor",
   can_handle = require("aeotec-multisensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return aeotec_multisensor

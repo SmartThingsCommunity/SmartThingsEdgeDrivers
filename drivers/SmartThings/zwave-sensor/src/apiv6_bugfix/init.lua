@@ -16,6 +16,7 @@ local apiv6_bugfix = {
   },
   NAME = "apiv6_bugfix",
   can_handle = require("apiv6_bugfix.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return apiv6_bugfix

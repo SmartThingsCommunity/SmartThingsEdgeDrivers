@@ -124,6 +124,7 @@ local fibaro_door_window_sensor = {
   },
   sub_drivers = require("fibaro-door-window-sensor.sub_drivers"),
   can_handle = require("fibaro-door-window-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return fibaro_door_window_sensor

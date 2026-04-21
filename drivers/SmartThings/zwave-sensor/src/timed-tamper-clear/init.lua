@@ -35,6 +35,7 @@ local timed_tamper_clear = {
   },
   NAME = "timed tamper clear",
   can_handle = require("timed-tamper-clear.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return timed_tamper_clear

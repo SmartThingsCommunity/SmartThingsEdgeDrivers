@@ -87,6 +87,7 @@ local zooz_4_in_1_sensor = {
   },
   NAME = "zooz 4 in 1 sensor",
   can_handle = require("zooz-4-in-1-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return zooz_4_in_1_sensor

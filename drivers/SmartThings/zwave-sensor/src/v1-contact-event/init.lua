@@ -29,6 +29,7 @@ local v1_contact_event = {
   },
   NAME = "v1 contact event",
   can_handle = require("v1-contact-event.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return v1_contact_event

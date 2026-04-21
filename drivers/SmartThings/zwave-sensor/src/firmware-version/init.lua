@@ -59,7 +59,8 @@ local firmware_version = {
     [cc.WAKE_UP] = {
       [WakeUp.NOTIFICATION] = wakeup_notification
     }
-  }
+  },
+  shared_device_thread_enabled = true,
 }
 
 return firmware_version

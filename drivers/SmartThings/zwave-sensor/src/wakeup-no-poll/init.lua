@@ -34,6 +34,7 @@ local wakeup_no_poll = {
     }
   },
   can_handle = require("wakeup-no-poll.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return wakeup_no_poll

@@ -39,7 +39,8 @@ local enerwave_motion_sensor = {
     doConfigure = do_configure
   },
   NAME = "enerwave_motion_sensor",
-  can_handle = require("enerwave-motion-sensor.can_handle")
+  can_handle = require("enerwave-motion-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return enerwave_motion_sensor

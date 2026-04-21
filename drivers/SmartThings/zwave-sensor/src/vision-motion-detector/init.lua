@@ -61,6 +61,7 @@ local vision_motion_detector = {
   },
   NAME = "Vision motion detector",
   can_handle = require("vision-motion-detector.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return vision_motion_detector

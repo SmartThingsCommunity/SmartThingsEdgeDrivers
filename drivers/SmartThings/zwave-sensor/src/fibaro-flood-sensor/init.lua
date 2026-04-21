@@ -77,6 +77,7 @@ local fibaro_flood_sensor = {
     doConfigure = do_configure
   },
   can_handle = require("fibaro-flood-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return fibaro_flood_sensor

@@ -83,6 +83,7 @@ local ezmultipli_multipurpose_sensor = {
     }
   },
   can_handle = require("ezmultipli-multipurpose-sensor.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return ezmultipli_multipurpose_sensor
