@@ -114,3 +114,8 @@ zigbeeManufacturer:
     manufacturer: NEO
     model: NAS_WS11
     deviceProfileName: water-battery
+  - id: MultIR/MIR-WA100
+    deviceLabel: MultiIR Water Leak Sensor MIR-WA100
+    manufacturer: MultIR
+    model: MIR-WA100
+    deviceProfileName: water-battery-no-fw-update
