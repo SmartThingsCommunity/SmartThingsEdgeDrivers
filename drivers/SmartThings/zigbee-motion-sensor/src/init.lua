@@ -118,6 +118,7 @@ local zigbee_motion_driver = {
     lazy_load_if_possible("smartsense"),
     lazy_load_if_possible("thirdreality"),
     lazy_load_if_possible("sengled"),
+    lazy_load_if_possible("MultiIR"),
   },
   additional_zcl_profiles = {
     [0xFC01] = true
