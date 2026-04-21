@@ -86,6 +86,7 @@ local zwave_fan_3_speed = {
   },
   NAME = "Z-Wave fan 3 speed",
   can_handle = require("zwave-fan-3-speed.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return zwave_fan_3_speed
