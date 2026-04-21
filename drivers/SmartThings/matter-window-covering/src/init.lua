@@ -367,6 +367,7 @@ local matter_driver_template = {
     capabilities.batteryLevel,
   },
   sub_drivers = require("sub_drivers"),
+  shared_device_thread_enabled = true,
 }
 
 local matter_driver = MatterDriver("matter-window-covering", matter_driver_template)
