@@ -4,6 +4,7 @@
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
+local capabilities = require "st.capabilities"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 
 local OnOff = clusters.OnOff
@@ -269,6 +270,52 @@ test.register_coroutine_test(
   end,
   {
      min_api_version = 17
+  }
+)
+
+local TRANSITION_TIME = 3
+local OPTIONS_MASK = 0x01
+local IGNORE_COMMAND_IF_OFF = 0x00
+local REPORTED_MIRED_MIN = 160
+local REPORTED_MIRED_MAX = 370
+
+test.register_coroutine_test(
+  "Step Color Temperature command with device-reported mired range test",
+  function()
+    -- Report non-default range values to verify subsequent step commands do not use defaults.
+    test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:build_test_attr_report(mock_device, REPORTED_MIRED_MAX)})
+    test.socket.zigbee:__queue_receive({mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:build_test_attr_report(mock_device, REPORTED_MIRED_MIN)})
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({minimum = 2703, maximum = 6250})))
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } } })
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        ColorControl.server.commands.StepColorTemperature(mock_device, ColorControl.types.CcStepMode.DOWN, 42, TRANSITION_TIME, REPORTED_MIRED_MIN, REPORTED_MIRED_MAX, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF)
+      }
+    )
+  end,
+  {
+    min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "Step Level command test",
+  function()
+    test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } } })
+
+    test.socket.zigbee:__expect_send(
+      {
+        mock_device.id,
+        Level.commands.Step(mock_device, Level.types.MoveStepMode.UP, 64, TRANSITION_TIME, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF)
+       }
+     )
+    test.wait_for_events()
+  end,
+  {
+    min_api_version = 19
   }
 )
 
