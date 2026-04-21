@@ -1,14 +1,14 @@
-name: on-off-level-no-firmware-update
+name: smoke-battery-tamper-no-fw-update
 components:
 - id: main
   capabilities:
-  - id: switch
+  - id: smokeDetector
     version: 1
-  - id: switchLevel
+  - id: tamperAlert
     version: 1
-  - id: statelessSwitchLevelStep
+  - id: battery
     version: 1
   - id: refresh
     version: 1
   categories:
-  - name: Light
+  - name: SmokeDetector
