@@ -24,6 +24,7 @@ local shelly_wave_i4 = {
     doConfigure = do_configure
   },
   can_handle = require("zwave-multi-button.shelly_wave_i4.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return shelly_wave_i4

@@ -24,6 +24,7 @@ local fibaro_keyfob = {
     doConfigure = do_configure
   },
   can_handle = require("zwave-multi-button.fibaro-keyfob.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return fibaro_keyfob

@@ -39,6 +39,7 @@ local aeotec_minimote = {
     doConfigure = do_configure
   },
   can_handle = require("zwave-multi-button.aeotec-minimote.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return aeotec_minimote

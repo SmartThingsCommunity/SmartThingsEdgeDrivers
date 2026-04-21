@@ -18,6 +18,7 @@ local aeotec_keyfob = {
     doConfigure = do_configure
   },
   can_handle = require("zwave-multi-button.aeotec-keyfob.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return aeotec_keyfob

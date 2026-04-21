@@ -82,6 +82,7 @@ local zwave_multi_button = {
   },
   can_handle = require("zwave-multi-button.can_handle"),
   sub_drivers = require("zwave-multi-button.sub_drivers"),
+  shared_device_thread_enabled = true,
 }
 
 return zwave_multi_button
