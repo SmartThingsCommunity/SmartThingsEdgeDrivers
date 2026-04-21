@@ -1554,15 +1554,29 @@ local function clear_user_response_handler(driver, device, ib, response)
     device.log.warn(string.format("Failed to clear user: %s", status))
   end
 
-  -- Update commandResult
-  local command_result_info = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    statusCode = status
-  }
-  device:emit_event(capabilities.lockUsers.commandResult(
-    command_result_info, {state_change = true, visibility = {displayed = false}}
-  ))
+  -- This occurs in the "defaultSchedule" command failure path, when a guest user's credentials are set but
+  -- the scheduling fails during default setup. In this case, those set credentials should be removed, and we
+  -- wait to log lock credentials (note: as a "failure", though it technically succeeded) until here.
+  if cmdName == "defaultSchedule" then
+    local command_result_info = {
+      commandName = "addCredential",
+      userIndex = userIdx,
+      statusCode = "failure"
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  else
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockUsers.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+  end
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
@@ -2418,17 +2432,22 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
     local cmdName = "addCredential"
     local credIdx = device:get_field(lock_utils.CRED_INDEX)
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    if status == "success" then
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    else
+      local ep = find_default_endpoint(device, clusters.DoorLock.ID)
+      device:send(DoorLock.server.commands.ClearUser(device, ep, userIdx))
+    end
     return
   end
 
