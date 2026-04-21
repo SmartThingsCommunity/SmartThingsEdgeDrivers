@@ -69,9 +69,7 @@ local function update_device_profile()
   mock_device:expect_metadata_update({ profile = "temperature-soil-sensor" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
-  test.wait_for_events()
-
-  local updated_device_profile = t_utils.get_profile_definition("temperature-humidity.yml")
+  local updated_device_profile = t_utils.get_profile_definition("temperature-soil-sensor.yml")
   test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
   for _, attr in ipairs(additional_subscribed_attributes) do
     subscribe_request:merge(attr:subscribe(mock_device))
