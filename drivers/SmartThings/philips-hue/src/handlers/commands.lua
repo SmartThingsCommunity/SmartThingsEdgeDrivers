@@ -193,7 +193,7 @@ local function do_step_color_temp_action(driver, device, args)
   local max_kelvin = device:get_field(Fields.MAX_KELVIN) or Consts.MAX_TEMP_KELVIN
   local min_mirek = math.floor(utils.kelvin_to_mirek(max_kelvin))
   local max_mirek = math.ceil(utils.kelvin_to_mirek(min_kelvin))
-  local mirek_delta = math.floor((max_mirek - min_mirek) * (math.abs(step_percent) / 100.0))
+  local mirek_delta = st_utils.round((max_mirek - min_mirek) * (math.abs(step_percent) / 100.0))
 
   local resp, err = hue_api:set_light_color_temp_delta(light_id, mirek_delta, action)
   log_command_response_errors(resp, err, "step color temp action")
