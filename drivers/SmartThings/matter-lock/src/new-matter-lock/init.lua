@@ -1550,34 +1550,32 @@ local function clear_user_response_handler(driver, device, ib, response)
     delete_aliro_from_table_as_user(device, userIdx)
     delete_week_schedule_from_table_as_user(device, userIdx)
     delete_year_schedule_from_table_as_user(device, userIdx)
-    -- If the guest user's default schedule input fails, the created guest user is deleted.
-    -- Below is the logic executed when the deletion of the guest user information succeeds.
-    if cmdName == "defaultSchedule" then
-      -- Update commandResult
-      local command_result_info = {
-        commandName = "addCredential",
-        userIndex = userIdx,
-        statusCode = "failure"
-      }
-      device:emit_event(capabilities.lockCredentials.commandResult(
-        command_result_info, {state_change = true, visibility = {displayed = false}}
-      ))
-      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
-      return
-    end
   else
     device.log.warn(string.format("Failed to clear user: %s", status))
   end
 
-  -- Update commandResult
-  local command_result_info = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    statusCode = status
-  }
-  device:emit_event(capabilities.lockUsers.commandResult(
-    command_result_info, {state_change = true, visibility = {displayed = false}}
-  ))
+  -- If the guest user's default schedule input fails, the created guest user is deleted.
+  -- Below is the logic executed when the deletion of the guest user information.
+  if cmdName == "defaultSchedule" then
+    local command_result_info = {
+      commandName = "addCredential",
+      userIndex = userIdx,
+      statusCode = "failure"
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  else
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockUsers.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+  end
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
