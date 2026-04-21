@@ -98,6 +98,7 @@ local mimolite_garage_door = {
   },
   NAME = "mimolite garage door",
   can_handle = require("mimolite-garage-door.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return mimolite_garage_door

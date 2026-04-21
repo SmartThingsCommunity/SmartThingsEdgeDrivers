@@ -262,6 +262,7 @@ local ecolink_garage_door_operator = {
     infoChanged = configure_device_with_updated_config
   },
   can_handle = require("ecolink-zw-gdo.can_handle"),
+  shared_device_thread_enabled = true,
 }
 
 return ecolink_garage_door_operator
