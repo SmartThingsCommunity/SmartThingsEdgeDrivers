@@ -267,6 +267,11 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401SCA4
     deviceProfileName: thirty-buttons
+  - id: "MultIR/MIR-SO100"
+    deviceLabel: MultiIR Smart button MIR-SO100
+    manufacturer: MultIR
+    model: MIR-SO100
+    deviceProfileName: one-button-battery-no-fw-update
 zigbeeGeneric:
   - id: "generic-button-sensor"
     deviceLabel: "Zigbee Generic Button"
