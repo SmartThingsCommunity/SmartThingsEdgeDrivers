@@ -1554,14 +1554,16 @@ local function clear_user_response_handler(driver, device, ib, response)
     device.log.warn(string.format("Failed to clear user: %s", status))
   end
 
-  -- This occurs in the "defaultSchedule" command failure path, when a guest user's credentials are set but
-  -- the scheduling fails during default setup. In this case, those set credentials should be removed, and we
-  -- wait to log lock credentials (note: as a "failure", though it technically succeeded) until here.
+  -- In the "defaultSchedule" cmd failure path, when a guest user's credentials are set but the scheduling
+  -- fails during default setup, those credentials should be removed, so we wait to log lock credentials until here.
   if cmdName == "defaultSchedule" then
+    -- note: if clear user succeeds, we'd log credential settings as a "failure" since it's effectively a no-op.
+    -- If clear user fails, log "success" since the credentials would still be present.
+    local lock_credential_status = status == "success" and "failure" or "success"
     local command_result_info = {
       commandName = "addCredential",
       userIndex = userIdx,
-      statusCode = "failure"
+      statusCode = lock_credential_status
     }
     device:emit_event(capabilities.lockCredentials.commandResult(
       command_result_info, {state_change = true, visibility = {displayed = false}}
