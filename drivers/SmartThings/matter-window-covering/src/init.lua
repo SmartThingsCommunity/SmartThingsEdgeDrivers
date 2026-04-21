@@ -186,6 +186,50 @@ local function match_profile_for_closure(device)
   })
 end
 
+--- Deeply compare two values.
+--- Handles metatables. Can optionally ignore cycle checking and/or function differences.
+---
+--- @param a any
+--- @param b any
+--- @param opts table|nil { ignore_functions = boolean, ignore_cycles = boolean }
+--- @param seen table|nil
+--- @return boolean
+local function deep_equals(a, b, opts, seen)
+  if a == b then return true end -- same object
+  if type(a) ~= type(b) then return false end -- different type
+  if type(a) == "function" and opts and opts.ignore_functions then return true end
+  if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+
+  -- check for cycles in table references and preserve reference topology.
+  if not (opts and opts.ignore_cycles) then
+    seen = seen or {}
+    seen[a] = seen[a] or {}
+    if seen[a][b] then
+      return seen[a][b]
+    end
+    seen[a][b] = true
+  end
+
+  -- Compare keys/values from a
+  for k, v in pairs(a) do
+    if not deep_equals(v, b[k], opts, seen) then
+      return false
+    end
+  end
+
+  -- Ensure b doesn't have extra keys
+  for k in pairs(b) do
+    if a[k] == nil then
+      return false
+    end
+  end
+
+  -- Compare metatables
+  local mt_a = getmetatable(a)
+  local mt_b = getmetatable(b)
+  return deep_equals(mt_a, mt_b, opts, seen)
+end
+
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
   device:set_endpoint_to_component_fn(endpoint_to_component)
@@ -204,13 +248,13 @@ local function device_init(driver, device)
 end
 
 local function do_configure(driver, device)
-  if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
+  local closure_control_eps = device:get_endpoints(clusters.ClosureControl.ID)
+  if #closure_control_eps > 0 then
     -- read TagList to determine the closure type
-    local descriptor_eps = device:get_endpoints(clusters.Descriptor.ID)
-    if #descriptor_eps > 0 then
-      device:send(clusters.Descriptor.attributes.TagList:read(device, descriptor_eps[1]))
+    if #device:get_endpoints(clusters.Descriptor.ID) > 0 then
+      device:send(clusters.Descriptor.attributes.TagList:read(device, closure_control_eps[1]))
     else
-      log.warn("No Descriptor endpoint found, cannot read TagList to determine closure type")
+      log.warn("Descriptor cluster not implemented on ClosureControl endpoint, cannot read TagList to determine closure type")
       device:set_field(CLOSURE_TAG, closure_tag_list.NA, {persist = true})
     end
     local battery_feature_eps = device:get_endpoints(
@@ -236,7 +280,10 @@ local function do_configure(driver, device)
 end
 
 local function info_changed(driver, device, event, args)
-  if device.profile.id ~= args.old_st_store.profile.id then
+  local is_window_covering = #device:get_endpoints(clusters.WindowCovering.ID) > 0
+  local is_closure = #device:get_endpoints(clusters.ClosureControl.ID) > 0
+  if (is_window_covering and device.profile.id ~= args.old_st_store.profile.id) or
+    (is_closure and not deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true })) then
     -- Profile has changed, resubscribe
     device:subscribe()
   elseif args.old_st_store.preferences.reverse ~= device.preferences.reverse then
@@ -245,20 +292,16 @@ local function info_changed(driver, device, event, args)
     else
       device:set_field(REVERSE_POLARITY, false, { persist = true })
     end
-  else
+  elseif is_window_covering then
     -- Something else has changed info (SW update, reinterview, etc.), so
     -- try updating profile as needed
-    if #device:get_endpoints(clusters.ClosureControl.ID) > 0 then
-      match_profile_for_closure(device)
+    local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
+    if #battery_feature_eps > 0 then
+      local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+      attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
+      device:send(attribute_list_read)
     else
-      local battery_feature_eps = device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY})
-      if #battery_feature_eps > 0 then
-        local attribute_list_read = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
-        attribute_list_read:merge(clusters.PowerSource.attributes.AttributeList:read())
-        device:send(attribute_list_read)
-      else
-        match_profile(device, battery_support.NO_BATTERY)
-      end
+      match_profile(device, battery_support.NO_BATTERY)
     end
   end
 end
