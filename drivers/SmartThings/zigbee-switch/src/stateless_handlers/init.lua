@@ -18,6 +18,9 @@ local OPTIONS_MASK = 0x01 -- default: The `ExecuteIfOff` option is overriden
 local IGNORE_COMMAND_IF_OFF = 0x00 -- default: the command will not be executed if the device is off
 
 local function step_color_temperature_by_percent_handler(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local step_percent_change = cmd.args and cmd.args.stepSize or 0
   if step_percent_change == 0 then return end
   -- Reminder, stepSize > 0 == Kelvin UP == Mireds DOWN. stepSize < 0 == Kelvin DOWN == Mireds UP
@@ -34,6 +37,9 @@ local function step_color_temperature_by_percent_handler(driver, device, cmd)
 end
 
 local function step_level_handler(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local step_size = st_utils.round((cmd.args and cmd.args.stepSize or 0)/100.0 * 254)
   if step_size == 0 then return end
   local step_mode = (step_size > 0) and clusters.Level.types.MoveStepMode.UP or clusters.Level.types.MoveStepMode.DOWN
