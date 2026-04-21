@@ -920,6 +920,56 @@ matterManufacturer:
     vendorId: 0x117C
     productId: 0x8001
     deviceProfileName: ikea-2-button-battery
+  - id: "4476/36885"
+    deviceLabel: KAJPLATS E12 WS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9015
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36880"
+    deviceLabel: VARMBLIXT table/wall lamp
+    vendorId: 0x117C
+    productId: 0x9010
+    deviceProfileName: light-color-level
+  - id: "4476/36881"
+    deviceLabel: KAJPLATS E26 450lm
+    vendorId: 0x117C
+    productId: 0x9011
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36882"
+    deviceLabel: KAJPLATS E26 1100lm
+    vendorId: 0x117C
+    productId: 0x9012
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36884"
+    deviceLabel: KAJPLATS E26 WS 1600lm
+    vendorId: 0x117C
+    productId: 0x9014
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36886"
+    deviceLabel: KAJPLATS E26 1100lm CWS
+    vendorId: 0x117C
+    productId: 0x9016
+    deviceProfileName: light-color-level
+  - id: "4476/36887"
+    deviceLabel: KAJPLATS E12 CWS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9017
+    deviceProfileName: light-color-level
+  - id: "4476/36889"
+    deviceLabel: KAJPLATS E12 WS B38 CL 470lm
+    vendorId: 0x117C
+    productId: 0x9019
+    deviceProfileName: light-level-colorTemperature
+  - id: "17526/16534"
+    deviceLabel: GRILLPLATS plug
+    vendorId: 0x4476
+    productId: 0x4096
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "17526/16535"
+    deviceLabel: TOFSMYGGA
+    vendorId: 0x4476
+    productId: 0x4097
+    deviceProfileName: plug-power-energy-powerConsumption
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
