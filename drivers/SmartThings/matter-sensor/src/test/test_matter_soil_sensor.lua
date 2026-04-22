@@ -40,9 +40,6 @@ local subscribe_request
 local cluster_subscribe_list = {
   clusters.SoilMeasurement.attributes.SoilMoistureMeasuredValue,
   clusters.SoilMeasurement.attributes.SoilMoistureMeasurementLimits,
-}
-
-local additional_subscribed_attributes = {
   clusters.TemperatureMeasurement.attributes.MeasuredValue,
   clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
   clusters.TemperatureMeasurement.attributes.MaxMeasuredValue
@@ -61,27 +58,17 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-end
-test.set_test_init_function(test_init)
-
-local function update_device_profile()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "temperature-soil-sensor" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-
   local updated_device_profile = t_utils.get_profile_definition("temperature-soil-sensor.yml")
   test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
-  for _, attr in ipairs(additional_subscribed_attributes) do
-    subscribe_request:merge(attr:subscribe(mock_device))
-  end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
+test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
   "Relative humidity reports should generate correct messages",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -107,8 +94,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Temperature reports should generate correct messages",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -124,8 +109,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Min and max temperature attributes set capability constraint",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -150,8 +133,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Soil moisture is reported raw when no limits are set",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -177,8 +158,6 @@ end
 test.register_coroutine_test(
   "Soil moisture is scaled 0-100% when min and max limits are set",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -201,8 +180,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Soil moisture scaling rounds correctly",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,

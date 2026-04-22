@@ -53,18 +53,19 @@ function DeviceConfiguration.match_profile(driver, device, battery_supported)
     profile_name = profile_name .. "-illuminance"
   end
 
-  if device:supports_capability(capabilities.temperatureMeasurement) then
+  -- TemperatureMeasurement is an optional cluster for the Soil Sensor device type,
+  -- and since Soil Sensors fingerprint to the humidity profile (which does not
+  -- include the temperatureMeasurement capability), we should also check for the
+  -- presence of the TemperatureMeasurement cluster here.
+  -- TODO: Update soil sensor profiles to use the SoilSensor category once it is available.
+  if device:supports_capability(capabilities.temperatureMeasurement) or
+    #device:get_endpoints(clusters.TemperatureMeasurement.ID) > 0 then
     profile_name = profile_name .. "-temperature"
   end
 
   if device:supports_capability(capabilities.relativeHumidityMeasurement) then
-    -- Soil Sensor fingerprints to the humidity profile, so we should also check for
-    -- TemperatureMeasurement, which is an optional cluster for this device type.
     if #device:get_endpoints(clusters.SoilMeasurement.ID) > 0 then
       profile_name = profile_name .. "-soil-sensor"
-      if #device:get_endpoints(clusters.TemperatureMeasurement.ID) > 0 then
-        profile_name = "-temperature" .. profile_name
-      end
     else
       profile_name = profile_name .. "-humidity"
     end
