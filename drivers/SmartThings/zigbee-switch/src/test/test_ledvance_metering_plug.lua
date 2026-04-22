@@ -23,6 +23,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
+  test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
 end
 
@@ -37,7 +38,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 1)
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 100)
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.register_coroutine_test(
@@ -49,7 +53,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 5)
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
-  end
+  end,
+  {
+    min_api_version = 15
+  }
 )
 
 test.run_registered_tests()
