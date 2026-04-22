@@ -576,4 +576,13 @@ function utils.subscribe(device)
   end
 end
 
+function utils.set_transition_times_for_stateless_capabilities(device)
+  if device:supports_capability(capabilities.statelessSwitchLevelStep) then
+    device:set_field(fields.TRANSITION_TIME.SWITCH_LEVEL_STEP, fields.TRANSITION_TIME_FAST)
+  end
+  if device:supports_capability(capabilities.statelessColorTemperatureStep) then
+    device:set_field(fields.TRANSITION_TIME.COLOR_TEMP_STEP, fields.TRANSITION_TIME_FAST)
+  end
+end
+
 return utils
