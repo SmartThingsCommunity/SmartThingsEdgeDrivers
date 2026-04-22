@@ -44,7 +44,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({profile = "base-lock"})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

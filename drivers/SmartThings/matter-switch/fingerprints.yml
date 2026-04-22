@@ -161,6 +161,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1076
     deviceProfileName: light-color-level
+  - id: "5014/4245"
+    deviceLabel: OREiN Matter smart Bathroom Fan
+    vendorId: 0x1396
+    productId: 0x1095
+    deviceProfileName: fan-modular
   - id: "5014/4246"
     deviceLabel: OREiN Matter smart Bathroom Fan
     vendorId: 0x1396
@@ -176,6 +181,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1077
     deviceProfileName: light-color-level
+  - id: "5014/4273"
+    deviceLabel: Linkind Smart Ceiling Light
+    vendorId: 0x1396
+    productId: 0x10B1
+    deviceProfileName: light-level-colorTemperature
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
@@ -194,6 +204,11 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+  - id: "5127/5121"
+    deviceLabel: ThirdReality Smart Night Light -T
+    vendorId: 0x1407
+    productId: 0x1401
+    deviceProfileName: light-color-level-illuminance-motion
   - id: "5127/4744"
     deviceLabel: Smart Bridge MZ1
     vendorId: 0x1407
@@ -894,6 +909,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0633
     deviceProfileName: plug-binary
+  - id: "4489/2193"
+    deviceLabel: SMART WIFI MATTER WALL SWITCH 2G
+    vendorId: 0x1189
+    productId: 0x0891
+    deviceProfileName: switch-binary
 #Ikea
   - id: "4476/32768"
     deviceLabel: BILRESA Scroll Wheel
@@ -905,6 +925,56 @@ matterManufacturer:
     vendorId: 0x117C
     productId: 0x8001
     deviceProfileName: ikea-2-button-battery
+  - id: "4476/36885"
+    deviceLabel: KAJPLATS E12 WS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9015
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36880"
+    deviceLabel: VARMBLIXT table/wall lamp
+    vendorId: 0x117C
+    productId: 0x9010
+    deviceProfileName: light-color-level
+  - id: "4476/36881"
+    deviceLabel: KAJPLATS E26 450lm
+    vendorId: 0x117C
+    productId: 0x9011
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36882"
+    deviceLabel: KAJPLATS E26 1100lm
+    vendorId: 0x117C
+    productId: 0x9012
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36884"
+    deviceLabel: KAJPLATS E26 WS 1600lm
+    vendorId: 0x117C
+    productId: 0x9014
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36886"
+    deviceLabel: KAJPLATS E26 1100lm CWS
+    vendorId: 0x117C
+    productId: 0x9016
+    deviceProfileName: light-color-level
+  - id: "4476/36887"
+    deviceLabel: KAJPLATS E12 CWS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9017
+    deviceProfileName: light-color-level
+  - id: "4476/36889"
+    deviceLabel: KAJPLATS E12 WS B38 CL 470lm
+    vendorId: 0x117C
+    productId: 0x9019
+    deviceProfileName: light-level-colorTemperature
+  - id: "17526/16534"
+    deviceLabel: GRILLPLATS plug
+    vendorId: 0x4476
+    productId: 0x4096
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "17526/16535"
+    deviceLabel: TOFSMYGGA
+    vendorId: 0x4476
+    productId: 0x4097
+    deviceProfileName: plug-power-energy-powerConsumption
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge

@@ -2,7 +2,9 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
+local cluster_base = require "st.matter.cluster_base"
 local clusters = require "st.matter.clusters"
+local camera_fields = require "sub_drivers.camera.camera_utils.fields"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -154,6 +156,9 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", FLOODLIGHT_EP)
   })
   subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.CameraAVSMFeatureMapAttr.cluster, camera_fields.CameraAVSMFeatureMapAttr.ID))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.CameraAVSULMFeatureMapAttr.cluster, camera_fields.CameraAVSULMFeatureMapAttr.ID))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.ZoneManagementFeatureMapAttr.cluster, camera_fields.ZoneManagementFeatureMapAttr.ID))
   for i, attr in ipairs(subscribed_attributes) do
     if i > 1 then subscribe_request:merge(attr:subscribe(mock_device)) end
   end
@@ -401,7 +406,148 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
   end,
   {
-    min_api_version = 19
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Software version change should initialize camera capabilities when profile is unchanged",
+  function()
+    local camera_handler = require "sub_drivers.camera"
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+    local button_cfg = require("switch_utils.device_configuration").ButtonCfg
+
+    local match_profile_called = false
+    local init_called = false
+    local subscribe_called = false
+    local configure_buttons_called = false
+
+    local fake_device = {
+      matter_version = { hardware = 1, software = 3 },
+      profile = { id = "camera" },
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          device_types = {
+            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+          }
+        },
+        {
+          endpoint_id = DOORBELL_EP,
+          device_types = {
+            {device_type_id = 0x0143, device_type_revision = 1} -- Doorbell
+          }
+        }
+      },
+      subscribe = function() subscribe_called = true end,
+      supports_capability = function() return false end,
+      get_endpoints = function() return { DOORBELL_EP } end,
+    }
+
+    local original_match_profile = camera_cfg.match_profile
+    local original_init = camera_cfg.initialize_camera_capabilities
+    local original_configure_buttons = button_cfg.configure_buttons
+
+    camera_cfg.match_profile = function()
+      match_profile_called = true
+      return false
+    end
+    camera_cfg.initialize_camera_capabilities = function() init_called = true end
+    button_cfg.configure_buttons = function() configure_buttons_called = true end
+
+    camera_handler.lifecycle_handlers.infoChanged(nil, fake_device, nil, {
+      old_st_store = {
+        matter_version = { hardware = 1, software = 1 },
+        profile = fake_device.profile,
+      }
+    })
+
+    camera_cfg.match_profile = original_match_profile
+    camera_cfg.initialize_camera_capabilities = original_init
+    button_cfg.configure_buttons = original_configure_buttons
+
+    assert(match_profile_called, "match_profile should be called on software version change")
+    assert(not init_called, "initialize_camera_capabilities should not be called when capability state is unchanged")
+    assert(not subscribe_called, "subscribe should not be called when capability state is unchanged")
+    assert(not configure_buttons_called, "configure_buttons should not be called when capability state is unchanged")
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Camera FeatureMap change should reinitialize capabilities when profile is unchanged",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local reconcile_called = false
+    local original_reconcile = camera_cfg.reconcile_profile_and_capabilities
+
+    camera_cfg.reconcile_profile_and_capabilities = function(_)
+      reconcile_called = true
+      return false
+    end
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      cluster_base.build_test_report_data(mock_device, CAMERA_EP, camera_fields.CameraAVSMFeatureMapAttr.cluster, camera_fields.CameraAVSMFeatureMapAttr.ID, uint32(0))
+    })
+    test.wait_for_events()
+
+    camera_cfg.reconcile_profile_and_capabilities = original_reconcile
+    assert(reconcile_called, "reconcile_profile_and_capabilities should be called")
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Camera privacy mode state compare should ignore table metatable differences",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local init_event_count = 0
+    local original_match_profile = camera_cfg.match_profile
+
+    camera_cfg.match_profile = function()
+      return false
+    end
+
+    local fake_device = {
+      supports_capability = function(_, capability)
+        return capability == capabilities.cameraPrivacyMode
+      end,
+      get_latest_state = function(_, _, _, attribute_name)
+        if attribute_name == capabilities.cameraPrivacyMode.supportedAttributes.NAME then
+          return { "softRecordingPrivacyMode", "softLivestreamPrivacyMode" }
+        elseif attribute_name == capabilities.cameraPrivacyMode.supportedCommands.NAME then
+          local commands = { "setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode" }
+          setmetatable(commands, {
+            __index = function()
+              return nil
+            end
+          })
+          return commands
+        end
+        return nil
+      end,
+      get_endpoints = function()
+        return { CAMERA_EP }
+      end,
+      emit_event_for_endpoint = function()
+        init_event_count = init_event_count + 1
+      end
+    }
+
+    camera_cfg.reconcile_profile_and_capabilities(fake_device)
+    camera_cfg.match_profile = original_match_profile
+
+    assert(init_event_count == 0, "cameraPrivacyMode should not be reinitialized for equal values with metatable differences")
+  end,
+  {
+    min_api_version = 17
   }
 )
 
@@ -451,7 +597,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -494,7 +640,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -523,7 +669,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -567,7 +713,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -598,7 +744,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -648,7 +794,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -673,7 +819,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -726,7 +872,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -850,7 +996,7 @@ test.register_coroutine_test(
     emit_supported_resolutions()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -868,7 +1014,7 @@ test.register_coroutine_test(
     emit_supported_resolutions()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -886,7 +1032,7 @@ test.register_coroutine_test(
     emit_supported_resolutions()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -941,7 +1087,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -965,7 +1111,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -983,7 +1129,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1001,7 +1147,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1049,7 +1195,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1087,7 +1233,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1113,7 +1259,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1142,7 +1288,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.sounds.selectedSound(2)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1185,7 +1331,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1211,7 +1357,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1251,7 +1397,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1287,7 +1433,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1312,7 +1458,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1379,7 +1525,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1487,7 +1633,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1513,7 +1659,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1538,7 +1684,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1570,7 +1716,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1651,7 +1797,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1683,7 +1829,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1708,7 +1854,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1782,7 +1928,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1855,7 +2001,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1931,7 +2077,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -2037,7 +2183,7 @@ test.register_coroutine_test(
     )
   end,
   {
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -2113,7 +2259,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -2707,6 +2853,11 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
+    local camera_cfg = require("sub_drivers.camera.camera_utils.device_configuration")
+    local original_reconcile = camera_cfg.reconcile_profile_and_capabilities
+    camera_cfg.reconcile_profile_and_capabilities = function(...) return false end
+
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
@@ -2714,9 +2865,12 @@ test.register_coroutine_test(
         uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
       })
     })
+    test.wait_for_events()
+
+    camera_cfg.reconcile_profile_and_capabilities = original_reconcile
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -2758,7 +2912,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

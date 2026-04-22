@@ -88,7 +88,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -113,7 +113,7 @@ test.register_message_test("Refresh should read all necessary attributes", {
     },
 },
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -149,7 +149,7 @@ test.register_coroutine_test("panicAlarm should be triggered and cleared", funct
 
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -184,7 +184,7 @@ test.register_coroutine_test(
         test.wait_for_events()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -226,7 +226,7 @@ test.register_coroutine_test(
         mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -253,7 +253,7 @@ function()
     test.socket.zigbee:__expect_send({mock_device.id, buttonDelay_msg})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -286,7 +286,7 @@ test.register_coroutine_test(" Configuration and Switching to button-profile-pan
     --test.socket.capability:__expect_send({mock_device.id, capabilities.panicAlarm.panicAlarm.clear({state_change = true})})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -302,7 +302,7 @@ test.register_coroutine_test("Switching from button-profile-panic-frient to butt
     test.socket.zigbee:__expect_send({mock_device_panic.id, cluster_base.write_manufacturer_specific_attribute(mock_device_panic,BasicInput.ID,0x8000,DEVELCO_MANUFACTURER_CODE,data_types.Uint16,0xFFFF)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -324,7 +324,7 @@ test.register_coroutine_test("New preferences after switching the profile should
     test.socket.zigbee:__expect_send({mock_device_panic.id, cluster_base.write_manufacturer_specific_attribute(mock_device_panic, IASZone.ID,0x8005,DEVELCO_MANUFACTURER_CODE,data_types.Enum8, 1)})
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
