@@ -290,4 +290,35 @@ test.register_coroutine_test(
   }
 )
 
+test.register_coroutine_test(
+  "PercentCurrent reports and setPercent commands should be handled correctly after profile change",
+  function()
+    test_thermostat_device_type_update_modular_profile(mock_device, expected_metadata,
+      get_subscribe_request(mock_device, new_cluster_subscribe_list))
+
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.FanControl.attributes.PercentCurrent:build_test_report_data(mock_device, 2, 10)
+    })
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.fanSpeedPercent.percent(10))
+    )
+
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "fanSpeedPercent", component = "main", command = "setPercent", args = { 50 } }
+    })
+
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      clusters.FanControl.attributes.PercentSetting:write(mock_device, 2, 50)
+    })
+  end
+)
+
 test.run_registered_tests()

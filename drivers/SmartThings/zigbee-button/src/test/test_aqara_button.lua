@@ -36,6 +36,7 @@ local mock_device_h1_single = test.mock_device.build_test_zigbee_device(
   }
 )
 
+local COMP_LIST = { "button1", "button2", "all" }
 local mock_device_e1 = test.mock_device.build_test_zigbee_device(
   {
     profile = t_utils.get_profile_definition("one-button-batteryLevel.yml"),
@@ -352,6 +353,47 @@ test.register_coroutine_test(
   {
      min_api_version = 17
   }
+)
+
+test.register_coroutine_test(
+  "Wireless Remote Switch H1 Mode Change",
+  function()
+    local mode = 2
+    local updates = {
+      preferences = {
+        [MODE_CHANGE] = true
+      }
+    }
+    test.socket.device_lifecycle:__queue_receive(mock_device_h1_double_rocker:generate_info_changed(updates))
+    mock_device_h1_double_rocker:set_field("devicemode", 1, { persist = true })
+    local attr_report_data = {
+      { PRIVATE_ATTRIBUTE_ID_ALIVE, data_types.OctetString.ID, "\x01\x21\xB8\x0B\x03\x28\x19\x04\x21\xA8\x13\x05\x21\x45\x08\x06\x24\x07\x00\x00\x00\x00\x08\x21\x15\x01\x0A\x21\xF5\x65\x0C\x20\x01\x64\x20\x01\x66\x20\x03\x67\x20\x01\x68\x21\xA8\x00" }
+    }
+    test.wait_for_events()
+    test.socket.zigbee:__queue_receive({
+      mock_device_h1_double_rocker.id,
+      zigbee_test_utils.build_attribute_report(mock_device_h1_double_rocker, PRIVATE_CLUSTER_ID, attr_report_data,
+        MFG_CODE)
+    })
+    test.socket.zigbee:__expect_send({ mock_device_h1_double_rocker.id, cluster_base
+        .write_manufacturer_specific_attribute(mock_device_h1_double_rocker, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID_E1,
+          MFG_CODE, data_types.Uint8, mode) })
+    test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message("main",
+      capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message("main",
+      capabilities.button.numberOfButtons({ value = 1 })))
+    test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message("main",
+      capabilities.button.button.pushed({ state_change = false })))
+
+    for i = 1, 3 do
+      test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message(COMP_LIST[i],
+        capabilities.button.supportedButtonValues({ "pushed", "held", "double" }, { visibility = { displayed = false } })))
+      test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message(COMP_LIST[i],
+        capabilities.button.numberOfButtons({ value = 1 })))
+      test.socket.capability:__expect_send(mock_device_h1_double_rocker:generate_test_message(COMP_LIST[i],
+        capabilities.button.button.pushed({ state_change = false })))
+    end
+  end
 )
 
 test.run_registered_tests()

@@ -36,6 +36,8 @@ function SwitchLifecycleHandlers.device_added(driver, device)
   -- was created after the initial subscription report
   if device.network_type == device_lib.NETWORK_TYPE_CHILD then
     device:send(clusters.OnOff.attributes.OnOff:read(device))
+  elseif device.network_type == device_lib.NETWORK_TYPE_MATTER then
+    switch_utils.handle_electrical_sensor_info(device)
   end
 
   -- call device init in case init is not called after added due to device caching
@@ -55,6 +57,7 @@ end
 
 function SwitchLifecycleHandlers.driver_switched(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+    switch_utils.handle_electrical_sensor_info(device) -- field settings required for proper setup when switching drivers
     device_cfg.match_profile(driver, device)
   end
 end

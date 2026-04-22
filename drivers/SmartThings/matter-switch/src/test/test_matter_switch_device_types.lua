@@ -721,6 +721,13 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Test init for device with requiring the switch category as a vendor override",
+  function()
+  end,
+  { test_init = test_init_switch_vendor_override }
+)
+
+test.register_coroutine_test(
   "Test init for mounted onoff control parent cluster as server",
   function()
   end,

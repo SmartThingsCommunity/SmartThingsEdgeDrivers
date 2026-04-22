@@ -54,6 +54,8 @@ local device_init = function(driver, device)
   end
 end
 
+local lazy_load_if_possible = require "lazy_load_subdriver"
+
 local zigbee_switch_driver_template = {
   supported_capabilities = {
     capabilities.switch,

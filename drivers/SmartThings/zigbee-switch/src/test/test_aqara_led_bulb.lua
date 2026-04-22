@@ -38,6 +38,7 @@ zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
+  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.colorTemperature.colorTemperatureRange({ minimum = 2700, maximum = 6000 })))
 end
 
 test.set_test_init_function(test_init)

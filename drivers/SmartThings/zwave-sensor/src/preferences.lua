@@ -175,7 +175,73 @@ local devices = {
       lowBatteryAlert = { parameter_number = 4, size = 1 },
     },
   },
+  AEOTEC_AERQ_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = 0x0018
+    },
+    PARAMETERS = {
+      parameter1 = {parameter_number = 1, size = 1},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter4 = {parameter_number = 4, size = 1},
+      parameter13 = {parameter_number = 13, size = 1},
+      parameter23 = {parameter_number = 23, size = 1},
+      parameter24 = {parameter_number = 24, size = 4},
+      parameter25 = {parameter_number = 25, size = 2},
+      parameter26 = {parameter_number = 26, size = 2},
+      parameter64 = {parameter_number = 64, size = 1},
+    }
+  },
+   AEOTEC_DOOR_WINDOW_SENSOR_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = {0x0037}
+    },
+    PARAMETERS = {
+      parameter1 = {parameter_number = 1, size = 4},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter5 = {parameter_number = 5, size = 1},
+      parameter13 = {parameter_number = 13, size = 1},
+      parameter23 = {parameter_number = 23, size = 1},
+      parameter24 = {parameter_number = 24, size = 4},
+      parameter25 = {parameter_number = 25, size = 2},
+      parameter26 = {parameter_number = 26, size = 2},
+      parameter27 = {parameter_number = 27, size = 1},
+      parameter28 = {parameter_number = 28, size = 1},
+      parameter33 = {parameter_number = 33, size = 1},
+      parameter34 = {parameter_number = 34, size = 1},
+      parameter35 = {parameter_number = 35, size = 1},
+      parameter36 = {parameter_number = 36, size = 1},
+      parameter64 = {parameter_number = 64, size = 1},
+    },
+  },
+  AEOTEC_WATER_SENSOR_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = {0x0038}
+    },
+    PARAMETERS = {
+      parameter1 = {parameter_number = 1, size = 1},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter4 = {parameter_number = 4, size = 1},
+      parameter5 = {parameter_number = 5, size = 1},
+      parameter10 = {parameter_number = 10, size = 1},
+      parameter13 = {parameter_number = 13, size = 1},
+      parameter23 = {parameter_number = 23, size = 1},
+      parameter24 = {parameter_number = 24, size = 4},
+      parameter25 = {parameter_number = 25, size = 2},
+      parameter26 = {parameter_number = 26, size = 2},
+      parameter64 = {parameter_number = 64, size = 1},
+    },
+  },
 }
+
 local preferences = {}
 
 preferences.update_preferences = function(driver, device, args)

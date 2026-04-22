@@ -17,6 +17,8 @@ local SwitchMultilevel = (require "st.zwave.CommandClass.SwitchMultilevel")({ ve
 local preferencesMap = require "preferences"
 local configurationsMap = require "configurations"
 
+local lazy_load_if_possible = require "lazy_load_subdriver"
+
 --- Map component to end_points(channels)
 ---
 --- @param device st.zwave.Device

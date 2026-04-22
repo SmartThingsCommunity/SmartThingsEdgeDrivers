@@ -145,6 +145,12 @@ local function test_init()
   })
   mock_device:expect_metadata_update({ profile = "fan-modular", optional_component_capabilities = {{"main", {"fanSpeedPercent", "fanMode"}}} })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  local updated_device_profile = t_utils.get_profile_definition("fan-modular.yml",
+    {enabled_optional_capabilities = {{"main", {"fanSpeedPercent", "fanMode"}}}}
+  )
+  test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
+  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 end
 
 test.set_test_init_function(test_init)
