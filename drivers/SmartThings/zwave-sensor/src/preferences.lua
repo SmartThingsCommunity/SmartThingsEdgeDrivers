@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 --- @type st.zwave.CommandClass.Configuration
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version=4 })
@@ -173,6 +162,71 @@ local devices = {
       leakAlertClearDelay = { parameter_number = 2, size = 4 },
       batteryThreshold = { parameter_number = 3, size = 1 },
       lowBatteryAlert = { parameter_number = 4, size = 1 },
+    },
+  },
+  AEOTEC_AERQ_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = 0x0039
+    },
+    PARAMETERS = {
+      parameter1 = {parameter_number = 1, size = 4},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter4 = {parameter_number = 4, size = 1},
+      parameter13 = {parameter_number = 13, size = 1},
+      parameter23 = {parameter_number = 23, size = 1},
+      parameter24 = {parameter_number = 24, size = 4},
+      parameter25 = {parameter_number = 25, size = 2},
+      parameter26 = {parameter_number = 26, size = 2},
+      parameter64 = {parameter_number = 64, size = 1},
+    }
+  },
+   AEOTEC_DOOR_WINDOW_SENSOR_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = {0x0037}
+    },
+    PARAMETERS = {
+      parameter1 = {parameter_number = 1, size = 4},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter5 = {parameter_number = 5, size = 1},
+      parameter13 = {parameter_number = 13, size = 1},
+      parameter23 = {parameter_number = 23, size = 1},
+      parameter24 = {parameter_number = 24, size = 4},
+      parameter25 = {parameter_number = 25, size = 2},
+      parameter26 = {parameter_number = 26, size = 2},
+      parameter27 = {parameter_number = 27, size = 1},
+      parameter28 = {parameter_number = 28, size = 1},
+      parameter33 = {parameter_number = 33, size = 1},
+      parameter34 = {parameter_number = 34, size = 1},
+      parameter35 = {parameter_number = 35, size = 1},
+      parameter36 = {parameter_number = 36, size = 1},
+      parameter64 = {parameter_number = 64, size = 1},
+    },
+  },
+  AEOTEC_WATER_SENSOR_8 = {
+    MATCHING_MATRIX = {
+      mfrs = 0x0371,
+      product_types = {0x0002, 0x0102, 0x0202},
+      product_ids = {0x0038}
+    },
+    PARAMETERS = {
+      parameter1 = {parameter_number = 1, size = 4},
+      parameter2 = {parameter_number = 2, size = 1},
+      parameter3 = {parameter_number = 3, size = 1},
+      parameter4 = {parameter_number = 4, size = 1},
+      parameter5 = {parameter_number = 5, size = 1},
+      parameter10 = {parameter_number = 10, size = 1},
+      parameter13 = {parameter_number = 13, size = 1},
+      parameter23 = {parameter_number = 23, size = 1},
+      parameter24 = {parameter_number = 24, size = 4},
+      parameter25 = {parameter_number = 25, size = 2},
+      parameter26 = {parameter_number = 26, size = 2},
+      parameter64 = {parameter_number = 64, size = 1},
     },
   },
 }
