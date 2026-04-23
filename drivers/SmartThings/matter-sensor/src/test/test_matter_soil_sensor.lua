@@ -10,7 +10,7 @@ clusters.Global = require "embedded_clusters.Global"
 clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
 
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("soil-sensor-battery.yml"),
+  profile = t_utils.get_profile_definition("temperature-soil-sensor.yml"),
   manufacturer_info = { vendor_id = 0x0000, product_id = 0x0000 },
   endpoints = {
     {
@@ -61,10 +61,17 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "temperature-soil-sensor" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  local updated_device_profile = t_utils.get_profile_definition("temperature-soil-sensor.yml")
-  test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
 end
 test.set_test_init_function(test_init)
+
+test.register_coroutine_test(
+  "Test infoChanged lifecycle event",
+  function()
+    local updated_device_profile = t_utils.get_profile_definition("temperature-soil-sensor.yml")
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+  end
+)
 
 test.register_coroutine_test(
   "Relative humidity reports should generate correct messages",
