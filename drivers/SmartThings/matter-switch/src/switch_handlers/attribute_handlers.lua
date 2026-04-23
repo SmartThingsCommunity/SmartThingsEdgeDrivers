@@ -554,6 +554,7 @@ end
 -- [[ OPERATIONAL STATE CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil then return end
   local accepted_command_list = {}
   for _, accepted_command in ipairs(ib.data.elements) do
     local accepted_command_id = accepted_command.value
@@ -576,6 +577,7 @@ function AttributeHandlers.operational_state_attr_handler(driver, device, ib, re
 end
 
 function AttributeHandlers.operational_error_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil or ib.data.elements.error_state_id == nil or ib.data.elements.error_state_id.value == nil then return end
   if version.api < 10 then
     clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
   end
@@ -588,6 +590,9 @@ function AttributeHandlers.operational_error_attr_handler(driver, device, ib, re
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.commandInvalidInCurrentState())
   end
 end
+
+
+-- [[ FLOW MEASUREMENT CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.flow_attr_handler(driver, device, ib, response)
   local measured_value = ib.data.value
