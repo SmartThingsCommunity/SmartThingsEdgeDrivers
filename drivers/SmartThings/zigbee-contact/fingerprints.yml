@@ -219,6 +219,11 @@ zigbeeManufacturer:
     manufacturer: Aug. Winkhaus SE
     model: FM.V.ZB
     deviceProfileName: contact-battery-profile
+  - id: "MultIR/MIR-MC100"
+    deviceLabel: MultiIR Contact Sensor MIR-MC100
+    manufacturer: MultIR
+    model: MIR-MC100
+    deviceProfileName: contact-battery-tamper-no-fw-update
 zigbeeGeneric:
   - id: "contact-generic"
     deviceLabel: "Zigbee Contact Sensor"
