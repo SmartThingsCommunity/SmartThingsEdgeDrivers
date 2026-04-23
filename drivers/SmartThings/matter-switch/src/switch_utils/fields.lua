@@ -194,8 +194,8 @@ SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
 
-SwitchFields.NULL_TRANSITION_TIME = 0 -- 0.0 seconds
-SwitchFields.TRANSITION_TIME_FAST = 3 -- 0.3 seconds, measured in tenths of a second as per the Matter spec
+SwitchFields.ZERO_TRANSITION_TIME = 0 -- 0.0 seconds
+SwitchFields.DEFAULT_STEP_TRANSITION_TIME = 3 -- 0.3 seconds, measured in tenths of a second as per the Matter spec
 
 SwitchFields.TRANSITION_TIME = {
   SWITCH_LEVEL_STEP = "__switch_level_step_transition_time",
