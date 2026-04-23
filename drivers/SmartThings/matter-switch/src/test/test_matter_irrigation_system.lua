@@ -106,6 +106,11 @@ end
 
 local subscribe_request
 
+local expected_metadata = {
+  optional_component_capabilities = { { "main", { "level", "flowMeasurement", "operationalState", } } },
+  profile = "irrigation-system"
+}
+
 local function test_init()
   test.mock_device.add_test_device(mock_irrigation_system)
   local cluster_subscribe_list = {
@@ -122,6 +127,9 @@ local function test_init()
   test.socket.matter:__expect_send({mock_irrigation_system.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_irrigation_system.id, "init" })
   test.socket.matter:__expect_send({mock_irrigation_system.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_irrigation_system.id, "doConfigure" })
+  mock_irrigation_system:expect_metadata_update(expected_metadata)
+  mock_irrigation_system:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   for _, child in pairs(mock_children) do
     test.mock_device.add_test_device(child)
   end
@@ -148,15 +156,7 @@ local additional_subscribed_attributes = {
   clusters.OperationalState.attributes.OperationalState,
 }
 
-local expected_metadata = {
-  optional_component_capabilities = { { "main", { "level", "flowMeasurement", "operationalState", } } },
-  profile = "irrigation-system"
-}
-
 local function update_device_profile()
-  test.socket.device_lifecycle:__queue_receive({ mock_irrigation_system.id, "doConfigure" })
-  mock_irrigation_system:expect_metadata_update(expected_metadata)
-  mock_irrigation_system:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   local updated_device_profile = t_utils.get_profile_definition(
     "irrigation-system.yml", { enabled_optional_capabilities = expected_metadata.optional_component_capabilities }
   )
@@ -171,13 +171,10 @@ end
 test.register_coroutine_test(
   "Parent device: Open command should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_irrigation_system.id,
       { capability = "valve", component = "main", command = "open", args = { } }
     })
-
     test.socket.matter:__expect_send({
       mock_irrigation_system.id,
       clusters.ValveConfigurationAndControl.server.commands.Open(mock_irrigation_system, endpoints.VALVE_1_EP)
@@ -188,13 +185,10 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Parent device: Close command should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_irrigation_system.id,
       { capability = "valve", component = "main", command = "close", args = { } }
     })
-
     test.socket.matter:__expect_send({
       mock_irrigation_system.id,
       clusters.ValveConfigurationAndControl.server.commands.Close(mock_irrigation_system, endpoints.VALVE_1_EP)
@@ -207,6 +201,7 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
     test.socket.capability:__queue_receive({
       mock_irrigation_system.id,
       { capability = "level", component = "main", command = "setLevel", args = { 75 } }
@@ -221,8 +216,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Parent device: Current state closed should generate closed event",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.ValveConfigurationAndControl.server.attributes.CurrentState:build_test_report_data(
@@ -242,6 +235,7 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.ValveConfigurationAndControl.server.attributes.CurrentLevel:build_test_report_data(
@@ -261,6 +255,7 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.FlowMeasurement.server.attributes.MeasuredValue:build_test_report_data(mock_irrigation_system, 1, 20 * 10)
@@ -279,6 +274,7 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.FlowMeasurement.attributes.MinMeasuredValue:build_test_report_data(mock_irrigation_system, 1, 20)
@@ -302,8 +298,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Child device valve 2: Open command should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_children[endpoints.VALVE_2_EP].id,
       { capability = "valve", component = "main", command = "open", args = { } }
@@ -318,8 +312,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Child device valve 2: Set level command should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_children[endpoints.VALVE_2_EP].id,
       { capability = "level", component = "main", command = "setLevel", args = { 40 } }
@@ -334,8 +326,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Child device valve 2: Current state closed should generate closed event",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.ValveConfigurationAndControl.server.attributes.CurrentState:build_test_report_data(
@@ -353,8 +343,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Child device valve 3: Close command should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_children[endpoints.VALVE_3_EP].id,
       { capability = "valve", component = "main", command = "close", args = { } }
@@ -369,8 +357,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Child device valve 3: Current level reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.ValveConfigurationAndControl.server.attributes.CurrentLevel:build_test_report_data(
@@ -390,6 +376,7 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.OperationalState.attributes.OperationalState:build_test_report_data(
@@ -409,6 +396,7 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
     test.socket.matter:__queue_receive({
       mock_irrigation_system.id,
       clusters.OperationalState.attributes.OperationalError:build_test_report_data(
