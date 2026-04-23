@@ -11,7 +11,7 @@ local DEFAULT_MIRED_MAX_BOUND = 370 -- 2700 Kelvin (Mireds are the inverse of Ke
 local DEFAULT_MIRED_MIN_BOUND = 154 -- 6500 Kelvin (Mireds are the inverse of Kelvin)
 
 -- Transition Time: The time that shall be taken to perform the step change, in units of 1/10ths of a second.
-local DEFAULT_STATELESS_TRANSITION_TIME = 3 -- 0.3 seconds
+local DEFAULT_STEP_TRANSITION_TIME = 3 -- 0.3 seconds
 
 -- Options Mask & Override: Indicates which options are being overridden by the Level/ColorControl cluster commands
 local OPTIONS_MASK = 0x01 -- default: The `ExecuteIfOff` option is overriden
@@ -20,7 +20,7 @@ local IGNORE_COMMAND_IF_OFF = 0x00 -- default: the command will not be executed 
 local function step_color_temperature_by_percent_handler(driver, device, cmd)
   local step_percent_change = cmd.args and cmd.args.stepSize or 0
   if step_percent_change == 0 then return end
-  local transition_time = device:get_field(switch_utils.COLOR_TEMP_STEP_TRANSITION_TIME) or DEFAULT_STATELESS_TRANSITION_TIME
+  local transition_time = device:get_field(switch_utils.COLOR_TEMP_STEP_TRANSITION_TIME) or DEFAULT_STEP_TRANSITION_TIME
   -- Reminder, stepSize > 0 == Kelvin UP == Mireds DOWN. stepSize < 0 == Kelvin DOWN == Mireds UP
   local step_mode = (step_percent_change > 0) and clusters.ColorControl.types.CcStepMode.DOWN or clusters.ColorControl.types.CcStepMode.UP
   local min_mireds = device:get_field(switch_utils.MIRED_MIN_BOUND)
@@ -37,7 +37,7 @@ end
 local function step_level_handler(driver, device, cmd)
   local step_size = st_utils.round((cmd.args and cmd.args.stepSize or 0)/100.0 * 254)
   if step_size == 0 then return end
-  local transition_time = device:get_field(switch_utils.SWITCH_LEVEL_STEP_TRANSITION_TIME) or DEFAULT_STATELESS_TRANSITION_TIME
+  local transition_time = device:get_field(switch_utils.SWITCH_LEVEL_STEP_TRANSITION_TIME) or DEFAULT_STEP_TRANSITION_TIME
   local step_mode = (step_size > 0) and clusters.Level.types.MoveStepMode.UP or clusters.Level.types.MoveStepMode.DOWN
   device:send(clusters.Level.server.commands.Step(device, step_mode, math.abs(step_size), transition_time, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF))
 end
