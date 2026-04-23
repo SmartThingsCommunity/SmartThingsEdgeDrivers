@@ -66,10 +66,10 @@ function utils.mired_to_kelvin(value, minOrMax)
   -- rounding errors from the conversion of Kelvin to mireds.
   local kelvin_step_size = 100
   local rounding_value = 0.5
-  if minOrMax == fields.COLOR_TEMP_MIN then
-    return st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value + 1)) + rounding_value) * kelvin_step_size
-  elseif minOrMax == fields.COLOR_TEMP_MAX then
-    return st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value - 1)) - rounding_value) * kelvin_step_size
+  if minOrMax == fields.COLOR_TEMP.MIN then
+    return st_utils.round(fields.MIRED.TO_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value + 1)) + rounding_value) * kelvin_step_size
+  elseif minOrMax == fields.COLOR_TEMP.MAX then
+    return st_utils.round(fields.MIRED.TO_KELVIN_CONVERSION_CONSTANT / (kelvin_step_size * (value - 1)) - rounding_value) * kelvin_step_size
   else
     log.warn_with({hub_logs = true}, "Attempted to convert temperature unit for an undefined value")
   end
@@ -573,15 +573,6 @@ function utils.subscribe(device)
 
   if #subscribe_request.info_blocks > 0 then
     device:send(subscribe_request)
-  end
-end
-
-function utils.set_transition_times_for_stateless_capabilities(device)
-  if device:supports_capability(capabilities.statelessSwitchLevelStep) then
-    device:set_field(fields.TRANSITION_TIME.SWITCH_LEVEL_STEP, fields.TRANSITION_TIME_FAST)
-  end
-  if device:supports_capability(capabilities.statelessColorTemperatureStep) then
-    device:set_field(fields.TRANSITION_TIME.COLOR_TEMP_STEP, fields.TRANSITION_TIME_FAST)
   end
 end
 

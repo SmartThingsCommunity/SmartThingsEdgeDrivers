@@ -75,7 +75,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 60, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 60, fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME, fields.MIRED.DEFAULT_MIN, fields.MIRED.DEFAULT_MAX, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -99,7 +99,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 271, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 271, fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME, fields.MIRED.DEFAULT_MIN, fields.MIRED.DEFAULT_MAX, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -123,7 +123,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 151, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 151, fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME, fields.MIRED.DEFAULT_MIN, fields.MIRED.DEFAULT_MAX, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF)
       },
     }
   },
@@ -157,7 +157,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 64, fields.TRANSITION_TIME_FAST, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 64, fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -181,7 +181,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.DOWN, 127, fields.TRANSITION_TIME_FAST, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.DOWN, 127, fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -205,7 +205,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 254, fields.TRANSITION_TIME_FAST, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 254, fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF)
       },
     }
   },

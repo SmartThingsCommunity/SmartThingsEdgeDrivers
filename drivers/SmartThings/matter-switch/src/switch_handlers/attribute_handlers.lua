@@ -67,17 +67,17 @@ function AttributeHandlers.level_bounds_handler_factory(minOrMax)
     if lighting_support and level == 0 then
       level = 1
     end
-    switch_utils.set_field_for_endpoint(device, fields.LEVEL_BOUND_RECEIVED..minOrMax, ib.endpoint_id, level)
-    local min = switch_utils.get_field_for_endpoint(device, fields.LEVEL_BOUND_RECEIVED..fields.LEVEL_MIN, ib.endpoint_id)
-    local max = switch_utils.get_field_for_endpoint(device, fields.LEVEL_BOUND_RECEIVED..fields.LEVEL_MAX, ib.endpoint_id)
+    switch_utils.set_field_for_endpoint(device, fields.LEVEL.BOUND_RECEIVED..minOrMax, ib.endpoint_id, level)
+    local min = switch_utils.get_field_for_endpoint(device, fields.LEVEL.BOUND_RECEIVED..fields.LEVEL.MIN, ib.endpoint_id)
+    local max = switch_utils.get_field_for_endpoint(device, fields.LEVEL.BOUND_RECEIVED..fields.LEVEL.MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.switchLevel.levelRange({ value = {minimum = min, maximum = max} }))
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min level value %d that is not lower than the reported max level value %d", min, max))
       end
-      switch_utils.set_field_for_endpoint(device, fields.LEVEL_BOUND_RECEIVED..fields.LEVEL_MAX, ib.endpoint_id, nil)
-      switch_utils.set_field_for_endpoint(device, fields.LEVEL_BOUND_RECEIVED..fields.LEVEL_MIN, ib.endpoint_id, nil)
+      switch_utils.set_field_for_endpoint(device, fields.LEVEL.BOUND_RECEIVED..fields.LEVEL.MAX, ib.endpoint_id, nil)
+      switch_utils.set_field_for_endpoint(device, fields.LEVEL.BOUND_RECEIVED..fields.LEVEL.MIN, ib.endpoint_id, nil)
     end
   end
 end
@@ -86,7 +86,7 @@ end
 -- [[ COLOR CONTROL CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.current_hue_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+  if device:get_field(fields.COLOR_CONTROL.COLOR_MODE) ~= clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY and ib.data.value ~= nil then
     local hue = math.floor((ib.data.value / 0xFE * 100) + 0.5)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(hue))
   end
@@ -96,7 +96,7 @@ function AttributeHandlers.current_hue_handler(driver, device, ib, response)
 end
 
 function AttributeHandlers.current_saturation_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) ~= fields.X_Y_COLOR_MODE and ib.data.value ~= nil then
+  if device:get_field(fields.COLOR_CONTROL.COLOR_MODE) ~= clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY and ib.data.value ~= nil then
     local sat = math.floor((ib.data.value / 0xFE * 100) + 0.5)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(sat))
   end
@@ -110,75 +110,75 @@ function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, 
   if temp_in_mired == nil then
     return
   end
-  if (temp_in_mired < fields.COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > fields.COLOR_TEMPERATURE_MIRED_MAX) then
-    device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX))
+  if (temp_in_mired < fields.MIRED.MIN_ALLOWED or temp_in_mired > fields.MIRED.MAX_ALLOWED) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, fields.MIRED.MIN_ALLOWED, fields.MIRED.MAX_ALLOWED))
     return
   end
-  local min_temp_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, ib.endpoint_id)
-  local max_temp_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, ib.endpoint_id)
+  local min_temp_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MIN, ib.endpoint_id)
+  local max_temp_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MAX, ib.endpoint_id)
 
-  local temp = st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/temp_in_mired)
+  local temp = st_utils.round(fields.MIRED.TO_KELVIN_CONVERSION_CONSTANT/temp_in_mired)
   if min_temp_mired ~= nil and temp_in_mired <= min_temp_mired then
-    temp = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP_MAX, ib.endpoint_id)
+    temp = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP.MAX, ib.endpoint_id)
   elseif max_temp_mired ~= nil and temp_in_mired >= max_temp_mired then
-    temp = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP_MIN, ib.endpoint_id)
+    temp = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP.MIN, ib.endpoint_id)
   end
 
   local temp_device = device
   if device:get_field(fields.IS_PARENT_CHILD_DEVICE) == true then
     temp_device = switch_utils.find_child(device, ib.endpoint_id) or device
   end
-  local most_recent_temp = temp_device:get_field(fields.MOST_RECENT_TEMP)
+  local most_recent_temp = temp_device:get_field(fields.COLOR_TEMP.MOST_RECENT_TEMP)
   -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
   if most_recent_temp ~= nil and
-    most_recent_temp <= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
-    most_recent_temp >= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
+    most_recent_temp <= st_utils.round(fields.MIRED.TO_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
+    most_recent_temp >= st_utils.round(fields.MIRED.TO_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
       temp = most_recent_temp
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
 end
 
 function AttributeHandlers.current_x_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+  if device:get_field(fields.COLOR_CONTROL.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
-  local y = device:get_field(fields.RECEIVED_Y)
+  local y = device:get_field(fields.COLOR_CONTROL.RECEIVED_Y)
   --TODO it is likely that both x and y attributes are in the response (not guaranteed though)
   -- if they are we can avoid setting fields on the device.
   if y == nil then
-    device:set_field(fields.RECEIVED_X, ib.data.value)
+    device:set_field(fields.COLOR_CONTROL.RECEIVED_X, ib.data.value)
   else
     local x = ib.data.value
     local h, s, _ = color_utils.safe_xy_to_hsv(x, y, nil)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
-    device:set_field(fields.RECEIVED_Y, nil)
+    device:set_field(fields.COLOR_CONTROL.RECEIVED_Y, nil)
   end
 end
 
 function AttributeHandlers.current_y_handler(driver, device, ib, response)
-  if device:get_field(fields.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
+  if device:get_field(fields.COLOR_CONTROL.COLOR_MODE) == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     return
   end
-  local x = device:get_field(fields.RECEIVED_X)
+  local x = device:get_field(fields.COLOR_CONTROL.RECEIVED_X)
   if x == nil then
-    device:set_field(fields.RECEIVED_Y, ib.data.value)
+    device:set_field(fields.COLOR_CONTROL.RECEIVED_Y, ib.data.value)
   else
     local y = ib.data.value
     local h, s, _ = color_utils.safe_xy_to_hsv(x, y, nil)
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.hue(h))
     device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorControl.saturation(s))
-    device:set_field(fields.RECEIVED_X, nil)
+    device:set_field(fields.COLOR_CONTROL.RECEIVED_X, nil)
   end
 end
 
 function AttributeHandlers.color_mode_handler(driver, device, ib, response)
-  if ib.data.value == device:get_field(fields.COLOR_MODE)
+  if ib.data.value == device:get_field(fields.COLOR_CONTROL.COLOR_MODE)
     or (ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION
     and ib.data.value ~= clusters.ColorControl.types.ColorMode.CURRENTX_AND_CURRENTY) then
       return
   end
-  device:set_field(fields.COLOR_MODE, ib.data.value)
+  device:set_field(fields.COLOR_CONTROL.COLOR_MODE, ib.data.value)
   local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
   if ib.data.value == clusters.ColorControl.types.ColorMode.CURRENT_HUE_AND_CURRENT_SATURATION then
     req:merge(clusters.ColorControl.attributes.CurrentHue:read())
@@ -196,7 +196,7 @@ end
 function AttributeHandlers.color_capabilities_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     if ib.data.value & 0x1 then
-      device:set_field(fields.HUESAT_SUPPORT, true)
+      device:set_field(fields.COLOR_CONTROL.HUESAT_SUPPORT, true)
     end
   end
 end
@@ -207,20 +207,20 @@ function AttributeHandlers.color_temp_physical_mireds_bounds_factory(minOrMax)
     if temp_in_mired == nil then
       return
     end
-    if (temp_in_mired < fields.COLOR_TEMPERATURE_MIRED_MIN or temp_in_mired > fields.COLOR_TEMPERATURE_MIRED_MAX) then
-      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, fields.COLOR_TEMPERATURE_MIRED_MIN, fields.COLOR_TEMPERATURE_MIRED_MAX))
+    if (temp_in_mired < fields.MIRED.MIN_ALLOWED or temp_in_mired > fields.MIRED.MAX_ALLOWED) then
+      device.log.warn_with({hub_logs = true}, string.format("Device reported a color temperature %d mired outside of sane range of %.2f-%.2f", temp_in_mired, fields.MIRED.MIN_ALLOWED, fields.MIRED.MAX_ALLOWED))
       return
     end
     local temp_in_kelvin = switch_utils.mired_to_kelvin(temp_in_mired, minOrMax)
-    switch_utils.set_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_KELVIN..minOrMax, ib.endpoint_id, temp_in_kelvin)
+    switch_utils.set_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_KELVIN..minOrMax, ib.endpoint_id, temp_in_kelvin)
     -- the minimum color temp in kelvin corresponds to the maximum temp in mireds
-    if minOrMax == fields.COLOR_TEMP_MIN then
-      switch_utils.set_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, ib.endpoint_id, temp_in_mired)
+    if minOrMax == fields.COLOR_TEMP.MIN then
+      switch_utils.set_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MAX, ib.endpoint_id, temp_in_mired)
     else
-      switch_utils.set_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, ib.endpoint_id, temp_in_mired)
+      switch_utils.set_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MIN, ib.endpoint_id, temp_in_mired)
     end
-    local min = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP_MIN, ib.endpoint_id)
-    local max = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP_MAX, ib.endpoint_id)
+    local min = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP.MIN, ib.endpoint_id)
+    local max = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP.MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
         device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = min, maximum = max} }))
@@ -450,9 +450,9 @@ function AttributeHandlers.temperature_measured_value_bounds_factory(minOrMax)
     end
     local temp = ib.data.value / 100.0
     local unit = "C"
-    switch_utils.set_field_for_endpoint(device, fields.TEMP_BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
-    local min = switch_utils.get_field_for_endpoint(device, fields.TEMP_BOUND_RECEIVED..fields.TEMP_MIN, ib.endpoint_id)
-    local max = switch_utils.get_field_for_endpoint(device, fields.TEMP_BOUND_RECEIVED..fields.TEMP_MAX, ib.endpoint_id)
+    switch_utils.set_field_for_endpoint(device, fields.TEMPERATURE_MEASUREMENT.BOUND_RECEIVED..minOrMax, ib.endpoint_id, temp)
+    local min = switch_utils.get_field_for_endpoint(device, fields.TEMPERATURE_MEASUREMENT.BOUND_RECEIVED..fields.TEMPERATURE_MEASUREMENT.MIN, ib.endpoint_id)
+    local max = switch_utils.get_field_for_endpoint(device, fields.TEMPERATURE_MEASUREMENT.BOUND_RECEIVED..fields.TEMPERATURE_MEASUREMENT.MAX, ib.endpoint_id)
     if min ~= nil and max ~= nil then
       if min < max then
         -- Only emit the capability for RPC version >= 5 (unit conversion for
@@ -460,8 +460,8 @@ function AttributeHandlers.temperature_measured_value_bounds_factory(minOrMax)
         if version.rpc >= 5 then
           device:emit_event_for_endpoint(ib.endpoint_id, capabilities.temperatureMeasurement.temperatureRange({ value = { minimum = min, maximum = max }, unit = unit }))
         end
-        switch_utils.set_field_for_endpoint(device, fields.TEMP_BOUND_RECEIVED..fields.TEMP_MIN, ib.endpoint_id, nil)
-        switch_utils.set_field_for_endpoint(device, fields.TEMP_BOUND_RECEIVED..fields.TEMP_MAX, ib.endpoint_id, nil)
+        switch_utils.set_field_for_endpoint(device, fields.TEMPERATURE_MEASUREMENT.BOUND_RECEIVED..fields.TEMPERATURE_MEASUREMENT.MIN, ib.endpoint_id, nil)
+        switch_utils.set_field_for_endpoint(device, fields.TEMPERATURE_MEASUREMENT.BOUND_RECEIVED..fields.TEMPERATURE_MEASUREMENT.MAX, ib.endpoint_id, nil)
       else
         device.log.warn_with({hub_logs = true}, string.format("Device reported a min temperature %d that is not lower than the reported max temperature %d", min, max))
       end

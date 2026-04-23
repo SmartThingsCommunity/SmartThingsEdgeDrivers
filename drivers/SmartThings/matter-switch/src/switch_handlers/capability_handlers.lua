@@ -57,8 +57,8 @@ function CapabilityHandlers.handle_step_level(driver, device, cmd)
   if step_size == 0 then return end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local step_mode = step_size > 0 and clusters.LevelControl.types.StepMode.UP or clusters.LevelControl.types.StepMode.DOWN
-  local transition_time = device:get_field(fields.TRANSITION_TIME.SWITCH_LEVEL_STEP) or fields.TRANSITION_TIME_FAST
-  device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, math.abs(step_size), transition_time, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF))
+  local transition_time = device:get_field(fields.LEVEL.STEP_TRANSITION_TIME) or fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME
+  device:send(clusters.LevelControl.server.commands.Step(device, endpoint_id, step_mode, math.abs(step_size), transition_time, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF))
 end
 
 
@@ -71,10 +71,10 @@ function CapabilityHandlers.handle_set_color(driver, device, cmd)
   if switch_utils.tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = switch_utils.convert_huesat_st_to_matter(cmd.args.color.hue)
     local sat = switch_utils.convert_huesat_st_to_matter(cmd.args.color.saturation)
-    req = clusters.ColorControl.server.commands.MoveToHueAndSaturation(device, endpoint_id, hue, sat, fields.NULL_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
+    req = clusters.ColorControl.server.commands.MoveToHueAndSaturation(device, endpoint_id, hue, sat, fields.COMMAND_OPTS.ZERO_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.HANDLE_COMMAND_IF_OFF)
   else
     local x, y, _ = st_utils.safe_hsv_to_xy(cmd.args.color.hue, cmd.args.color.saturation)
-    req = clusters.ColorControl.server.commands.MoveToColor(device, endpoint_id, x, y, fields.NULL_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
+    req = clusters.ColorControl.server.commands.MoveToColor(device, endpoint_id, x, y, fields.COMMAND_OPTS.ZERO_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.HANDLE_COMMAND_IF_OFF)
   end
   device:send(req)
 end
@@ -84,7 +84,7 @@ function CapabilityHandlers.handle_set_hue(driver, device, cmd)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if switch_utils.tbl_contains(huesat_endpoints, endpoint_id) then
     local hue = switch_utils.convert_huesat_st_to_matter(cmd.args.hue)
-    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, fields.NULL_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
+    local req = clusters.ColorControl.server.commands.MoveToHue(device, endpoint_id, hue, 0, fields.COMMAND_OPTS.ZERO_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.HANDLE_COMMAND_IF_OFF)
     device:send(req)
   else
     device.log.warn("Device does not support huesat features on its color control cluster")
@@ -96,7 +96,7 @@ function CapabilityHandlers.handle_set_saturation(driver, device, cmd)
   local huesat_endpoints = device:get_endpoints(clusters.ColorControl.ID, {feature_bitmap = clusters.ColorControl.FeatureMap.HUE_AND_SATURATION})
   if switch_utils.tbl_contains(huesat_endpoints, endpoint_id) then
     local sat = switch_utils.convert_huesat_st_to_matter(cmd.args.saturation)
-    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, fields.NULL_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
+    local req = clusters.ColorControl.server.commands.MoveToSaturation(device, endpoint_id, sat, fields.COMMAND_OPTS.ZERO_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.HANDLE_COMMAND_IF_OFF)
     device:send(req)
   else
     device.log.warn("Device does not support huesat features on its color control cluster")
@@ -109,17 +109,17 @@ end
 function CapabilityHandlers.handle_set_color_temperature(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local temp_in_kelvin = cmd.args.temperature
-  local min_temp_kelvin = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP_MIN, endpoint_id)
-  local max_temp_kelvin = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP_MAX, endpoint_id)
+  local min_temp_kelvin = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP.MIN, endpoint_id)
+  local max_temp_kelvin = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_KELVIN..fields.COLOR_TEMP.MAX, endpoint_id)
 
-  local temp_in_mired = st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/temp_in_kelvin)
+  local temp_in_mired = st_utils.round(fields.MIRED.TO_KELVIN_CONVERSION_CONSTANT/temp_in_kelvin)
   if min_temp_kelvin ~= nil and temp_in_kelvin <= min_temp_kelvin then
-    temp_in_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id)
+    temp_in_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MAX, endpoint_id)
   elseif max_temp_kelvin ~= nil and temp_in_kelvin >= max_temp_kelvin then
-    temp_in_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id)
+    temp_in_mired = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MIN, endpoint_id)
   end
-  local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, fields.NULL_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
-  device:set_field(fields.MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
+  local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, fields.COMMAND_OPTS.ZERO_TRANSITION_TIME, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.HANDLE_COMMAND_IF_OFF)
+  device:set_field(fields.COLOR_TEMP.MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
   device:send(req)
 end
 
@@ -136,11 +136,11 @@ function CapabilityHandlers.handle_step_color_temperature_by_percent(driver, dev
   local endpoint_id = device:component_to_endpoint(cmd.component)
   -- before the Matter 1.3 lua libs update (HUB FW 55), there was no ColorControl StepModeEnum type defined
   local step_mode = step_percent_change > 0 and (clusters.ColorControl.types.StepModeEnum and clusters.ColorControl.types.StepModeEnum.DOWN or 3) or (clusters.ColorControl.types.StepModeEnum and clusters.ColorControl.types.StepModeEnum.UP or 1)
-  local min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or fields.DEFAULT_MIRED_MIN
-  local max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or fields.DEFAULT_MIRED_MAX
+  local min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MIN, endpoint_id) or fields.MIRED.DEFAULT_MIN
+  local max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP.BOUND_RECEIVED_MIRED..fields.COLOR_TEMP.MAX, endpoint_id) or fields.MIRED.DEFAULT_MAX
   local step_size_in_mireds = st_utils.round((max_mireds - min_mireds) * (math.abs(step_percent_change)/100.0))
-  local transition_time = device:get_field(fields.TRANSITION_TIME.COLOR_TEMP_STEP) or fields.TRANSITION_TIME_FAST
-  device:send(clusters.ColorControl.server.commands.StepColorTemperature(device, endpoint_id, step_mode, step_size_in_mireds, transition_time, min_mireds, max_mireds, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF))
+  local transition_time = device:get_field(fields.COLOR_TEMP.STEP_TRANSITION_TIME) or fields.COMMAND_OPTS.DEFAULT_STEP_TRANSITION_TIME
+  device:send(clusters.ColorControl.server.commands.StepColorTemperature(device, endpoint_id, step_mode, step_size_in_mireds, transition_time, min_mireds, max_mireds, fields.COMMAND_OPTS.OPTIONS_MASK, fields.COMMAND_OPTS.IGNORE_COMMAND_IF_OFF))
 end
 
 

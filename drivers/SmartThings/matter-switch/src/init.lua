@@ -101,7 +101,6 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
       device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist = true})
     end
-    switch_utils.set_transition_times_for_stateless_capabilities(device)
     switch_utils.handle_electrical_sensor_info(device)
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
@@ -127,8 +126,8 @@ local matter_driver_template = {
         [clusters.ColorControl.attributes.ColorCapabilities.ID] = attribute_handlers.color_capabilities_handler,
         [clusters.ColorControl.attributes.ColorMode.ID] = attribute_handlers.color_mode_handler,
         [clusters.ColorControl.attributes.ColorTemperatureMireds.ID] = attribute_handlers.color_temperature_mireds_handler,
-        [clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = attribute_handlers.color_temp_physical_mireds_bounds_factory(fields.COLOR_TEMP_MIN), -- max mireds = min kelvin
-        [clusters.ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = attribute_handlers.color_temp_physical_mireds_bounds_factory(fields.COLOR_TEMP_MAX), -- min mireds = max kelvin
+        [clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds.ID] = attribute_handlers.color_temp_physical_mireds_bounds_factory(fields.COLOR_TEMP.MIN), -- max mireds = min kelvin
+        [clusters.ColorControl.attributes.ColorTempPhysicalMinMireds.ID] = attribute_handlers.color_temp_physical_mireds_bounds_factory(fields.COLOR_TEMP.MAX), -- min mireds = max kelvin
         [clusters.ColorControl.attributes.CurrentHue.ID] = attribute_handlers.current_hue_handler,
         [clusters.ColorControl.attributes.CurrentSaturation.ID] = attribute_handlers.current_saturation_handler,
         [clusters.ColorControl.attributes.CurrentX.ID] = attribute_handlers.current_x_handler,
@@ -154,8 +153,8 @@ local matter_driver_template = {
       },
       [clusters.LevelControl.ID] = {
         [clusters.LevelControl.attributes.CurrentLevel.ID] = attribute_handlers.level_control_current_level_handler,
-        [clusters.LevelControl.attributes.MaxLevel.ID] = attribute_handlers.level_bounds_handler_factory(fields.LEVEL_MAX),
-        [clusters.LevelControl.attributes.MinLevel.ID] = attribute_handlers.level_bounds_handler_factory(fields.LEVEL_MIN),
+        [clusters.LevelControl.attributes.MaxLevel.ID] = attribute_handlers.level_bounds_handler_factory(fields.LEVEL.MAX),
+        [clusters.LevelControl.attributes.MinLevel.ID] = attribute_handlers.level_bounds_handler_factory(fields.LEVEL.MIN),
       },
       [clusters.OccupancySensing.ID] = {
         [clusters.OccupancySensing.attributes.Occupancy.ID] = attribute_handlers.occupancy_handler,
@@ -178,9 +177,9 @@ local matter_driver_template = {
         [clusters.Switch.attributes.MultiPressMax.ID] = attribute_handlers.multi_press_max_handler
       },
       [clusters.TemperatureMeasurement.ID] = {
-        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MAX),
+        [clusters.TemperatureMeasurement.attributes.MaxMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMPERATURE_MEASUREMENT.MAX),
         [clusters.TemperatureMeasurement.attributes.MeasuredValue.ID] = attribute_handlers.temperature_measured_value_handler,
-        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMP_MIN),
+        [clusters.TemperatureMeasurement.attributes.MinMeasuredValue.ID] = attribute_handlers.temperature_measured_value_bounds_factory(fields.TEMPERATURE_MEASUREMENT.MIN),
       },
       [clusters.ValveConfigurationAndControl.ID] = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = attribute_handlers.valve_configuration_current_level_handler,

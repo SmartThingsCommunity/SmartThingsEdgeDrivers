@@ -169,15 +169,15 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
       if switch_utils.tbl_contains(msm_eps, ep) then
         supportedButtonValues_event = nil -- deferred to the max press handler
         device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
-        switch_utils.set_field_for_endpoint(device, fields.SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
+        switch_utils.set_field_for_endpoint(device, fields.BUTTON.SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
       elseif switch_utils.tbl_contains(msl_eps, ep) then
         supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
       elseif switch_utils.tbl_contains(msr_eps, ep) then
         supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})
-        switch_utils.set_field_for_endpoint(device, fields.EMULATE_HELD, ep, true, {persist = true})
+        switch_utils.set_field_for_endpoint(device, fields.BUTTON.EMULATE_HELD, ep, true, {persist = true})
       else -- this switch endpoint only supports momentary switch, no release events
         supportedButtonValues_event = capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})
-        switch_utils.set_field_for_endpoint(device, fields.INITIAL_PRESS_ONLY, ep, true, {persist = true})
+        switch_utils.set_field_for_endpoint(device, fields.BUTTON.INITIAL_PRESS_ONLY, ep, true, {persist = true})
       end
 
       if supportedButtonValues_event then
