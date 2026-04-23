@@ -13,18 +13,6 @@ local DEFAULT_MIRED_MIN_BOUND = 154 -- 6500 Kelvin (Mireds are the inverse of Ke
 -- Transition Time: The time that shall be taken to perform the step change, in units of 1/10ths of a second.
 local DEFAULT_STATELESS_TRANSITION_TIME = 3 -- 0.3 seconds
 
--- Fields to store the transition times for the stateless capabilities,
--- in case we want to make the native handler implementations configurable in the future
-local TRANSITION_TIME = {
-    SWITCH_LEVEL_STEP = "__switch_level_step_transition_time",
-    COLOR_TEMP_STEP = "__color_temp_step_transition_time",
-}
-
-local function set_transition_time(device, field)
-  device:set_field(field, DEFAULT_STATELESS_TRANSITION_TIME)
-  return DEFAULT_STATELESS_TRANSITION_TIME
-end
-
 -- Options Mask & Override: Indicates which options are being overridden by the Level/ColorControl cluster commands
 local OPTIONS_MASK = 0x01 -- default: The `ExecuteIfOff` option is overriden
 local IGNORE_COMMAND_IF_OFF = 0x00 -- default: the command will not be executed if the device is off
@@ -32,8 +20,7 @@ local IGNORE_COMMAND_IF_OFF = 0x00 -- default: the command will not be executed 
 local function step_color_temperature_by_percent_handler(driver, device, cmd)
   local step_percent_change = cmd.args and cmd.args.stepSize or 0
   if step_percent_change == 0 then return end
-  set_transition_time(device, TRANSITION_TIME.COLOR_TEMP_STEP)
-  local transition_time = DEFAULT_STATELESS_TRANSITION_TIME
+  local transition_time = device:get_field(switch_utils.COLOR_TEMP_STEP_TRANSITION_TIME) or DEFAULT_STATELESS_TRANSITION_TIME
   -- Reminder, stepSize > 0 == Kelvin UP == Mireds DOWN. stepSize < 0 == Kelvin DOWN == Mireds UP
   local step_mode = (step_percent_change > 0) and clusters.ColorControl.types.CcStepMode.DOWN or clusters.ColorControl.types.CcStepMode.UP
   local min_mireds = device:get_field(switch_utils.MIRED_MIN_BOUND)
@@ -50,9 +37,7 @@ end
 local function step_level_handler(driver, device, cmd)
   local step_size = st_utils.round((cmd.args and cmd.args.stepSize or 0)/100.0 * 254)
   if step_size == 0 then return end
-  -- set the transition time as a field so that it can be altered in the native handler implementation as needed
-  set_transition_time(device, TRANSITION_TIME.SWITCH_LEVEL_STEP)
-  local transition_time = DEFAULT_STATELESS_TRANSITION_TIME
+  local transition_time = device:get_field(switch_utils.SWITCH_LEVEL_STEP_TRANSITION_TIME) or DEFAULT_STATELESS_TRANSITION_TIME
   local step_mode = (step_size > 0) and clusters.Level.types.MoveStepMode.UP or clusters.Level.types.MoveStepMode.DOWN
   device:send(clusters.Level.server.commands.Step(device, step_mode, math.abs(step_size), transition_time, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF))
 end
