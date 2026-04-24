@@ -18,7 +18,6 @@ local switch_utils = require "switch_utils.utils"
 local attribute_handlers = require "switch_handlers.attribute_handlers"
 local event_handlers = require "switch_handlers.event_handlers"
 local capability_handlers = require "switch_handlers.capability_handlers"
-local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -50,10 +49,12 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
   elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    local valve_ep_ids = embedded_cluster_utils.get_endpoints(device:get_parent_device(), clusters.ValveConfigurationAndControl.ID)
-    if #valve_ep_ids > 0 then
-      local default_endpoint_id = switch_utils.find_default_endpoint(device:get_parent_device())
-      child_cfg.create_or_update_child_devices(driver, device:get_parent_device(), valve_ep_ids, default_endpoint_id, valve_cfg.assign_profile_for_valve_ep)
+    local parent_device = device:get_parent_device()
+    local irrigation_system_ep_ids = switch_utils.get_endpoints_by_device_type(parent_device, fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM)
+    if #irrigation_system_ep_ids > 0 then
+      local valve_ep_ids = switch_utils.get_endpoints_by_device_type(parent_device, fields.DEVICE_TYPE_ID.WATER_VALVE)
+      local default_endpoint_id = switch_utils.find_default_endpoint(parent_device)
+      child_cfg.create_or_update_child_devices(driver, parent_device, valve_ep_ids, default_endpoint_id, valve_cfg.assign_profile_for_irrigation_system_ep)
     end
     -- because get_parent_device() may cause race conditions if used in init, an initial child subscribe is handled in doConfigure.
     -- all future calls to subscribe will be handled by the parent device in init
