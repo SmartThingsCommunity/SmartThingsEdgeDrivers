@@ -6,6 +6,7 @@ local clusters = require "st.matter.clusters"
 local version = require "version"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
+local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -190,19 +191,6 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
   end
 end
 
-function ValveDeviceConfiguration.assign_profile_for_valve_ep(device, valve_ep_id, is_child_device)
-  local supports_level = switch_utils.find_cluster_on_ep(
-    switch_utils.get_endpoint_info(device, valve_ep_id),
-    clusters.ValveConfigurationAndControl.ID,
-    {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}
-  )
-
-  if supports_level then
-    return "water-valve-level"
-  end
-  return "water-valve"
-end
-
 function ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_id, is_child_device)
   local main_component_capabilities = {}
 
@@ -279,12 +267,13 @@ function DeviceConfiguration.match_profile(driver, device)
   local valve_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
   if #irrigation_system_ep_ids > 0 then
     updated_profile, optional_component_capabilities = ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_ids[1], false)
-    if #valve_ep_ids > 0 then
-      ChildConfiguration.create_or_update_child_devices(driver, device, valve_ep_ids, default_endpoint_id, ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep)
-    end
+    ChildConfiguration.create_or_update_child_devices(driver, device, valve_ep_ids, default_endpoint_id, ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep)
   elseif #valve_ep_ids > 0 then
-    updated_profile = ValveDeviceConfiguration.assign_profile_for_valve_ep(device, default_endpoint_id, false)
-    ChildConfiguration.create_or_update_child_devices(driver, device, valve_ep_ids, default_endpoint_id, ValveDeviceConfiguration.assign_profile_for_valve_ep)
+    updated_profile = "water-valve"
+    if #embedded_cluster_utils.get_endpoints(device, clusters.ValveConfigurationAndControl.ID,
+      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}) > 0 then
+      updated_profile = updated_profile .. "-level"
+    end
   end
 
   if #switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN) > 0 then
