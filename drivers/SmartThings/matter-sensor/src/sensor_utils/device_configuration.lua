@@ -107,7 +107,7 @@ function DeviceConfiguration.match_profile(driver, device, battery_supported)
       if #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.ACTIVE_INFRARED}) > 0 or
         #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RADAR}) > 0 or
         #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.RF_SENSING}) > 0 or
-        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.VISION}) then
+        #device:get_endpoints(clusters.OccupancySensing.ID, {feature_bitmap = clusters.OccupancySensing.types.Feature.VISION}) > 0 then
         occupancy_support = "-presence"
       end
     end
