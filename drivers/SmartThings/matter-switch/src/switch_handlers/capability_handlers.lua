@@ -226,14 +226,14 @@ end
 -- [[ OPERATIONAL STATE CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_operational_state_resume(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = device:get_endpoints(clusters.OperationalState.ID)[1]
   device:send(clusters.OperationalState.server.commands.Resume(device, endpoint_id))
   device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
   device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
 end
 
 function CapabilityHandlers.handle_operational_state_pause(driver, device, cmd)
-  local endpoint_id = device:component_to_endpoint(cmd.component)
+  local endpoint_id = device:get_endpoints(clusters.OperationalState.ID)[1]
   device:send(clusters.OperationalState.server.commands.Pause(device, endpoint_id))
   device:send(clusters.OperationalState.attributes.OperationalState:read(device, endpoint_id))
   device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))

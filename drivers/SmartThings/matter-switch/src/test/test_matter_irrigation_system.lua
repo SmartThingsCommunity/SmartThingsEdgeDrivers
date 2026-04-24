@@ -410,5 +410,55 @@ test.register_coroutine_test(
   end
 )
 
+test.register_coroutine_test(
+  "OperationalState resume command should send Resume and re-read state/error to irrigation system EP",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_irrigation_system.id,
+      { capability = "operationalState", component = "main", command = "resume", args = { } }
+    })
+    test.socket.matter:__expect_send({
+      mock_irrigation_system.id,
+      clusters.OperationalState.server.commands.Resume(mock_irrigation_system, endpoints.IRRIGATION_SYSTEM_EP)
+    })
+    test.socket.matter:__expect_send({
+      mock_irrigation_system.id,
+      clusters.OperationalState.attributes.OperationalState:read(mock_irrigation_system, endpoints.IRRIGATION_SYSTEM_EP)
+    })
+    test.socket.matter:__expect_send({
+      mock_irrigation_system.id,
+      clusters.OperationalState.attributes.OperationalError:read(mock_irrigation_system, endpoints.IRRIGATION_SYSTEM_EP)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "OperationalState pause command should send Pause and re-read state/error to irrigation system EP",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    test.socket.capability:__queue_receive({
+      mock_irrigation_system.id,
+      { capability = "operationalState", component = "main", command = "pause", args = { } }
+    })
+    test.socket.matter:__expect_send({
+      mock_irrigation_system.id,
+      clusters.OperationalState.server.commands.Pause(mock_irrigation_system, endpoints.IRRIGATION_SYSTEM_EP)
+    })
+    test.socket.matter:__expect_send({
+      mock_irrigation_system.id,
+      clusters.OperationalState.attributes.OperationalState:read(mock_irrigation_system, endpoints.IRRIGATION_SYSTEM_EP)
+    })
+    test.socket.matter:__expect_send({
+      mock_irrigation_system.id,
+      clusters.OperationalState.attributes.OperationalError:read(mock_irrigation_system, endpoints.IRRIGATION_SYSTEM_EP)
+    })
+  end
+)
+
 test.run_registered_tests()
 
