@@ -193,20 +193,18 @@ end
 
 function ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep(device, irrigation_system_ep_id, is_child_device)
   local main_component_capabilities = {}
+  local profile_name = "irrigation-system"
 
   local valve_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
-  if #valve_ep_ids > 0 then
-    local supports_level = switch_utils.find_cluster_on_ep(
-      switch_utils.get_endpoint_info(device, valve_ep_ids[1]),
-      clusters.ValveConfigurationAndControl.ID,
-      {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}
-    )
-    if supports_level then
-      table.insert(main_component_capabilities, capabilities.level.ID)
-    end
+  table.sort(valve_ep_ids)
+  local supports_level = switch_utils.find_cluster_on_ep(
+    switch_utils.get_endpoint_info(device, is_child_device and irrigation_system_ep_id or valve_ep_ids[1]),
+    clusters.ValveConfigurationAndControl.ID,
+    {feature_bitmap = clusters.ValveConfigurationAndControl.types.Feature.LEVEL}
+  )
+  if supports_level then
+    table.insert(main_component_capabilities, capabilities.level.ID)
   end
-
-  local profile_name = "irrigation-system"
 
   if is_child_device then
     return profile_name, {{"main", main_component_capabilities}}
