@@ -483,7 +483,7 @@ local function handle_emergency_command(driver, device, zb_rx)
   end)
 end
 local function handle_arm(device, status)
-  local duration = get_exit_delay_duration(device)
+  local duration
   if is_exit_delay_active(device) then
     return
   end
