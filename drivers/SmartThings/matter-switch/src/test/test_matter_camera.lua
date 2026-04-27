@@ -2,7 +2,9 @@
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
+local cluster_base = require "st.matter.cluster_base"
 local clusters = require "st.matter.clusters"
+local camera_fields = require "sub_drivers.camera.camera_utils.fields"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local uint32 = require "st.matter.data_types.Uint32"
@@ -46,7 +48,8 @@ local mock_device = test.mock_device.build_test_matter_device({
         },
         {
           cluster_id = clusters.CameraAvSettingsUserLevelManagement.ID,
-          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
+          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.DIGITALPTZ |
+            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM |
             clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
@@ -65,10 +68,6 @@ local mock_device = test.mock_device.build_test_matter_device({
         {
           cluster_id = clusters.WebRTCTransportProvider.ID,
           cluster_type = "SERVER"
-        },
-        {
-          cluster_id = clusters.WebRTCTransportRequestor.ID,
-          cluster_type = "CLIENT"
         },
         {
           cluster_id = clusters.OccupancySensing.ID,
@@ -157,6 +156,9 @@ local function test_init()
     parent_assigned_child_key = string.format("%d", FLOODLIGHT_EP)
   })
   subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.CameraAVSMFeatureMapAttr.cluster, camera_fields.CameraAVSMFeatureMapAttr.ID))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.CameraAVSULMFeatureMapAttr.cluster, camera_fields.CameraAVSULMFeatureMapAttr.ID))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.ZoneManagementFeatureMapAttr.cluster, camera_fields.ZoneManagementFeatureMapAttr.ID))
   for i, attr in ipairs(subscribed_attributes) do
     if i > 1 then subscribe_request:merge(attr:subscribe(mock_device)) end
   end
@@ -205,6 +207,7 @@ local additional_subscribed_attributes = {
   clusters.CameraAvSettingsUserLevelManagement.attributes.PanMin,
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams,
   clusters.Chime.attributes.InstalledChimeSounds,
   clusters.Chime.attributes.SelectedChime,
   clusters.ZoneManagement.attributes.MaxZones,
@@ -349,6 +352,206 @@ end
 -- Matter Handler UTs
 
 test.register_coroutine_test(
+  "Software version change should trigger camera reprofiling when camera endpoint is present",
+  function()
+    test.socket.device_lifecycle:__queue_receive(
+      mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })
+    )
+
+    mock_device:expect_metadata_update({
+      optional_component_capabilities = {
+        {
+          "main",
+          {
+            "videoCapture2",
+            "cameraViewportSettings",
+            "videoStreamSettings",
+            "localMediaStorage",
+            "audioRecording",
+            "cameraPrivacyMode",
+            "imageControl",
+            "hdr",
+            "nightVision",
+            "mechanicalPanTiltZoom",
+            "zoneManagement",
+            "webrtc",
+            "motionSensor",
+            "sounds"
+          }
+        },
+        {
+          "speaker",
+          {
+            "audioMute",
+            "audioVolume"
+          }
+        },
+        {
+          "microphone",
+          {
+            "audioMute",
+            "audioVolume"
+          }
+        },
+        {
+          "doorbell",
+          {
+            "button"
+          }
+        }
+      },
+      profile = "camera"
+    })
+
+    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Software version change should initialize camera capabilities when profile is unchanged",
+  function()
+    local camera_handler = require "sub_drivers.camera"
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+    local button_cfg = require("switch_utils.device_configuration").ButtonCfg
+
+    local match_profile_called = false
+    local init_called = false
+    local subscribe_called = false
+    local configure_buttons_called = false
+
+    local fake_device = {
+      matter_version = { hardware = 1, software = 3 },
+      profile = { id = "camera" },
+      endpoints = {
+        {
+          endpoint_id = CAMERA_EP,
+          device_types = {
+            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+          }
+        },
+        {
+          endpoint_id = DOORBELL_EP,
+          device_types = {
+            {device_type_id = 0x0143, device_type_revision = 1} -- Doorbell
+          }
+        }
+      },
+      subscribe = function() subscribe_called = true end,
+      supports_capability = function() return false end,
+      get_endpoints = function() return { DOORBELL_EP } end,
+    }
+
+    local original_match_profile = camera_cfg.match_profile
+    local original_init = camera_cfg.initialize_camera_capabilities
+    local original_configure_buttons = button_cfg.configure_buttons
+
+    camera_cfg.match_profile = function()
+      match_profile_called = true
+      return false
+    end
+    camera_cfg.initialize_camera_capabilities = function() init_called = true end
+    button_cfg.configure_buttons = function() configure_buttons_called = true end
+
+    camera_handler.lifecycle_handlers.infoChanged(nil, fake_device, nil, {
+      old_st_store = {
+        matter_version = { hardware = 1, software = 1 },
+        profile = fake_device.profile,
+      }
+    })
+
+    camera_cfg.match_profile = original_match_profile
+    camera_cfg.initialize_camera_capabilities = original_init
+    button_cfg.configure_buttons = original_configure_buttons
+
+    assert(match_profile_called, "match_profile should be called on software version change")
+    assert(not init_called, "initialize_camera_capabilities should not be called when capability state is unchanged")
+    assert(not subscribe_called, "subscribe should not be called when capability state is unchanged")
+    assert(not configure_buttons_called, "configure_buttons should not be called when capability state is unchanged")
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Camera FeatureMap change should reinitialize capabilities when profile is unchanged",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local reconcile_called = false
+    local original_reconcile = camera_cfg.reconcile_profile_and_capabilities
+
+    camera_cfg.reconcile_profile_and_capabilities = function(_)
+      reconcile_called = true
+      return false
+    end
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      cluster_base.build_test_report_data(mock_device, CAMERA_EP, camera_fields.CameraAVSMFeatureMapAttr.cluster, camera_fields.CameraAVSMFeatureMapAttr.ID, uint32(0))
+    })
+    test.wait_for_events()
+
+    camera_cfg.reconcile_profile_and_capabilities = original_reconcile
+    assert(reconcile_called, "reconcile_profile_and_capabilities should be called")
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Camera privacy mode state compare should ignore table metatable differences",
+  function()
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+
+    local init_event_count = 0
+    local original_match_profile = camera_cfg.match_profile
+
+    camera_cfg.match_profile = function()
+      return false
+    end
+
+    local fake_device = {
+      supports_capability = function(_, capability)
+        return capability == capabilities.cameraPrivacyMode
+      end,
+      get_latest_state = function(_, _, _, attribute_name)
+        if attribute_name == capabilities.cameraPrivacyMode.supportedAttributes.NAME then
+          return { "softRecordingPrivacyMode", "softLivestreamPrivacyMode" }
+        elseif attribute_name == capabilities.cameraPrivacyMode.supportedCommands.NAME then
+          local commands = { "setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode" }
+          setmetatable(commands, {
+            __index = function()
+              return nil
+            end
+          })
+          return commands
+        end
+        return nil
+      end,
+      get_endpoints = function()
+        return { CAMERA_EP }
+      end,
+      emit_event_for_endpoint = function()
+        init_event_count = init_event_count + 1
+      end
+    }
+
+    camera_cfg.reconcile_profile_and_capabilities(fake_device)
+    camera_cfg.match_profile = original_match_profile
+
+    assert(init_event_count == 0, "cameraPrivacyMode should not be reinitialized for equal values with metatable differences")
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
   "Reports mapping to EnabledState capability data type should generate appropriate events",
   function()
     update_device_profile()
@@ -392,7 +595,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", v.capability("disabled"))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -432,7 +638,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", v.capability("auto"))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -458,7 +667,10 @@ test.register_coroutine_test(
         first_value = false
       end
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -499,7 +711,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.webrtc.talkback(false))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -527,7 +742,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message(v.component, capabilities.audioMute.mute("unmuted"))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -574,7 +792,10 @@ test.register_coroutine_test(
         mock_device:generate_test_message(v.component, capabilities.audioVolume.volume(32))
       )
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -596,7 +817,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("statusLed", capabilities.switch.switch.off())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -646,7 +870,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("statusLed", capabilities.mode.mode("auto"))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 local function receive_rate_distortion_trade_off_points()
@@ -767,7 +994,10 @@ test.register_coroutine_test(
     receive_video_sensor_params()
     emit_video_sensor_parameters()
     emit_supported_resolutions()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -782,7 +1012,10 @@ test.register_coroutine_test(
     emit_video_sensor_parameters()
     receive_max_encoded_pixel_rate()
     emit_supported_resolutions()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -797,7 +1030,10 @@ test.register_coroutine_test(
     emit_video_sensor_parameters()
     receive_rate_distortion_trade_off_points()
     emit_supported_resolutions()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -849,7 +1085,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.zoom(30))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -870,7 +1109,10 @@ test.register_coroutine_test(
         { id = 2, label = "Preset 2", pan = -55, tilt = 80, zoom = 60}
       }))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -885,7 +1127,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.maxPresets(10))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -900,7 +1145,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.zoneManagement.maxZones(10))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -945,7 +1193,10 @@ test.register_coroutine_test(
         }
       }))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -980,7 +1231,10 @@ test.register_coroutine_test(
         }
       }))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1003,7 +1257,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.zoneManagement.sensitivity(5, {visibility = {displayed = false}}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1029,7 +1286,10 @@ test.register_coroutine_test(
       clusters.Chime.attributes.SelectedChime:build_test_report_data(mock_device, CAMERA_EP, 2)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.sounds.selectedSound(2)))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Event Handler UTs
@@ -1069,7 +1329,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.zoneManagement.triggeredZones({{zoneId = 3}}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1092,7 +1355,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("doorbell", capabilities.button.button.double({state_change = true}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Capability Handler UTs
@@ -1129,7 +1395,10 @@ test.register_coroutine_test(
         mock_device.id, attr:write(mock_device, CAMERA_EP, clusters.CameraAvStreamManagement.types.TriStateAutoEnum.AUTO)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1162,7 +1431,10 @@ test.register_coroutine_test(
         mock_device.id, v.attr:write(mock_device, CAMERA_EP, false)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1184,7 +1456,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvStreamManagement.attributes.ImageRotation:write(mock_device, CAMERA_EP, 257)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1248,7 +1523,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvStreamManagement.attributes.MicrophoneMuted:write(mock_device, CAMERA_EP, false)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1353,7 +1631,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("microphone", capabilities.audioVolume.volume(99))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1376,7 +1657,10 @@ test.register_coroutine_test(
         mock_device.id, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(mock_device, CAMERA_EP, v)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1398,7 +1682,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled:write(mock_device, CAMERA_EP, false)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1427,7 +1714,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZRelativeMove(mock_device, CAMERA_EP, 0, 0, 80)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1505,7 +1795,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.zoom(5))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1534,7 +1827,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.MPTZMoveToPreset(mock_device, CAMERA_EP, 2)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1556,7 +1852,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.Chime.server.commands.PlayChimeSound(mock_device, CAMERA_EP)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1627,7 +1926,10 @@ test.register_coroutine_test(
         mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, i)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1697,7 +1999,10 @@ test.register_coroutine_test(
         mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, i)
       })
     end
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1770,7 +2075,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.ZoneManagement.server.commands.RemoveTrigger(mock_device, CAMERA_EP, 1)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1859,39 +2167,124 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.zoneManagement.zones({value = {}}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
-  "Stream management commands should send the appropriate commands",
+  "setStream with label and viewport changes should emit capability event",
   function()
     update_device_profile()
     test.wait_for_events()
-    test.socket.capability:__queue_receive({
+    -- Set up an existing stream
+    test.socket.matter:__queue_receive({
       mock_device.id,
-      { capability = "videoStreamSettings", component = "main", command = "setStream", args = {
-        3,
-        "liveStream",
-        "Stream 3",
-        { width = 1920, height = 1080, fps = 30 },
-        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1920, y = 1080} },
-        "enabled",
-        "disabled"
-      }}
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamModify(mock_device, CAMERA_EP,
-        3, true, false
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 3,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
       )
     })
-  end
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 1920,
+              height = 1080,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1920, y = 1080 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change label and viewport only
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        3,
+        "liveStream",  -- type
+        "My Stream",  -- label
+        { width = 1920, height = 1080, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 100, y = 100}, lowerRightVertex = {x = 1820, y = 980} },  -- viewport
+        "disabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    -- Should send DPTZSetViewport command
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.DPTZSetViewport(mock_device, CAMERA_EP,
+        3,
+        clusters.Global.types.ViewportStruct({
+          x1 = 100,
+          x2 = 1820,
+          y1 = 100,
+          y2 = 980
+        })
+      )
+    })
+    -- Should emit updated capability directly, no stream reallocation
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "My Stream",
+            type = "liveStream",
+            resolution = {
+              width = 1920,
+              height = 1080,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 100, y = 100 },
+              lowerRightVertex = { x = 1820, y = 980 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
-  "Stream management setStream command should modify an existing stream",
+  "setStream with only watermark/OSD changes should use VideoStreamModify",
   function()
     update_device_profile()
     test.wait_for_events()
+    -- Set up an existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
@@ -1926,22 +2319,29 @@ test.register_coroutine_test(
               height = 360,
               fps = 30
             },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 640, y = 360 }
+            },
             watermark = "enabled",
             onScreenDisplay = "disabled"
           }
         }
       }))
     )
+    test.wait_for_events()
+    -- Change watermark and OSD only
     test.socket.capability:__queue_receive({
       mock_device.id,
-      { capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
         1,
-        "liveStream",
-        "Stream 1",
-        { width = 640, height = 360, fps = 30 },
-        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 640, y = 360} },
-        "disabled",
-        "enabled"
+        "liveStream",  -- type
+        "Stream 1",  -- label
+        { width = 640, height = 360, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 640, y = 360} },  -- viewport
+        "disabled",  -- watermark
+        "enabled"  -- onScreenDisplay
       }}
     })
     test.socket.matter:__expect_send({
@@ -1949,6 +2349,594 @@ test.register_coroutine_test(
         1, false, true
       )
     })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "setStream with only label change should emit capability event",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 2,
+            stream_usage = clusters.Global.types.StreamUsageEnum.RECORDING,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 15,
+            max_frame_rate = 30,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 2,
+          data = {
+            label = "Stream 1",
+            type = "clipRecording",
+            resolution = {
+              width = 1280,
+              height = 720,
+              fps = 15
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change label only
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        2,
+        "clipRecording",  -- type
+        "Recording Stream",  -- label
+        { width = 1280, height = 720, fps = 15 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1280, y = 720} },  -- viewport
+        "disabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    -- Should emit updated capability directly, no stream reallocation
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 2,
+          data = {
+            label = "Recording Stream",
+            type = "clipRecording",
+            resolution = {
+              width = 1280,
+              height = 720,
+              fps = 15
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "setStream with only viewport change should send DPTZSetViewport command",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 5,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 3840, height = 2160}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 3840, height = 2160}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = true,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 5,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 3840,
+              height = 2160,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 3840, y = 2160 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "enabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change only viewport
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        5,
+        "liveStream",  -- type
+        "Stream 1",  -- label
+        { width = 3840, height = 2160, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 500, y = 500}, lowerRightVertex = {x = 3340, y = 1660} },  -- viewport
+        "disabled",  -- watermark
+        "enabled"  -- onScreenDisplay
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvSettingsUserLevelManagement.server.commands.DPTZSetViewport(mock_device, CAMERA_EP,
+        5,
+        clusters.Global.types.ViewportStruct({
+          x1 = 500,
+          x2 = 3340,
+          y1 = 500,
+          y2 = 1660
+        })
+      )
+    })
+    -- Should emit updated capability directly, no stream reallocation
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 5,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 3840,
+              height = 2160,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 500, y = 500 },
+              lowerRightVertex = { x = 3340, y = 1660 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "enabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "setStream with resolution change should trigger reallocation",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 1,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = true,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = {
+              width = 1280,
+              height = 720,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            },
+            watermark = "enabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change resolution and reallocate stream
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        1,
+        "liveStream",  -- type
+        "HD Stream",  -- label
+        { width = 1920, height = 1080, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 1280, y = 720} },  -- viewport
+        "enabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "HD Stream",
+            type = "liveStream",
+            resolution = {
+              width = 1280,
+              height = 720,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1280, y = 720 }
+            },
+            watermark = "enabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamDeallocate(mock_device, CAMERA_EP, 1)
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.CameraAvStreamManagement.server.commands.VideoStreamAllocate(mock_device, CAMERA_EP,
+        clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+        clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+        30,
+        60,
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+        10000,
+        2000000,
+        4000,
+        true,
+        false
+      )
+    })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 1,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "HD Stream",
+            type = "liveStream",
+            resolution = {
+              width = 1920,
+              height = 1080,
+              fps = 30
+            },
+            viewport = {
+              upperLeftVertex = { x = 0, y = 0 },
+              lowerRightVertex = { x = 1920, y = 1080 }
+            },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Stream label should persist across attribute reports",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up existing stream
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 3,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = { width = 640, height = 480, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 640, y = 480 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Change label
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      {
+        capability = "videoStreamSettings", component = "main", command = "setStream", args = {
+        3,
+        "liveStream",  -- type
+        "My Camera",  -- label
+        { width = 640, height = 480, fps = 30 },  -- resolution
+        { upperLeftVertex = {x = 0, y = 0}, lowerRightVertex = {x = 640, y = 480} },  -- viewport
+        "disabled",  -- watermark
+        "disabled"  -- onScreenDisplay
+      }}
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "My Camera",
+            type = "liveStream",
+            resolution = { width = 640, height = 480, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 640, y = 480 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.wait_for_events()
+    -- Simulate another AllocatedVideoStreams report
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 3,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 640, height = 480}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    -- Should preserve the custom label from capability state
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 3,
+          data = {
+            label = "My Camera",
+            type = "liveStream",
+            resolution = { width = 640, height = 480, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 640, y = 480 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "DPTZStreams attribute should update viewports in capability",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+    -- Set up multiple existing streams
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 1,
+            stream_usage = clusters.Global.types.StreamUsageEnum.LIVE_VIEW,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 30,
+            max_frame_rate = 60,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1920, height = 1080}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          }),
+          clusters.CameraAvStreamManagement.types.VideoStreamStruct({
+            video_stream_id = 2,
+            stream_usage = clusters.Global.types.StreamUsageEnum.RECORDING,
+            video_codec = clusters.CameraAvStreamManagement.types.VideoCodecEnum.H264,
+            min_frame_rate = 15,
+            max_frame_rate = 30,
+            min_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            max_resolution = clusters.CameraAvStreamManagement.types.VideoResolutionStruct({width = 1280, height = 720}),
+            min_bit_rate = 10000,
+            max_bit_rate = 10000,
+            key_frame_interval = 4000,
+            watermark_enabled = false,
+            osd_enabled = false,
+            reference_count = 0
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = { width = 1920, height = 1080, fps = 30 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 1920, y = 1080 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        },
+        {
+          streamId = 2,
+          data = {
+            label = "Stream 2",
+            type = "clipRecording",
+            resolution = { width = 1280, height = 720, fps = 15 },
+            viewport = { upperLeftVertex = { x = 0, y = 0 }, lowerRightVertex = { x = 1280, y = 720 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.CameraAvSettingsUserLevelManagement.types.DPTZStruct({
+            video_stream_id = 1,
+            viewport = clusters.Global.types.ViewportStruct({
+              x1 = 200,
+              x2 = 1720,
+              y1 = 100,
+              y2 = 980
+            })
+          }),
+          clusters.CameraAvSettingsUserLevelManagement.types.DPTZStruct({
+            video_stream_id = 2,
+            viewport = clusters.Global.types.ViewportStruct({
+              x1 = 50,
+              x2 = 1230,
+              y1 = 50,
+              y2 = 670
+            })
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.videoStreamSettings.videoStreams({
+        {
+          streamId = 1,
+          data = {
+            label = "Stream 1",
+            type = "liveStream",
+            resolution = { width = 1920, height = 1080, fps = 30 },
+            viewport = { upperLeftVertex = { x = 200, y = 100 }, lowerRightVertex = { x = 1720, y = 980 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        },
+        {
+          streamId = 2,
+          data = {
+            label = "Stream 2",
+            type = "clipRecording",
+            resolution = { width = 1280, height = 720, fps = 15 },
+            viewport = { upperLeftVertex = { x = 50, y = 50 }, lowerRightVertex = { x = 1230, y = 670 } },
+            watermark = "disabled",
+            onScreenDisplay = "disabled"
+          }
+        }
+      }))
+    )
   end
 )
 
@@ -1957,6 +2945,11 @@ test.register_coroutine_test(
   function()
     update_device_profile()
     test.wait_for_events()
+
+    local camera_cfg = require("sub_drivers.camera.camera_utils.device_configuration")
+    local original_reconcile = camera_cfg.reconcile_profile_and_capabilities
+    camera_cfg.reconcile_profile_and_capabilities = function(...) return false end
+
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
@@ -1964,7 +2957,13 @@ test.register_coroutine_test(
         uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
       })
     })
-  end
+    test.wait_for_events()
+
+    camera_cfg.reconcile_profile_and_capabilities = original_reconcile
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -2003,7 +3002,10 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
     test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- run the tests

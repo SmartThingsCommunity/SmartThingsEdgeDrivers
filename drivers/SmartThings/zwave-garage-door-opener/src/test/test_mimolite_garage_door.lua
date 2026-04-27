@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -67,6 +57,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -88,6 +81,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -109,6 +105,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -130,6 +129,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -151,6 +153,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.closed())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -172,6 +177,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.contactSensor.contact.open())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -203,6 +211,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.closing())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -234,6 +245,9 @@ test.register_message_test(
         direction = "send",
         message = mock_garage_door:generate_test_message("main", capabilities.doorControl.door.opening())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -261,7 +275,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -288,7 +305,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -305,7 +325,10 @@ test.register_coroutine_test(
           Association:Set({grouping_identifier = 3, node_ids = {}})
       ))
       mock_garage_door:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -326,7 +349,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 test.run_registered_tests()

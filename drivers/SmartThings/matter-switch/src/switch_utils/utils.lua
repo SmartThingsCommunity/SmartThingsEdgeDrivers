@@ -151,10 +151,6 @@ function utils.find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
-  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
-  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
-
   local get_first_non_zero_endpoint = function(endpoints)
     table.sort(endpoints)
     for _,ep in ipairs(endpoints) do
@@ -166,23 +162,24 @@ function utils.find_default_endpoint(device)
   end
 
   -- Return the first fan endpoint as the default endpoint if any is found
+  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_endpoint_ids > 0 then
     return get_first_non_zero_endpoint(fan_endpoint_ids)
   end
 
-  -- Return the first onoff endpoint as the default endpoint if no momentary switch endpoints are present
-  if #momentary_switch_ep_ids == 0 and #onoff_ep_ids > 0 then
-    return get_first_non_zero_endpoint(onoff_ep_ids)
-  end
-
-  -- Return the first momentary switch endpoint as the default endpoint if no onoff endpoints are present
-  if #onoff_ep_ids == 0 and #momentary_switch_ep_ids > 0 then
-    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+  -- Return the first water valve endpoint as the default endpoint if any is found
+  local water_valve_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
+  if #water_valve_endpoint_ids > 0 then
+    return get_first_non_zero_endpoint(water_valve_endpoint_ids)
   end
 
   -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
   -- endpoint. If it is not a supported device type, return the first momentary switch endpoint as the
-  -- default endpoint.
+  -- default endpoint. Else return the first onoff endpoint as the default endpoint.
+  --
+  -- If only one of the two types of endpoints are present, return the first endpoint of the present type.
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
+  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
     local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
     if utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
@@ -191,6 +188,10 @@ function utils.find_default_endpoint(device)
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
       return get_first_non_zero_endpoint(momentary_switch_ep_ids)
     end
+  elseif #onoff_ep_ids > 0 then
+    return get_first_non_zero_endpoint(onoff_ep_ids)
+  elseif #momentary_switch_ep_ids > 0 then
+    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
   end
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
@@ -279,7 +280,8 @@ function utils.find_cluster_on_ep(ep, cluster_id, opts)
   local clus_has_features = function(cluster, checked_feature)
     return (cluster.feature_map & checked_feature) == checked_feature
   end
-  for _, cluster in ipairs(ep.clusters) do
+  if type(ep) ~= "table" then return nil end
+  for _, cluster in ipairs(ep.clusters or {}) do
     if ((cluster.cluster_id == cluster_id)
       and (opts.feature_bitmap == nil or clus_has_features(cluster, opts.feature_bitmap))
       and ((opts.cluster_type == nil and cluster.cluster_type == "SERVER" or cluster.cluster_type == "BOTH")
@@ -323,6 +325,50 @@ function utils.create_multi_press_values_list(size, supportsHeld)
     table.insert(list, string.format("pushed_%dx", i))
   end
   return list
+end
+
+--- Deeply compare two values.
+--- Handles metatables. Can optionally ignore cycle checking and/or function differences.
+---
+--- @param a any
+--- @param b any
+--- @param opts table|nil { ignore_functions = boolean, ignore_cycles = boolean }
+--- @param seen table|nil
+--- @return boolean
+function utils.deep_equals(a, b, opts, seen)
+  if a == b then return true end -- same object
+  if type(a) ~= type(b) then return false end -- different type
+  if type(a) == "function" and opts and opts.ignore_functions then return true end
+  if type(a) ~= "table" then return false end -- same type but not table, thus was already compared
+
+  -- check for cycles in table references and preserve reference topology.
+  if not (opts and opts.ignore_cycles) then
+    seen = seen or {}
+    seen[a] = seen[a] or {}
+    if seen[a][b] then
+      return seen[a][b]
+    end
+    seen[a][b] = true
+  end
+
+  -- Compare keys/values from a
+  for k, v in pairs(a) do
+    if not utils.deep_equals(v, b[k], opts, seen) then
+      return false
+    end
+  end
+
+  -- Ensure b doesn't have extra keys
+  for k in pairs(b) do
+    if a[k] == nil then
+      return false
+    end
+  end
+
+  -- Compare metatables
+  local mt_a = getmetatable(a)
+  local mt_b = getmetatable(b)
+  return utils.deep_equals(mt_a, mt_b, opts, seen)
 end
 
 function utils.detect_bridge(device)
@@ -398,32 +444,32 @@ function utils.handle_electrical_sensor_info(device)
     return
   end
 
-  -- check the feature map for the first (or only) Electrical Sensor EP
-  local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
-  local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
-  if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a SET topology
-    local available_eps_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- SET read
-    for _, ep in ipairs(electrical_sensor_eps) do
-      available_eps_req:merge(clusters.PowerTopology.attributes.AvailableEndpoints:read(device, ep.endpoint_id))
+  -- energy reporting must be handled by a cumulative report, a periodic report, or both attributes simultaneously.
+  -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
+  for _, ep_info in ipairs(electrical_sensor_eps) do
+    if utils.find_cluster_on_ep(ep_info, clusters.ElectricalEnergyMeasurement.ID,
+      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) then
+      device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true)
+      break
     end
-    device:send(available_eps_req)
-    return
-  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
-    device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps) -- assume any other stored EPs also have a TREE topology
-    local parts_list_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {}) -- TREE read
-    for _, ep in ipairs(electrical_sensor_eps) do
-      parts_list_req:merge(clusters.Descriptor.attributes.PartsList:read(device, ep.endpoint_id))
+  end
+
+  -- check the feature map for the first (or only) Electrical Sensor EP if the device profiling has not been completed
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+    local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
+    local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
+    if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) or
+      clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_feature_map) then
+      -- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
+      -- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
+      device:set_field(fields.ELECTRICAL_SENSOR_EPS, electrical_sensor_eps)
+    elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
+      -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
+      device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
+      if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
+        device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
+      end
     end
-    device:send(parts_list_req)
-    return
-  elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
-    -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
-    if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
-      device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
-    end
-    return
   end
 end
 
@@ -508,6 +554,21 @@ function utils.subscribe(device)
   if device:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil then
     local ib = im.InteractionInfoBlock(nil, clusters.PowerSource.ID, clusters.PowerSource.attributes.AttributeList.ID)
     subscribe_request:with_info_block(ib)
+  end
+
+  -- If the power topology of the device has not yet been determined, add the AvailableEndpoints (for SET topology)
+  -- or PartsList (for TREE topology) attributes to the list of subscribed attributes in order to map the device's electrical endpoints
+  -- to the proper device card(s).
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+    local electrical_sensor_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR, { with_info = true }) or {}
+    local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
+    if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
+      local ib = im.InteractionInfoBlock(nil, clusters.PowerTopology.ID, clusters.PowerTopology.attributes.AvailableEndpoints.ID)
+      subscribe_request:with_info_block(ib)
+    elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.TREE_TOPOLOGY, endpoint_power_topology_cluster.feature_map or 0) then
+      local ib = im.InteractionInfoBlock(nil, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID)
+      subscribe_request:with_info_block(ib)
+    end
   end
 
   if #subscribe_request.info_blocks > 0 then

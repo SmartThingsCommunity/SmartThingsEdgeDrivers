@@ -98,6 +98,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -140,7 +143,10 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 2.0, unit = "kWh"}))
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -201,7 +207,10 @@ test.register_coroutine_test(
                                         ElectricalMeasurement.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1)
                                       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -226,7 +235,8 @@ test.register_coroutine_test(
     {
       test_init = function()
         -- no op to override auto device add on startup
-      end
+      end,
+      min_api_version = 17
     }
 )
 test.register_coroutine_test(
@@ -242,7 +252,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 0.1, unit = "kWh"}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -262,7 +275,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 1.5, unit = "kWh"}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 

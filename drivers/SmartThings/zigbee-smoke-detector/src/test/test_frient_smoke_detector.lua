@@ -81,7 +81,10 @@ test.register_coroutine_test(
             })
 
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_coroutine_test(
@@ -200,7 +203,10 @@ test.register_coroutine_test(
             })
 
             mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_message_test(
@@ -216,6 +222,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.battery.battery(14))
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -233,6 +242,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -250,6 +262,9 @@ test.register_message_test(
                 direction = "send",
                 message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.tested())
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -268,7 +283,10 @@ test.register_coroutine_test(
             )
 
             test.wait_for_events()
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_message_test(
@@ -292,6 +310,9 @@ test.register_message_test(
                 { device_uuid = mock_device.id, capability_id = "temperatureMeasurement", capability_attr_id = "temperature" }
             }
             }
+        },
+        {
+           min_api_version = 17
         }
 )
 
@@ -369,7 +390,8 @@ test.register_message_test(
             }
         },
         {
-            inner_block_ordering = "relaxed"
+            inner_block_ordering = "relaxed",
+            min_api_version = 17
         }
 )
 
@@ -404,7 +426,10 @@ test.register_coroutine_test(
 
             test.socket.zigbee:__set_channel_ordering("relaxed")
 
-        end
+        end,
+        {
+           min_api_version = 17
+        }
 )
 
 test.register_coroutine_test(
@@ -437,7 +462,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -471,7 +499,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -504,7 +535,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -538,7 +572,10 @@ test.register_coroutine_test(
         })
 
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -612,7 +649,10 @@ test.register_coroutine_test(
                   string.format("Version mismatch! Expected '%s' but got '%s'",
                   expected_hex, stored_version or "nil"))
         end
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 local function build_default_response_msg(device, cluster, command, status)
@@ -651,6 +691,9 @@ test.register_message_test(
             direction = "send",
             message = mock_device:generate_test_message("main", smokeDetector.smoke.detected())
         }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -667,7 +710,10 @@ test.register_coroutine_test(
                 mock_device:generate_test_message("main", smokeDetector.smoke.clear())
         )
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -683,7 +729,10 @@ test.register_coroutine_test(
         test.mock_time.advance_time(ALARM_DEFAULT_MAX_DURATION)
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", alarm.alarm.off()))
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -696,7 +745,10 @@ test.register_coroutine_test(
         })
         test.socket.capability:__expect_send(mock_device:generate_test_message("main", alarm.alarm.off()))
         test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

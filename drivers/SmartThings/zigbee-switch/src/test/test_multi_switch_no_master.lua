@@ -103,6 +103,9 @@ test.register_message_test(
         { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -133,6 +136,9 @@ test.register_message_test(
         { device_uuid = mock_first_child.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -163,6 +169,9 @@ test.register_message_test(
         { device_uuid = mock_second_child.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -193,6 +202,9 @@ test.register_message_test(
         { device_uuid = mock_parent_device.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -223,6 +235,9 @@ test.register_message_test(
         { device_uuid = mock_first_child.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -253,6 +268,9 @@ test.register_message_test(
         { device_uuid = mock_second_child.id, capability_id = "switch", capability_attr_id = "switch" }
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -277,6 +295,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -301,6 +322,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x02) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -325,6 +349,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, OnOff.server.commands.On(mock_parent_device):to_endpoint(0x03) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -349,6 +376,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -373,6 +403,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x02) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -397,6 +430,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_parent_device.id, OnOff.server.commands.Off(mock_parent_device):to_endpoint(0x03) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -473,7 +509,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_base_device.id, OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(2) })
     test.socket.zigbee:__expect_send({ mock_base_device.id, OnOff.attributes.OnOff:read(mock_base_device):to_endpoint(3) })
     mock_base_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 local mock_non_mns_device = test.mock_device.build_test_zigbee_device(
@@ -513,7 +552,8 @@ test.register_coroutine_test(
   {
     test_init = function()
       test.mock_device.add_test_device(mock_non_mns_device)
-    end
+    end,
+    min_api_version = 17
   }
 )
 

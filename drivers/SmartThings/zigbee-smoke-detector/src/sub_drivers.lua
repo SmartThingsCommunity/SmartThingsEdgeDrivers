@@ -6,5 +6,6 @@ local sub_drivers = {
    lazy_load_if_possible("frient"),
    lazy_load_if_possible("aqara-gas"),
    lazy_load_if_possible("aqara"),
+   lazy_load_if_possible("MultiIR"),
 }
 return sub_drivers

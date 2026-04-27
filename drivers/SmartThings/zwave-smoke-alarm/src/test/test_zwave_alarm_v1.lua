@@ -52,6 +52,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -71,6 +74,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -90,6 +96,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -109,6 +118,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -151,6 +163,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
       },
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -170,6 +185,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.clear())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -189,6 +207,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.smokeDetector.smoke.detected())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 

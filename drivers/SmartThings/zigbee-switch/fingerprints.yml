@@ -1730,6 +1730,11 @@ zigbeeManufacturer:
     manufacturer: LEDVANCE
     model: RT TW
     deviceProfileName: color-temp-bulb
+  - id: "LEDVANCE/PLUG COMPACT EU EM T"
+    deviceLabel: SMART ZIGBEE COMPACT OUTDOOR PLUG EU
+    manufacturer: LEDVANCE
+    model: PLUG COMPACT EU EM T
+    deviceProfileName: switch-power-energy
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -2404,6 +2409,11 @@ zigbeeManufacturer:
     deviceLabel: Zigbee Multifunction Relay Switch
     manufacturer: NodOn
     model: SIN-4-1-20
+    deviceProfileName: basic-switch
+  - id: "NodOn/SIN-4-1-20-PRO"
+    deviceLabel: Zigbee Multifunction Relay Switch PRO
+    manufacturer: NodOn
+    model: SIN-4-1-20-PRO
     deviceProfileName: basic-switch
   - id: "NodOn/SIN-4-2-20"
     deviceLabel: Zigbee ON/OFF Lighting Relay Switch

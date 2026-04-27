@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local capabilities = require "st.capabilities"
@@ -232,6 +235,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group3",
         capabilities.button.supportedButtonValues({"pushed", "double", "held", "pushed_3x"}, {visibility = {displayed = false}}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -353,6 +359,9 @@ test.register_message_test(
         )
       },
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -474,6 +483,9 @@ test.register_message_test(
         )
       },
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -527,6 +539,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group2",
         capabilities.knob.rotateAmount(18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -580,6 +595,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group2",
         capabilities.knob.rotateAmount(-18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -633,6 +651,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group3",
         capabilities.knob.rotateAmount(18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -686,6 +707,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group3",
         capabilities.knob.rotateAmount(-18, {state_change = true}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -717,6 +741,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("main",
         capabilities.button.button.held({state_change = true}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -748,6 +775,9 @@ test.register_message_test(
       message = mock_ikea_scroll:generate_test_message("group2",
         capabilities.button.button.pushed({state_change = true}))
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 

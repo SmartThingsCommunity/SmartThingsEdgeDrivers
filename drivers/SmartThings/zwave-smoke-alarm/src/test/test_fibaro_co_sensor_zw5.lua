@@ -68,7 +68,10 @@ test.register_coroutine_test(
         Configuration:Set({parameter_number = ACOUSTIC_SIGNALS, configuration_value = EXCEEDING_THE_TEMPERATURE})
     ))
     mock_fibaro_CO_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -84,6 +87,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -109,6 +115,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -134,6 +143,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 70.7, unit = 'F' }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -158,6 +170,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -182,6 +197,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -206,6 +224,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -230,6 +251,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -253,6 +277,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.tested())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -278,6 +305,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.carbonMonoxideDetector.carbonMonoxide.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -302,6 +332,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -326,6 +359,9 @@ test.register_message_test(
       direction = "send",
       message = mock_fibaro_CO_sensor:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -355,7 +391,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -462,7 +499,10 @@ test.register_coroutine_test(
       Configuration:Report({ parameter_number = 2, configuration_value = 3 })
     })
 
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

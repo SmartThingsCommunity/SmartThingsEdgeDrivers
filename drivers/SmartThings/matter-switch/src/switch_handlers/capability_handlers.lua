@@ -50,6 +50,9 @@ end
 -- [[ STATELESS SWITCH LEVEL STEP CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_step_level(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local step_size = st_utils.round((cmd.args and cmd.args.stepSize or 0)/100.0 * 254)
   if step_size == 0 then return end
   local endpoint_id = device:component_to_endpoint(cmd.component)
@@ -123,13 +126,17 @@ end
 -- [[ STATELESS COLOR TEMPERATURE STEP CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_step_color_temperature_by_percent(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local step_percent_change = cmd.args and cmd.args.stepSize or 0
   if step_percent_change == 0 then return end
+  step_percent_change = st_utils.clamp_value(step_percent_change, -100, 100)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   -- before the Matter 1.3 lua libs update (HUB FW 55), there was no ColorControl StepModeEnum type defined
   local step_mode = step_percent_change > 0 and (clusters.ColorControl.types.StepModeEnum and clusters.ColorControl.types.StepModeEnum.DOWN or 3) or (clusters.ColorControl.types.StepModeEnum and clusters.ColorControl.types.StepModeEnum.UP or 1)
-  local min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or fields.COLOR_TEMPERATURE_MIRED_MIN -- default min mireds
-  local max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or fields.COLOR_TEMPERATURE_MIRED_MAX -- default max mireds
+  local min_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id) or fields.DEFAULT_MIRED_MIN
+  local max_mireds = switch_utils.get_field_for_endpoint(device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MAX, endpoint_id) or fields.DEFAULT_MIRED_MAX
   local step_size_in_mireds = st_utils.round((max_mireds - min_mireds) * (math.abs(step_percent_change)/100.0))
   device:send(clusters.ColorControl.server.commands.StepColorTemperature(device, endpoint_id, step_mode, step_size_in_mireds, fields.TRANSITION_TIME_FAST, min_mireds, max_mireds, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF))
 end

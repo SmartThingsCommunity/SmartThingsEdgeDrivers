@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local t_utils = require "integration_test.utils"
 local zigbee_test_utils = require "integration_test.zigbee_test_utils"
@@ -43,7 +46,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear()))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(10)))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("0")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -59,6 +65,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.battery.battery(50))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -75,6 +84,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -91,6 +103,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.switch.switch.off())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -107,6 +122,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.On(mock_device) }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -123,6 +141,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, OnOff.server.commands.Off(mock_device) }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -139,6 +160,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -155,6 +179,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -169,7 +196,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, THIRDREALITY_WATERING_CLUSTER, attr_report_data, 0x1407)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(10)))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -183,7 +213,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, THIRDREALITY_WATERING_CLUSTER, attr_report_data, 0x1407)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(30)))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -197,7 +230,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, THIRDREALITY_WATERING_CLUSTER, attr_report_data, 0x1407)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("4")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -206,7 +242,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "fanSpeed", component = "main", command = "setFanSpeed", args = { 20 } } })
     test.socket.zigbee:__expect_send({ mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device,
     THIRDREALITY_WATERING_CLUSTER, WATERING_TIME_ATTR, 0x1407, data_types.Uint16, 20) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -215,7 +254,10 @@ test.register_coroutine_test(
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "mode", component = "main", command = "setMode", args = { "2" } } })
     test.socket.zigbee:__expect_send({ mock_device.id, cluster_base.write_manufacturer_specific_attribute(mock_device,
     THIRDREALITY_WATERING_CLUSTER, WATERING_INTERVAL_ATTR, 0x1407, data_types.Uint8, 2) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -231,6 +273,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.detected())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -247,6 +292,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.hardwareFault.hardwareFault.clear())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -261,7 +309,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_report(mock_device, THIRDREALITY_WATERING_CLUSTER, attr_report_data, 0x1407)
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(0)))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

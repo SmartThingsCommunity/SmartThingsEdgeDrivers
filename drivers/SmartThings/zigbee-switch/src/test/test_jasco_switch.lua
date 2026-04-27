@@ -54,6 +54,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_device.id, OnOffCluster.server.commands.On(mock_device) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -78,6 +81,9 @@ test.register_message_test(
       direction = "send",
       message = { mock_device.id, OnOffCluster.server.commands.Off(mock_device) }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -94,6 +100,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 33.3, unit = "W" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -115,6 +124,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.5555, unit = "kWh" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -141,7 +153,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ACPowerDivisor:configure_reporting(mock_device, 1, 43200, 1) })
     test.socket.zigbee:__expect_send({ mock_device.id, ElectricalMeasurementCluster.attributes.ACPowerMultiplier:configure_reporting(mock_device, 1, 43200, 1) })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

@@ -3,6 +3,7 @@
 
 local device_lib = require "st.device"
 local clusters = require "st.zigbee.zcl.clusters"
+local configurationMap = require "configurations"
 
 local function set_up_zll_polling(driver, device)
   local INFREQUENT_POLL_COUNTER = "_infrequent_poll_counter"
@@ -33,7 +34,7 @@ end
 local ZLL_polling = {
   NAME = "ZLL Polling",
   lifecycle_handlers = {
-    init = set_up_zll_polling
+    init = configurationMap.reconfig_wrapper(set_up_zll_polling)
   },
   can_handle = require("zll-polling.can_handle"),
 }

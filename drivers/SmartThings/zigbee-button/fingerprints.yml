@@ -34,6 +34,11 @@ zigbeeManufacturer:
     manufacturer: LUMI
     model: lumi.remote.b28ac1
     deviceProfileName: aqara-double-buttons-mode
+  - id: "lumi/lumi.remote.rkba01"
+    deviceLabel: "Aqara Wireless Smart Knob H1"
+    manufacturer: LUMI
+    model: lumi.remote.rkba01
+    deviceProfileName: aqara-knob-switch
   - id: "HEIMAN/SOS-EM"
     deviceLabel: HEIMAN Button
     manufacturer: HEIMAN
@@ -262,6 +267,11 @@ zigbeeManufacturer:
     manufacturer: WALL HERO
     model: ACL-401SCA4
     deviceProfileName: thirty-buttons
+  - id: "MultIR/MIR-SO100"
+    deviceLabel: MultiIR Smart button MIR-SO100
+    manufacturer: MultIR
+    model: MIR-SO100
+    deviceProfileName: one-button-battery-no-fw-update
 zigbeeGeneric:
   - id: "generic-button-sensor"
     deviceLabel: "Zigbee Generic Button"

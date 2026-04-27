@@ -104,7 +104,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -156,7 +157,10 @@ test.register_coroutine_test(
         Configuration:Get({ parameter_number=parameter_number })
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 do
@@ -182,7 +186,11 @@ do
         direction = "send",
         message = mock_aeotec_bulb:generate_test_message("main", capabilities.colorTemperature.colorTemperature(temp))
       }
+    },
+    {
+       min_api_version = 17
     }
+
   )
 end
 

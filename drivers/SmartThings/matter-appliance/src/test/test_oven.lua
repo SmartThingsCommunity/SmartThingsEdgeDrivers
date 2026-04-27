@@ -141,7 +141,10 @@ test.register_coroutine_test(
       "Cook Surface One Endpoint must be 5")
     assert(component_to_endpoint_map["cookSurfaceTwo"] == COOK_SURFACE_TWO_ENDPOINT,
       "Cook Surface Two Endpoint must be 6")
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 
@@ -201,6 +204,9 @@ test.register_message_test(
         clusters.OvenMode.commands.ChangeToMode(mock_device, OVEN_TCC_ONE_ENDPOINT, 0) --Index where Grill is stored)
       }
     }
+  },
+  {
+    min_api_version = 19
   }
 )
 
@@ -220,6 +226,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("tccOne", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -276,6 +285,9 @@ test.register_message_test(
         clusters.TemperatureControl.commands.SetTemperature(mock_device, OVEN_TCC_ONE_ENDPOINT, 130 * 100, nil)
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -335,6 +347,9 @@ test.register_message_test(
         clusters.OvenMode.commands.ChangeToMode(mock_device, OVEN_TCC_TWO_ENDPOINT, 1) --Index where Pre Heat is stored
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -354,6 +369,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("tccTwo", capabilities.temperatureMeasurement.temperature({ value = 50.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -391,6 +409,9 @@ test.register_message_test(
         clusters.TemperatureControl.server.commands.SetTemperature(mock_device, OVEN_TCC_TWO_ENDPOINT, nil, 0) --0 is the index where Level1 is stored.
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -414,6 +435,9 @@ test.register_message_test(
         clusters.OnOff.server.commands.Off(mock_device, COOK_TOP_ENDPOINT)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -449,6 +473,9 @@ test.register_message_test(
         clusters.TemperatureControl.server.commands.SetTemperature(mock_device, COOK_SURFACE_ONE_ENDPOINT, nil, 2) -- 2 is the index where Level 5 is stored.
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -484,6 +511,9 @@ test.register_message_test(
         clusters.TemperatureControl.server.commands.SetTemperature(mock_device, COOK_SURFACE_TWO_ENDPOINT, nil, 1) -- 1 is the index where Level 4 is stored.
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -503,6 +533,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("cookSurfaceOne", capabilities.temperatureMeasurement.temperature({ value = 40.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -522,6 +555,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("cookSurfaceTwo", capabilities.temperatureMeasurement.temperature({ value = 20.0, unit = "C" }))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 

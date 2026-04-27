@@ -69,6 +69,9 @@ test.register_message_test(
         direction = "send",
         message = mock_valve_binary:generate_test_message("main", capabilities.valve.valve.open())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -85,6 +88,9 @@ test.register_message_test(
         direction = "send",
         message = mock_valve_binary:generate_test_message("main", capabilities.valve.valve.closed())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -114,7 +120,8 @@ test.register_message_test(
       },
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 17
     }
 )
 
@@ -144,7 +151,8 @@ test.register_message_test(
       },
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 17
     }
 )
 
@@ -175,7 +183,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -205,7 +216,10 @@ test.register_coroutine_test(
               Basic:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -235,7 +249,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -265,7 +282,10 @@ test.register_coroutine_test(
               SwitchBinary:Get({})
           )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

@@ -7,6 +7,7 @@ test.set_rpc_version(0)
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
+local cluster_base = require "st.matter.cluster_base"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("lock-user-pin.yml"),
@@ -42,6 +43,7 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = clusters.DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
   -- subscribe request
@@ -52,6 +54,7 @@ local function test_init()
   subscribe_request:merge(clusters.DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.attributes.MinPINCodeLength:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device))
+  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
   subscribe_request:merge(clusters.DoorLock.events.LockOperation:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(clusters.DoorLock.events.LockUserChange:subscribe(mock_device))
@@ -90,6 +93,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, clusters.DoorLock.server.commands.LockDoor(mock_device, 1)},
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -111,6 +117,9 @@ test.register_message_test(
         clusters.DoorLock.server.commands.UnlockDoor(mock_device, 1),
       },
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -130,7 +139,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.locked())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -149,7 +161,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -168,7 +183,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lock.lock.not_fully_locked())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 local function refresh_commands(dev)
@@ -191,6 +209,9 @@ test.register_message_test(
       direction = "send",
       message = {mock_device.id, refresh_commands(mock_device)},
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -287,6 +308,9 @@ test.register_message_test(
         capabilities.lockAlarm.alarm.forcedOpeningAttempt({state_change = true})
       ),
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -301,7 +325,10 @@ test.register_coroutine_test(
         capabilities.lockAlarm.alarm.clear({state_change = true})
       )
     )
-end
+end,
+{
+   min_api_version = 17
+}
 )
 
 test.run_registered_tests()

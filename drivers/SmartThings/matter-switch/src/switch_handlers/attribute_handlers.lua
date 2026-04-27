@@ -316,7 +316,15 @@ end
 --- In the case there are multiple endpoints supporting the PowerTopology cluster with
 --- SET feature, all AvailableEndpoints responses must be handled before profiling.
 function AttributeHandlers.available_endpoints_handler(driver, device, ib, response)
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
+    device.log.warn("Received an AvailableEndpoints response after power topology has already been determined. Ignoring this response.")
+    return
+  end
   local set_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
+  if set_topology_eps == nil then
+    device.log.warn("Received an AvailableEndpoints response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with SET feature. Ignoring this response.")
+    return
+  end
   for i, set_ep_info in pairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
@@ -341,7 +349,15 @@ end
 -- [[ DESCRIPTOR CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.parts_list_handler(driver, device, ib, response)
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) ~= nil then
+    device.log.warn("Received a PartsList response after power topology has already been determined. Ignoring this response.")
+    return
+  end
   local tree_topology_eps = device:get_field(fields.ELECTRICAL_SENSOR_EPS)
+  if tree_topology_eps == nil then
+    device.log.warn("Received a PartsList response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with TREE feature. Ignoring this response.")
+    return
+  end
   for i, tree_ep_info in pairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
