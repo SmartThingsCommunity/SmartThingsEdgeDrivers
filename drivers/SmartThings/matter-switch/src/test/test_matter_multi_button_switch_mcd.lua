@@ -370,8 +370,11 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Switch child device: Set color temperature should send the appropriate commands",
   function()
-    test.mock_device.add_test_device(mock_child)
     test.wait_for_events()
+    test.mock_device.add_test_device(mock_child)
+    -- The parent device is already initialized at this point, so we must manually
+    -- queue an infoChanged event to update its live child_ids field via load_updated_data().
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({child_ids = {mock_child.id}}))
     test.socket.capability:__queue_receive({
       mock_child.id,
       { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
