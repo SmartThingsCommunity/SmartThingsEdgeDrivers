@@ -9,10 +9,8 @@ local log = require "log"
 local version = require "version"
 local cfg = require "switch_utils.device_configuration"
 local button_cfg = cfg.ButtonCfg
-local child_cfg = cfg.ChildCfg
 local device_cfg = cfg.DeviceCfg
 local switch_cfg = cfg.SwitchCfg
-local valve_cfg = cfg.ValveCfg
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 local attribute_handlers = require "switch_handlers.attribute_handlers"
@@ -49,13 +47,7 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
   elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
-    local parent_device = device:get_parent_device()
-    local irrigation_system_ep_ids = switch_utils.get_endpoints_by_device_type(parent_device, fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM)
-    if #irrigation_system_ep_ids > 0 then
-      local valve_ep_ids = switch_utils.get_endpoints_by_device_type(parent_device, fields.DEVICE_TYPE_ID.WATER_VALVE)
-      local default_endpoint_id = switch_utils.find_default_endpoint(parent_device)
-      child_cfg.create_or_update_child_devices(driver, parent_device, valve_ep_ids, default_endpoint_id, valve_cfg.assign_profile_for_irrigation_system_ep)
-    end
+    device_cfg.match_child_profile(driver, device)
     -- because get_parent_device() may cause race conditions if used in init, an initial child subscribe is handled in doConfigure.
     -- all future calls to subscribe will be handled by the parent device in init
     device:subscribe()

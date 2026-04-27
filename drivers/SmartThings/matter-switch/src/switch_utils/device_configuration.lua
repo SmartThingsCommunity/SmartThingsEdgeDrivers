@@ -224,6 +224,24 @@ end
 
 -- [[ PROFILE MATCHING AND CONFIGURATIONS ]] --
 
+function DeviceConfiguration.match_child_profile(driver, device)
+  local parent_device = device:get_parent_device()
+  local irrigation_system_ep_ids = switch_utils.get_endpoints_by_device_type(
+    parent_device,
+    fields.DEVICE_TYPE_ID.IRRIGATION_SYSTEM
+  )
+  if #irrigation_system_ep_ids > 0 then
+    local child_ep_id = device.parent_assigned_child_key
+    ChildConfiguration.create_or_update_child_devices(
+      driver,
+      parent_device,
+      {child_ep_id},
+      nil,
+      ValveDeviceConfiguration.assign_profile_for_irrigation_system_ep
+    )
+  end
+end
+
 local function profiling_data_still_required(device)
   for _, field in pairs(fields.profiling_data) do
     if device:get_field(field) == nil then
@@ -297,3 +315,5 @@ return {
   SwitchCfg = SwitchDeviceConfiguration,
   ValveCfg = ValveDeviceConfiguration
 }
+
+
