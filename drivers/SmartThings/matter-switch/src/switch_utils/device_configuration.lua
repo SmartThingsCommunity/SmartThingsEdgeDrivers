@@ -217,16 +217,16 @@ function DeviceConfiguration.match_profile(driver, device)
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
-    if generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
+    if generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
+      -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
+      -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
+      return
+    elseif generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
       updated_profile = "light-level-motion"
     elseif switch_utils.check_switch_category_vendor_overrides(device) then
       -- check whether the overwrite should be over "plug" or "light" based on the current profile
       local overwrite_category = string.find(updated_profile, "plug") and "plug" or "light"
       updated_profile = string.gsub(updated_profile, overwrite_category, "switch")
-    elseif generic_profile("light-level-colorTemperature") or generic_profile("light-color-level") then
-      -- ignore attempts to dynamically profile light-level-colorTemperature and light-color-level devices for now, since
-      -- these may lose fingerprinted Kelvin ranges when dynamically profiled.
-      return
     end
   end
 
