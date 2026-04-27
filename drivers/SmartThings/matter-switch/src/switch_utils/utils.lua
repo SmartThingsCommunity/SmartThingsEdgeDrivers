@@ -151,10 +151,6 @@ function utils.find_default_endpoint(device)
     return device.MATTER_DEFAULT_ENDPOINT
   end
 
-  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
-  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
-  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
-
   local get_first_non_zero_endpoint = function(endpoints)
     table.sort(endpoints)
     for _,ep in ipairs(endpoints) do
@@ -174,23 +170,24 @@ function utils.find_default_endpoint(device)
     end
 
   -- Return the first fan endpoint as the default endpoint if any is found
+  local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_endpoint_ids > 0 then
     return get_first_non_zero_endpoint(fan_endpoint_ids)
   end
 
-  -- Return the first onoff endpoint as the default endpoint if no momentary switch endpoints are present
-  if #momentary_switch_ep_ids == 0 and #onoff_ep_ids > 0 then
-    return get_first_non_zero_endpoint(onoff_ep_ids)
-  end
-
-  -- Return the first momentary switch endpoint as the default endpoint if no onoff endpoints are present
-  if #onoff_ep_ids == 0 and #momentary_switch_ep_ids > 0 then
-    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+  -- Return the first water valve endpoint as the default endpoint if any is found
+  local water_valve_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
+  if #water_valve_endpoint_ids > 0 then
+    return get_first_non_zero_endpoint(water_valve_endpoint_ids)
   end
 
   -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
   -- endpoint. If it is not a supported device type, return the first momentary switch endpoint as the
-  -- default endpoint.
+  -- default endpoint. Else return the first onoff endpoint as the default endpoint.
+  --
+  -- If only one of the two types of endpoints are present, return the first endpoint of the present type.
+  local onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID)
+  local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
     local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
     if utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
@@ -199,6 +196,10 @@ function utils.find_default_endpoint(device)
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
       return get_first_non_zero_endpoint(momentary_switch_ep_ids)
     end
+  elseif #onoff_ep_ids > 0 then
+    return get_first_non_zero_endpoint(onoff_ep_ids)
+  elseif #momentary_switch_ep_ids > 0 then
+    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
   end
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
@@ -359,15 +360,15 @@ function utils.deep_equals(a, b, opts, seen)
   end
 
   -- Compare keys/values from a
-  for k, v in next, a do
-    if not utils.deep_equals(v, rawget(b, k), opts, seen) then
+  for k, v in pairs(a) do
+    if not utils.deep_equals(v, b[k], opts, seen) then
       return false
     end
   end
 
   -- Ensure b doesn't have extra keys
-  for k in next, b do
-    if rawget(a, k) == nil then
+  for k in pairs(b) do
+    if a[k] == nil then
       return false
     end
   end

@@ -63,6 +63,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -76,6 +84,14 @@ test.register_message_test(
       message = {
         mock_device_color_temp.id,
         { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 90 } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
       }
     },
     {
@@ -95,6 +111,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -104,7 +128,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -118,6 +142,14 @@ test.register_message_test(
       message = {
         mock_device_color_temp.id,
         { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
       }
     },
     {
@@ -137,6 +169,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -153,6 +193,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -162,7 +210,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

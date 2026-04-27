@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -189,7 +179,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -222,7 +212,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -255,7 +245,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -288,7 +278,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -321,7 +311,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -354,7 +344,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -387,7 +377,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -420,7 +410,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -453,7 +443,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -486,7 +476,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -519,7 +509,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -552,7 +542,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -589,7 +579,7 @@ test.register_coroutine_test("WindowCovering OperationalStatus opening", functio
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -626,7 +616,7 @@ test.register_coroutine_test("WindowCovering OperationalStatus closing", functio
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -663,7 +653,7 @@ test.register_coroutine_test("WindowCovering OperationalStatus unknown", functio
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -681,7 +671,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -699,7 +689,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -717,7 +707,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -749,7 +739,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -765,7 +755,7 @@ test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -781,7 +771,7 @@ test.register_coroutine_test("WindowShade setShadeTiltLevel cmd handler", functi
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -799,7 +789,7 @@ test.register_coroutine_test("LevelControl CurrentLevel handler", function()
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -821,7 +811,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -844,7 +834,7 @@ test.register_coroutine_test("OperationalStatus report contains current position
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -870,7 +860,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -886,7 +876,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "window-covering-tilt-battery" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -901,7 +891,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -911,7 +901,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_mains_powered,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -926,7 +916,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({profile = "window-covering-tilt-battery"})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1038,7 +1028,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1112,7 +1102,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1170,7 +1160,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1228,7 +1218,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

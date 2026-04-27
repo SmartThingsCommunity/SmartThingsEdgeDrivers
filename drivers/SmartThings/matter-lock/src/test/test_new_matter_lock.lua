@@ -35,7 +35,7 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_id = DoorLock.ID,
           cluster_type = "SERVER",
           cluster_revision = 1,
-          feature_map = 0x0181, -- PIN & USR & COTA
+          feature_map = 0x0591, -- PIN & WDSCH & USR & COTA & YDSCH
         }
       },
       device_types = {
@@ -76,7 +76,7 @@ local function test_init()
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
   )
-  mock_device:expect_metadata_update({ profile = "lock-user-pin" })
+  mock_device:expect_metadata_update({ profile = "lock-user-pin-schedule" })
   mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
@@ -115,7 +115,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -166,7 +166,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -186,7 +186,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -206,7 +206,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -226,7 +226,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -246,7 +246,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -266,7 +266,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -286,7 +286,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -357,7 +357,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -438,7 +438,7 @@ function()
   test.wait_for_events()
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -455,7 +455,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -475,7 +475,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -494,7 +494,7 @@ test.register_coroutine_test(
       })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -515,7 +515,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -539,7 +539,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -561,7 +561,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -583,7 +583,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -605,7 +605,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -631,7 +631,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -730,7 +730,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -957,7 +957,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -974,7 +974,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1043,7 +1043,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1070,7 +1070,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1114,7 +1114,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1163,7 +1163,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1190,7 +1190,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1256,7 +1256,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1283,7 +1283,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1349,7 +1349,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1376,7 +1376,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1441,7 +1441,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1470,7 +1470,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1526,7 +1526,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1589,7 +1589,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1645,7 +1645,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1701,7 +1701,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1730,7 +1730,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1784,7 +1784,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1813,7 +1813,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1885,7 +1885,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1914,7 +1914,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1985,7 +1985,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -2014,7 +2014,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -2064,7 +2064,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -2096,7 +2096,139 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
+  }
+)
+
+-- mock_device:set_field(lock_utils.COTA_CRED, "654123", {persist = true}) --overwrite random cred for test expectation
+test.register_coroutine_test(
+  "Add Guest User and failure response ",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCredentials.ID,
+          command = "addCredential",
+          args = {0, "guest", "pin", "654123"}
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {credential_type = DoorLock.types.CredentialTypeEnum.PIN, credential_index = 1}
+          ), -- credential
+          "654123", -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.UserTypeEnum.SCHEDULE_RESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.SUCCESS, -- status
+          1, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({{userIndex = 1, userType = "guest"}}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials(
+          {{credentialIndex=1, credentialType="pin", userIndex=1}}, {visibility={displayed=false}}
+        )
+      )
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetYearDaySchedule(
+          mock_device, 1, -- endpoint
+          1, -- year_day_index
+          1, -- user_index
+          0, -- local_start_time
+          0xffffffff -- local_end_time
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetYearDaySchedule:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.FAILURE -- status
+        ),
+      }
+    )
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      DoorLock.server.commands.ClearUser(
+        mock_device, 1,
+        1
+      )
+    })
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.server.commands.ClearUser:build_test_command_response(
+          mock_device, 1
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.weekDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockSchedules.yearDaySchedules({}, {visibility={displayed=false}})
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.commandResult(
+          {commandName="addCredential", statusCode="failure", userIndex=1}, {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 17
   }
 )
 

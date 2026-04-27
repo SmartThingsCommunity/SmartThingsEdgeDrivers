@@ -56,16 +56,12 @@ local battery_support = {
 
 local profiling_data = {
   BATTERY_SUPPORT = "__BATTERY_SUPPORT",
-  ENABLE_DOOR_STATE = "__ENABLE_DOOR_STATE"
 }
 
 local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local subscribed_attributes = {
   [capabilities.lock.ID] = {
     DoorLock.attributes.LockState
-  },
-  [capabilities.doorState.ID] = {
-    DoorLock.attributes.DoorState
   },
   [capabilities.remoteControlStatus.ID] = {
     DoorLock.attributes.OperatingMode
@@ -133,11 +129,6 @@ end
 
 local function device_init(driver, device)
   device:set_component_to_endpoint_fn(component_to_endpoint)
-  if #device:get_endpoints(clusters.DoorLock.ID, {feature_bitmap = clusters.DoorLock.types.Feature.DOOR_POSITION_SENSOR}) == 0 then
-    device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
-  else
-    device:add_subscribed_attribute(clusters.DoorLock.attributes.DoorState)
-  end
   if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
     device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
   elseif device:get_field(profiling_data.BATTERY_SUPPORT) == nil then
@@ -267,10 +258,6 @@ local function match_profile_modular(driver, device)
     table.insert(main_component_capabilities, capabilities.battery.ID)
   end
 
-  if device:get_field(profiling_data.ENABLE_DOOR_STATE) then
-    table.insert(main_component_capabilities, capabilities.doorState.ID)
-  end
-
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   if lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
     device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
@@ -337,15 +324,15 @@ local function deep_equals(a, b, opts, seen)
   end
 
   -- Compare keys/values from a
-  for k, v in next, a do
-    if not deep_equals(v, rawget(b, k), opts, seen) then
+  for k, v in pairs(a) do
+    if not deep_equals(v, b[k], opts, seen) then
       return false
     end
   end
 
   -- Ensure b doesn't have extra keys
-  for k in next, b do
-    if rawget(a, k) == nil then
+  for k in pairs(b) do
+    if a[k] == nil then
       return false
     end
   end
@@ -378,10 +365,7 @@ local function info_changed(driver, device, event, args)
   if device:supports_capability_by_id(capabilities.lockAliro.ID) then
     set_reader_config(device)
   end
-  if device:supports_capability(capabilities.doorState) and device:get_latest_state("main", capabilities.doorState.ID, capabilities.doorState.supportedDoorStates.NAME) == nil then
-    device:emit_event(capabilities.doorState.supportedDoorStates({"open", "closed"}, {visibility = {displayed = false}})) -- open and closed are mandatory
-  end
-  if device:supports_capability(capabilities.lockAlarm) and device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
+  if device:get_latest_state("main", capabilities.lockAlarm.ID, capabilities.lockAlarm.supportedAlarmValues.NAME) == nil then
     device:emit_event(capabilities.lockAlarm.alarm.clear({state_change = true}))
     device:emit_event(capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}})) -- lockJammed is mandatory
   end
@@ -441,45 +425,6 @@ local function lock_state_handler(driver, device, ib, response)
       device.log.warn("Lock State is nil")
     end
   end)
-end
-
-local function door_state_handler(driver, device, ib, response)
-  if ib.data.value == nil then
-    -- early return on nil data. Also, if ENABLE_DOOR_STATE is unset, set it to false and attempt profile matching.
-    if device:get_field(profiling_data.ENABLE_DOOR_STATE) == nil then
-      device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
-      match_profile(driver, device)
-    end
-    return
-  elseif device:supports_capability(capabilities.doorState) == false then
-    -- if a non-nil report comes in and the doorState capability is unsupported, set ENABLE_DOOR_STATE to true and attempt profile matching.
-    device:set_field(profiling_data.ENABLE_DOOR_STATE, true, {persist = true})
-    match_profile(driver, device)
-    return
-  end
-
-  local DoorStateEnum = DoorLock.types.DoorStateEnum
-  local doorState = capabilities.doorState.doorState
-  local DOOR_STATE_MAP = {
-    [DoorStateEnum.DOOR_OPEN] = doorState.open,
-    [DoorStateEnum.DOOR_CLOSED] = doorState.closed,
-    [DoorStateEnum.DOOR_JAMMED] = doorState.jammed,
-    [DoorStateEnum.DOOR_FORCED_OPEN] = doorState.forcedOpen,
-    [DoorStateEnum.DOOR_UNSPECIFIED_ERROR] = doorState.unspecifiedError,
-    [DoorStateEnum.DOOR_AJAR] = doorState.ajar
-  }
-  local door_state = DOOR_STATE_MAP[ib.data.value] or doorState.unspecifiedError -- fallback to unspecifiedError if we receive a value we don't recognize
-  device:emit_event(door_state())
-
-  -- add new door states to supportedDoorStates list if not already present.
-  local supported_door_states = utils.deep_copy(device:get_latest_state("main", capabilities.doorState.ID, capabilities.doorState.supportedDoorStates.NAME) or {})
-  for _, state in pairs(supported_door_states) do
-    if state == door_state.NAME then
-      return
-    end
-  end
-  table.insert(supported_door_states, door_state.NAME)
-  device:emit_event(capabilities.doorState.supportedDoorStates(supported_door_states, {visibility = {displayed = false}}))
 end
 
 ---------------------
@@ -730,12 +675,6 @@ local function door_lock_feature_map_handler(driver, device, ib, response)
   local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
   if feature_map ~= ib.data.value then
     lock_utils.set_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id, ib.data.value, { persist = true })
-    -- If the DPS feature is changed, check the DoorState value and call the match_profile.
-    if ib.data.value & clusters.DoorLock.types.Feature.DOOR_POSITION_SENSOR == 0 then
-      device:set_field(profiling_data.ENABLE_DOOR_STATE, false, {persist = true})
-    else
-      device:set_field(profiling_data.ENABLE_DOOR_STATE, true, {persist = true})
-    end
     match_profile(driver, device, true)
   end
 end
@@ -1615,15 +1554,31 @@ local function clear_user_response_handler(driver, device, ib, response)
     device.log.warn(string.format("Failed to clear user: %s", status))
   end
 
-  -- Update commandResult
-  local command_result_info = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    statusCode = status
-  }
-  device:emit_event(capabilities.lockUsers.commandResult(
-    command_result_info, {state_change = true, visibility = {displayed = false}}
-  ))
+  -- In the "defaultSchedule" cmd failure path, when a guest user's credentials are set but the scheduling
+  -- fails during default setup, those credentials should be removed, so we wait to log lock credentials until here.
+  if cmdName == "defaultSchedule" then
+    -- note: if clear user succeeds, we'd log credential settings as a "failure" since it's effectively a no-op.
+    -- If clear user fails, log "success" since the credentials would still be present.
+    local lock_credential_status = status == "success" and "failure" or "success"
+    local command_result_info = {
+      commandName = "addCredential",
+      userIndex = userIdx,
+      statusCode = lock_credential_status
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  else
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockUsers.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+  end
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
@@ -2479,17 +2434,22 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
     local cmdName = "addCredential"
     local credIdx = device:get_field(lock_utils.CRED_INDEX)
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    if status == "success" then
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    else
+      local ep = find_default_endpoint(device, clusters.DoorLock.ID)
+      device:send(DoorLock.server.commands.ClearUser(device, ep, userIdx))
+    end
     return
   end
 
@@ -2992,7 +2952,6 @@ local new_matter_lock_handler = {
     attr = {
       [DoorLock.ID] = {
         [DoorLock.attributes.LockState.ID] = lock_state_handler,
-        [DoorLock.attributes.DoorState.ID] = door_state_handler,
         [DoorLock.attributes.OperatingMode.ID] = operating_modes_handler,
         [DoorLock.attributes.NumberOfTotalUsersSupported.ID] = total_users_supported_handler,
         [DoorLock.attributes.NumberOfPINUsersSupported.ID] = pin_users_supported_handler,
