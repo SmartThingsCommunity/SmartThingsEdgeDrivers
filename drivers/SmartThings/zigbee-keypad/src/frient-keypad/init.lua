@@ -7,7 +7,6 @@ local device_management = require "st.zigbee.device_management"
 local battery_defaults = require "st.zigbee.defaults.battery_defaults"
 local utils = require "st.utils"
 local json = require "st.json"
-local log = require "log"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 
@@ -18,6 +17,7 @@ local SecuritySystem = capabilities.securitySystem
 local LockCodes = capabilities.lockCodes
 local tamperAlert = capabilities.tamperAlert
 local mode = capabilities.mode
+local panicAlarm = capabilities.panicAlarm
 
 local ArmMode = IASACE.types.ArmMode
 local ArmNotification = IASACE.types.ArmNotification
@@ -27,6 +27,8 @@ local AlarmStatus = IASACE.types.IasaceAlarmStatus
 
 local armCommandFromKeypad = false
 local DEVELCO_MANUFACTURER_CODE = 0x1015
+local EXIT_DELAY_UNTIL = "exit_delay_until"
+local EXIT_DELAY_TARGET_STATUS = "exit_delay_target_status"
 
 local SECURITY_STATUS_EVENTS = {
   armedAway = SecuritySystem.securitySystemStatus.armedAway,
@@ -82,32 +84,12 @@ end
 local function emit_status_event(device, status, extra_data)
   local event_factory = SECURITY_STATUS_EVENTS[status] or SecuritySystem.securitySystemStatus.disarmed
   local event = event_factory({ state_change = true })
-  if extra_data ~= nil then
-    device.log.info(string.format("securitySystemStatus extra data captured (keys=%s)", table.concat((function()
-      local keys = {}
-      for k, _ in pairs(extra_data) do
-        keys[#keys + 1] = tostring(k)
-      end
-      return keys
-    end)(), ",")))
-  end
-  device.log.info(string.format("Emitting securitySystemStatus=%s", status, {visibility = { displayed = true }}))
   device:emit_event(event)
 end
 
 local function emit_mode_event(device, lock_state, extra_data)
   local mode_value = MODE_STATUS_VALUES[lock_state] or "Unlocked"
   local event = mode.mode(mode_value, { state_change = true })
-  if extra_data ~= nil then
-    device.log.info(string.format("lockStatus extra data captured (keys=%s)", table.concat((function()
-      local keys = {}
-      for k, _ in pairs(extra_data) do
-        keys[#keys + 1] = tostring(k)
-      end
-      return keys
-    end)(), ",")))
-  end
-  device.log.info(string.format("Emitting lockStatus=%s", lock_state, {visibility = { displayed = true }}))
   device:emit_event(event)
 end
 
@@ -159,6 +141,30 @@ end
 local function get_exit_delay_duration(device)
   local duration = device.preferences.duration
   return duration or 5
+end
+
+local function is_exit_delay_active(device)
+  local deadline = device:get_field(EXIT_DELAY_UNTIL)
+  return type(deadline) == "number" and os.time() < deadline
+end
+
+local function clear_exit_delay(device)
+  device:set_field(EXIT_DELAY_UNTIL, nil, { persist = false })
+  device:set_field(EXIT_DELAY_TARGET_STATUS, nil, { persist = false })
+end
+
+local function start_exit_delay(device, target_status)
+  local duration = get_exit_delay_duration(device)
+  device:set_field(EXIT_DELAY_UNTIL, os.time() + duration, { persist = false })
+  device:set_field(EXIT_DELAY_TARGET_STATUS, target_status, { persist = false })
+  device:send(IASACE.client.commands.PanelStatusChanged(
+    device,
+    PanelStatus.EXIT_DELAY,
+    duration,
+    AudibleNotification.DEFAULT_SOUND,
+    AlarmStatus.NO_ALARM
+  ))
+  return duration
 end
 
 local function build_lock_code_state_from_prefs(device)
@@ -386,29 +392,23 @@ local function handle_arm_command(driver, device, zb_rx)
   armCommandFromKeypad = true
   local cmd = zb_rx.body.zcl_body
   local pin = cmd.arm_disarm_code.value
-  local pin_len = pin ~= nil and string.len(pin) or 0
-  log.info(string.format("IAS ACE Arm received (mode=%s, pin_len=%d)", tostring(cmd.arm_mode.value), pin_len))
 
   local status = ARM_MODE_TO_STATUS[cmd.arm_mode.value]
   if status == nil then
-    log.warn("IAS ACE Arm received with unsupported arm mode")
     return
   end
 
   if pin == nil or pin == "" then
-    log.warn("IAS ACE Arm rejected: missing pin or rfid")
     return
   end
 
   if not is_pin_length_valid(device, pin) then
-    log.warn(string.format("IAS ACE Arm rejected: invalid pin length (len=%d)", pin_len))
     return
   end
 
   local user, auth_type = resolve_user_from_code(device, pin)
   if user == nil then
     device:emit_event(LockCodes.codeChanged(tostring(pin) .. " is not assigned to any user on this keypad. You can create a new user with this code in settings.", { state_change = true }))
-    log.warn("IAS ACE Arm rejected: unknown pin or rfid")
     return
   end
 
@@ -419,11 +419,17 @@ local function handle_arm_command(driver, device, zb_rx)
     userName = user.name,
   }
 
+  if is_exit_delay_active(device) then
+    device:send(IASACE.client.commands.ArmResponse(device, 0xFF))
+    armCommandFromKeypad = false
+    return
+  end
+
   if can_process_arm_command(status, get_current_status(device)) then
     if device.preferences.exitDelay == true and status == "armedAway" and tonumber(device.preferences.mode) == 0 then
-      local duration = get_exit_delay_duration(device)
-      send_panel_status(device, "exitDelay")
+      local duration = start_exit_delay(device, status)
       device.thread:call_with_delay(duration, function()
+        clear_exit_delay(device)
         emit_mode_status_event(device, status, data)
         emit_arm_activity(device, status, user.name)
         device:send(IASACE.client.commands.ArmResponse(
@@ -440,7 +446,6 @@ local function handle_arm_command(driver, device, zb_rx)
       ))
     end
   else
-    log.info("Arm command ignored: already in target state or incompatible state")
     device:send(IASACE.client.commands.ArmResponse(
       device,
       0xFF
@@ -451,6 +456,16 @@ end
 
 local function handle_get_panel_status(driver, device, zb_rx)
   local duration = get_exit_delay_duration(device)
+  if is_exit_delay_active(device) then
+    device:send(IASACE.client.commands.GetPanelStatusResponse(
+      device,
+      PanelStatus.EXIT_DELAY,
+      duration,
+      AudibleNotification.DEFAULT_SOUND,
+      AlarmStatus.NO_ALARM
+    ))
+    return
+  end
   local status = get_current_status(device)
   device:send(IASACE.client.commands.GetPanelStatusResponse(
     device,
@@ -460,12 +475,23 @@ local function handle_get_panel_status(driver, device, zb_rx)
     AlarmStatus.NO_ALARM
   ))
 end
+
+local function handle_emergency_command(driver, device, zb_rx)
+  device:emit_event(panicAlarm.panicAlarm.panic({ state_change = true }))
+  device.thread:call_with_delay(10, function()
+    device:emit_event(panicAlarm.panicAlarm.clear({ state_change = true }))
+  end)
+end
 local function handle_arm(device, status)
   local duration = get_exit_delay_duration(device)
+  if is_exit_delay_active(device) then
+    return
+  end
   if not armCommandFromKeypad and can_process_arm_command(status, get_current_security_status(device)) then
     if device.preferences.exitDelay == true and status == "armedAway" and tonumber(device.preferences.mode) == 0 then
-      send_panel_status(device, "exitDelay")
+      duration = start_exit_delay(device, status)
       device.thread:call_with_delay(duration, function()
+        clear_exit_delay(device)
         emit_status_event(device, status, { source = "app" })
         emit_security_activity(device, status, "App")
         send_panel_status(device, status)
@@ -483,22 +509,15 @@ local function handle_arm(device, status)
 end
 
 local function handle_lock(device, status)
-  --[[ local duration = get_exit_delay_duration(device) ]]
+  if is_exit_delay_active(device) then
+    return
+  end
   if not armCommandFromKeypad and can_process_arm_command(status, get_current_mode_status(device)) then
-    --[[ if device.preferences.exitDelay == true and tonumber(device.preferences.mode) == 1 then
-      send_panel_status(device, "exitDelay")
-      device.thread:call_with_delay(duration, function()
-        emit_mode_event(device, status, { source = "app" })
-        emit_mode_activity(device, status, "App")
-        send_panel_status(device, status)
-      end)
-    else ]]
     emit_mode_event(device, status, { source = "app" })
     emit_mode_activity(device, status, "App")
     if tonumber(device.preferences.mode) == 1 then
       send_panel_status(device, status)
     end
-    --[[ end ]]
   else
     return
   end
@@ -513,6 +532,9 @@ local function handle_arm_stay(driver, device, command)
 end
 
 local function handle_disarm(driver, device, command)
+    if is_exit_delay_active(device) then
+      clear_exit_delay(device)
+    end
     if can_process_arm_command("disarmed", get_current_security_status(device)) and not armCommandFromKeypad then
       emit_status_event(device, "disarmed", { source = "app" })
       emit_security_activity(device, "disarmed", "App")
@@ -525,6 +547,9 @@ local function handle_disarm(driver, device, command)
 end
 
 local function handle_unlock(driver, device, command)
+    if is_exit_delay_active(device) then
+      clear_exit_delay(device)
+    end
     if can_process_arm_command("Unlocked", get_current_mode_status(device)) and not armCommandFromKeypad then
       emit_mode_event(device, "Unlocked", { source = "app" })
       emit_mode_activity(device, "Unlocked", "App")
@@ -540,12 +565,8 @@ local function handle_set_mode(driver, device, command)
   local desired = command.args.mode
   if desired == "Locked" then
     handle_lock(device, "Locked")
-    log.error("Locking")
   elseif desired == "Unlocked" then
     handle_unlock(driver, device, command)
-    log.error("Unlocking")
-  else
-    log.warn(string.format("Unsupported mode requested: %s", tostring(desired)))
   end
 end
 
@@ -615,6 +636,7 @@ local function device_init(driver, device)
   update_user_map(device)
   emit_lock_code_limits(device)
   set_states(device)
+  device:emit_event(panicAlarm.panicAlarm.clear({ state_change = true }))
 end
 
 local function info_changed(driver, device, event, args)
@@ -684,6 +706,7 @@ local frient_keypad = {
       [IASACE.ID] = {
         [IASACE.server.commands.Arm.ID] = handle_arm_command,
         [IASACE.server.commands.GetPanelStatus.ID] = handle_get_panel_status,
+        [IASACE.server.commands.Emergency.ID] = handle_emergency_command,
       },
       [IASZone.ID] = {
         [IASZone.client.commands.ZoneStatusChangeNotification.ID] = ias_zone_status_change_handler

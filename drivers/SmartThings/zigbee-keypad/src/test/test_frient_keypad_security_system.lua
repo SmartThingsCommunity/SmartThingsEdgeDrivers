@@ -106,6 +106,12 @@ local function test_init()
 			capabilities.lockCodes.codeChanged("Security System disarmed by App", { state_change = true, data = { codeName = "App" } })
 		)
 	)
+  test.socket.capability:__expect_send(
+    mock_device:generate_test_message(
+      "main",
+      capabilities.panicAlarm.panicAlarm.clear({ state_change = true })
+    )
+  )
 end
 
 test.set_test_init_function(test_init)
@@ -323,7 +329,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
 	"infoChanged pinMap add updates lockCodes",
 	function()
-		local add_data = info_changed_device_data({ pinMap = "1234:Alice" })
+		local add_data = info_changed_device_data({ pinMap = "1234:Alice", showPinSnapshot = true })
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", add_data })
 
 		test.socket.capability:__set_channel_ordering("relaxed")
@@ -336,7 +342,7 @@ test.register_coroutine_test(
 			)
 		)
 
-		local delete_data = info_changed_device_data({ deletePinMap = "1234", pinMap = "1234:Alice" })
+		local delete_data = info_changed_device_data({ deletePinMap = "1234", pinMap = "1234:Alice", showPinSnapshot = true })
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", delete_data })
 
 		test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.minCodeLength(4, { visibility = { displayed = true } })))
@@ -453,7 +459,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
 	"IAS ACE Arm with known PIN arms system and responds",
 	function()
-		local add_data = info_changed_device_data({ pinMap = "5678:Bob" })
+		local add_data = info_changed_device_data({ pinMap = "5678:Bob", showPinSnapshot = true })
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", add_data })
 
 		test.socket.capability:__set_channel_ordering("relaxed")
@@ -509,7 +515,7 @@ test.register_coroutine_test(
 	"Overflow lockCodes payload emits lockCodes event",
 	function()
 		local very_long_name = string.rep("A", 280)
-		local add_data = info_changed_device_data({ pinMap = "1234:" .. very_long_name })
+		local add_data = info_changed_device_data({ pinMap = "1234:" .. very_long_name, showPinSnapshot = true })
 		test.socket.device_lifecycle:__queue_receive({ mock_device.id, "infoChanged", add_data })
 
 		test.socket.capability:__set_channel_ordering("relaxed")
@@ -526,6 +532,28 @@ test.register_coroutine_test(
 				)
 			)
 		)
+	end
+)
+
+test.register_coroutine_test(
+	"Emergency command triggers panicAlarm, which clears after 10s",
+	function()
+		test.socket.zigbee:__queue_receive({ mock_device.id, IASACE.server.commands.Emergency.build_test_rx(mock_device) })
+
+		test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.panicAlarm.panicAlarm.panic({ state_change = true })
+      )
+    )
+    test.timer.__create_and_queue_test_time_advance_timer(10, "oneshot")
+    test.mock_time.advance_time(10)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.panicAlarm.panicAlarm.clear({ state_change = true })
+      )
+    )
 	end
 )
 

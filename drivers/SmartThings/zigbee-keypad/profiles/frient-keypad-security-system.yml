@@ -14,6 +14,8 @@ components:
     version: 1
   - id: mode
     version: 1
+  - id: panicAlarm
+    version: 1
   categories:
   - name: SecurityPanel
 preferences:
@@ -45,11 +47,11 @@ preferences:
       default: ""
   - name: showPinSnapshot
     title: Show PIN Snapshot
-    description: "Display the current PIN/RFID list in the device history (sensitive)."
+    description: "Display the current PIN/RFID list in the device history after adding them (sensitive)."
     required: false
     preferenceType: boolean
     definition:
-      default: true
+      default: false
   - name: minCodeLength
     title: Minimal PIN Length
     description: "Minimal allowed PIN length."
@@ -86,7 +88,7 @@ preferences:
       default: 5
   - name: autoArmDisarmMode
     title: Auto Arm/Disarm Mode
-    description: "Automatically arm/disarm without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'PIN'."
+    description: "Automatically arm/disarm (lock/unlock) without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'PIN'."
     required: false
     preferenceType: enumeration
     definition:
@@ -96,15 +98,15 @@ preferences:
         2: "PIN"
       default: 0
   - name: autoDisarmModeSetting
-    title: Auto Disarm Mode Setting
+    title: Auto Disarm/Unlock Mode Setting
     description: "When Auto Arm/Disarm Mode is set to 'PIN' or 'RFID', automatically disarm when a valid PIN/RFID is used."
     required: false
     preferenceType: boolean
     definition:
       default: false
   - name: autoArmModeSetting
-    title: Auto Arm Mode Setting
-    description: "When Auto Arm/Disarm Mode is set to 'PIN' or 'RFID', automatically arm in one of the following modes: 'Disabled', 'Arm Stay', 'Arm Away'."
+    title: Auto Arm/Lock Mode Setting
+    description: "When Auto Arm/Disarm Mode is set to 'PIN' or 'RFID', automatically arm in one of the following modes: 'Disabled', 'Arm Stay', 'Arm Away'. Any option other than 'Disabled' allows to lock while controlling Mode Status. "
     required: false
     preferenceType: enumeration
     definition:
@@ -115,10 +117,13 @@ preferences:
       default: 0
   - name: pinLengthSetting
     title: PIN length to auto arm/disarm
-    description: "When Auto Arm/Disarm Mode is set to 'PIN', the length of PINs that will trigger auto arm/disarm."
+    description: "When Auto Arm/Disarm Mode is set to 'PIN', the length of PINs that will trigger auto arm/disarm (lock/unlock)."
     required: false
     preferenceType: integer
     definition:
       minimum: 1
       maximum: 32
       default: 4
+metadata:
+  mnmn: SmartThings
+  vid: SmartThings-smartthings-frient_Keypad
