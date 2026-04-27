@@ -6,9 +6,10 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local button_attr = capabilities.button.button
-local utils = require "st.utils"
-local dkjson = require "dkjson"
 local uint32 = require "st.matter.data_types.Uint32"
+local fields = require "switch_utils.fields"
+local switch_utils = require "switch_utils.utils"
+local st_utils = require "st.utils"
 
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("button.yml"),
@@ -40,162 +41,75 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local mock_device_battery = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("button-battery.yml"),
-  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
-  matter_version = {hardware = 1, software = 1},
-  endpoints = {
-    {
-      endpoint_id = 0,
-      clusters = {
-        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
-      },
-      device_types = {
-        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
-      }
-    },
-    {
-      endpoint_id = 1,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.Feature.MOMENTARY_SWITCH,
-          cluster_type = "SERVER",
-        },
-        {
-          cluster_id = clusters.PowerSource.ID,
-          cluster_type = "SERVER",
-          feature_map = clusters.PowerSource.types.Feature.BATTERY
-        },
-      },
-      device_types = {
-        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
-      }
-    }
-  }
-})
 
-local function expect_configure_buttons(device)
+local expected_component_to_endpoint_map = {
+  ["main"] = 1
+}
+local expected_initial_press_only_state = true
+
+local function expect_configure_button(device)
   test.socket.capability:__expect_send(device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(device:generate_test_message("main", button_attr.pushed({state_change = false})))
 end
 
-local function update_profile()
-  test.socket.matter:__queue_receive({mock_device_battery.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(
-    mock_device_battery, 1, {uint32(clusters.PowerSource.attributes.BatPercentRemaining.ID)}
-  )})
-  expect_configure_buttons(mock_device_battery)
-  mock_device_battery:expect_metadata_update({ profile = "button-battery" })
-end
-
-local function test_init()
-  local CLUSTER_SUBSCRIBE_LIST = {
-    clusters.Switch.server.events.InitialPress,
-    clusters.Switch.server.events.LongPress,
-    clusters.Switch.server.events.ShortRelease,
-    clusters.Switch.server.events.MultiPressComplete,
-  }
-
-  local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
-  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
-    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
-  end
-
+local function test_init_for_lifecycle_tests()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  expect_configure_buttons(mock_device)
-  mock_device:expect_metadata_update({ profile = "button" })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
-local function test_init_battery()
-  local CLUSTER_SUBSCRIBE_LIST_BATTERY = {
-    clusters.PowerSource.server.attributes.AttributeList,
-    clusters.PowerSource.server.attributes.BatPercentRemaining,
-    clusters.Switch.server.events.InitialPress,
-    clusters.Switch.server.events.LongPress,
-    clusters.Switch.server.events.ShortRelease,
-    clusters.Switch.server.events.MultiPressComplete,
-  }
-
-  local subscribe_request = CLUSTER_SUBSCRIBE_LIST_BATTERY[1]:subscribe(mock_device_battery)
-  for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_BATTERY) do
-    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_battery)) end
-  end
-
+local function test_init_for_message_tests()
   test.disable_startup_messages()
-  test.mock_device.add_test_device(mock_device_battery)
-  test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "added" })
-  test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "init" })
-  test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "doConfigure" })
-  mock_device_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  test.mock_device.add_test_device(mock_device)
+  mock_device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, expected_component_to_endpoint_map, { persist = true })
+  switch_utils.set_field_for_endpoint(mock_device, fields.INITIAL_PRESS_ONLY, 1, expected_initial_press_only_state, { persist = true })
 end
-
-test.set_test_init_function(test_init)
+test.set_test_init_function(test_init_for_message_tests)
 
 test.register_coroutine_test(
-  "Simulate the profile change update taking affect and the device info changing",
-  function()
-    test.socket.matter:__set_channel_ordering("relaxed")
-    update_profile()
-    test.wait_for_events()
-    local device_info_copy = utils.deep_copy(mock_device_battery.raw_st_data)
-    device_info_copy.profile.id = "buttons-battery"
-    local device_info_json = dkjson.encode(device_info_copy)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "infoChanged", device_info_json })
-    -- due to the AttributeList being processed in update_profile, setting profiling_data.BATTERY_SUPPORT,
-    -- subsequent subscriptions will not include AttributeList.
-    local UPDATED_CLUSTER_SUBSCRIBE_LIST = {
-      clusters.PowerSource.server.attributes.BatPercentRemaining,
+  "Handle initial init lifecycle event",
+  function ()
+    local CLUSTER_SUBSCRIBE_LIST = {
       clusters.Switch.server.events.InitialPress,
       clusters.Switch.server.events.LongPress,
       clusters.Switch.server.events.ShortRelease,
       clusters.Switch.server.events.MultiPressComplete,
     }
-    local updated_subscribe_request = UPDATED_CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device_battery)
-    for i, clus in ipairs(UPDATED_CLUSTER_SUBSCRIBE_LIST) do
-      if i > 1 then updated_subscribe_request:merge(clus:subscribe(mock_device_battery)) end
+
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST[1]:subscribe(mock_device)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
     end
-    test.socket.matter:__expect_send({mock_device_battery.id, updated_subscribe_request})
-    expect_configure_buttons(mock_device_battery)
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    test.wait_for_events()
+    assert(mock_device:get_field(fields.profiling_data.BATTERY_SUPPORT) == fields.battery_support.NO_BATTERY, "Device should be marked as not needing battery support")
+    assert(mock_device:get_field(fields.profiling_data.POWER_TOPOLOGY) == false, "Device should be marked as not needing to configure power topology")
   end,
   {
-    test_init = test_init_battery,
+    test_init = test_init_for_lifecycle_tests,
     min_api_version = 17
   }
 )
 
 test.register_coroutine_test(
-  "Handle received BatPercentRemaining from device.",
-  function()
-    update_profile()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device_battery.id,
-        clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
-          mock_device_battery, 1, 150
-        )
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_device_battery:generate_test_message(
-        "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
-      )
-    )
+  "Handle initial doConfigure lifecycle event, where profiling should be skipped",
+  function ()
+    mock_device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, { persist = true })
+    mock_device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
+    test.wait_for_events()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    expect_configure_button(mock_device)
+    mock_device:expect_metadata_update({ profile = "button" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+    test.wait_for_events()
+    assert(switch_utils.deep_equals(st_utils.deep_copy(mock_device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP)), expected_component_to_endpoint_map), "Component to endpoint map should be set in doConfigure")
+    assert(switch_utils.get_field_for_endpoint(mock_device, fields.INITIAL_PRESS_ONLY, 1) == expected_initial_press_only_state, "InitialPressOnly should be true")
+    assert(switch_utils.get_field_for_endpoint(mock_device, fields.SUPPORTS_MULTI_PRESS, 1) == nil, "MultiPress should be nil")
+    assert(switch_utils.get_field_for_endpoint(mock_device, fields.EMULATE_HELD, 1) == nil, "EmulateHeld should be nil")
   end,
   {
-    test_init = test_init_battery,
+    test_init = test_init_for_lifecycle_tests,
     min_api_version = 17
   }
 )
@@ -498,67 +412,205 @@ test.register_message_test(
   }
 )
 
-local function reset_battery_profiling_info()
-  local fields = require "switch_utils.fields"
-  mock_device:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.NO_BATTERY, {persist=true})
+local mock_device_battery = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("button-battery.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {
+          cluster_id = clusters.Switch.ID,
+          feature_map = clusters.Switch.types.Feature.MOMENTARY_SWITCH,
+          cluster_type = "SERVER",
+        },
+        {
+          cluster_id = clusters.PowerSource.ID,
+          cluster_type = "SERVER",
+          feature_map = clusters.PowerSource.types.Feature.BATTERY
+        },
+      },
+      device_types = {
+        {device_type_id = 0x000F, device_type_revision = 1} -- Generic Switch
+      }
+    }
+  }
+})
+
+local function test_init_battery()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_battery)
+end
+
+local function test_init_profile_change_with_battery()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_battery)
+  -- by this point, init will have run and this will have been set to false
+  mock_device_battery:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
 end
 
 test.register_coroutine_test(
-  "Test profile does not change to button-battery when battery percent remaining attribute (attribute ID 12) is not available",
-  function()
-    reset_battery_profiling_info()
-    test.wait_for_events()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(10)})
-      }
-    )
+  "Handle initial init lifecycle event for device with battery",
+  function ()
+    local CLUSTER_SUBSCRIBE_LIST_BATTERY = {
+      clusters.PowerSource.server.attributes.AttributeList,
+      clusters.PowerSource.server.attributes.BatPercentRemaining,
+      clusters.Switch.server.events.InitialPress,
+      clusters.Switch.server.events.LongPress,
+      clusters.Switch.server.events.ShortRelease,
+      clusters.Switch.server.events.MultiPressComplete,
+    }
+
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST_BATTERY[1]:subscribe(mock_device_battery)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_BATTERY) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_battery)) end
+    end
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "init" })
+    test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
+    assert(mock_device_battery:get_field(fields.profiling_data.BATTERY_SUPPORT) == nil, "Device should not have specified battery support yet")
+    assert(mock_device_battery:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil, "Device should be marked as not needing to configure power topology")
   end,
   {
-     min_api_version = 17
+    test_init = test_init_battery,
+    min_api_version = 17
   }
 )
 
 test.register_coroutine_test(
-  "Test profile change to button-batteryLevel when battery percent remaining attribute (attribute ID 14) is available",
+  "Following init events, after battery has been configured, device should not create subscriptions to AttributeList",
   function()
-    reset_battery_profiling_info()
+    mock_device_battery:set_field(fields.profiling_data.BATTERY_SUPPORT, fields.battery_support.BATTERY_PERCENTAGE, {persist = true})
     test.wait_for_events()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(
-          clusters.PowerSource.attributes.BatChargeLevel.ID
-        )})
-      }
-    )
-    expect_configure_buttons(mock_device)
-    mock_device:expect_metadata_update({ profile = "button-batteryLevel" })
+    local CLUSTER_SUBSCRIBE_LIST_BATTERY = {
+      clusters.PowerSource.server.attributes.BatPercentRemaining,
+      clusters.Switch.server.events.InitialPress,
+      clusters.Switch.server.events.LongPress,
+      clusters.Switch.server.events.ShortRelease,
+      clusters.Switch.server.events.MultiPressComplete,
+    }
+
+    local subscribe_request = CLUSTER_SUBSCRIBE_LIST_BATTERY[1]:subscribe(mock_device_battery)
+    for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_BATTERY) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_battery)) end
+    end
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "init" })
+    test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
   end,
   {
-     min_api_version = 17
+    test_init = test_init_profile_change_with_battery,
+    min_api_version = 17
   }
 )
 
 test.register_coroutine_test(
-  "Test profile change to button-battery when battery percent remaining attribute (attribute ID 12) is available",
-  function()
-    reset_battery_profiling_info()
-    test.wait_for_events()
-    test.socket.matter:__queue_receive(
-      {
-        mock_device.id,
-        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 1, {uint32(
-          clusters.PowerSource.attributes.BatPercentRemaining.ID
-        )})
-      }
-    )
-    expect_configure_buttons(mock_device)
-    mock_device:expect_metadata_update({ profile = "button-battery" })
+  "Handle initial doConfigure lifecycle event for device with battery, where profiling should be skipped",
+  function ()
+    test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "doConfigure" })
+    mock_device_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+    test_init = test_init_profile_change_with_battery,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "PowerSource AttributeList update should trigger profile update",
+  function()
+    test.socket.matter:__queue_receive({mock_device_battery.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(
+      mock_device_battery, 1, {uint32(clusters.PowerSource.attributes.BatPercentRemaining.ID)}
+    )})
+    expect_configure_button(mock_device_battery)
+    mock_device_battery:expect_metadata_update({ profile = "button-battery" })
+  end,
+  {
+    test_init = test_init_profile_change_with_battery,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "PowerSource AttributeList with BatPercentRemaining update should trigger profile update to button-battery",
+  function()
+    test.socket.matter:__queue_receive({mock_device_battery.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(
+      mock_device_battery, 1, {uint32(clusters.PowerSource.attributes.BatPercentRemaining.ID)}
+    )})
+    expect_configure_button(mock_device_battery)
+    mock_device_battery:expect_metadata_update({ profile = "button-battery" })
+  end,
+  {
+    test_init = test_init_profile_change_with_battery,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "PowerSource AttributeList with BatChargeLevel update should trigger profile update to button-batteryLevel",
+  function()
+    test.socket.matter:__queue_receive({mock_device_battery.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(
+      mock_device_battery, 1, {uint32(clusters.PowerSource.attributes.BatChargeLevel.ID)}
+    )})
+    expect_configure_button(mock_device_battery)
+    mock_device_battery:expect_metadata_update({ profile = "button-batteryLevel" })
+  end,
+  {
+    test_init = test_init_profile_change_with_battery,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "PowerSource AttributeList with no attributes update should set battery support to false and trigger profile update to button",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery.id,
+        clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device_battery, 1, {uint32(2)})
+      }
+    )
+    expect_configure_button(mock_device_battery)
+    mock_device_battery:expect_metadata_update({ profile = "button" })
+    test.wait_for_events()
+    assert(mock_device_battery:get_field(fields.profiling_data.BATTERY_SUPPORT) == fields.battery_support.NO_BATTERY, "Device should be marked as not supporting battery")
+  end,
+  {
+    test_init = test_init_profile_change_with_battery,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "BatPercentRemaining attribute event should generate a battery capability report",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery.id,
+        clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
+          mock_device_battery, 1, 150
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery:generate_test_message(
+        "main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5))
+      )
+    )
+  end,
+  {
+    test_init = test_init_battery,
+    min_api_version = 17
   }
 )
 
