@@ -66,6 +66,7 @@ local zigbee_switch_driver_template = {
     capabilities.illuminanceMeasurement,
     capabilities.relativeHumidityMeasurement,
     capabilities.temperatureMeasurement,
+    capabilities.tvocMeasurement
   },
   sub_drivers = require("sub_drivers"),
   zigbee_handlers = {
