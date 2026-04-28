@@ -6,7 +6,6 @@ local camera_utils = require "sub_drivers.camera.camera_utils.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
-local fields = require "switch_utils.fields"
 local utils = require "st.utils"
 
 local CameraAttributeHandlers = {}
@@ -447,25 +446,24 @@ function CameraAttributeHandlers.selected_chime_handler(driver, device, ib, resp
 end
 
 function CameraAttributeHandlers.camera_av_stream_management_attribute_list_handler(driver, device, ib, response)
-  if not ib.data.elements then return end
   local status_light_enabled_present, status_light_brightness_present = false, false
-  local attribute_ids = {}
-  for _, attr in ipairs(ib.data.elements) do
+  local status_light_attribute_ids = {}
+  for _, attr in ipairs(ib.data.elements or {}) do
     if attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID then
       status_light_enabled_present = true
-      table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
+      table.insert(status_light_attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
     elseif attr.value == clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID then
       status_light_brightness_present = true
-      table.insert(attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+      table.insert(status_light_attribute_ids, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
     end
   end
-  local component_map = device:get_field(fields.COMPONENT_TO_ENDPOINT_MAP) or {}
-  component_map.statusLed = {
-    endpoint_id = ib.endpoint_id,
-    cluster_id = ib.cluster_id,
-    attribute_ids = attribute_ids,
-  }
-  device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
+  if #status_light_attribute_ids > 0 then
+    camera_utils.update_component_to_endpoint_map(device, camera_fields.profile_components.statusLed, {
+      endpoint_id = ib.endpoint_id,
+      cluster_id = ib.cluster_id,
+      attribute_ids = status_light_attribute_ids,
+    })
+  end
   camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
   camera_cfg.reconcile_profile_and_capabilities(device)
 end
