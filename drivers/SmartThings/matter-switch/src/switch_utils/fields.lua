@@ -118,6 +118,9 @@ SwitchFields.vendor_overrides = {
     [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
     [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
+  [0x1209] = { -- Bosch
+    [0x3013] = {target_profile = "light-level-battery-illuminance-motion-temperature"}
+  }
 }
 
 SwitchFields.switch_category_vendor_overrides = {
