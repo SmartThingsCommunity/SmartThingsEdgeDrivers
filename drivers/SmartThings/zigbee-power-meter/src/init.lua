@@ -60,6 +60,7 @@ local zigbee_power_meter_driver_template = {
     doConfigure = do_configure,
   },
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_power_meter_driver_template, zigbee_power_meter_driver_template.supported_capabilities)
