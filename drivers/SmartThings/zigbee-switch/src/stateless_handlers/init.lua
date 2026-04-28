@@ -26,8 +26,10 @@ local function step_color_temperature_by_percent_handler(driver, device, cmd)
   local transition_time = device:get_field(switch_utils.COLOR_TEMP_STEP_TRANSITION_TIME) or DEFAULT_STEP_TRANSITION_TIME
   -- Reminder, stepSize > 0 == Kelvin UP == Mireds DOWN. stepSize < 0 == Kelvin DOWN == Mireds UP
   local step_mode = (step_percent_change > 0) and clusters.ColorControl.types.CcStepMode.DOWN or clusters.ColorControl.types.CcStepMode.UP
-  local min_mireds = device:get_field(switch_utils.MIRED_MIN_BOUND)
-  local max_mireds = device:get_field(switch_utils.MIRED_MAX_BOUND)
+  -- note: the field containing the color temp bounds will be associated with a parent device
+  local field_device = device:get_parent_device() or device
+  local min_mireds = field_device:get_field(switch_utils.MIRED_MIN_BOUND)
+  local max_mireds = field_device:get_field(switch_utils.MIRED_MAX_BOUND)
   -- since colorTemperatureRange is only set after both custom bounds are, use defaults if any custom bound is missing
   if not (min_mireds and max_mireds) then
     min_mireds = DEFAULT_MIRED_MIN_BOUND

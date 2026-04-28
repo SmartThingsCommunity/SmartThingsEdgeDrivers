@@ -66,6 +66,19 @@ local function test_init()
 end
 test.set_test_init_function(test_init)
 
+
+test.register_coroutine_test(
+  "Test profile change on init for water valve parent cluster as server",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+    mock_device:expect_metadata_update({ profile = "water-valve-level" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
 test.register_message_test(
   "Open command should send the appropriate commands",
   {
