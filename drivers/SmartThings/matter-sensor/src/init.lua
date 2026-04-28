@@ -296,6 +296,7 @@ local matter_driver_template = {
     capabilities.flowMeasurement,
   },
   sub_drivers = require("sub_drivers"),
+  shared_device_thread_enabled = true,
 }
 
 local matter_driver = MatterDriver("matter-sensor", matter_driver_template)
