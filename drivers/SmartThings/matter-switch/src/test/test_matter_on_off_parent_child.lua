@@ -1,4 +1,4 @@
--- Copyright © 2024 SmartThings, Inc.
+-- Copyright © 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
@@ -10,6 +10,18 @@ local switch_utils = require "switch_utils.utils"
 
 test.disable_startup_messages()
 
+local generic_manufacturer_info = { vendor_id = 0x0000, product_id = 0x0000 }
+local generic_matter_version = { hardware = 1, software = 1 }
+local root_endpoint = {
+  endpoint_id = 0,
+  clusters = {
+    {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+  },
+  device_types = {
+    {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+  }
+}
+
 local parent_ep_id = 10
 local dimmable_ep_id = 30
 local extended_color_ep_id = 50
@@ -19,24 +31,10 @@ local extended_color_ep_id = 50
 local mock_device = test.mock_device.build_test_matter_device({
   label = "Matter Switch",
   profile = t_utils.get_profile_definition("light-color-level.yml"),
-  manufacturer_info = {
-    vendor_id = 0x0000,
-    product_id = 0x0000,
-  },
-  matter_version = {
-    hardware = 1,
-    software = 1
-   },
+  manufacturer_info = generic_manufacturer_info,
+  matter_version = generic_matter_version,
   endpoints = {
-    {
-      endpoint_id = 0,
-      clusters = {
-        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
-      },
-      device_types = {
-        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
-      }
-    },
+    root_endpoint,
     {
       endpoint_id = parent_ep_id,
       clusters = {
@@ -333,7 +331,7 @@ test.register_message_test(
 test.register_message_test(
   "Extended Color Child: colorTemperatureRange, setColorTemperature, stepColorTemperatureByPercent handled appropriately",
   {
-    -- setColorTemperature before a color temperature range is set 
+    -- setColorTemperature before a color temperature range is set
     {
       channel = "capability",
       direction = "receive",
@@ -426,7 +424,7 @@ test.register_message_test(
       }
     }, -- 555 is expected since it is re-bounded by the given range
 
-    -- stepColorTemperatureByPercent testing  
+    -- stepColorTemperatureByPercent testing
     {
       channel = "capability",
       direction = "receive",
@@ -606,6 +604,264 @@ test.register_message_test(
     },
   },
   {
+    min_api_version = 17
+  }
+)
+
+local dimmable_child_plug_ep_id = 30
+
+local mock_plug = test.mock_device.build_test_matter_device({
+  label = "Matter Plug",
+  profile = t_utils.get_profile_definition("plug-level.yml"),
+  manufacturer_info = generic_manufacturer_info,
+  matter_version = generic_matter_version,
+  endpoints = {
+    root_endpoint,
+    {
+      endpoint_id = parent_ep_id,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT, device_type_revision = 2}
+      }
+    },
+    {
+      endpoint_id = dimmable_child_plug_ep_id,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.DIMMABLE_PLUG_IN_UNIT, device_type_revision = 2}
+      }
+    },
+  }
+})
+
+local function handle_init_event_for_plug(mock_device)
+  local cluster_subscribe_list = {
+    clusters.OnOff.attributes.OnOff,
+    clusters.LevelControl.attributes.CurrentLevel,
+    clusters.LevelControl.attributes.MaxLevel,
+    clusters.LevelControl.attributes.MinLevel
+  }
+  local expected_subscriptions = cluster_subscribe_list[1]:subscribe(mock_device)
+  for i, cluster in ipairs(cluster_subscribe_list) do
+    if i > 1 then
+      expected_subscriptions:merge(cluster:subscribe(mock_device))
+    end
+  end
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({mock_device.id, expected_subscriptions})
+end
+
+local function handle_do_configure_event_for_plug(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  test.socket.matter:__expect_send({mock_device.id, clusters.LevelControl.attributes.Options:write(mock_device, dimmable_child_plug_ep_id, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)})
+  mock_device:expect_metadata_update({ profile = "plug-binary" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Plug 2",
+    profile = "plug-level",
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", dimmable_child_plug_ep_id)
+  })
+end
+
+test.register_coroutine_test(
+  "Plug: Handle initial init lifecycle event, before children are created",
+  function()
+    handle_init_event_for_plug(mock_plug)
+    test.wait_for_events()
+    assert(mock_plug:get_field(fields.profiling_data.POWER_TOPOLOGY) == false, "Device should be marked as not needing to configure power topology")
+    assert(mock_plug:get_field(fields.profiling_data.BATTERY_SUPPORT) == fields.battery_support.NO_BATTERY, "Device should be marked as having no battery")
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_plug)
+    end,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Plug: Handle doConfigure lifecycle event",
+  function()
+    mock_plug:set_field(fields.profiling_data.BATTERY_SUPPORT, false, { persist = true })
+    mock_plug:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
+    handle_do_configure_event_for_plug(mock_plug)
+    test.wait_for_events()
+    local FIND_CHILD_KEY = "__find_child_fn"
+    assert(type(mock_plug:get_field(FIND_CHILD_KEY)) == "function", "Child find function should be stored in doConfigure")
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_plug)
+    end,
+    min_api_version = 17
+  }
+)
+
+
+local overriden_plug_child_ep_id = 30
+
+-- This device overrides both its parent and child profiles to become the Switch category
+local mock_plug_profile_override = test.mock_device.build_test_matter_device({
+  label = "Matter Plug",
+  profile = t_utils.get_profile_definition("switch-binary.yml"),
+  manufacturer_info = { vendor_id = 0x1321, product_id = 0x000C }, -- this Sonoff device has an overloaded profile only for its children
+  endpoints = {
+    root_endpoint,
+    {
+      endpoint_id = parent_ep_id,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT, device_type_revision = 2}
+      }
+    },
+    {
+      endpoint_id = overriden_plug_child_ep_id,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.ON_OFF_PLUG_IN_UNIT, device_type_revision = 2}
+      }
+    },
+  }
+})
+
+
+local function handle_do_configure_event_for_plug_with_profile_override(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
+  mock_device:expect_metadata_update({ profile = "switch-binary" })
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+  mock_device:expect_device_create({
+    type = "EDGE_CHILD",
+    label = "Matter Plug 2",
+    profile = "switch-binary", -- overriden profile for Sonoff device
+    parent_device_id = mock_device.id,
+    parent_assigned_child_key = string.format("%d", overriden_plug_child_ep_id)
+  })
+end
+
+test.register_coroutine_test(
+  "Plug with Overriden Profile: Handle doConfigure lifecycle event",
+  function()
+    mock_plug_profile_override:set_field(fields.profiling_data.BATTERY_SUPPORT, false, { persist = true })
+    mock_plug_profile_override:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
+    handle_do_configure_event_for_plug_with_profile_override(mock_plug_profile_override)
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_plug_profile_override)
+    end,
+    min_api_version = 17
+  }
+)
+
+local mock_switch = test.mock_device.build_test_matter_device({
+  label = "Matter Switch",
+  profile = t_utils.get_profile_definition("matter-thing.yml"),
+  manufacturer_info = generic_manufacturer_info,
+  matter_version = generic_matter_version,
+  endpoints = {
+    root_endpoint,
+    {
+      endpoint_id = 7,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.SWITCH.DIMMER, device_type_revision = 1}
+      }
+    },
+    {
+      endpoint_id = 10,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT, device_type_revision = 1}
+      }
+    },
+    {
+      endpoint_id = 20, -- this endpoint should not generate a child device since it only has a client OnOff cluster
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "CLIENT", cluster_revision = 1, feature_map = 0},
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.SWITCH.ON_OFF_LIGHT, device_type_revision = 1}
+      }
+    },
+    {
+      endpoint_id = 30, -- this endpoint should profile correctly, though it is not a switch
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = fields.DEVICE_TYPE_ID.LIGHT.ON_OFF, device_type_revision = 2}
+      }
+    },
+    {
+      endpoint_id = 40, -- this endpoint should generate a switch-binary child device since it has a SERVER OnOff cluster,though the device type is unknown.
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER", cluster_revision = 1, feature_map = 0},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2}
+      },
+      device_types = {
+        {device_type_id = 0x0304, device_type_revision = 2} -- Pump Controller
+      }
+    }
+  }
+})
+
+test.register_coroutine_test(
+  "Switch Profile: Handle doConfigure lifecycle event",
+  function()
+    mock_switch:set_field(fields.profiling_data.BATTERY_SUPPORT, false, { persist = true })
+    mock_switch:set_field(fields.profiling_data.POWER_TOPOLOGY, false, { persist = true })
+    test.socket.device_lifecycle:__queue_receive({ mock_switch.id, "doConfigure" })
+    test.socket.matter:__expect_send({ mock_switch.id, clusters.LevelControl.attributes.Options:write(mock_switch, 7, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF) })
+    test.socket.matter:__expect_send({ mock_switch.id, clusters.LevelControl.attributes.Options:write(mock_switch, 40, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF) })
+    mock_switch:expect_metadata_update({ profile = "switch-level" })
+    mock_switch:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+
+    mock_switch:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Matter Switch 2",
+      profile = "switch-binary",
+      parent_device_id = mock_switch.id,
+      parent_assigned_child_key = string.format("%d", 10)
+    })
+
+    -- client cluster only endpoint (20) should not generate a child device
+
+    mock_switch:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Matter Switch 3",
+      profile = "light-binary",
+      parent_device_id = mock_switch.id,
+      parent_assigned_child_key = string.format("%d", 30)
+    })
+
+    mock_switch:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Matter Switch 4",
+      profile = "switch-binary",
+      parent_device_id = mock_switch.id,
+      parent_assigned_child_key = string.format("%d", 40)
+    })
+  end,
+  {
+    test_init = function() test.mock_device.add_test_device(mock_switch) end,
     min_api_version = 17
   }
 )
