@@ -1,0 +1,6 @@
+name: 'Zigbee Keypad'
+packageKey: 'zigbee-keypad'
+permissions:
+  zigbee: {}
+description: "SmartThings driver for Zigbee keypad devices"
+vendorSupportInformation: "https://support.smartthings.com"

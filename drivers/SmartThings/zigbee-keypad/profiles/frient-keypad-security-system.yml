@@ -1,0 +1,129 @@
+name: frient-keypad-security-system
+components:
+- id: main
+  capabilities:
+  - id: securitySystem
+    version: 1
+  - id: lockCodes
+    version: 1
+  - id: battery
+    version: 1
+  - id: tamperAlert
+    version: 1
+  - id: refresh
+    version: 1
+  - id: mode
+    version: 1
+  - id: panicAlarm
+    version: 1
+  categories:
+  - name: SecurityPanel
+preferences:
+  - name: mode
+    title: Control Security System or Mode
+    description: "Choose whether to use the keypad to control Security System Status (Arm/Disarm) or Mode Status (Lock/Unlock)."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Security System Status"
+        1: "Mode Status"
+      default: 0
+  - name: pinMap
+    title: Add PIN code(s)
+    description: "Format: 1234:Alice,4321:Bob (other format will not be accepted). Only PIN(s) present in this setting are recognized."
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      default: ""
+  - name: rfidMap
+    title: Add RFID(s)
+    description: "Format: +ABCD1234:Alice,+EFGH5678:Bob (other format will not be accepted, the + prefix is required). Only RFID(s) present in this setting are recognized."
+    required: false
+    preferenceType: string
+    definition:
+      stringType: text
+      default: ""
+  - name: showPinSnapshot
+    title: Show PIN Snapshot
+    description: "Display the current PIN/RFID list in the device history after adding them (sensitive)."
+    required: false
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: minCodeLength
+    title: Minimal PIN Length
+    description: "Minimal allowed PIN length."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 32
+      default: 4
+  - name: maxCodeLength
+    title: Maximal PIN Length
+    description: "Maximal allowed PIN length."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 32
+      default: 15
+  - name: exitDelay
+    title: Exit Delay
+    description: "Turn on exit delay when arming away. Duration in seconds can be set in the 'Exit Delay Duration' setting."
+    required: false
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: duration
+    title: Exit Delay Duration
+    description: "Exit delay duration in seconds."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 0
+      maximum: 30
+      default: 5
+  - name: autoArmDisarmMode
+    title: Auto Arm/Disarm Mode
+    description: "Automatically arm/disarm (lock/unlock) without pressing a function button on a keypad. Options: 'Disabled', 'RFID', 'PIN'."
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "RFID"
+        2: "PIN"
+      default: 0
+  - name: autoDisarmModeSetting
+    title: Auto Disarm/Unlock Mode Setting
+    description: "When Auto Arm/Disarm Mode is set to 'PIN' or 'RFID', automatically disarm when a valid PIN/RFID is used."
+    required: false
+    preferenceType: boolean
+    definition:
+      default: false
+  - name: autoArmModeSetting
+    title: Auto Arm/Lock Mode Setting
+    description: "When Auto Arm/Disarm Mode is set to 'PIN' or 'RFID', automatically arm in one of the following modes: 'Disabled', 'Arm Stay', 'Arm Away'. Any option other than 'Disabled' allows to lock while controlling Mode Status. "
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "Disabled"
+        1: "Arm Away"
+        3: "Arm Stay"
+      default: 0
+  - name: pinLengthSetting
+    title: PIN length to auto arm/disarm
+    description: "When Auto Arm/Disarm Mode is set to 'PIN', the length of PINs that will trigger auto arm/disarm (lock/unlock)."
+    required: false
+    preferenceType: integer
+    definition:
+      minimum: 1
+      maximum: 32
+      default: 4
+metadata:
+  mnmn: SmartThings
+  vid: SmartThings-smartthings-frient_Keypad

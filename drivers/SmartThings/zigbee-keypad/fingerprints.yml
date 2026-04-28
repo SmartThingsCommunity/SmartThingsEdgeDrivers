@@ -1,0 +1,21 @@
+zigbeeManufacturer:
+  - id: "frient A/S/KEPZB-110"
+    deviceLabel: "frient Intelligent Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-110
+    deviceProfileName: frient-keypad-security-system
+  - id: "frient A/S/KEPZB-112"
+    deviceLabel: "frient Alarm Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-112
+    deviceProfileName: frient-keypad-security-system
+  - id: "frient A/S/KEPZB-120"
+    deviceLabel: "frient Intelligent Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-120
+    deviceProfileName: frient-keypad-security-system
+  - id: "frient A/S/KEPZB-122"
+    deviceLabel: "frient Alarm Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-122
+    deviceProfileName: frient-keypad-security-system
