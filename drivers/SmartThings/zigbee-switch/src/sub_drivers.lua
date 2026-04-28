@@ -37,5 +37,6 @@ return {
     lazy_load_if_possible("frient"),
     lazy_load_if_possible("frient-IO"),
     lazy_load_if_possible("color_temp_range_handlers"),
+    lazy_load_if_possible("thirdreality-dual-plug"),
     lazy_load_if_possible("stateless_handlers")
 }
