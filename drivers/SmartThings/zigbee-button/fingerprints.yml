@@ -244,6 +244,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSB22BZ
     deviceProfileName: one-button-battery
+  - id: "Third Reality/3RSB01085Z"
+    deviceLabel: ThirdReality Smart Button ZB2
+    manufacturer: Third Reality, Inc
+    model: 3RSB01085Z
+    deviceProfileName: thirdreality-three-button
   - id: Samsung/SAMSUNG-ITM-Z-005
     deviceLabel: ITM Switch
     manufacturer: Samsung Electronics
