@@ -53,7 +53,7 @@ local devices = {
       }
     }
   },
-  EWELINK_HUMIDITY_TEMP_SENSOR = {
+  EWELINK_SONOFF_HUMIDITY_TEMP_SENSOR = {
     FINGERPRINTS = {
       { mfr = "eWeLink", model = "TH01" },
       { mfr = "eWeLink", model = "SNZB-02P" },
