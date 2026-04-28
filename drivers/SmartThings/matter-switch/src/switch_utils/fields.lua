@@ -34,7 +34,7 @@ SwitchFields.DEVICE_TYPE_ID = {
   CAMERA = 0x0142,
   CHIME = 0x0146,
   DIMMABLE_PLUG_IN_UNIT = 0x010B,
-  DOORBELL = 0x0143,
+  DOORBELL = 0x0148,
   ELECTRICAL_SENSOR = 0x0510,
   FAN = 0x002B,
   GENERIC_SWITCH = 0x000F,
@@ -158,6 +158,8 @@ SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
   BATTERY_SUPPORT = "__battery_support",
+  STATUS_LIGHT_ENABLED_PRESENT = "__status_light_enabled_present",
+  STATUS_LIGHT_BRIGHTNESS_PRESENT = "__status_light_brightness_present",
 }
 
 SwitchFields.battery_support = {

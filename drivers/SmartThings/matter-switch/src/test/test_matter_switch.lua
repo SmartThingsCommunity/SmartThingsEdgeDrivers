@@ -154,7 +154,6 @@ local function test_init()
     end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   -- note that since disable_startup_messages is not explicitly called here,
   -- the following subscribe is due to the init event sent by the test framework.
@@ -172,7 +171,6 @@ local function test_init_x_y_color_mode()
     end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
@@ -187,7 +185,6 @@ local function test_init_no_hue_sat()
     end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device_no_hue_sat.id, "added" })
-  test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
 
   test.socket.matter:__expect_send({mock_device_no_hue_sat.id, subscribe_request})
   test.mock_device.add_test_device(mock_device_no_hue_sat)
@@ -215,7 +212,6 @@ local function test_init_color_temp()
   end
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "added" })
-  test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_color_temp.id, "init" })
   test.socket.matter:__expect_send({mock_device_color_temp.id, subscribe_request})
@@ -241,7 +237,6 @@ local function test_init_extended_color()
       subscribe_request:merge(cluster:subscribe(mock_device_extended_color))
     end
   end
-  test.socket.matter:__expect_send({mock_device_extended_color.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "added" })
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_extended_color.id, "init" })

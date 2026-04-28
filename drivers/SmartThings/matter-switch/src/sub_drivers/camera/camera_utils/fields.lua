@@ -14,8 +14,6 @@ CameraFields.MAX_RESOLUTION = "__max_resolution"
 CameraFields.MIN_RESOLUTION = "__min_resolution"
 CameraFields.TRIGGERED_ZONES = "__triggered_zones"
 CameraFields.DPTZ_VIEWPORTS = "__dptz_viewports"
-CameraFields.STATUS_LIGHT_ENABLED_PRESENT = "__status_light_enabled_present"
-CameraFields.STATUS_LIGHT_BRIGHTNESS_PRESENT = "__status_light_brightness_present"
 
 CameraFields.CameraAVSMFeatureMapAttr = { ID = 0xFFFC, cluster = clusters.CameraAvStreamManagement.ID }
 CameraFields.CameraAVSULMFeatureMapAttr = { ID = 0xFFFC, cluster = clusters.CameraAvSettingsUserLevelManagement.ID }

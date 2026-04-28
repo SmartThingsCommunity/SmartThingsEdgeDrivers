@@ -21,15 +21,15 @@ local SwitchDeviceConfiguration = {}
 local ButtonDeviceConfiguration = {}
 local FanDeviceConfiguration = {}
 
-function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn)
+function ChildConfiguration.create_or_update_child_devices(driver, device, server_cluster_ep_ids, default_endpoint_id, assign_profile_fn, label_prefix)
+  table.sort(server_cluster_ep_ids)
   if #server_cluster_ep_ids == 1 and server_cluster_ep_ids[1] == default_endpoint_id then -- no children will be created
     return
   end
 
-  table.sort(server_cluster_ep_ids)
   for device_num, ep_id in ipairs(server_cluster_ep_ids) do
     if ep_id ~= default_endpoint_id then -- don't create a child device that maps to the main endpoint
-      local label_and_name = string.format("%s %d", device.label, device_num)
+      local label_and_name = string.format("%s %d", label_prefix or device.label, device_num)
       local child_profile, _ = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
@@ -205,14 +205,25 @@ end
 function DeviceConfiguration.match_profile(driver, device)
   if profiling_data_still_required(device) then return end
 
-  local default_endpoint_id = switch_utils.find_default_endpoint(device)
+  local default_endpoint_id, default_device_type = switch_utils.find_default_endpoint(device)
   local optional_component_capabilities
   local updated_profile
 
+  -- TODO: we only check this early for "Floodlight" labeling purposes,
+  -- but ideally that should be identified with a Floodlight Camera device type check
+  local camera_ep_ids = {}
+  if version.api >= 16 and version.rpc >= 10 then
+    camera_ep_ids = switch_utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.CAMERA)
+  end
+
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
-    ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
+    local label_prefix = #camera_ep_ids > 0 and "Floodlight" or nil -- if there's a camera EP, it's likely this OnOff EP is for a floodlight, so label the child device accordingly
+    ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep, label_prefix)
   end
+
+  -- Allow Bridges to create child on/off devices, but don't attempt to re-profile the main Bridge device.
+  if default_device_type == fields.DEVICE_TYPE_ID.AGGREGATOR then return end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
@@ -245,13 +256,23 @@ function DeviceConfiguration.match_profile(driver, device)
   -- initialize the main device card with buttons if applicable
   local momentary_switch_ep_ids = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
   if switch_utils.tbl_contains(fields.STATIC_BUTTON_PROFILE_SUPPORTED, #momentary_switch_ep_ids) then
-    updated_profile = ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, #momentary_switch_ep_ids)
-    -- All button endpoints found will be added as additional components in the profile containing the default_endpoint_id.
-    ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momentary_switch_ep_ids)
+    if #camera_ep_ids == 0 then
+      -- the Doorbell device type, which is a superset of the Generic Switch device type, is handled later on as a subset of the the camera profiling logic.
+      updated_profile = ButtonDeviceConfiguration.update_button_profile(device, default_endpoint_id, #momentary_switch_ep_ids)
+      -- All button endpoints found will be added as additional components in the profile containing the default_endpoint_id.
+      ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momentary_switch_ep_ids)
+    end
     ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
   end
 
+  if #camera_ep_ids > 0 then
+    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
+    updated_profile, optional_component_capabilities = camera_cfg.assign_profile_for_camera_ep(device, camera_ep_ids[1])
+    if not updated_profile then return false end
+  end
+
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
+  return updated_profile ~= nil
 end
 
 return {

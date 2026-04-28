@@ -5,69 +5,15 @@
 -- Matter Camera Sub Driver
 -------------------------------------------------------------------------------------
 
-local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
-local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
-local camera_fields = require "sub_drivers.camera.camera_utils.fields"
-local camera_utils = require "sub_drivers.camera.camera_utils.utils"
 local capabilities = require "st.capabilities"
-local capability_handlers = require "sub_drivers.camera.camera_handlers.capability_handlers"
 local clusters = require "st.matter.clusters"
+local camera_fields = require "sub_drivers.camera.camera_utils.fields"
+local attribute_handlers = require "sub_drivers.camera.camera_handlers.attribute_handlers"
+local capability_handlers = require "sub_drivers.camera.camera_handlers.capability_handlers"
 local event_handlers = require "sub_drivers.camera.camera_handlers.event_handlers"
-local fields = require "switch_utils.fields"
-local switch_utils = require "switch_utils.utils"
-
-local CameraLifecycleHandlers = {}
-
-function CameraLifecycleHandlers.device_init(driver, device)
-  device:set_component_to_endpoint_fn(camera_utils.component_to_endpoint)
-  device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
-  device:extend_device("emit_event_for_endpoint", switch_utils.emit_event_for_endpoint)
-  if device:get_field(fields.IS_PARENT_CHILD_DEVICE) then
-    device:set_find_child(switch_utils.find_child)
-  end
-  device:extend_device("subscribe", camera_utils.subscribe)
-  device:subscribe()
-end
-
-function CameraLifecycleHandlers.do_configure(driver, device)
-  camera_utils.update_camera_component_map(device)
-  if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
-    camera_cfg.match_profile(device)
-  end
-  camera_cfg.create_child_devices(driver, device)
-  camera_cfg.initialize_camera_capabilities(device)
-end
-
-function CameraLifecycleHandlers.driver_switched(driver, device)
-  camera_utils.update_camera_component_map(device)
-  if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
-    camera_cfg.match_profile(device)
-  end
-end
-
-function CameraLifecycleHandlers.info_changed(driver, device, event, args)
-  local software_version_changed = device.matter_version ~= nil and args.old_st_store.matter_version ~= nil and
-    device.matter_version.software ~= args.old_st_store.matter_version.software
-  local profile_changed = not switch_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true })
-
-  if software_version_changed then
-    camera_cfg.reconcile_profile_and_capabilities(device)
-  elseif profile_changed then
-    camera_cfg.reinitialize_changed_camera_capabilities_and_subscriptions(device, args.old_st_store.profile, device.profile)
-  end
-end
-
-function CameraLifecycleHandlers.added() end
 
 local camera_handler = {
   NAME = "Camera Handler",
-  lifecycle_handlers = {
-    init = CameraLifecycleHandlers.device_init,
-    infoChanged = CameraLifecycleHandlers.info_changed,
-    doConfigure = CameraLifecycleHandlers.do_configure,
-    driverSwitched = CameraLifecycleHandlers.driver_switched,
-    added = CameraLifecycleHandlers.added
-  },
   matter_handlers = {
     attr = {
       [clusters.CameraAvStreamManagement.ID] = {

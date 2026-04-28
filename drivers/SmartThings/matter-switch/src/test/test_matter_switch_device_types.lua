@@ -513,7 +513,6 @@ local function test_init_switch_vendor_override()
   test.mock_device.add_test_device(mock_device_switch_vendor_override)
   local subscribe_request = clusters.OnOff.attributes.OnOff:subscribe(mock_device_switch_vendor_override)
   test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "added" })
-  test.socket.matter:__expect_send({mock_device_switch_vendor_override.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "init" })
   test.socket.matter:__expect_send({mock_device_switch_vendor_override.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_switch_vendor_override.id, "doConfigure" })
@@ -533,7 +532,6 @@ local function test_init_mounted_on_off_control()
     end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "added" })
-  test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_on_off_control.id, "init" })
   test.socket.matter:__expect_send({mock_device_mounted_on_off_control.id, subscribe_request})
@@ -562,7 +560,6 @@ local function test_init_mounted_dimmable_load_control()
     end
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "added" })
-  test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_mounted_dimmable_load_control.id, "init" })
   test.socket.matter:__expect_send({mock_device_mounted_dimmable_load_control.id, subscribe_request})
@@ -592,7 +589,6 @@ local function test_init_parent_child_different_types()
   }
   local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_parent_child_different_types)
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "added" })
-  test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_parent_child_different_types.id, "init" })
   test.socket.matter:__expect_send({mock_device_parent_child_different_types.id, subscribe_request})
@@ -656,7 +652,6 @@ local function test_init_light_level_motion()
   end
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "added" })
-  test.socket.matter:__expect_send({mock_device_light_level_motion.id, subscribe_request})
 
   test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "init" })
   test.socket.matter:__expect_send({mock_device_light_level_motion.id, subscribe_request})

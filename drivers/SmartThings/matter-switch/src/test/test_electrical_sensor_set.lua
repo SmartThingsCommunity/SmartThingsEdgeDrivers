@@ -183,7 +183,6 @@ local function test_init()
   end
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
-  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 end
 test.set_test_init_function(test_init)
 
@@ -198,7 +197,6 @@ local function test_init_periodic()
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "added" })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.device_lifecycle:__queue_receive({ mock_device_periodic.id, "init" })
-  test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device_periodic.id, subscribe_request })
 end
 

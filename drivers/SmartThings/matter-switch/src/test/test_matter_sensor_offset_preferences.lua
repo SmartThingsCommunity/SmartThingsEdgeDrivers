@@ -42,17 +42,10 @@ local function test_init()
     test.mock_device.add_test_device(mock_device)
 
     local cluster_subscribe_list = {
-        clusters.Switch.events.InitialPress,
-        clusters.Switch.events.LongPress,
-        clusters.Switch.events.ShortRelease,
-        clusters.Switch.events.MultiPressComplete,
-
         clusters.TemperatureMeasurement.attributes.MeasuredValue,
         clusters.TemperatureMeasurement.attributes.MinMeasuredValue,
         clusters.TemperatureMeasurement.attributes.MaxMeasuredValue,
-
         clusters.RelativeHumidityMeasurement.attributes.MeasuredValue,
-        clusters.PowerSource.attributes.BatPercentRemaining
     }
 
     local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device)
@@ -63,7 +56,6 @@ local function test_init()
     end
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})

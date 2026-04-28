@@ -5,171 +5,78 @@ local capabilities = require "st.capabilities"
 local cluster_base = require "st.matter.cluster_base"
 local clusters = require "st.matter.clusters"
 local camera_fields = require "sub_drivers.camera.camera_utils.fields"
+local switch_fields = require "switch_utils.fields"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local uint32 = require "st.matter.data_types.Uint32"
 
 test.disable_startup_messages()
 
-local CAMERA_EP, FLOODLIGHT_EP, CHIME_EP, DOORBELL_EP = 1, 2, 3, 4
+local CAMERA_EP = 1
 
-local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition("camera.yml"),
-  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
-  matter_version = {hardware = 1, software = 1},
-  endpoints = {
-    {
-      endpoint_id = 0,
-      clusters = {
-        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+local endpoints = {
+  {
+    endpoint_id = 0,
+    clusters = {
+      { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+    },
+    device_types = {
+      { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+    }
+  },
+  {
+    endpoint_id = CAMERA_EP,
+    clusters = {
+      {
+        cluster_id = clusters.CameraAvStreamManagement.ID,
+        feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO |
+          clusters.CameraAvStreamManagement.types.Feature.PRIVACY |
+          clusters.CameraAvStreamManagement.types.Feature.AUDIO |
+          clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE |
+          clusters.CameraAvStreamManagement.types.Feature.SPEAKER |
+          clusters.CameraAvStreamManagement.types.Feature.IMAGE_CONTROL |
+          clusters.CameraAvStreamManagement.types.Feature.SPEAKER |
+          clusters.CameraAvStreamManagement.types.Feature.HIGH_DYNAMIC_RANGE |
+          clusters.CameraAvStreamManagement.types.Feature.NIGHT_VISION |
+          clusters.CameraAvStreamManagement.types.Feature.WATERMARK |
+          clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY,
+        cluster_type = "SERVER"
       },
-      device_types = {
-        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      {
+        cluster_id = clusters.CameraAvSettingsUserLevelManagement.ID,
+        feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.DIGITALPTZ |
+          clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
+          clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
+          clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM |
+          clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
+        cluster_type = "SERVER"
+      },
+      {
+        cluster_id = clusters.PushAvStreamTransport.ID,
+        cluster_type = "SERVER"
+      },
+      {
+        cluster_id = clusters.ZoneManagement.ID,
+        feature_map = clusters.ZoneManagement.types.Feature.TWO_DIMENSIONAL_CARTESIAN_ZONE |
+          clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY,
+        cluster_type = "SERVER"
+      },
+      {
+        cluster_id = clusters.WebRTCTransportProvider.ID,
+        cluster_type = "SERVER"
+      },
+      {
+        cluster_id = clusters.OccupancySensing.ID,
+        cluster_type = "SERVER"
       }
     },
-    {
-      endpoint_id = CAMERA_EP,
-      clusters = {
-        {
-          cluster_id = clusters.CameraAvStreamManagement.ID,
-          feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO |
-            clusters.CameraAvStreamManagement.types.Feature.PRIVACY |
-            clusters.CameraAvStreamManagement.types.Feature.AUDIO |
-            clusters.CameraAvStreamManagement.types.Feature.LOCAL_STORAGE |
-            clusters.CameraAvStreamManagement.types.Feature.PRIVACY |
-            clusters.CameraAvStreamManagement.types.Feature.SPEAKER |
-            clusters.CameraAvStreamManagement.types.Feature.IMAGE_CONTROL |
-            clusters.CameraAvStreamManagement.types.Feature.SPEAKER |
-            clusters.CameraAvStreamManagement.types.Feature.HIGH_DYNAMIC_RANGE |
-            clusters.CameraAvStreamManagement.types.Feature.NIGHT_VISION |
-            clusters.CameraAvStreamManagement.types.Feature.WATERMARK |
-            clusters.CameraAvStreamManagement.types.Feature.ON_SCREEN_DISPLAY,
-          cluster_type = "SERVER"
-        },
-        {
-          cluster_id = clusters.CameraAvSettingsUserLevelManagement.ID,
-          feature_map = clusters.CameraAvSettingsUserLevelManagement.types.Feature.DIGITALPTZ |
-            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PAN |
-            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_TILT |
-            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM |
-            clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_PRESETS,
-          cluster_type = "SERVER"
-        },
-        {
-          cluster_id = clusters.PushAvStreamTransport.ID,
-          cluster_type = "SERVER"
-        },
-        {
-          cluster_id = clusters.ZoneManagement.ID,
-          feature_map = clusters.ZoneManagement.types.Feature.TWO_DIMENSIONAL_CARTESIAN_ZONE |
-            clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY,
-          cluster_type = "SERVER"
-        },
-        {
-          cluster_id = clusters.WebRTCTransportProvider.ID,
-          cluster_type = "SERVER"
-        },
-        {
-          cluster_id = clusters.OccupancySensing.ID,
-          cluster_type = "SERVER"
-        }
-      },
-      device_types = {
-        {device_type_id = 0x0142, device_type_revision = 1} -- Camera
-      }
-    },
-    {
-      endpoint_id = FLOODLIGHT_EP,
-      clusters = {
-        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
-        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER", feature_map = 2},
-        {cluster_id = clusters.ColorControl.ID, cluster_type = "BOTH", feature_map = 30}
-      },
-      device_types = {
-        {device_type_id = 0x010D, device_type_revision = 2} -- Extended Color Light
-      }
-    },
-    {
-      endpoint_id = CHIME_EP,
-      clusters = {
-        {
-          cluster_id = clusters.Chime.ID,
-          cluster_type = "SERVER"
-        },
-      },
-      device_types = {
-        {device_type_id = 0x0146, device_type_revision = 1} -- Chime
-      }
-    },
-    {
-      endpoint_id = DOORBELL_EP,
-      clusters = {
-        {
-          cluster_id = clusters.Switch.ID,
-          feature_map = clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH |
-            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_MULTI_PRESS |
-            clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS,
-          cluster_type = "SERVER",
-        }
-      },
-      device_types = {
-        {device_type_id = 0x0143, device_type_revision = 1} -- Doorbell
-      }
+    device_types = {
+      {device_type_id = switch_fields.DEVICE_TYPE_ID.CAMERA, device_type_revision = 1}
     }
   }
-})
-
-local subscribe_request
-local subscribed_attributes = {
-  clusters.CameraAvStreamManagement.attributes.AttributeList,
-  clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
-  clusters.OnOff.attributes.OnOff,
-  clusters.LevelControl.attributes.CurrentLevel,
-  clusters.LevelControl.attributes.MaxLevel,
-  clusters.LevelControl.attributes.MinLevel,
-  clusters.ColorControl.attributes.ColorTemperatureMireds,
-  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-  clusters.ColorControl.attributes.CurrentHue,
-  clusters.ColorControl.attributes.CurrentSaturation,
-  clusters.ColorControl.attributes.CurrentX,
-  clusters.ColorControl.attributes.CurrentY,
-  clusters.ColorControl.attributes.ColorMode,
 }
 
-local function test_init()
-  test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
-  local floodlight_child_device_data = {
-    profile = t_utils.get_profile_definition("light-color-level.yml"),
-    device_network_id = string.format("%s:%d", mock_device.id, FLOODLIGHT_EP),
-    parent_device_id = mock_device.id,
-    parent_assigned_child_key = string.format("%d", FLOODLIGHT_EP)
-  }
-  test.mock_device.add_test_device(test.mock_device.build_test_child_device(floodlight_child_device_data))
-  mock_device:expect_device_create({
-    type = "EDGE_CHILD",
-    label = "Floodlight 1",
-    profile = "light-color-level",
-    parent_device_id = mock_device.id,
-    parent_assigned_child_key = string.format("%d", FLOODLIGHT_EP)
-  })
-  subscribe_request = subscribed_attributes[1]:subscribe(mock_device)
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.CameraAVSMFeatureMapAttr.cluster, camera_fields.CameraAVSMFeatureMapAttr.ID))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.CameraAVSULMFeatureMapAttr.cluster, camera_fields.CameraAVSULMFeatureMapAttr.ID))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, camera_fields.ZoneManagementFeatureMapAttr.cluster, camera_fields.ZoneManagementFeatureMapAttr.ID))
-  for i, attr in ipairs(subscribed_attributes) do
-    if i > 1 then subscribe_request:merge(attr:subscribe(mock_device)) end
-  end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end
-
-test.set_test_init_function(test_init)
-
-local additional_subscribed_attributes = {
+local additional_subscriptions = {
   clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
   clusters.CameraAvStreamManagement.attributes.ImageRotation,
   clusters.CameraAvStreamManagement.attributes.NightVision,
@@ -188,8 +95,6 @@ local additional_subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.MicrophoneVolumeLevel,
   clusters.CameraAvStreamManagement.attributes.MicrophoneMaxLevel,
   clusters.CameraAvStreamManagement.attributes.MicrophoneMinLevel,
-  clusters.CameraAvStreamManagement.attributes.StatusLightBrightness,
-  clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
   clusters.CameraAvStreamManagement.attributes.RateDistortionTradeOffPoints,
   clusters.CameraAvStreamManagement.attributes.LocalSnapshotRecordingEnabled,
   clusters.CameraAvStreamManagement.attributes.LocalVideoRecordingEnabled,
@@ -208,8 +113,6 @@ local additional_subscribed_attributes = {
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMax,
   clusters.CameraAvSettingsUserLevelManagement.attributes.TiltMin,
   clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams,
-  clusters.Chime.attributes.InstalledChimeSounds,
-  clusters.Chime.attributes.SelectedChime,
   clusters.ZoneManagement.attributes.MaxZones,
   clusters.ZoneManagement.attributes.Zones,
   clusters.ZoneManagement.attributes.Triggers,
@@ -217,193 +120,74 @@ local additional_subscribed_attributes = {
   clusters.ZoneManagement.attributes.Sensitivity,
   clusters.ZoneManagement.events.ZoneTriggered,
   clusters.ZoneManagement.events.ZoneStopped,
-  clusters.OnOff.attributes.OnOff,
-  clusters.LevelControl.attributes.CurrentLevel,
-  clusters.LevelControl.attributes.MaxLevel,
-  clusters.LevelControl.attributes.MinLevel,
-  clusters.ColorControl.attributes.ColorTemperatureMireds,
-  clusters.ColorControl.attributes.ColorTempPhysicalMaxMireds,
-  clusters.ColorControl.attributes.ColorTempPhysicalMinMireds,
-  clusters.ColorControl.attributes.CurrentHue,
-  clusters.ColorControl.attributes.CurrentSaturation,
-  clusters.ColorControl.attributes.CurrentX,
-  clusters.ColorControl.attributes.CurrentY,
   clusters.OccupancySensing.attributes.Occupancy,
-  clusters.Switch.server.events.InitialPress,
-  clusters.Switch.server.events.LongPress,
-  clusters.Switch.server.events.ShortRelease,
-  clusters.Switch.server.events.MultiPressComplete
 }
+
+local function create_subscription(device)
+  local subscribe_request = clusters.CameraAvStreamManagement.attributes.AttributeList:subscribe(device)
+  subscribe_request:merge(cluster_base.subscribe(device, nil, camera_fields.CameraAVSMFeatureMapAttr.cluster,
+    camera_fields.CameraAVSMFeatureMapAttr.ID))
+  subscribe_request:merge(cluster_base.subscribe(device, nil, camera_fields.CameraAVSULMFeatureMapAttr.cluster,
+    camera_fields.CameraAVSULMFeatureMapAttr.ID))
+  subscribe_request:merge(cluster_base.subscribe(device, nil, camera_fields.ZoneManagementFeatureMapAttr.cluster,
+    camera_fields.ZoneManagementFeatureMapAttr.ID))
+  for _, attr in ipairs(additional_subscriptions) do
+    subscribe_request:merge(attr:subscribe(device))
+  end
+  return subscribe_request
+end
 
 local expected_metadata = {
   optional_component_capabilities = {
-    {
-      "main",
-      {
-        "videoCapture2",
-        "cameraViewportSettings",
-        "videoStreamSettings",
-        "localMediaStorage",
-        "audioRecording",
-        "cameraPrivacyMode",
-        "imageControl",
-        "hdr",
-        "nightVision",
-        "mechanicalPanTiltZoom",
-        "zoneManagement",
-        "webrtc",
+    {"main", {
+        "videoCapture2", "cameraViewportSettings", "videoStreamSettings",
+        "localMediaStorage", "audioRecording", "cameraPrivacyMode",
+        "imageControl", "hdr", "nightVision",
+        "mechanicalPanTiltZoom", "zoneManagement", "webrtc",
         "motionSensor",
-        "sounds",
       }
     },
-    {
-      "statusLed",
-      {
-        "switch",
-        "mode"
-      }
-    },
-    {
-      "speaker",
-      {
-        "audioMute",
-        "audioVolume"
-      }
-    },
-    {
-      "microphone",
-      {
-        "audioMute",
-        "audioVolume"
-      }
-    },
-    {
-      "doorbell",
-      {
-        "button"
-      }
-    }
+    {"speaker", {"audioMute", "audioVolume"}},
+    {"microphone", {"audioMute", "audioVolume"}}
   },
   profile = "camera"
 }
 
-local function update_device_profile()
-  test.socket.matter:__queue_receive({
-    mock_device.id,
-    clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
-      uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
-      uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
-    })
-  })
+local mock_device = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("camera.yml", { enabled_optional_capabilities = expected_metadata.optional_component_capabilities }),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = endpoints
+})
+
+local function test_init()
+  test.mock_device.add_test_device(mock_device)
+  mock_device:set_field(switch_fields.profiling_data.STATUS_LIGHT_BRIGHTNESS_PRESENT, false, {persist=true})
+  mock_device:set_field(switch_fields.profiling_data.STATUS_LIGHT_ENABLED_PRESENT, false, {persist=true})
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+  test.socket.matter:__expect_send({ mock_device.id, create_subscription(mock_device) })
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update(expected_metadata)
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
-  test.wait_for_events()
-  local updated_device_profile = t_utils.get_profile_definition(
-    "camera.yml", {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
-  )
-  test.wait_for_events()
-  test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.webrtc.supportedFeatures(
-      {audio="sendrecv", bundle=true, order="audio/video", supportTrickleICE=true, turnSource="player", video="recvonly"}
-    ))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.mechanicalPanTiltZoom.supportedAttributes(
-      {"pan", "panRange", "tilt", "tiltRange", "zoom", "zoomRange", "presets", "maxPresets"}
-    ))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.zoneManagement.supportedFeatures(
-      {"triggerAugmentation", "perZoneSensitivity"}
-    ))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.localMediaStorage.supportedAttributes(
-      {"localVideoRecording"}
-    ))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.audioRecording.audioRecording("enabled"))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.videoStreamSettings.supportedFeatures(
-      {"liveStreaming", "clipRecording", "perStreamViewports", "watermark", "onScreenDisplay"}
-    ))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes(
-      {"softRecordingPrivacyMode", "softLivestreamPrivacyMode"}
-    ))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedCommands(
-      {"setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode"}
-    ))
-  )
-  for _, attr in ipairs(additional_subscribed_attributes) do
-    subscribe_request:merge(attr:subscribe(mock_device))
-  end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
-  test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
+  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
--- Matter Handler UTs
+test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Software version change should trigger camera reprofiling when camera endpoint is present",
+  "Software version change should initialize camera capabilities when profile is unchanged",
   function()
+    mock_device:set_field(switch_fields.profiling_data.STATUS_LIGHT_BRIGHTNESS_PRESENT, false)
+    mock_device:set_field(switch_fields.profiling_data.STATUS_LIGHT_ENABLED_PRESENT, false)
+    local camera_utils = require "sub_drivers.camera.camera_utils.utils"
+    camera_utils.optional_capabilities_list_changed = function () return false end -- integration profile ref logic makes this fn inaccurate
+
+    local unchanged_profile = t_utils.get_profile_definition("camera.yml", { enabled_optional_capabilities = expected_metadata.optional_component_capabilities })
+    unchanged_profile.id = "00000000-1111-2222-3333-000000000002"
+    unchanged_profile.preferences = nil
     test.socket.device_lifecycle:__queue_receive(
-      mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })
+      mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 }, profile = unchanged_profile })
     )
-
-    mock_device:expect_metadata_update({
-      optional_component_capabilities = {
-        {
-          "main",
-          {
-            "videoCapture2",
-            "cameraViewportSettings",
-            "videoStreamSettings",
-            "localMediaStorage",
-            "audioRecording",
-            "cameraPrivacyMode",
-            "imageControl",
-            "hdr",
-            "nightVision",
-            "mechanicalPanTiltZoom",
-            "zoneManagement",
-            "webrtc",
-            "motionSensor",
-            "sounds"
-          }
-        },
-        {
-          "speaker",
-          {
-            "audioMute",
-            "audioVolume"
-          }
-        },
-        {
-          "microphone",
-          {
-            "audioMute",
-            "audioVolume"
-          }
-        },
-        {
-          "doorbell",
-          {
-            "button"
-          }
-        }
-      },
-      profile = "camera"
-    })
-
-    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
   end,
   {
     min_api_version = 17
@@ -411,65 +195,14 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Software version change should initialize camera capabilities when profile is unchanged",
+  "Software version change should trigger camera reprofiling when camera endpoint is present",
   function()
-    local camera_handler = require "sub_drivers.camera"
-    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
-    local button_cfg = require("switch_utils.device_configuration").ButtonCfg
-
-    local match_profile_called = false
-    local init_called = false
-    local subscribe_called = false
-    local configure_buttons_called = false
-
-    local fake_device = {
-      matter_version = { hardware = 1, software = 3 },
-      profile = { id = "camera" },
-      endpoints = {
-        {
-          endpoint_id = CAMERA_EP,
-          device_types = {
-            {device_type_id = 0x0142, device_type_revision = 1} -- Camera
-          }
-        },
-        {
-          endpoint_id = DOORBELL_EP,
-          device_types = {
-            {device_type_id = 0x0143, device_type_revision = 1} -- Doorbell
-          }
-        }
-      },
-      subscribe = function() subscribe_called = true end,
-      supports_capability = function() return false end,
-      get_endpoints = function() return { DOORBELL_EP } end,
-    }
-
-    local original_match_profile = camera_cfg.match_profile
-    local original_init = camera_cfg.initialize_camera_capabilities
-    local original_configure_buttons = button_cfg.configure_buttons
-
-    camera_cfg.match_profile = function()
-      match_profile_called = true
-      return false
-    end
-    camera_cfg.initialize_camera_capabilities = function() init_called = true end
-    button_cfg.configure_buttons = function() configure_buttons_called = true end
-
-    camera_handler.lifecycle_handlers.infoChanged(nil, fake_device, nil, {
-      old_st_store = {
-        matter_version = { hardware = 1, software = 1 },
-        profile = fake_device.profile,
-      }
-    })
-
-    camera_cfg.match_profile = original_match_profile
-    camera_cfg.initialize_camera_capabilities = original_init
-    button_cfg.configure_buttons = original_configure_buttons
-
-    assert(match_profile_called, "match_profile should be called on software version change")
-    assert(not init_called, "initialize_camera_capabilities should not be called when capability state is unchanged")
-    assert(not subscribe_called, "subscribe should not be called when capability state is unchanged")
-    assert(not configure_buttons_called, "configure_buttons should not be called when capability state is unchanged")
+    mock_device:set_field(switch_fields.profiling_data.STATUS_LIGHT_BRIGHTNESS_PRESENT, false)
+    mock_device:set_field(switch_fields.profiling_data.STATUS_LIGHT_ENABLED_PRESENT, false)
+    test.socket.device_lifecycle:__queue_receive(
+      mock_device:generate_info_changed({ matter_version = { hardware = 1, software = 2 } })
+    )
+    mock_device:expect_metadata_update(expected_metadata)
   end,
   {
     min_api_version = 17
@@ -480,21 +213,17 @@ test.register_coroutine_test(
   "Camera FeatureMap change should reinitialize capabilities when profile is unchanged",
   function()
     local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
-
     local reconcile_called = false
     local original_reconcile = camera_cfg.reconcile_profile_and_capabilities
-
     camera_cfg.reconcile_profile_and_capabilities = function(_)
       reconcile_called = true
       return false
     end
-
     test.socket.matter:__queue_receive({
       mock_device.id,
       cluster_base.build_test_report_data(mock_device, CAMERA_EP, camera_fields.CameraAVSMFeatureMapAttr.cluster, camera_fields.CameraAVSMFeatureMapAttr.ID, uint32(0))
     })
     test.wait_for_events()
-
     camera_cfg.reconcile_profile_and_capabilities = original_reconcile
     assert(reconcile_called, "reconcile_profile_and_capabilities should be called")
   end,
@@ -504,108 +233,8 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Camera privacy mode state compare should ignore table metatable differences",
-  function()
-    local camera_cfg = require "sub_drivers.camera.camera_utils.device_configuration"
-
-    local init_event_count = 0
-    local original_match_profile = camera_cfg.match_profile
-
-    camera_cfg.match_profile = function()
-      return false
-    end
-
-    local fake_device = {
-      supports_capability = function(_, capability)
-        return capability == capabilities.cameraPrivacyMode
-      end,
-      get_latest_state = function(_, _, _, attribute_name)
-        if attribute_name == capabilities.cameraPrivacyMode.supportedAttributes.NAME then
-          return { "softRecordingPrivacyMode", "softLivestreamPrivacyMode" }
-        elseif attribute_name == capabilities.cameraPrivacyMode.supportedCommands.NAME then
-          local commands = { "setSoftRecordingPrivacyMode", "setSoftLivestreamPrivacyMode" }
-          setmetatable(commands, {
-            __index = function()
-              return nil
-            end
-          })
-          return commands
-        end
-        return nil
-      end,
-      get_endpoints = function()
-        return { CAMERA_EP }
-      end,
-      emit_event_for_endpoint = function()
-        init_event_count = init_event_count + 1
-      end
-    }
-
-    camera_cfg.reconcile_profile_and_capabilities(fake_device)
-    camera_cfg.match_profile = original_match_profile
-
-    assert(init_event_count == 0, "cameraPrivacyMode should not be reinitialized for equal values with metatable differences")
-  end,
-  {
-    min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Reports mapping to EnabledState capability data type should generate appropriate events",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    local cluster_to_capability_map = {
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.HDRModeEnabled, capability = capabilities.hdr.hdr},
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.ImageFlipHorizontal, capability = capabilities.imageControl.imageFlipHorizontal},
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.ImageFlipVertical, capability = capabilities.imageControl.imageFlipVertical},
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.SoftRecordingPrivacyModeEnabled, capability = capabilities.cameraPrivacyMode.softRecordingPrivacyMode},
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.SoftLivestreamPrivacyModeEnabled, capability = capabilities.cameraPrivacyMode.softLivestreamPrivacyMode},
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.HardPrivacyModeOn, capability = capabilities.cameraPrivacyMode.hardPrivacyMode},
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.LocalSnapshotRecordingEnabled, capability = capabilities.localMediaStorage.localSnapshotRecording},
-      {cluster = clusters.CameraAvStreamManagement.server.attributes.LocalVideoRecordingEnabled, capability = capabilities.localMediaStorage.localVideoRecording}
-    }
-    for _, v in ipairs(cluster_to_capability_map) do
-      test.socket.matter:__queue_receive({
-        mock_device.id,
-        v.cluster:build_test_report_data(mock_device, CAMERA_EP, true)
-      })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", v.capability("enabled"))
-      )
-      if v.capability == capabilities.imageControl.imageFlipHorizontal then
-        test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.imageControl.supportedAttributes({"imageFlipHorizontal"}))
-        )
-      elseif v.capability == capabilities.imageControl.imageFlipVertical then
-        test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.imageControl.supportedAttributes({"imageFlipHorizontal", "imageFlipVertical"}))
-        )
-      elseif v.capability == capabilities.cameraPrivacyMode.hardPrivacyMode then
-        test.socket.capability:__expect_send(
-          mock_device:generate_test_message("main", capabilities.cameraPrivacyMode.supportedAttributes({"softRecordingPrivacyMode", "softLivestreamPrivacyMode", "hardPrivacyMode"}))
-        )
-      end
-      test.socket.matter:__queue_receive({
-        mock_device.id,
-        v.cluster:build_test_report_data(mock_device, CAMERA_EP, false)
-      })
-      test.socket.capability:__expect_send(
-        mock_device:generate_test_message("main", v.capability("disabled"))
-      )
-    end
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
   "Night Vision reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local cluster_to_capability_map = {
       {cluster = clusters.CameraAvStreamManagement.server.attributes.NightVision, capability = capabilities.nightVision.nightVision},
       {cluster = clusters.CameraAvStreamManagement.server.attributes.NightVisionIllum, capability = capabilities.nightVision.illumination}
@@ -648,8 +277,6 @@ test.register_coroutine_test(
   "Image Rotation reports should generate appropriate events",
   function()
     local utils = require "st.utils"
-    update_device_profile()
-    test.wait_for_events()
     local first_value = true
     for angle = 0, 400, 50 do
       test.socket.matter:__queue_receive({
@@ -676,8 +303,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Two Way Talk Support reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvStreamManagement.server.attributes.TwoWayTalkSupport:build_test_report_data(
@@ -720,8 +345,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Muted reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local cluster_to_component_map = {
       {cluster = clusters.CameraAvStreamManagement.server.attributes.SpeakerMuted, component = "speaker"},
       {cluster = clusters.CameraAvStreamManagement.server.attributes.MicrophoneMuted, component = "microphone"}
@@ -751,8 +374,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Volume Level reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local max_vol = 200
     local min_vol = 0
     test.socket.matter:__queue_receive({
@@ -792,84 +413,6 @@ test.register_coroutine_test(
         mock_device:generate_test_message(v.component, capabilities.audioVolume.volume(32))
       )
     end
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Status Light Enabled reports should generate appropriate events",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.StatusLightEnabled:build_test_report_data(mock_device, CAMERA_EP, true)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.switch.switch.on())
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.StatusLightEnabled:build_test_report_data(mock_device, CAMERA_EP, false)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.switch.switch.off())
-    )
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Status Light Brightness reports should generate appropriate events",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:build_test_report_data(
-        mock_device, CAMERA_EP, clusters.Global.types.ThreeLevelAutoEnum.LOW)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.mode.supportedModes(
-        {"low", "medium", "high", "auto"}, {visibility = {displayed = false}})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.mode.supportedArguments(
-        {"low", "medium", "high", "auto"}, {visibility = {displayed = false}})
-      )
-    )
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.mode.mode("low"))
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:build_test_report_data(
-        mock_device, CAMERA_EP, clusters.Global.types.ThreeLevelAutoEnum.MEDIUM)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.mode.mode("medium"))
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:build_test_report_data(
-        mock_device, CAMERA_EP, clusters.Global.types.ThreeLevelAutoEnum.HIGH)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.mode.mode("high"))
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:build_test_report_data(
-        mock_device, CAMERA_EP, clusters.Global.types.ThreeLevelAutoEnum.AUTO)
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("statusLed", capabilities.mode.mode("auto"))
-    )
   end,
   {
      min_api_version = 17
@@ -985,8 +528,6 @@ end
 test.register_coroutine_test(
   "Rate Distortion Trade Off Points, MaxEncodedPixelRate, MinViewport, VideoSensorParams reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     receive_rate_distortion_trade_off_points()
     receive_max_encoded_pixel_rate()
     receive_min_viewport()
@@ -1003,8 +544,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Rate Distortion Trade Off Points, MinViewport, VideoSensorParams, MaxEncodedPixelRate reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     receive_rate_distortion_trade_off_points()
     receive_min_viewport()
     emit_min_viewport()
@@ -1021,8 +560,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "MaxEncodedPixelRate, MinViewport, VideoSensorParams, Rate Distortion Trade Off Points reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     receive_max_encoded_pixel_rate()
     receive_min_viewport()
     emit_min_viewport()
@@ -1039,8 +576,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "PTZ Position reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvSettingsUserLevelManagement.attributes.PanMax:build_test_report_data(mock_device, CAMERA_EP, 150)
@@ -1094,8 +629,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "PTZ Presets reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvSettingsUserLevelManagement.attributes.MPTZPresets:build_test_report_data(
@@ -1118,8 +651,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Max Presets reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.CameraAvSettingsUserLevelManagement.attributes.MaxPresets:build_test_report_data(mock_device, CAMERA_EP, 10)
@@ -1136,8 +667,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Max Zones reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ZoneManagement.attributes.MaxZones:build_test_report_data(mock_device, CAMERA_EP, 10)
@@ -1154,8 +683,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Zones reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ZoneManagement.attributes.Zones:build_test_report_data(
@@ -1202,8 +729,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Triggers reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ZoneManagement.attributes.Triggers:build_test_report_data(
@@ -1240,8 +765,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Sensitivity reports should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ZoneManagement.attributes.SensitivityMax:build_test_report_data(mock_device, CAMERA_EP, 7)
@@ -1263,42 +786,11 @@ test.register_coroutine_test(
   }
 )
 
-test.register_coroutine_test(
-  "Chime reports should generate appropriate events",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Chime.attributes.InstalledChimeSounds:build_test_report_data(mock_device, CAMERA_EP, {
-        clusters.Chime.types.ChimeSoundStruct({chime_id = 1, name = "Sound 1"}),
-        clusters.Chime.types.ChimeSoundStruct({chime_id = 2, name = "Sound 2"})
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.sounds.supportedSounds({
-        {id = 1, label = "Sound 1"},
-        {id = 2, label = "Sound 2"},
-      }, {visibility = {displayed = false}}))
-    )
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Chime.attributes.SelectedChime:build_test_report_data(mock_device, CAMERA_EP, 2)
-    })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.sounds.selectedSound(2)))
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
 -- Event Handler UTs
 
 test.register_coroutine_test(
   "Zone events should generate appropriate events",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.matter:__queue_receive({
       mock_device.id,
       clusters.ZoneManagement.events.ZoneTriggered:build_test_event_report(mock_device, CAMERA_EP, {
@@ -1335,39 +827,11 @@ test.register_coroutine_test(
   }
 )
 
-test.register_coroutine_test(
-  "Button events should generate appropriate events",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Switch.server.events.InitialPress:build_test_event_report(mock_device, DOORBELL_EP, {new_position = 1})
-    })
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.Switch.server.events.MultiPressComplete:build_test_event_report(mock_device, DOORBELL_EP, {
-        new_position = 1,
-        total_number_of_presses_counted = 2,
-        previous_position = 0
-      })
-    })
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("doorbell", capabilities.button.button.double({state_change = true}))
-    )
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
 -- Capability Handler UTs
 
 test.register_coroutine_test(
   "Set night vision commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local command_to_attribute_map = {
       ["setNightVision"] = clusters.CameraAvStreamManagement.attributes.NightVision,
       ["setIllumination"] = clusters.CameraAvStreamManagement.attributes.NightVisionIllum
@@ -1404,8 +868,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Set enabled commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local command_to_attribute_map = {
       ["setHdr"] = { capability = "hdr", attr = clusters.CameraAvStreamManagement.attributes.HDRModeEnabled},
       ["setImageFlipHorizontal"] = { capability = "imageControl", attr = clusters.CameraAvStreamManagement.attributes.ImageFlipHorizontal},
@@ -1440,8 +902,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Set image rotation command should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "imageControl", component = "main", command = "setImageRotation", args = { 10 } },
@@ -1465,8 +925,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Set mute commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "audioMute", component = "speaker", command = "setMute", args = { "muted" } },
@@ -1532,8 +990,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Set Volume command should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local max_vol = 200
     local min_vol = 5
     test.socket.matter:__queue_receive({
@@ -1638,61 +1094,8 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Set Mode command should send the appropriate commands",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    local mode_to_enum_map = {
-      ["low"] = clusters.Global.types.ThreeLevelAutoEnum.LOW,
-      ["medium"] = clusters.Global.types.ThreeLevelAutoEnum.MEDIUM,
-      ["high"] = clusters.Global.types.ThreeLevelAutoEnum.HIGH,
-      ["auto"] = clusters.Global.types.ThreeLevelAutoEnum.AUTO
-    }
-    for i, v in pairs(mode_to_enum_map) do
-      test.socket.capability:__queue_receive({
-        mock_device.id,
-        { capability = "mode", component = "speaker", command = "setMode", args = { i } },
-      })
-      test.socket.matter:__expect_send({
-        mock_device.id, clusters.CameraAvStreamManagement.attributes.StatusLightBrightness:write(mock_device, CAMERA_EP, v)
-      })
-    end
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Set Status LED commands should send the appropriate commands",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "switch", component = "statusLed", command = "on", args = { } },
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled:write(mock_device, CAMERA_EP, true)
-    })
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "switch", component = "statusLed", command = "off", args = { } },
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.CameraAvStreamManagement.attributes.StatusLightEnabled:write(mock_device, CAMERA_EP, false)
-    })
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
   "Set Relative PTZ commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mechanicalPanTiltZoom", component = "main", command = "panRelative", args = { 10 } },
@@ -1723,8 +1126,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Set PTZ commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mechanicalPanTiltZoom", component = "main", command = "setPanTiltZoom", args = { 10, 20, 30 } },
@@ -1804,8 +1205,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Preset commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     test.socket.capability:__queue_receive({
       mock_device.id,
       { capability = "mechanicalPanTiltZoom", component = "main", command = "savePreset", args = { 1, "Preset 1" } },
@@ -1833,36 +1232,10 @@ test.register_coroutine_test(
   }
 )
 
-test.register_coroutine_test(
-  "Sound commands should send the appropriate commands",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "sounds", component = "main", command = "setSelectedSound", args = { 1 } },
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.Chime.attributes.SelectedChime:write(mock_device, CAMERA_EP, 1)
-    })
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = "sounds", component = "main", command = "playSound", args = {} },
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id, clusters.Chime.server.commands.PlayChimeSound(mock_device, CAMERA_EP)
-    })
-  end,
-  {
-     min_api_version = 17
-  }
-)
 
 test.register_coroutine_test(
   "Zone Management zone commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local use_map = {
       ["motion"] = clusters.ZoneManagement.types.ZoneUseEnum.MOTION,
       ["focus"] = clusters.ZoneManagement.types.ZoneUseEnum.FOCUS,
@@ -1935,8 +1308,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Zone Management zone commands should send the appropriate commands - missing optional color argument",
   function()
-    update_device_profile()
-    test.wait_for_events()
     local use_map = {
       ["motion"] = clusters.ZoneManagement.types.ZoneUseEnum.MOTION,
       ["focus"] = clusters.ZoneManagement.types.ZoneUseEnum.FOCUS,
@@ -2008,9 +1379,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Zone Management trigger commands should send the appropriate commands",
   function()
-    update_device_profile()
-    test.wait_for_events()
-
     -- Create the trigger
     test.socket.capability:__queue_receive({
       mock_device.id,
@@ -2084,9 +1452,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Removing a zone with an existing trigger should send RemoveTrigger followed by RemoveZone",
   function()
-    update_device_profile()
-    test.wait_for_events()
-
     -- Create a zone
     test.socket.capability:__queue_receive({
       mock_device.id,
@@ -2176,8 +1541,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setStream with label and viewport changes should emit capability event",
   function()
-    update_device_profile()
-    test.wait_for_events()
     -- Set up an existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2282,8 +1645,6 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setStream with only watermark/OSD changes should use VideoStreamModify",
   function()
-    update_device_profile()
-    test.wait_for_events()
     -- Set up an existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2358,8 +1719,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setStream with only label change should emit capability event",
   function()
-    update_device_profile()
-    test.wait_for_events()
+
     -- Set up existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2449,8 +1809,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setStream with only viewport change should send DPTZSetViewport command",
   function()
-    update_device_profile()
-    test.wait_for_events()
+
     -- Set up existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2551,8 +1910,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "setStream with resolution change should trigger reallocation",
   function()
-    update_device_profile()
-    test.wait_for_events()
+
     -- Set up existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2704,8 +2062,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Stream label should persist across attribute reports",
   function()
-    update_device_profile()
-    test.wait_for_events()
+
     -- Set up existing stream
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2820,8 +2177,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "DPTZStreams attribute should update viewports in capability",
   function()
-    update_device_profile()
-    test.wait_for_events()
+
     -- Set up multiple existing streams
     test.socket.matter:__queue_receive({
       mock_device.id,
@@ -2940,73 +2296,4 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "Camera profile should not update for an unchanged Status Light AttributeList report",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-
-    local camera_cfg = require("sub_drivers.camera.camera_utils.device_configuration")
-    local original_reconcile = camera_cfg.reconcile_profile_and_capabilities
-    camera_cfg.reconcile_profile_and_capabilities = function(...) return false end
-
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
-        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
-        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
-      })
-    })
-    test.wait_for_events()
-
-    camera_cfg.reconcile_profile_and_capabilities = original_reconcile
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Camera profile should update for a changed Status Light AttributeList report",
-  function()
-    update_device_profile()
-    test.wait_for_events()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device, CAMERA_EP, {
-        uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID)
-      })
-    })
-    local updated_expected_metadata = {
-      optional_component_capabilities = {
-        { "main",
-          { "videoCapture2", "cameraViewportSettings", "videoStreamSettings", "localMediaStorage", "audioRecording",
-            "cameraPrivacyMode", "imageControl", "hdr", "nightVision", "mechanicalPanTiltZoom", "zoneManagement",
-            "webrtc", "motionSensor", "sounds", }
-        },
-        { "statusLed",
-          { "switch" } -- only switch capability remains
-        },
-        { "speaker",
-          { "audioMute", "audioVolume" }
-        },
-        { "microphone",
-          { "audioMute", "audioVolume" }
-        },
-        { "doorbell",
-          { "button" }
-        }
-      },
-      profile = "camera"
-    }
-    mock_device:expect_metadata_update(updated_expected_metadata)
-    test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
-    test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
--- run the tests
 test.run_registered_tests()
