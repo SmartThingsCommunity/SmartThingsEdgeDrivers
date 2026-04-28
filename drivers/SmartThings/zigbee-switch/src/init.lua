@@ -86,6 +86,7 @@ local zigbee_switch_driver_template = {
     doConfigure = lazy_handler("lifecycle_handlers.do_configure"),
   },
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
   zigbee_switch_driver_template.supported_capabilities,
