@@ -81,6 +81,7 @@ local zigbee_water_driver_template = {
   ias_zone_configuration_method = constants.IAS_ZONE_CONFIGURE_TYPE.AUTO_ENROLL_RESPONSE,
   sub_drivers = require("sub_drivers"),
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_water_driver_template,
