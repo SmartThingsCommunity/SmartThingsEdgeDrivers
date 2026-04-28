@@ -4078,6 +4078,12 @@ matterManufacturer:
     vendorId: 0x1344
     productId: 0x041E
     deviceProfileName: matter-bridge
+#Tapo
+  - id: "5010/1027"
+    deviceLabel: Tapo Smart HomeBase
+    vendorId: 0x1392
+    productId: 0x0403
+    deviceProfileName: matter-bridge
 
 
 matterGeneric:
