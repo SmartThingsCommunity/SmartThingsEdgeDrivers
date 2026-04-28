@@ -20,6 +20,11 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x286A
     deviceProfileName: lock-user-pin
+  - id: "4447/10244"
+    deviceLabel: Aqara Smart Lock U400
+    vendorId: 0x115F
+    productId: 0x2804
+    deviceProfileName: lock-modular
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
