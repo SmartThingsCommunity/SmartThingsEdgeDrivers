@@ -143,13 +143,22 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
   table.sort(button_eps)
   local component_map = {}
   component_map["main"] = default_endpoint_id
+
+  local is_hager_vendor = (device.manufacturer_info.vendor_id == 0x1285)
+  local first_button_ep = button_eps[1]
+  if is_hager_vendor and first_button_ep ~= default_endpoint_id then
+    component_map["main"] = first_button_ep
+  end
+
   for component_num, ep in ipairs(button_eps) do
     if ep ~= default_endpoint_id then
-      local button_component = "button"
-      if #button_eps > 1 then
-        button_component = button_component .. component_num
+      if not (is_hager_vendor and ep == first_button_ep) then
+        local button_component = "button"
+        if #button_eps > 1 then
+          button_component = button_component .. component_num
+        end
+        component_map[button_component] = ep
       end
-      component_map[button_component] = ep
     end
   end
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
@@ -211,7 +220,24 @@ function DeviceConfiguration.match_profile(driver, device)
 
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
-    ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
+    if device.manufacturer_info.vendor_id == 0x1285 then
+    else
+      ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
+    end
+  end
+
+    -- Hager vendor override checks
+  if device.manufacturer_info.vendor_id == 0x1285 then
+    local product_override = fields.vendor_overrides[0x1285][device.manufacturer_info.product_id]
+    if product_override then
+      if product_override and device:supports_server_cluster(clusters.OccupancySensing.ID) then
+        return
+      end
+
+      if product_override and device:supports_server_cluster(clusters.WindowCovering.ID) then
+        return
+      end
+    end
   end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
