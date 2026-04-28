@@ -196,6 +196,7 @@ local zigbee_presence_driver = {
   zigbee_message_handler = all_zigbee_message_handler,
   sub_drivers = require("sub_drivers"),
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_presence_driver, zigbee_presence_driver.supported_capabilities)
