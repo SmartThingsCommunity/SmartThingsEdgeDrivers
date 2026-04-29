@@ -253,16 +253,11 @@ local function lock_state_handler(driver, device, value, zb_rx)
     local payload = string.sub(text, 4, string.len(text))
     local func_id = toValue(payload, 1, 1) .. "." .. toValue(payload, 2, 1) .. "." .. toValue(payload, 3, 2)
     local serial_num = toValue(msg, 3, 2)
-    local last_serial_num = device:get_field(SERIAL_NUM_RX) or 0
 
-    if serial_num > last_serial_num then
-      device:set_field(SERIAL_NUM_RX, serial_num)
-      if resource_id[func_id] then
-        resource_id[func_id].event_handler(driver, device, resource_id[func_id].event_name,
-          toValue(payload, 6, string.byte(payload, 5)))
-      end
-    else
-      request_generate_shared_key(device)
+    device:set_field(SERIAL_NUM_RX, serial_num)
+    if resource_id[func_id] then
+      resource_id[func_id].event_handler(driver, device, resource_id[func_id].event_name,
+        toValue(payload, 6, string.byte(payload, 5)))
     end
   end
 end
