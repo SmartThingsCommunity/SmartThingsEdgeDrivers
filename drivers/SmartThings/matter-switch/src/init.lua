@@ -43,7 +43,7 @@ function SwitchLifecycleHandlers.device_added(driver, device)
 end
 
 function SwitchLifecycleHandlers.do_configure(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     switch_cfg.set_device_control_options(device)
     device_cfg.match_profile(driver, device)
   elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
@@ -54,7 +54,7 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
 end
 
 function SwitchLifecycleHandlers.driver_switched(driver, device)
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     device_cfg.match_profile(driver, device)
   end
 end
@@ -71,7 +71,7 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
     end
   end
 
-  if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
+  if device.network_type == device_lib.NETWORK_TYPE_MATTER then
     if device.matter_version.software ~= args.old_st_store.matter_version.software then
       device_cfg.match_profile(driver, device)
     end

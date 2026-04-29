@@ -146,7 +146,7 @@ end
 --- find_default_endpoint is a helper function to handle situations where
 --- device does not have endpoint ids in sequential order from 1
 function utils.find_default_endpoint(device)
-  -- Buttons should not be set on the main component for the Aqara Climate Sensor W100,
+  -- Buttons should not be set on the main component for the Aqara Climate Sensor W100
   if utils.get_product_override_field(device, "is_climate_sensor_w100") then
     return device.MATTER_DEFAULT_ENDPOINT
   end
@@ -161,16 +161,22 @@ function utils.find_default_endpoint(device)
     return nil
   end
 
+  -- After camera, use aggregator as default if it is found
+  local aggregator_ep_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.AGGREGATOR)
+  if #aggregator_ep_ids > 0 then
+    return aggregator_ep_ids[1], fields.DEVICE_TYPE_ID.AGGREGATOR
+  end
+
   -- Return the first fan endpoint as the default endpoint if any is found
   local fan_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.FAN)
   if #fan_endpoint_ids > 0 then
-    return get_first_non_zero_endpoint(fan_endpoint_ids)
+    return get_first_non_zero_endpoint(fan_endpoint_ids), fields.DEVICE_TYPE_ID.FAN
   end
 
   -- Return the first water valve endpoint as the default endpoint if any is found
   local water_valve_endpoint_ids = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.WATER_VALVE)
   if #water_valve_endpoint_ids > 0 then
-    return get_first_non_zero_endpoint(water_valve_endpoint_ids)
+    return get_first_non_zero_endpoint(water_valve_endpoint_ids), fields.DEVICE_TYPE_ID.WATER_VALVE
   end
 
   -- If both onoff and momentary switch endpoints are present, check the device type on the first onoff
@@ -183,19 +189,19 @@ function utils.find_default_endpoint(device)
   if #onoff_ep_ids > 0 and #momentary_switch_ep_ids > 0 then
     local default_endpoint_id = get_first_non_zero_endpoint(onoff_ep_ids)
     if utils.device_type_supports_button_switch_combination(device, default_endpoint_id) then
-      return default_endpoint_id
+      return default_endpoint_id, fields.DEVICE_TYPE_ID.LIGHT.DIMMABLE
     else
       device.log.warn("The main switch endpoint does not contain a supported device type for a component configuration with buttons")
-      return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+      return get_first_non_zero_endpoint(momentary_switch_ep_ids), fields.DEVICE_TYPE_ID.GENERIC_SWITCH
     end
   elseif #onoff_ep_ids > 0 then
-    return get_first_non_zero_endpoint(onoff_ep_ids)
+    return get_first_non_zero_endpoint(onoff_ep_ids), fields.DEVICE_TYPE_ID.LIGHT.ON_OFF
   elseif #momentary_switch_ep_ids > 0 then
-    return get_first_non_zero_endpoint(momentary_switch_ep_ids)
+    return get_first_non_zero_endpoint(momentary_switch_ep_ids), fields.DEVICE_TYPE_ID.GENERIC_SWITCH
   end
 
   device.log.warn(string.format("Did not find default endpoint, will use endpoint %d instead", device.MATTER_DEFAULT_ENDPOINT))
-  return device.MATTER_DEFAULT_ENDPOINT
+  return device.MATTER_DEFAULT_ENDPOINT, utils.find_primary_device_type(utils.get_endpoint_info(device, device.MATTER_DEFAULT_ENDPOINT))
 end
 
 function utils.component_to_endpoint(device, component)
@@ -369,10 +375,6 @@ function utils.deep_equals(a, b, opts, seen)
   local mt_a = getmetatable(a)
   local mt_b = getmetatable(b)
   return utils.deep_equals(mt_a, mt_b, opts, seen)
-end
-
-function utils.detect_bridge(device)
-  return #utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.AGGREGATOR) > 0
 end
 
 --- Generalizes the 'get_latest_state' function to be callable with extra endpoint information, described below,
