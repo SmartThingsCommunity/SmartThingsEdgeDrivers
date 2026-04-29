@@ -63,7 +63,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -88,7 +88,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -112,7 +112,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -136,7 +136,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -160,7 +160,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -184,7 +184,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -208,7 +208,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -227,7 +227,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_inovelli_vzm30_sn:generate_info_changed({preferences = {notificationChild = true}}))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

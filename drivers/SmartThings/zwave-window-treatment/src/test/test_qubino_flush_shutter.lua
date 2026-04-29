@@ -76,7 +76,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -109,7 +109,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -142,7 +142,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -175,7 +175,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -208,7 +208,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -230,7 +230,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -264,7 +264,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -297,7 +297,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -325,7 +325,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -358,7 +358,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -383,7 +383,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -410,7 +410,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -437,7 +437,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -464,7 +464,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -491,7 +491,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -518,7 +518,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -563,7 +563,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -582,7 +582,7 @@ test.register_coroutine_test(
   mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter-venetian" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -601,7 +601,7 @@ test.register_coroutine_test(
     mock_qubino_flush_shutter:expect_metadata_update({ profile = "qubino-flush-shutter" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -623,7 +623,7 @@ test.register_coroutine_test(
     assert(targetValue == mock_qubino_flush_shutter.transient_store.shade_target, "driver should chache correct level value")
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -653,7 +653,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -686,7 +686,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -713,7 +713,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -739,7 +739,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -772,7 +772,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )

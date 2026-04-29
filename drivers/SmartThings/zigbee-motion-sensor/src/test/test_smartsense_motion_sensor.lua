@@ -69,7 +69,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -86,7 +86,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -103,7 +103,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -120,7 +120,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -136,7 +136,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -152,7 +152,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -169,7 +169,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({ value = -50, unit = "dBm" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -182,7 +182,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.signalStrength.rssi({value = -100, unit = 'dBm'})))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

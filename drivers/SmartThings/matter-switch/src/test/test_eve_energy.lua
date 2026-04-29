@@ -182,7 +182,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -215,7 +215,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -235,7 +235,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -250,7 +250,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -283,7 +283,7 @@ test.register_coroutine_test(
 
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -302,7 +302,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -329,7 +329,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -356,7 +356,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -395,7 +395,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -423,7 +423,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -450,7 +450,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -486,7 +486,7 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -580,7 +580,7 @@ test.register_coroutine_test(
     end,
     {
       test_init = test_init_electrical_sensor,
-      min_api_version = 19
+      min_api_version = 17
     }
 )
 

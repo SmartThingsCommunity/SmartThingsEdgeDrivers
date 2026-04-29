@@ -76,7 +76,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -118,7 +118,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -147,7 +147,7 @@ test.register_coroutine_test(
 
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -235,7 +235,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -273,7 +273,7 @@ test.register_coroutine_test(
 
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -333,7 +333,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -381,7 +381,7 @@ test.register_coroutine_test(
 
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -398,7 +398,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -458,7 +458,7 @@ test.register_coroutine_test(
             -- if group_id and scene_id are same, do nothing.
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -483,7 +483,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -501,7 +501,7 @@ test.register_coroutine_test(
             -- driver should do nothing.
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -521,7 +521,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -541,7 +541,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 

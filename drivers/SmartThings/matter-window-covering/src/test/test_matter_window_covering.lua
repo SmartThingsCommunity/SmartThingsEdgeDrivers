@@ -189,7 +189,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -222,7 +222,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -255,7 +255,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -288,7 +288,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -321,7 +321,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -354,7 +354,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -387,7 +387,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -420,7 +420,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -453,7 +453,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -486,7 +486,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -519,7 +519,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -552,7 +552,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -589,7 +589,7 @@ test.register_coroutine_test("WindowCovering OperationalStatus opening", functio
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -626,7 +626,7 @@ test.register_coroutine_test("WindowCovering OperationalStatus closing", functio
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -663,7 +663,7 @@ test.register_coroutine_test("WindowCovering OperationalStatus unknown", functio
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -681,7 +681,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -699,7 +699,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -717,7 +717,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -749,7 +749,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -765,7 +765,7 @@ test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -781,7 +781,7 @@ test.register_coroutine_test("WindowShade setShadeTiltLevel cmd handler", functi
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -799,7 +799,7 @@ test.register_coroutine_test("LevelControl CurrentLevel handler", function()
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -821,7 +821,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -844,7 +844,7 @@ test.register_coroutine_test("OperationalStatus report contains current position
   )
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -870,7 +870,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -886,7 +886,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "window-covering-tilt-battery" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -901,7 +901,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -911,7 +911,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_mains_powered,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -926,7 +926,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({profile = "window-covering-tilt-battery"})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1038,7 +1038,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1112,7 +1112,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1170,7 +1170,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1228,7 +1228,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

@@ -55,7 +55,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0000_messge})
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -79,7 +79,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -106,7 +106,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -128,7 +128,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -146,7 +146,7 @@ test.register_coroutine_test(
       capabilities.windowShade.windowShade.open()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -164,7 +164,7 @@ test.register_coroutine_test(
       capabilities.windowShade.windowShade.opening()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -182,7 +182,7 @@ test.register_coroutine_test(
       capabilities.windowShade.windowShade.closed()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -200,7 +200,7 @@ test.register_coroutine_test(
       capabilities.windowShade.windowShade.closing()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -218,7 +218,7 @@ test.register_coroutine_test(
       capabilities.windowShade.windowShade.partially_open()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

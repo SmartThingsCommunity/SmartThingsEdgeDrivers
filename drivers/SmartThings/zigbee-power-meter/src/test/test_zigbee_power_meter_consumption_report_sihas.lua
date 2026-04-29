@@ -100,7 +100,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -145,7 +145,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -209,7 +209,7 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -236,7 +236,7 @@ test.register_coroutine_test(
       test_init = function()
         -- no op to override auto device add on startup
       end,
-      min_api_version = 19
+      min_api_version = 17
     }
 )
 test.register_coroutine_test(
@@ -254,7 +254,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -277,7 +277,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

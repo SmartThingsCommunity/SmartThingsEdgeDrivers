@@ -68,7 +68,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -90,7 +90,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -112,7 +112,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -134,7 +134,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -156,7 +156,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -179,7 +179,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -199,7 +199,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -219,7 +219,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -239,7 +239,7 @@ test.register_coroutine_test(
       test.wait_for_events()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -261,7 +261,7 @@ test.register_coroutine_test(
       end
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -306,7 +306,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
    end,
    {
-      min_api_version = 19
+      min_api_version = 17
    }
 
   )
@@ -345,7 +345,7 @@ test.register_coroutine_test(
       })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -394,7 +394,7 @@ test.register_coroutine_test(
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

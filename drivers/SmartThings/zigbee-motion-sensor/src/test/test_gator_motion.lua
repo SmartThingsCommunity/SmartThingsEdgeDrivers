@@ -46,7 +46,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -65,7 +65,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.presenceSensor.presence.not_present()))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -81,7 +81,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.open()))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -97,7 +97,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.contactSensor.contact.closed()))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -113,7 +113,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -129,7 +129,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(0)))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -145,7 +145,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(10)))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -163,7 +163,7 @@ test.register_coroutine_test(
       test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -182,7 +182,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive()))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
