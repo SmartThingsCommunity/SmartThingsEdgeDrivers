@@ -4,6 +4,10 @@ on:
     paths:
       - 'drivers/**'
 
+  pull_request_target:
+    paths:
+      - 'drivers/**'
+
 permissions:
   statuses: write
 
@@ -12,7 +16,7 @@ jobs:
     strategy:
       matrix:
         version:
-          [ 59, 60 ]
+          [ 59, 60, dev]
 
     runs-on: ubuntu-latest
     steps:

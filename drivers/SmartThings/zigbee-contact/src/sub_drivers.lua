@@ -10,5 +10,6 @@ local sub_drivers = {
    lazy_load_if_possible("smartsense-multi"),
    lazy_load_if_possible("sengled"),
    lazy_load_if_possible("frient"),
+   lazy_load_if_possible("MultiIR"),
 }
 return sub_drivers

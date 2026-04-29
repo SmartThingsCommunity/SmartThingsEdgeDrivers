@@ -54,3 +54,8 @@ zigbeeManufacturer:
     manufacturer: HEIMAN
     model: GASSensor-N
     deviceProfileName: smoke-detector
+  - id: "MultIR/MIR-SM200"
+    deviceLabel: MultiIR Smoke Detector MIR-SM200
+    manufacturer: MultIR
+    model: MIR-SM200
+    deviceProfileName: smoke-battery-tamper-no-fw-update
