@@ -345,7 +345,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColor(mock_device, extended_color_ep_id, 15182, 21547, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.MoveToColor(mock_device, extended_color_ep_id, 15182, 21547, fields.ZERO_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
       }
     },
     {
@@ -420,7 +420,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, extended_color_ep_id, 555, fields.TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, extended_color_ep_id, 555, fields.ZERO_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
       }
     }, -- 555 is expected since it is re-bounded by the given range
 
@@ -446,7 +446,7 @@ test.register_message_test(
       direction = "send",
       message = {
         mock_device.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device, extended_color_ep_id, clusters.ColorControl.types.StepModeEnum.DOWN, 80, fields.TRANSITION_TIME_FAST, 153, 555, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device, extended_color_ep_id, clusters.ColorControl.types.StepModeEnum.DOWN, 80, fields.DEFAULT_STEP_TRANSITION_TIME, 153, 555, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     },
   },
