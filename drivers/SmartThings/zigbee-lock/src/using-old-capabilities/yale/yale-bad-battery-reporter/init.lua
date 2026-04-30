@@ -4,9 +4,6 @@
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
-
-
-
 local battery_report_handler = function(driver, device, value)
    device:emit_event(capabilities.battery.battery(value.value))
 end
@@ -20,7 +17,7 @@ local bad_yale_driver = {
       }
     }
   },
-  can_handle = require("yale.yale-bad-battery-reporter.can_handle"),
+  can_handle = require("using-old-capabilities.yale.yale-bad-battery-reporter.can_handle")
 }
 
 return bad_yale_driver

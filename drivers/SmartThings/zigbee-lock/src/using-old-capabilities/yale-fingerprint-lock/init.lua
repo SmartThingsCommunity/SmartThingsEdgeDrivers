@@ -8,9 +8,6 @@ local LockCluster = clusters.DoorLock
 local LockCodes = capabilities.lockCodes
 
 local YALE_FINGERPRINT_MAX_CODES = 0x1E
-
-
-
 local handle_max_codes = function(driver, device, value)
   device:emit_event(LockCodes.maxCodes(YALE_FINGERPRINT_MAX_CODES), { visibility = { displayed = false } })
 end
@@ -24,7 +21,7 @@ local yale_fingerprint_lock_driver = {
       }
     }
   },
-  can_handle = require("yale-fingerprint-lock.can_handle"),
+  can_handle = require("using-old-capabilities.yale-fingerprint-lock.can_handle")
 }
 
 return yale_fingerprint_lock_driver

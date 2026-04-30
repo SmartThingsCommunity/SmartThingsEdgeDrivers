@@ -102,7 +102,7 @@ local samsung_sds_driver = {
     added = device_added,
     init = device_init
   },
-  can_handle = require("samsungsds.can_handle"),
+  can_handle = require("using-old-capabilities.samsungsds.can_handle")
 }
 
 return samsung_sds_driver

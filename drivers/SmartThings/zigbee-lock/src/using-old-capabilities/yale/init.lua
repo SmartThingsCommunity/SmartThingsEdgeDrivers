@@ -142,8 +142,8 @@ local yale_door_lock_driver = {
       [LockCodes.commands.setCode.NAME] = set_code
     }
   },
-  sub_drivers = require("yale.sub_drivers"),
-  can_handle = require("yale.can_handle"),
+  sub_drivers = require("using-old-capabilities.yale.sub_drivers"),
+  can_handle = require("using-old-capabilities.yale.can_handle")
 }
 
 return yale_door_lock_driver

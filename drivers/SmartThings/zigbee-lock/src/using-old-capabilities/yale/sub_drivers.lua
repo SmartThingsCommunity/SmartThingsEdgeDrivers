@@ -3,7 +3,6 @@
 
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
-   lazy_load_if_possible("using-old-capabilities"),
-   lazy_load_if_possible("using-new-capabilities"),
+    lazy_load_if_possible("using-old-capabilities.yale.yale-bad-battery-reporter"),
 }
 return sub_drivers

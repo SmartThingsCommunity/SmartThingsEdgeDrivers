@@ -8,9 +8,6 @@ local capabilities = require "st.capabilities"
 
 local DoorLock = clusters.DoorLock
 local PowerConfiguration = clusters.PowerConfiguration
-
-
-
 local function device_init(driver, device)
   local configuration = configurationMap.get_device_configuration(device)
   if configuration ~= nil then
@@ -73,7 +70,7 @@ local lock_without_codes = {
       }
     }
   },
-  can_handle = require("lock-without-codes.can_handle"),
+  can_handle = require("using-old-capabilities.lock-without-codes.can_handle")
 }
 
 return lock_without_codes
