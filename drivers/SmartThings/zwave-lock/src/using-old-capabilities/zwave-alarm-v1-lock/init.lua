@@ -1,6 +1,5 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright © 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
-
 
 local capabilities = require "st.capabilities"
 --- @type st.zwave.CommandClass
@@ -19,13 +18,6 @@ local METHOD = {
   COMMAND = "command",
   AUTO = "auto"
 }
-
---- Determine whether the passed command is a V1 alarm command
----
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @return boolean true if the device is smoke co alarm
-
 --- Default handler for alarm command class reports, these were largely OEM-defined
 ---
 --- This converts alarm V1 reports to correct lock events
@@ -146,7 +138,7 @@ local zwave_lock = {
     }
   },
   NAME = "Z-Wave lock alarm V1",
-  can_handle = require("zwave-alarm-v1-lock.can_handle"),
+  can_handle = require("using-old-capabilities.zwave-alarm-v1-lock.can_handle")
 }
 
 return zwave_lock
