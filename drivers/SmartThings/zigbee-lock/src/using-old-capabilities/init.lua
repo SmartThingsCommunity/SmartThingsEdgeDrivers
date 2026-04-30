@@ -400,9 +400,7 @@ local old_capabilities_driver = {
       [LockCodes.commands.migrate.NAME] = migrate,
     },
   },
-  sub_drivers = {
-    require("using-old-capabilities.sub_drivers")
-  },
+  sub_drivers = require("using-old-capabilities.sub_drivers"),
   health_check = false,
   lifecycle_handlers = {
     doConfigure = do_configure

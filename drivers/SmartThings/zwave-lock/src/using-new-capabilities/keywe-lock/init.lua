@@ -1,6 +1,5 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright © 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
-
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -9,9 +8,8 @@ local Association = (require "st.zwave.CommandClass.Association")({version=2})
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local access_control_event = Notification.event.access_control
 
-local LockDefaults = require "st.zwave.defaults.lock"
-local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 local TamperDefaults = require "st.zwave.defaults.tamperAlert"
+local lock_utils = require "new_lock_utils"
 
 local TAMPER_CLEAR_DELAY = 10
 
@@ -39,8 +37,8 @@ local function notification_report_handler(self, device, cmd)
   if event ~= nil then
     device:emit_event(event)
   else
-    LockDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
-    LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
+    lock_utils.door_operation_event_handler(self, device, cmd)
+    lock_utils.base_driver_code_event_handler(self, device, cmd)
     TamperDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
     device.thread:call_with_delay(
       TAMPER_CLEAR_DELAY,
@@ -65,7 +63,7 @@ local keywe_lock = {
     doConfigure = do_configure
   },
   NAME = "Keywe Lock",
-  can_handle = require("keywe-lock.can_handle"),
+  can_handle = require("using-new-capabilities.keywe-lock.can_handle"),
 }
 
 return keywe_lock

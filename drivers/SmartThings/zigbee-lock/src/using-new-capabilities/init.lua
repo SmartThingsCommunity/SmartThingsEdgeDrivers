@@ -556,9 +556,7 @@ local new_capabilities_driver = {
       [capabilities.lockCodes.commands.migrate.NAME] = migrate,
     },
   },
-  sub_drivers = {
-    require("using-new-capabilities.sub_drivers")
-  },
+  sub_drivers = require("using-new-capabilities.sub_drivers"),
   health_check = false,
   lifecycle_handlers = {
     init = init,

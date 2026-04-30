@@ -1,6 +1,5 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright © 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
-
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -17,8 +16,6 @@ local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 local get_lock_codes = LockCodesDefaults.get_lock_codes
 local clear_code_state = LockCodesDefaults.clear_code_state
 local code_deleted = LockCodesDefaults.code_deleted
-
-
 local function get_ongoing_code_set(device)
   local code_id
   local code_state = device:get_field(constants.CODE_STATE)
@@ -90,7 +87,7 @@ local samsung_lock = {
     doConfigure = do_configure
   },
   NAME = "Samsung Lock",
-  can_handle = require("samsung-lock.can_handle"),
+  can_handle = require("using-old-capabilities.samsung-lock.can_handle"),
 }
 
 return samsung_lock

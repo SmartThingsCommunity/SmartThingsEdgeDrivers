@@ -1,6 +1,5 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright © 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
-
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -33,10 +32,11 @@ local zwave_lock_endpoints = {
 }
 
 local mock_device = test.mock_device.build_test_zwave_device(
-        {
-          profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
-          zwave_endpoints = zwave_lock_endpoints
-        }
+  {
+    profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
+    zwave_endpoints = zwave_lock_endpoints,
+    useOldCapabilityForTesting = true,
+  }
 )
 
 local function test_init()
@@ -502,7 +502,7 @@ test.register_coroutine_test(
         Notification:Report({
           notification_type = Notification.notification_type.ACCESS_CONTROL,
           event = Notification.event.access_control.KEYPAD_UNLOCK_OPERATION,
-          event_parameter = ""
+          event_parameter = "\x01"
         })
       }
     )
