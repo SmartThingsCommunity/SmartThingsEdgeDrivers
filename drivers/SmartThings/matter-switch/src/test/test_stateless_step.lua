@@ -63,11 +63,19 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 60, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 60, fields.DEFAULT_STEP_TRANSITION_TIME, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -79,11 +87,19 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 271, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.DOWN, 271, fields.DEFAULT_STEP_TRANSITION_TIME, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -95,11 +111,19 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessColorTemperatureStep", capability_cmd_id = "stepColorTemperatureByPercent" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 151, fields.TRANSITION_TIME_FAST, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.ColorControl.server.commands.StepColorTemperature(mock_device_color_temp, 1, clusters.ColorControl.types.StepModeEnum.UP, 151, fields.DEFAULT_STEP_TRANSITION_TIME, fields.DEFAULT_MIRED_MIN, fields.DEFAULT_MIRED_MAX, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     }
   },
@@ -121,11 +145,19 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 64, fields.TRANSITION_TIME_FAST, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 64, fields.DEFAULT_STEP_TRANSITION_TIME, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -137,11 +169,19 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.DOWN, 127, fields.TRANSITION_TIME_FAST, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.DOWN, 127, fields.DEFAULT_STEP_TRANSITION_TIME, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     },
     {
@@ -153,11 +193,19 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device_color_temp.id, capability_id = "statelessSwitchLevelStep", capability_cmd_id = "stepLevel" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
         mock_device_color_temp.id,
-        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 254, fields.TRANSITION_TIME_FAST, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
+        clusters.LevelControl.server.commands.Step(mock_device_color_temp, 1, clusters.LevelControl.types.StepModeEnum.UP, 254, fields.DEFAULT_STEP_TRANSITION_TIME, fields.OPTIONS_MASK, fields.IGNORE_COMMAND_IF_OFF)
       },
     }
   },

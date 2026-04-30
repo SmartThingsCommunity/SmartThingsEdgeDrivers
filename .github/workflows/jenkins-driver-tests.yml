@@ -1,18 +1,15 @@
 name: Run Jenkins driver tests
 on:
-  pull_request:
+  pull_request_target:
     paths:
       - 'drivers/**'
-
-permissions:
-  statuses: write
 
 jobs:
   trigger-driver-test:
     strategy:
       matrix:
         version:
-          [ 59, 60 ]
+          [ 59, 60, dev]
 
     runs-on: ubuntu-latest
     steps:
