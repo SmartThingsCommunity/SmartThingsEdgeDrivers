@@ -171,7 +171,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_humidity_battery,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -181,7 +181,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_humidity_no_battery,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -191,7 +191,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_temp_humidity,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 

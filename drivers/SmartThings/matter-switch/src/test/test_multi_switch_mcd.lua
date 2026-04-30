@@ -206,7 +206,7 @@ test.register_message_test(
   },
   {
     test_init = test_init_mock_3switch,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -233,7 +233,7 @@ test.register_message_test(
   },
   {
     test_init = test_init_mock_2switch,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -260,7 +260,7 @@ test.register_message_test(
   },
   {
     test_init = test_init_mock_3switch_non_sequential,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 

@@ -102,7 +102,7 @@ test.register_coroutine_test("Read appropriate attribute values after tempOffset
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 
@@ -125,7 +125,7 @@ test.register_coroutine_test("Read appropriate attribute values after humidityOf
     })))
 end,
 {
-   min_api_version = 19
+   min_api_version = 17
 }
 )
 

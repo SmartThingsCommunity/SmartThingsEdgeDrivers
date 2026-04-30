@@ -361,7 +361,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"batteryLevel"}}} })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -396,7 +396,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = {{"main", {"battery"}}} })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -431,7 +431,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_unlatch,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -467,7 +467,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_unlatch,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -503,7 +503,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -540,7 +540,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin_schedule_unlatch,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -619,7 +619,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_modular,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 

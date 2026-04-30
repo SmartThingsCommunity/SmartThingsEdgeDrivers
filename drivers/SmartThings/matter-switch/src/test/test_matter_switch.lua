@@ -265,7 +265,7 @@ test.register_message_test(
   {},
   {
     test_init = test_init_color_temp,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -274,7 +274,7 @@ test.register_message_test(
   {},
   {
     test_init = test_init_extended_color,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -307,7 +307,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -340,7 +340,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -424,7 +424,7 @@ test.register_message_test(
 
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -454,7 +454,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -503,7 +503,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_hue_sat,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -589,7 +589,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -674,7 +674,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -701,7 +701,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -726,7 +726,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -772,7 +772,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -804,7 +804,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -836,7 +836,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -868,7 +868,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -885,7 +885,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -915,7 +915,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -945,7 +945,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1001,7 +1001,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1063,7 +1063,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1088,7 +1088,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1113,7 +1113,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1143,7 +1143,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1168,7 +1168,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1226,7 +1226,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_x_y_color_mode,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -1271,7 +1271,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -1289,7 +1289,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

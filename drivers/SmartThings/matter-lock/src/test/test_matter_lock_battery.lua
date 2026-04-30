@@ -121,7 +121,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "base-lock" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -149,7 +149,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "base-lock-batteryLevel" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -159,7 +159,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_battery,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 test.run_registered_tests()

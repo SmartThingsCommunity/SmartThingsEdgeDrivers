@@ -60,7 +60,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -79,7 +79,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -103,7 +103,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -127,7 +127,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -146,7 +146,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -166,7 +166,7 @@ test.register_message_test(
   },
   {
     test_init = test_init,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -187,7 +187,7 @@ test.register_message_test(
   {
     test_init = test_init,
     inner_block_ordering = "relaxed",
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
