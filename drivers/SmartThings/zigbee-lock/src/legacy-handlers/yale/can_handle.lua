@@ -3,7 +3,7 @@
 
 local function yale_can_handle(opts, driver, device, ...)
   if device:get_manufacturer() == "ASSA ABLOY iRevo" or device:get_manufacturer() == "Yale" then
-    return true, require("yale")
+    return true, require("legacy-handlers.yale")
   end
   return false
 end

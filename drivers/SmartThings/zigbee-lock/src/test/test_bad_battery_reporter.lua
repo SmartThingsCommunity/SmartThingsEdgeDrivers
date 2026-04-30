@@ -50,4 +50,42 @@ test.register_message_test(
   }
 )
 
+local mock_device_yrd = test.mock_device.build_test_zigbee_device({
+  profile = t_utils.get_profile_definition("base-lock.yml"),
+  zigbee_endpoints ={
+    [1] = {
+      id = 1,
+      manufacturer ="Yale",
+      model ="YRD220/240 TSDB",
+      server_clusters = {}
+    }
+  }
+})
+
+local function test_init_yrd()
+  test.mock_device.add_test_device(mock_device_yrd)
+end
+
+test.register_message_test(
+    "Battery percentage report should be handled",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_device_yrd.id,
+          PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device_yrd, 55) }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_device_yrd:generate_test_message("main", capabilities.battery.battery(55))
+      }
+    },
+    {
+      test_init = test_init_yrd,
+      min_api_version = 17
+    }
+)
+
 test.run_registered_tests()
