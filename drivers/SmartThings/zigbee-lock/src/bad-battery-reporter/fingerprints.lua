@@ -1,7 +1,7 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local BAD_YALE_LOCK_FINGERPRINTS = {
+local BAD_BATTERY_REPORTING_LOCK_FINGERPRINTS = {
   { mfr = "Yale", model = "YRD220/240 TSDB" },
   { mfr = "Yale", model = "YRL220 TS LL" },
   { mfr = "Yale", model = "YRD210 PB DB" },
@@ -10,4 +10,4 @@ local BAD_YALE_LOCK_FINGERPRINTS = {
   { mfr = "ASSA ABLOY iRevo", model = "06ffff2027" }
 }
 
-return BAD_YALE_LOCK_FINGERPRINTS
+return BAD_BATTERY_REPORTING_LOCK_FINGERPRINTS
