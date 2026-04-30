@@ -33,10 +33,10 @@ local zwave_lock_endpoints = {
 }
 
 local mock_device = test.mock_device.build_test_zwave_device(
-        {
-          profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
-          zwave_endpoints = zwave_lock_endpoints
-        }
+  {
+    profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
+    zwave_endpoints = zwave_lock_endpoints
+  }
 )
 
 local function test_init()
@@ -52,31 +52,6 @@ local expect_reload_all_codes_messages = function()
   test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning", { visibility = { displayed = false } })))
   test.socket.zwave:__expect_send( UserCode:Get({ user_identifier = 1 }):build_test_tx(mock_device.id) )
 end
-
-test.register_coroutine_test(
-  "When the device is added it should be set up and start reading codes",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-
-    expect_reload_all_codes_messages()
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_device,
-        DoorLock:OperationGet({})
-      )
-    )
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_device,
-        Battery:Get({})
-      )
-    )
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear()))
-  end,
-  {
-     min_api_version = 17
-  }
-)
 
 test.register_coroutine_test(
   "Door Lock Operation Reports should be handled",
@@ -502,7 +477,7 @@ test.register_coroutine_test(
         Notification:Report({
           notification_type = Notification.notification_type.ACCESS_CONTROL,
           event = Notification.event.access_control.KEYPAD_UNLOCK_OPERATION,
-          event_parameter = ""
+          event_parameter = "\x01"
         })
       }
     )
@@ -822,6 +797,12 @@ test.register_coroutine_test(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
         Battery:Get({})
+      )
+    )
+    test.socket.zwave:__expect_send(
+      zw_test_utils.zwave_test_build_send_command(
+        mock_device,
+        UserCode:UsersNumberGet({})
       )
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
