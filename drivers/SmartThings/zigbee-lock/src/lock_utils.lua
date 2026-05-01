@@ -1,4 +1,4 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright 2026 SmartThings
 -- Licensed under the Apache License, Version 2.0
 local utils = require "st.utils"
 local capabilities = require "st.capabilities"
