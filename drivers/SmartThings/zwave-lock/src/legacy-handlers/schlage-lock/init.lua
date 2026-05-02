@@ -1,5 +1,6 @@
--- Copyright © 2022 SmartThings, Inc.
+-- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -171,7 +172,7 @@ local schlage_lock = {
     doConfigure = do_configure,
   },
   NAME = "Schlage Lock",
-  can_handle = require("using-old-capabilities.schlage-lock.can_handle"),
+  can_handle = require("legacy-handlers.schlage-lock.can_handle"),
 }
 
 return schlage_lock

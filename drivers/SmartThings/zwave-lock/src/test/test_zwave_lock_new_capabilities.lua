@@ -1,4 +1,4 @@
--- Copyright © 2022 SmartThings, Inc.
+-- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
@@ -96,7 +96,6 @@ local function add_credential(user_index)
   test_credential_index = test_credential_index + 1
 end
 
--- start with a migrated blank device
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 

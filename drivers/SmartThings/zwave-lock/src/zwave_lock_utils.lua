@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -34,6 +34,8 @@ local new_lock_utils = {
   USER_NAME = "userName",
   USER_TYPE = "userType"
 }
+
+local DEFAULT_SUPPORTED_PIN_SLOTS = 8
 
 -- check if we are currently busy performing a task.
 -- if we aren't then set as busy.
@@ -138,7 +140,7 @@ end
 
 new_lock_utils.get_available_user_index = function(device)
   local max = device:get_latest_state("main", capabilities.lockUsers.ID,
-    capabilities.lockUsers.totalUsersSupported.NAME, 8)
+    capabilities.lockUsers.totalUsersSupported.NAME, DEFAULT_SUPPORTED_PIN_SLOTS)
   local current_users = new_lock_utils.get_users(device)
   local available_index = nil
   local used_index = {}
@@ -188,7 +190,7 @@ end
 
 new_lock_utils.get_available_credential_index = function(device)
   local max = device:get_latest_state("main", capabilities.lockCredentials.ID,
-    capabilities.lockCredentials.pinUsersSupported.NAME, 8)
+    capabilities.lockCredentials.pinUsersSupported.NAME, DEFAULT_SUPPORTED_PIN_SLOTS)
   local current_credentials = new_lock_utils.get_credentials(device)
   local available_index = nil
   local used_index = {}
@@ -483,6 +485,109 @@ new_lock_utils.door_operation_event_handler = function(driver, device, cmd)
         device:emit_event(event_to_send)
       end
     end
+  end
+end
+
+function new_lock_utils.add_credential_handler(driver, device, command)
+  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
+  if new_lock_utils.busy_check_and_set(device, {name = new_lock_utils.ADD_CREDENTIAL, type = new_lock_utils.LOCK_CREDENTIALS}) then
+    return
+  end
+  local user_index = tonumber(command.args.userIndex)
+  local user_type = command.args.userType
+  local credential_type = command.args.credentialType
+  local credential_data = command.args.credentialData
+  local status = new_lock_utils.STATUS_SUCCESS
+
+  local credential_index = new_lock_utils.get_available_credential_index(device)
+  if credential_index == nil then
+    status = new_lock_utils.STATUS_RESOURCE_EXHAUSTED
+  elseif user_index ~= 0 and new_lock_utils.get_credential_by_user_index(device, user_index) then
+    status = new_lock_utils.STATUS_OCCUPIED
+  elseif user_index ~= 0 and new_lock_utils.get_user(device, user_index) == nil then
+    status = new_lock_utils.STATUS_FAILURE
+  end
+
+  if user_index == 0 then
+    user_index = new_lock_utils.get_available_user_index(device)
+    if user_index ~= nil then
+      new_lock_utils.create_user(device, nil, user_type, user_index)
+    else
+      status = new_lock_utils.STATUS_RESOURCE_EXHAUSTED
+    end
+  end
+
+  if status == new_lock_utils.STATUS_SUCCESS then
+    device:set_field(new_lock_utils.ACTIVE_CREDENTIAL,
+      { userIndex = user_index, userType = user_type, credentialType = credential_type, credentialIndex = credential_index })
+    device:send(UserCode:Set({
+      user_identifier = credential_index,
+      user_code = credential_data,
+      user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}))
+    -- clearing busy state handled in user_code_report_handler
+  else
+    new_lock_utils.clear_busy_state(device, status)
+  end
+end
+
+function new_lock_utils.user_code_report_handler(driver, device, cmd)
+  local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
+  local credential_index = cmd.args.user_identifier
+  local command = device:get_field(new_lock_utils.COMMAND_NAME)
+  local active_credential = device:get_field(new_lock_utils.ACTIVE_CREDENTIAL)
+  local user_id_status = cmd.args.user_id_status
+  local emit_events = false
+
+  if (user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
+      (user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code)) then
+    if new_lock_utils.get_credential(device, credential_index) == nil and command == nil then
+      local user_index = new_lock_utils.get_available_user_index(device)
+      if user_index ~= nil then
+        new_lock_utils.create_user(device, nil, "guest", user_index)
+        new_lock_utils.add_credential(device, user_index, new_lock_utils.CREDENTIAL_TYPE, credential_index)
+        emit_events = true
+      end
+    elseif command ~= nil then
+      if command.name == new_lock_utils.ADD_CREDENTIAL and new_lock_utils.get_credential(device, credential_index) == nil then
+        new_lock_utils.add_credential(device,
+          active_credential.userIndex,
+          active_credential.credentialType,
+          credential_index)
+        emit_events = true
+      elseif command.name == new_lock_utils.UPDATE_CREDENTIAL then
+        local credential = new_lock_utils.get_credential(device, credential_index)
+        if credential ~= nil then
+          new_lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
+          emit_events = true
+        end
+      end
+    end
+  elseif user_id_status == UserCode.user_id_status.AVAILABLE then
+    if new_lock_utils.get_credential(device, credential_index) ~= nil then
+      new_lock_utils.delete_credential(device, credential_index)
+      emit_events = true
+    end
+  end
+
+  if (credential_index == device:get_field(new_lock_utils.CHECKING_CODE)) then
+    local last_slot = device:get_latest_state("main", capabilities.lockCredentials.ID,
+      capabilities.lockCredentials.pinUsersSupported.NAME, DEFAULT_SUPPORTED_PIN_SLOTS)
+    if (credential_index >= last_slot) then
+      device:set_field(new_lock_utils.CHECKING_CODE, nil)
+      emit_events = true
+    else
+      local checkingCode = device:get_field(new_lock_utils.CHECKING_CODE) + 1
+      device:set_field(new_lock_utils.CHECKING_CODE, checkingCode)
+      device:send(UserCode:Get({user_identifier = checkingCode}))
+    end
+  end
+
+  if emit_events then
+    new_lock_utils.send_events(device)
+  end
+
+  if command ~= nil and command ~= new_lock_utils.DELETE_ALL_CREDENTIALS and command ~= new_lock_utils.DELETE_ALL_USERS then
+    new_lock_utils.clear_busy_state(device, new_lock_utils.STATUS_SUCCESS)
   end
 end
 

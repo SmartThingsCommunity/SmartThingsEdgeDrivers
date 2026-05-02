@@ -1,4 +1,4 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 return function(opts, driver, device, ...)
@@ -6,7 +6,7 @@ return function(opts, driver, device, ...)
   local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID,
     capabilities.lockCodes.migrated.NAME, false)
   if not lock_codes_migrated then
-    local subdriver = require("using-old-capabilities")
+    local subdriver = require("legacy-handlers")
     return true, subdriver
   end
   return false

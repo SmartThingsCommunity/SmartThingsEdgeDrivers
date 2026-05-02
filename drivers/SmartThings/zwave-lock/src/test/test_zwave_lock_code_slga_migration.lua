@@ -1,4 +1,4 @@
--- Copyright © 2025 SmartThings, Inc.
+-- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
@@ -30,8 +30,7 @@ local zwave_lock_endpoints = {
 local mock_device = test.mock_device.build_test_zwave_device(
   {
     profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
-    zwave_endpoints = zwave_lock_endpoints,
-    useOldCapabilityForTesting = true,
+    zwave_endpoints = zwave_lock_endpoints
   }
 )
 
@@ -41,8 +40,7 @@ local schlage_mock_device = test.mock_device.build_test_zwave_device(
     zwave_endpoints = zwave_lock_endpoints,
     zwave_manufacturer_id = SCHLAGE_MANUFACTURER_ID,
     zwave_product_type = SCHLAGE_PRODUCT_TYPE,
-    zwave_product_id = SCHLAGE_PRODUCT_ID,
-    useOldCapabilityForTesting = true,
+    zwave_product_id = SCHLAGE_PRODUCT_ID
   }
 )
 

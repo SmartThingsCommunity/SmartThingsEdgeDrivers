@@ -1,4 +1,4 @@
--- Copyright © 2026 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -8,7 +8,7 @@ local cc = require "st.zwave.CommandClass"
 local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 --- @type st.zwave.CommandClass.Battery
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
-local lock_utils = require "new_lock_utils"
+local lock_utils = require "zwave_lock_utils"
 
 local METHOD = {
   KEYPAD = "keypad",
@@ -169,7 +169,7 @@ local zwave_lock = {
     }
   },
   NAME = "Z-Wave lock alarm V1",
-  can_handle = require("using-new-capabilities.zwave-alarm-v1-lock.can_handle")
+  can_handle = require("zwave-alarm-v1-lock.can_handle")
 }
 
 return zwave_lock

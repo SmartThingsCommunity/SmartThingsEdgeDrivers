@@ -1,7 +1,12 @@
--- Copyright © 2022 SmartThings, Inc.
+-- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
+local cc = require "st.zwave.CommandClass"
+local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
+local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
+local LockDefaults = require "st.zwave.defaults.lock"
+local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 
 local init_handler = function(driver, device, event)
   local constants = require "st.zwave.constants"
@@ -101,9 +106,23 @@ local using_old_capabilities = {
       [capabilities.lockCodes.commands.migrate.NAME] = migrate
     },
   },
-  sub_drivers = require("using-old-capabilities.sub_drivers"),
-  can_handle = require("using-old-capabilities.can_handle"),
-  NAME = "Using old capabilities"
+  zwave_handlers = {
+    [cc.NOTIFICATION] = {
+      [Notification.REPORT] = function(driver, device, cmd)
+        LockDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](driver, device, cmd)
+        LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](driver, device, cmd)
+        local TamperDefaults = require "st.zwave.defaults.tamperAlert"
+        TamperDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](driver, device, cmd)
+      end
+    },
+    [cc.USER_CODE] = {
+      [UserCode.REPORT] = LockCodesDefaults.zwave_handlers[cc.USER_CODE][UserCode.REPORT],
+      [UserCode.USERS_NUMBER_REPORT] = LockCodesDefaults.zwave_handlers[cc.USER_CODE][UserCode.USERS_NUMBER_REPORT],
+    }
+  },
+  sub_drivers = require("legacy-handlers.sub_drivers"),
+  can_handle = require("legacy-handlers.can_handle"),
+  NAME = "legacy-handlers"
 }
 
 return using_old_capabilities

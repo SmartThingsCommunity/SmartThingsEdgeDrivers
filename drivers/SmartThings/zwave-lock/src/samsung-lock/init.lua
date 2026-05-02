@@ -1,4 +1,4 @@
--- Copyright © 2026 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -8,7 +8,7 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local UserCode = (require "st.zwave.CommandClass.UserCode")({version=1})
 local access_control_event = Notification.event.access_control
 
-local lock_utils = require "new_lock_utils"
+local lock_utils = require "zwave_lock_utils"
 
 local function notification_report_handler(self, device, cmd)
   local event
@@ -58,7 +58,7 @@ local samsung_lock = {
     doConfigure = do_configure
   },
   NAME = "Samsung Lock",
-  can_handle = require("using-new-capabilities.samsung-lock.can_handle"),
+  can_handle = require("samsung-lock.can_handle"),
 }
 
 return samsung_lock

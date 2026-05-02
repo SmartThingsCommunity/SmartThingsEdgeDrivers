@@ -1,9 +1,10 @@
--- Copyright © 2022 SmartThings, Inc.
+-- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
+
 
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
@@ -27,16 +28,13 @@ local mock_device = test.mock_device.build_test_zwave_device(
     zwave_endpoints = zwave_lock_endpoints,
     zwave_manufacturer_id = KEYWE_MANUFACTURER_ID,
     zwave_product_type = KEYWE_PRODUCT_TYPE,
-    zwave_product_id = KEYWE_PRODUCT_ID,
-    useOldCapabilityForTesting = true,
+    zwave_product_id = KEYWE_PRODUCT_ID
   }
 )
 
--- start with a migrated blank device
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
-
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(

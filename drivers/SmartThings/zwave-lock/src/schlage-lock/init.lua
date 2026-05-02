@@ -1,4 +1,4 @@
--- Copyright © 2026 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local capabilities = require "st.capabilities"
@@ -11,7 +11,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({version=2
 local Basic = (require "st.zwave.CommandClass.Basic")({version=1})
 local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
-local lock_utils = require "new_lock_utils"
+local lock_utils = require "zwave_lock_utils"
 
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
@@ -70,8 +70,7 @@ local function user_code_report_handler(self, device, cmd)
       lock_utils.send_events(device)
     end
   else
-    local new_capabilities = require "using-new-capabilities"
-    new_capabilities.zwave_handlers[cc.USER_CODE][UserCode.REPORT](self, device, cmd)
+    lock_utils.user_code_report_handler(self, device, cmd)
   end
 end
 
@@ -79,8 +78,7 @@ local function add_credential_handler(self, device, cmd)
   local DEFAULT_COMMANDS_DELAY = 4.2
   local current_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.minPinCodeLen.NAME)
   local base_handler = function()
-    local new_capabilities = require "using-new-capabilities"
-    new_capabilities.capability_handlers[capabilities.lockCredentials.ID][capabilities.lockCredentials.commands.addCredential.NAME](self, device, cmd)
+    lock_utils.add_credential_handler(self, device, cmd)
   end
   if current_code_length == nil then
     device:send(Configuration:Get({parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number}))
@@ -111,7 +109,7 @@ local schlage_lock = {
     doConfigure = do_configure,
   },
   NAME = "Schlage Lock",
-  can_handle = require("using-new-capabilities.schlage-lock.can_handle"),
+  can_handle = require("schlage-lock.can_handle"),
 }
 
 return schlage_lock

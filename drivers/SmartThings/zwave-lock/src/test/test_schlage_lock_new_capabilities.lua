@@ -1,4 +1,4 @@
--- Copyright © 2026 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
@@ -42,7 +42,6 @@ local mock_device = test.mock_device.build_test_zwave_device(
 
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
--- start with a migrated blank device
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 end

@@ -1,5 +1,6 @@
--- Copyright © 2022 SmartThings, Inc.
+-- Copyright 2022 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -35,14 +36,12 @@ local mock_device = test.mock_device.build_test_zwave_device(
     zwave_endpoints = zwave_lock_endpoints,
     zwave_manufacturer_id = SCHLAGE_MANUFACTURER_ID,
     zwave_product_type = SCHLAGE_PRODUCT_TYPE,
-    zwave_product_id = SCHLAGE_PRODUCT_ID,
-    useOldCapabilityForTesting = true,
+    zwave_product_id = SCHLAGE_PRODUCT_ID
   }
 )
 
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
--- start with a migrated blank device
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
