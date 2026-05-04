@@ -627,8 +627,8 @@ test.register_coroutine_test(
 local mock_nuki_smart_lock_ultra = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("lock-nocodes-notamper.yml"),
   manufacturer_info = {
-    vendor_id = 0x115f,
-    product_id = 0x2802,
+    vendor_id = 0x135D,
+    product_id = 0x00A1,
   },
   endpoints = {
     {
