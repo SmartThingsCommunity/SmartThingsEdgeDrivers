@@ -92,15 +92,6 @@ local function test_init()
   subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-  )
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)

@@ -116,48 +116,6 @@ function lock_utils.set_field_for_endpoint(device, field, endpoint, value, addit
   device:set_field(string.format("%s_%d", field, endpoint), value, additional_params)
 end
 
-function lock_utils.optional_capabilities_list_changed(new_component_capability_list, previous_component_capability_list)
-  local previous_capability_map = {}
-  local component_sizes = {}
-  local previous_component_count = 0
-  for component_name, component in pairs(previous_component_capability_list or {}) do
-    previous_capability_map[component_name] = {}
-    component_sizes[component_name] = 0
-    for _, capability in pairs(component.capabilities or {}) do
-      if capability.id ~= "lock" and capability.id ~= "lockAlarm" and capability.id ~= "remoteControlStatus" and
-        capability.id ~= "firmwareUpdate" and capability.id ~= "refresh" then
-        previous_capability_map[component_name][capability.id] = true
-        component_sizes[component_name] = component_sizes[component_name] + 1
-      end
-    end
-    previous_component_count = previous_component_count + 1
-  end
-
-  local number_of_components_counted = 0
-  for _, new_component_capabilities in pairs(new_component_capability_list or {}) do
-    local component_name = new_component_capabilities[1]
-    local capability_list = new_component_capabilities[2]
-    number_of_components_counted = number_of_components_counted + 1
-    if previous_capability_map[component_name] == nil then
-      return true
-    end
-    for _, capability in ipairs(capability_list) do
-      if previous_capability_map[component_name][capability] == nil then
-        return true
-      end
-    end
-    if #capability_list ~= component_sizes[component_name] then
-      return true
-    end
-  end
-
-  if number_of_components_counted ~= previous_component_count then
-    return true
-  end
-
-  return false
-end
-
 -- This function check busy_state and if busy_state is false, set it to true(current time)
 function lock_utils.is_busy_state_set(device)
   local c_time = os.time()
