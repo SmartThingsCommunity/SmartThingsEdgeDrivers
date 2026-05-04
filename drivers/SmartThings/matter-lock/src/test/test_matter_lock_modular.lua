@@ -623,4 +623,77 @@ test.register_coroutine_test(
   }
 )
 
+
+local mock_nuki_smart_lock_ultra = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("lock-nocodes-notamper.yml"),
+  manufacturer_info = {
+    vendor_id = 0x135D,
+    product_id = 0x00A1,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.BasicInformation.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {
+          cluster_id = DoorLock.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0x1000, -- UNBOLT
+        },
+        {
+          cluster_id = clusters.PowerSource.ID,
+          cluster_type = "SERVER",
+          feature_map = 10
+        },
+      },
+      device_types = {
+        { device_type_id = 0x000A, device_type_revision = 1 } -- Door Lock
+      }
+    }
+  }
+})
+
+local battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE"
+}
+
+local profiling_data = {
+  BATTERY_SUPPORT = "__BATTERY_SUPPORT",
+}
+
+test.register_coroutine_test(
+  "Test Nuki Smart Lock Ultra profile change with user and pin supported",
+  function()
+    -- technically, since power source attributes must be read, this wouldn't be running via doConfigure, but this is straightforward.
+    test.socket.device_lifecycle:__queue_receive({ mock_nuki_smart_lock_ultra.id, "doConfigure" })
+    test.socket.capability:__expect_send(
+      mock_nuki_smart_lock_ultra:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "unlatched", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_nuki_smart_lock_ultra:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock", "unlatch"}, {visibility = {displayed = false}}))
+    )
+    mock_nuki_smart_lock_ultra:expect_metadata_update({ profile = "lock-modular-embedded-unlatch", optional_component_capabilities = {{"main", {"battery"}}}})
+    mock_nuki_smart_lock_ultra:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    test_init = function()
+      test.disable_startup_messages()
+      test.mock_device.add_test_device(mock_nuki_smart_lock_ultra)
+      mock_nuki_smart_lock_ultra:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, {persist = true}) -- assume this has been set previously
+    end,
+    min_api_version = 17
+  }
+)
+
 test.run_registered_tests()

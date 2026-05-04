@@ -259,7 +259,8 @@ local function match_profile_modular(driver, device)
   end
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
-  if lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
+  if modular_profile_name == "lock-modular-embedded-unlatch" -- the embedded config that may be needed is not checked by an optional capability comparison
+    or lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
     device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
   end
 end
