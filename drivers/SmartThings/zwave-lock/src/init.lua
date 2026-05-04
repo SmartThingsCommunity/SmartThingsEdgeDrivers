@@ -43,7 +43,10 @@ end
 
 -- Lifecycle handlers
 local added_handler = function(driver, device)
-  if device:supports_capability_by_id(capabilities.lockCodes.ID) then
+  if device:supports_capability_by_id(capabilities.lockCodes.ID) and device._provisioning_state == "TYPED" then
+    -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
+    -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
+    -- and should be migrated manually by the user.
     device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
   end
   lock_utils.reload_tables(device)

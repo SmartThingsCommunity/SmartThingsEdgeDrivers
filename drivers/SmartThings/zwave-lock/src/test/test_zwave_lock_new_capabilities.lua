@@ -17,6 +17,7 @@ local Alarm = (require "st.zwave.CommandClass.Alarm")({ version = 1 })
 local t_utils = require "integration_test.utils"
 local access_control_event = Notification.event.access_control
 
+test.disable_startup_messages()
 
 -- supported comand classes
 local zwave_lock_endpoints = {
@@ -36,6 +37,7 @@ local test_users = {}
 local mock_device = test.mock_device.build_test_zwave_device(
     {
       profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
+      _provisioning_state = "TYPED",
       zwave_endpoints = zwave_lock_endpoints
     }
 )

@@ -11,6 +11,8 @@ local Battery = (require "st.zwave.CommandClass.Battery")({version=1})
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local lock_utils = require "zwave_lock_utils"
 
+test.disable_startup_messages()
+
 local SAMSUNG_MANUFACTURER_ID = 0x022E
 local SAMSUNG_PRODUCT_TYPE = 0x0001
 local SAMSUNG_PRODUCT_ID = 0x0001
@@ -18,6 +20,7 @@ local SAMSUNG_PRODUCT_ID = 0x0001
 local mock_device = test.mock_device.build_test_zwave_device(
   {
     profile = t_utils.get_profile_definition("base-lock.yml"),
+    _provisioning_state = "TYPED",
     zwave_manufacturer_id = SAMSUNG_MANUFACTURER_ID,
     zwave_product_type = SAMSUNG_PRODUCT_TYPE,
     zwave_product_id = SAMSUNG_PRODUCT_ID,

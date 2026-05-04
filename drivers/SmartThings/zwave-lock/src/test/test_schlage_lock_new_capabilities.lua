@@ -14,6 +14,8 @@ local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
 local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
 
+test.disable_startup_messages()
+
 local SCHLAGE_MANUFACTURER_ID = 0x003B
 local SCHLAGE_PRODUCT_TYPE = 0x0002
 local SCHLAGE_PRODUCT_ID = 0x0469
@@ -33,6 +35,7 @@ local zwave_lock_endpoints = {
 local mock_device = test.mock_device.build_test_zwave_device(
   {
     profile = t_utils.get_profile_definition("base-lock.yml"),
+    _provisioning_state = "TYPED",
     zwave_endpoints = zwave_lock_endpoints,
     zwave_manufacturer_id = SCHLAGE_MANUFACTURER_ID,
     zwave_product_type = SCHLAGE_PRODUCT_TYPE,

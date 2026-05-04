@@ -10,6 +10,8 @@ local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 
+test.disable_startup_messages()
+
 local KEYWE_MANUFACTURER_ID = 0x037B
 local KEYWE_PRODUCT_TYPE = 0x0002
 local KEYWE_PRODUCT_ID = 0x0001
@@ -26,6 +28,7 @@ local zwave_lock_endpoints = {
 local mock_device = test.mock_device.build_test_zwave_device(
   {
     profile = t_utils.get_profile_definition("base-lock-tamper.yml"),
+    _provisioning_state = "TYPED",
     zwave_endpoints = zwave_lock_endpoints,
     zwave_manufacturer_id = KEYWE_MANUFACTURER_ID,
     zwave_product_type = KEYWE_PRODUCT_TYPE,
