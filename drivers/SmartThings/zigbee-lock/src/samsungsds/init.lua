@@ -64,7 +64,13 @@ local function load_device_state(device)
 end
 
 local device_added = function(self, device)
-  load_device_state(device)
+  if device:supports_capability_by_id(capabilities.lockCodes.ID) then
+    if device._provisioning_state == "TYPED" then -- only run migration for typed devices, as provisioned devices may be in the process of migrating and we don't want to interfere with that.
+      -- If a device is newly onboarded (typed), we set the migrated field to true so devices use lockCredentials/lockUsers from the start.
+      device:emit_event(capabilities.lockCodes.migrated(true, { state_change = true, visibility = { displayed = true } }))
+      device:emit_event(capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
+    end
+  end
   emit_event_if_latest_state_missing(device, "main", capabilities.lock, capabilities.lock.lock.NAME, capabilities.lock.lock.unlocked())
   device:emit_event(capabilities.battery.battery(100))
 end

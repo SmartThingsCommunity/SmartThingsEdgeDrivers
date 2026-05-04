@@ -59,19 +59,13 @@ local alarm_handler = function(driver, device, zb_mess)
   end
 end
 
--- This triggers setting the migrated field so new devices use new capabilities from the start.
 local function device_added(driver, device)
-  -- this variable should only be present for test cases trying to test the old capabilities.
-  if device.useOldCapabilityForTesting == nil then
-    if device:supports_capability_by_id(LockCodes.ID) then
+  if device:supports_capability_by_id(LockCodes.ID) then
+    if device._provisioning_state == "TYPED" then -- only run migration for typed devices, as provisioned devices may be in the process of migrating and we don't want to interfere with that.
+      -- If a device is newly onboarded (typed), we set the migrated field to true so devices use lockCredentials/lockUsers from the start.
       device:emit_event(LockCodes.migrated(true, { state_change = true, visibility = { displayed = true } }))
       device:emit_event(capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
-      lock_utils.reload_tables(device)
-    else
-      legacy_lock_utils.populate_state_from_data(device)
     end
-  else
-    legacy_lock_utils.populate_state_from_data(device)
   end
 
   driver:inject_capability_command(device, {

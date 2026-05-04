@@ -7,9 +7,7 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local t_utils = require "integration_test.utils"
 
 local clusters = require "st.zigbee.zcl.clusters"
-local PowerConfiguration = clusters.PowerConfiguration
 local DoorLock = clusters.DoorLock
-local Alarm = clusters.Alarms
 local capabilities = require "st.capabilities"
 
 local json = require "st.json"
@@ -24,30 +22,27 @@ local mock_device = test.mock_device.build_test_zigbee_device(
           ["1"] = "Zach",
           ["5"] = "Steven"
         }),
-      },
-      useOldCapabilityForTesting = true
+      }
     }
 )
 
 zigbee_test_utils.prepare_zigbee_env_info()
-local function test_init()end
+local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
+end
 
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
     "Device called 'migrate' command",
     function()
-      test.mock_device.add_test_device(mock_device)
-      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-      test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
-      test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
+      test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
       test.wait_for_events()
       -- Validate lockCodes field
       mock_datastore.__assert_device_store_contains(mock_device.id, "lockCodes", { ["1"] = "Zach", ["5"] = "Steven" })
       -- Validate migration complete flag
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
-
       -- Set min/max code length attributes
       test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MinPINCodeLength:build_test_attr_report(mock_device, 5) })
       test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MaxPINCodeLength:build_test_attr_report(mock_device, 10) })

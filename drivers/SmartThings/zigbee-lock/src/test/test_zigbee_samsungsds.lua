@@ -30,6 +30,7 @@ local SAMSUNG_SDS_MFR_CODE = 0x0003
 local mock_device = test.mock_device.build_test_zigbee_device(
     {
       profile = t_utils.get_profile_definition("lock-without-codes.yml"),
+      provisioning_state = "TYPED",
       zigbee_endpoints = {
         [1] = {
           id = 1,

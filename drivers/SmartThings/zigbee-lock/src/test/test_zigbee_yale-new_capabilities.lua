@@ -17,9 +17,12 @@ local DoorLockUserStatus = DoorLock.types.DrlkUserStatus
 local DoorLockUserType = DoorLock.types.DrlkUserType
 local ProgrammingEventCode = DoorLock.types.ProgramEventCode
 
+test.disable_startup_messages()
+
 
 local mock_device = test.mock_device.build_test_zigbee_device({
   profile = t_utils.get_profile_definition("base-lock.yml"),
+  _provisioning_state = "TYPED",
   zigbee_endpoints = {
     [1] = { id = 1, manufacturer = "Yale", server_clusters = { 0x0001 } }
   }
@@ -28,6 +31,7 @@ local mock_device = test.mock_device.build_test_zigbee_device({
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init_default()
+  test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -40,18 +44,8 @@ local function test_init_default()
   test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
 end
 
-local function test_init_add_device()
-  test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.lockCodes.migrated(true, { state_change = true, visibility = { displayed = true } })))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-    capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } })))
-  test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(
-    mock_device) })
-  test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
-  test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
-
+local function test_init_lifecycle_event(mock_device)
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init"})
   test.socket.zigbee:__queue_receive({ mock_device.id, DoorLock.attributes.MinPINCodeLength:build_test_attr_report(
     mock_device, 4) })
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -62,6 +56,7 @@ local function test_init_add_device()
     capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
   test.socket.capability:__expect_send(mock_device:generate_test_message("main",
     capabilities.lockCredentials.pinUsersSupported(4, { visibility = { displayed = false } })))
+  test.wait_for_events()
 end
 
 test.set_test_init_function(test_init_default)
@@ -118,6 +113,7 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Adding a credential should succeed and report users, credentials, and command result.",
   function()
+    test_init_lifecycle_event(mock_device)
     test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "guest", "pin", "1234" } } })
     test.socket.zigbee:__expect_send(
@@ -177,17 +173,13 @@ test.register_coroutine_test(
         )
       )
     )
-  end,
-  {
-    test_init = function()
-      test_init_add_device()
-    end
-  }
+  end
 )
 
 test.register_coroutine_test(
   "Updating a credential should succeed and report users, credentials, and command result.",
   function()
+    test_init_lifecycle_event(mock_device)
     -- add credential first
     test.timer.__create_and_queue_test_time_advance_timer(4, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "guest", "pin", "1234" } } })
@@ -326,86 +318,67 @@ test.register_coroutine_test(
       )
     )
     test.wait_for_events()
-  end,
-  {
-    test_init = function()
-      test_init_add_device()
-    end
-  }
+  end
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "The lock reporting a single code has been set and then deleted should be handled",
-  {
+  function()
+    test_init_lifecycle_event(mock_device)
     -- add credential
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
-          mock_device,
-          0x0,
-          ProgrammingEventCode.PIN_CODE_ADDED,
-          1,
-          "1234",
-          DoorLockUserType.UNRESTRICTED,
-          DoorLockUserStatus.OCCUPIED_ENABLED,
-          0x0000,
-          "data"
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
+        mock_device,
+        0x0,
+        ProgrammingEventCode.PIN_CODE_ADDED,
+        1,
+        "1234",
+        DoorLockUserType.UNRESTRICTED,
+        DoorLockUserStatus.OCCUPIED_ENABLED,
+        0x0000,
+        "data"
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockUsers.users({ { userIndex = 1, userName = "Guest1", userType = "guest" } },
           { state_change = true, visibility = { displayed = true } }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials({ { credentialIndex = 1, credentialType = "pin", userIndex = 1 } },
           { state_change = true, visibility = { displayed = true } }))
-    },
+    )
+    test.wait_for_events()
 
     -- delete the credential
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
-          mock_device,
-          0x0,
-          ProgrammingEventCode.PIN_CODE_DELETED,
-          1,
-          "1234",
-          DoorLockUserType.UNRESTRICTED,
-          DoorLockUserStatus.AVAILABLE,
-          0x0000,
-          "data"
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
+        mock_device,
+        0x0,
+        ProgrammingEventCode.PIN_CODE_DELETED,
+        1,
+        "1234",
+        DoorLockUserType.UNRESTRICTED,
+        DoorLockUserStatus.AVAILABLE,
+        0x0000,
+        "data"
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockUsers.users({},
           { state_change = true, visibility = { displayed = true } }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials({},
           { state_change = true, visibility = { displayed = true } }))
-    }
-  },
-  { test_init = test_init_add_device }
+    )
+    test.wait_for_events()
+  end
 )
 
 test.register_message_test(
@@ -433,78 +406,65 @@ test.register_message_test(
   }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
   "The lock reporting all codes have been deleted should be handled",
-  {
+  function()
+    test_init_lifecycle_event(mock_device)
     -- add a credential
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
-          mock_device,
-          0x0,
-          ProgrammingEventCode.PIN_CODE_ADDED,
-          1,
-          "1234",
-          DoorLockUserType.UNRESTRICTED,
-          DoorLockUserStatus.OCCUPIED_ENABLED,
-          0x0000,
-          "data"
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
+        mock_device,
+        0x0,
+        ProgrammingEventCode.PIN_CODE_ADDED,
+        1,
+        "1234",
+        DoorLockUserType.UNRESTRICTED,
+        DoorLockUserStatus.OCCUPIED_ENABLED,
+        0x0000,
+        "data"
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockUsers.users({ { userIndex = 1, userName = "Guest1", userType = "guest" } },
           { state_change = true, visibility = { displayed = true } }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials({ { credentialIndex = 1, credentialType = "pin", userIndex = 1 } },
           { state_change = true, visibility = { displayed = true } }))
-    },
+    )
+    test.wait_for_events()
 
     -- delete all credentials
-    {
-      channel = "zigbee",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
-          mock_device,
-          0x0,
-          ProgrammingEventCode.PIN_CODE_DELETED,
-          0xFFFF
-        )
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      DoorLock.client.commands.ProgrammingEventNotification.build_test_rx(
+        mock_device,
+        0x0,
+        ProgrammingEventCode.PIN_CODE_DELETED,
+        0xFFFF
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockUsers.users({},
           { state_change = true, visibility = { displayed = true } }))
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_device:generate_test_message("main",
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials({},
           { state_change = true, visibility = { displayed = true } }))
-    }
-  },
-  { test_init = test_init_add_device }
+    )
+    test.wait_for_events()
+  end
 )
 
 test.register_coroutine_test(
   "Out of band get pin call should add credential if it doesn't exist (happens during reload all codes).",
   function()
+    test_init_lifecycle_event(mock_device)
     test.socket.zigbee:__queue_receive(
       {
         mock_device.id,
@@ -531,12 +491,7 @@ test.register_coroutine_test(
           { state_change = true, visibility = { displayed = true } })
       )
     )
-  end,
-  {
-    test_init = function()
-      test_init_add_device()
-    end
-  }
+  end
 )
 
 test.run_registered_tests()
