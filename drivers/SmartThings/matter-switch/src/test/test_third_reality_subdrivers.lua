@@ -236,6 +236,70 @@ test.register_coroutine_test(
   {min_api_version = 17}
 )
 
+
+local mock_device_misprofiled = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("light-binary.yml"),
+  manufacturer_info = {vendor_id = 0x1407, product_id = 0x1098},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {
+          cluster_id = clusters.OnOff.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0,
+        },
+        {
+          cluster_id = clusters.PowerSource.ID,
+          cluster_type = "SERVER",
+          feature_map = clusters.PowerSource.types.Feature.BATTERY,
+        },
+      },
+      device_types = {
+        {device_type_id = 0x010A, device_type_revision = 1} -- On/Off Plug-in Unit
+      }
+    }
+  }
+})
+
+test.register_coroutine_test(
+  "doConfigure should correct profile if misprofiled",
+  function()
+    test.disable_startup_messages()
+    test.mock_device.add_test_device(mock_device_misprofiled)
+
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_misprofiled)
+    for i, clus in ipairs(cluster_subscribe_list) do
+      if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_misprofiled)) end
+    end
+
+    -- added lifecycle: subdriver overrides device_added to a no-op so no subscribe here
+    test.socket.device_lifecycle:__queue_receive({mock_device_misprofiled.id, "added"})
+
+    -- init lifecycle: device_init subscribes
+    test.socket.device_lifecycle:__queue_receive({mock_device_misprofiled.id, "init"})
+    test.socket.matter:__expect_send({mock_device_misprofiled.id, subscribe_request})
+
+    -- doConfigure: sets battery support field and updates profile metadata
+    test.socket.device_lifecycle:__queue_receive({mock_device_misprofiled.id, "doConfigure"})
+    mock_device_misprofiled:expect_metadata_update({profile = "garage-door-battery"})
+    mock_device_misprofiled:expect_metadata_update({provisioning_state = "PROVISIONED"})
+  end,
+  {
+    test_init = function() test.mock_device.add_test_device(mock_device_misprofiled) end,
+  }
+)
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("12-button-keyboard.yml"),
   manufacturer_info = {vendor_id = 0x1407, product_id = 0x1388},

@@ -16,6 +16,7 @@ local clusters = require "st.matter.clusters"
 local function device_init(driver, device)
   -- Force a subscription to the OnOff cluster, since doorControl does not explicitly map to it in the default driver.
   device:add_subscribed_attribute(clusters.OnOff.attributes.OnOff)
+  device:add_subscribed_attribute(clusters.PowerSource.attributes.BatPercentRemaining)
   device:subscribe()
 end
 

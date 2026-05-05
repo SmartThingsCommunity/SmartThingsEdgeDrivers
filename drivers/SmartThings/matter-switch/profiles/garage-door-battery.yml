@@ -1,4 +1,4 @@
-name: GarageDoor
+name: garage-door-battery
 components:
 - id: main
   capabilities:
