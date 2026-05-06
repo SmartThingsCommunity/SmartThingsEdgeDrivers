@@ -37,14 +37,14 @@ local function notification_report_handler(self, device, cmd)
   if event ~= nil then
     device:emit_event(event)
   else
-    local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME, false)
-    if not lock_codes_migrated then
+    local lock_utils = require "zwave_lock_utils"
+    local slga_migrated = device:get_field(lock_utils.SLGA_MIGRATED) or false
+    if not slga_migrated then
       local LockDefaults = require "st.zwave.defaults.lock"
       local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
       LockDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
       LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
     else
-      local lock_utils = require "zwave_lock_utils"
       lock_utils.door_operation_event_handler(self, device, cmd)
       lock_utils.base_driver_code_event_handler(self, device, cmd)
     end

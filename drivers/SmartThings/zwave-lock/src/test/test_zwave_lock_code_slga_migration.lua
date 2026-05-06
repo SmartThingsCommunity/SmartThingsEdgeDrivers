@@ -11,6 +11,7 @@ local Configuration = (require "st.zwave.CommandClass.Configuration")({ version 
 local t_utils = require "integration_test.utils"
 --- @type st.zwave.constants
 local constants = require "st.zwave.constants"
+local lock_utils = require "zwave_lock_utils"
 
 local SCHLAGE_MANUFACTURER_ID = 0x003B
 local SCHLAGE_PRODUCT_TYPE = 0x0002
@@ -80,6 +81,8 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      test.wait_for_events()
+      assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
     end
 )
 
@@ -95,6 +98,8 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(8, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({}, { visibility = { displayed = false } })))
     test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+    test.wait_for_events()
+    assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
   end
 )
 
@@ -119,6 +124,8 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=2, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( schlage_mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      test.wait_for_events()
+      assert(schlage_mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
     end
 )
 

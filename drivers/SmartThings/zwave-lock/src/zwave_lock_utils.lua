@@ -32,7 +32,8 @@ local new_lock_utils = {
   UPDATE_USER = "updateUser",
   USER_INDEX = "userIndex",
   USER_NAME = "userName",
-  USER_TYPE = "userType"
+  USER_TYPE = "userType",
+  SLGA_MIGRATED = "slgaMigrated"
 }
 
 local DEFAULT_SUPPORTED_PIN_SLOTS = 8

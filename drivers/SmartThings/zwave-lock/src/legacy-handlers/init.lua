@@ -88,6 +88,8 @@ local function migrate(driver, device, cmd)
   device:emit_event(capabilities.lockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+  local lock_utils = require("zwave_lock_utils")
+  device:set_field(lock_utils.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
 end
 
 local using_old_capabilities = {

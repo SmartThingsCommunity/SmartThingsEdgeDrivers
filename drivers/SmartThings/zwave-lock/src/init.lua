@@ -48,6 +48,7 @@ local added_handler = function(driver, device)
     -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
     -- and should be migrated manually by the user.
     device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:set_field(lock_utils.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
   end
   lock_utils.reload_tables(device)
   device.thread:call_with_delay(2, function ()
