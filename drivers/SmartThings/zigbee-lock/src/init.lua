@@ -65,6 +65,7 @@ local function device_added(driver, device)
     -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
     -- and should be migrated manually by the user.
     device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:set_field(lock_utils.SLGA_MIGRATED, true, { persist = true }) -- persist the migration event in the datastore
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
   end
 
@@ -148,8 +149,8 @@ local do_configure = function(self, device)
   device:send(device_management.build_bind_request(device, Alarm.ID, self.environment_info.hub_zigbee_eui))
   device:send(Alarm.attributes.AlarmCount:configure_reporting(device, 0, 21600, 0))
 
-  local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME, false)
-  if lock_codes_migrated then
+  local slga_migrated = device:get_field(lock_utils.SLGA_MIGRATED) or false
+  if slga_migrated then
     device.thread:call_with_delay(2, function(d) reload_all_codes(device) end)
   else
     -- Don't send a reload all codes if this is a part of migration

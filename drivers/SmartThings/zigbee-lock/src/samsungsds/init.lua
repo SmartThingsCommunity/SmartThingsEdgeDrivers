@@ -54,8 +54,8 @@ local function emit_event_if_latest_state_missing(device, component, capability,
 end
 
 local function load_device_state(device)
-  local lock_codes_migrated = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME, false)
-  if lock_codes_migrated then
+  local slga_migrated = device:get_field(lock_utils.SLGA_MIGRATED) or false
+  if slga_migrated then
     lock_utils.reload_tables(device)
   else
     local legacy_lock_utils = require "legacy-handlers.legacy_lock_utils"
@@ -69,6 +69,7 @@ local device_added = function(self, device)
     -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
     -- and should be migrated manually by the user.
     device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:set_field(lock_utils.SLGA_MIGRATED, true, { persist = true }) -- persist the migration event in the datastore
     device:emit_event(capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
   end
   emit_event_if_latest_state_missing(device, "main", capabilities.lock, capabilities.lock.lock.NAME, capabilities.lock.lock.unlocked())

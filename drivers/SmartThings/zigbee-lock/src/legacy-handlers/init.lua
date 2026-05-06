@@ -290,6 +290,8 @@ local name_slot = function(driver, device, command)
 end
 
 local migrate = function(driver, device, command)
+  local post_migration_lock_utils = require "zigbee_lock_utils"
+
   local lock_users = {}
   local lock_credentials = {}
   local lock_codes = lock_utils.get_lock_codes(device)
@@ -324,6 +326,7 @@ local migrate = function(driver, device, command)
   device:emit_event(LockUsers.users(lock_users, { visibility = { displayed = false } }))
   device:emit_event(LockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
   device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
+  device:set_field(post_migration_lock_utils.SLGA_MIGRATED, true, { persist = true }) -- persist the migration event in the datastore
 end
 
 local legacy_capabilities_driver = {

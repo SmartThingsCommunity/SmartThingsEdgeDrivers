@@ -9,6 +9,7 @@ local t_utils = require "integration_test.utils"
 local clusters = require "st.zigbee.zcl.clusters"
 local DoorLock = clusters.DoorLock
 local capabilities = require "st.capabilities"
+local lock_utils = require "zigbee_lock_utils"
 
 local json = require "st.json"
 
@@ -62,6 +63,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.totalUsersSupported(4, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
       test.wait_for_events()
+      assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "SLGA_MIGRATED field should be set to true after migration")
     end
 )
 
