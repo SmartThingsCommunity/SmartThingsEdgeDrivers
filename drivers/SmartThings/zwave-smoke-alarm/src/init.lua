@@ -79,7 +79,8 @@ local driver_template = {
     infoChanged = info_changed,
     doConfigure = do_configure,
     added = device_added
-  }
+  },
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)

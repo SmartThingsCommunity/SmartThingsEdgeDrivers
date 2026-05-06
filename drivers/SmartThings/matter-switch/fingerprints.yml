@@ -783,6 +783,36 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x6056
     deviceProfileName: light-color-level
+  - id: "4999/5281"
+    deviceLabel: Govee Smart Bulb PAR38
+    vendorId: 0x1387
+    productId: 0x14A1
+    deviceProfileName: light-color-level
+  - id: "4999/5121"
+    deviceLabel: Govee Smart Bulb A21 1600lm
+    vendorId: 0x1387
+    productId: 0x1401
+    deviceProfileName: light-color-level
+  - id: "4999/5313"
+    deviceLabel: Govee Edison Bulb
+    vendorId: 0x1387
+    productId: 0x14C1
+    deviceProfileName: light-color-level
+  - id: "4999/5312"
+    deviceLabel: Govee Edison Bulb
+    vendorId: 0x1387
+    productId: 0x14C0
+    deviceProfileName: light-color-level
+  - id: "4999/5680"
+    deviceLabel: Govee Lantern Floor Lamp
+    vendorId: 0x1387
+    productId: 0x1630
+    deviceProfileName: light-color-level
+  - id: "4999/5953"
+    deviceLabel: Govee Table Lamp Classic
+    vendorId: 0x1387
+    productId: 0x1741
+    deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
     deviceLabel: Hager matter 2 buttons (battery)

@@ -714,6 +714,7 @@ local matter_lock_driver = {
     doConfigure = do_configure,
     infoChanged = info_changed,
   },
+  shared_device_thread_enabled = true,
 }
 
 -----------------------------------------------------------------------------------------------------------------------------

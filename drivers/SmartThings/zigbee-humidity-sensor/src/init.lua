@@ -70,6 +70,7 @@ local zigbee_humidity_driver = {
   },
   sub_drivers = require("sub_drivers"),
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_humidity_driver, zigbee_humidity_driver.supported_capabilities, {native_capability_attrs_enabled = true})

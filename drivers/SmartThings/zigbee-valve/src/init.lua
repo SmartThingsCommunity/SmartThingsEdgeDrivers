@@ -43,6 +43,7 @@ local zigbee_valve_driver_template = {
   },
   sub_drivers = require("sub_drivers"),
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_valve_driver_template, zigbee_valve_driver_template.supported_capabilities)
