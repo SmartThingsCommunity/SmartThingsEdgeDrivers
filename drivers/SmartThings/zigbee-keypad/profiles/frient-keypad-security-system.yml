@@ -45,6 +45,13 @@ preferences:
     definition:
       stringType: text
       default: ""
+  - name: panicAlarmActive
+    title: Panic Alarm Active
+    description: "When enabled, the SOS button will trigger the alarm. When disabled, the SOS button will be ignored."
+    required: false
+    preferenceType: boolean
+    definition:
+      default: true
   - name: showPinSnapshot
     title: Show PIN Snapshot
     description: "Display the current PIN/RFID list in the device history after adding them (sensitive)."

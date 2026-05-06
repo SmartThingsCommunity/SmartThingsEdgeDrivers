@@ -477,6 +477,9 @@ local function handle_get_panel_status(driver, device, zb_rx)
 end
 
 local function handle_emergency_command(driver, device, zb_rx)
+  if device.preferences.panicAlarmActive == false then
+    return
+  end
   device:emit_event(panicAlarm.panicAlarm.panic({ state_change = true }))
   device.thread:call_with_delay(10, function()
     device:emit_event(panicAlarm.panicAlarm.clear({ state_change = true }))
