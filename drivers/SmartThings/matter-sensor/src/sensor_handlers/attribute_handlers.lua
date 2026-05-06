@@ -9,6 +9,10 @@ local fields = require "sensor_utils.fields"
 local device_cfg = require "sensor_utils.device_configuration"
 local version = require "version"
 
+if version.api < 13 then
+  clusters.Global = require "embedded_clusters.Global"
+end
+
 local AttributeHandlers = {}
 
 
@@ -69,16 +73,39 @@ function AttributeHandlers.humidity_measured_value_handler(driver, device, ib, r
 end
 
 
+-- [[ SOIL MEASUREMENT CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.soil_moisture_measured_value_handler(driver, device, ib, response)
+  if ib.data.value == nil then return end
+  local min = sensor_utils.get_field_for_endpoint(device, fields.SOIL_LIMIT_MIN, ib.endpoint_id) or sensor_utils.SOIL_MOISTURE_MIN
+  local max = sensor_utils.get_field_for_endpoint(device, fields.SOIL_LIMIT_MAX, ib.endpoint_id) or sensor_utils.SOIL_MOISTURE_MAX
+  local soil_moisture = st_utils.clamp_value(ib.data.value, min, max)
+  device:emit_event_for_endpoint(ib.endpoint_id, capabilities.relativeHumidityMeasurement.humidity(soil_moisture))
+end
+
+function AttributeHandlers.soil_moisture_measurement_limits_handler(driver, device, ib, response)
+  local MeasurementAccuracyStruct = require "embedded_clusters.Global.types.MeasurementAccuracyStruct"
+  MeasurementAccuracyStruct:augment_type(ib.data)
+  local min_val = ib.data.elements and ib.data.elements.min_measured_value and ib.data.elements.min_measured_value.value
+  local max_val = ib.data.elements and ib.data.elements.max_measured_value and ib.data.elements.max_measured_value.value
+  if not (min_val and max_val) or (min_val >= max_val) or (min_val < sensor_utils.SOIL_MOISTURE_MIN) or (max_val > sensor_utils.SOIL_MOISTURE_MAX) then
+    device.log.warn_with({hub_logs = true}, string.format("Device reported invalid soil moisture limits: min=%d, max=%d", min_val, max_val))
+  end
+  sensor_utils.set_field_for_endpoint(device, fields.SOIL_LIMIT_MIN, ib.endpoint_id, min_val)
+  sensor_utils.set_field_for_endpoint(device, fields.SOIL_LIMIT_MAX, ib.endpoint_id, max_val)
+end
+
+
 -- [[ BOOLEAN STATE CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.boolean_state_value_handler(driver, device, ib, response)
   local name
   for dt_name, _ in pairs(fields.BOOLEAN_DEVICE_TYPE_INFO) do
-      local dt_ep_id = device:get_field(dt_name)
-      if ib.endpoint_id == dt_ep_id then
-          name = dt_name
-          break
-      end
+    local dt_ep_id = device:get_field(dt_name)
+    if ib.endpoint_id == dt_ep_id then
+      name = dt_name
+      break
+    end
   end
   if name then
     device:emit_event_for_endpoint(ib.endpoint_id, fields.BOOLEAN_CAP_EVENT_MAP[ib.data.value][name])
