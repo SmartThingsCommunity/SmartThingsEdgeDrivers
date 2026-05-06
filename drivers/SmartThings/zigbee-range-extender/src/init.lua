@@ -23,6 +23,7 @@ local zigbee_range_driver_template = {
   },
   health_check = false,
   sub_drivers = require("sub_drivers"),
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_range_driver_template, zigbee_range_driver_template.supported_capabilities)
