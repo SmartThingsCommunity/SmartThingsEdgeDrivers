@@ -15,5 +15,6 @@ local sub_drivers = {
    lazy_load_if_possible("thirdreality"),
    lazy_load_if_possible("thirdreality-zb2"),
    lazy_load_if_possible("ezviz"),
+   lazy_load_if_possible("MultiIR"),
 }
 return sub_drivers

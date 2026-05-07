@@ -52,6 +52,7 @@ SwitchFields.DEVICE_TYPE_ID = {
     DIMMER = 0x0104,
     COLOR_DIMMER = 0x0105,
   },
+  WATER_VALVE = 0x0042,
 }
 
 SwitchFields.device_type_profile_map = {
