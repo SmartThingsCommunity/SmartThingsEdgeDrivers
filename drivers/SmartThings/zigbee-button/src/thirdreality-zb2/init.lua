@@ -26,6 +26,9 @@ local function present_value_attr_handler(driver, device, value, zb_rx)
 
   if not event then return end
 
+  -- main component
+  device:emit_event(event)
+
   local ep = zb_rx.address_header.src_endpoint.value
   local component_id = COMPONENT_MAP[ep]
 
@@ -36,6 +39,10 @@ end
 
 local function device_added(driver, device)
   local supported = { "pushed", "double", "held" }
+
+  -- main
+  device:emit_event(capabilities.button.supportedButtonValues(supported, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.button.numberOfButtons({ value = 3 }, { visibility = { displayed = false } }))
 
   for ep, comp_id in pairs(COMPONENT_MAP) do
     local comp = device.profile.components[comp_id]
