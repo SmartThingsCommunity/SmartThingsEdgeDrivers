@@ -527,21 +527,6 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "PowerSource AttributeList update should trigger profile update",
-  function()
-    test.socket.matter:__queue_receive({mock_device_battery.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(
-      mock_device_battery, 1, {uint32(clusters.PowerSource.attributes.BatPercentRemaining.ID)}
-    )})
-    expect_configure_button(mock_device_battery)
-    mock_device_battery:expect_metadata_update({ profile = "button-battery" })
-  end,
-  {
-    test_init = test_init_profile_change_with_battery,
-    min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
   "PowerSource AttributeList with BatPercentRemaining update should trigger profile update to button-battery",
   function()
     test.socket.matter:__queue_receive({mock_device_battery.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(
