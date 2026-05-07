@@ -218,7 +218,7 @@ new_lock_utils.create_user = function(device, user_name, user_type, user_index)
 
   local current_users = new_lock_utils.get_users(device)
   table.insert(current_users, { userIndex = user_index, userType = user_type, userName = user_name })
-  device:set_field(new_lock_utils.LOCK_USERS, current_users, { persist = true })
+  device:set_field(new_lock_utils.LOCK_USERS, current_users)
 end
 
 new_lock_utils.delete_user = function(device, user_index)
@@ -242,7 +242,7 @@ new_lock_utils.add_credential = function(device, user_index, credential_type, cr
   local credentials = new_lock_utils.get_credentials(device)
   table.insert(credentials,
     { userIndex = user_index, credentialIndex = credential_index, credentialType = credential_type })
-  device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials, { persist = true })
+  device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
   return new_lock_utils.STATUS_SUCCESS
 end
 
@@ -273,7 +273,7 @@ new_lock_utils.update_credential = function(device, credential_index, user_index
     if credential.credentialIndex == credential_index then
       credential.credentialType = credential_type
       credential.userIndex = user_index
-      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials, { persist = true })
+      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
       status_code = new_lock_utils.STATUS_SUCCESS
       break
     end

@@ -108,7 +108,7 @@ local update_user_handler = function(driver, device, command)
       device:set_field(lock_utils.ACTIVE_CREDENTIAL, { userIndex = user_index })
       user.userName = user_name
       user.userType = user_type
-      device:set_field(lock_utils.LOCK_USERS, current_users, { persist = true })
+      device:set_field(lock_utils.LOCK_USERS, current_users)
       lock_utils.send_events(device, lock_utils.LOCK_USERS)
       status = lock_utils.STATUS_SUCCESS
       break
