@@ -289,6 +289,7 @@ test.register_coroutine_test(
     test.wait_for_events()
 
     test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } } })
+    mock_device:expect_native_cmd_handler_registration("statelessColorTemperatureStep", "stepColorTemperatureByPercent")
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,
@@ -305,7 +306,7 @@ test.register_coroutine_test(
   "Step Level command test",
   function()
     test.socket.capability:__queue_receive({mock_device.id, { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } } })
-
+    mock_device:expect_native_cmd_handler_registration("statelessSwitchLevelStep", "stepLevel")
     test.socket.zigbee:__expect_send(
       {
         mock_device.id,

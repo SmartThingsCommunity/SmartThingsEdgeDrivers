@@ -273,6 +273,11 @@ zigbeeManufacturer:
     manufacturer: SONOFF
     model: SNZB-01M
     deviceProfileName: four-buttons-battery
+  - id: "MultIR/MIR-SO100"
+    deviceLabel: MultiIR Smart button MIR-SO100
+    manufacturer: MultIR
+    model: MIR-SO100
+    deviceProfileName: one-button-battery-no-fw-update
 zigbeeGeneric:
   - id: "generic-button-sensor"
     deviceLabel: "Zigbee Generic Button"

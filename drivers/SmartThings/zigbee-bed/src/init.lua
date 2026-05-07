@@ -12,6 +12,7 @@ local zigbee_bed_template = {
   },
   sub_drivers = require("sub_drivers"),
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_bed_template, zigbee_bed_template.supported_capabilities)

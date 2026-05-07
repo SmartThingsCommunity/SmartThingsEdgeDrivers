@@ -259,7 +259,8 @@ local function match_profile_modular(driver, device)
   end
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
-  if lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
+  if modular_profile_name == "lock-modular-embedded-unlatch" -- the embedded config that may be needed is not checked by an optional capability comparison
+    or lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
     device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
   end
 end
@@ -1554,15 +1555,31 @@ local function clear_user_response_handler(driver, device, ib, response)
     device.log.warn(string.format("Failed to clear user: %s", status))
   end
 
-  -- Update commandResult
-  local command_result_info = {
-    commandName = cmdName,
-    userIndex = userIdx,
-    statusCode = status
-  }
-  device:emit_event(capabilities.lockUsers.commandResult(
-    command_result_info, {state_change = true, visibility = {displayed = false}}
-  ))
+  -- In the "defaultSchedule" cmd failure path, when a guest user's credentials are set but the scheduling
+  -- fails during default setup, those credentials should be removed, so we wait to log lock credentials until here.
+  if cmdName == "defaultSchedule" then
+    -- note: if clear user succeeds, we'd log credential settings as a "failure" since it's effectively a no-op.
+    -- If clear user fails, log "success" since the credentials would still be present.
+    local lock_credential_status = status == "success" and "failure" or "success"
+    local command_result_info = {
+      commandName = "addCredential",
+      userIndex = userIdx,
+      statusCode = lock_credential_status
+    }
+    device:emit_event(capabilities.lockCredentials.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+  else
+    local command_result_info = {
+      commandName = cmdName,
+      userIndex = userIdx,
+      statusCode = status
+    }
+    device:emit_event(capabilities.lockUsers.commandResult(
+      command_result_info, {state_change = true, visibility = {displayed = false}}
+    ))
+  end
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
@@ -2418,17 +2435,22 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
     local cmdName = "addCredential"
     local credIdx = device:get_field(lock_utils.CRED_INDEX)
 
-    -- Update commandResult
-    local command_result_info = {
-      commandName = cmdName,
-      userIndex = userIdx,
-      credentialIndex = credIdx,
-      statusCode = status
-    }
-    device:emit_event(capabilities.lockCredentials.commandResult(
-      command_result_info, {state_change = true, visibility = {displayed = false}}
-    ))
-    device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    if status == "success" then
+      -- Update commandResult
+      local command_result_info = {
+        commandName = cmdName,
+        userIndex = userIdx,
+        credentialIndex = credIdx,
+        statusCode = status
+      }
+      device:emit_event(capabilities.lockCredentials.commandResult(
+        command_result_info, {state_change = true, visibility = {displayed = false}}
+      ))
+      device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    else
+      local ep = find_default_endpoint(device, clusters.DoorLock.ID)
+      device:send(DoorLock.server.commands.ClearUser(device, ep, userIdx))
+    end
     return
   end
 
