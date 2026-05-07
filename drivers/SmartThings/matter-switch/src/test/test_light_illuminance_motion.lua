@@ -656,4 +656,83 @@ test.register_message_test(
   }
 )
 
+local generic_manufacturer_info = { vendor_id = 0x0000, product_id = 0x0000 }
+local generic_matter_version = { hardware = 1, software = 1 }
+local root_endpoint = {
+  endpoint_id = 0,
+  clusters = {
+    {cluster_id = clusters.Basic.ID, cluster_type = "SERVER"},
+  },
+  device_types = {
+    {device_type_id = 0x0016, device_type_revision = 1} -- RootNode
+  }
+}
+
+local mock_device_light_level_motion = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("light-level-motion.yml"),
+  manufacturer_info = generic_manufacturer_info,
+  matter_version = generic_matter_version,
+  endpoints = {
+    root_endpoint,
+    {
+      endpoint_id = 1,
+      clusters = {
+        {cluster_id = clusters.OnOff.ID, cluster_type = "SERVER"},
+        {cluster_id = clusters.LevelControl.ID, cluster_type = "SERVER"}
+      },
+      device_types = {
+        {device_type_id = 0x0101, device_type_revision = 1}  -- Dimmable Light
+      }
+    },
+    {
+      endpoint_id = 2,
+      clusters = {
+        {cluster_id = clusters.OccupancySensing.ID, cluster_type = "SERVER"},
+      },
+      device_types = {
+        {device_type_id = 0x0107, device_type_revision = 1}  -- Occupancy Sensor
+      }
+    }
+  }
+})
+
+local function test_init_light_level_motion()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device_light_level_motion)
+end
+
+test.register_coroutine_test(
+  "Test init and doConfigure for Dimmable Light device type with Occupancy Sensor",
+  function()
+    local cluster_subscribe_list = {
+      clusters.OnOff.attributes.OnOff,
+      clusters.LevelControl.attributes.CurrentLevel,
+      clusters.LevelControl.attributes.MaxLevel,
+      clusters.LevelControl.attributes.MinLevel,
+      clusters.OccupancySensing.attributes.Occupancy
+    }
+    local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_light_level_motion)
+    for i, cluster in ipairs(cluster_subscribe_list) do
+      if i > 1 then
+        subscribe_request:merge(cluster:subscribe(mock_device_light_level_motion))
+      end
+    end
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "init" })
+    test.socket.matter:__expect_send({mock_device_light_level_motion.id, subscribe_request})
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device_light_level_motion.id, "doConfigure" })
+    test.socket.matter:__expect_send({
+      mock_device_light_level_motion.id,
+      clusters.LevelControl.attributes.Options:write(mock_device_light_level_motion, 1, clusters.LevelControl.types.OptionsBitmap.EXECUTE_IF_OFF)
+    })
+    mock_device_light_level_motion:expect_metadata_update({ profile = "light-level-motion" })
+    mock_device_light_level_motion:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+    test_init = test_init_light_level_motion,
+    min_api_version = 17
+  }
+)
+
 test.run_registered_tests()
