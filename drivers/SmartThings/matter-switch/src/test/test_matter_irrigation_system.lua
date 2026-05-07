@@ -123,8 +123,6 @@ local function test_init()
       subscribe_request:merge(cluster:subscribe(mock_irrigation_system))
     end
   end
-  test.socket.device_lifecycle:__queue_receive({ mock_irrigation_system.id, "added" })
-  test.socket.matter:__expect_send({mock_irrigation_system.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_irrigation_system.id, "init" })
   test.socket.matter:__expect_send({mock_irrigation_system.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_irrigation_system.id, "doConfigure" })
