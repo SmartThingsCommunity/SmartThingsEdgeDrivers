@@ -413,50 +413,45 @@ function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_
   }))
 end
 
---- sets fields for handling EPs with the Electrical Sensor device type
+--- Sets fields for handling electrical clusters, including storage of electrical tags (like "-energy-powerConsumption", etc)
+--- and associating the clusters with the appropriate devices via the find_child implementation
 ---
 --- @param device table a Matter device object
---- @param electrical_sensor_ep table an EP object that includes an Electrical Sensor device type
---- @param associated_endpoint_ids table EP IDs that are associated with the Electrical Sensor EP
+--- @param electrical_ep table an EP that includes electrical clusters.
+--- @param associated_ep_ids table EP IDs that should be associated with the electrical clusters
 --- @return boolean
-function utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_ep, associated_endpoint_ids)
-  if #associated_endpoint_ids == 0 then
+function utils.cache_electrical_data_from_endpoint(device, electrical_ep, associated_ep_ids)
+  if #associated_ep_ids == 0 then
     return false
   else
     local tags = ""
-    if utils.find_cluster_on_ep(electrical_sensor_ep, clusters.ElectricalPowerMeasurement.ID) then tags = tags.."-power" end
-    if utils.find_cluster_on_ep(electrical_sensor_ep, clusters.ElectricalEnergyMeasurement.ID) then tags = tags.."-energy-powerConsumption" end
+    if utils.find_cluster_on_ep(electrical_ep, clusters.ElectricalPowerMeasurement.ID) then tags = tags.."-power" end
+    if utils.find_cluster_on_ep(electrical_ep, clusters.ElectricalEnergyMeasurement.ID) then tags = tags.."-energy-powerConsumption" end
+    if tags == "" then return false end
     -- note: using the lowest valued EP ID here is arbitrary (not spec defined) and is done to create internal consistency
     -- Ex. for the NODE topology, electrical capabilities will then be associated with the default (aka lowest ID'd) OnOff EP
-    table.sort(associated_endpoint_ids)
-    local primary_associated_ep_id = associated_endpoint_ids[1]
+    table.sort(associated_ep_ids)
+    local primary_associated_ep_id = associated_ep_ids[1]
     -- map the required electrical tags for this electrical sensor EP with the first associated EP ID, used later during profling.
-    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags, {persist = true})
-    utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_sensor_ep.endpoint_id, string.format("%d", primary_associated_ep_id), { persist = true })
+    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags)
+    utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_ep.endpoint_id, string.format("%d", primary_associated_ep_id), { persist = true })
     return true
   end
 end
 
-function utils.handle_electrical_sensor_info(device)
-  local electrical_sensor_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR, { with_info = true })
-  if #electrical_sensor_eps == 0 then
-    -- no Electrical Sensor EPs are supported. Set profiling data to false and return
-    device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, {persist=true})
-    return
-  end
-
+function utils.cache_electrical_cluster_data(device)
   -- energy reporting must be handled by a cumulative report, a periodic report, or both attributes simultaneously.
   -- To ensure a single source of truth, we only handle a device's periodic reporting if cumulative reporting is not supported.
-  for _, ep_info in ipairs(electrical_sensor_eps) do
-    if utils.find_cluster_on_ep(ep_info, clusters.ElectricalEnergyMeasurement.ID,
-      {feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY}) then
-      device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true)
-      break
-    end
+  if #device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID,
+    { feature_bitmap = clusters.ElectricalEnergyMeasurement.types.Feature.CUMULATIVE_ENERGY }) > 0 then
+    device:set_field(fields.CUMULATIVE_REPORTS_SUPPORTED, true)
   end
 
-  -- check the feature map for the first (or only) Electrical Sensor EP if the device profiling has not been completed
-  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) == nil then
+  -- if this data has already been cached, we don't need to proceed further
+  if device:get_field(fields.profiling_data.POWER_TOPOLOGY) then return end
+  local electrical_sensor_eps = utils.get_endpoints_by_device_type(device, fields.DEVICE_TYPE_ID.ELECTRICAL_SENSOR, { with_info = true })
+  if #electrical_sensor_eps > 0 then
+    -- check the feature map for the first (or only) Electrical Sensor EP
     local endpoint_power_topology_cluster = utils.find_cluster_on_ep(electrical_sensor_eps[1], clusters.PowerTopology.ID) or {}
     local endpoint_power_topology_feature_map = endpoint_power_topology_cluster.feature_map or 0
     if clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.SET_TOPOLOGY, endpoint_power_topology_feature_map) or
@@ -467,10 +462,31 @@ function utils.handle_electrical_sensor_info(device)
     elseif clusters.PowerTopology.are_features_supported(clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, endpoint_power_topology_feature_map) then
       -- EP has a NODE topology, so there is only ONE Electrical Sensor EP
       device:set_field(fields.profiling_data.POWER_TOPOLOGY, clusters.PowerTopology.types.Feature.NODE_TOPOLOGY, {persist=true})
-      if utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
+      if utils.cache_electrical_data_from_endpoint(device, electrical_sensor_eps[1], device:get_endpoints(clusters.OnOff.ID)) == false then
         device.log.warn("Electrical Sensor EP with NODE topology found, but no OnOff EPs exist. Electrical Sensor capabilities will not be exposed.")
       end
     end
+  else
+    -- no electrical sensor endpoints are available, so mark power topology as absent
+    device:set_field(fields.profiling_data.POWER_TOPOLOGY, false, {persist=true})
+    -- return early if electrical cluster endpoints are absent
+    local energy_meas_ep_ids = device:get_endpoints(clusters.ElectricalEnergyMeasurement.ID)
+    local power_meas_ep_ids = device:get_endpoints(clusters.ElectricalPowerMeasurement.ID)
+    if #energy_meas_ep_ids == 0 and #power_meas_ep_ids == 0 then return end
+    -- try to cache electrical data from each OnOff cluster endpoint
+    local endpoint_mapping_successful = false
+    for _, ep in ipairs(device.endpoints) do
+      if utils.find_cluster_on_ep(ep, clusters.OnOff.ID) then
+        endpoint_mapping_successful = utils.cache_electrical_data_from_endpoint(device, ep, { ep.endpoint_id }) or endpoint_mapping_successful
+      end
+    end
+    if endpoint_mapping_successful then return end
+    -- if all else fails, try to directly map the first (hopefully only) energy endpoint to an OnOff endpoint, with an assumption
+    -- that if a power cluster exists, it will be on the same endpoint as the energy one. This should only really happen if these
+    -- lone electrical endpoints exist without corresponding OnOff endpoints, which means they are likely attached to the root node,
+    -- which is against spec, or some device structure we don't yet support
+    local energy_ep_info = utils.get_endpoint_info(device, energy_meas_ep_ids[1])
+    utils.cache_electrical_data_from_endpoint(device, energy_ep_info, device:get_endpoints(clusters.OnOff.ID))
   end
 end
 
