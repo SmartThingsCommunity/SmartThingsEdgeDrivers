@@ -18,7 +18,7 @@ local function notification_report_handler(self, device, cmd)
       event = capabilities.lock.lock.unlocked()
     elseif event_code == access_control_event.NEW_USER_CODE_ADDED then
       local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
-      local command = device:get_field(lock_utils.COMMAND_NAME)
+      local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
       if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL and active_credential ~= nil then
         device:send(UserCode:Get({ user_identifier = active_credential.credentialIndex }))
         return

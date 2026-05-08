@@ -5,12 +5,12 @@ local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local INITIAL_INDEX = 1
 
-local new_lock_utils = {
+local lock_utils = {
   -- Constants
   ADD_CREDENTIAL = "addCredential",
   ADD_USER = "addUser",
   BUSY = "busy",
-  COMMAND_NAME = "commandName",
+  COMMAND_IN_PROGRESS = "commandInProgress",
   CREDENTIAL_TYPE = "pin",
   CHECKING_CODE = "checkingCode",
   DELETE_ALL_CREDENTIALS = "deleteAllCredentials",
@@ -40,25 +40,25 @@ local DEFAULT_SUPPORTED_PIN_SLOTS = 8
 
 -- check if we are currently busy performing a task.
 -- if we aren't then set as busy.
-new_lock_utils.busy_check_and_set = function (device, command, override_busy_check)
+lock_utils.busy_check_and_set = function (device, command, override_busy_check)
   if override_busy_check then
     -- the function was called by an injected command.
     return false
   end
 
   local c_time = os.time()
-  local busy_state = device:get_field(new_lock_utils.BUSY) or false
+  local busy_state = device:get_field(lock_utils.BUSY) or false
 
   if busy_state == false or c_time - busy_state > 10 then
-    device:set_field(new_lock_utils.COMMAND_NAME, command)
-    device:set_field(new_lock_utils.BUSY, c_time)
+    device:set_field(lock_utils.COMMAND_IN_PROGRESS, command)
+    device:set_field(lock_utils.BUSY, c_time)
     return false
   else
     local command_result_info = {
       commandName = command.name,
-      statusCode = new_lock_utils.STATUS_BUSY
+      statusCode = lock_utils.STATUS_BUSY
     }
-    if command.type == new_lock_utils.LOCK_USERS then
+    if command.type == lock_utils.LOCK_USERS then
       device:emit_event(capabilities.lockUsers.commandResult(
         command_result_info, { state_change = true, visibility = { displayed = true } }
       ))
@@ -71,18 +71,18 @@ new_lock_utils.busy_check_and_set = function (device, command, override_busy_che
   end
 end
 
-new_lock_utils.clear_busy_state = function(device, status, override_busy_check)
+lock_utils.clear_busy_state = function(device, status, override_busy_check)
   if override_busy_check then
     return
   end
-  local command = device:get_field(new_lock_utils.COMMAND_NAME)
-  local active_credential = device:get_field(new_lock_utils.ACTIVE_CREDENTIAL)
+  local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
+  local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
   if command ~= nil then
     local command_result_info = {
       commandName = command.name,
       statusCode = status
     }
-    if command.type == new_lock_utils.LOCK_USERS then
+    if command.type == lock_utils.LOCK_USERS then
       if active_credential ~= nil and active_credential.userIndex ~= nil then
         command_result_info.userIndex = active_credential.userIndex
       end
@@ -102,35 +102,35 @@ new_lock_utils.clear_busy_state = function(device, status, override_busy_check)
     end
   end
 
-  device:set_field(new_lock_utils.ACTIVE_CREDENTIAL, nil)
-  device:set_field(new_lock_utils.COMMAND_NAME, nil)
-  device:set_field(new_lock_utils.BUSY, false)
+  device:set_field(lock_utils.ACTIVE_CREDENTIAL, nil)
+  device:set_field(lock_utils.COMMAND_IN_PROGRESS, nil)
+  device:set_field(lock_utils.BUSY, false)
 end
 
-new_lock_utils.reload_tables = function(device)
+lock_utils.reload_tables = function(device)
   local users = device:get_latest_state("main", capabilities.lockUsers.ID, capabilities.lockUsers.users.NAME, {})
   local credentials = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.credentials.NAME, {})
   if next(users) ~= nil then
-    device:set_field(new_lock_utils.LOCK_USERS, users)
+    device:set_field(lock_utils.LOCK_USERS, users)
   end
   if next(credentials) ~= nil then
-    device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
+    device:set_field(lock_utils.LOCK_CREDENTIALS, credentials)
   end
 
-  device:set_field(new_lock_utils.TABLES_LOADED, true)
+  device:set_field(lock_utils.TABLES_LOADED, true)
 end
 
-new_lock_utils.get_users = function(device)
-  if not device:get_field(new_lock_utils.TABLES_LOADED) then
-    new_lock_utils.reload_tables(device)
+lock_utils.get_users = function(device)
+  if not device:get_field(lock_utils.TABLES_LOADED) then
+    lock_utils.reload_tables(device)
   end
 
-  local users = utils.deep_copy(device:get_field(new_lock_utils.LOCK_USERS))
+  local users = utils.deep_copy(device:get_field(lock_utils.LOCK_USERS))
   return users ~= nil and users or {}
 end
 
-new_lock_utils.get_user = function(device, user_index)
-  for _, user in pairs(new_lock_utils.get_users(device)) do
+lock_utils.get_user = function(device, user_index)
+  for _, user in pairs(lock_utils.get_users(device)) do
     if user.userIndex == user_index then
       return user
     end
@@ -139,10 +139,10 @@ new_lock_utils.get_user = function(device, user_index)
   return nil
 end
 
-new_lock_utils.get_available_user_index = function(device)
+lock_utils.get_available_user_index = function(device)
   local max = device:get_latest_state("main", capabilities.lockUsers.ID,
     capabilities.lockUsers.totalUsersSupported.NAME, DEFAULT_SUPPORTED_PIN_SLOTS)
-  local current_users = new_lock_utils.get_users(device)
+  local current_users = lock_utils.get_users(device)
   local available_index = nil
   local used_index = {}
   for _, user in pairs(current_users) do
@@ -161,17 +161,17 @@ new_lock_utils.get_available_user_index = function(device)
   return available_index
 end
 
-new_lock_utils.get_credentials = function(device)
-  if not device:get_field(new_lock_utils.TABLES_LOADED) then
-    new_lock_utils.reload_tables(device)
+lock_utils.get_credentials = function(device)
+  if not device:get_field(lock_utils.TABLES_LOADED) then
+    lock_utils.reload_tables(device)
   end
 
-  local credentials = utils.deep_copy(device:get_field(new_lock_utils.LOCK_CREDENTIALS))
+  local credentials = utils.deep_copy(device:get_field(lock_utils.LOCK_CREDENTIALS))
   return credentials ~= nil and credentials or {}
 end
 
-new_lock_utils.get_credential = function(device, credential_index)
-  for _, credential in pairs(new_lock_utils.get_credentials(device)) do
+lock_utils.get_credential = function(device, credential_index)
+  for _, credential in pairs(lock_utils.get_credentials(device)) do
     if credential.credentialIndex == credential_index then
       return credential
     end
@@ -179,8 +179,8 @@ new_lock_utils.get_credential = function(device, credential_index)
   return nil
 end
 
-new_lock_utils.get_credential_by_user_index = function(device, user_index)
-  for _, credential in pairs(new_lock_utils.get_credentials(device)) do
+lock_utils.get_credential_by_user_index = function(device, user_index)
+  for _, credential in pairs(lock_utils.get_credentials(device)) do
     if credential.userIndex == user_index then
       return credential
     end
@@ -189,10 +189,10 @@ new_lock_utils.get_credential_by_user_index = function(device, user_index)
   return nil
 end
 
-new_lock_utils.get_available_credential_index = function(device)
+lock_utils.get_available_credential_index = function(device)
   local max = device:get_latest_state("main", capabilities.lockCredentials.ID,
     capabilities.lockCredentials.pinUsersSupported.NAME, DEFAULT_SUPPORTED_PIN_SLOTS)
-  local current_credentials = new_lock_utils.get_credentials(device)
+  local current_credentials = lock_utils.get_credentials(device)
   local available_index = nil
   local used_index = {}
   for _, credential in pairs(current_credentials) do
@@ -211,53 +211,53 @@ new_lock_utils.get_available_credential_index = function(device)
   return available_index
 end
 
-new_lock_utils.create_user = function(device, user_name, user_type, user_index)
+lock_utils.create_user = function(device, user_name, user_type, user_index)
   if user_name == nil then
     user_name = "Guest" .. user_index
   end
 
-  local current_users = new_lock_utils.get_users(device)
+  local current_users = lock_utils.get_users(device)
   table.insert(current_users, { userIndex = user_index, userType = user_type, userName = user_name })
-  device:set_field(new_lock_utils.LOCK_USERS, current_users)
+  device:set_field(lock_utils.LOCK_USERS, current_users)
 end
 
-new_lock_utils.delete_user = function(device, user_index)
-  local current_users = new_lock_utils.get_users(device)
-  local status_code = new_lock_utils.STATUS_FAILURE
+lock_utils.delete_user = function(device, user_index)
+  local current_users = lock_utils.get_users(device)
+  local status_code = lock_utils.STATUS_FAILURE
 
   for index, user in pairs(current_users) do
     if user.userIndex == user_index then
       -- table.remove causes issues if we are removing while iterating.
       -- instead set the value as nil and let `prep_table` handle removing it.
       current_users[index] = nil
-      device:set_field(new_lock_utils.LOCK_USERS, current_users)
-      status_code = new_lock_utils.STATUS_SUCCESS
+      device:set_field(lock_utils.LOCK_USERS, current_users)
+      status_code = lock_utils.STATUS_SUCCESS
       break
     end
   end
   return status_code
 end
 
-new_lock_utils.add_credential = function(device, user_index, credential_type, credential_index)
-  local credentials = new_lock_utils.get_credentials(device)
+lock_utils.add_credential = function(device, user_index, credential_type, credential_index)
+  local credentials = lock_utils.get_credentials(device)
   table.insert(credentials,
     { userIndex = user_index, credentialIndex = credential_index, credentialType = credential_type })
-  device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
-  return new_lock_utils.STATUS_SUCCESS
+  device:set_field(lock_utils.LOCK_CREDENTIALS, credentials)
+  return lock_utils.STATUS_SUCCESS
 end
 
-new_lock_utils.delete_credential = function(device, credential_index)
-  local credentials = new_lock_utils.get_credentials(device)
-  local status_code = new_lock_utils.STATUS_FAILURE
+lock_utils.delete_credential = function(device, credential_index)
+  local credentials = lock_utils.get_credentials(device)
+  local status_code = lock_utils.STATUS_FAILURE
 
   for index, credential in pairs(credentials) do
     if credential.credentialIndex == credential_index then
-      new_lock_utils.delete_user(device, credential.userIndex)
+      lock_utils.delete_user(device, credential.userIndex)
       -- table.remove causes issues if we are removing while iterating.
       -- instead set the value as nil and let `prep_table` handle removing it.
       credentials[index] = nil
-      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
-      status_code = new_lock_utils.STATUS_SUCCESS
+      device:set_field(lock_utils.LOCK_CREDENTIALS, credentials)
+      status_code = lock_utils.STATUS_SUCCESS
       break
     end
   end
@@ -265,16 +265,16 @@ new_lock_utils.delete_credential = function(device, credential_index)
   return status_code
 end
 
-new_lock_utils.update_credential = function(device, credential_index, user_index, credential_type)
-  local credentials = new_lock_utils.get_credentials(device)
-  local status_code = new_lock_utils.STATUS_FAILURE
+lock_utils.update_credential = function(device, credential_index, user_index, credential_type)
+  local credentials = lock_utils.get_credentials(device)
+  local status_code = lock_utils.STATUS_FAILURE
 
   for _, credential in pairs(credentials) do
     if credential.credentialIndex == credential_index then
       credential.credentialType = credential_type
       credential.userIndex = user_index
-      device:set_field(new_lock_utils.LOCK_CREDENTIALS, credentials)
-      status_code = new_lock_utils.STATUS_SUCCESS
+      device:set_field(lock_utils.LOCK_CREDENTIALS, credentials)
+      status_code = lock_utils.STATUS_SUCCESS
       break
     end
   end
@@ -282,7 +282,7 @@ new_lock_utils.update_credential = function(device, credential_index, user_index
 end
 
 -- emit_event doesn't like having `nil` values in the table. Remove any if they are present.
-new_lock_utils.prep_table = function(data)
+lock_utils.prep_table = function(data)
     local clean_table = {}
     for _, value in pairs(data) do
         if value ~= nil then
@@ -292,20 +292,20 @@ new_lock_utils.prep_table = function(data)
     return clean_table
 end
 
-new_lock_utils.send_events = function(device, type)
-  if type == nil or type == new_lock_utils.LOCK_USERS then
-    local current_users = new_lock_utils.prep_table(new_lock_utils.get_users(device))
+lock_utils.send_events = function(device, type)
+  if type == nil or type == lock_utils.LOCK_USERS then
+    local current_users = lock_utils.prep_table(lock_utils.get_users(device))
     device:emit_event(capabilities.lockUsers.users(current_users,
       {state_change = true, visibility = { displayed = true } }))
   end
-  if type == nil or type == new_lock_utils.LOCK_CREDENTIALS then
-    local credentials = new_lock_utils.prep_table(new_lock_utils.get_credentials(device))
+  if type == nil or type == lock_utils.LOCK_CREDENTIALS then
+    local credentials = lock_utils.prep_table(lock_utils.get_credentials(device))
     device:emit_event(capabilities.lockCredentials.credentials(credentials,
       { state_change = true,  visibility = { displayed = true } }))
   end
 end
 
-new_lock_utils.get_code_id_from_notification_event = function(event_params, v1_alarm_level)
+lock_utils.get_code_id_from_notification_event = function(event_params, v1_alarm_level)
   -- some locks do not properly include the code ID in the event params, but do encode it
   -- in the v1 alarm level
   local code_id = v1_alarm_level
@@ -318,88 +318,88 @@ end
 
 -- This is the part of the notifcation event handler code from the base driver
 -- that deals with lock code programming events
-new_lock_utils.base_driver_code_event_handler = function(driver, device, cmd)
+lock_utils.base_driver_code_event_handler = function(driver, device, cmd)
   local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
   local access_control_event = Notification.event.access_control
   if (cmd.args.notification_type == Notification.notification_type.ACCESS_CONTROL) then
     local event = cmd.args.event
-    local credential_index = tonumber(new_lock_utils.get_code_id_from_notification_event(cmd.args.event_parameter, cmd.args.v1_alarm_level))
-    local active_credential = device:get_field(new_lock_utils.ACTIVE_CREDENTIAL)
-    local status = new_lock_utils.STATUS_SUCCESS
-    local command = device:get_field(new_lock_utils.COMMAND_NAME)
+    local credential_index = tonumber(lock_utils.get_code_id_from_notification_event(cmd.args.event_parameter, cmd.args.v1_alarm_level))
+    local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
+    local status = lock_utils.STATUS_SUCCESS
+    local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
     local emit_event = false
 
     if (event == access_control_event.ALL_USER_CODES_DELETED) then
       -- all credentials have been deleted
-      for _, credential in pairs(new_lock_utils.get_credentials(device)) do
-        new_lock_utils.delete_credential(device, credential.credentialIndex)
+      for _, credential in pairs(lock_utils.get_credentials(device)) do
+        lock_utils.delete_credential(device, credential.credentialIndex)
         emit_event = true
       end
     elseif (event == access_control_event.SINGLE_USER_CODE_DELETED) then
       -- credential has been deleted.
-      if new_lock_utils.get_credential(device, credential_index) ~= nil then
-        new_lock_utils.delete_credential(device, credential_index)
+      if lock_utils.get_credential(device, credential_index) ~= nil then
+        lock_utils.delete_credential(device, credential_index)
         emit_event = true
       end
     elseif (event == access_control_event.NEW_USER_CODE_ADDED) then
-      if command ~= nil and command.name == new_lock_utils.ADD_CREDENTIAL then
+      if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
       -- create credential if not already present.
-        if new_lock_utils.get_credential(device, credential_index) == nil then
-          new_lock_utils.add_credential(device,
+        if lock_utils.get_credential(device, credential_index) == nil then
+          lock_utils.add_credential(device,
             active_credential.userIndex,
             active_credential.credentialType,
             credential_index)
           emit_event = true
         end
-      elseif command ~= nil and command.name == new_lock_utils.UPDATE_CREDENTIAL then
+      elseif command ~= nil and command.name == lock_utils.UPDATE_CREDENTIAL then
         -- update credential
-        local credential = new_lock_utils.get_credential(device, credential_index)
+        local credential = lock_utils.get_credential(device, credential_index)
         if credential ~= nil then
-          new_lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
+          lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
           emit_event = true
         end
       else
         -- out-of-band update. Don't add if already in table.
-        if new_lock_utils.get_credential(device, credential_index) == nil then
-          local new_user_index = new_lock_utils.get_available_user_index(device)
+        if lock_utils.get_credential(device, credential_index) == nil then
+          local new_user_index = lock_utils.get_available_user_index(device)
           if new_user_index ~= nil then
-            new_lock_utils.create_user(device, nil, "guest", new_user_index)
-            new_lock_utils.add_credential(device,
+            lock_utils.create_user(device, nil, "guest", new_user_index)
+            lock_utils.add_credential(device,
               new_user_index,
-              new_lock_utils.CREDENTIAL_TYPE,
+              lock_utils.CREDENTIAL_TYPE,
               credential_index)
             emit_event = true
           else
-            status = new_lock_utils.STATUS_RESOURCE_EXHAUSTED
+            status = lock_utils.STATUS_RESOURCE_EXHAUSTED
           end
         end
       end
     elseif (event == access_control_event.NEW_USER_CODE_NOT_ADDED_DUE_TO_DUPLICATE_CODE) then
       -- adding credential failed since code already exists.
       -- remove the created user if one got made. There is no associated credential.
-      status = new_lock_utils.STATUS_DUPLICATE
-      if active_credential ~= nil then new_lock_utils.delete_user(device, active_credential.userIndex) end
+      status = lock_utils.STATUS_DUPLICATE
+      if active_credential ~= nil then lock_utils.delete_user(device, active_credential.userIndex) end
     elseif (event == access_control_event.NEW_PROGRAM_CODE_ENTERED_UNIQUE_CODE_FOR_LOCK_CONFIGURATION) then
       -- master code changed -- should we send an index with this?
       device:emit_event(capabilities.lockCredentials.commandResult(
-        {commandName = new_lock_utils.UPDATE_CREDENTIAL, statusCode = new_lock_utils.STATUS_SUCCESS},
+        {commandName = lock_utils.UPDATE_CREDENTIAL, statusCode = lock_utils.STATUS_SUCCESS},
         { state_change = true, visibility = { displayed = true } }
       ))
     end
 
     -- handle emitting events if any changes occured.
     if emit_event then
-      new_lock_utils.send_events(device)
+      lock_utils.send_events(device)
     end
     -- clear the busy state and handle the commandStatus
     -- ignore handling the busy state for some commands, they are handled within their own handlers
-    if command ~= nil and command ~= new_lock_utils.DELETE_ALL_CREDENTIALS and command ~= new_lock_utils.DELETE_ALL_USERS then
-      new_lock_utils.clear_busy_state(device, status)
+    if command ~= nil and command.name ~= lock_utils.DELETE_ALL_CREDENTIALS and command.name ~= lock_utils.DELETE_ALL_USERS then
+      lock_utils.clear_busy_state(device, status)
     end
   end
 end
 
-new_lock_utils.door_operation_event_handler = function(driver, device, cmd)
+lock_utils.door_operation_event_handler = function(driver, device, cmd)
   local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
   local access_control_event = Notification.event.access_control
   if (cmd.args.notification_type == Notification.notification_type.ACCESS_CONTROL) then
@@ -456,7 +456,7 @@ new_lock_utils.door_operation_event_handler = function(driver, device, cmd)
             code_id = (#event_params == 1) and event_params[1] or event_params[3]
           end
           local user_id = nil
-          local credential = new_lock_utils.get_credential(device, code_id)
+          local credential = lock_utils.get_credential(device, code_id)
           if (credential ~= nil) then
             user_id = credential.userIndex
           end
@@ -489,37 +489,37 @@ new_lock_utils.door_operation_event_handler = function(driver, device, cmd)
   end
 end
 
-function new_lock_utils.add_credential_handler(driver, device, command)
+function lock_utils.add_credential_handler(driver, device, command)
   local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
-  if new_lock_utils.busy_check_and_set(device, {name = new_lock_utils.ADD_CREDENTIAL, type = new_lock_utils.LOCK_CREDENTIALS}) then
+  if lock_utils.busy_check_and_set(device, {name = lock_utils.ADD_CREDENTIAL, type = lock_utils.LOCK_CREDENTIALS}) then
     return
   end
   local user_index = tonumber(command.args.userIndex)
   local user_type = command.args.userType
   local credential_type = command.args.credentialType
   local credential_data = command.args.credentialData
-  local status = new_lock_utils.STATUS_SUCCESS
+  local status = lock_utils.STATUS_SUCCESS
 
-  local credential_index = new_lock_utils.get_available_credential_index(device)
+  local credential_index = lock_utils.get_available_credential_index(device)
   if credential_index == nil then
-    status = new_lock_utils.STATUS_RESOURCE_EXHAUSTED
-  elseif user_index ~= 0 and new_lock_utils.get_credential_by_user_index(device, user_index) then
-    status = new_lock_utils.STATUS_OCCUPIED
-  elseif user_index ~= 0 and new_lock_utils.get_user(device, user_index) == nil then
-    status = new_lock_utils.STATUS_FAILURE
+    status = lock_utils.STATUS_RESOURCE_EXHAUSTED
+  elseif user_index ~= 0 and lock_utils.get_credential_by_user_index(device, user_index) then
+    status = lock_utils.STATUS_OCCUPIED
+  elseif user_index ~= 0 and lock_utils.get_user(device, user_index) == nil then
+    status = lock_utils.STATUS_FAILURE
   end
 
   if user_index == 0 then
-    user_index = new_lock_utils.get_available_user_index(device)
+    user_index = lock_utils.get_available_user_index(device)
     if user_index ~= nil then
-      new_lock_utils.create_user(device, nil, user_type, user_index)
+      lock_utils.create_user(device, nil, user_type, user_index)
     else
-      status = new_lock_utils.STATUS_RESOURCE_EXHAUSTED
+      status = lock_utils.STATUS_RESOURCE_EXHAUSTED
     end
   end
 
-  if status == new_lock_utils.STATUS_SUCCESS then
-    device:set_field(new_lock_utils.ACTIVE_CREDENTIAL,
+  if status == lock_utils.STATUS_SUCCESS then
+    device:set_field(lock_utils.ACTIVE_CREDENTIAL,
       { userIndex = user_index, userType = user_type, credentialType = credential_type, credentialIndex = credential_index })
     device:send(UserCode:Set({
       user_identifier = credential_index,
@@ -527,69 +527,69 @@ function new_lock_utils.add_credential_handler(driver, device, command)
       user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}))
     -- clearing busy state handled in user_code_report_handler
   else
-    new_lock_utils.clear_busy_state(device, status)
+    lock_utils.clear_busy_state(device, status)
   end
 end
 
-function new_lock_utils.user_code_report_handler(driver, device, cmd)
+function lock_utils.user_code_report_handler(driver, device, cmd)
   local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
   local credential_index = cmd.args.user_identifier
-  local command = device:get_field(new_lock_utils.COMMAND_NAME)
-  local active_credential = device:get_field(new_lock_utils.ACTIVE_CREDENTIAL)
+  local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
+  local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
   local user_id_status = cmd.args.user_id_status
   local emit_events = false
 
   if (user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
       (user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code)) then
-    if new_lock_utils.get_credential(device, credential_index) == nil and command == nil then
-      local user_index = new_lock_utils.get_available_user_index(device)
+    if lock_utils.get_credential(device, credential_index) == nil and command == nil then
+      local user_index = lock_utils.get_available_user_index(device)
       if user_index ~= nil then
-        new_lock_utils.create_user(device, nil, "guest", user_index)
-        new_lock_utils.add_credential(device, user_index, new_lock_utils.CREDENTIAL_TYPE, credential_index)
+        lock_utils.create_user(device, nil, "guest", user_index)
+        lock_utils.add_credential(device, user_index, lock_utils.CREDENTIAL_TYPE, credential_index)
         emit_events = true
       end
     elseif command ~= nil then
-      if command.name == new_lock_utils.ADD_CREDENTIAL and new_lock_utils.get_credential(device, credential_index) == nil then
-        new_lock_utils.add_credential(device,
+      if command.name == lock_utils.ADD_CREDENTIAL and lock_utils.get_credential(device, credential_index) == nil then
+        lock_utils.add_credential(device,
           active_credential.userIndex,
           active_credential.credentialType,
           credential_index)
         emit_events = true
-      elseif command.name == new_lock_utils.UPDATE_CREDENTIAL then
-        local credential = new_lock_utils.get_credential(device, credential_index)
+      elseif command.name == lock_utils.UPDATE_CREDENTIAL then
+        local credential = lock_utils.get_credential(device, credential_index)
         if credential ~= nil then
-          new_lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
+          lock_utils.update_credential(device, credential.credentialIndex, credential.userIndex, credential.credentialType)
           emit_events = true
         end
       end
     end
   elseif user_id_status == UserCode.user_id_status.AVAILABLE then
-    if new_lock_utils.get_credential(device, credential_index) ~= nil then
-      new_lock_utils.delete_credential(device, credential_index)
+    if lock_utils.get_credential(device, credential_index) ~= nil then
+      lock_utils.delete_credential(device, credential_index)
       emit_events = true
     end
   end
 
-  if (credential_index == device:get_field(new_lock_utils.CHECKING_CODE)) then
+  if (credential_index == device:get_field(lock_utils.CHECKING_CODE)) then
     local last_slot = device:get_latest_state("main", capabilities.lockCredentials.ID,
       capabilities.lockCredentials.pinUsersSupported.NAME, DEFAULT_SUPPORTED_PIN_SLOTS)
     if (credential_index >= last_slot) then
-      device:set_field(new_lock_utils.CHECKING_CODE, nil)
+      device:set_field(lock_utils.CHECKING_CODE, nil)
       emit_events = true
     else
-      local checkingCode = device:get_field(new_lock_utils.CHECKING_CODE) + 1
-      device:set_field(new_lock_utils.CHECKING_CODE, checkingCode)
+      local checkingCode = device:get_field(lock_utils.CHECKING_CODE) + 1
+      device:set_field(lock_utils.CHECKING_CODE, checkingCode)
       device:send(UserCode:Get({user_identifier = checkingCode}))
     end
   end
 
   if emit_events then
-    new_lock_utils.send_events(device)
+    lock_utils.send_events(device)
   end
 
-  if command ~= nil and command ~= new_lock_utils.DELETE_ALL_CREDENTIALS and command ~= new_lock_utils.DELETE_ALL_USERS then
-    new_lock_utils.clear_busy_state(device, new_lock_utils.STATUS_SUCCESS)
+  if command ~= nil and command.name ~= lock_utils.DELETE_ALL_CREDENTIALS and command.name ~= lock_utils.DELETE_ALL_USERS then
+    lock_utils.clear_busy_state(device, lock_utils.STATUS_SUCCESS)
   end
 end
 
-return new_lock_utils
+return lock_utils

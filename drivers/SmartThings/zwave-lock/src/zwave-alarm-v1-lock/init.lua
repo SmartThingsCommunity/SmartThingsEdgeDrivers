@@ -91,7 +91,7 @@ local function alarm_report_handler(driver, device, cmd)
       lock_utils.send_events(device)
     end
   elseif (alarm_type == 13 or alarm_type == 112) then
-    local command = device:get_field(lock_utils.COMMAND_NAME)
+    local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
     local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
     if command ~= nil and command.name == lock_utils.ADD_CREDENTIAL then
     -- create credential if not already present.
@@ -121,7 +121,7 @@ local function alarm_report_handler(driver, device, cmd)
             credential_index)
           lock_utils.send_events(device)
         else
-          if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
+          if command ~= nil and command.name ~= lock_utils.DELETE_ALL_CREDENTIALS and command.name ~= lock_utils.DELETE_ALL_USERS then
             lock_utils.clear_busy_state(device, lock_utils.STATUS_RESOURCE_EXHAUSTED)
           end
         end
@@ -130,10 +130,10 @@ local function alarm_report_handler(driver, device, cmd)
   elseif (alarm_type == 34 or alarm_type == 113) then
     -- adding credential failed since code already exists.
     -- remove the created user if one got made. There is no associated credential.
-    local command = device:get_field(lock_utils.COMMAND_NAME)
+    local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
     local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
     if active_credential ~= nil then lock_utils.delete_user(device, active_credential.userIndex) end
-    if command ~= nil and command ~= lock_utils.DELETE_ALL_CREDENTIALS and command ~= lock_utils.DELETE_ALL_USERS then
+    if command ~= nil and command.name ~= lock_utils.DELETE_ALL_CREDENTIALS and command.name ~= lock_utils.DELETE_ALL_USERS then
       lock_utils.clear_busy_state(device, lock_utils.STATUS_DUPLICATE)
     end
   elseif (alarm_type == 130) then

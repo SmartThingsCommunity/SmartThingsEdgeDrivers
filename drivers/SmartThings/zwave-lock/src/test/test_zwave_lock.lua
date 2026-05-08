@@ -547,8 +547,10 @@ test.register_coroutine_test(
       },
     })
 
+    -- 3 timers: deleteUser(1) at delay=0, deleteUser(2) at delay=2, clear_busy_state at delay=8
     test.timer.__create_and_queue_test_time_advance_timer(0, "oneshot")
     test.timer.__create_and_queue_test_time_advance_timer(0.5, "oneshot")
+    test.timer.__create_and_queue_test_time_advance_timer(8, "oneshot")
     test.mock_time.advance_time(0)
     test.socket.zwave:__expect_send(
       UserCode:Set({
@@ -566,20 +568,19 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
 
+    -- credential 1 deletion acknowledged: user 1 removed, user 2 and credential 2 still present
     test.socket.zwave:__queue_receive({mock_device.id,
       Notification:Report({
         notification_type = Notification.notification_type.ACCESS_CONTROL,
         event = access_control_event.SINGLE_USER_CODE_DELETED,
-        payload = "\x21\x01\x00\xFF\x06\x0D\x00\x00" -- delete payload
+        payload = "\x21\x01\x00\xFF\x06\x0D\x00\x00"
       })
     })
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
         capabilities.lockUsers.users(
-          {
-            { userIndex = 2, userName = "Guest2", userType = "guest" }
-          },
+          { { userIndex = 2, userName = "Guest2", userType = "guest" } },
           { state_change = true, visibility = { displayed = true } })
       )
     )
@@ -587,14 +588,37 @@ test.register_coroutine_test(
       mock_device:generate_test_message(
         "main",
         capabilities.lockCredentials.credentials(
-        {
-          { userIndex = 2, credentialIndex = 2, credentialType = "pin" }
-        },
-        { state_change = true, visibility = { displayed = true } })
+          { { userIndex = 2, credentialIndex = 2, credentialType = "pin" } },
+          { state_change = true, visibility = { displayed = true } })
       )
     )
+    -- commandResult must NOT be emitted here; command is still in progress
+    test.wait_for_events()
 
+    -- credential 2 deletion acknowledged: both user 2 and credential 2 now removed
+    test.socket.zwave:__queue_receive({mock_device.id,
+      Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = access_control_event.SINGLE_USER_CODE_DELETED,
+        payload = "\x21\x02\x00\xFF\x06\x0D\x00\x00"
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({}, { state_change = true, visibility = { displayed = true } })
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({}, { state_change = true, visibility = { displayed = true } })
+      )
+    )
+    test.wait_for_events()
 
+    -- final timer fires, emitting commandResult only after all operations complete
+    test.mock_time.advance_time(8)
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
