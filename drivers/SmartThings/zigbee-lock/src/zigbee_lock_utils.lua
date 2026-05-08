@@ -10,7 +10,7 @@ local lock_utils = {
   ADD_CREDENTIAL = "addCredential",
   ADD_USER = "addUser",
   BUSY = "busy",
-  COMMAND_NAME = "commandName",
+  COMMAND_IN_PROGRESS = "commandInProgress",
   CREDENTIAL_TYPE = "pin",
   CHECKING_CODE = "checkingCode",
   DELETE_ALL_CREDENTIALS = "deleteAllCredentials",
@@ -49,7 +49,7 @@ lock_utils.busy_check_and_set = function (device, command, override_busy_check)
   local busy_state = device:get_field(lock_utils.BUSY) or false
 
   if busy_state == false or c_time - busy_state > 10 then
-    device:set_field(lock_utils.COMMAND_NAME, command)
+    device:set_field(lock_utils.COMMAND_IN_PROGRESS, command)
     device:set_field(lock_utils.BUSY, c_time)
     return false
   else
@@ -74,7 +74,7 @@ lock_utils.clear_busy_state = function(device, status, override_busy_check)
   if override_busy_check then
     return
   end
-  local command = device:get_field(lock_utils.COMMAND_NAME)
+  local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
   local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
   if command ~= nil then
     local command_result_info = {
@@ -102,7 +102,7 @@ lock_utils.clear_busy_state = function(device, status, override_busy_check)
   end
 
   device:set_field(lock_utils.ACTIVE_CREDENTIAL, nil)
-  device:set_field(lock_utils.COMMAND_NAME, nil)
+  device:set_field(lock_utils.COMMAND_IN_PROGRESS, nil)
   device:set_field(lock_utils.BUSY, false)
 end
 

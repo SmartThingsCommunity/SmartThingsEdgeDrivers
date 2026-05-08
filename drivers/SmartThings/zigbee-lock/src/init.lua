@@ -405,7 +405,7 @@ end
 local get_pin_response_handler = function(driver, device, zb_mess)
   local credential_index = tonumber(zb_mess.body.zcl_body.user_id.value)
   local active_credential = device:get_field(lock_utils.ACTIVE_CREDENTIAL)
-  local command = device:get_field(lock_utils.COMMAND_NAME)
+  local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
   local status = lock_utils.STATUS_SUCCESS
   local emit_event = false
 
@@ -480,7 +480,7 @@ end
 
 local programming_event_handler = function(driver, device, zb_mess)
   local credential_index = tonumber(zb_mess.body.zcl_body.user_id.value)
-  local command = device:get_field(lock_utils.COMMAND_NAME)
+  local command = device:get_field(lock_utils.COMMAND_IN_PROGRESS)
   local emit_events = false
 
   if credential_index >= 256 then -- Index is incorrectly written, attempt to shift it to get an actual value
