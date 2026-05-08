@@ -101,6 +101,12 @@ matterManufacturer:
     vendorId: 0x156A
     productId: 0x0001
     deviceProfileName: air-purifier-hepa-wind-aqs-pm25-meas-pm25-level
+  #Gerlsair
+  - id: "5493/1"
+    deviceLabel: Smart AC Controller
+    vendorId: 0x1575
+    productId: 0x0001
+    deviceProfileName: thermostat-modular
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
