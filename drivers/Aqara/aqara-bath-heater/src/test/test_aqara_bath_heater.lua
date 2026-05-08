@@ -521,6 +521,23 @@ test.register_coroutine_test(
 -- FAN_MID` fallback, but the profile's enabledValues restricts fanMode to
 -- {"low","medium","high"}, so "auto" is rejected by framework validation.
 
+-- refresh ---------------------------------------------------------------------
+
+test.register_coroutine_test(
+  "Capability refresh should read OnOff, Level and ColorTemperature",
+  function()
+    test.socket.capability:__queue_receive({ mock_device.id,
+      { capability = "refresh", component = "main", command = "refresh", args = {} } })
+
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      Level.attributes.CurrentLevel:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id,
+      ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
+  end
+)
+
 -- ============================================================================
 -- 2. ZIGBEE ATTRIBUTE HANDLERS
 -- ============================================================================

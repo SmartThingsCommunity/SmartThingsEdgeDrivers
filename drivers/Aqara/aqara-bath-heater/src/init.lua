@@ -324,6 +324,12 @@ local function handle_fan_mode(driver, device, cmd)
   send_ac_code(device, { fan = fan })
 end
 
+local function handle_refresh(driver, device, cmd)
+  device:send(OnOff.attributes.OnOff:read(device))
+  device:send(Level.attributes.CurrentLevel:read(device))
+  device:send(ColorControl.attributes.ColorTemperatureMireds:read(device))
+end
+
 -- Zigbee attribute handlers
 local function on_off_attr_handler(driver, device, value, zb_rx)
   device:emit_event(capabilities.switch.switch(value.value and "on" or "off"))
@@ -538,6 +544,7 @@ local aqara_bathroom_heater_driver = ZigbeeDriver("aqara-bathroom-heater-t1", {
     capabilities.thermostatHeatingSetpoint,
     capabilities.fanOscillationMode,
     capabilities.fanMode,
+    capabilities.refresh,
   },
 
   capability_handlers = {
@@ -562,6 +569,9 @@ local aqara_bathroom_heater_driver = ZigbeeDriver("aqara-bathroom-heater-t1", {
     },
     [capabilities.fanMode.ID] = {
       [capabilities.fanMode.commands.setFanMode.NAME] = handle_fan_mode,
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = handle_refresh,
     },
   },
 
