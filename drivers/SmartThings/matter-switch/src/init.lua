@@ -38,8 +38,11 @@ function SwitchLifecycleHandlers.device_added(driver, device)
     device:send(clusters.OnOff.attributes.OnOff:read(device))
   end
 
-  -- call device init in case init is not called after added due to device caching
-  SwitchLifecycleHandlers.device_init(driver, device)
+  -- The device init event is guaranteed in FW versions 58+, so this is only needed for older hubs
+  if version.rpc < 10 then
+    -- call device init in case init is not called after added due to device caching
+    SwitchLifecycleHandlers.device_init(driver, device)
+  end
 end
 
 function SwitchLifecycleHandlers.do_configure(driver, device)
