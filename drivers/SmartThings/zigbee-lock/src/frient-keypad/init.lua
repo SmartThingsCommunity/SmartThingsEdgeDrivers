@@ -10,7 +10,6 @@ local json = require "st.json"
 local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 
-local PowerConfiguration = clusters.PowerConfiguration
 local IASACE = clusters.IASACE
 local IASZone = clusters.IASZone
 local SecuritySystem = capabilities.securitySystem
@@ -25,22 +24,25 @@ local PanelStatus = IASACE.types.IasacePanelStatus
 local AudibleNotification = IASACE.types.IasaceAudibleNotification
 local AlarmStatus = IASACE.types.IasaceAlarmStatus
 
-local armCommandFromKeypad = false
 local DEVELCO_MANUFACTURER_CODE = 0x1015
 local EXIT_DELAY_UNTIL = "exit_delay_until"
 local EXIT_DELAY_TARGET_STATUS = "exit_delay_target_status"
+local ARM_COMMAND_FROM_KEYPAD = "armCommandFromKeypad"
 
+-- translates a logical security state (armedAway, armedStay, disarmed) into the specific SmartThings securitySystem capability event factory.
 local SECURITY_STATUS_EVENTS = {
   armedAway = SecuritySystem.securitySystemStatus.armedAway,
   armedStay = SecuritySystem.securitySystemStatus.armedStay,
   disarmed = SecuritySystem.securitySystemStatus.disarmed,
 }
 
+-- defines the exact string values used for the Mode capability when the keypad is acting like a lock (Locked / Unlocked).
 local MODE_STATUS_VALUES = {
   Locked = "Locked",
   Unlocked = "Unlocked",
 }
 
+-- converts the Zigbee IAS ACE arm mode coming from the keypad (enum values) into the driver’s internal logical status (armedAway / armedStay / disarmed) that the rest of the driver uses.
 local ARM_MODE_TO_STATUS = {
   [ArmMode.DISARM] = "disarmed",
   [ArmMode.ARM_DAY_HOME_ZONES_ONLY] = "armedStay",
@@ -48,6 +50,7 @@ local ARM_MODE_TO_STATUS = {
   [ArmMode.ARM_ALL_ZONES] = "armedAway",
 }
 
+-- converts the same Zigbee arm mode into the IAS ACE response code that the driver sends back to the keypad as an acknowledgement.
 local ARM_MODE_TO_NOTIFICATION = {
   [ArmMode.DISARM] = ArmNotification.ALL_ZONES_DISARMED,
   [ArmMode.ARM_DAY_HOME_ZONES_ONLY] = ArmNotification.ONLY_DAY_HOME_ZONES_ARMED,
@@ -55,6 +58,7 @@ local ARM_MODE_TO_NOTIFICATION = {
   [ArmMode.ARM_ALL_ZONES] = ArmNotification.ALL_ZONES_ARMED,
 }
 
+-- maps the internal logical status to the IAS ACE panel status used in PanelStatusChanged so the keypad UI can show the correct panel state.
 local STATUS_TO_PANEL = {
   armedAway = PanelStatus.ARMED_AWAY,
   armedStay = PanelStatus.ARMED_STAY,
@@ -62,6 +66,7 @@ local STATUS_TO_PANEL = {
   exitDelay = PanelStatus.EXIT_DELAY,
 }
 
+-- converts the internal logical status into a human‑readable activity string for security system events (used in history/activity text).
 local STATUS_TO_ACTIVITY = {
   armedAway = "armed away",
   armedStay = "armed stay",
@@ -69,6 +74,7 @@ local STATUS_TO_ACTIVITY = {
   exitDelay = "exit delay",
 }
 
+-- converts lock‑style statuses (Locked/Unlocked) into the activity label used when running in Mode (lock) mode, so the history text is consistent.
 local LOCK_STATUS_TO_ACTIVITY = {
   Locked = "Locked",
   Unlocked = "Unlocked",
@@ -122,18 +128,18 @@ local function is_pin_length_valid(device, pin)
   return true
 end
 
-local function parse_user_map(value)
+local function parse_user_map(device, value)
   local map = {}
-    if value == nil or value == "" then
-      return map
-    end
+  if value == nil or value == "" then
+    return map
+  end
 
-    for pair in string.gmatch(value, "[^,]+") do
-      local code, name = pair:match("^%s*([^:]+)%s*:%s*(.+)%s*$")
-      if code ~= nil and name ~= nil and code ~= "" and name ~= "" then
-        map[code] = name
-      end
+  for pair in string.gmatch(value, "[^,]+") do
+    local code, name = pair:match("^%s*([^:]+)%s*:%s*(.+)%s*$")
+    if code ~= nil and name ~= nil and code ~= "" and name ~= "" and is_pin_length_valid(device, code) then
+      map[code] = name
     end
+  end
 
   return map
 end
@@ -168,8 +174,8 @@ local function start_exit_delay(device, target_status)
 end
 
 local function build_lock_code_state_from_prefs(device)
-  local pin_updates = parse_user_map(device.preferences.pinMap)
-  local rfid_updates = parse_user_map(device.preferences.rfidMap)
+  local pin_updates = parse_user_map(device, device.preferences.pinMap)
+  local rfid_updates = parse_user_map(device, device.preferences.rfidMap)
 
   local lock_codes = {}
   local lock_code_pins = {}
@@ -205,8 +211,8 @@ end
 
 local function build_user_map_from_prefs(device)
   return {
-    pins = parse_user_map(device.preferences.pinMap),
-    rfids = parse_user_map(device.preferences.rfidMap),
+    pins = parse_user_map(device, device.preferences.pinMap),
+    rfids = parse_user_map(device, device.preferences.rfidMap),
   }
 end
 
@@ -368,9 +374,21 @@ local function get_current_status(device)
   end
 end
 
+local function normalize_panel_status(device, status)
+  if tonumber(device.preferences.mode) == 1 then
+    if status == "Locked" then
+      return "armedAway"
+    elseif status == "Unlocked" then
+      return "disarmed"
+    end
+  end
+  return status
+end
+
 local function send_panel_status(device, status)
   local duration = get_exit_delay_duration(device)
-  local panel_status = STATUS_TO_PANEL[status] or PanelStatus.PANEL_DISARMED_READY_TO_ARM
+  local normalized = normalize_panel_status(device, status)
+  local panel_status = STATUS_TO_PANEL[normalized] or PanelStatus.PANEL_DISARMED_READY_TO_ARM
   device:send(IASACE.client.commands.PanelStatusChanged(
     device,
     panel_status,
@@ -389,26 +407,30 @@ local function can_process_arm_command(command, status)
 end
 
 local function handle_arm_command(driver, device, zb_rx)
-  armCommandFromKeypad = true
+  device:set_field(ARM_COMMAND_FROM_KEYPAD, true, { persist = false })
   local cmd = zb_rx.body.zcl_body
   local pin = cmd.arm_disarm_code.value
 
   local status = ARM_MODE_TO_STATUS[cmd.arm_mode.value]
   if status == nil then
+    device:set_field(ARM_COMMAND_FROM_KEYPAD, false, { persist = false })
     return
   end
 
   if pin == nil or pin == "" then
+    device:set_field(ARM_COMMAND_FROM_KEYPAD, false, { persist = false })
     return
   end
 
   if not is_pin_length_valid(device, pin) then
+    device:set_field(ARM_COMMAND_FROM_KEYPAD, false, { persist = false })
     return
   end
 
   local user, auth_type = resolve_user_from_code(device, pin)
   if user == nil then
     device:emit_event(LockCodes.codeChanged(tostring(pin) .. " is not assigned to any user on this keypad. You can create a new user with this code in settings.", { state_change = true }))
+    device:set_field(ARM_COMMAND_FROM_KEYPAD, false, { persist = false })
     return
   end
 
@@ -421,7 +443,7 @@ local function handle_arm_command(driver, device, zb_rx)
 
   if is_exit_delay_active(device) then
     device:send(IASACE.client.commands.ArmResponse(device, 0xFF))
-    armCommandFromKeypad = false
+    device:set_field(ARM_COMMAND_FROM_KEYPAD, false, { persist = false })
     return
   end
 
@@ -451,7 +473,7 @@ local function handle_arm_command(driver, device, zb_rx)
       0xFF
     ))
   end
-  armCommandFromKeypad = false
+  device:set_field(ARM_COMMAND_FROM_KEYPAD, false, { persist = false })
 end
 
 local function handle_get_panel_status(driver, device, zb_rx)
@@ -478,6 +500,17 @@ end
 
 local function handle_emergency_command(driver, device, zb_rx)
   if device.preferences.panicAlarmActive == false then
+    local status = get_current_status(device)
+    local normalized = normalize_panel_status(device, status)
+    local panel_status = STATUS_TO_PANEL[normalized] or PanelStatus.PANEL_DISARMED_READY_TO_ARM
+    local duration = get_exit_delay_duration(device)
+    device:send(IASACE.client.commands.PanelStatusChanged(
+      device,
+      panel_status,
+      duration,
+      AudibleNotification.DEFAULT_SOUND,
+      AlarmStatus.NO_ALARM
+    ))
     return
   end
   device:emit_event(panicAlarm.panicAlarm.panic({ state_change = true }))
@@ -490,7 +523,8 @@ local function handle_arm(device, status)
   if is_exit_delay_active(device) then
     return
   end
-  if not armCommandFromKeypad and can_process_arm_command(status, get_current_security_status(device)) then
+  local commandFromKeypad = device:get_field(ARM_COMMAND_FROM_KEYPAD)
+  if not commandFromKeypad and can_process_arm_command(status, get_current_security_status(device)) then
     if device.preferences.exitDelay == true and status == "armedAway" and tonumber(device.preferences.mode) == 0 then
       duration = start_exit_delay(device, status)
       device.thread:call_with_delay(duration, function()
@@ -515,7 +549,8 @@ local function handle_lock(device, status)
   if is_exit_delay_active(device) then
     return
   end
-  if not armCommandFromKeypad and can_process_arm_command(status, get_current_mode_status(device)) then
+  local commandFromKeypad = device:get_field(ARM_COMMAND_FROM_KEYPAD)
+  if not commandFromKeypad and can_process_arm_command(status, get_current_mode_status(device)) then
     emit_mode_event(device, status, { source = "app" })
     emit_mode_activity(device, status, "App")
     if tonumber(device.preferences.mode) == 1 then
@@ -538,7 +573,8 @@ local function handle_disarm(driver, device, command)
     if is_exit_delay_active(device) then
       clear_exit_delay(device)
     end
-    if can_process_arm_command("disarmed", get_current_security_status(device)) and not armCommandFromKeypad then
+    local commandFromKeypad = device:get_field(ARM_COMMAND_FROM_KEYPAD)
+    if can_process_arm_command("disarmed", get_current_security_status(device)) and not commandFromKeypad then
       emit_status_event(device, "disarmed", { source = "app" })
       emit_security_activity(device, "disarmed", "App")
       if tonumber(device.preferences.mode) == 0 then
@@ -553,7 +589,8 @@ local function handle_unlock(driver, device, command)
     if is_exit_delay_active(device) then
       clear_exit_delay(device)
     end
-    if can_process_arm_command("Unlocked", get_current_mode_status(device)) and not armCommandFromKeypad then
+    local commandFromKeypad = device:get_field(ARM_COMMAND_FROM_KEYPAD)
+    if can_process_arm_command("Unlocked", get_current_mode_status(device)) and not commandFromKeypad then
       emit_mode_event(device, "Unlocked", { source = "app" })
       emit_mode_activity(device, "Unlocked", "App")
       if tonumber(device.preferences.mode) == 1 then
@@ -581,7 +618,7 @@ local function update_user_map(device)
 end
 
 local function refresh(driver, device)
-  device:send(PowerConfiguration.attributes.BatteryVoltage:read(device))
+  device:refresh()
   send_panel_status(device, get_current_status(device))
 end
 
@@ -624,8 +661,10 @@ end
 
 local function do_configure(self, device)
   device:send(device_management.build_bind_request(device, IASACE.ID, self.environment_info.hub_zigbee_eui))
-  device:send(device_management.build_bind_request(device, PowerConfiguration.ID, self.environment_info.hub_zigbee_eui))
-  device:send(PowerConfiguration.attributes.BatteryVoltage:configure_reporting(device, 30, 21600, 1))
+  -- Configure IAS Zone here to avoid enabling IAS Zone defaults for all zigbee-lock devices.
+  device:send(device_management.build_bind_request(device, IASZone.ID, self.environment_info.hub_zigbee_eui))
+  device:send(IASZone.attributes.ZoneStatus:configure_reporting(device, 0, 300, 1))
+  device:configure()
 end
 
 local function send_iasace_mfg_write(device, attr_id, data_type, payload)

@@ -31,7 +31,7 @@ preferences:
       default: 0
   - name: pinMap
     title: Add PIN code(s)
-    description: "Format: 1234:Alice,4321:Bob (other format will not be accepted). Only PIN(s) present in this setting are recognized."
+    description: "Format: 1234:Alice,4321:Bob (other format will not be accepted). Only PIN(s) present in this setting are recognized. PINs that are shorter than current minimal length or longer than current maximal length will be displayed in the settings, but will not be added to the list."
     required: false
     preferenceType: string
     definition:
@@ -65,7 +65,7 @@ preferences:
     required: false
     preferenceType: integer
     definition:
-      minimum: 1
+      minimum: 4
       maximum: 32
       default: 4
   - name: maxCodeLength
@@ -74,9 +74,9 @@ preferences:
     required: false
     preferenceType: integer
     definition:
-      minimum: 1
+      minimum: 4
       maximum: 32
-      default: 15
+      default: 32
   - name: exitDelay
     title: Exit Delay
     description: "Turn on exit delay when arming away. Duration in seconds can be set in the 'Exit Delay Duration' setting."
@@ -128,7 +128,7 @@ preferences:
     required: false
     preferenceType: integer
     definition:
-      minimum: 1
+      minimum: 4
       maximum: 32
       default: 4
 metadata:
