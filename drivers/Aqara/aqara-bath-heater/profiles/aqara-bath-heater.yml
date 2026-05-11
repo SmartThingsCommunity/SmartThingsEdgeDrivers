@@ -3,13 +3,17 @@ components:
   - id: main
     capabilities:
       - id: switch
+        version: 1
       - id: switchLevel
+        version: 1
       - id: colorTemperature
+        version: 1
         config:
           values:
             - key: "colorTemperature.value"
               range: [2700, 6500]
       - id: thermostatMode
+        version: 1
         config:
           values:
             - key: "thermostatMode.value"
@@ -20,12 +24,14 @@ components:
                 - "cool"
                 - "fanonly"
       - id: thermostatHeatingSetpoint
+        version: 1
         config:
           values:
             - key: "thermostatHeatingSetpoint.value"
               range: [16, 45]
               unit: "C"
       - id: fanOscillationMode
+        version: 1
         config:
           values:
             - key: "fanOscillationMode.value"
@@ -33,6 +39,7 @@ components:
                 - "swing"
                 - "fixed"
       - id: fanMode
+        version: 1
         config:
           values:
             - key: "fanMode.value"
@@ -41,6 +48,7 @@ components:
                 - "medium"
                 - "high"
       - id: refresh
+        version: 1
     categories:
       - name: Thermostat
 deviceConfig:
@@ -99,6 +107,9 @@ deviceConfig:
       value: thermostatMode.value
       operator: ONE_OF
       operand: '["heat", "dryair", "cool", "fanonly"]'
+  - component: main
+    capability: refresh
+    version: 1
   automation:
     conditions:
     - component: main

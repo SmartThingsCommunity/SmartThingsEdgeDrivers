@@ -324,7 +324,7 @@ local function handle_fan_mode(driver, device, cmd)
   send_ac_code(device, { fan = fan })
 end
 
-local function handle_refresh(driver, device, cmd)
+local function handle_refresh(driver, device)
   device:send(OnOff.attributes.OnOff:read(device))
   device:send(Level.attributes.CurrentLevel:read(device))
   device:send(ColorControl.attributes.ColorTemperatureMireds:read(device))
