@@ -89,16 +89,6 @@ matterManufacturer:
     vendorId: 0x134E
     productId: 0x0002
     deviceProfileName: thermostat-humidity-heating-only-nostate-nobattery
-  - id: "4942/9"
-    deviceLabel: Smart Radiator Thermostat X
-    vendorId: 0x134E
-    productId: 0x0009
-    deviceProfileName: thermostat-humidity-heating-only-nostate-batteryLevel
-  - id: "4942/8"
-    deviceLabel: Wireless Temperature Sensor X (2nd Gen)
-    vendorId: 0x134E
-    productId: 0x0008
-    deviceProfileName: thermostat-humidity-heating-only-nostate-batteryLevel
   #Taruie
   - id: "5151/4101"
     deviceLabel: TARUIE AC Remote
@@ -111,6 +101,12 @@ matterManufacturer:
     vendorId: 0x156A
     productId: 0x0001
     deviceProfileName: air-purifier-hepa-wind-aqs-pm25-meas-pm25-level
+  #Gerlsair
+  - id: "5493/1"
+    deviceLabel: Smart AC Controller
+    vendorId: 0x1575
+    productId: 0x0001
+    deviceProfileName: thermostat-modular
 matterGeneric:
   - id: "matter/hvac/heatcool"
     deviceLabel: Matter Thermostat
