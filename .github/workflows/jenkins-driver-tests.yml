@@ -19,14 +19,15 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
-            core.setOutput('status_url', (await github.rest.repos.createCommitStatus({
+            let response = await github.rest.repos.createCommitStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              sha: context.sha,
+              sha: context.payload.pull_request.head.sha,
               state: 'pending',
               description: 'Jenkins job triggered...',
               context: 'Driver Tests (${{ matrix.version }})'
-            })).data.url);
+            });
+            core.setOutput('status_url', response.data.url);
       - name: Trigger Jenkins Generic Webhook
         env:
           JENKINS_WEBHOOK_TOKEN: ${{ secrets.JENKINS_WEBHOOK_TOKEN }}
