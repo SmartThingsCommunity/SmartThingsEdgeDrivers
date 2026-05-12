@@ -272,9 +272,11 @@ function CameraCapabilityHandlers.handle_remove_zone(driver, device, cmd)
 end
 
 function CameraCapabilityHandlers.handle_create_or_update_trigger(driver, device, cmd)
+  local per_zone_sensitivity_supported = camera_utils.feature_supported(
+    device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY
+  )
   if not cmd.args.augmentationDuration or not cmd.args.maxDuration or not cmd.args.blindDuration or
-    (camera_utils.feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and
-      not cmd.args.sensitivity) then
+    (per_zone_sensitivity_supported and not cmd.args.sensitivity) then
     local triggers = device:get_latest_state(
       camera_fields.profile_components.main, capabilities.zoneManagement.ID, capabilities.zoneManagement.triggers.NAME
     ) or {}
@@ -284,8 +286,7 @@ function CameraCapabilityHandlers.handle_create_or_update_trigger(driver, device
         if not cmd.args.augmentationDuration then cmd.args.augmentationDuration = v.augmentationDuration end
         if not cmd.args.maxDuration then cmd.args.maxDuration = v.maxDuration end
         if not cmd.args.blindDuration then cmd.args.blindDuration = v.blindDuration end
-        if camera_utils.feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) and
-          not cmd.args.sensitivity then
+        if per_zone_sensitivity_supported and not cmd.args.sensitivity then
           cmd.args.sensitivity = v.sensitivity
         end
         found_trigger = true
@@ -306,7 +307,7 @@ function CameraCapabilityHandlers.handle_create_or_update_trigger(driver, device
         augmentation_duration = cmd.args.augmentationDuration,
         max_duration = cmd.args.maxDuration,
         blind_duration = cmd.args.blindDuration,
-        sensitivity = cmd.args.sensitivity
+        sensitivity = per_zone_sensitivity_supported and cmd.args.sensitivity or nil -- omit even if provided by client if per-zone sensitivity is not supported
       }
     )
   ))
@@ -320,7 +321,7 @@ end
 function CameraCapabilityHandlers.handle_set_sensitivity(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   if not camera_utils.feature_supported(device, clusters.ZoneManagement.ID, clusters.ZoneManagement.types.Feature.PER_ZONE_SENSITIVITY) then
-    device:send(clusters.ZoneManagement.attributes.Sensitivity:write(device, endpoint_id, cmd.args.id))
+    device:send(clusters.ZoneManagement.attributes.Sensitivity:write(device, endpoint_id, cmd.args.sensitivity))
   else
     device.log.warn(string.format("Can't set global zone sensitivity setting, per zone sensitivity enabled."))
   end
