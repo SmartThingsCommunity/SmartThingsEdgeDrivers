@@ -34,6 +34,8 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1421, 0x0042}, -- Kwikset Halo Select Plus
   {0x1421, 0x0081}, -- Kwikset Aura Reach
   {0x1236, 0xa538}, -- Schlage Sense Pro
+  {0x1236, 0x3800}, -- Schlage
+  {0x1236, 0xA738} -- Schlage
 }
 
 return NEW_MATTER_LOCK_PRODUCTS
