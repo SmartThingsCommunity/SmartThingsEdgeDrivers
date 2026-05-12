@@ -277,7 +277,7 @@ test.register_coroutine_test(
 
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -404,7 +404,7 @@ test.register_coroutine_test(
             )
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -435,7 +435,7 @@ test.register_coroutine_test(
             test.wait_for_events()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -465,7 +465,7 @@ test.register_coroutine_test(
             test.wait_for_events()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -481,7 +481,7 @@ test.register_coroutine_test(
             test.wait_for_events()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -542,7 +542,7 @@ test.register_coroutine_test(
             get_siren_OFF_commands()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -628,7 +628,7 @@ test.register_coroutine_test(
             get_siren_OFF_commands()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -707,7 +707,7 @@ test.register_coroutine_test(
             get_siren_OFF_commands(expectedWarningDuration)
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -733,7 +733,7 @@ test.register_coroutine_test(
             test.wait_for_events()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -759,7 +759,7 @@ test.register_coroutine_test(
             test.wait_for_events()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -804,7 +804,7 @@ test.register_coroutine_test(
             get_squawk_command_new_fw(SquawkMode.SOUND_FOR_SYSTEM_IS_DISARMED, IaswdLevel.MEDIUM_LEVEL)
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -849,7 +849,7 @@ test.register_coroutine_test(
             get_squawk_command_older_fw(SquawkMode.SOUND_FOR_SYSTEM_IS_DISARMED, IaswdLevel.MEDIUM_LEVEL)
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -906,7 +906,7 @@ test.register_coroutine_test(
             get_squawk_command_new_fw(SquawkMode.SOUND_FOR_SYSTEM_IS_DISARMED, IaswdLevel.MEDIUM_LEVEL)
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -940,7 +940,7 @@ test.register_coroutine_test(
             test.wait_for_events()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -989,7 +989,7 @@ test.register_coroutine_test(
             test.wait_for_events()
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -1014,7 +1014,7 @@ test.register_message_test(
         },
         {
             inner_block_ordering = "relaxed",
-            min_api_version = 19
+            min_api_version = 17
         }
 )
 
@@ -1039,7 +1039,7 @@ test.register_message_test(
         },
         {
             inner_block_ordering = "relaxed",
-            min_api_version = 19
+            min_api_version = 17
         }
 )
 
@@ -1058,7 +1058,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -1077,7 +1077,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -1096,7 +1096,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -1134,7 +1134,7 @@ test.register_coroutine_test(
         { test_init = function()
             test.mock_device.add_test_device(mock_device_112)
         end,
-        min_api_version = 19
+        min_api_version = 17
         }
 )
 

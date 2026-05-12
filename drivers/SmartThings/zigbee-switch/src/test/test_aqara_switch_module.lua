@@ -56,7 +56,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -73,7 +73,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -90,7 +90,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(POWER_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -104,7 +104,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -118,7 +118,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -140,7 +140,7 @@ test.register_coroutine_test(
       AnalogInput.attributes.PresentValue:read(mock_device):to_endpoint(ENERGY_METER_ENDPOINT) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -167,7 +167,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -182,7 +182,7 @@ test.register_coroutine_test(
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -197,7 +197,7 @@ test.register_coroutine_test(
         ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 1) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

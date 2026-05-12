@@ -80,14 +80,16 @@ local driver_template = {
     capabilities.tamperAlert,
     capabilities.temperatureMeasurement,
     capabilities.relativeHumidityMeasurement,
-    capabilities.chime
+    capabilities.chime,
+    capabilities.powerSource
   },
   sub_drivers = require("sub_drivers"),
   lifecycle_handlers = {
     infoChanged = info_changed,
     doConfigure = do_configure,
     added = added_handler
-  }
+  },
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(driver_template, driver_template.supported_capabilities)

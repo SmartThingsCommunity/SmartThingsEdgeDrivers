@@ -1,7 +1,7 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local st_utils = require "st.utils"
+local clusters = require "st.matter.clusters"
 
 local SwitchFields = {}
 
@@ -13,10 +13,12 @@ SwitchFields.HUESAT_SUPPORT = "huesatSupport"
 SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 
 -- These values are a "sanity check" to check that values we are getting are reasonable
-local COLOR_TEMPERATURE_KELVIN_MAX = 15000
-local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN)
-SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = st_utils.round(SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX)
+SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = 67   -- 15000 Kelvin
+SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = 1000 --  1000 Kelvin
+
+-- These values are the config bounds in the default Matter profiles (e.g. light-level-colorTemperature, light-color-level)
+SwitchFields.DEFAULT_MIRED_MIN = 154 -- 6500 Kelvin
+SwitchFields.DEFAULT_MIRED_MAX = 455 -- 2200 Kelvin
 
 SwitchFields.SWITCH_LEVEL_LIGHTING_MIN = 1
 SwitchFields.CURRENT_HUESAT_ATTR_MIN = 0
@@ -32,6 +34,7 @@ SwitchFields.DEVICE_TYPE_ID = {
   ELECTRICAL_SENSOR = 0x0510,
   FAN = 0x002B,
   GENERIC_SWITCH = 0x000F,
+  IRRIGATION_SYSTEM = 0x0040,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
@@ -46,6 +49,7 @@ SwitchFields.DEVICE_TYPE_ID = {
     DIMMER = 0x0104,
     COLOR_DIMMER = 0x0105,
   },
+  WATER_VALVE = 0x0042,
 }
 
 SwitchFields.device_type_profile_map = {
@@ -84,6 +88,9 @@ SwitchFields.LEVEL_BOUND_RECEIVED = "__level_bound_received"
 SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
+SwitchFields.FLOW_BOUND_RECEIVED = "__flow_bound_received"
+SwitchFields.FLOW_MIN = "__flow_min"
+SwitchFields.FLOW_MAX = "__flow_max"
 
 SwitchFields.SUBSCRIBED_ATTRIBUTES_KEY = "__subscribed_attributes"
 
@@ -92,6 +99,7 @@ SwitchFields.updated_fields = {
   { current_field_name = "__switch_intialized", updated_field_name = nil },
   { current_field_name = "__energy_management_endpoint", updated_field_name = nil },
   { current_field_name = "__total_imported_energy", updated_field_name = nil },
+  { current_field_name = "__last_imported_report_timestamp", updated_field_name = nil },
 }
 
 SwitchFields.vendor_overrides = {
@@ -140,6 +148,11 @@ SwitchFields.switch_category_vendor_overrides = {
     {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
 }
 
+SwitchFields.operational_state_command_map = {
+  [clusters.OperationalState.commands.Pause.ID] = "pause",
+  [clusters.OperationalState.commands.Resume.ID] = "resume"
+}
+
 --- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
 --- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
@@ -147,8 +160,6 @@ SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
 --- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
-
-SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
@@ -189,8 +200,13 @@ SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
 
-SwitchFields.TRANSITION_TIME = 0 -- number of 10ths of a second
-SwitchFields.TRANSITION_TIME_FAST = 3 -- 0.3 seconds
+SwitchFields.ZERO_TRANSITION_TIME = 0 -- 0.0 seconds
+SwitchFields.DEFAULT_STEP_TRANSITION_TIME = 3 -- 0.3 seconds, measured in tenths of a second as per the Matter spec
+
+SwitchFields.TRANSITION_TIME = {
+  SWITCH_LEVEL_STEP = "__switch_level_step_transition_time",
+  COLOR_TEMP_STEP = "__color_temp_step_transition_time",
+}
 
 -- For Level/Color Control cluster commands, this field indicates which bits in the OptionsOverride field are valid. In this case, we specify that the ExecuteIfOff option (bit 1) may be overridden.
 SwitchFields.OPTIONS_MASK = 0x01

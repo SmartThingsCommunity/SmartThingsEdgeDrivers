@@ -89,7 +89,7 @@ test.register_coroutine_test(
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -121,7 +121,7 @@ test.register_coroutine_test(
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "migrationComplete", nil)
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -160,7 +160,7 @@ test.register_coroutine_test(
       mock_datastore.__assert_device_store_contains(mock_device.id, "migrationComplete", true)
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -208,7 +208,7 @@ test.register_coroutine_test(
       mock_datastore.__assert_device_store_contains(mock_device_no_data.id, "migrationComplete", true)
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -244,7 +244,7 @@ test.register_coroutine_test(
       -- Nothing should happen
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 

@@ -81,7 +81,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -107,7 +107,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -133,7 +133,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -166,7 +166,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -199,7 +199,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -232,7 +232,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -266,7 +266,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -300,7 +300,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -322,7 +322,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -356,7 +356,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -390,7 +390,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -419,7 +419,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -448,7 +448,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_window_shade_switch_multilevel:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -490,7 +490,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -533,7 +533,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -575,7 +575,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -605,7 +605,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -620,7 +620,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

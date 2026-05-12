@@ -33,7 +33,7 @@ test.register_coroutine_test("zwave_device_handled", function()
     test.wait_for_events()
   end,
   {
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -45,7 +45,7 @@ test.register_message_test(
         message = { mock_device.id, { capability = "switch", component = "main", command = "on", args = { } } }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

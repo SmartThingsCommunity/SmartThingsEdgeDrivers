@@ -54,7 +54,7 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local mock_device_electrical_sensor = test.mock_device.build_test_matter_device({
+local mock_eve_device_using_electrical_sensor = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-energy-powerConsumption.yml"),
   manufacturer_info = {
     vendor_id = 0x130A,
@@ -113,30 +113,6 @@ local mock_device_electrical_sensor = test.mock_device.build_test_matter_device(
   }
 })
 
-local function test_init_electrical_sensor()
-  test.disable_startup_messages()
-  test.mock_device.add_test_device(mock_device_electrical_sensor)
-  local cluster_subscribe_list = {
-    clusters.OnOff.attributes.OnOff,
-    clusters.ElectricalEnergyMeasurement.attributes.CumulativeEnergyImported,
-    clusters.ElectricalEnergyMeasurement.attributes.PeriodicEnergyImported,
-  }
-  local subscribe_request = cluster_subscribe_list[1]:subscribe(mock_device_electrical_sensor)
-  for i, clus in ipairs(cluster_subscribe_list) do
-    if i > 1 then subscribe_request:merge(clus:subscribe(mock_device_electrical_sensor)) end
-  end
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "added" })
-  test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "init" })
-  test.socket.matter:__expect_send({mock_device_electrical_sensor.id, subscribe_request})
-
-  test.socket.device_lifecycle:__queue_receive({ mock_device_electrical_sensor.id, "doConfigure" })
-  mock_device_electrical_sensor:expect_metadata_update({ profile = "plug-energy-powerConsumption" })
-  mock_device_electrical_sensor:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end
-
 local function test_init()
   local cluster_subscribe_list = {
     clusters.OnOff.attributes.OnOff,
@@ -182,7 +158,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -215,7 +191,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -235,7 +211,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -250,7 +226,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -283,7 +259,7 @@ test.register_coroutine_test(
 
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -302,7 +278,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -329,7 +305,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -356,7 +332,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -395,7 +371,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -423,7 +399,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -450,7 +426,7 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -486,7 +462,7 @@ test.register_coroutine_test(
       test.timer.__create_and_queue_test_time_advance_timer(60 * 15, "interval", "create_poll_report_schedule")
       test.timer.__create_and_queue_test_time_advance_timer(60, "interval", "create_poll_schedule")
     end,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -523,7 +499,7 @@ local cumulative_report_val_39 = {
 test.register_coroutine_test(
   "Cumulative Energy measurement should generate correct messages",
     function()
-      local mock_device = mock_device_electrical_sensor
+      mock_device = mock_eve_device_using_electrical_sensor
 
       test.mock_time.advance_time(901) -- move time 15 minutes past 0 (this can be assumed to be true in practice in all cases)
       test.socket.matter:__queue_receive(
@@ -579,8 +555,11 @@ test.register_coroutine_test(
       )
     end,
     {
-      test_init = test_init_electrical_sensor,
-      min_api_version = 19
+      test_init = function()
+        test.disable_startup_messages()
+        test.mock_device.add_test_device(mock_eve_device_using_electrical_sensor)
+      end,
+      min_api_version = 17
     }
 )
 

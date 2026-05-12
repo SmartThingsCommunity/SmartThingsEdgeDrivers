@@ -27,6 +27,7 @@ local zigbee_fan_driver = {
     init = device_init
   },
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_fan_driver,zigbee_fan_driver.supported_capabilities)

@@ -50,7 +50,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -70,7 +70,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -90,7 +90,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -110,7 +110,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -130,7 +130,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -150,7 +150,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -170,7 +170,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -190,7 +190,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -212,7 +212,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -232,7 +232,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -252,7 +252,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -272,7 +272,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -292,7 +292,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -312,7 +312,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -332,7 +332,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -352,7 +352,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -365,7 +365,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -378,7 +378,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x03) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -391,7 +391,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x04) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -404,7 +404,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x05) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -417,7 +417,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x06) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -430,7 +430,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x07) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -443,7 +443,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x08) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -456,7 +456,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x01) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -469,7 +469,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -482,7 +482,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x03) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -495,7 +495,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x04) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -508,7 +508,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x05) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -521,7 +521,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x06) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -534,7 +534,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x07) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -547,7 +547,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x08) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -567,7 +567,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

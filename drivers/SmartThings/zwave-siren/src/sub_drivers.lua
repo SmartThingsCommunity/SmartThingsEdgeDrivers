@@ -4,6 +4,7 @@
 local lazy_load_if_possible = require "lazy_load_subdriver"
 local sub_drivers = {
    lazy_load_if_possible("multifunctional-siren"),
+   lazy_load_if_possible("zooz-zse50"),
    lazy_load_if_possible("zwave-sound-sensor"),
    lazy_load_if_possible("ecolink-wireless-siren"),
    lazy_load_if_possible("philio-sound-siren"),

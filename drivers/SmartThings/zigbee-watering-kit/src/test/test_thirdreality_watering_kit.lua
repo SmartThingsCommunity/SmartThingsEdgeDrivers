@@ -48,7 +48,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("0")))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -67,7 +67,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -86,7 +86,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -105,7 +105,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -124,7 +124,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -143,7 +143,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -162,7 +162,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -181,7 +181,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -198,7 +198,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(10)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -215,7 +215,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(30)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -232,7 +232,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.mode.mode("4")))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -244,7 +244,7 @@ test.register_coroutine_test(
     THIRDREALITY_WATERING_CLUSTER, WATERING_TIME_ATTR, 0x1407, data_types.Uint16, 20) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -256,7 +256,7 @@ test.register_coroutine_test(
     THIRDREALITY_WATERING_CLUSTER, WATERING_INTERVAL_ATTR, 0x1407, data_types.Uint8, 2) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -275,7 +275,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -294,7 +294,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -311,7 +311,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.fanSpeed.fanSpeed(0)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

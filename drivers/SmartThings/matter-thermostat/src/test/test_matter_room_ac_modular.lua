@@ -314,7 +314,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_basic,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -342,7 +342,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_no_state,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 test.run_registered_tests()

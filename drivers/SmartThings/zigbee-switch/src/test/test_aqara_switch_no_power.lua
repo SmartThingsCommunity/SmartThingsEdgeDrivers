@@ -99,7 +99,7 @@ test.register_coroutine_test(
     { visibility = { displayed = false } })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -123,7 +123,7 @@ test.register_coroutine_test(
     { visibility = { displayed = false } })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -150,7 +150,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_base_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -164,7 +164,7 @@ test.register_coroutine_test(
       OnOff.attributes.OnOff:read(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -177,7 +177,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -190,7 +190,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.on()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -203,7 +203,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -216,7 +216,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.off()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -230,7 +230,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -244,7 +244,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -258,7 +258,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -272,7 +272,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -289,7 +289,7 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -306,7 +306,7 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -323,7 +323,7 @@ test.register_coroutine_test(
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -338,7 +338,7 @@ test.register_coroutine_test(
         CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

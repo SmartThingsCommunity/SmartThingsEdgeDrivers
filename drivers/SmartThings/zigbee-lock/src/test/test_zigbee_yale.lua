@@ -47,7 +47,7 @@ test.register_coroutine_test(
       expect_reload_all_codes_messages()
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -89,7 +89,7 @@ test.register_coroutine_test(
 
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -139,7 +139,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false }})))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -189,7 +189,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({["0"] = "test"}), { visibility = { displayed = false }})))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -218,7 +218,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -276,7 +276,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -321,7 +321,7 @@ test.register_coroutine_test(
       capabilities.lockCodes.codeChanged("1 failed", { state_change = true  })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -339,7 +339,7 @@ test.register_coroutine_test(
       capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo"}), { visibility = { displayed = false }})))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -382,7 +382,7 @@ test.register_coroutine_test(
           capabilities.lockCodes.codeChanged("1 is not set", { state_change = true })))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -412,7 +412,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({["1"] = "initialName"}), { visibility = { displayed = false }})))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -442,7 +442,7 @@ test.register_coroutine_test(
         capabilities.lockCodes.lockCodes(json.encode({}), { visibility = { displayed = false }})))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 

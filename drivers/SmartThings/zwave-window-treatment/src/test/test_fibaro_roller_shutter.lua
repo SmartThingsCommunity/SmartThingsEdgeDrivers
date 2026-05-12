@@ -68,7 +68,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -94,7 +94,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -120,7 +120,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -153,7 +153,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -186,7 +186,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -219,7 +219,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -253,7 +253,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -287,7 +287,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -309,7 +309,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -343,7 +343,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -377,7 +377,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -405,7 +405,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -431,7 +431,7 @@ test.register_coroutine_test(
       assert(mock_fibaro_roller_shutter:get_field("calibration") == "done", "Calibration should be done")
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -456,7 +456,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -483,7 +483,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -510,7 +510,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -537,7 +537,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -564,7 +564,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -591,7 +591,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -618,7 +618,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -645,7 +645,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -672,7 +672,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -699,7 +699,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -726,7 +726,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -753,7 +753,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -780,7 +780,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -807,7 +807,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -834,7 +834,7 @@ do
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 
   )
@@ -851,7 +851,7 @@ test.register_coroutine_test(
     mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -867,7 +867,7 @@ test.register_coroutine_test(
     mock_fibaro_roller_shutter_venetian:expect_metadata_update({ profile = "fibaro-roller-shutter-venetian" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

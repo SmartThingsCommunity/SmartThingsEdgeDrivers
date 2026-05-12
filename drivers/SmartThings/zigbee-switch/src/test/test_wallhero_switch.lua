@@ -182,7 +182,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -215,7 +215,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -248,7 +248,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -281,7 +281,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -314,7 +314,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -347,7 +347,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -380,7 +380,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -413,7 +413,7 @@ test.register_message_test(
       },
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -428,7 +428,7 @@ test.register_coroutine_test(
         0x6000, 0x1235, data_types.Uint8, 0x01) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -443,7 +443,7 @@ test.register_coroutine_test(
         0x6000, 0x1235, data_types.Uint8, 0x00) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -475,7 +475,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -502,7 +502,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -529,7 +529,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -556,7 +556,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -584,7 +584,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -611,7 +611,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -638,7 +638,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -665,7 +665,7 @@ test.register_message_test(
       }
     },
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -682,7 +682,7 @@ test.register_coroutine_test(
                                             )))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -698,7 +698,7 @@ test.register_coroutine_test(
                                             )))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -714,7 +714,7 @@ test.register_coroutine_test(
                                             )))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -730,7 +730,7 @@ test.register_coroutine_test(
                                             )))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -794,7 +794,7 @@ test.register_coroutine_test(
       })
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -808,7 +808,7 @@ test.register_coroutine_test(
         capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 

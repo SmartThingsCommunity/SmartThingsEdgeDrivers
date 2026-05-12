@@ -60,7 +60,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lock.lock.unlocked()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -79,7 +79,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -98,7 +98,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -115,7 +115,7 @@ test.register_coroutine_test(
     test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device.id))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -136,7 +136,7 @@ test.register_coroutine_test(
     }):build_test_tx(mock_device.id))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

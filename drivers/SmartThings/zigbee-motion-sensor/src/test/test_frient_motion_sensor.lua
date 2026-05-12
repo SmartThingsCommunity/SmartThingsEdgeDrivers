@@ -71,7 +71,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -84,7 +84,7 @@ test.register_coroutine_test(
             test.socket.zigbee:__expect_send({ mock_device.id, OccupancySensing.attributes.Occupancy:read(mock_device):to_endpoint(OCCUPANCY_ENDPOINT)})
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -214,7 +214,7 @@ test.register_coroutine_test(
             })
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -233,7 +233,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -252,7 +252,7 @@ test.register_message_test(
             }
         },
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 
@@ -284,7 +284,7 @@ test.register_coroutine_test(
             })
         end,
         {
-           min_api_version = 19
+           min_api_version = 17
         }
 )
 

@@ -93,7 +93,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -138,7 +138,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -184,7 +184,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -242,7 +242,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -288,7 +288,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -343,7 +343,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -378,7 +378,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

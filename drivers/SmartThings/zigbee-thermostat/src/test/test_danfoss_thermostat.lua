@@ -44,7 +44,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -55,7 +55,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device_danfoss:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.0, unit = "C"})))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -66,7 +66,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device_danfoss:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 21.0, unit = "C"})))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -76,7 +76,7 @@ test.register_coroutine_test(
     test.socket.zigbee:__queue_receive({ mock_device_danfoss.id, Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device_danfoss, 2100) })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -102,7 +102,7 @@ test.register_coroutine_test(
     end
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -121,7 +121,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

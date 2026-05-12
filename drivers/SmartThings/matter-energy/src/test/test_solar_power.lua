@@ -124,7 +124,7 @@ test.register_coroutine_test(
     capabilities.powerMeter.power({ value = 35.0, unit = "W" })))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -172,7 +172,7 @@ test.register_coroutine_test(
     test_init = function()
       test_init()
     end,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -197,7 +197,7 @@ test.register_coroutine_test(
       clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct({ energy = 100000, start_timestamp = 0, end_timestamp = 0, start_systime = 0, end_systime = 0, apparent_energy = 0, reactive_energy = 0 })) })             --100Wh
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

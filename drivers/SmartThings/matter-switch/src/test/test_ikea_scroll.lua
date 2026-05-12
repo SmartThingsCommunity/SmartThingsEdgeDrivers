@@ -237,7 +237,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -361,7 +361,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -485,7 +485,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -541,7 +541,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -597,7 +597,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -653,7 +653,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -709,7 +709,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -743,7 +743,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -777,8 +777,20 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
+)
+
+test.register_coroutine_test(
+  "Refresh necessary attributes",
+  function()
+    test.socket.capability:__queue_receive(
+      {mock_ikea_scroll.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+    )
+    local read_request = clusters.PowerSource.attributes.BatPercentRemaining:read(mock_ikea_scroll, 0)
+    test.socket.matter:__expect_send({mock_ikea_scroll.id, read_request})
+    test.wait_for_events()
+  end
 )
 
 test.run_registered_tests()

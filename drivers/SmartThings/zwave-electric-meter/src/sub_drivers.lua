@@ -6,5 +6,6 @@ local sub_drivers = {
    lazy_load_if_possible("qubino-meter"),
    lazy_load_if_possible("aeotec-gen5-meter"),
    lazy_load_if_possible("aeon-meter"),
+   lazy_load_if_possible("aeotec-home-energy-meter-gen8"),
 }
 return sub_drivers

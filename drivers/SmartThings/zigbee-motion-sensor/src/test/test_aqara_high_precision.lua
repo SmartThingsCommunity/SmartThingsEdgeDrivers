@@ -73,7 +73,7 @@ test.register_coroutine_test(
       capabilities.battery.battery(100)))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -96,7 +96,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -120,7 +120,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -145,7 +145,7 @@ test.register_coroutine_test(
       capabilities.motionSensor.motion.inactive()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -188,7 +188,7 @@ test.register_coroutine_test(
     detectionFrequency.detectionFrequency(value, {visibility = {displayed = false}})))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -205,7 +205,7 @@ test.register_coroutine_test(
       sensitivityAdjustment.sensitivityAdjustment.High()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -222,7 +222,7 @@ test.register_coroutine_test(
       sensitivityAdjustment.sensitivityAdjustment.Medium()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -239,7 +239,7 @@ test.register_coroutine_test(
       sensitivityAdjustment.sensitivityAdjustment.Low()))
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -277,7 +277,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 

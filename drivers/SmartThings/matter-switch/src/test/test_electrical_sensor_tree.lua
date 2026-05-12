@@ -128,77 +128,9 @@ local function test_init()
           subscribe_request:merge(cluster:subscribe(mock_device))
       end
   end
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
   test.socket.matter:__expect_send({ mock_device.id, subscribe_request })
 end
 test.set_test_init_function(test_init)
-
-test.register_message_test(
-	"On command should send the appropriate commands",
-  {
-		{
-			channel = "capability",
-			direction = "receive",
-			message = {
-				mock_device.id,
-				{ capability = "switch", component = "main", command = "on", args = { } }
-			}
-		},
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "on" }
-      }
-    },
-		{
-			channel = "matter",
-			direction = "send",
-			message = {
-				mock_device.id,
-				clusters.OnOff.server.commands.On(mock_device, 2)
-			}
-		}
-	},
-	{
-	   min_api_version = 19
-	}
-)
-
-test.register_message_test(
-  "Off command should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        { capability = "switch", component = "main", command = "off", args = { } }
-      }
-    },
-    {
-      channel = "devices",
-      direction = "send",
-      message = {
-        "register_native_capability_cmd_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_cmd_id = "off" }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.OnOff.server.commands.Off(mock_device, 2)
-      }
-    }
-  },
-  {
-     min_api_version = 19
-  }
-)
 
 test.register_message_test(
   "Active power measurement should generate correct messages",
@@ -226,7 +158,7 @@ test.register_message_test(
     }
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
@@ -294,7 +226,7 @@ test.register_coroutine_test(
       )
     end,
     {
-       min_api_version = 19
+       min_api_version = 17
     }
 )
 
@@ -320,7 +252,7 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init,
-    min_api_version = 19
+    min_api_version = 17
   }
 )
 
@@ -403,7 +335,7 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 19
+     min_api_version = 17
   }
 )
 
