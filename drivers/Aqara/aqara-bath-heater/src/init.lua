@@ -36,7 +36,7 @@ local SPEED           = {
   HIGH   = "high",
 }
 local MODE_TO_FAN     = { [SPEED.LOW] = FAN_LOW, [SPEED.MEDIUM] = FAN_MID, [SPEED.HIGH] = FAN_HIGH }
-local FAN_TO_MODE     = { [0] = SPEED.LOW, [1] = SPEED.MEDIUM, [2] = SPEED.HIGH }
+local FAN_TO_MODE     = { [FAN_LOW] = SPEED.LOW, [FAN_MID] = SPEED.MEDIUM, [FAN_HIGH] = SPEED.HIGH }
 
 -- SmartThings fanOscillationMode capability values
 local OSC             = {
@@ -96,7 +96,7 @@ local function send_ac_code(device, params)
 
   if params.setpoint ~= nil then
     local sp_raw = math.floor(clamp(params.setpoint, 16, 45) * 100) & 0xFFFF
-    hi32 = (sp_raw << 16) | (hi32 & 0xFFFF)
+    hi32 = (sp_raw << 16) | 0xFFFF
   end
 
   if params.pwr ~= nil then
