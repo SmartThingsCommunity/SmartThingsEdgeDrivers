@@ -7,6 +7,7 @@ local ZigbeeDriver = require "st.zigbee"
 local defaults = require "st.zigbee.defaults"
 
 local device_init = function(self, device)
+  -- some change
   local configurationMap = require "configurations"
   local configuration = configurationMap.get_device_configuration(device)
   if configuration ~= nil then
