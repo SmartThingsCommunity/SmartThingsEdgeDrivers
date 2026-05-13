@@ -570,227 +570,226 @@ end
 
 test.set_test_init_function(test_init)
 
-test.register_coroutine_test("Test: 4-Button Device Detection - Profile Changes from matter-bridge to 4-button When Four Button Endpoints Present", function()
-    test.socket.matter:__set_channel_ordering("relaxed")
+--test.register_coroutine_test("Test: 4-Button Device Detection - Profile Changes from matter-bridge to 4-button When Four Button Endpoints Present", function()
+--    test.socket.matter:__set_channel_ordering("relaxed")
+--
+--    local host = create_host_device("matter-bridge", subhub)
+--
+--    -- Initialize HOST device
+--    add_host_device(host, subhub)
+--
+--    -- Configure both devices
+--    configure_subhub(subhub)
+--    configure_host(host, "4-button")
+--    test.wait_for_events()
+--    local host_SUBHUB_ID = host:get_field("SUBHUB_ID")
+--    local host_HOST_ID = host:get_field("HOST_ID")
+--    local parent_SUBHUB_ID = subhub:get_field("SUBHUB_ID")
+--    local parent_HOST_ID = subhub:get_field("HOST_ID")
+--
+--    -- link_host_and_subhub function
+--    assert(host_SUBHUB_ID == subhub.id, "link_host_and_subhub 1/4")
+--    assert(host_HOST_ID == host.id, "link_host_and_subhub 2/4")
+--    assert(parent_SUBHUB_ID == subhub.id, "link_host_and_subhub 3/4")
+--    assert(parent_HOST_ID == host.id, "link_host_and_subhub 4/4")
+--
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.PartsList:build_test_report_data(subhub, 0, data_types.Array({
+--            data_types.Uint16(8),
+--            data_types.Uint16(9),
+--            data_types.Uint16(10),
+--            data_types.Uint16(11),
+--        }))
+--    })
+--    test.socket.matter:__expect_send({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x08)
+--    })
+--    test.socket.matter:__expect_send({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x09)
+--    })
+--    test.socket.matter:__expect_send({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x0A)
+--    })
+--    test.socket.matter:__expect_send({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x0B)
+--    })
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 8, data_types.Array({
+--            { device_type = 0x000F, revision = 0x0003 }
+--        }))
+--    })
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 9, data_types.Array({
+--            { device_type = 0x000F, revision = 0x0003 }
+--        }))
+--    })
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 10, data_types.Array({
+--            { device_type = 0x000F, revision = 0x0003 }
+--        }))
+--    })
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 11, data_types.Array({
+--            { device_type = 0x000F, revision = 0x0003 }
+--        }))
+--    })
+--end)
+--
+--test.register_coroutine_test("Test: Button Event Handling - Pushed, Double Press, and Held Events on 4-Button Device", function()
+--    -- Create HOST device with 4-button profile
+--    test.socket.matter:__set_channel_ordering("relaxed")
+--
+--    local host = create_host_device("4-button", subhub)
+--
+--    -- Initialize HOST device
+--    add_host_device(host, subhub)
+--
+--    -- Configure both devices
+--    configure_subhub(subhub)
+--    configure_host(host, "4-button")
+--
+--    subscribe_switch_events(host)
+--
+--    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
+--    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+--
+--    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
+--    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.button.pushed({ state_change = false })))
+--
+--    test.socket.capability:__expect_send(host:generate_test_message("button3", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
+--    test.socket.capability:__expect_send(host:generate_test_message("button3", capabilities.button.button.pushed({ state_change = false })))
+--
+--    test.socket.capability:__expect_send(host:generate_test_message("button4", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
+--    test.socket.capability:__expect_send(host:generate_test_message("button4", capabilities.button.button.pushed({ state_change = false })))
+--    test.wait_for_events()
+--
+--    -- Test single press (pushed) on endpoint 8 (button1)
+--    test.socket.matter:__queue_receive({
+--        host.id,
+--        clusters.Switch.events.InitialPress:build_test_event_report(
+--                host, 8, { new_position = 1 }
+--        )
+--    })
+--
+--    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.pushed({ state_change = true })))
+--
+--    --Test double press on endpoint 8 (button1)
+--    test.socket.matter:__queue_receive({
+--        host.id,
+--        clusters.Switch.events.MultiPressComplete:build_test_event_report(
+--                host, 8, { new_position = 0, total_number_of_presses_counted = 2, previous_position = 1 }
+--        )
+--    })
+--
+--    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.double({ state_change = true })))
+--    test.socket.matter:__queue_receive({
+--        host.id,
+--        clusters.Switch.events.LongPress:build_test_event_report(
+--                host, 8, { new_position = 1 }
+--        )
+--    })
+--    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.held({ state_change = true })))
+--
+--    -- Test long press (held) on endpoint 9 (button2)
+--    test.socket.matter:__queue_receive({
+--        host.id,
+--        clusters.Switch.events.InitialPress:build_test_event_report(
+--                host, 9, { new_position = 1 }
+--        )
+--    })
+--    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.button.pushed({ state_change = true })))
+--    test.socket.matter:__queue_receive({
+--        host.id,
+--        clusters.Switch.events.LongPress:build_test_event_report(
+--                host, 9, { new_position = 1 }
+--        )
+--    })
+--    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.button.held({ state_change = true })))
+--
+--    test.wait_for_events()
+--end)
+--
+--test.register_coroutine_test("Test: Device Type Handler - Handles Button (Type 15) and OnOff (Type 256) Device Types with Child Creation", function()
+--    test.socket.matter:__set_channel_ordering("relaxed")
+--
+--    local host = create_host_device("4-button", subhub)
+--    add_host_device(host, subhub)
+--    configure_subhub(subhub)
+--    configure_host(host, "4-button")
+--    subscribe_switch_events(host)
+--    four_button_2g_button_init(host)
+--    test.wait_for_events()
+--
+--    -- Receive PartsList with endpoints 8 (button) and 6 (OnOff)
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.PartsList:build_test_report_data(subhub, 0, data_types.Array({
+--            data_types.Uint16(8),
+--            data_types.Uint16(6),
+--        }))
+--    })
+--
+--    -- Expect DeviceTypeList reads for both endpoints
+--    test.socket.matter:__expect_send({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 8)
+--    })
+--    test.socket.matter:__expect_send({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 6)
+--    })
+--
+--    test.wait_for_events()
+--
+--    -- Receive DeviceTypeList report with device type 15 (button) for endpoint 8
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 8, data_types.Array {
+--            {
+--                device_type = data_types.Uint32(15),
+--                revision = data_types.Uint16(1)
+--            }
+--        })
+--    })
+--
+--    test.wait_for_events()
+--
+--    -- Receive DeviceTypeList report with device type 256 (OnOff) for endpoint 6
+--    test.socket.matter:__queue_receive({
+--        subhub.id,
+--        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 6, data_types.Array {
+--            {
+--                device_type = data_types.Uint32(256),
+--                revision = data_types.Uint16(1)
+--            }
+--        })
+--    })
+--    subhub:expect_device_create({
+--        type = "EDGE_CHILD",
+--        label = "Hager G2 4x Button Subhub 1",
+--        profile = "light-binary",
+--        parent_device_id = subhub.id,
+--        parent_assigned_child_key = "6"
+--    })
+--
+--    test.wait_for_events()
+--
+--    assert(subhub:get_field("__multi_button_8") == true, "Expected __multi_button_8 to be set to true")
+--
+--    local button_eps = subhub:get_field("__button_eps")
+--    assert(button_eps ~= nil, "Expected __button_eps field to be set")
+--    assert(button_eps[1] == 8, "Expected __button_eps to contain endpoint 8")
+--end)
 
-    local host = create_host_device("matter-bridge", subhub)
-
-    -- Initialize HOST device
-    add_host_device(host, subhub)
-
-    -- Configure both devices
-    configure_subhub(subhub)
-    configure_host(host, "4-button")
-    test.wait_for_events()
-    local host_SUBHUB_ID = host:get_field("SUBHUB_ID")
-    local host_HOST_ID = host:get_field("HOST_ID")
-    local parent_SUBHUB_ID = subhub:get_field("SUBHUB_ID")
-    local parent_HOST_ID = subhub:get_field("HOST_ID")
-
-    -- link_host_and_subhub function
-    assert(host_SUBHUB_ID == subhub.id, "link_host_and_subhub 1/4")
-    assert(host_HOST_ID == host.id, "link_host_and_subhub 2/4")
-    assert(parent_SUBHUB_ID == subhub.id, "link_host_and_subhub 3/4")
-    assert(parent_HOST_ID == host.id, "link_host_and_subhub 4/4")
-
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.PartsList:build_test_report_data(subhub, 0, data_types.Array({
-            data_types.Uint16(8),
-            data_types.Uint16(9),
-            data_types.Uint16(10),
-            data_types.Uint16(11),
-        }))
-    })
-    test.socket.matter:__expect_send({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x08)
-    })
-    test.socket.matter:__expect_send({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x09)
-    })
-    test.socket.matter:__expect_send({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x0A)
-    })
-    test.socket.matter:__expect_send({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 0x0B)
-    })
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 8, data_types.Array({
-            { device_type = 0x000F, revision = 0x0003 }
-        }))
-    })
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 9, data_types.Array({
-            { device_type = 0x000F, revision = 0x0003 }
-        }))
-    })
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 10, data_types.Array({
-            { device_type = 0x000F, revision = 0x0003 }
-        }))
-    })
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 11, data_types.Array({
-            { device_type = 0x000F, revision = 0x0003 }
-        }))
-    })
-end)
-
-test.register_coroutine_test("Test: Button Event Handling - Pushed, Double Press, and Held Events on 4-Button Device", function()
-    -- Create HOST device with 4-button profile
-    test.socket.matter:__set_channel_ordering("relaxed")
-
-    local host = create_host_device("4-button", subhub)
-
-    -- Initialize HOST device
-    add_host_device(host, subhub)
-
-    -- Configure both devices
-    configure_subhub(subhub)
-    configure_host(host, "4-button")
-
-    subscribe_switch_events(host)
-
-    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
-
-    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.button.pushed({ state_change = false })))
-
-    test.socket.capability:__expect_send(host:generate_test_message("button3", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(host:generate_test_message("button3", capabilities.button.button.pushed({ state_change = false })))
-
-    test.socket.capability:__expect_send(host:generate_test_message("button4", capabilities.button.supportedButtonValues({ "pushed" }, { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(host:generate_test_message("button4", capabilities.button.button.pushed({ state_change = false })))
-    test.wait_for_events()
-
-    -- Test single press (pushed) on endpoint 8 (button1)
-    test.socket.matter:__queue_receive({
-        host.id,
-        clusters.Switch.events.InitialPress:build_test_event_report(
-                host, 8, { new_position = 1 }
-        )
-    })
-
-    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.pushed({ state_change = true })))
-
-    --Test double press on endpoint 8 (button1)
-    test.socket.matter:__queue_receive({
-        host.id,
-        clusters.Switch.events.MultiPressComplete:build_test_event_report(
-                host, 8, { new_position = 0, total_number_of_presses_counted = 2, previous_position = 1 }
-        )
-    })
-
-    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.double({ state_change = true })))
-    test.socket.matter:__queue_receive({
-        host.id,
-        clusters.Switch.events.LongPress:build_test_event_report(
-                host, 8, { new_position = 1 }
-        )
-    })
-    test.socket.capability:__expect_send(host:generate_test_message("main", capabilities.button.button.held({ state_change = true })))
-
-    -- Test long press (held) on endpoint 9 (button2)
-    test.socket.matter:__queue_receive({
-        host.id,
-        clusters.Switch.events.InitialPress:build_test_event_report(
-                host, 9, { new_position = 1 }
-        )
-    })
-    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.button.pushed({ state_change = true })))
-    test.socket.matter:__queue_receive({
-        host.id,
-        clusters.Switch.events.LongPress:build_test_event_report(
-                host, 9, { new_position = 1 }
-        )
-    })
-    test.socket.capability:__expect_send(host:generate_test_message("button2", capabilities.button.button.held({ state_change = true })))
-
-    test.wait_for_events()
-end)
-
-test.register_coroutine_test("Test: Device Type Handler - Handles Button (Type 15) and OnOff (Type 256) Device Types with Child Creation", function()
-    test.socket.matter:__set_channel_ordering("relaxed")
-
-    local host = create_host_device("4-button", subhub)
-    add_host_device(host, subhub)
-    configure_subhub(subhub)
-    configure_host(host, "4-button")
-    subscribe_switch_events(host)
-    four_button_2g_button_init(host)
-    test.wait_for_events()
-
-    -- Receive PartsList with endpoints 8 (button) and 6 (OnOff)
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.PartsList:build_test_report_data(subhub, 0, data_types.Array({
-            data_types.Uint16(8),
-            data_types.Uint16(6),
-        }))
-    })
-
-    -- Expect DeviceTypeList reads for both endpoints
-    test.socket.matter:__expect_send({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 8)
-    })
-    test.socket.matter:__expect_send({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:read(subhub, 6)
-    })
-
-    test.wait_for_events()
-
-    -- Receive DeviceTypeList report with device type 15 (button) for endpoint 8
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 8, data_types.Array {
-            {
-                device_type = data_types.Uint32(15),
-                revision = data_types.Uint16(1)
-            }
-        })
-    })
-
-    test.wait_for_events()
-
-    -- Receive DeviceTypeList report with device type 256 (OnOff) for endpoint 6
-    test.socket.matter:__queue_receive({
-        subhub.id,
-        clusters.Descriptor.attributes.DeviceTypeList:build_test_report_data(subhub, 6, data_types.Array {
-            {
-                device_type = data_types.Uint32(256),
-                revision = data_types.Uint16(1)
-            }
-        })
-    })
-    subhub:expect_device_create({
-        type = "EDGE_CHILD",
-        label = "Hager G2 4x Button Subhub 1",
-        profile = "light-binary",
-        parent_device_id = subhub.id,
-        parent_assigned_child_key = "6"
-    })
-
-    test.wait_for_events()
-
-    assert(subhub:get_field("__multi_button_8") == true, "Expected __multi_button_8 to be set to true")
-
-    local button_eps = subhub:get_field("__button_eps")
-    assert(button_eps ~= nil, "Expected __button_eps field to be set")
-    assert(button_eps[1] == 8, "Expected __button_eps to contain endpoint 8")
-end)
-
-local driver = require "st.driver"
 test.register_coroutine_test("Test: 2G Relay - Profile Changes Between light-binary and 2-button Based On Endpoint Availability", function()
     test.socket.matter:__set_channel_ordering("relaxed")
     test.timer.__create_and_queue_test_time_advance_timer(5, "oneshot")

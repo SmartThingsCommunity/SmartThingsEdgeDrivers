@@ -10,31 +10,21 @@ local ButtonCfg = require "switch_utils.device_configuration"
 local switch_utils = require "switch_utils.utils"
 local fields = require "switch_utils.fields"
 
-local IGNORE_NEXT_MPC = "__ignore_next_mpc"
-local SUPPORTS_MULTI_PRESS = "__multi_button"
-
+local IGNORE_NEXT_MPC = fields.IGNORE_NEXT_MPC
+local SUPPORTS_MULTI_PRESS = fields.SUPPORTS_MULTI_PRESS
 local ACTIVE_EPS = "__active_EPS"
-local FIELD_MAIN_ONOFF_EP = "FIELD_MAIN_ONOFF_EP"
-local FIELD_MOTION_HOST = "FIELD_MOTION_HOST"
-local FIELD_LUX_TO_MOTION = "__lux_to_motion"
+local MAIN_ONOFF_EP = "FIELD_MAIN_ONOFF_EP"
+local MOTION_HOST = "FIELD_MOTION_HOST"
+local LUX_TO_MOTION = "__lux_to_motion"
 local HOST_ID = "HOST_ID"
 local SUBHUB_ID = "SUBHUB_ID"
 local CURRENT_LIFT = "__current_lift"
-local CURRENT_TILT = "__current_tilt"
 local REVERSE_POLARITY = "__reverse_polarity"
 local PRESET_LEVEL_KEY = "__preset_level_key"
 local BUTTON_EPS = "__button_eps"
 
-
-local function subscribe_descriptor (device, endpoint_id)
-    device:send(cluster_base.subscribe(device, endpoint_id, clusters.Descriptor.ID, clusters.Descriptor.attributes.PartsList.ID, nil))
-end
-
-local function set_field_for_endpoint(device, field, endpoint, value, persist)
-    device:set_field(string.format("%s_%d", field, endpoint), value, { persist = persist })
-end
-local function get_field_for_endpoint(device, field, endpoint)
-    return device:get_field(string.format("%s_%d", field, endpoint))
+local function subscribe (device, endpoint_id, cluster_id, attr_id, event_id)
+    device:send(cluster_base.subscribe(device, endpoint_id, cluster_id, attr_id, event_id))
 end
 
 local function get_subhub (driver, device)
@@ -43,6 +33,15 @@ end
 
 local function get_host (driver, device)
     return driver:get_device_info(device:get_field(HOST_ID) or nil)
+end
+
+local function contains_ep (list, ep)
+    for _, v in ipairs(list) do
+        if v == ep then
+            return true
+        end
+    end
+    return false
 end
 
 local function build_lux_to_motion_map(occ_eps, lux_eps)
@@ -91,16 +90,13 @@ local function emit_for_ep(driver, device, ep, event)
     local host = get_host(driver, device)
     local subhub = get_subhub(driver, device)
     local mapped_ep = ep
-    local lux_map = device:get_field(FIELD_LUX_TO_MOTION)
+    local lux_map = device:get_field(LUX_TO_MOTION)
 
     if lux_map and lux_map[ep] then
         mapped_ep = lux_map[ep]
     end
 
-    local child = nil
-    if subhub then
-        child = subhub:get_child_by_parent_assigned_key(tostring(mapped_ep))
-    end
+    local child = subhub:get_child_by_parent_assigned_key(tostring(mapped_ep))
 
     local target = child or host
     target:emit_event(event)
@@ -108,11 +104,6 @@ end
 
 local function create_child_for_ep(driver, device, ep_id, profile)
     local subhub = get_subhub(driver, device)
-
-    if not subhub then
-        return nil
-    end
-
     local key = string.format("%d", ep_id)
 
     local device_num = (subhub:get_field("CHILD_COUNTER") or 0) + 1
@@ -127,11 +118,10 @@ local function create_child_for_ep(driver, device, ep_id, profile)
         parent_assigned_child_key = key,
         vendor_provided_label = name,
     })
-
     return nil
 end
 
-local function diff (driver, device, ib_elements)
+local function diff (device, ib_elements)
     local stored_eps = device:get_field(ACTIVE_EPS) or {}
     ib_elements = ib_elements or {}
 
@@ -166,27 +156,20 @@ local function resolve_host_and_ep(driver, device)
     if device.network_type == device_lib.NETWORK_TYPE_MATTER then
         local wc_eps = device:get_endpoints(clusters.WindowCovering.ID) or {}
         local wc_main = wc_eps[1]
-
-        local onOff_eps = host and host:get_field(FIELD_MAIN_ONOFF_EP)
+        local onOff_eps = host and host:get_field(MAIN_ONOFF_EP)
 
         if wc_main then
             return parent, wc_main
         elseif onOff_eps then
             return parent, onOff_eps
-        else
-            return nil, nil
         end
-    end
-
-    if device.network_type == device_lib.NETWORK_TYPE_CHILD then
+    elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
         local ep = tonumber(device.parent_assigned_child_key)
         if not ep then
             return nil, nil
         end
         return device, ep
     end
-
-    return nil, nil
 end
 
 local function link_host_and_subhub(host)
@@ -206,8 +189,7 @@ local function device_init(driver, device)
     local oc_eps = device:get_endpoints(clusters.OccupancySensing.ID)
     local product_id = device.manufacturer_info.product_id
 
-    subscribe_descriptor(device, 2)
-    subscribe_descriptor(device, 0)
+    subscribe(device, 2, clusters.Descriptor.ID,clusters.Descriptor.attributes.PartsList.ID)
 
     if device:get_parent_device() ~= nil then
         link_host_and_subhub(device)
@@ -216,49 +198,42 @@ local function device_init(driver, device)
     table.sort(wc_eps)
     table.sort(oc_eps)
 
-    local subhub = get_subhub(driver, device)
     local host = get_host(driver, device)
-    local main_onOff_at_join = device:get_field(FIELD_MAIN_ONOFF_EP)
+    local main_onOff_at_join = device:get_field(MAIN_ONOFF_EP)
 
     if host and not main_onOff_at_join and (product_id == 0x0005 or product_id == 0x0006) then
-        host:set_field(FIELD_MAIN_ONOFF_EP, 3, { persist = true })
+        host:set_field(MAIN_ONOFF_EP, 3, { persist = true })
         device.thread:call_with_delay(6, function()
             if host:supports_capability(capabilities.switchLevel) then
-                host:set_field(FIELD_MAIN_ONOFF_EP, 4, { persist = true })
+                host:set_field(MAIN_ONOFF_EP, 4, { persist = true })
             end
         end)
     end
 
     if #oc_eps > 0 then
         device:try_update_metadata({ profile = "motion-illuminance" })
-        device:set_field(FIELD_MOTION_HOST, oc_eps[1])
+        device:set_field(MOTION_HOST, oc_eps[1])
     elseif #wc_eps > 0 and product_id == 0x0005 then
         device:try_update_metadata({ profile = "window-covering" })
     elseif #wc_eps > 0 and product_id == 0x0006 then
         host:try_update_metadata({ profile = "2-button" })
     end
-    if subhub then
-        subhub:subscribe()
-    end
-
 end
 
 local function handle_descriptor_report(driver, device, ib, response)
-    if ib.endpoint_id ~= 0 and ib.endpoint_id ~= 2 then
+    if ib.endpoint_id ~= 2 then
         return
     end
 
     local subhub = get_subhub(driver, device)
     local host = get_host(driver, device)
 
-    if not subhub then
-        return
-    end
+    if not subhub then return end
 
     local new_eps = extract(ib) or {}
     table.sort(new_eps)
 
-    local removed, added = diff(driver, device, new_eps)
+    local removed, added = diff(device, new_eps)
 
     device:set_field(ACTIVE_EPS, new_eps, { persist = true })
 
@@ -267,55 +242,35 @@ local function handle_descriptor_report(driver, device, ib, response)
     local lux_to_motion = build_lux_to_motion_map(occ_eps, lux_eps)
 
     if next(lux_to_motion) ~= nil then
-        device:set_field(FIELD_LUX_TO_MOTION, lux_to_motion)
+        device:set_field(LUX_TO_MOTION, lux_to_motion)
     end
 
     local stored_eps = device:get_field(ACTIVE_EPS)
 
     for _, ep in ipairs(added or {}) do
+        subhub:send(clusters.Descriptor.attributes.DeviceTypeList:read(subhub, ep))
 
-        local button_comb
+        if device.network_type == device_lib.NETWORK_TYPE_MATTER then
+            local product_id = device.manufacturer_info and device.manufacturer_info.product_id
 
-        if subhub.id == device.id then
-            subhub:send(clusters.Descriptor.attributes.DeviceTypeList:read(subhub, ep))
-
-            if ep == 3 and device.network_type == device_lib.NETWORK_TYPE_MATTER and device.manufacturer_info.product_id == 0x0005 then
-                host:try_update_metadata({ profile = "light-binary" })
-            elseif ep == 4 and device.network_type == device_lib.NETWORK_TYPE_MATTER and device.manufacturer_info.product_id == 0x0006 then
-                for _, ep_match in ipairs(stored_eps) do
-                    if ep_match == 3 then
-                        button_comb = true
-                        break
-                    end
-                    button_comb = false
-                end
-
-                if button_comb then
-                    host:try_update_metadata({ profile = "light-binary" })
-                else
-                    host:try_update_metadata({ profile = "2-button" })
-                end
-            elseif ep == 3 and device.network_type == device_lib.NETWORK_TYPE_MATTER and device.manufacturer_info.product_id == 0x0006 then
-                for _, ep_match in ipairs(stored_eps) do
-                    if ep_match == 4 then
-                        button_comb = true
-                        break
-                    end
-                    button_comb = false
-                end
-                if button_comb then
-                    host:try_update_metadata({ profile = "light-binary" })
-                else
-                    host:try_update_metadata({ profile = "2-button" })
+            if product_id == 0x0005 and ep == 3 then
+                device:try_update_metadata({ profile = "2-button" })
+            elseif product_id == 0x0006 then
+                if ep == 3 then
+                    local profile = contains_ep(stored_eps, 4) and "light-binary" or "2-button"
+                    host:try_update_metadata({ profile = profile })
+                elseif ep == 4 then
+                    local profile = contains_ep(stored_eps, 3) and "light-binary" or "2-button"
+                    host:try_update_metadata({ profile = profile })
                 end
             end
         end
     end
 
     for _, ep in ipairs(removed) do
-
         local button_eps = subhub:get_field(BUTTON_EPS) or {}
         local clean_eps = {}
+
         for _, value in ipairs(button_eps) do
             if value ~= ep then
                 table.insert(clean_eps, value)
@@ -325,57 +280,32 @@ local function handle_descriptor_report(driver, device, ib, response)
         table.sort(clean_eps)
         subhub:set_field(BUTTON_EPS, clean_eps, { persist = true })
 
-        device.thread:call_with_delay(5, function()
-            if subhub.id == device.id then
-                subhub:send(clusters.Descriptor.attributes.DeviceTypeList:read(subhub, ep))
-            end
-        end)
-
-        local key = tostring(ep)
-
-        if not subhub then
-        end
-        local child = subhub:get_child_by_parent_assigned_key(key)
+        local child = subhub:get_child_by_parent_assigned_key(tostring(ep))
         if child and child.network_type == device_lib.NETWORK_TYPE_CHILD then
             driver:try_delete_device(child.id)
         end
 
         local button_comb
-        if ep == 3 then
-            if device:get_parent_device() ~= nil then
-                if device.manufacturer_info.product_id == 0x0005 then
-                    device:try_update_metadata({ profile = "2-button" })
-                elseif device.manufacturer_info.product_id == 0x0006 then
-                    for _, eps in ipairs(stored_eps) do
-                        if eps == 4 then
-                            button_comb = true
-                            break
-                        end
-                        button_comb = false
-                    end
-                    if not button_comb then
-                        host:try_update_metadata({ profile = "4-button" })
-                    else
-                        host:try_update_metadata({ profile = "2-button" })
-                    end
-                end
+
+        if ep == 3 and device:get_parent_device() ~= nil then
+            if device.manufacturer_info.product_id == 0x0005 then
+                device:try_update_metadata({ profile = "2-button" })
+            elseif device.manufacturer_info.product_id == 0x0006 then
+                local has_ep4 = contains_ep(stored_eps, 4)
+                host:try_update_metadata({ profile = has_ep4 and "2-button" or "4-button" })
             end
+
         elseif ep == 4 then
             if device.manufacturer_info.product_id == 0x0006 then
-                for _, eps in ipairs(stored_eps) do
-                    if eps == 3 then
-                        button_comb = true
-                        break
-                    end
-                    button_comb = false
-                end
-                if not button_comb then
-                    host:try_update_metadata({ profile = "4-button" })
-                else
+                button_comb = contains_ep(stored_eps, 3)
+                if  button_comb then
                     host:try_update_metadata({ profile = "2-button" })
                     create_child_for_ep(driver, subhub, 3, "light-binary")
+                else
+                    host:try_update_metadata({ profile = "4-button" })
                 end
             end
+
         end
     end
 end
@@ -388,11 +318,9 @@ local function on_off_attr_handler(driver, device, ib, response)
     end
 end
 
+
 local function handle_preset(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     local lift_value = device:get_field(PRESET_LEVEL_KEY) or 50
     local hundredths_lift_percent = (100 - tonumber(lift_value)) * 100
     subhub:send(clusters.WindowCovering.server.commands.GoToLiftPercentage(subhub, ep, hundredths_lift_percent))
@@ -400,9 +328,6 @@ end
 
 local function handle_close(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     if device:get_field(REVERSE_POLARITY) then
         subhub:send(clusters.WindowCovering.commands.UpOrOpen(subhub, ep))
     else
@@ -412,9 +337,6 @@ end
 
 local function handle_open(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     if device:get_field(REVERSE_POLARITY) then
         subhub:send(clusters.WindowCovering.commands.DownOrClose(subhub, ep))
     else
@@ -424,17 +346,11 @@ end
 
 local function handle_pause(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     subhub:send(clusters.WindowCovering.commands.StopMotion(subhub, ep))
 end
 
 local function handle_shade_level(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     local lift_percentage_value = 100 - cmd.args.shadeLevel
     local hundredths_lift_percentage = lift_percentage_value * 100
     subhub:send(clusters.WindowCovering.commands.GoToLiftPercentage(subhub, ep, hundredths_lift_percentage))
@@ -451,29 +367,16 @@ local current_pos_handler = function(attribute)
         emit_for_ep(driver, device, ib.endpoint_id, attribute(position))
         if attribute == capabilities.windowShadeLevel.shadeLevel then
             device:set_field(CURRENT_LIFT, position)
-        else
-            device:set_field(CURRENT_TILT, position)
         end
         local lift_position = device:get_field(CURRENT_LIFT)
-        local tilt_position = device:get_field(CURRENT_TILT)
         if lift_position == nil then
-            if tilt_position == 0 then
-                emit_for_ep(driver, device, ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
-            elseif tilt_position == 100 then
-                emit_for_ep(driver, device, ib.endpoint_id, reverse and windowShade.closed() or windowShade.open())
-            else
-                emit_for_ep(driver, device, ib.endpoint_id, windowShade.partially_open())
-            end
+            emit_for_ep(driver, device, ib.endpoint_id, windowShade.partially_open())
         elseif lift_position == 100 then
             emit_for_ep(driver, device, ib.endpoint_id, reverse and windowShade.closed() or windowShade.open())
         elseif lift_position > 0 then
             emit_for_ep(driver, device, ib.endpoint_id, windowShade.partially_open())
         elseif lift_position == 0 then
-            if tilt_position == nil or tilt_position == 0 then
-                emit_for_ep(driver, device, ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
-            elseif tilt_position > 0 then
-                emit_for_ep(driver, device, ib.endpoint_id, windowShade.partially_open())
-            end
+            emit_for_ep(driver, device, ib.endpoint_id, reverse and windowShade.open() or windowShade.closed())
         end
     end
 end
@@ -495,8 +398,6 @@ local function occupancy_measured_value_handler(driver, device, ib, response)
     local host = get_host(driver, device)
     if ib.data.value ~= nil then
         emit_for_ep(driver, host, ib.endpoint_id, ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
-    else
-        return
     end
 end
 
@@ -505,32 +406,22 @@ local function illuminance_measured_value_handler(driver, device, ib, response)
     if ib.data.value ~= nil then
         local lux = math.floor(10 ^ ((ib.data.value - 1) / 10000))
         emit_for_ep(driver, host, ib.endpoint_id, capabilities.illuminanceMeasurement.illuminance(lux))
-    else
-        return
+
     end
 end
 
 local function handle_switch_on(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     subhub:send(clusters.OnOff.commands.On(subhub, ep))
 end
 
 local function handle_switch_off(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     subhub:send(clusters.OnOff.commands.Off(subhub, ep))
 end
 
 local function handle_switch_set_levels(driver, device, cmd)
     local subhub, ep = resolve_host_and_ep(driver, device)
-    if not subhub or not ep then
-        return
-    end
     local level = math.floor(cmd.args.level / 100.0 * 254)
     subhub:send(clusters.LevelControl.server.commands.MoveToLevelWithOnOff(subhub, ep, level, cmd.args.rate, 0, 0))
 end
@@ -548,28 +439,22 @@ end
 local function long_press_event_handler(driver, device, ib, response)
     local host = get_host(driver, device)
     host:emit_event_for_endpoint(ib.endpoint_id, capabilities.button.button.held({ state_change = true }))
-    if get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
-        set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, true)
+    if switch_utils.get_field_for_endpoint(device, SUPPORTS_MULTI_PRESS, ib.endpoint_id) then
+        switch_utils.set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, true)
     end
 end
 
 local function multi_press_complete_handler(driver, device, ib, response)
     local host = get_host(driver, device)
-    if ib.data and not switch_utils.get_field_for_endpoint(device, fields.IGNORE_NEXT_MPC, ib.endpoint_id) then
+    if ib.data and not switch_utils.get_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id) then
         local press_value = ib.data.elements.total_number_of_presses_counted.value
-        if press_value < 7 then
-            local button_event = capabilities.button.button.pushed({ state_change = true })
-            if press_value == 2 then
-                button_event = capabilities.button.button.double({ state_change = true })
-            elseif press_value > 2 then
-
-                button_event = capabilities.button.button(string.format("pushed_%dx", press_value), { state_change = true })
-            end
-            host:emit_event_for_endpoint(ib.endpoint_id, button_event)
-        else
+        local button_event = capabilities.button.button.pushed({ state_change = true })
+        if press_value == 2 then
+            button_event = capabilities.button.button.double({ state_change = true })
         end
+        host:emit_event_for_endpoint(ib.endpoint_id, button_event)
     end
-    switch_utils.set_field_for_endpoint(device, fields.IGNORE_NEXT_MPC, ib.endpoint_id, nil)
+    switch_utils.set_field_for_endpoint(device, IGNORE_NEXT_MPC, ib.endpoint_id, nil)
 end
 
 local function info_changed(driver, device, event, args)
@@ -587,18 +472,18 @@ local function info_changed(driver, device, event, args)
                 end
                 ButtonCfg.ButtonCfg.update_button_component_map(host, 1, clean_eps)
                 ButtonCfg.ButtonCfg.configure_buttons(host)
-                for _, value in ipairs(clean_eps) do
-                    subhub:send(cluster_base.subscribe(subhub, value, clusters.Switch.ID, nil, clusters.Switch.events.MultiPressComplete.ID))
-                    subhub:send(cluster_base.subscribe(subhub, value, clusters.Switch.ID, nil, clusters.Switch.events.ShortRelease.ID))
-                    subhub:send(cluster_base.subscribe(subhub, value, clusters.Switch.ID, nil, clusters.Switch.events.LongPress.ID))
-                    host:emit_event_for_endpoint(value, capabilities.button.supportedButtonValues({ "pushed", "double", "held" }))
+                for _, ep in ipairs(clean_eps) do
+                    subscribe(subhub, ep, clusters.Switch.ID, nil, clusters.Switch.events.MultiPressComplete.ID)
+                    subscribe(subhub, ep, clusters.Switch.ID, nil, clusters.Switch.events.ShortRelease.ID)
+                    subscribe(subhub, ep, clusters.Switch.ID, nil, clusters.Switch.events.LongPress.ID)
+                    host:emit_event_for_endpoint(ep, capabilities.button.supportedButtonValues({ "pushed", "double", "held" }))
                 end
             elseif host:supports_capability(capabilities.switch) then
                 subhub:send(clusters.OnOff.attributes.OnOff:read(subhub))
             elseif host:supports_capability(capabilities.motionSensor) then
                 subhub:send(clusters.OccupancySensing.attributes.Occupancy:read(subhub))
                 subhub:send(clusters.IlluminanceMeasurement.attributes.MeasuredValue:read(subhub))
-            elseif host:supports_capability(capabilities.windowShadeLevel)then
+            elseif host:supports_capability(capabilities.windowShadeLevel) then
                 subhub:send(clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths:read(subhub))
             end
         end)
@@ -614,23 +499,9 @@ local function info_changed(driver, device, event, args)
     end
 end
 
-local function contains_ep (list, ep)
-    for _, v in ipairs(list) do
-        if v == ep then
-            return true
-        end
-    end
-    return false
-end
-
 local function device_type_handler (driver, device, ib)
     local host = get_host(driver, device)
     local subhub = get_subhub(driver, device)
-
-    if not subhub then
-        return
-    end
-
     local stored = subhub:get_field(BUTTON_EPS) or {}
     local button_endpoints = {}
 
@@ -648,7 +519,7 @@ local function device_type_handler (driver, device, ib)
 
         if device_type_id == 15 then
             if not contains_ep(button_endpoints, ep) then
-                set_field_for_endpoint(subhub, SUPPORTS_MULTI_PRESS, ep, true, true)
+                switch_utils.set_field_for_endpoint(subhub, SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
                 table.insert(button_endpoints, ep)
                 table.sort(button_endpoints)
                 subhub:set_field(BUTTON_EPS, button_endpoints, { persist = true })
@@ -658,70 +529,53 @@ local function device_type_handler (driver, device, ib)
         if device_type_id == 256 then
             local active_eps = device:get_field(ACTIVE_EPS)
             device.thread:call_with_delay(6, function()
-                local subscribe = cluster_base.subscribe(subhub, ep, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID, nil)
-                subhub:send(subscribe)
+                subscribe(subhub, ep, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID)
             end)
 
             if ep == 3 and device.manufacturer_info.product_id == 0x0005 then
                 return
             elseif ep == 4 and device.manufacturer_info.product_id == 0x0006 then
-                local has3 = false
-                for _, eps in ipairs(active_eps) do
-                    if eps == 3 then
-                        has3 = true
-                        local ep3 = subhub:get_child_by_parent_assigned_key("3") or nil
-                        if ep3 then
-                            driver:try_delete_device(ep3.id)
-                        end
-                        break
+                if contains_ep(active_eps, 3) then
+                    local ep3 = subhub:find_child() or nil
+                    if ep3 then
+                        driver:try_delete_device(ep3.id)
                     end
-                end
-
-                if not has3 then
+                else
                     create_child_for_ep(driver, subhub, 4, "light-binary")
                     return
                 end
             elseif ep == 3 and device.manufacturer_info.product_id == 0x0006 then
                 host.thread:call_with_delay(4, function()
                     local latest_eps = host:get_field(ACTIVE_EPS) or {}
-                    local has4 = false
-                    for _, eps in ipairs(latest_eps) do
-                        if eps == 4 then
-                            has4 = true
-                            break
-                        end
+                    if not contains_ep(latest_eps, 4) then
+                        create_child_for_ep(driver, subhub, 3, "light-binary")
                     end
-
-                    if has4 then
-                        return
-                    end
-                    create_child_for_ep(driver, subhub, 3, "light-binary")
                 end)
                 return
             end
             create_child_for_ep(driver, subhub, ib.endpoint_id, "light-binary")
         elseif device_type_id == 257 then
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID, nil))
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.LevelControl.ID, clusters.LevelControl.attributes.CurrentLevel.ID, nil))
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.LevelControl.ID, clusters.LevelControl.attributes.MaxLevel.ID, nil))
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.LevelControl.ID, clusters.LevelControl.attributes.MinLevel.ID, nil))
+            subscribe(subhub, ep, clusters.OnOff.ID, clusters.OnOff.attributes.OnOff.ID)
+            subscribe(subhub, ep, clusters.LevelControl.ID, clusters.LevelControl.attributes.CurrentLevel.ID)
+            subscribe(subhub, ep, clusters.LevelControl.ID, clusters.LevelControl.attributes.MaxLevel.ID)
+            subscribe(subhub, ep, clusters.LevelControl.ID, clusters.LevelControl.attributes.MinLevel.ID)
             if ep == 4 and device.manufacturer_info.product_id == 0x0005 then
                 return
             end
             create_child_for_ep(driver, device, ib.endpoint_id, "light-level")
 
         elseif device_type_id == 514 then
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.OperationalStatus.ID, nil))
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID, nil))
+            subscribe(subhub, ep, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.OperationalStatus.ID)
+            subscribe(subhub, ep, clusters.WindowCovering.ID, clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID)
             if device.manufacturer_info.product_id == 0x0005 then
                 return
             else
                 create_child_for_ep(driver, device, ib.endpoint_id, "window-covering")
             end
         elseif device_type_id == 263 then
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.OccupancySensing.ID, clusters.OccupancySensing.attributes.Occupancy.ID, nil))
+            subscribe(subhub, ep, clusters.OccupancySensing.ID, clusters.OccupancySensing.attributes.Occupancy.ID)
         elseif device_type_id == 262 then
-            subhub:send(cluster_base.subscribe(subhub, ep, clusters.IlluminanceMeasurement.ID, clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID, nil))
+            subscribe(subhub, ep, clusters.IlluminanceMeasurement.ID, clusters.IlluminanceMeasurement.attributes.MeasuredValue.ID)
         end
     end
 end
@@ -754,7 +608,6 @@ local Hager_switch = {
                 [clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths.ID] = current_pos_handler(capabilities.windowShadeLevel.shadeLevel),
                 [clusters.WindowCovering.attributes.OperationalStatus.ID] = current_status_handler,
             },
-
         },
         event = {
             [clusters.Switch.ID] = {
