@@ -109,11 +109,11 @@ end
 
 local function is_pin_length_valid(device, pin)
   local pinStr = tostring(pin)
-  if pinStr:sub(1,1) == "+" then -- device adds + to the rfid codes, so ignore length check for those
-    return true
-  end
   if pin == nil or pin == "" then
     return false
+  end
+  if pinStr:sub(1,1) == "+" then -- device adds + to the rfid codes, so ignore length check for those
+    return true
   end
   local min_len = device.preferences.minCodeLength
   local max_len = device.preferences.maxCodeLength
@@ -128,7 +128,7 @@ local function is_pin_length_valid(device, pin)
   return true
 end
 
-local function parse_user_map(device, value)
+local function parse_user_map_from_pin(device, value)
   local map = {}
   if value == nil or value == "" then
     return map
@@ -136,7 +136,23 @@ local function parse_user_map(device, value)
 
   for pair in string.gmatch(value, "[^,]+") do
     local code, name = pair:match("^%s*([^:]+)%s*:%s*(.+)%s*$")
-    if code ~= nil and name ~= nil and code ~= "" and name ~= "" and is_pin_length_valid(device, code) then
+    if name ~= nil and name ~= "" and is_pin_length_valid(device, code) and tonumber(code) ~= nil then
+      map[code] = name
+    end
+  end
+
+  return map
+end
+
+local function parse_user_map_from_rfid(device, value)
+  local map = {}
+  if value == nil or value == "" then
+    return map
+  end
+
+  for pair in string.gmatch(value, "[^,]+") do
+    local code, name = pair:match("^%s*([^:]+)%s*:%s*(.+)%s*$")
+    if name ~= nil and name ~= "" and is_pin_length_valid(device, code) then
       map[code] = name
     end
   end
@@ -174,8 +190,8 @@ local function start_exit_delay(device, target_status)
 end
 
 local function build_lock_code_state_from_prefs(device)
-  local pin_updates = parse_user_map(device, device.preferences.pinMap)
-  local rfid_updates = parse_user_map(device, device.preferences.rfidMap)
+  local pin_updates = parse_user_map_from_pin(device, device.preferences.pinMap)
+  local rfid_updates = parse_user_map_from_rfid(device, device.preferences.rfidMap)
 
   local lock_codes = {}
   local lock_code_pins = {}
@@ -211,8 +227,8 @@ end
 
 local function build_user_map_from_prefs(device)
   return {
-    pins = parse_user_map(device, device.preferences.pinMap),
-    rfids = parse_user_map(device, device.preferences.rfidMap),
+    pins = parse_user_map_from_pin(device, device.preferences.pinMap),
+    rfids = parse_user_map_from_rfid(device, device.preferences.rfidMap),
   }
 end
 
@@ -220,7 +236,14 @@ local function build_lock_codes_payload(device, lock_codes, lock_pins)
   local payload = {}
   local show_pins = device.preferences.showPinSnapshot ~= false
 
-  for slot, name in pairs(lock_codes or {}) do
+  local slots = {}
+  for slot, _ in pairs(lock_codes or {}) do
+    slots[#slots + 1] = slot
+  end
+  table.sort(slots, function(a, b) return tonumber(a) < tonumber(b) end)
+
+  for _, slot in ipairs(slots) do
+    local name = lock_codes[slot]
     local pin = lock_pins and lock_pins[slot] or nil
     if show_pins and pin ~= nil and pin ~= "" then
       payload[slot] = string.format("%s: %s", name, pin)
@@ -233,11 +256,33 @@ local function build_lock_codes_payload(device, lock_codes, lock_pins)
 end
 
 local function encode_payload(payload)
-  local ok, encoded = pcall(json.encode, utils.deep_copy(payload))
-  if ok and type(encoded) == "string" then
-    return encoded
+  if type(payload) ~= "table" then
+    local ok, encoded = pcall(json.encode, payload)
+    if ok and type(encoded) == "string" then
+      return encoded
+    end
+    return "{}"
   end
-  return "{}"
+
+  local keys = {}
+  for key, _ in pairs(payload) do
+    keys[#keys + 1] = key
+  end
+  if #keys == 0 then
+    return "[]"
+  end
+  table.sort(keys, function(a, b) return tonumber(a) < tonumber(b) end)
+
+  local parts = {}
+  for _, key in ipairs(keys) do
+    local ok_key, encoded_key = pcall(json.encode, key)
+    local ok_val, encoded_val = pcall(json.encode, payload[key])
+    if ok_key and ok_val then
+      parts[#parts + 1] = string.format("%s:%s", encoded_key, encoded_val)
+    end
+  end
+
+  return "{" .. table.concat(parts, ",") .. "}"
 end
 
 local function emit_lock_codes(device, lock_codes, lock_pins)
@@ -399,11 +444,7 @@ local function send_panel_status(device, status)
 end
 
 local function can_process_arm_command(command, status)
-  if command == status then
-    return false
-  else
-    return true
-  end
+  return command ~= status
 end
 
 local function handle_arm_command(driver, device, zb_rx)
@@ -683,12 +724,13 @@ end
 
 local function info_changed(driver, device, event, args)
   emit_lock_code_limits(device)
+  local should_update_user_map = false
   for name, value in pairs(device.preferences) do
     if (device.preferences[name] ~= nil and args.old_st_store.preferences[name] ~= device.preferences[name]) then
       if (name == "pinMap") then
-        update_user_map(device)
+        should_update_user_map = true
       elseif (name == "rfidMap") then
-        update_user_map(device)
+        should_update_user_map = true
       elseif (name == "autoArmDisarmMode") then
         local autoArmDisarmMode = tonumber(device.preferences.autoArmDisarmMode)
         if autoArmDisarmMode ~= nil then
@@ -719,6 +761,9 @@ local function info_changed(driver, device, event, args)
         refresh(driver, device)
       end
     end
+  end
+  if should_update_user_map then
+    update_user_map(device)
   end
 end
 
