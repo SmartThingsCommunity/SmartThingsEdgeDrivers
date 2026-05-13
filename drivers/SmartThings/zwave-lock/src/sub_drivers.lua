@@ -8,5 +8,6 @@ local sub_drivers = {
    lazy_load_if_possible("samsung-lock"),
    lazy_load_if_possible("keywe-lock"),
    lazy_load_if_possible("apiv6_bugfix"),
+   lazy_load_if_possible("legacy-handlers"),
 }
 return sub_drivers
