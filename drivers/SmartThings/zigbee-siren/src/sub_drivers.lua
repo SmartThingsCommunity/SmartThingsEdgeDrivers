@@ -6,4 +6,5 @@ local lazy_load_if_possible = require "lazy_load_subdriver"
 return {
     lazy_load_if_possible("frient"),
     lazy_load_if_possible("ozom"),
+    lazy_load_if_possible("MultiIR"),
 }
