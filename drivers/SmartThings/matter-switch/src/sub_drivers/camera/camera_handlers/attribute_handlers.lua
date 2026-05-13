@@ -466,7 +466,12 @@ function CameraAttributeHandlers.camera_av_stream_management_attribute_list_hand
     attribute_ids = attribute_ids,
   }
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist=true})
-  camera_cfg.match_profile(device, status_light_enabled_present, status_light_brightness_present)
+  camera_cfg.update_status_light_attribute_presence(device, status_light_enabled_present, status_light_brightness_present)
+  camera_cfg.reconcile_profile_and_capabilities(device)
+end
+
+function CameraAttributeHandlers.camera_feature_map_handler(driver, device, ib, response)
+  camera_cfg.reconcile_profile_and_capabilities(device)
 end
 
 return CameraAttributeHandlers
