@@ -1,6 +1,11 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+--- @type st.zwave.CommandClass
+local cc = require "st.zwave.CommandClass"
+--- @type st.zwave.CommandClass.Notification
+local Notification = (require "st.zwave.CommandClass.Notification")({ version = 4 })
+
 local excluded_devices = {
   FIBARO_DOOR_WINDOW = {
     mfrs = 0x010F
