@@ -413,7 +413,7 @@ local migrate = function(driver, device, command)
   table.sort(ordered_code_slots)
   for _, code_slot in ipairs(ordered_code_slots) do
     local code_name = cached_lock_codes[tostring(code_slot)]
-    -- cached_lock_codes is formatted as { ["1"] = "User 1", ["2"] = "User 2" }, etc
+    -- cached_lock_codes is formatted as { ["1"] = "Guest 1", ["2"] = "Guest 2" }, etc
     if code_slot then
       table.insert(users, { userIndex = code_slot, userType = "guest", userName = code_name })
       table.insert(credentials, { userIndex = code_slot, credentialIndex = code_slot, credentialType = post_migration_consts.CRED_TYPE_PIN, credentialName = code_name })

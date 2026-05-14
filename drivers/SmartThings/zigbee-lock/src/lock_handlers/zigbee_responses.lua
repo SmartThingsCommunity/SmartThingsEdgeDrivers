@@ -41,14 +41,14 @@ function ZigbeeHandlers.set_pin_code_response(driver, device, zb_rx)
     if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
       tables.add_entry(device, "users", {
         userIndex = credential_args_in_use.userIndex,
-        userName = "User " .. credential_args_in_use.userIndex, -- default
+        userName = "Guest " .. credential_args_in_use.userIndex, -- default
         userType = "guest", -- default
       })
       result_status = tables.add_entry(device, "credentials", {
         userIndex       = credential_args_in_use.userIndex,
         credentialIndex = credential_args_in_use.credentialIndex,
         credentialType  = credential_args_in_use.credentialType,
-        credentialName  = credential_args_in_use.credentialName, -- optional
+        credentialName  = "Guest " .. credential_args_in_use.userIndex, -- default
       })
     elseif command_in_progress == consts.LOCK_CREDENTIALS.UPDATE then
       result_status = consts.COMMAND_RESULT.SUCCESS
@@ -160,14 +160,14 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
       -- If an entry already exists at this index, this will be a no-op.
       tables.add_entry(device, "users", {
         userIndex = user_id,
-        userName = "User " .. user_id,
+        userName = "Guest " .. user_id,
         userType = "guest",
       })
       tables.add_entry(device, "credentials", {
         userIndex = user_id,
         credentialIndex = user_id,
         credentialType = consts.CRED_TYPE_PIN,
-        credentialName = "User " .. user_id,
+        credentialName = "Guest " .. user_id,
       })
     end
     if user_id >= tables.get_max_entries(device, "credentials") then
@@ -219,7 +219,7 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
       if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
         tables.add_entry(device, "users", {
           userIndex = credential_args_in_use.userIndex,
-          userName = "User " .. credential_args_in_use.userIndex, -- default
+          userName = "Guest " .. credential_args_in_use.userIndex, -- default
           userType = "guest", -- default
         })
         result_status = tables.add_entry(device, "credentials", {
@@ -269,14 +269,14 @@ function ZigbeeHandlers.programming_event_notification(driver, device, zb_rx)
       if next_index and next_index <= tables.get_max_entries(device, "users") then
         tables.add_entry(device, "users", {
           userIndex = next_index,
-          userName = "User " .. next_index,
+          userName = "Guest " .. next_index,
           userType = "guest",
         })
         tables.add_entry(device, "credentials", {
           userIndex = next_index,
           credentialIndex = user_id,
           credentialType = consts.CRED_TYPE_PIN,
-          credentialName = "User " .. next_index,
+          credentialName = "Guest " .. next_index,
         })
       end
     end
@@ -344,7 +344,7 @@ function ZigbeeHandlers.operating_event_notification(driver, device, zb_rx)
       lock_event.data.userType = associated_user.userType
     else
       lock_event.data.userIndex = user_id
-      lock_event.data.userName = "User " .. user_id -- default
+      lock_event.data.userName = "Guest " .. user_id -- default
     end
   end
 

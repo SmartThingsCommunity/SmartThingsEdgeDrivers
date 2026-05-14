@@ -122,7 +122,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "User 1", userType = "guest" } },
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -130,7 +130,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "User 1" } },
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -170,14 +170,14 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockUsers.users(
-          { { userIndex = 20, userName = "User 20", userType = "guest" } },
+          { { userIndex = 20, userName = "Guest 20", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main",
         capabilities.lockCredentials.credentials(
-          { { userIndex = 20, credentialIndex = 20, credentialType = "pin", credentialName = "User 20" } },
+          { { userIndex = 20, credentialIndex = 20, credentialType = "pin", credentialName = "Guest 20" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -208,14 +208,14 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device_yale:generate_test_message("main",
         capabilities.lockUsers.users(
-          { { userIndex = 1, userName = "User 1", userType = "guest" } },
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
           { visibility = { displayed = false } }
         ))
     )
     test.socket.capability:__expect_send(
       mock_device_yale:generate_test_message("main",
         capabilities.lockCredentials.credentials(
-          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "User 1" } },
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
           { visibility = { displayed = false } }
         ))
     )
@@ -299,7 +299,7 @@ test.register_coroutine_test(
           data = {
             method = "keypad",
             userIndex = 99,
-            userName = "User 99",
+            userName = "Guest 99",
           },
         })
       )

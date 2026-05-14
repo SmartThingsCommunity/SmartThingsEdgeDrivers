@@ -625,7 +625,7 @@ test.register_coroutine_test(
           {
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
             { userIndex = 3, credentialIndex = 3, credentialType = "pin" },
-            { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
+            { userIndex = 2, credentialIndex = 2, credentialType = "pin", credentialName = "Guest 2" },
           },
           { visibility = { displayed = false } }
         ))

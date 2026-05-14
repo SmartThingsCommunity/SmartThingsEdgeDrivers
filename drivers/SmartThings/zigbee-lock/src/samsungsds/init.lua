@@ -131,7 +131,7 @@ local operating_event_notification = function(driver, device, zb_rx)
       lock_event.data.userType = associated_user.userType
     else
       lock_event.data.userIndex = user_id .. ""
-      lock_event.data.userName = "User " .. user_id -- default
+      lock_event.data.userName = "Guest " .. user_id -- default
     end
   end
 

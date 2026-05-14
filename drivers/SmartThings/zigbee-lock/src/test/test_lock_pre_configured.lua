@@ -284,7 +284,7 @@ test.register_coroutine_test(
           {
             { userIndex = 1, userName = "Alice", userType = "guest" },
             { userIndex = 2, userName = "Bob",   userType = "guest" },
-            { userIndex = 3, userName = "User 3", userType = "guest" }, -- default name since lock doesn't provide one
+            { userIndex = 3, userName = "Guest 3", userType = "guest" }, -- default name since lock doesn't provide one
           },
           { visibility = { displayed = false } }
         ))
@@ -295,7 +295,7 @@ test.register_coroutine_test(
           {
             { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
             { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
-            { userIndex = 3, credentialIndex = 3, credentialType = "pin" },
+            { userIndex = 3, credentialIndex = 3, credentialType = "pin", credentialName = "Guest 3" },
           },
           { visibility = { displayed = false } }
         ))

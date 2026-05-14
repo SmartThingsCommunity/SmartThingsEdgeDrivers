@@ -95,6 +95,7 @@ local zigbee_lock_driver = {
     init = LockLifecycle.init,
     doConfigure = LockLifecycle.do_configure,
     infoChanged = LockLifecycle.info_changed,
+    driverSwitched = LockLifecycle.driver_switched,
   },
   zigbee_handlers = {
     cluster = {
