@@ -84,18 +84,12 @@ function LockLifecycle.info_changed(driver, device, event, args)
   end
 end
 
-function LockLifecycle.driver_switched(driver, device)
-  -- if we handle a driver switched, we can automatically assume we'll be on the latest
-  device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
-end
-
 local zigbee_lock_driver = {
   lifecycle_handlers = {
     added = LockLifecycle.device_added,
     init = LockLifecycle.init,
     doConfigure = LockLifecycle.do_configure,
     infoChanged = LockLifecycle.info_changed,
-    driverSwitched = LockLifecycle.driver_switched,
   },
   zigbee_handlers = {
     cluster = {
