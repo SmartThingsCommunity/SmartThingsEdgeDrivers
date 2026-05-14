@@ -17,7 +17,7 @@ local mock_device = test.mock_device.build_test_zigbee_device(
       [1] = {
         id = 1,
         manufacturer = "Sombra Shades",
-        model = "WM25/L-Z",
+        model = "SOMBRA/Z-M",
         server_clusters = {0x000, 0x0003, 0x0004, 0x0005, 0x0102}
       }
     }
