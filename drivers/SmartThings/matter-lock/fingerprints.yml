@@ -158,7 +158,7 @@ matterManufacturer:
     deviceProfileName: lock-user-pin-schedule-battery
   #Dreame
   - id: "5420/38144"
-    deviceLabel: New Product
+    deviceLabel: Dreame NAVO Smart Lock A10
     vendorId: 0x152C
     productId: 0x9500
     deviceProfileName: lock
