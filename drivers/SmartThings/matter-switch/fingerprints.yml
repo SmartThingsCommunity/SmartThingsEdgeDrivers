@@ -813,6 +813,21 @@ matterManufacturer:
     vendorId: 0x1387
     productId: 0x1741
     deviceProfileName: light-color-level
+  - id: "4999/5808"
+    deviceLabel: Govee Floor Lamp 3
+    vendorId: 0x1387
+    productId: 0x16B0
+    deviceProfileName: light-color-level
+  - id: "4999/5824"
+    deviceLabel: Govee Floor Lamp 3 Lite
+    vendorId: 0x1387
+    productId: 0x16C0
+    deviceProfileName: light-color-level
+  - id: "4999/4720"
+    deviceLabel: Govee Ceiling Light Ultra(21inch)
+    vendorId: 0x1387
+    productId: 0x1270
+    deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
     deviceLabel: Hager matter 2 buttons (battery)
