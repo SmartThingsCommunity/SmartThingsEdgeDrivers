@@ -824,7 +824,7 @@ matterManufacturer:
     productId: 0x16C0
     deviceProfileName: light-color-level
   - id: "4999/4720"
-    deviceLabel: Govee Ceiling Light Ultra(21inch)
+    deviceLabel: Govee Ceiling Light Ultra (21inch)
     vendorId: 0x1387
     productId: 0x1270
     deviceProfileName: light-color-level
