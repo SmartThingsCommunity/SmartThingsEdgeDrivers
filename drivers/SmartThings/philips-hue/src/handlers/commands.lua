@@ -146,6 +146,7 @@ end
 ---@param device HueChildDevice
 ---@param args table
 local function do_color_temp_action(driver, device, args)
+  local capabilities = require "st.capabilities"
   local kelvin = args.args.temperature
   local light_id, hue_api = get_light_device_id_and_hue_api_module(driver, device)
   if not (light_id and hue_api) then return end
@@ -153,6 +154,15 @@ local function do_color_temp_action(driver, device, args)
   local min = device:get_field(Fields.MIN_KELVIN) or Consts.MIN_TEMP_KELVIN_WHITE_AMBIANCE
   local clamped_kelvin = st_utils.clamp_value(kelvin, min, Consts.MAX_TEMP_KELVIN)
   local mirek = math.floor(utils.kelvin_to_mirek(clamped_kelvin))
+
+  local current_color_temp = device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME)
+  if current_color_temp then
+    local current_mirek = math.floor(utils.kelvin_to_mirek(current_color_temp))
+    if current_mirek == mirek then
+      log.debug(string.format("Color temp change from %dK to %dK results in same mirek value (%d), emitting event directly", current_color_temp, clamped_kelvin, mirek))
+      device:emit_event(capabilities.colorTemperature.colorTemperature(clamped_kelvin))
+    end
+  end
 
   local resp, err = hue_api:set_light_color_temp(light_id, mirek)
   log_command_response_errors(resp, err, "color temp action")
