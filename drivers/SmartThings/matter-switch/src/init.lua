@@ -374,6 +374,7 @@ local matter_driver_template = {
     switch_utils.lazy_load("sub_drivers.camera"),
     switch_utils.lazy_load_if_possible("sub_drivers.eve_energy"),
     switch_utils.lazy_load_if_possible("sub_drivers.ikea_scroll"),
+    switch_utils.lazy_load_if_possible("sub_drivers.third_reality_garage_door"),
     switch_utils.lazy_load_if_possible("sub_drivers.third_reality_mk1")
   },
   shared_device_thread_enabled = true,
