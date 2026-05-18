@@ -60,3 +60,4 @@ local sonoff_handler = {
 }
 
 return sonoff_handler
+
