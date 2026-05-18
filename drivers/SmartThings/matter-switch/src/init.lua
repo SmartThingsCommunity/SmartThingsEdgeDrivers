@@ -61,6 +61,7 @@ function SwitchLifecycleHandlers.driver_switched(driver, device)
   if device.network_type == device_lib.NETWORK_TYPE_MATTER and not switch_utils.detect_bridge(device) then
     device_cfg.match_profile(driver, device)
   end
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)

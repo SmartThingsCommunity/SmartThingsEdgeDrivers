@@ -184,7 +184,6 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
       if supportedButtonValues_event then
         device:emit_event_for_endpoint(ep, supportedButtonValues_event)
       end
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
     else
       device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end

@@ -185,7 +185,6 @@ local function configure_buttons()
     local component = "F" .. key
     if key == 1 then component = "main" end
     test.socket.capability:__expect_send(mock_device:generate_test_message(component, capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-    test.socket.capability:__expect_send(mock_device:generate_test_message(component, capabilities.button.button.pushed({state_change = false})))
   end
 end
 
