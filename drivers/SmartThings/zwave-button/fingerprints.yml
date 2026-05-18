@@ -79,3 +79,9 @@ zwaveManufacturer:
     productType: 0x0009
     productId: 0x0082
     deviceProfileName: multi-button-4-no-battery
+  - id: "786/2340/53249"
+    deviceLabel: Z-Wave Scene Control Switch
+    manufacturerId: 0x0312
+    productId: 0xD001
+    productType: 0x0924
+    deviceProfileName: multi-button-4
