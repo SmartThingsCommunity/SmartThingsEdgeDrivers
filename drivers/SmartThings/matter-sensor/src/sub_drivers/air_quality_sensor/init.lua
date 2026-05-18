@@ -53,6 +53,7 @@ function AirQualitySensorLifecycleHandlers.driver_switched(driver, device)
     local legacy_device_cfg = require "sub_drivers.air_quality_sensor.air_quality_sensor_utils.legacy_device_configuration"
     legacy_device_cfg.match_profile(device)
   end
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 function AirQualitySensorLifecycleHandlers.device_init(driver, device)
