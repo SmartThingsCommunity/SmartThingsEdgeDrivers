@@ -112,9 +112,15 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
             print('\nNEW PROFILE:\n%s is a profile! Comparing to other profiles...' % file)
 
             os.chdir(file_directory)
-            for current_profile in os.listdir("./"):
-                new_profile = file_basename
+            new_profile = file_basename
 
+            # Skip deleted files
+            if not os.path.exists(new_profile):
+                print("Skipping %s - file was deleted" % new_profile)
+                os.chdir(cwd)
+                continue
+
+            for current_profile in os.listdir("./"):
                 # compare to YAML files that are not the same file
                 # Compare only .yml files and only files that have not already been found to be a duplicate
                 if current_profile != new_profile and Path(current_profile).suffix == ".yml" and (current_profile, new_profile) not in duplicate_pairs:
