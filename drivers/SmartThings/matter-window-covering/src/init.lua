@@ -363,6 +363,8 @@ local matter_driver_template = {
     capabilities.windowShadeTiltLevel,
     capabilities.windowShade,
     capabilities.windowShadePreset,
+    capabilities.doorControl,
+    capabilities.level,
     capabilities.battery,
     capabilities.batteryLevel,
   },
