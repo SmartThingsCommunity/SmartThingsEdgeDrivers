@@ -276,3 +276,4 @@ test.register_coroutine_test(
 )
 
 test.run_registered_tests()
+
