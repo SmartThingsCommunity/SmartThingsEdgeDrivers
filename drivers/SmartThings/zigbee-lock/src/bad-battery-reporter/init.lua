@@ -11,8 +11,8 @@ local battery_report_handler = function(driver, device, value)
    device:emit_event(capabilities.battery.battery(value.value))
 end
 
-local bad_yale_driver = {
-  NAME = "YALE BAD Lock Driver",
+local bad_battery_reporter_driver = {
+  NAME = "Bad Battery Reporter Driver",
   zigbee_handlers = {
     attr = {
       [clusters.PowerConfiguration.ID] = {
@@ -20,7 +20,7 @@ local bad_yale_driver = {
       }
     }
   },
-  can_handle = require("yale.yale-bad-battery-reporter.can_handle"),
+  can_handle = require("bad-battery-reporter.can_handle")
 }
 
-return bad_yale_driver
+return bad_battery_reporter_driver
