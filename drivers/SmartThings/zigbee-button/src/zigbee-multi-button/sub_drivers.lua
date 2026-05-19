@@ -6,6 +6,7 @@ local sub_drivers = {
    lazy_load_if_possible("zigbee-multi-button.ikea"),
    lazy_load_if_possible("zigbee-multi-button.somfy"),
    lazy_load_if_possible("zigbee-multi-button.ecosmart"),
+   lazy_load_if_possible("zigbee-multi-button.sonoff"),
    lazy_load_if_possible("zigbee-multi-button.centralite"),
    lazy_load_if_possible("zigbee-multi-button.adurosmart"),
    lazy_load_if_possible("zigbee-multi-button.heiman"),
