@@ -406,7 +406,6 @@ local function update_device_profile()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
-  test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
 end
 
 local additional_subscribed_attributes_no_per_zone_sensitivity = {
@@ -3138,7 +3137,6 @@ test.register_coroutine_test(
     }
     mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
-    test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
   end,
   {
      min_api_version = 17
