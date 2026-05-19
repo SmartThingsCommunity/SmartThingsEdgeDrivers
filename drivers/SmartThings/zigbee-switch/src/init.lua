@@ -11,7 +11,7 @@ local SIMPLE_METERING_ID = 0x0702
 local ELECTRICAL_MEASUREMENT_ID = 0x0B04
 local version = require "version"
 
--- Change in a driver 1
+-- Change in a driver 2
 
 local lazy_handler
 if version.api >= 15 then
