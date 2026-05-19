@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 local capabilities    = require "st.capabilities"
 local ZigbeeDriver    = require "st.zigbee"
+local defaults        = require "st.zigbee.defaults"
 local cluster_base    = require "st.zigbee.cluster_base"
 local zcl_clusters    = require "st.zigbee.zcl.clusters"
 local data_types      = require "st.zigbee.data_types"
@@ -74,13 +75,7 @@ local AC_MODE_TO_ST   = {
   [0x5] = ST_MODE.FANONLY,
 }
 
--- Color temperature range (mireds) for the LED light
-local MIRED_MIN       = 153
-local MIRED_MAX       = 370
-
 local function clamp(v, lo, hi) return math.max(lo, math.min(hi, v)) end
-local function kelvin_to_mired(k) return math.floor(1000000 / k) end
-local function mired_to_kelvin(m) return math.floor(1000000 / m) end
 
 -- Encode and send the 64-bit AC control code as an Aqara manufacturer attribute.
 -- A nibble of 0xF means "no change"; the default 0xFFFFFFFFFFFFFFFF leaves
@@ -207,19 +202,19 @@ local function restore_mode_state(device, st_mode)
   local fields = MODE_FIELDS[st_mode]
   if not fields then return end
 
-  local defaults = MODE_DEFAULTS[st_mode] or {}
+  local mode_defaults = MODE_DEFAULTS[st_mode] or {}
   local swing, fan = nil, nil
 
   for _, field in ipairs(fields) do
     if field == FIELD.SWING then
-      local v = load_mode_state(device, st_mode, FIELD.SWING) or defaults.swing
+      local v = load_mode_state(device, st_mode, FIELD.SWING) or mode_defaults.swing
       if v ~= nil then
         swing = ST_FAN_TO_SWING[v]
         device:set_field("fan_mode", v)
         device:emit_event(capabilities.fanOscillationMode.fanOscillationMode(v))
       end
     elseif field == FIELD.FAN_MODE then
-      local v = load_mode_state(device, st_mode, FIELD.FAN_MODE) or defaults.fan_mode
+      local v = load_mode_state(device, st_mode, FIELD.FAN_MODE) or mode_defaults.fan_mode
       if v ~= nil then
         fan = MODE_TO_FAN[v]
         device:set_field("fan_mode_ac", fan)
@@ -235,30 +230,6 @@ end
 
 
 -- Capability handlers
-local function handle_switch_on(driver, device, cmd)
-  device:send(OnOff.server.commands.On(device))
-end
-
-local function handle_switch_off(driver, device, cmd)
-  device:send(OnOff.server.commands.Off(device))
-end
-
-local function handle_switch_level(driver, device, cmd)
-  local level = cmd.args.level
-  local zb = math.floor(clamp(level, 1, 100) / 100 * 0xFE)
-  device:send(Level.server.commands.MoveToLevelWithOnOff(
-    device, data_types.Uint8(zb), data_types.Uint16(0x0000)
-  ))
-end
-
-local function handle_color_temperature(driver, device, cmd)
-  local kelvin = clamp(cmd.args.temperature, 2700, 6500)
-  local mired  = clamp(kelvin_to_mired(kelvin), MIRED_MIN, MIRED_MAX)
-  device:send(ColorControl.server.commands.MoveToColorTemperature(
-    device, data_types.Uint16(mired), data_types.Uint16(0x0000)
-  ))
-end
-
 local function handle_thermostat_mode(driver, device, cmd)
   local st_mode = cmd.args.mode
   local ac = ST_TO_AC[st_mode]
@@ -322,6 +293,7 @@ local function handle_fan_mode(driver, device, cmd)
   local fan      = MODE_TO_FAN[fan_mode] or FAN_MID
   device:set_field("fan_mode_ac", fan)
   send_ac_code(device, { fan = fan })
+  device:emit_event(capabilities.fanMode.fanMode(fan_mode))
 end
 
 local function handle_refresh(driver, device)
@@ -331,22 +303,6 @@ local function handle_refresh(driver, device)
 end
 
 -- Zigbee attribute handlers
-local function on_off_attr_handler(driver, device, value, zb_rx)
-  device:emit_event(capabilities.switch.switch(value.value and "on" or "off"))
-end
-
-local function current_level_handler(driver, device, value, zb_rx)
-  local pct = clamp(math.floor(value.value / 0xFE * 100), 1, 100)
-  device:emit_event(capabilities.switchLevel.level(pct))
-end
-
-local function color_temp_handler(driver, device, value, zb_rx)
-  local mired = value.value
-  if mired == 0 then return end
-  local kelvin = clamp(mired_to_kelvin(mired), 2700, 6500)
-  device:emit_event(capabilities.colorTemperature.colorTemperature(kelvin))
-end
-
 -- Decode the AC code reported by the device, emit matching capability events,
 -- and persist the per-mode state so values are restored when the user returns
 -- to that mode.
@@ -460,9 +416,7 @@ local function device_init(driver, device)
   device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpointRange(
     { value = { minimum = 16, maximum = 45, step = 1 }, unit = "C" }
   ))
-  device:send(OnOff.attributes.OnOff:read(device))
-  device:send(Level.attributes.CurrentLevel:read(device))
-  device:send(ColorControl.attributes.ColorTemperatureMireds:read(device))
+  handle_refresh(driver, device)
 end
 
 local function device_added(driver, device)
@@ -535,29 +489,14 @@ local function info_changed(driver, device, event, args)
   end
 end
 
-local aqara_bathroom_heater_driver = ZigbeeDriver("aqara-bathroom-heater-t1", {
+local aqara_bathroom_heater_driver_template = {
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
-    capabilities.colorTemperature,
-    capabilities.thermostatMode,
-    capabilities.thermostatHeatingSetpoint,
-    capabilities.fanOscillationMode,
-    capabilities.fanMode,
-    capabilities.refresh,
+    capabilities.colorTemperature
   },
 
   capability_handlers = {
-    [capabilities.switch.ID] = {
-      [capabilities.switch.commands.on.NAME]  = handle_switch_on,
-      [capabilities.switch.commands.off.NAME] = handle_switch_off,
-    },
-    [capabilities.switchLevel.ID] = {
-      [capabilities.switchLevel.commands.setLevel.NAME] = handle_switch_level,
-    },
-    [capabilities.colorTemperature.ID] = {
-      [capabilities.colorTemperature.commands.setColorTemperature.NAME] = handle_color_temperature,
-    },
     [capabilities.thermostatMode.ID] = {
       [capabilities.thermostatMode.commands.setThermostatMode.NAME] = handle_thermostat_mode,
     },
@@ -577,15 +516,6 @@ local aqara_bathroom_heater_driver = ZigbeeDriver("aqara-bathroom-heater-t1", {
 
   zigbee_handlers = {
     attr = {
-      [OnOff.ID] = {
-        [OnOff.attributes.OnOff.ID] = on_off_attr_handler,
-      },
-      [Level.ID] = {
-        [Level.attributes.CurrentLevel.ID] = current_level_handler,
-      },
-      [ColorControl.ID] = {
-        [ColorControl.attributes.ColorTemperatureMireds.ID] = color_temp_handler,
-      },
       [aqara.CLUSTER_ID] = {
         [aqara.ATTR_AC_CODE] = ac_code_attr_handler,
       },
@@ -597,6 +527,13 @@ local aqara_bathroom_heater_driver = ZigbeeDriver("aqara-bathroom-heater-t1", {
     added       = device_added,
     infoChanged = info_changed,
   },
-})
+}
 
+defaults.register_for_default_handlers(
+  aqara_bathroom_heater_driver_template,
+  aqara_bathroom_heater_driver_template.supported_capabilities,
+  { native_capability_cmds_enabled = true, native_capability_attrs_enabled = true }
+)
+
+local aqara_bathroom_heater_driver = ZigbeeDriver("aqara-bathroom-heater-t1", aqara_bathroom_heater_driver_template)
 aqara_bathroom_heater_driver:run()

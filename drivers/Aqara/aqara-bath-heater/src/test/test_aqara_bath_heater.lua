@@ -105,140 +105,11 @@ end
 -- ============================================================================
 -- 1. CAPABILITY COMMAND HANDLERS
 -- ============================================================================
-
--- switch.on / switch.off ------------------------------------------------------
-
-test.register_coroutine_test(
-  "Capability switch.on should send OnOff.On zigbee command",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      { capability = "switch", component = "main", command = "on", args = {} } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      OnOff.server.commands.On(mock_device) })
-  end
-)
-
-test.register_coroutine_test(
-  "Capability switch.off should send OnOff.Off zigbee command",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      { capability = "switch", component = "main", command = "off", args = {} } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      OnOff.server.commands.Off(mock_device) })
-  end
-)
-
--- switchLevel.setLevel --------------------------------------------------------
-
-test.register_coroutine_test(
-  "Capability switchLevel 50 should scale to zigbee level 0x7F",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      {
-        capability = "switchLevel",
-        component = "main",
-        command = "setLevel",
-        args = { 50 }
-      } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      Level.server.commands.MoveToLevelWithOnOff(mock_device,
-        data_types.Uint8(math.floor(50 / 100 * 0xFE)),
-        data_types.Uint16(0x0000)) })
-  end
-)
-
-test.register_coroutine_test(
-  "Capability switchLevel 100 should scale to zigbee level 0xFE",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      {
-        capability = "switchLevel",
-        component = "main",
-        command = "setLevel",
-        args = { 100 }
-      } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      Level.server.commands.MoveToLevelWithOnOff(mock_device,
-        data_types.Uint8(0xFE), data_types.Uint16(0x0000)) })
-  end
-)
-
-test.register_coroutine_test(
-  "Capability switchLevel 0 should be clamped to 1",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      {
-        capability = "switchLevel",
-        component = "main",
-        command = "setLevel",
-        args = { 0 }
-      } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      Level.server.commands.MoveToLevelWithOnOff(mock_device,
-        data_types.Uint8(math.floor(1 / 100 * 0xFE)),
-        data_types.Uint16(0x0000)) })
-  end
-)
-
--- NOTE: setLevel(150) would exercise the driver's clamp(..., 1, 100) but the
--- capability framework validates `level` against its 0..100 schema BEFORE the
--- handler runs, so the clamp is unreachable via the capability command path.
-
--- colorTemperature.setColorTemperature ----------------------------------------
-
-test.register_coroutine_test(
-  "Capability colorTemperature 4000K should send mired=250",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      {
-        capability = "colorTemperature",
-        component = "main",
-        command = "setColorTemperature",
-        args = { 4000 }
-      } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      ColorControl.server.commands.MoveToColorTemperature(mock_device,
-        data_types.Uint16(250), data_types.Uint16(0x0000)) })
-  end
-)
-
-test.register_coroutine_test(
-  "Capability colorTemperature 2700K should send mired=370 (boundary)",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      {
-        capability = "colorTemperature",
-        component = "main",
-        command = "setColorTemperature",
-        args = { 2700 }
-      } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      ColorControl.server.commands.MoveToColorTemperature(mock_device,
-        data_types.Uint16(370), data_types.Uint16(0x0000)) })
-  end
-)
-
-test.register_coroutine_test(
-  "Capability colorTemperature 6500K should send mired=153 (boundary)",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id,
-      {
-        capability = "colorTemperature",
-        component = "main",
-        command = "setColorTemperature",
-        args = { 6500 }
-      } })
-    test.socket.zigbee:__expect_send({ mock_device.id,
-      ColorControl.server.commands.MoveToColorTemperature(mock_device,
-        data_types.Uint16(153), data_types.Uint16(0x0000)) })
-  end
-)
-
--- NOTE: setColorTemperature(2000) and (8000) would test the clamp, but the
--- profile restricts the colorTemperature range to [2700, 6500], so those
--- values are rejected by framework validation. The incoming Zigbee clamp path
--- (color_temp_handler with mired that yields kelvin > 6500 or < 2700) IS
--- exercised by "ColorTemperatureMireds 100 should clamp kelvin to 6500" below.
+--
+-- switch / switchLevel / colorTemperature are handled by the SmartThings
+-- default zigbee handlers (registered via defaults.register_for_default_handlers),
+-- so their behavior is covered by the framework's own tests and is not
+-- re-tested here.
 
 -- thermostatMode.setThermostatMode --------------------------------------------
 
@@ -486,6 +357,8 @@ test.register_coroutine_test(
         args = { "low" }
       } })
     expect_ac_code_send(0xFFFFFFFF, (0xFFFFFFFF & 0xFF0FFFFF) | (0x0 << 20))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.fanMode.fanMode("low")))
   end
 )
 
@@ -500,6 +373,8 @@ test.register_coroutine_test(
         args = { "medium" }
       } })
     expect_ac_code_send(0xFFFFFFFF, (0xFFFFFFFF & 0xFF0FFFFF) | (0x1 << 20))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.fanMode.fanMode("medium")))
   end
 )
 
@@ -514,6 +389,8 @@ test.register_coroutine_test(
         args = { "high" }
       } })
     expect_ac_code_send(0xFFFFFFFF, (0xFFFFFFFF & 0xFF0FFFFF) | (0x2 << 20))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.fanMode.fanMode("high")))
   end
 )
 
@@ -541,100 +418,10 @@ test.register_coroutine_test(
 -- ============================================================================
 -- 2. ZIGBEE ATTRIBUTE HANDLERS
 -- ============================================================================
-
--- OnOff -----------------------------------------------------------------------
-
-test.register_coroutine_test(
-  "OnOff attribute true should emit switch.on",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      OnOff.attributes.OnOff:build_test_attr_report(mock_device, true) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.switch.switch.on()))
-  end
-)
-
-test.register_coroutine_test(
-  "OnOff attribute false should emit switch.off",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      OnOff.attributes.OnOff:build_test_attr_report(mock_device, false) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.switch.switch.off()))
-  end
-)
-
--- Level.CurrentLevel ----------------------------------------------------------
-
-test.register_coroutine_test(
-  "CurrentLevel 0xFE should emit level 100",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      Level.attributes.CurrentLevel:build_test_attr_report(mock_device, 0xFE) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.switchLevel.level(100)))
-  end
-)
-
-test.register_coroutine_test(
-  "CurrentLevel 0x7F should emit level 50",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      Level.attributes.CurrentLevel:build_test_attr_report(mock_device, 0x7F) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.switchLevel.level(math.floor(0x7F / 0xFE * 100))))
-  end
-)
-
-test.register_coroutine_test(
-  "CurrentLevel 0x00 should emit level 1 (clamped)",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      Level.attributes.CurrentLevel:build_test_attr_report(mock_device, 0x00) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.switchLevel.level(1)))
-  end
-)
-
--- ColorControl.ColorTemperatureMireds -----------------------------------------
-
-test.register_coroutine_test(
-  "ColorTemperatureMireds 250 should emit colorTemperature 4000K",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 250) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.colorTemperature.colorTemperature(math.floor(1000000 / 250))))
-  end
-)
-
-test.register_coroutine_test(
-  "ColorTemperatureMireds 370 should emit colorTemperature ~2702K",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 370) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.colorTemperature.colorTemperature(math.floor(1000000 / 370))))
-  end
-)
-
-test.register_coroutine_test(
-  "ColorTemperatureMireds 100 should clamp kelvin to 6500",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 100) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.colorTemperature.colorTemperature(6500)))
-  end
-)
-
-test.register_coroutine_test(
-  "ColorTemperatureMireds 0 should be ignored (no event)",
-  function()
-    test.socket.zigbee:__queue_receive({ mock_device.id,
-      ColorControl.attributes.ColorTemperatureMireds:build_test_attr_report(mock_device, 0) })
-  end
-)
+--
+-- OnOff / CurrentLevel / ColorTemperatureMireds attribute reports are handled
+-- by the SmartThings default zigbee handlers and emit their corresponding
+-- capability events automatically, so they are not re-tested here.
 
 -- Aqara AC code (0xFCC0 / 0x024F) ---------------------------------------------
 
