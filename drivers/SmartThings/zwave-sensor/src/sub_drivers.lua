@@ -22,4 +22,8 @@ return {
     lazy_load_if_possible("timed-tamper-clear"),
     lazy_load_if_possible("wakeup-no-poll"),
     lazy_load_if_possible("firmware-version"),
+    lazy_load_if_possible("apiv6_bugfix"),
+    lazy_load_if_possible("aeotec-door-window-sensor-8"),
+    lazy_load_if_possible("aeotec-aerq-8"),
+    lazy_load_if_possible("aeotec-water-sensor-8")
 }
