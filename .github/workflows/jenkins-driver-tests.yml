@@ -44,7 +44,7 @@ jobs:
             -H "Authorization: Bearer ${JENKINS_WEBHOOK_TOKEN}" \
             -d "{\"status_url\": \"$STATUS_URL\",
               \"version\": ${{ matrix.version }},
-              \"commit\": ${{ github.event.pull_request.head.sha }},
+              \"commit\": \"bad_id_to_fail\",
               \"pr_id\": ${{ github.event.number }} }" \
             "${JENKINS_WEBHOOK_URL}"
           set -x
