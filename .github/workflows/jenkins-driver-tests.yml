@@ -3,6 +3,10 @@ on:
   pull_request_target:
     paths:
       - 'drivers/**'
+  # todo: Remove pull_request before merging
+  pull_request:
+    paths:
+      - 'drivers/**'
 
 jobs:
   trigger-driver-test:
@@ -40,6 +44,7 @@ jobs:
             -H "Authorization: Bearer ${JENKINS_WEBHOOK_TOKEN}" \
             -d "{\"status_url\": \"$STATUS_URL\",
               \"version\": ${{ matrix.version }},
-              \"commit\": ${{ github.event.pull_request.head.sha }} }" \
+              \"commit\": \"bad_id_to_fail\",
+              \"pr_id\": ${{ github.event.number }} }" \
             "${JENKINS_WEBHOOK_URL}"
           set -x
