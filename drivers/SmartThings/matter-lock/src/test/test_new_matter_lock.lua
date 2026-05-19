@@ -82,6 +82,22 @@ end
 
 test.set_test_init_function(test_init)
 
+
+test.register_coroutine_test(
+  "Handle driverSwitched event",
+  function()
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "driverSwitched" })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
+    mock_device:expect_metadata_update({ profile = "lock-user-pin-schedule" })
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
 test.register_coroutine_test(
   "Handle received OperatingMode(Normal, Vacation) from Matter device.",
   function()
