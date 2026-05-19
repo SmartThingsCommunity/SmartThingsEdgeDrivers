@@ -674,7 +674,7 @@ matterManufacturer:
     productId: 0x61B9
     deviceProfileName: light-color-level
   - id: "4999/24742"
-    deviceLabel: Govee Ceiling Light Pro (15 inch)
+    deviceLabel: Govee Ceiling Light Pro
     vendorId: 0x1387
     productId: 0x60A6
     deviceProfileName: light-color-level
