@@ -172,6 +172,8 @@ SwitchFields.battery_support = {
   BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE",
 }
 
+SwitchFields.MODE_SELECT_SUPPORTED_MODES = "__mode_select_supported_modes"
+
 SwitchFields.ENERGY_METER_OFFSET = "__energy_meter_offset"
 SwitchFields.CUMULATIVE_REPORTS_SUPPORTED = "__cumulative_reports_supported"
 SwitchFields.LAST_IMPORTED_REPORT_TIMESTAMP = "__last_imported_report_timestamp"

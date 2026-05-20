@@ -249,4 +249,23 @@ function CapabilityHandlers.handle_operational_state_pause(driver, device, cmd)
   device:send(clusters.OperationalState.attributes.OperationalError:read(device, endpoint_id))
 end
 
+
+-- [[ MODE SELECT CAPABILITY COMMANDS ]] --
+
+function CapabilityHandlers.handle_set_mode(driver, device, cmd)
+  local ModeSelect = require "embedded_clusters.ModeSelect"
+  device.log.info(string.format("handle_set_mode mode: %s", cmd.args.mode))
+  
+  local mode_select_eps = device:get_endpoints(ModeSelect.ID)
+  local endpoint_id = mode_select_eps[1] or device:component_to_endpoint(cmd.component)
+  
+  local supportedModesWithIdx = device:get_field(fields.MODE_SELECT_SUPPORTED_MODES) or {}
+  for _, mode in ipairs(supportedModesWithIdx) do
+    if cmd.args.mode == mode[2] then
+      device:send(ModeSelect.commands.ChangeToMode(device, endpoint_id, mode[1]))
+      return
+    end
+  end
+end
+
 return CapabilityHandlers
