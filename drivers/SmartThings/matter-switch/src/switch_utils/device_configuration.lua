@@ -146,12 +146,12 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
   component_map["main"] = default_endpoint_id
   for component_num, ep in ipairs(button_eps) do
     if ep ~= default_endpoint_id then
-      local button_component = "button"
-      if #button_eps > 1 then
-        button_component = button_component .. component_num
+        local button_component = "button"
+        if #button_eps > 1 then
+          button_component = button_component .. component_num
+        end
+        component_map[button_component] = ep
       end
-      component_map[button_component] = ep
-    end
   end
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
@@ -258,7 +258,7 @@ function DeviceConfiguration.match_profile(driver, device)
 
   local server_onoff_ep_ids = device:get_endpoints(clusters.OnOff.ID) -- get_endpoints defaults to return EPs supporting SERVER or BOTH
   if #server_onoff_ep_ids > 0 then
-    ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
+      ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
   end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
