@@ -124,7 +124,7 @@ function CapabilityHandlers.handle_set_color_temperature(driver, device, cmd)
     temp_in_mired = switch_utils.get_field_for_endpoint(field_device, fields.COLOR_TEMP_BOUND_RECEIVED_MIRED..fields.COLOR_TEMP_MIN, endpoint_id)
   end
   local req = clusters.ColorControl.server.commands.MoveToColorTemperature(device, endpoint_id, temp_in_mired, fields.ZERO_TRANSITION_TIME, fields.OPTIONS_MASK, fields.HANDLE_COMMAND_IF_OFF)
-  device:set_field(fields.MOST_RECENT_TEMP, cmd.args.temperature, {persist = true})
+  device:set_field(fields.LATEST_REQUESTED_KELVIN, cmd.args.temperature)
   device:send(req)
 end
 
