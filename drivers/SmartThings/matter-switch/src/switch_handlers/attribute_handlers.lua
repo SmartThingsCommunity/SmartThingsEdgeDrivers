@@ -128,12 +128,12 @@ function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, 
   if device:get_field(fields.IS_PARENT_CHILD_DEVICE) == true then
     temp_device = switch_utils.find_child(device, ib.endpoint_id) or device
   end
-  local most_recent_temp = temp_device:get_field(fields.MOST_RECENT_TEMP)
+  local latest_requested_kelvin = temp_device:get_field(fields.LATEST_REQUESTED_KELVIN)
   -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
-  if most_recent_temp ~= nil and
-    most_recent_temp <= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
-    most_recent_temp >= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
-      temp = most_recent_temp
+  if latest_requested_kelvin and
+    latest_requested_kelvin <= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
+    latest_requested_kelvin >= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
+      temp = latest_requested_kelvin
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
 end

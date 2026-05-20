@@ -5,7 +5,7 @@ local clusters = require "st.matter.clusters"
 
 local SwitchFields = {}
 
-SwitchFields.MOST_RECENT_TEMP = "mostRecentTemp"
+SwitchFields.LATEST_REQUESTED_KELVIN = "mostRecentTemp"
 SwitchFields.RECEIVED_X = "receivedX"
 SwitchFields.RECEIVED_Y = "receivedY"
 SwitchFields.HUESAT_SUPPORT = "huesatSupport"
@@ -100,6 +100,7 @@ SwitchFields.updated_fields = {
   { current_field_name = "__energy_management_endpoint", updated_field_name = nil },
   { current_field_name = "__total_imported_energy", updated_field_name = nil },
   { current_field_name = "__last_imported_report_timestamp", updated_field_name = nil },
+  { current_field_name = "mostRecentTemp", updated_field_name = nil },
 }
 
 SwitchFields.vendor_overrides = {
