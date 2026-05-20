@@ -43,6 +43,7 @@ function CameraLifecycleHandlers.driver_switched(driver, device)
   if #device:get_endpoints(clusters.CameraAvStreamManagement.ID) == 0 then
     camera_cfg.match_profile(device)
   end
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 function CameraLifecycleHandlers.info_changed(driver, device, event, args)

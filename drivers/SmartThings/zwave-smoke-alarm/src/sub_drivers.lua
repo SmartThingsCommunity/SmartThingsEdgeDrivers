@@ -6,6 +6,5 @@ local sub_drivers = {
    lazy_load_if_possible("zwave-smoke-co-alarm-v1"),
    lazy_load_if_possible("zwave-smoke-co-alarm-v2"),
    lazy_load_if_possible("fibaro-smoke-sensor"),
-   lazy_load_if_possible("apiv6_bugfix"),
 }
 return sub_drivers

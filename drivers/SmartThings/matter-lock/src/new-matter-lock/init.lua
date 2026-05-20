@@ -400,6 +400,7 @@ end
 
 local function driver_switched(driver, device)
   match_profile(driver, device, false)
+  device:try_update_metadata({provisioning_state = "PROVISIONED"})
 end
 
 -- Matter Handler

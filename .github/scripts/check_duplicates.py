@@ -5,6 +5,7 @@ from pathlib import Path
 
 cwd = os.getcwd()
 duplicate_pairs = []
+deleted_profiles = []
 
 def compare_component_capabilities_unordered(comp1, comp2):
     for cap1 in comp1["capabilities"]:
@@ -112,9 +113,16 @@ with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
             print('\nNEW PROFILE:\n%s is a profile! Comparing to other profiles...' % file)
 
             os.chdir(file_directory)
-            for current_profile in os.listdir("./"):
-                new_profile = file_basename
+            new_profile = file_basename
 
+            # Skip deleted files and track them for warning
+            if not os.path.exists(new_profile):
+                print("Skipping %s - file was deleted" % new_profile)
+                deleted_profiles.append(file)
+                os.chdir(cwd)
+                continue
+
+            for current_profile in os.listdir("./"):
                 # compare to YAML files that are not the same file
                 # Compare only .yml files and only files that have not already been found to be a duplicate
                 if current_profile != new_profile and Path(current_profile).suffix == ".yml" and (current_profile, new_profile) not in duplicate_pairs:
@@ -145,7 +153,12 @@ with open("profile-comment-body.md", "w") as f:
         for duplicate in duplicate_pairs:
             f.write("%s == %s\n" % (duplicate[0], duplicate [1]))
     else:
-        f.write("Duplicate profile check: Passed - no duplicate profiles detected.")
+        f.write("Duplicate profile check: Passed - no duplicate profiles detected.\n")
+
+    if deleted_profiles:
+        f.write("\n:warning: **Deleted profile files detected:**\n")
+        for deleted in deleted_profiles:
+            f.write("- `%s`\n" % deleted)
 
 with open("profile-comment-body.md", "r") as f:
     print("\n" + f.read())
