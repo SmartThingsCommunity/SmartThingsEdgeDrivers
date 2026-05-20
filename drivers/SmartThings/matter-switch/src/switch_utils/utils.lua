@@ -402,12 +402,13 @@ function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_
 
   local previous_imported_report = utils.get_latest_state_for_endpoint(device, endpoint_id, capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
+  local delta_energy = total_imported_energy_wh - previous_imported_report.energy
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
   local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
   device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
     start = epoch_to_iso8601(last_time),
     ["end"] = epoch_to_iso8601(current_time - 1),
-    deltaEnergy = total_imported_energy_wh - previous_imported_report.energy,
+    deltaEnergy = delta_energy >= 0.0 and delta_energy or total_imported_energy_wh, -- clarifying assumption: a negative delta means the meter was reset
     energy = total_imported_energy_wh
   }))
 end
