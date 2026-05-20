@@ -487,7 +487,11 @@ local aqara_bathroom_heater_driver_template = {
   supported_capabilities = {
     capabilities.switch,
     capabilities.switchLevel,
-    capabilities.colorTemperature
+    capabilities.colorTemperature,
+    capabilities.thermostatMode,
+    capabilities.thermostatHeatingSetpoint,
+    capabilities.fanOscillationMode,
+    capabilities.fanMode
   },
 
   capability_handlers = {
