@@ -128,7 +128,12 @@ test.register_coroutine_test(
         )
       end
     end
-  end
+  end,
+  {
+    test_init = function()
+      test.mock_device.add_test_device(mock_parent)
+    end
+  }
 )
 
 test.register_coroutine_test(
