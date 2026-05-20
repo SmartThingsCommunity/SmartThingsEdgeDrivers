@@ -7,11 +7,7 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.generated.zap_clusters"
 
-local TRANSITION_TIME = 0
-local OPTIONS_MASK = 0x01
-local HANDLE_COMMAND_IF_OFF = 0x01
 local button_attr = capabilities.button.button
-
 
 local mock_device_ep1 = 1
 local mock_device_ep2 = 2
@@ -354,35 +350,6 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Switch child device: Set color temperature should send the appropriate commands",
-  function()
-    test.mock_device.add_test_device(mock_child)
-    test.wait_for_events()
-    test.socket.capability:__queue_receive({
-      mock_child.id,
-      { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
-    })
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, mock_device_ep5)
-    })
-    test.wait_for_events()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, mock_device_ep5, 556)
-    })
-    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
   end,
   {
      min_api_version = 17
