@@ -264,8 +264,11 @@ test.register_coroutine_test(
 -- thermostatHeatingSetpoint.setHeatingSetpoint --------------------------------
 
 test.register_coroutine_test(
-  "Capability heatingSetpoint 28 in non-heat mode emits only event (no AC code)",
+  "Capability heatingSetpoint 28 in non-heat mode produces no observable output",
   function()
+    -- Outside heat mode the handler only stashes the value in a field; the
+    -- capability event will fire later via the AC-code attribute report from
+    -- the device, not from this command path.
     test.socket.capability:__queue_receive({ mock_device.id,
       {
         capability = "thermostatHeatingSetpoint",
@@ -273,8 +276,6 @@ test.register_coroutine_test(
         command = "setHeatingSetpoint",
         args = { 28 }
       } })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 28, unit = "C" })))
   end
 )
 
@@ -285,7 +286,7 @@ test.register_coroutine_test(
 -- mode_state") below.
 
 test.register_coroutine_test(
-  "Capability heatingSetpoint in heat mode should also send AC code with setpoint",
+  "Capability heatingSetpoint in heat mode should send AC code with setpoint",
   function()
     mock_device:set_field("thermostat_mode", "heat")
     test.socket.capability:__queue_receive({ mock_device.id,
@@ -299,8 +300,6 @@ test.register_coroutine_test(
     local hi32 = ((3000 & 0xFFFF) << 16) | (0xFFFFFFFF & 0xFFFF)
     local lo32 = 0xFFFFFFFF
     expect_ac_code_send(hi32, lo32)
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 30, unit = "C" })))
   end
 )
 
@@ -320,8 +319,6 @@ test.register_coroutine_test(
     local hi32 = 0xFFFFFFFF
     local lo32 = (0xFFFFFFFF & 0xFFFCFFFF) | (0x0 << 16)
     expect_ac_code_send(hi32, lo32)
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanOscillationMode.fanOscillationMode("swing")))
   end
 )
 
@@ -339,8 +336,6 @@ test.register_coroutine_test(
     local hi32 = 0xFFFFFFFF
     local lo32 = (0xFFFFFFFF & 0xFFFCFFFF) | (0x1 << 16)
     expect_ac_code_send(hi32, lo32)
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanOscillationMode.fanOscillationMode("fixed")))
   end
 )
 
@@ -357,8 +352,6 @@ test.register_coroutine_test(
         args = { "low" }
       } })
     expect_ac_code_send(0xFFFFFFFF, (0xFFFFFFFF & 0xFF0FFFFF) | (0x0 << 20))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanMode.fanMode("low")))
   end
 )
 
@@ -373,8 +366,6 @@ test.register_coroutine_test(
         args = { "medium" }
       } })
     expect_ac_code_send(0xFFFFFFFF, (0xFFFFFFFF & 0xFF0FFFFF) | (0x1 << 20))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanMode.fanMode("medium")))
   end
 )
 
@@ -389,8 +380,6 @@ test.register_coroutine_test(
         args = { "high" }
       } })
     expect_ac_code_send(0xFFFFFFFF, (0xFFFFFFFF & 0xFF0FFFFF) | (0x2 << 20))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanMode.fanMode("high")))
   end
 )
 
@@ -789,56 +778,7 @@ test.register_coroutine_test(
 -- ============================================================================
 
 test.register_coroutine_test(
-  "thermostatMode heat with existing heatingSetpoint 30 latest state uses 30",
-  function()
-    -- Seed the latest state via the real capability path: setHeatingSetpoint
-    -- emits the event, which updates the attribute's latest state. The current
-    -- thermostat_mode is still "off" (default), so no AC-code write happens here.
-    test.socket.capability:__queue_receive({ mock_device.id,
-    {
-        capability = "thermostatHeatingSetpoint",
-        component = "main",
-        command = "setHeatingSetpoint",
-        args = { 30 }
-      } })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 30, unit = "C" })))
-
-    -- Now switch to heat mode. get_latest_state() should return 30 and the
-    -- first AC code must carry setpoint=30.
-    test.socket.capability:__queue_receive({ mock_device.id,
-      {
-        capability = "thermostatMode",
-        component = "main",
-        command = "setThermostatMode",
-        args = { "heat" }
-      } })
-
-    local hi32 = ((3000 & 0xFFFF) << 16) | (0xFFFFFFFF & 0xFFFF)
-    local lo32 = (0xFFFFFFFF & 0x0FFFFFFF) | (0x1 << 28)
-    lo32 = (lo32 & 0xF0FFFFFF) | (0x0 << 24)
-    expect_ac_code_send(hi32, lo32)
-
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.thermostatMode.thermostatMode("heat")))
-
-    -- restore_mode_state restores swing/fan defaults; setpoint is shared
-    -- across modes and not part of mode_state.
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanOscillationMode.fanOscillationMode("swing")))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanMode.fanMode("medium")))
-
-    local r_hi = 0xFFFFFFFF
-    local r_lo = 0xFFFFFFFF
-    r_lo = (r_lo & 0xFF0FFFFF) | (0x1 << 20)
-    r_lo = (r_lo & 0xFFFCFFFF) | (0x0 << 16)
-    expect_ac_code_send(r_hi, r_lo)
-  end
-)
-
-test.register_coroutine_test(
-  "setHeatingSetpoint while mode is 'off' hits save_current_mode_field no-op",
+  "setHeatingSetpoint while mode is 'off' produces no observable output",
   function()
     mock_device:set_field("thermostat_mode", "off")
     test.socket.capability:__queue_receive({ mock_device.id,
@@ -848,13 +788,11 @@ test.register_coroutine_test(
         command = "setHeatingSetpoint",
         args = { 22 }
       } })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.thermostatHeatingSetpoint.heatingSetpoint({ value = 22, unit = "C" })))
   end
 )
 
 test.register_coroutine_test(
-  "setFanOscillationMode while mode is 'fanonly' hits MODE_FIELDS no-match path",
+  "setFanOscillationMode while mode is 'fanonly' still sends AC code",
   function()
     mock_device:set_field("thermostat_mode", "fanonly")
     test.socket.capability:__queue_receive({ mock_device.id,
@@ -865,8 +803,6 @@ test.register_coroutine_test(
         args = { "fixed" }
       } })
     expect_ac_code_send(0xFFFFFFFF, (0xFFFFFFFF & 0xFFFCFFFF) | (0x1 << 16))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-      capabilities.fanOscillationMode.fanOscillationMode("fixed")))
   end
 )
 

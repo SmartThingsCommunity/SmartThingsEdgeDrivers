@@ -273,10 +273,6 @@ local function handle_heating_setpoint(driver, device, cmd)
   if cur == ST_MODE.HEAT then
     send_ac_code(device, { setpoint = temp_c })
   end
-
-  device:emit_event(capabilities.thermostatHeatingSetpoint.heatingSetpoint(
-    { value = temp_c, unit = "C" }
-  ))
 end
 
 local function handle_fan_oscillation_mode(driver, device, cmd)
@@ -285,7 +281,6 @@ local function handle_fan_oscillation_mode(driver, device, cmd)
 
   device:set_field("fan_mode", st_fan)
   send_ac_code(device, { swing = swing })
-  device:emit_event(capabilities.fanOscillationMode.fanOscillationMode(st_fan))
 end
 
 local function handle_fan_mode(driver, device, cmd)
@@ -293,7 +288,6 @@ local function handle_fan_mode(driver, device, cmd)
   local fan      = MODE_TO_FAN[fan_mode] or FAN_MID
   device:set_field("fan_mode_ac", fan)
   send_ac_code(device, { fan = fan })
-  device:emit_event(capabilities.fanMode.fanMode(fan_mode))
 end
 
 local function handle_refresh(driver, device)
