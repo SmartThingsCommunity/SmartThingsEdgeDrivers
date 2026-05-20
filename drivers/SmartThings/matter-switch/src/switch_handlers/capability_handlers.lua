@@ -107,6 +107,9 @@ end
 -- [[ COLOR TEMPERATURE CAPABILITY COMMANDS ]] --
 
 function CapabilityHandlers.handle_set_color_temperature(driver, device, cmd)
+  if type(device.register_native_capability_cmd_handler) == "function" then
+    device:register_native_capability_cmd_handler(cmd.capability, cmd.command)
+  end
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local temp_in_kelvin = cmd.args.temperature
   -- note: the field containing the color temp bounds will be associated with a parent device

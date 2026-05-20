@@ -245,6 +245,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -445,6 +453,14 @@ test.register_message_test(
       }
     },
     {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
+      }
+    },
+    {
       channel = "matter",
       direction = "send",
       message = {
@@ -458,6 +474,14 @@ test.register_message_test(
       message = {
         mock_device.id,
         { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {2700} }
+      }
+    },
+    {
+      channel = "devices",
+      direction = "send",
+      message = {
+        "register_native_capability_cmd_handler",
+        { device_uuid = mock_device.id, capability_id = "colorTemperature", capability_cmd_id = "setColorTemperature" }
       }
     },
     {
