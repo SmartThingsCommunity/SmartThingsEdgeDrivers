@@ -16,7 +16,7 @@ end
 function IkeaScrollLifecycleHandlers.device_init(driver, device)
   device:set_endpoint_to_component_fn(switch_utils.endpoint_to_component)
   device:extend_device("subscribe", scroll_utils.subscribe)
-  device:subscribe()
+  -- device:subscribe()
 end
 
 function IkeaScrollLifecycleHandlers.do_configure(driver, device)
@@ -31,7 +31,7 @@ end
 function IkeaScrollLifecycleHandlers.info_changed(driver, device, event, args)
   if device.profile.id ~= args.old_st_store.profile.id then
     scroll_cfg.configure_buttons(device)
-    device:subscribe()
+    -- device:subscribe()
   end
 end
 

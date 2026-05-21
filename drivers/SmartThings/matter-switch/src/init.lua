@@ -53,7 +53,7 @@ function SwitchLifecycleHandlers.do_configure(driver, device)
     device_cfg.match_child_profile(driver, device)
     -- because get_parent_device() may cause race conditions if used in init, an initial child subscribe is handled in doConfigure.
     -- all future calls to subscribe will be handled by the parent device in init
-    device:subscribe()
+    -- device:subscribe()
   end
 end
 
@@ -67,12 +67,12 @@ end
 function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
   if not switch_utils.deep_equals(device.profile, args.old_st_store.profile, { ignore_functions = true }) then
     if device.network_type == device_lib.NETWORK_TYPE_MATTER then
-      device:subscribe()
+      -- device:subscribe()
       button_cfg.configure_buttons(device,
         device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
       )
     elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
-      device:get_parent_device():subscribe() -- parent device required to send subscription requests
+      -- device:get_parent_device():subscribe() -- parent device required to send subscription requests
     end
   end
 
@@ -108,7 +108,7 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     end
     switch_utils.handle_electrical_sensor_info(device)
     device:extend_device("subscribe", switch_utils.subscribe)
-    device:subscribe()
+    -- device:subscribe()
   end
 end
 
