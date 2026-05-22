@@ -36,7 +36,8 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1236, 0xa538}, -- Schlage Sense Pro
   {0x1236, 0x3800}, -- Schlage
   {0x1236, 0xA738}, -- Schlage
-  {0x152C, 0x9500} -- Dreame NAVO Smart Lock A10
+  {0x152C, 0x9500}, -- Dreame NAVO Smart Lock A10
+  {0x127F, 0x8006}, -- Nordic Smart Lock Reference Design
 }
 
 return NEW_MATTER_LOCK_PRODUCTS
