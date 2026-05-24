@@ -252,7 +252,7 @@ end
 function DeviceConfiguration.match_profile(driver, device)
   if profiling_data_still_required(device) then return end
 
-  local default_endpoint_id = switch_utils.find_default_endpoint(device)
+  local default_endpoint_id, default_device_type = switch_utils.find_default_endpoint(device)
   local optional_component_capabilities
   local updated_profile
 
@@ -260,6 +260,9 @@ function DeviceConfiguration.match_profile(driver, device)
   if #server_onoff_ep_ids > 0 then
     ChildConfiguration.create_or_update_child_devices(driver, device, server_onoff_ep_ids, default_endpoint_id, SwitchDeviceConfiguration.assign_profile_for_onoff_ep)
   end
+
+  -- Allow Bridges to create child on/off devices, but don't attempt to re-profile the main Bridge device.
+  if default_device_type == fields.DEVICE_TYPE_ID.AGGREGATOR then return end
 
   if switch_utils.tbl_contains(server_onoff_ep_ids, default_endpoint_id) then
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
