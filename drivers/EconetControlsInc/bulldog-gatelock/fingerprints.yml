@@ -1,6 +1,6 @@
 matterManufacturer:
   - id: "econet-gatelock"
-    deviceProfileName: gatelock-matter
+    deviceProfileName: matter-lock-contact-tamper
     vendorId: 0x1568        # Econet Controls Inc (5480)
     productId: 0x000A         # 10 (Bulldog GateLock)
     deviceTypes:

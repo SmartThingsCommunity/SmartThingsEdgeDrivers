@@ -1,4 +1,4 @@
-name: gatelock-matter
+name: matter-lock-contact-tamper
 components:
   - id: main
     capabilities:

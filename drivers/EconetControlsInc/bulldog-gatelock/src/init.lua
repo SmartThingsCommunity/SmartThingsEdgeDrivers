@@ -9,12 +9,10 @@ local MatterDriver = require "st.matter.driver"
 local clusters = require "st.matter.clusters"
 local capabilities = require "st.capabilities"
 
-local DoorLock           = clusters.DoorLock
-local PowerSource        = clusters.PowerSource
-local GeneralDiagnostics = clusters.GeneralDiagnostics
+local DoorLock    = clusters.DoorLock
+local PowerSource = clusters.PowerSource
 
-local UNLATCHED_STATE              = 0x3
-local HARDWARE_FAULT_TAMPER_DETECTED = 10
+local UNLATCHED_STATE = 0x3
 
 ----------------------------------------------------------------------
 -- ATTRIBUTE HANDLERS
@@ -52,38 +50,10 @@ local function battery_percent_handler(driver, device, ib, response)
   end
 end
 
--- GeneralDiagnostics.ActiveHardwareFaults is a list of HardwareFaultEnum values.
--- Firmware adds kTamperDetected (10) when the keypad 4-strike brute-force
--- limit trips and removes it when the lockout expires. Map list membership
--- directly to the tamperAlert capability so the SmartThings UI tracks the
--- attribute's full lifecycle (detected -> clear) instead of just the alarm
--- event edge.
-local function hardware_faults_handler(driver, device, ib, response)
-  local list = ib.data and ib.data.elements
-  local tampered = false
-  if list ~= nil then
-    for _, entry in ipairs(list) do
-      if entry.value == HARDWARE_FAULT_TAMPER_DETECTED then
-        tampered = true
-        break
-      end
-    end
-  end
-  if tampered then
-    device:emit_event(capabilities.tamperAlert.tamper.detected())
-  else
-    device:emit_event(capabilities.tamperAlert.tamper.clear())
-  end
-end
-
 ----------------------------------------------------------------------
 -- EVENT HANDLERS
 ----------------------------------------------------------------------
 
--- Retained for compatibility with firmware that only fires the
--- DoorLockAlarm event (older builds without GeneralDiagnostics tamper
--- reporting). On builds that report both, the attribute handler above
--- supersedes this by also clearing the state.
 local function door_lock_alarm_handler(driver, device, ib, response)
   device:emit_event(capabilities.tamperAlert.tamper.detected())
 end
@@ -137,9 +107,6 @@ local matter_lock_driver = {
       [PowerSource.ID] = {
         [PowerSource.attributes.BatPercentRemaining.ID] = battery_percent_handler,
       },
-      [GeneralDiagnostics.ID] = {
-        [GeneralDiagnostics.attributes.ActiveHardwareFaults.ID] = hardware_faults_handler,
-      },
     },
     event = {
       [DoorLock.ID] = {
@@ -157,9 +124,6 @@ local matter_lock_driver = {
     },
     [capabilities.battery.ID] = {
       PowerSource.attributes.BatPercentRemaining,
-    },
-    [capabilities.tamperAlert.ID] = {
-      GeneralDiagnostics.attributes.ActiveHardwareFaults,
     },
   },
 
