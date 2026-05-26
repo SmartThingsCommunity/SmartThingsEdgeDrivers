@@ -14,9 +14,42 @@ local INITIAL_COTA_INDEX = 1
 local UNLATCHED_STATE = 0x3
 
 local subscribed_attributes = {
-  [capabilities.lock.ID] = {DoorLock.attributes.LockState},
-  [capabilities.battery.ID] = {PowerSource.attributes.BatPercentRemaining},
-  [capabilities.batteryLevel.ID] = {PowerSource.attributes.BatChargeLevel},
+  [capabilities.lock.ID] = {
+    DoorLock.attributes.LockState
+  },
+  [capabilities.remoteControlStatus.ID] = {
+    DoorLock.attributes.OperatingMode
+  },
+  [capabilities.lockUsers.ID] = {
+    DoorLock.attributes.NumberOfTotalUsersSupported
+  },
+  [capabilities.lockCredentials.ID] = {
+    DoorLock.attributes.NumberOfPINUsersSupported,
+    DoorLock.attributes.MaxPINCodeLength,
+    DoorLock.attributes.MinPINCodeLength,
+    DoorLock.attributes.RequirePINforRemoteOperation
+  },
+  [capabilities.lockSchedules.ID] = {
+    DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser,
+    DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser
+  },
+  [capabilities.lockAliro.ID] = {
+    DoorLock.attributes.AliroReaderVerificationKey,
+    DoorLock.attributes.AliroReaderGroupIdentifier,
+    DoorLock.attributes.AliroReaderGroupSubIdentifier,
+    DoorLock.attributes.AliroExpeditedTransactionSupportedProtocolVersions,
+    DoorLock.attributes.AliroGroupResolvingKey,
+    DoorLock.attributes.AliroSupportedBLEUWBProtocolVersions,
+    DoorLock.attributes.AliroBLEAdvertisingVersion,
+    DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported,
+    DoorLock.attributes.NumberOfAliroEndpointKeysSupported,
+  },
+  [capabilities.battery.ID] = {
+    PowerSource.attributes.BatPercentRemaining
+  },
+  [capabilities.batteryLevel.ID] = {
+    PowerSource.attributes.BatChargeLevel
+  }
 }
 
 --- If a device needs a cota credential this function attempts to set the credential
@@ -414,7 +447,6 @@ local function lock_user_change_event_handler(driver, device, ib, response)
 end
 
 local function handle_refresh(driver, device, command)
-  device.log.info_with({hub_logs=true}, string.format("old driver handle_refresh !!!!!!!!!!!"))
   -- Note: no endpoint specified indicates a wildcard endpoint
   local req = DoorLock.attributes.LockState:read(device)
   req:merge(PowerSource.attributes.BatPercentRemaining:read(device))

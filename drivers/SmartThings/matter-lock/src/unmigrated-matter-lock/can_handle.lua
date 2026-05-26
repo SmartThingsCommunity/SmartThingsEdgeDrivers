@@ -8,10 +8,13 @@ local function is_unmigrated_matter_lock_products(opts, driver, device)
     return false
   end
   local is_migrated = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME) or nil
-    if device:supports_capability(capabilities.lockCodes) and is_migrated ~= true then
+  if device:supports_capability(capabilities.lockAlarm) then
+    return false
+  elseif device:supports_capability(capabilities.lockCodes) and is_migrated == true then
+    return false
+  else
     return true, require("unmigrated-matter-lock")
   end
-  return false
 end
 
 return is_unmigrated_matter_lock_products
