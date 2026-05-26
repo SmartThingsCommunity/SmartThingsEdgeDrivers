@@ -4125,7 +4125,7 @@ matterManufacturer:
     deviceProfileName: matter-bridge
 #Tapo
   - id: "5010/269"
-    deviceLabel: Tapo smart Power strip
+    deviceLabel: Tapo Smart Power Strip
     vendorId: 0x1392
     productId: 0x010D
     deviceProfileName: plug-binary
