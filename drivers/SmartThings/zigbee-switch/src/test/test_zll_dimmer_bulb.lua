@@ -10,6 +10,10 @@ local zigbee_test_utils = require "integration_test.zigbee_test_utils"
 local OnOff = clusters.OnOff
 local Level = clusters.Level
 
+local TRANSITION_TIME = 3
+local OPTIONS_MASK = 0x01
+local IGNORE_COMMAND_IF_OFF = 0x00
+
 local mock_device = test.mock_device.build_test_zigbee_device(
   { profile = t_utils.get_profile_definition("on-off-level.yml"),
     fingerprinted_endpoint_id = 0x01,
@@ -175,6 +179,29 @@ test.register_coroutine_test(
   end,
   {
      min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "StatelessSwitchLevelStep stepLevel should trigger delayed refresh on ZLL device",
+  function()
+    test.socket.zigbee:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } } })
+    mock_device:expect_native_cmd_handler_registration("statelessSwitchLevelStep", "stepLevel")
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Level.server.commands.Step(mock_device, Level.types.MoveStepMode.UP, 64, TRANSITION_TIME, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF)
+    })
+
+    test.wait_for_events()
+    test.mock_time.advance_time(3)
+
+    test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
+    test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
+  end,
+  {
+    min_api_version = 19
   }
 )
 
