@@ -106,6 +106,9 @@ function AttributeHandlers.current_saturation_handler(driver, device, ib, respon
 end
 
 function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, response)
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorTemperature", "colorTemperature")
+  end
   local temp_in_mired = ib.data.value
   if temp_in_mired == nil then
     return
