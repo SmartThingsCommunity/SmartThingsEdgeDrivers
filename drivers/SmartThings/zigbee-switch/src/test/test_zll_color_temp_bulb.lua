@@ -290,18 +290,7 @@ test.register_coroutine_test(
   "StatelessColorTemperatureStep stepColorTemperatureByPercent should trigger delayed refresh on ZLL device",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } } })
-    mock_device:expect_native_cmd_handler_registration("statelessColorTemperatureStep", "stepColorTemperatureByPercent")
-    test.socket.zigbee:__expect_send({
-      mock_device.id,
-      ColorControl.server.commands.StepColorTemperature(mock_device, ColorControl.types.CcStepMode.DOWN, 43, TRANSITION_TIME, DEFAULT_MIRED_MIN, DEFAULT_MIRED_MAX, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF)
-    })
-
-    test.wait_for_events()
-    test.mock_time.advance_time(1)
-
-    -- an event after 1 second should not trigger another delayed refresh
+    test.timer.__create_and_queue_test_time_advance_timer(1, "oneshot")
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "statelessColorTemperatureStep", component = "main", command = "stepColorTemperatureByPercent", args = { 20 } } })
     mock_device:expect_native_cmd_handler_registration("statelessColorTemperatureStep", "stepColorTemperatureByPercent")
     test.socket.zigbee:__expect_send({
@@ -317,11 +306,6 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
-
-    test.wait_for_events()
-    test.mock_time.advance_time(1)
-
-    -- nothing should be triggered after 1 more second
   end,
   {
     min_api_version = 20
@@ -329,41 +313,42 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "StatelessSwitchLevelStep stepLevel should trigger delayed refresh on ZLL color temp device",
+  "Rapid StatelessSwitchLevelStep stepLevel commands should cancel and recreate delayed refresh timer",
   function()
     test.socket.zigbee:__set_channel_ordering("relaxed")
-    test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
+
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } } })
     mock_device:expect_native_cmd_handler_registration("statelessSwitchLevelStep", "stepLevel")
     test.socket.zigbee:__expect_send({
       mock_device.id,
       Level.server.commands.Step(mock_device, Level.types.MoveStepMode.UP, 64, TRANSITION_TIME, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF)
     })
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
 
     test.wait_for_events()
     test.mock_time.advance_time(1)
 
-    -- an event after 1 second should not trigger another delayed refresh
+    -- Second step command: cancels timer #1, creates timer #2
     test.socket.capability:__queue_receive({ mock_device.id, { capability = "statelessSwitchLevelStep", component = "main", command = "stepLevel", args = { 25 } } })
     mock_device:expect_native_cmd_handler_registration("statelessSwitchLevelStep", "stepLevel")
     test.socket.zigbee:__expect_send({
       mock_device.id,
       Level.server.commands.Step(mock_device, Level.types.MoveStepMode.UP, 64, TRANSITION_TIME, OPTIONS_MASK, IGNORE_COMMAND_IF_OFF)
     })
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
 
     test.wait_for_events()
-    test.mock_time.advance_time(2)
+    test.mock_time.advance_time(1)
+    -- now, nothing should happen since the first timer was cancelled and the second timer has not yet reached its 2s delay
+
+    test.wait_for_events()
+    test.mock_time.advance_time(1)
 
     test.socket.zigbee:__expect_send({ mock_device.id, OnOff.attributes.OnOff:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, Level.attributes.CurrentLevel:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTemperatureMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMaxMireds:read(mock_device) })
     test.socket.zigbee:__expect_send({ mock_device.id, ColorControl.attributes.ColorTempPhysicalMinMireds:read(mock_device) })
-
-    test.wait_for_events()
-    test.mock_time.advance_time(1)
-
-    -- nothing should be triggered after 1 more second
   end,
   {
     min_api_version = 20

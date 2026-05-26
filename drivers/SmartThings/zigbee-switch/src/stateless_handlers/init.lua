@@ -7,27 +7,6 @@ local constants = require "st.zigbee.constants"
 local clusters = require "st.zigbee.zcl.clusters"
 local switch_utils = require "switch_utils"
 
--- Indicates whether a delayed refresh for ZLL devices has been triggered, to prevent multiple refreshes in a quick series of step commands
-local DELAYED_REFRESH_TRIGGERED = "__delayed_refresh_triggered"
-
--- delay time (in seconds) for the refresh sent for ZLL devices after a step command
-local REFRESH_DELAY = "__refresh_delay"
-local DEFAULT_REFRESH_DELAY = 3
-
-local function trigger_delayed_refresh_if_zll(device)
-  if device:get_profile_id() == constants.ZLL_PROFILE_ID and not device:get_field(DELAYED_REFRESH_TRIGGERED) then
-    device:set_field(DELAYED_REFRESH_TRIGGERED, true)
-    local refresh_delay = device:get_field(REFRESH_DELAY) or DEFAULT_REFRESH_DELAY
-    device.thread:call_with_delay(refresh_delay,
-      function ()
-        device:refresh()
-        device:set_field(DELAYED_REFRESH_TRIGGERED, nil)
-      end,
-      "statelessStep delayed read"
-    )
-  end
-end
-
 -- These values are the mired versions of the config bounds in the default profile (e.g. color-temp-bulb)
 local DEFAULT_MIRED_MAX_BOUND = 370 -- 2700 Kelvin (Mireds are the inverse of Kelvin)
 local DEFAULT_MIRED_MIN_BOUND = 154 -- 6500 Kelvin (Mireds are the inverse of Kelvin)
@@ -41,6 +20,29 @@ local DEFAULT_STEP_TRANSITION_TIME = 3 -- 0.3 seconds
 -- Options Mask & Override: Indicates which options are being overridden by the Level/ColorControl cluster commands
 local OPTIONS_MASK = 0x01 -- default: The `ExecuteIfOff` option is overriden
 local IGNORE_COMMAND_IF_OFF = 0x00 -- default: the command will not be executed if the device is off
+
+-- Indicates whether a delayed refresh for ZLL devices is in progress, to prevent multiple refreshes in a quick series of step commands
+local IS_REFRESH_CALLBACK_QUEUED = "__is_refresh_callback_queued"
+-- Stores a timer object, which is required to cancel a timer early
+local REFRESH_CALLBACK_TIMER = "__refresh_callback_timer"
+
+local function trigger_delayed_refresh_if_zll(device)
+  if device:get_profile_id() ~= constants.ZLL_PROFILE_ID then
+    return
+  end
+
+  -- If a refresh callback is already queued, cancel it and create a new one with the updated time
+  if device:get_field(IS_REFRESH_CALLBACK_QUEUED) then
+    device.thread:cancel_timer(device:get_field(REFRESH_CALLBACK_TIMER))
+  end
+  local delay_s = 2
+  local new_timer = device.thread:call_with_delay(delay_s, function()
+    device:refresh()
+    device:set_field(IS_REFRESH_CALLBACK_QUEUED, nil)
+  end)
+  device:set_field(REFRESH_CALLBACK_TIMER, new_timer)
+  device:set_field(IS_REFRESH_CALLBACK_QUEUED, true)
+end
 
 local function step_color_temperature_by_percent_handler(driver, device, cmd)
   if type(device.register_native_capability_cmd_handler) == "function" then
