@@ -167,6 +167,11 @@ matterManufacturer:
     vendorId: 0x152C
     productId: 0x9500
     deviceProfileName: lock
+  - id: "5420/38145"
+    deviceLabel: Dreame NAVO Smart Lock E10
+    vendorId: 0x152C
+    productId: 0x9501
+    deviceProfileName: lock
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
