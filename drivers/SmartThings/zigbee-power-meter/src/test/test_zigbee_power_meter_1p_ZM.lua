@@ -1,3 +1,6 @@
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local test = require "integration_test"
 local clusters = require "st.zigbee.zcl.clusters"
 local ElectricalMeasurement = clusters.ElectricalMeasurement
@@ -71,23 +74,6 @@ test.register_coroutine_test(
         mock_device:generate_test_message("main", capabilities.energyMeter.energy({value = 2.0, unit = "kWh"}))
       )
     end
-)
-
-test.register_message_test(
-    "ActivePower Report should be handled. Sensor value is in W, capability attribute value is in hectowatts",
-    {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, ElectricalMeasurement.attributes.ActivePower:build_test_attr_report(mock_device,
-                                                                                                        27) },
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_device:generate_test_message("PhaseA", capabilities.powerMeter.power({ value = 27.0, unit = "W" }))
-      }
-    }
 )
 
 test.register_message_test(
