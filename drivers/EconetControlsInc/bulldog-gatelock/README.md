@@ -23,7 +23,7 @@ The reed switch on GPIO0.28 triggers `sendDoorStateChangeAlarmEvent()` in firmwa
 
 ## Tamper alert
 
-When the keypad's 4-strikes-in-20-seconds brute-force protection trips, the firmware fires a `DoorLockAlarm` event with `alarmCode = kWrongCodeEntryLimit (4)`. The driver maps this to the standard **tamperAlert** capability ("tampered" badge in the app). The state stays `tampered` until the driver re-initializes; on init the driver emits `clear`.
+When the keypad's 4-strikes-in-20-seconds brute-force protection trips, the firmware fires a `DoorLockAlarm` event with `alarmCode = kWrongCodeEntryLimit (4)`. The driver maps this to the standard **tamperAlert** capability ("tampered" badge in the app) and auto-clears the state after 15 seconds, slightly longer than the firmware's ~10-second keypad lockout window. On `device_added` the driver also emits `clear` to ensure a known initial state.
 
 ## Prerequisites
 

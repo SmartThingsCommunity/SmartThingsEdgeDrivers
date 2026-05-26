@@ -54,8 +54,16 @@ end
 -- EVENT HANDLERS
 ----------------------------------------------------------------------
 
+-- Firmware locks out the keypad for ~10 s on the 4-strike brute-force trip.
+-- Auto-clear after 15 s (10 s lockout + 5 s buffer) so SmartThings tracks
+-- a real detected->clear transition without waiting for a driver restart.
+local TAMPER_CLEAR_DELAY_S = 15
+
 local function door_lock_alarm_handler(driver, device, ib, response)
   device:emit_event(capabilities.tamperAlert.tamper.detected())
+  device.thread:call_with_delay(TAMPER_CLEAR_DELAY_S, function()
+    device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end)
 end
 
 ----------------------------------------------------------------------
