@@ -46,6 +46,7 @@ local lock_utils = {
   MODULAR_PROFILE_UPDATED = "__MODULAR_PROFILE_UPDATED",
   ALIRO_READER_CONFIG_UPDATED = "aliroReaderConfigUpdated",
   LATEST_DOOR_LOCK_FEATURE_MAP = "latestDoorLockFeatureMap",
+  LOCK_CODES_COPY_REQUIRED = "lockCodesCopyRequried",
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"
