@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local test = require "integration_test"
@@ -68,6 +57,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.freeze())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -84,6 +76,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.heat())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -105,6 +100,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 55.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -126,6 +124,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = -1.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -147,6 +148,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({value = 15.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -163,6 +167,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 25.0, unit = "C"}))
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -179,6 +186,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -198,6 +208,9 @@ test.register_message_test(
         zigbee_test_utils.build_attribute_read(mock_device, Thermostat.ID, {MFR_SETPOINT_MODE_ATTTRIBUTE}, MFG_CODE)
       }
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -227,7 +240,10 @@ test.register_coroutine_test(
         Thermostat.attributes.PIHeatingDemand:build_test_attr_report(mock_device, 0)
       })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", ThermostatOperatingState.thermostatOperatingState("idle")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -247,7 +263,10 @@ test.register_coroutine_test(
             {{ MFR_SETPOINT_MODE_ATTTRIBUTE, data_types.Uint16.ID, 0x04}}, MFG_CODE)
       })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", ThermostatMode.thermostatMode.heat()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -277,7 +296,10 @@ test.register_coroutine_test(
         mock_device.id,
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -307,7 +329,10 @@ test.register_coroutine_test(
         mock_device.id,
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -396,7 +421,10 @@ test.register_coroutine_test(
         })
 
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -478,6 +506,9 @@ test.register_message_test(
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       }
     },
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -498,7 +529,11 @@ test.register_coroutine_test("Setting the heating setpoint should generate the a
       mock_device.id,
       Thermostat.attributes.PIHeatingDemand:read(mock_device)
     })
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 test.register_coroutine_test(
   "Setting thermostat mode to eco should generate correct zigbee messages",
@@ -526,7 +561,62 @@ test.register_coroutine_test(
         mock_device.id,
         cluster_base.read_manufacturer_specific_attribute(mock_device, Thermostat.ID, MFR_SETPOINT_MODE_ATTTRIBUTE, MFG_CODE)
       })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
+)
+test.register_coroutine_test(
+  "LocalTemperature handler should request PIHeatingDemand when setpoint > temperature",
+  function()
+    local RAW_SETPOINT_FIELD = "raw_setpoint"
+    mock_device:set_field(RAW_SETPOINT_FIELD, 3000, { persist = true })
+
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.LocalTemperature:build_test_attr_report(mock_device, 2000)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureAlarm.temperatureAlarm.cleared())
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      Thermostat.attributes.PIHeatingDemand:read(mock_device)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 20.0, unit = "C" }))
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Setting an unsupported thermostat mode should re-emit the current mode",
+  function()
+    -- Establish a known current mode state
+    test.socket.zigbee:__queue_receive({
+      mock_device.id,
+      Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, ThermostatSystemMode.OFF)
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
+    )
+    test.wait_for_events()
+
+    -- "cool" is not in SUPPORTED_MODES for stelpro-ki; the driver re-emits the current mode
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "thermostatMode", component = "main", command = "setThermostatMode", args = { "cool" } }
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", ThermostatMode.thermostatMode.off())
+    )
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

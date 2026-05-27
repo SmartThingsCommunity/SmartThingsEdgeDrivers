@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
@@ -187,7 +177,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -217,7 +210,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -247,7 +243,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.closed()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -277,7 +276,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.closed()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -307,7 +309,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -337,7 +342,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -367,7 +375,10 @@ test.register_coroutine_test(
         ),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -397,7 +408,10 @@ test.register_coroutine_test(
         ),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -427,7 +441,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -457,7 +474,10 @@ test.register_coroutine_test(
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -487,7 +507,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -517,7 +540,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test("WindowCovering OperationalStatus opening", function()
@@ -551,7 +577,11 @@ test.register_coroutine_test("WindowCovering OperationalStatus opening", functio
       "main", capabilities.windowShade.windowShade.opening()
     )
   )
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 test.register_coroutine_test("WindowCovering OperationalStatus closing", function()
   test.socket.capability:__set_channel_ordering("relaxed")
@@ -584,7 +614,11 @@ test.register_coroutine_test("WindowCovering OperationalStatus closing", functio
       "main", capabilities.windowShade.windowShade.closing()
     )
   )
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 test.register_coroutine_test("WindowCovering OperationalStatus unknown", function()
   test.socket.capability:__set_channel_ordering("relaxed")
@@ -617,7 +651,11 @@ test.register_coroutine_test("WindowCovering OperationalStatus unknown", functio
       "main", capabilities.windowShade.windowShade.unknown()
     )
   )
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 test.register_coroutine_test(
   "WindowShade open cmd handler", function()
@@ -631,7 +669,10 @@ test.register_coroutine_test(
       {mock_device.id, WindowCovering.server.commands.UpOrOpen(mock_device, 10)}
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -646,7 +687,10 @@ test.register_coroutine_test(
       {mock_device.id, WindowCovering.server.commands.DownOrClose(mock_device, 10)}
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -661,7 +705,10 @@ test.register_coroutine_test(
       {mock_device.id, WindowCovering.server.commands.StopMotion(mock_device, 10)}
     )
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -690,7 +737,10 @@ test.register_coroutine_test(
     end
     test.socket.matter:__expect_send({mock_device.id, read_request})
     test.wait_for_events()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
@@ -703,7 +753,11 @@ test.register_coroutine_test("WindowShade setShadeLevel cmd handler", function()
   test.socket.matter:__expect_send(
     {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 8000)}
   )
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 test.register_coroutine_test("WindowShade setShadeTiltLevel cmd handler", function()
   test.socket.capability:__queue_receive(
@@ -715,7 +769,11 @@ test.register_coroutine_test("WindowShade setShadeTiltLevel cmd handler", functi
   test.socket.matter:__expect_send(
     {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 4000)}
   )
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 test.register_coroutine_test("LevelControl CurrentLevel handler", function()
   test.socket.matter:__queue_receive(
@@ -729,7 +787,11 @@ test.register_coroutine_test("LevelControl CurrentLevel handler", function()
       "main", capabilities.windowShadeLevel.shadeLevel(math.floor((100 / 254.0 * 100) + .5))
     )
   )
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 --test battery
 test.register_coroutine_test(
@@ -747,7 +809,10 @@ test.register_coroutine_test(
         "main", capabilities.battery.battery(math.floor(150/2.0+0.5))
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test("OperationalStatus report contains current position report", function()
@@ -767,7 +832,11 @@ test.register_coroutine_test("OperationalStatus report contains current position
       "main", capabilities.windowShade.windowShade.partially_open()
     )
   )
-end)
+end,
+{
+   min_api_version = 17
+}
+)
 
 test.register_coroutine_test(
   "Handle preset commands",
@@ -789,7 +858,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send(
       {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, (100 - PRESET_LEVEL) * 100)}
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -802,7 +874,10 @@ test.register_coroutine_test(
       }
     )
     mock_device:expect_metadata_update({ profile = "window-covering-tilt-battery" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -814,14 +889,20 @@ test.register_coroutine_test(
         clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 10, {uint32(10)})
       }
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
   "Test mains powered device does not switch to battery profile",
   function()
   end,
-  { test_init = test_init_mains_powered }
+  {
+    test_init = test_init_mains_powered,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -833,7 +914,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.matter:__queue_receive({mock_device.id, clusters.PowerSource.attributes.AttributeList:build_test_report_data(mock_device, 10, {uint32(0x0C)})})
     mock_device:expect_metadata_update({profile = "window-covering-tilt-battery"})
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -942,7 +1026,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1013,7 +1100,10 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1068,7 +1158,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send(
       {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 0)}
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -1123,7 +1216,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send(
       {mock_device.id, WindowCovering.server.commands.GoToTiltPercentage(mock_device, 10, 10000)}
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

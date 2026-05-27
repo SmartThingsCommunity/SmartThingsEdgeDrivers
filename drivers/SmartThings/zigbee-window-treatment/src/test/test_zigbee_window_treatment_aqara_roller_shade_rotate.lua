@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local base64 = require "st.base64"
 local capabilities = require "st.capabilities"
@@ -124,7 +114,10 @@ test.register_coroutine_test(
       cluster_base.write_manufacturer_specific_attribute(mock_device, Basic.ID, PREF_ATTRIBUTE_ID, MFG_CODE,
         data_types.CharString,
         PREF_REVERSE_OFF) })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -156,7 +149,10 @@ test.register_coroutine_test(
       zigbee_test_utils.build_attribute_read(mock_device, Basic.ID, { PREF_ATTRIBUTE_ID }, MFG_CODE)
     })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -175,7 +171,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -194,7 +193,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -213,7 +215,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.partially_open())
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -239,7 +244,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -265,7 +273,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -281,7 +292,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.Stop(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -297,7 +311,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true, visibility = { displayed = false }}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -314,7 +331,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", shadeRotateState.rotateState.idle({state_change = true, visibility = { displayed = false }}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -349,7 +369,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       initializedStateWithGuide.initializedStateWithGuide.initialized()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -370,7 +393,10 @@ test.register_coroutine_test(
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -399,7 +425,10 @@ test.register_coroutine_test(
       mock_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(mock_device, 50)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 
@@ -415,7 +444,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       initializedStateWithGuide.initializedStateWithGuide.notInitialized()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -432,7 +464,10 @@ test.register_coroutine_test(
       mock_device.id,
       AnalogOutput.attributes.PresentValue:read(mock_device)
     })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -470,7 +505,10 @@ test.register_coroutine_test(
       message.body.zcl_header.frame_ctrl = FrameCtrl(0x10)
 
     test.socket.zigbee:__expect_send({ mock_device.id, message })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 

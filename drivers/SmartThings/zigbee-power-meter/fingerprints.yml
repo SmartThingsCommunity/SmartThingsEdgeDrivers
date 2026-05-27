@@ -7,12 +7,27 @@ zigbeeManufacturer:
     deviceLabel: frient Energy Monitor
     manufacturer: Develco
     model: "ZHEMI101"
-    deviceProfileName: power-meter
+    deviceProfileName: frient-power-energy-consumption-report
   - id: "Develco/EMIZB-132"
     deviceLabel: frient Energy Monitor
     manufacturer: Develco Products A/S
     model: "EMIZB-132"
-    deviceProfileName: power-meter
+    deviceProfileName: frient-power-meter-consumption-report
+  - id: "frient A/S/EMIZB-132"
+    deviceLabel: frient Energy Monitor
+    manufacturer: frient A/S
+    model: "EMIZB-132"
+    deviceProfileName: frient-power-meter-consumption-report
+  - id: "frient A/S/EMIZB-141"
+    deviceLabel: "frient EMI 2 LED"
+    manufacturer: frient A/S
+    model: "EMIZB-141"
+    deviceProfileName: frient-power-energy-battery-consumption-report
+  - id: "frient A/S/EMIZB-151"
+    deviceLabel: "frient EMI 2 P1"
+    manufacturer: frient A/S
+    model: "EMIZB-151"
+    deviceProfileName: frient-power-energy-current-voltage
   - id: "ShinaSystem/PMM-300Z1"
     deviceLabel: SiHAS Energy Monitor
     manufacturer: ShinaSystem
@@ -67,6 +82,31 @@ zigbeeManufacturer:
     deviceLabel: Energy Monitor 1PN
     manufacturer: BITUO TECHNIK
     model: "SDM01B"
+    deviceProfileName: power-meter-1p
+  - id: "Zemismart/SPM01-1Z2"
+    deviceLabel: Energy Monitor 1PN
+    manufacturer: Zemismart
+    model: "SPM01-1Z2"
+    deviceProfileName: power-meter-1p
+  - id: "Zemismart/SDM02-2Z1"
+    deviceLabel: Energy Monitor 2PN
+    manufacturer: Zemismart
+    model: "SDM02-2Z1"
+    deviceProfileName: power-meter-2p
+  - id: "Zemismart/SPM02-3Z3"
+    deviceLabel: Energy Monitor 3PN
+    manufacturer: Zemismart
+    model: "SPM02-3Z3"
+    deviceProfileName: power-meter-3p
+  - id: "Zemismart/SDM01-3Z1"
+    deviceLabel: Energy Monitor 3PN
+    manufacturer: Zemismart
+    model: "SDM01-3Z1"
+    deviceProfileName: power-meter-3p
+  - id: "Zemismart/SDM01-1Z1"
+    deviceLabel: Energy Monitor 1PN
+    manufacturer: Zemismart
+    model: "SDM01-1Z1"
     deviceProfileName: power-meter-1p
 zigbeeGeneric:
   - id: "genericMeter"

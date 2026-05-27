@@ -58,7 +58,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -80,7 +84,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -102,7 +110,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -124,7 +136,11 @@ do
           })
         )
       )
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
@@ -144,8 +160,13 @@ do
         parent_device_id = mock_inovelli_vzw32_sn.id,
         parent_assigned_child_key = "notification"
       })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
+
   )
 end
 
 test.run_registered_tests()
+

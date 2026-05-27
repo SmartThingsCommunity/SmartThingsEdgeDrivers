@@ -1,16 +1,5 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
 
 -- Mock out globals
 local base64 = require "st.base64"
@@ -104,7 +93,10 @@ test.register_coroutine_test(
           mock_device:generate_test_message("main", button_attr.pushed({ state_change = true }))
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 
@@ -158,7 +150,10 @@ test.register_coroutine_test(
           mock_device:generate_test_message("main", button_attr.held({ state_change = true }))
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -194,7 +189,10 @@ test.register_coroutine_test(
         OnOff.attributes.OnOff:configure_reporting(mock_device, 0, 600, 1)
       })
       mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -205,7 +203,10 @@ test.register_coroutine_test(
         mock_device.id,
         PowerConfiguration.attributes.BatteryVoltage:read(mock_device)
       })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -250,7 +251,10 @@ test.register_coroutine_test(
 
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

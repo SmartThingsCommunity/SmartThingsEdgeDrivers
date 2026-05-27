@@ -33,7 +33,6 @@ local BUTTON_BATTERY_NORMAL = 99
 local DEVICE_PROFILE_CHANGE_IN_PROGRESS = "device_profile_change_in_progress"
 local NEXT_BUTTON_BATTERY_EVENT_DETAILS = "next_button_battery_event_details"
 
-
 local function querySoundStatus(device)
   for endpoint = 2, NUMBER_OF_SOUND_COMPONENTS do
     device:send_to_component(Basic:Get({}), "sound"..endpoint)
@@ -208,6 +207,7 @@ local function changeDeviceProfileIfNeeded(device, endpoint)
   end
 end
 
+-- Note that endpoint should be a number not a dst_channels table.
 local function setActiveEndpoint(device, endpoint)
   if (endpoint) then
     device:set_field(LAST_TRIGGERED_ENDPOINT, endpoint, {persist = true})
@@ -271,20 +271,22 @@ end
 
 local function alarmChimeOnOff(device, command, newValue)
   if (device and command and newValue) then
+    -- Note that zwave/device.lua send_to_component expects the component_to_endpoint function to
+    -- return a dst_channels table, not a single endpoint number
     local endpoint = component_to_endpoint(device, command.component)
-    device:send(Basic:Set({value = newValue})):to_endpoint(endpoint)
+    device:send_to_component(Basic:Set({value = newValue}), command.component)
     if (newValue == ON) then
-      setActiveEndpoint(endpoint)
+      setActiveEndpoint(device, endpoint[1])
     end
   end
 end
 
-local function alarm_chime_on(device, command)
+local function alarm_chime_on(self, device, command)
   resetActiveEndpoint(device)
   alarmChimeOnOff(device, command, ON)
 end
 
-local function alarm_chime_off(device, command)
+local function alarm_chime_off(self, device, command)
   alarmChimeOnOff(device, command, OFF)
 end
 
@@ -306,6 +308,9 @@ local aeotec_doorbell_siren = {
       [Notification.REPORT] = notification_report_handler
     }
   },
+  -- This typo is a bug. There are many unit tests that fail, when
+  -- it is enabled, and it is not clear what the correct functionality is
+  -- without real device testing.
   capabilities_handlers = {
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh

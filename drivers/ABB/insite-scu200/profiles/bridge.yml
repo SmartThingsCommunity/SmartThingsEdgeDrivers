@@ -1,0 +1,8 @@
+name: abb.scu200.bridge.v1
+components:
+- id: main
+  capabilities:
+  - id: refresh
+    version: 1
+  categories:
+  - name: Bridges

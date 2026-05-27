@@ -7,11 +7,7 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.matter.generated.zap_clusters"
 
-local TRANSITION_TIME = 0
-local OPTIONS_MASK = 0x01
-local OPTIONS_OVERRIDE = 0x01
 local button_attr = capabilities.button.button
-
 
 local mock_device_ep1 = 1
 local mock_device_ep2 = 2
@@ -198,13 +194,8 @@ local CLUSTER_SUBSCRIBE_LIST_WITH_CHILD ={
 
 local function expect_configure_buttons()
   test.socket.capability:__expect_send(mock_device:generate_test_message("button1", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button1", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
 end
 
 local function test_init()
@@ -216,8 +207,6 @@ local function test_init()
   for i, clus in ipairs(CLUSTER_SUBSCRIBE_LIST_NO_CHILD) do
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
 
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
@@ -280,6 +269,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.switch.switch.on())
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -300,6 +292,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("button1", button_attr.pushed({state_change = true})) --should send initial press
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -330,6 +325,9 @@ test.register_message_test(
     direction = "send",
     message = mock_device:generate_test_message("button2", button_attr.pushed({state_change = true}))
   }
+},
+{
+   min_api_version = 17
 }
 )
 
@@ -352,33 +350,10 @@ test.register_coroutine_test(
       )
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("button3", button_attr.pushed({state_change = true})))
-  end
-)
-
-test.register_coroutine_test(
-  "Switch child device: Set color temperature should send the appropriate commands",
-  function()
-    test.mock_device.add_test_device(mock_child)
-    test.wait_for_events()
-    test.socket.capability:__queue_receive({
-      mock_child.id,
-      { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
-    })
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep5, 556, TRANSITION_TIME, OPTIONS_MASK, OPTIONS_OVERRIDE)
-    })
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, mock_device_ep5)
-    })
-    test.wait_for_events()
-    test.socket.matter:__queue_receive({
-      mock_device.id,
-      clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, mock_device_ep5, 556)
-    })
-    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800)))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -396,8 +371,6 @@ test.register_coroutine_test(
     for _, cluster in ipairs(CLUSTER_SUBSCRIBE_LIST) do
       subscribe_request:merge(cluster:subscribe(unsup_mock_device))
     end
-    test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "added" })
-    test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
     test.socket.device_lifecycle:__queue_receive({ unsup_mock_device.id, "init" })
     test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
@@ -411,7 +384,6 @@ test.register_coroutine_test(
       parent_assigned_child_key = string.format("%d", 7)
     })
     test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
     unsup_mock_device:expect_metadata_update({ profile = "2-button" })
     unsup_mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 
@@ -435,12 +407,12 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({unsup_mock_device.id, subscribe_request})
 
     test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
-
     test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-    test.socket.capability:__expect_send(unsup_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
     end,
-  { test_init = test_init_mcd_unsupported_switch_device_type }
+  {
+    test_init = test_init_mcd_unsupported_switch_device_type,
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -457,7 +429,11 @@ test.register_coroutine_test(
     mock_child:expect_metadata_update({ profile = "light-color-level" })
     mock_device:expect_metadata_update({ profile = "light-level-3-button" })
     expect_configure_buttons()
-  end
+    mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -472,7 +448,10 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = updated_device_profile }))
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     expect_configure_buttons()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -483,7 +462,10 @@ test.register_coroutine_test(
     mock_child:expect_metadata_update({ profile = "light-color-level" })
     mock_device:expect_metadata_update({ profile = "light-level-3-button" })
     expect_configure_buttons()
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -500,7 +482,10 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     mock_child:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "doConfigure" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- run the tests

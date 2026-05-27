@@ -136,7 +136,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -162,7 +163,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.thermostatHeatingSetpoint.heatingSetpoint({value = 68, unit = "C"})
     ))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -187,7 +191,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.thermostatCoolingSetpoint.coolingSetpoint({value = 68, unit = "C"})
     ))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -212,7 +219,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.relativeHumidityMeasurement.humidity({value = 45})
     ))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -268,6 +278,9 @@ test.register_message_test(
         ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.COOLING_1})
       )
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -324,6 +337,9 @@ test.register_message_test(
         ThermostatSetpoint:Get({setpoint_type = ThermostatSetpoint.setpoint_type.HEATING_1})
       )
     }
+  },
+  {
+     min_api_version = 17
   }
 )
 
@@ -386,7 +402,10 @@ test.register_coroutine_test(
         ThermostatOperatingState:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -452,7 +471,10 @@ test.register_coroutine_test(
         ThermostatOperatingState:Get({})
       )
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- these next two tests are based on actual messages from a real device
@@ -475,7 +497,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.temperatureMeasurement.temperature({value = 60.0, unit = 'F'})
     ))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -497,7 +522,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.relativeHumidityMeasurement.humidity({value = 48})
     ))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

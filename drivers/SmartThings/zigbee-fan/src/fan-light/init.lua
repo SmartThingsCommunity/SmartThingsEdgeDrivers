@@ -1,34 +1,13 @@
--- Copyright 2024 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2024 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local FanControl = clusters.FanControl
 local Level = clusters.Level
 local OnOff = clusters.OnOff
 
-local FINGERPRINTS = {
-  { mfr = "Samsung Electronics", model = "SAMSUNG-ITM-Z-003" },
-}
 
-local function can_handle_itm_fanlight(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 -- CAPABILITY HANDLERS
 
@@ -115,9 +94,7 @@ local itm_fan_light = {
       [capabilities.fanSpeed.commands.setFanSpeed.NAME] = fan_speed_handler
     }
   },
-  can_handle = can_handle_itm_fanlight
+  can_handle = require("fan-light.can_handle"),
 }
 
 return itm_fan_light
-
-

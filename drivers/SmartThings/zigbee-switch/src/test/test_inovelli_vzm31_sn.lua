@@ -72,7 +72,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -95,7 +96,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -118,7 +120,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -144,7 +147,8 @@ test.register_message_test(
     },
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -213,7 +217,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -244,7 +249,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -280,7 +286,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm31_sn:generate_test_message("button1", capabilities.button.button.pushed_2x({ state_change = true }))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test power meter from ElectricalMeasurement
@@ -299,7 +308,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm31_sn:generate_test_message("main", capabilities.powerMeter.power({value = 200.0, unit = "W"}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test energy meter
@@ -318,7 +330,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_inovelli_vzm31_sn:generate_test_message("main", capabilities.energyMeter.energy({value = 500.0, unit = "kWh"}))
     )
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 -- Test energy meter reset command
@@ -365,7 +380,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -415,7 +431,10 @@ test.register_coroutine_test(
     test.socket.zigbee:__expect_send({ mock_inovelli_vzm31_sn.id, clusters.ElectricalMeasurement.attributes.ACPowerMultiplier:read(mock_inovelli_vzm31_sn) })
 
     mock_inovelli_vzm31_sn:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

@@ -5,8 +5,6 @@ local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local configurations = require "configurations"
 
-
-
 local function component_to_endpoint(device, component_id)
   if component_id == "main" then
     return device.fingerprinted_endpoint_id
@@ -48,7 +46,7 @@ local laisiao_bath_heater = {
     capabilities.switch,
   },
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(device_init),
+    init = configurations.reconfig_wrapper(device_init),
   },
   capability_handlers = {
     [capabilities.switch.ID] = {

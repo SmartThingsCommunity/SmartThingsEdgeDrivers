@@ -1,0 +1,10 @@
+name: abb.scu200.gas-meter.v1
+components:
+- id: main
+  capabilities:
+  - id: gasMeter
+    version: 1
+  - id: refresh
+    version: 1
+  categories: 
+  - name: Others

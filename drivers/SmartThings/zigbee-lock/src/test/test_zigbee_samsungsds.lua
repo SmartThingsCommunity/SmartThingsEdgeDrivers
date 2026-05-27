@@ -74,7 +74,10 @@ test.register_coroutine_test(
     )
 
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -91,6 +94,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -108,6 +114,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -120,6 +129,9 @@ test.register_message_test(
         message = { mock_device.id, DoorLock.attributes.LockState:build_test_attr_report(mock_device,
                                                                                          DoorLockState.NOT_FULLY_LOCKED) }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -146,6 +158,9 @@ test.register_message_test(
           capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -172,6 +187,9 @@ test.register_message_test(
           capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -198,6 +216,9 @@ test.register_message_test(
           capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -224,6 +245,9 @@ test.register_message_test(
           capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -250,6 +274,9 @@ test.register_message_test(
           capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -276,6 +303,9 @@ test.register_message_test(
           capabilities.lock.lock.locked({ data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -302,6 +332,9 @@ test.register_message_test(
           capabilities.lock.lock.locked({data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -328,6 +361,9 @@ test.register_message_test(
           capabilities.lock.lock.unlocked({ data = { method = "keypad"} })
         )
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -352,6 +388,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "command" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -376,6 +415,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "command" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -400,6 +442,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "command" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -424,6 +469,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "command" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -448,6 +496,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "command" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -472,6 +523,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "auto" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -496,6 +550,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "command" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -520,6 +577,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "command" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -544,6 +604,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -568,6 +631,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -592,6 +658,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -616,6 +685,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -640,6 +712,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -664,6 +739,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "auto" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -688,6 +766,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -712,6 +793,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "manual" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -736,6 +820,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "rfid" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -760,6 +847,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "rfid" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -784,6 +874,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "rfid" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -808,6 +901,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "rfid" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -832,6 +928,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "rfid" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -856,6 +955,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "auto" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -880,6 +982,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "rfid" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -904,6 +1009,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "rfid" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -928,6 +1036,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "fingerprint" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -952,6 +1063,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "fingerprint" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -976,6 +1090,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "fingerprint" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1000,6 +1117,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "fingerprint" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1024,6 +1144,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "fingerprint" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1048,6 +1171,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "auto" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1072,6 +1198,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "fingerprint" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1096,6 +1225,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "fingerprint" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1120,6 +1252,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "bluetooth" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1144,6 +1279,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "bluetooth" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1168,6 +1306,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "bluetooth" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1192,6 +1333,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "bluetooth" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1216,6 +1360,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "bluetooth" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1240,6 +1387,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "auto" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1264,6 +1414,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.locked({ data = { method = "bluetooth" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1288,6 +1441,9 @@ test.register_message_test(
         direction = "send",
         message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked({ data = { method = "bluetooth" } }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -1308,7 +1464,10 @@ test.register_coroutine_test(
         test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.battery.battery(batt_perc)) )
         test.wait_for_events()
       end
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -1327,6 +1486,9 @@ test.register_message_test(
       direction = "send",
       message = mock_device:generate_test_message("main", capabilities.lock.lock.unlocked())
     },
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1341,6 +1503,9 @@ test.register_message_test(
         zigbee_test_utils.build_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, " ")
       }
     }
+  },
+  {
+     min_api_version = 19
   }
 )
 
@@ -1358,7 +1523,10 @@ test.register_coroutine_test(
         zigbee_test_utils.build_tx_custom_command_id(mock_device, DoorLock.ID, SAMSUNG_SDS_MFR_SPECIFIC_COMMAND, SAMSUNG_SDS_MFR_CODE, "1235")
       })
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -1371,7 +1539,10 @@ test.register_coroutine_test(
           }
       )
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -1388,7 +1559,10 @@ test.register_coroutine_test(
       test.socket.capability:__set_channel_ordering("relaxed")
       test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.battery.battery(100)))
       test.wait_for_events()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

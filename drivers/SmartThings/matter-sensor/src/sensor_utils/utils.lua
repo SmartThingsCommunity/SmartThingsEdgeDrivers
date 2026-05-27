@@ -3,6 +3,10 @@
 
 local utils = {}
 
+-- Sanity check bounds for soil moisture measurement limits (percent)
+utils.SOIL_MOISTURE_MIN = 0
+utils.SOIL_MOISTURE_MAX = 100
+
 function utils.get_field_for_endpoint(device, field, endpoint)
   return device:get_field(string.format("%s_%d", field, endpoint))
 end

@@ -52,6 +52,9 @@ test.register_message_test(
         direction = "send",
         message = mock_meter:generate_test_message("main", capabilities.powerMeter.power({ value = 27, unit = "W" }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -71,6 +74,9 @@ test.register_message_test(
         direction = "send",
         message = mock_meter:generate_test_message("main", capabilities.energyMeter.energy({ value = 5, unit = "kWh" }))
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -100,7 +106,8 @@ test.register_message_test(
       },
     },
     {
-      inner_block_ordering = "relaxed"
+      inner_block_ordering = "relaxed",
+      min_api_version = 17
     }
 )
 
@@ -118,7 +125,10 @@ test.register_coroutine_test(
           Configuration:Set({parameter_number = 42, size = 2, configuration_value = 1800})
       ))
       mock_meter:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.run_registered_tests()

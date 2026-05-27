@@ -96,7 +96,10 @@ test.register_coroutine_test(
         test.wait_for_events()
         test.mock_time.advance_time(7)
       end
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_message_test(
@@ -114,7 +117,8 @@ test.register_message_test(
     }
   },
   {
-    inner_block_ordering = "relaxed"
+    inner_block_ordering = "relaxed",
+    min_api_version = 17
   }
 )
 
@@ -123,7 +127,10 @@ test.register_coroutine_test(
     function ()
       add_device()
       add_device_after_switch_over()
-    end
+    end,
+    {
+       min_api_version = 17
+    }
 )
 
 test.register_coroutine_test(
@@ -135,7 +142,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -148,7 +158,10 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(100)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -161,7 +174,10 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(75)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -174,7 +190,10 @@ test.register_coroutine_test(
     test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.battery.battery(0)))
     test.socket.capability:__expect_send(mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("present")))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -188,7 +207,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_simple_device:generate_test_message("main", capabilities.presenceSensor.presence("not present")) )
     end,
     {
-      test_init = function()      end
+      test_init = function()      end,      min_api_version = 17
     }
 )
 

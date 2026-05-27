@@ -28,7 +28,7 @@ for file in $files; do
 
             # Check if file is not empty, is a SmartThings driver and has the copyright header
             if [ -s "$file" ] && [[ "$file" =~ "drivers/SmartThings" ]] \
-                && [[ ! $(grep $file -P -e "-{2,} Copyright \d{4}(?:-\d{4})? SmartThings") ]]; then
+                && [[ ! $(grep $file --text -P -e "-{2,} Copyright (?:© )?\d{4}(?:-\d{4})? SmartThings") ]]; then
                 echo "$file: SmartThings Copyright missing from file"
                 fail=1
             fi

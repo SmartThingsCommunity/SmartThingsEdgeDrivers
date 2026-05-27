@@ -1,9 +1,11 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local clusters = require "st.matter.clusters"
+
 local SwitchFields = {}
 
-SwitchFields.MOST_RECENT_TEMP = "mostRecentTemp"
+SwitchFields.LATEST_REQUESTED_KELVIN = "mostRecentTemp"
 SwitchFields.RECEIVED_X = "receivedX"
 SwitchFields.RECEIVED_Y = "receivedY"
 SwitchFields.HUESAT_SUPPORT = "huesatSupport"
@@ -11,10 +13,12 @@ SwitchFields.HUESAT_SUPPORT = "huesatSupport"
 SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT = 1000000
 
 -- These values are a "sanity check" to check that values we are getting are reasonable
-local COLOR_TEMPERATURE_KELVIN_MAX = 15000
-local COLOR_TEMPERATURE_KELVIN_MIN = 1000
-SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MIN
-SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = SwitchFields.MIRED_KELVIN_CONVERSION_CONSTANT/COLOR_TEMPERATURE_KELVIN_MAX
+SwitchFields.COLOR_TEMPERATURE_MIRED_MIN = 67   -- 15000 Kelvin
+SwitchFields.COLOR_TEMPERATURE_MIRED_MAX = 1000 --  1000 Kelvin
+
+-- These values are the config bounds in the default Matter profiles (e.g. light-level-colorTemperature, light-color-level)
+SwitchFields.DEFAULT_MIRED_MIN = 154 -- 6500 Kelvin
+SwitchFields.DEFAULT_MIRED_MAX = 455 -- 2200 Kelvin
 
 SwitchFields.SWITCH_LEVEL_LIGHTING_MIN = 1
 SwitchFields.CURRENT_HUESAT_ATTR_MIN = 0
@@ -30,6 +34,7 @@ SwitchFields.DEVICE_TYPE_ID = {
   ELECTRICAL_SENSOR = 0x0510,
   FAN = 0x002B,
   GENERIC_SWITCH = 0x000F,
+  IRRIGATION_SYSTEM = 0x0040,
   MOUNTED_ON_OFF_CONTROL = 0x010F,
   MOUNTED_DIMMABLE_LOAD_CONTROL = 0x0110,
   ON_OFF_PLUG_IN_UNIT = 0x010A,
@@ -44,6 +49,7 @@ SwitchFields.DEVICE_TYPE_ID = {
     DIMMER = 0x0104,
     COLOR_DIMMER = 0x0105,
   },
+  WATER_VALVE = 0x0042,
 }
 
 SwitchFields.device_type_profile_map = {
@@ -82,6 +88,9 @@ SwitchFields.LEVEL_BOUND_RECEIVED = "__level_bound_received"
 SwitchFields.LEVEL_MIN = "__level_min"
 SwitchFields.LEVEL_MAX = "__level_max"
 SwitchFields.COLOR_MODE = "__color_mode"
+SwitchFields.FLOW_BOUND_RECEIVED = "__flow_bound_received"
+SwitchFields.FLOW_MIN = "__flow_min"
+SwitchFields.FLOW_MAX = "__flow_max"
 
 SwitchFields.SUBSCRIBED_ATTRIBUTES_KEY = "__subscribed_attributes"
 
@@ -90,20 +99,26 @@ SwitchFields.updated_fields = {
   { current_field_name = "__switch_intialized", updated_field_name = nil },
   { current_field_name = "__energy_management_endpoint", updated_field_name = nil },
   { current_field_name = "__total_imported_energy", updated_field_name = nil },
+  { current_field_name = "__last_imported_report_timestamp", updated_field_name = nil },
+  { current_field_name = "mostRecentTemp", updated_field_name = nil },
 }
 
 SwitchFields.vendor_overrides = {
-  [0x1321] = { -- SONOFF_MANUFACTURER_ID
-    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
-    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
-  },
   [0x115F] = { -- AQARA_MANUFACTURER_ID
     [0x1006] = { ignore_combo_switch_button = true }, -- 3 Buttons(Generic Switch), 1 Channel (Dimmable Light)
     [0x100A] = { ignore_combo_switch_button = true }, -- 1 Buttons(Generic Switch), 1 Channel (Dimmable Light)
     [0x2004] = { is_climate_sensor_w100 = true }, -- Climate Sensor W100, requires unique profile
   },
   [0x117C] = { -- IKEA_MANUFACTURER_ID
-    [0x8000] = { is_ikea_scroll = true }
+    [0x8000] = { is_ikea_scroll = true }, -- BILRESA scroll wheel
+    [0x8001] = { is_ikea_dual_button = true}, -- BILRESA dual button
+  },
+  [0x1189] = { -- LEDVANCE_MANUFACTURER_ID
+    [0x0891] = { target_profile = "switch-binary", initial_profile = "light-binary" },
+  },
+  [0x1321] = { -- SONOFF_MANUFACTURER_ID
+    [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
+    [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
   [0x1209] = { -- Bosch
     [0x3013] = {target_profile = "light-level-battery-illuminance-motion-temperature"}
@@ -137,18 +152,28 @@ SwitchFields.switch_category_vendor_overrides = {
     {0xEEE2, 0xAB08, 0xAB31, 0xAB04, 0xAB01, 0xAB43, 0xAB02, 0xAB03, 0xAB05}
 }
 
+SwitchFields.operational_state_command_map = {
+  [clusters.OperationalState.commands.Pause.ID] = "pause",
+  [clusters.OperationalState.commands.Resume.ID] = "resume"
+}
+
 --- stores a table of endpoints that support the Electrical Sensor device type, used during profiling
 --- in AvailableEndpoints and PartsList handlers for SET and TREE PowerTopology features, respectively
 SwitchFields.ELECTRICAL_SENSOR_EPS = "__electrical_sensor_eps"
 
 --- used in tandem with an EP ID. Stores the required electrical tags "-power", "-energy-powerConsumption", etc.
---- for an Electrical Sensor EP with a "primary" endpoint, used during device profling.
+--- for an Electrical Sensor EP with a "primary" endpoint, used during device profiling.
 SwitchFields.ELECTRICAL_TAGS = "__electrical_tags"
-
-SwitchFields.MODULAR_PROFILE_UPDATED = "__modular_profile_updated"
 
 SwitchFields.profiling_data = {
   POWER_TOPOLOGY = "__power_topology",
+  BATTERY_SUPPORT = "__battery_support",
+}
+
+SwitchFields.battery_support = {
+  NO_BATTERY = "NO_BATTERY",
+  BATTERY_LEVEL = "BATTERY_LEVEL",
+  BATTERY_PERCENTAGE = "BATTERY_PERCENTAGE",
 }
 
 SwitchFields.ENERGY_METER_OFFSET = "__energy_meter_offset"
@@ -179,10 +204,18 @@ SwitchFields.TEMP_BOUND_RECEIVED = "__temp_bound_received"
 SwitchFields.TEMP_MIN = "__temp_min"
 SwitchFields.TEMP_MAX = "__temp_max"
 
-SwitchFields.TRANSITION_TIME = 0 --1/10ths of a second
--- When sent with a command, these options mask and override bitmaps cause the command
--- to take effect when the switch/light is off.
+SwitchFields.ZERO_TRANSITION_TIME = 0 -- 0.0 seconds
+SwitchFields.DEFAULT_STEP_TRANSITION_TIME = 3 -- 0.3 seconds, measured in tenths of a second as per the Matter spec
+
+SwitchFields.TRANSITION_TIME = {
+  SWITCH_LEVEL_STEP = "__switch_level_step_transition_time",
+  COLOR_TEMP_STEP = "__color_temp_step_transition_time",
+}
+
+-- For Level/Color Control cluster commands, this field indicates which bits in the OptionsOverride field are valid. In this case, we specify that the ExecuteIfOff option (bit 1) may be overridden.
 SwitchFields.OPTIONS_MASK = 0x01
-SwitchFields.OPTIONS_OVERRIDE = 0x01
+-- the OptionsOverride field's first bit overrides the ExecuteIfOff option, defining whether the command should take effect when the device is off.
+SwitchFields.HANDLE_COMMAND_IF_OFF = 0x01
+SwitchFields.IGNORE_COMMAND_IF_OFF = 0x00
 
 return SwitchFields

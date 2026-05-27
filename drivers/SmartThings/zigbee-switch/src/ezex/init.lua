@@ -12,7 +12,7 @@ end
 local ezex_switch_handler = {
   NAME = "ezex switch handler",
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(do_init)
+    init = configurations.reconfig_wrapper(do_init)
   },
   can_handle = require("ezex.can_handle"),
 }

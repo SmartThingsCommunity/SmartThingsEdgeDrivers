@@ -152,7 +152,7 @@ local frient_smart_plug = {
     },
   },
   lifecycle_handlers = {
-    init = device_init,
+    init = configurationMap.reconfig_wrapper(device_init),
     doConfigure = do_configure,
     added = device_added,
   },

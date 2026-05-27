@@ -1,16 +1,6 @@
--- Copyright 2025 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 -- Mock out globals
 local test = require "integration_test"
@@ -53,7 +43,10 @@ test.register_coroutine_test(
 
 	local read_0x0000_messge = cluster_base.read_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, 0x0000, MFG_CODE)
     test.socket.zigbee:__expect_send({mock_device.id, read_0x0000_messge})
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -74,6 +67,9 @@ test.register_message_test(
         direction = "send",
         message = { mock_device.id, clusters.WindowCovering.server.commands.UpOrOpen(mock_device) }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -98,6 +94,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.DownOrClose(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -117,6 +116,9 @@ test.register_message_test(
           clusters.WindowCovering.server.commands.Stop(mock_device)
         }
       }
+    },
+    {
+       min_api_version = 17
     }
 )
 
@@ -132,7 +134,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.open()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -147,7 +152,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.opening()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -162,7 +170,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.closed()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -177,7 +188,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.closing()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -192,7 +206,10 @@ test.register_coroutine_test(
     })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.windowShade.windowShade.partially_open()))
-  end
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
