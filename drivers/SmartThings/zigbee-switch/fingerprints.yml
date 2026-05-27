@@ -2404,6 +2404,11 @@ zigbeeManufacturer:
     manufacturer: LAISIAO
     model: yuba
     deviceProfileName: switch-smart-bath-heater-laisiao
+  - id: "LAISIAO/DG60GCM-04-2904W"
+    deviceLabel: Laisiao Bathroom Heater
+    manufacturer: LAISIAO
+    model: DG60GCM-04-2904W
+    deviceProfileName: switch-smart-bath-heater-laisiao
   # NodOn
   - id: "NodOn/SIN-4-1-20"
     deviceLabel: Zigbee Multifunction Relay Switch
