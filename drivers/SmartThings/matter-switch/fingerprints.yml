@@ -206,6 +206,26 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1045
     deviceProfileName: light-color-level
+  - id: "5014/4578"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11E2
+    deviceProfileName: light-color-level
+  - id: "5014/4274"
+    deviceLabel: Linkind Smart Ceiling Light
+    vendorId: 0x1396
+    productId: 0x10B2
+    deviceProfileName: light-color-level
+  - id: "5014/4642"
+    deviceLabel: Linkind Smart Permanent Outdoor Lights
+    vendorId: 0x1396
+    productId: 0x1222
+    deviceProfileName: light-color-level
+  - id: "5014/4629"
+    deviceLabel: Smart Outdoor String Lights
+    vendorId: 0x1396
+    productId: 0x1215
+    deviceProfileName: light-color-level
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
@@ -847,6 +867,11 @@ matterManufacturer:
     deviceLabel: Govee Ceiling Light Ultra (21inch)
     vendorId: 0x1387
     productId: 0x1270
+    deviceProfileName: light-color-level
+  - id: "4999/24755"
+    deviceLabel: Govee Uplighter Floor Lamp with Nebula Effect
+    vendorId: 0x1387
+    productId: 0x60B3
     deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
@@ -4113,6 +4138,12 @@ matterManufacturer:
     vendorId: 0x1344
     productId: 0x041E
     deviceProfileName: matter-bridge
+#Tapo
+  - id: "5010/269"
+    deviceLabel: Tapo Smart Power Strip
+    vendorId: 0x1392
+    productId: 0x010D
+    deviceProfileName: plug-binary
 
 
 matterGeneric:
