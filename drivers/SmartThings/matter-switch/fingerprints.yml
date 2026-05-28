@@ -185,7 +185,7 @@ matterManufacturer:
     deviceLabel: Linkind Smart Ceiling Light
     vendorId: 0x1396
     productId: 0x10B1
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5014/4164"
     deviceLabel: Linkind Smart Light Bulb
     vendorId: 0x1396
