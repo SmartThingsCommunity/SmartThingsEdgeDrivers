@@ -1671,6 +1671,7 @@ local function handle_update_credential(driver, device, command)
   device:set_field(lock_utils.COMMAND_NAME, cmdName, {persist = true})
   device:set_field(lock_utils.USER_INDEX, userIdx, {persist = true})
   device:set_field(lock_utils.CRED_INDEX, credIdx, {persist = true})
+  device:set_field(lock_utils.USER_TYPE, nil, {persist = true})
 
   -- Send command
   local ep = device:component_to_endpoint(command.component)
@@ -1728,7 +1729,7 @@ local function set_pin_response_handler(driver, device, ib, response)
     -- If User Type is Guest and device support schedule, add default schedule
     local week_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.WEEK_DAY_ACCESS_SCHEDULES})
     local year_schedule_eps = device:get_endpoints(DoorLock.ID, {feature_bitmap = DoorLock.types.Feature.YEAR_DAY_ACCESS_SCHEDULES})
-    if userType == "guest" and (#week_schedule_eps > 0 or #year_schedule_eps > 0) then
+    if userType == "guest" and (#week_schedule_eps > 0 or #year_schedule_eps > 0) and cmdName ~= "updateCredential" then
       local cmdName = "defaultSchedule"
       local scheduleIdx = 1
 
