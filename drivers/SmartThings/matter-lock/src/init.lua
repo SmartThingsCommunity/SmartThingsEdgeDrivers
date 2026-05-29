@@ -622,8 +622,8 @@ local function aliro_protocol_versions_handler(driver, device, ib, response)
   end
   local protocol_versions = {}
   for i, element in ipairs(ib.data.elements) do
-    local version = string.format("%s.%s", element.value:byte(1), element.value:byte(2))
-    table.insert(protocol_versions, version);
+    local ver = string.format("%s.%s", element.value:byte(1), element.value:byte(2))
+    table.insert(protocol_versions, ver);
   end
   device:emit_event(capabilities.lockAliro.expeditedTransactionProtocolVersions(protocol_versions, {visibility = {displayed = false}}))
 end
@@ -637,8 +637,8 @@ local function aliro_supported_ble_uwb_protocol_versions_handler(driver, device,
   end
   local protocol_versions = {}
   for i, element in ipairs(ib.data.elements) do
-    local version = string.format("%s.%s", element.value:byte(1), element.value:byte(2))
-    table.insert(protocol_versions, version);
+    local ver = string.format("%s.%s", element.value:byte(1), element.value:byte(2))
+    table.insert(protocol_versions, ver);
   end
   device:emit_event(capabilities.lockAliro.bleUWBProtocolVersions(protocol_versions, {visibility = {displayed = false}}))
 end
@@ -1382,6 +1382,7 @@ local function get_user_response_handler(driver, device, ib, response)
       command_result_info, {state_change = true, visibility = {displayed = false}}
     ))
     device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    return
   end
 
   local ep = find_default_endpoint(device, DoorLock.ID)

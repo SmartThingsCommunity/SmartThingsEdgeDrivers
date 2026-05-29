@@ -380,7 +380,7 @@ end
 
 local function lock_op_event_handler(driver, device, ib, response)
   local tamper_detected = device:get_latest_state(
-                            device:endpoint_to_component(ib.endopint_id),
+                            device:endpoint_to_component(ib.endpoint_id),
                               capabilities.tamperAlert.ID, capabilities.tamperAlert.tamper.NAME
                           )
   if nil == tamper_detected or tamper_detected == capabilities.tamperAlert.tamper.detected.NAME then
