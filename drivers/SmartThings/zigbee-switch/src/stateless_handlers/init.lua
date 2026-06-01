@@ -26,6 +26,8 @@ local IS_REFRESH_CALLBACK_QUEUED = "__is_refresh_callback_queued"
 -- Stores a timer object, which is required to cancel a timer early
 local REFRESH_CALLBACK_TIMER = "__refresh_callback_timer"
 
+-- Note: These commands' native handlers do not match the driver's ZLL behavior 1-1.
+-- Instead, they will queue a 2s timer and read refresh for each command, in all cases.
 local function trigger_delayed_refresh_if_zll(device)
   if device:get_profile_id() ~= constants.ZLL_PROFILE_ID then
     return
