@@ -52,7 +52,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 1)
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 100)
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -64,7 +67,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 5)
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -76,7 +82,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 1)
     assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 100)
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -88,7 +97,10 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 5)
     assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
