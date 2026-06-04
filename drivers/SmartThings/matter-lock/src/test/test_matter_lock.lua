@@ -192,6 +192,29 @@ test.register_message_test(
 )
 
 test.register_message_test(
+  "Handle unknown LockState value from Matter device.", {
+    {
+      channel = "matter",
+      direction = "receive",
+      message = {
+        mock_device.id,
+        clusters.DoorLock.attributes.LockState:build_test_report_data(
+          mock_device, 10, 0xFF
+        ),
+      },
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.lock.lock.unknown()),
+    },
+  },
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_message_test(
   "Handle received BatPercentRemaining from device.", {
     {
       channel = "matter",
