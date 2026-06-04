@@ -98,6 +98,11 @@ zigbeeManufacturer:
     manufacturer: Third Reality, Inc
     model: 3RSM0147Z
     deviceProfileName: humidity-temp-battery
+  - id: "Third Reality/3RSM0347Z"
+    deviceLabel: ThirdReality Smart Soil Moisture Sensor Gen2
+    manufacturer: Third Reality, Inc
+    model: 3RSM0347Z
+    deviceProfileName: humidity-temp-battery
   - id: "NodOn/STPH-4-1-00"
     deviceLabel: Zigbee Temperature and Humidity Sensor
     manufacturer: NodOn
