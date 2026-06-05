@@ -70,16 +70,7 @@ function IkeaScrollEventHandlers.initial_press_handler(driver, device, ib, respo
   if switch_utils.tbl_contains(scroll_fields.ENDPOINTS_PUSH, ib.endpoint_id) then
     generic_event_handlers.initial_press_handler(driver, device, ib, response)
   else
-    if #response.info_blocks > 1 then
-      device.log.debug("Received InitialPress event in response with multiple info blocks, ignoring due to event order ambiguity.")
-      return
-    end
-    local latest_presses_handled = device:get_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_HANDLED) or 0
-    if latest_presses_handled == 0 then
-      -- the magic number "1" is here since the InitialPress event when presses handled is 0 represents the first press.
-      device:set_field(scroll_fields.LATEST_NUMBER_OF_PRESSES_HANDLED, 1)
-      rotate_amount_event_helper(device, ib.endpoint_id, 1)
-    end
+    device.log.debug("Received InitialPress event from scroll endpoint, ignoring.")
   end
 end
 
