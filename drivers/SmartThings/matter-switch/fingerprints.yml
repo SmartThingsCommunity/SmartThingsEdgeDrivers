@@ -542,6 +542,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/86"
+    deviceLabel: Cync Smart Shop Light
+    vendorId: 0x1339
+    productId: 0x0056
+    deviceProfileName: light-color-level
 #Govee
   - id: "4999/24740"
     deviceLabel: Govee Square Ceiling Light (12 inch)
