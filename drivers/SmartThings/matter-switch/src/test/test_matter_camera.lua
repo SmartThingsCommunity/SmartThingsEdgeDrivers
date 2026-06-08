@@ -1472,6 +1472,47 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Duplicate ZoneTriggered events should not duplicate triggeredZones state",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.events.ZoneTriggered:build_test_event_report(mock_device, CAMERA_EP, {
+        zone = 2,
+        reason = clusters.ZoneManagement.types.ZoneEventTriggeredReasonEnum.MOTION
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.triggeredZones({{zoneId = 2}}))
+    )
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.events.ZoneTriggered:build_test_event_report(mock_device, CAMERA_EP, {
+        zone = 2,
+        reason = clusters.ZoneManagement.types.ZoneEventTriggeredReasonEnum.MOTION
+      })
+    })
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.events.ZoneStopped:build_test_event_report(mock_device, CAMERA_EP, {
+        zone = 2,
+        reason = clusters.ZoneManagement.types.ZoneEventStoppedReasonEnum.ACTION_STOPPED
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.triggeredZones({}))
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
   "Button events should generate appropriate events",
   function()
     update_device_profile()

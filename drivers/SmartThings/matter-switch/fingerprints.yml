@@ -185,7 +185,7 @@ matterManufacturer:
     deviceLabel: Linkind Smart Ceiling Light
     vendorId: 0x1396
     productId: 0x10B1
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5014/4164"
     deviceLabel: Linkind Smart Light Bulb
     vendorId: 0x1396
@@ -2075,6 +2075,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0892
     deviceProfileName: switch-binary
+  - id: "4489/4097"
+    deviceLabel: OSRAM PLANON SLIM
+    vendorId: 0x1189
+    productId: 0x1001
+    deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
