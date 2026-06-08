@@ -13,6 +13,7 @@ local sub_drivers = {
    lazy_load_if_possible("samjin"),
    lazy_load_if_possible("ewelink"),
    lazy_load_if_possible("thirdreality"),
+   lazy_load_if_possible("thirdreality-zb2"),
    lazy_load_if_possible("ezviz"),
    lazy_load_if_possible("MultiIR"),
 }
