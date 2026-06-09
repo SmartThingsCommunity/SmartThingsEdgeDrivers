@@ -181,6 +181,8 @@ function CameraUtils.optional_capabilities_list_changed(new_component_capability
 end
 
 function CameraUtils.subscribe(device)
+  local im = require "st.matter.interaction_model"
+
   local camera_subscribed_attributes = {
     [capabilities.hdr.ID] = {
       clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
@@ -214,7 +216,8 @@ function CameraUtils.subscribe(device)
     },
     [capabilities.audioMute.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerMuted,
-      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted
+      clusters.CameraAvStreamManagement.attributes.MicrophoneMuted,
+      clusters.Chime.attributes.Enabled
     },
     [capabilities.audioVolume.ID] = {
       clusters.CameraAvStreamManagement.attributes.SpeakerVolumeLevel,
@@ -292,8 +295,6 @@ function CameraUtils.subscribe(device)
       clusters.Switch.events.MultiPressComplete
     }
   }
-
-  local im = require "st.matter.interaction_model"
 
   local subscribe_request = im.InteractionRequest(im.InteractionRequest.RequestType.SUBSCRIBE, {})
   local devices_seen, capabilities_seen, attributes_seen, events_seen = {}, {}, {}, {}
