@@ -4332,6 +4332,12 @@ matterGeneric:
     deviceTypes:
       - id: 0x0142 # Camera
     deviceProfileName: camera
+  - id: "matter/camera/chime"
+    deviceLabel: Matter Camera
+    deviceTypes:
+      - id: 0x0142 # Camera
+      - id: 0x0146 # Chime
+    deviceProfileName: camera
   - id: "matter/intercom"
     deviceLabel: Matter Intercom
     deviceTypes:

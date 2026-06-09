@@ -252,6 +252,7 @@ function CameraDeviceConfiguration.match_profile(device)
     end
     if #chime_endpoints > 0 then
       table.insert(main_component_capabilities, capabilities.sounds.ID)
+      table.insert(main_component_capabilities, capabilities.audioMute.ID)
     end
     if #doorbell_endpoints > 0 then
       table.insert(doorbell_component_capabilities, capabilities.button.ID)
