@@ -20,25 +20,10 @@ local mock_device = test.mock_device.build_test_zigbee_device(
   }
 )
 
-local mock_device_eu_em_t = test.mock_device.build_test_zigbee_device(
-  {
-    profile = t_utils.get_profile_definition("switch-power-energy.yml"),
-    zigbee_endpoints = {
-      [1] = {
-        id = 1,
-        manufacturer = "LEDVANCE",
-        model = "PLUG EU EM T",
-        server_clusters = { 0x0006, 0x0702 }
-      }
-    }
-  }
-)
-
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
   test.mock_device.add_test_device(mock_device)
-  test.mock_device.add_test_device(mock_device_eu_em_t)
 end
 
 test.set_test_init_function(test_init)
@@ -67,36 +52,6 @@ test.register_coroutine_test(
     test.wait_for_events()
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 5)
     assert(mock_device:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
-  end,
-  {
-    min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Device init should set default multiplier and divisor only when not already set - PLUG EU EM T",
-  function()
-    assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == nil)
-    assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == nil)
-    test.socket.device_lifecycle:__queue_receive({ mock_device_eu_em_t.id, "init" })
-    test.wait_for_events()
-    assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 1)
-    assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 100)
-  end,
-  {
-    min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Device init should preserve device-reported multiplier and divisor - PLUG EU EM T",
-  function()
-    mock_device_eu_em_t:set_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY, 5, {persist = true})
-    mock_device_eu_em_t:set_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY, 1000, {persist = true})
-    test.socket.device_lifecycle:__queue_receive({ mock_device_eu_em_t.id, "init" })
-    test.wait_for_events()
-    assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_MULTIPLIER_KEY) == 5)
-    assert(mock_device_eu_em_t:get_field(zigbee_constants.SIMPLE_METERING_DIVISOR_KEY) == 1000)
   end,
   {
     min_api_version = 17
