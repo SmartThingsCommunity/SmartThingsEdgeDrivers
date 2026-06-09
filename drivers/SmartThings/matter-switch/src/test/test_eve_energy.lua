@@ -15,6 +15,28 @@ local PRIVATE_ATTR_ID_WATT = 0x130A000A
 local PRIVATE_ATTR_ID_WATT_ACCUMULATED = 0x130A000B
 local PRIVATE_ATTR_ID_ACCUMULATED_CONTROL_POINT = 0x130A000E
 
+-- Helper function to add get_endpoints method to mock devices
+local function add_get_endpoints_to_mock(device)
+  device.get_endpoints = function(self, cluster_id, opts)
+    opts = opts or {}
+    local eps = {}
+    for _, ep in ipairs(self.endpoints) do
+      for _, cluster in ipairs(ep.clusters or {}) do
+        if cluster.cluster_id == cluster_id then
+          -- Check feature_bitmap if specified
+          if opts.feature_bitmap == nil or
+             (cluster.feature_map and (cluster.feature_map & opts.feature_bitmap) == opts.feature_bitmap) then
+            table.insert(eps, ep.endpoint_id)
+            break
+          end
+        end
+      end
+    end
+    return eps
+  end
+  return device
+end
+
 local mock_device = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("power-energy-powerConsumption.yml"),
   manufacturer_info = {
@@ -53,6 +75,7 @@ local mock_device = test.mock_device.build_test_matter_device({
     }
   }
 })
+add_get_endpoints_to_mock(mock_device)
 
 local mock_eve_device_using_electrical_sensor = test.mock_device.build_test_matter_device({
   profile = t_utils.get_profile_definition("plug-energy-powerConsumption.yml"),
@@ -112,6 +135,7 @@ local mock_eve_device_using_electrical_sensor = test.mock_device.build_test_matt
     }
   }
 })
+add_get_endpoints_to_mock(mock_eve_device_using_electrical_sensor)
 
 -- Mock device without Eve Private Cluster (should not match eve_energy sub-driver)
 local mock_device_without_private_cluster = test.mock_device.build_test_matter_device({
@@ -146,6 +170,7 @@ local mock_device_without_private_cluster = test.mock_device.build_test_matter_d
     }
   }
 })
+add_get_endpoints_to_mock(mock_device_without_private_cluster)
 
 local function test_init()
   local cluster_subscribe_list = {
