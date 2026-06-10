@@ -9,17 +9,14 @@ local IkeaScrollEventUtils = {}
 
 
 function IkeaScrollEventUtils.requeue_clear_scroll_state(device)
-  -- Stores a timer object, which is required to cancel a timer early
-  local CLEAR_STATE_TIMER = "__clear_state_timer"
   -- cancel any previously queued clear state actions to prevent unintended clears
-  if device:get_field(CLEAR_STATE_TIMER) then
-    device.thread:cancel_timer(device:get_field(CLEAR_STATE_TIMER))
+  if device:get_field(scroll_fields.CLEAR_STATE_TIMER) then
+    device.thread:cancel_timer(device:get_field(scroll_fields.CLEAR_STATE_TIMER))
   end
-  local delay_s = 8
-  local new_timer = device.thread:call_with_delay(delay_s, function()
+  local new_timer = device.thread:call_with_delay(scroll_fields.CLEAR_STATE_DELAY_S, function()
     device:set_field(scroll_fields.GLOBAL_ROTATE_AMOUNT_STATE, 0)
   end)
-  device:set_field(CLEAR_STATE_TIMER, new_timer)
+  device:set_field(scroll_fields.CLEAR_STATE_TIMER, new_timer)
 end
 
 function IkeaScrollEventUtils.is_valid_scroll_amount(device, scroll_amount)
@@ -39,7 +36,7 @@ end
 function IkeaScrollEventUtils.is_last_valid_info_block(cur_info_block_event_id, cur_info_block_value, info_blocks)
   local last_valid_emission_idx = #info_blocks
   -- Ignore all InitialPress events in a multi-response block
-  while (last_valid_emission_idx > 1) and (info_blocks[last_valid_emission_idx].info_block.event_id == clusters.Switch.events.InitialPress) do
+  while (last_valid_emission_idx > 1) and (info_blocks[last_valid_emission_idx].info_block.event_id == clusters.Switch.events.InitialPress.ID) do
     last_valid_emission_idx = last_valid_emission_idx - 1
   end
 

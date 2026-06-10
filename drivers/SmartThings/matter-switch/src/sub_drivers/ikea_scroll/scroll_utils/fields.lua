@@ -27,6 +27,12 @@ IkeaScrollFields.LATEST_NUMBER_OF_PRESSES_HANDLED = "__latest_number_of_presses_
 -- Field to track the global rotate amount state for the device to ensure no scroll events mapped outside of state bounds are emitted
 IkeaScrollFields.GLOBAL_ROTATE_AMOUNT_STATE = "__global_rotate_amount_state"
 
+-- Stores a timer object, which is required to cancel a timer early
+IkeaScrollFields.CLEAR_STATE_TIMER = "__clear_state_timer"
+
+-- Delay in seconds to wait before clearing the global rotate amount state after the last scroll event
+IkeaScrollFields.CLEAR_STATE_DELAY_S = 8
+
 -- Required Events for the ENDPOINTS_PUSH.
 IkeaScrollFields.switch_press_subscribed_events = {
   clusters.Switch.events.InitialPress.ID,
