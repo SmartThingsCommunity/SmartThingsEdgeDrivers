@@ -120,6 +120,10 @@ SwitchFields.vendor_overrides = {
     [0x000C] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
     [0x000D] = { target_profile = "switch-binary", initial_profile = "plug-binary" },
   },
+  [0x1407] = { -- THIRD_REALITY_MANUFACTURER_ID
+    [0x1098] = { is_third_reality_garage_door = true },
+    [0x1388] = { is_third_reality_mk1 = true},
+  },
 }
 
 SwitchFields.switch_category_vendor_overrides = {
