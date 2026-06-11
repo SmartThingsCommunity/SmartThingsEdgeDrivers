@@ -172,6 +172,12 @@ matterManufacturer:
     vendorId: 0x152C
     productId: 0x9501
     deviceProfileName: lock
+  #Schlage
+  - id: "4662/14336"
+    deviceLabel: Schlage Sense Pro
+    vendorId: 0x1236
+    productId: 0x3800
+    deviceProfileName: lock-modular
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
