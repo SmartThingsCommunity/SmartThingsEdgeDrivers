@@ -7,5 +7,6 @@ local sub_drivers = {
    lazy_load_if_possible("yale"),
    lazy_load_if_possible("yale-fingerprint-lock"),
    lazy_load_if_possible("lock-without-codes"),
+   lazy_load_if_possible("frient-keypad"),
 }
 return sub_drivers

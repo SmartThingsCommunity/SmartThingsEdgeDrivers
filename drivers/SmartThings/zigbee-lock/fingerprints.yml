@@ -212,6 +212,28 @@ zigbeeManufacturer:
     manufacturer: Zhenchen
     model: SG20
     deviceProfileName: lock-battery
+  # frient
+  - id: "frient A/S/KEPZB-110"
+    deviceLabel: "frient Intelligent Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-110
+    deviceProfileName: frient-keypad-security-system
+  - id: "frient A/S/KEPZB-112"
+    deviceLabel: "frient Alarm Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-112
+    deviceProfileName: frient-keypad-security-system
+  - id: "frient A/S/KEPZB-120"
+    deviceLabel: "frient Intelligent Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-120
+    deviceProfileName: frient-keypad-security-system
+  - id: "frient A/S/KEPZB-122"
+    deviceLabel: "frient Alarm Keypad"
+    manufacturer: "frient A/S"
+    model: KEPZB-122
+    deviceProfileName: frient-keypad-security-system
+
 zigbeeGeneric:
   - id: "genericLock"
     deviceLabel: Zigbee Lock
@@ -220,3 +242,4 @@ zigbeeGeneric:
         - 0x0101 #Door Lock
         - 0x0001 #Power Configuration
     deviceProfileName: lock-battery
+  
