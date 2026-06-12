@@ -22,7 +22,6 @@ function IkeaScrollConfiguration.configure_buttons(device)
   for _, ep in ipairs(scroll_fields.ENDPOINTS_PUSH) do
     device:send(clusters.Switch.attributes.MultiPressMax:read(device, ep))
     switch_utils.set_field_for_endpoint(device, switch_fields.SUPPORTS_MULTI_PRESS, ep, true, {persist = true})
-    device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
   end
   for _, ep in ipairs(scroll_fields.ENDPOINTS_UP_SCROLL) do -- and by extension, ENDPOINTS_DOWN_SCROLL
     device:emit_event_for_endpoint(ep, capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}}))

@@ -1,0 +1,56 @@
+name: garage-door
+components:
+- id: main
+  capabilities:
+  - id: doorControl
+    version: 1
+  - id: level
+    version: 1
+    optional: true
+  - id: battery
+    version: 1
+    optional: true
+  - id: batteryLevel
+    version: 1
+    optional: true
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+  - name: GarageDoor
+- id: door1
+  optional: true
+  capabilities:
+    - id: level
+      version: 1
+      optional: true
+  categories:
+    - name: GarageDoor
+- id: door2
+  optional: true
+  capabilities:
+    - id: level
+      version: 1
+      optional: true
+  categories:
+    - name: GarageDoor
+- id: door3
+  optional: true
+  capabilities:
+    - id: level
+      version: 1
+      optional: true
+  categories:
+    - name: GarageDoor
+- id: door4
+  optional: true
+  capabilities:
+    - id: level
+      version: 1
+      optional: true
+  categories:
+    - name: GarageDoor
+preferences:
+  - preferenceId: reverse
+    explicit: true

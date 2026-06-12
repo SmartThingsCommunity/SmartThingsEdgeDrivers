@@ -161,6 +161,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1076
     deviceProfileName: light-color-level
+  - id: "5014/4245"
+    deviceLabel: OREiN Matter smart Bathroom Fan
+    vendorId: 0x1396
+    productId: 0x1095
+    deviceProfileName: fan-modular
   - id: "5014/4246"
     deviceLabel: OREiN Matter smart Bathroom Fan
     vendorId: 0x1396
@@ -175,6 +180,51 @@ matterManufacturer:
     deviceLabel: Linkind Smart Light Bulb
     vendorId: 0x1396
     productId: 0x1077
+    deviceProfileName: light-color-level
+  - id: "5014/4273"
+    deviceLabel: Linkind Smart Ceiling Light
+    vendorId: 0x1396
+    productId: 0x10B1
+    deviceProfileName: light-color-level
+  - id: "5014/4164"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1044
+    deviceProfileName: light-color-level
+  - id: "5014/4118"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x1016
+    deviceProfileName: light-color-level
+  - id: "5014/4116"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1014
+    deviceProfileName: light-color-level
+  - id: "5014/4165"
+    deviceLabel: Linkind Smart Downlight
+    vendorId: 0x1396
+    productId: 0x1045
+    deviceProfileName: light-color-level
+  - id: "5014/4578"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11E2
+    deviceProfileName: light-color-level
+  - id: "5014/4274"
+    deviceLabel: Linkind Smart Ceiling Light
+    vendorId: 0x1396
+    productId: 0x10B2
+    deviceProfileName: light-color-level
+  - id: "5014/4642"
+    deviceLabel: Linkind Smart Permanent Outdoor Lights
+    vendorId: 0x1396
+    productId: 0x1222
+    deviceProfileName: light-color-level
+  - id: "5014/4629"
+    deviceLabel: Smart Outdoor String Lights
+    vendorId: 0x1396
+    productId: 0x1215
     deviceProfileName: light-color-level
 #Bosch Smart Home
   - id: "4617/12310"
@@ -194,6 +244,11 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1088
     deviceProfileName: light-color-level-illuminance-motion-1000K-15000K
+  - id: "5127/5121"
+    deviceLabel: ThirdReality Smart Night Light -T
+    vendorId: 0x1407
+    productId: 0x1401
+    deviceProfileName: light-color-level-illuminance-motion
   - id: "5127/4744"
     deviceLabel: Smart Bridge MZ1
     vendorId: 0x1407
@@ -487,6 +542,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/86"
+    deviceLabel: Cync Smart Shop Light
+    vendorId: 0x1339
+    productId: 0x0056
+    deviceProfileName: light-color-level
 #Govee
   - id: "4999/24740"
     deviceLabel: Govee Square Ceiling Light (12 inch)
@@ -659,7 +719,7 @@ matterManufacturer:
     productId: 0x61B9
     deviceProfileName: light-color-level
   - id: "4999/24742"
-    deviceLabel: Govee Ceiling Light Pro (15 inch)
+    deviceLabel: Govee Ceiling Light Pro
     vendorId: 0x1387
     productId: 0x60A6
     deviceProfileName: light-color-level
@@ -767,6 +827,56 @@ matterManufacturer:
     deviceLabel: Govee RGBICWW Light Bar
     vendorId: 0x1387
     productId: 0x6056
+    deviceProfileName: light-color-level
+  - id: "4999/5281"
+    deviceLabel: Govee Smart Bulb PAR38
+    vendorId: 0x1387
+    productId: 0x14A1
+    deviceProfileName: light-color-level
+  - id: "4999/5121"
+    deviceLabel: Govee Smart Bulb A21 1600lm
+    vendorId: 0x1387
+    productId: 0x1401
+    deviceProfileName: light-color-level
+  - id: "4999/5313"
+    deviceLabel: Govee Edison Bulb
+    vendorId: 0x1387
+    productId: 0x14C1
+    deviceProfileName: light-color-level
+  - id: "4999/5312"
+    deviceLabel: Govee Edison Bulb
+    vendorId: 0x1387
+    productId: 0x14C0
+    deviceProfileName: light-color-level
+  - id: "4999/5680"
+    deviceLabel: Govee Lantern Floor Lamp
+    vendorId: 0x1387
+    productId: 0x1630
+    deviceProfileName: light-color-level
+  - id: "4999/5953"
+    deviceLabel: Govee Table Lamp Classic
+    vendorId: 0x1387
+    productId: 0x1741
+    deviceProfileName: light-color-level
+  - id: "4999/5808"
+    deviceLabel: Govee Floor Lamp 3
+    vendorId: 0x1387
+    productId: 0x16B0
+    deviceProfileName: light-color-level
+  - id: "4999/5824"
+    deviceLabel: Govee Floor Lamp 3 Lite
+    vendorId: 0x1387
+    productId: 0x16C0
+    deviceProfileName: light-color-level
+  - id: "4999/4720"
+    deviceLabel: Govee Ceiling Light Ultra (21inch)
+    vendorId: 0x1387
+    productId: 0x1270
+    deviceProfileName: light-color-level
+  - id: "4999/24755"
+    deviceLabel: Govee Uplighter Floor Lamp with Nebula Effect
+    vendorId: 0x1387
+    productId: 0x60B3
     deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
@@ -910,6 +1020,56 @@ matterManufacturer:
     vendorId: 0x117C
     productId: 0x8001
     deviceProfileName: ikea-2-button-battery
+  - id: "4476/36885"
+    deviceLabel: KAJPLATS E12 WS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9015
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36880"
+    deviceLabel: VARMBLIXT table/wall lamp
+    vendorId: 0x117C
+    productId: 0x9010
+    deviceProfileName: light-color-level
+  - id: "4476/36881"
+    deviceLabel: KAJPLATS E26 450lm
+    vendorId: 0x117C
+    productId: 0x9011
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36882"
+    deviceLabel: KAJPLATS E26 1100lm
+    vendorId: 0x117C
+    productId: 0x9012
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36884"
+    deviceLabel: KAJPLATS E26 WS 1600lm
+    vendorId: 0x117C
+    productId: 0x9014
+    deviceProfileName: light-level-colorTemperature
+  - id: "4476/36886"
+    deviceLabel: KAJPLATS E26 1100lm CWS
+    vendorId: 0x117C
+    productId: 0x9016
+    deviceProfileName: light-color-level
+  - id: "4476/36887"
+    deviceLabel: KAJPLATS E12 CWS Globe 800lm
+    vendorId: 0x117C
+    productId: 0x9017
+    deviceProfileName: light-color-level
+  - id: "4476/36889"
+    deviceLabel: KAJPLATS E12 WS B38 CL 470lm
+    vendorId: 0x117C
+    productId: 0x9019
+    deviceProfileName: light-level-colorTemperature
+  - id: "17526/16534"
+    deviceLabel: GRILLPLATS plug
+    vendorId: 0x4476
+    productId: 0x4096
+    deviceProfileName: plug-power-energy-powerConsumption
+  - id: "17526/16535"
+    deviceLabel: TOFSMYGGA
+    vendorId: 0x4476
+    productId: 0x4097
+    deviceProfileName: plug-power-energy-powerConsumption
 #Innovation Matters
   - id: "4978/1"
     deviceLabel: M2D Bridge
@@ -1915,6 +2075,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0892
     deviceProfileName: switch-binary
+  - id: "4489/4097"
+    deviceLabel: OSRAM PLANON SLIM
+    vendorId: 0x1189
+    productId: 0x1001
+    deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
@@ -3983,6 +4148,17 @@ matterManufacturer:
     vendorId: 0x1344
     productId: 0x041E
     deviceProfileName: matter-bridge
+#Tapo
+  - id: "5010/269"
+    deviceLabel: Tapo Smart Power Strip
+    vendorId: 0x1392
+    productId: 0x010D
+    deviceProfileName: plug-binary
+  - id: "20496/610"
+    deviceLabel: Mini Smart Wi-Fi Plug Energy Monitoring Matter
+    vendorId: 0x5010
+    productId: 0x0262
+    deviceProfileName: plug-power-energy-powerConsumption
 
 
 matterGeneric:
@@ -4070,6 +4246,11 @@ matterGeneric:
     deviceTypes:
       - id: 0x0110 # Mounted Dimmable Load Control
     deviceProfileName: switch-level
+  - id: "matter/irrigation-system"
+    deviceLabel: Matter Irrigation System
+    deviceTypes:
+      - id: 0x0040 # Irrigation System
+    deviceProfileName: irrigation-system
   - id: "matter/water-valve"
     deviceLabel: Matter Water Valve
     deviceTypes:

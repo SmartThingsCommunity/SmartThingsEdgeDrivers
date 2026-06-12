@@ -392,22 +392,23 @@ end
 
 function utils.report_power_consumption_to_st_energy(device, endpoint_id, total_imported_energy_wh)
   local current_time = os.time()
-  local last_time = device:get_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP) or 0
+  local last_time = utils.get_field_for_endpoint(device, fields.LAST_IMPORTED_REPORT_TIMESTAMP, endpoint_id) or 0
 
   -- Ensure that the previous report was sent at least 15 minutes ago
   if fields.MINIMUM_ST_ENERGY_REPORT_INTERVAL >= (current_time - last_time) then
     return
   end
-  device:set_field(fields.LAST_IMPORTED_REPORT_TIMESTAMP, current_time, { persist = true })
+  utils.set_field_for_endpoint(device, fields.LAST_IMPORTED_REPORT_TIMESTAMP, endpoint_id, current_time, { persist = true })
 
   local previous_imported_report = utils.get_latest_state_for_endpoint(device, endpoint_id, capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME, { energy = total_imported_energy_wh }) -- default value if nil
+  local delta_energy = total_imported_energy_wh - previous_imported_report.energy
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
   local epoch_to_iso8601 = function(time) return os.date("!%Y-%m-%dT%H:%M:%SZ", time) end -- Return an ISO-8061 timestamp from UTC
   device:emit_event_for_endpoint(endpoint_id, capabilities.powerConsumptionReport.powerConsumption({
     start = epoch_to_iso8601(last_time),
     ["end"] = epoch_to_iso8601(current_time - 1),
-    deltaEnergy = total_imported_energy_wh - previous_imported_report.energy,
+    deltaEnergy = delta_energy >= 0.0 and delta_energy or total_imported_energy_wh, -- clarifying assumption: a negative delta means the meter was reset
     energy = total_imported_energy_wh
   }))
 end

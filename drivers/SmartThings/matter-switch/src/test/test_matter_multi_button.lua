@@ -179,19 +179,10 @@ local mock_device_battery = test.mock_device.build_test_matter_device(
 
 local function expect_configure_buttons(device)
   test.socket.capability:__expect_send(device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(device:generate_test_message("main", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed", "held"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(device:generate_test_message("button3", button_attr.pushed({state_change = false})))
-
   test.socket.matter:__expect_send({device.id, clusters.Switch.attributes.MultiPressMax:read(device, 50)})
-  test.socket.capability:__expect_send(device:generate_test_message("button4", button_attr.pushed({state_change = false})))
-
   test.socket.matter:__expect_send({device.id, clusters.Switch.attributes.MultiPressMax:read(device, 60)})
-  test.socket.capability:__expect_send(device:generate_test_message("button5", button_attr.pushed({state_change = false})))
 end
 
 local function update_profile()
@@ -221,10 +212,6 @@ local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device) -- make sure the cache is populated
 
-  -- added sets a bunch of fields on the device, and calls init
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-
   -- init results in subscription interaction
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
@@ -253,9 +240,6 @@ local function test_init_battery()
 
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device_battery)
-
-  test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
-  test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "added" })
 
   test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "init" })

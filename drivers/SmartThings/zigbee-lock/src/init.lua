@@ -442,6 +442,7 @@ local zigbee_lock_driver = {
     init = init,
   },
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 
 defaults.register_for_default_handlers(zigbee_lock_driver, zigbee_lock_driver.supported_capabilities)
