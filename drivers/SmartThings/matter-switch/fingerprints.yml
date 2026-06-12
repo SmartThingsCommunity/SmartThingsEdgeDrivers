@@ -4154,10 +4154,10 @@ matterManufacturer:
     vendorId: 0x1392
     productId: 0x010D
     deviceProfileName: plug-binary
-  - id: "20496/610"
+  - id: "5010/262"
     deviceLabel: Mini Smart Wi-Fi Plug Energy Monitoring Matter
-    vendorId: 0x5010
-    productId: 0x0262
+    vendorId: 0x1392
+    productId: 0x0106
     deviceProfileName: plug-power-energy-powerConsumption
 
 
