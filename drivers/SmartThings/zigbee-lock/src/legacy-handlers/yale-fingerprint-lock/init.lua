@@ -1,20 +1,15 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
 
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local LockCluster = clusters.DoorLock
-local LockCredentials = capabilities.lockCredentials
-local LockUsers = capabilities.lockUsers
+local LockCodes = capabilities.lockCodes
 
 local YALE_FINGERPRINT_MAX_CODES = 0x1E
-
-
-
 local handle_max_codes = function(driver, device, value)
-  device:emit_event(LockCredentials.pinUsersSupported(YALE_FINGERPRINT_MAX_CODES))
-  device:emit_event(LockUsers.totalUsersSupported(YALE_FINGERPRINT_MAX_CODES))
+  device:emit_event(LockCodes.maxCodes(YALE_FINGERPRINT_MAX_CODES), { visibility = { displayed = false } })
 end
 
 local yale_fingerprint_lock_driver = {
@@ -26,7 +21,7 @@ local yale_fingerprint_lock_driver = {
       }
     }
   },
-  can_handle = require("yale-fingerprint-lock.can_handle")
+  can_handle = require("legacy-handlers.yale-fingerprint-lock.can_handle")
 }
 
 return yale_fingerprint_lock_driver
