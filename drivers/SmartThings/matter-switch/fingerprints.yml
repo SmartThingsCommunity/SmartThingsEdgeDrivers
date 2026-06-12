@@ -226,6 +226,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1215
     deviceProfileName: light-color-level
+  - id: "5014/4158"
+    deviceLabel: Linkind Smart Ceiling Fan
+    vendorId: 0x1396
+    productId: 0x103E
+    deviceProfileName: fan-modular
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
