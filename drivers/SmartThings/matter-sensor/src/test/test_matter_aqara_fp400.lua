@@ -82,7 +82,7 @@ test.register_coroutine_test(
 )
 
 test.register_message_test(
-  "Occupancy reports should generate correct motion messages",
+  "Occupancy reports should generate correct presence messages",
   {
     {
       channel = "matter",
@@ -95,7 +95,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.active())
+      message = mock_device:generate_test_message("main", capabilities.presenceSensor.presence("present"))
     },
     {
       channel = "matter",
@@ -108,7 +108,7 @@ test.register_message_test(
     {
       channel = "capability",
       direction = "send",
-      message = mock_device:generate_test_message("main", capabilities.motionSensor.motion.inactive())
+      message = mock_device:generate_test_message("main", capabilities.presenceSensor.presence("not present"))
     }
   },
   {

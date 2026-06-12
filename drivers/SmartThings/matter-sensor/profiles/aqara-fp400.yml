@@ -2,7 +2,7 @@ name: aqara-fp400
 components:
 - id: main
   capabilities:
-  - id: motionSensor
+  - id: presenceSensor
     version: 1
   - id: illuminanceMeasurement
     version: 1
@@ -11,4 +11,4 @@ components:
   - id: refresh
     version: 1
   categories:
-  - name: MotionSensor
+  - name: PresenceSensor
