@@ -1,0 +1,37 @@
+name: switch-light-restore-wireless
+components:
+- id: main
+  capabilities:
+  - id: switch
+    version: 1
+  - id: firmwareUpdate
+    version: 1
+  - id: refresh
+    version: 1
+  categories:
+    - name: Switch
+preferences:
+  - title: "背光灯(backlight/백라이트)"
+    name: backlight
+    description: "背光灯(backlight/백라이트)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "关闭(close/닫다)"
+        1: "打开(open/열다)"
+        2: "人体移动检测(human detection/인체 움직임 검사)"
+      default: 2
+  - title: "开关上电状态(relay powerOn state)"
+    name: powerOnStatus
+    description: "开关上电状态(relay powerOn state/릴레이 초기 동작 상태)"
+    required: false
+    preferenceType: enumeration
+    definition:
+      options:
+        0: "关闭(close/닫다)"
+        1: "打开(open/열다)"
+        2: "恢复记忆状态(restore/복원)"
+      default: 2
+  - preferenceId: stse.changeToWirelessSwitch
+    explicit: true
