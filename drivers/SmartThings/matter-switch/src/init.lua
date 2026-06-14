@@ -29,6 +29,8 @@ if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
 end
 
+local ModeSelect = require "embedded_clusters.ModeSelect"
+
 local SwitchLifecycleHandlers = {}
 
 function SwitchLifecycleHandlers.device_added(driver, device)
@@ -71,6 +73,13 @@ function SwitchLifecycleHandlers.info_changed(driver, device, event, args)
       button_cfg.configure_buttons(device,
         device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH})
       )
+      local mode_select_eps = device:get_endpoints(ModeSelect.ID)
+      if #mode_select_eps > 0 then
+        for _, ep in ipairs(mode_select_eps) do
+          device:send(ModeSelect.attributes.SupportedModes:read(device, ep))
+          device:send(ModeSelect.attributes.CurrentMode:read(device, ep))
+        end
+      end
     elseif device.network_type == device_lib.NETWORK_TYPE_CHILD then
       device:get_parent_device():subscribe() -- parent device required to send subscription requests
     end
@@ -109,6 +118,14 @@ function SwitchLifecycleHandlers.device_init(driver, device)
     switch_utils.handle_electrical_sensor_info(device)
     device:extend_device("subscribe", switch_utils.subscribe)
     device:subscribe()
+
+    local mode_select_eps = device:get_endpoints(ModeSelect.ID)
+    if #mode_select_eps > 0 then
+      for _, ep in ipairs(mode_select_eps) do
+        device:send(ModeSelect.attributes.SupportedModes:read(device, ep))
+        device:send(ModeSelect.attributes.CurrentMode:read(device, ep))
+      end
+    end
   end
 end
 
@@ -200,6 +217,10 @@ local matter_driver_template = {
         [clusters.ValveConfigurationAndControl.attributes.CurrentLevel.ID] = attribute_handlers.valve_configuration_current_level_handler,
         [clusters.ValveConfigurationAndControl.attributes.CurrentState.ID] = attribute_handlers.valve_configuration_current_state_handler,
       },
+      [ModeSelect.ID] = {
+        [ModeSelect.attributes.SupportedModes.ID] = attribute_handlers.mode_select_supported_modes_handler,
+        [ModeSelect.attributes.CurrentMode.ID] = attribute_handlers.mode_select_current_mode_handler,
+      },
     },
     event = {
       [clusters.Switch.ID] = {
@@ -282,6 +303,10 @@ local matter_driver_template = {
     [capabilities.valve.ID] = {
       clusters.ValveConfigurationAndControl.attributes.CurrentState
     },
+    [capabilities.mode.ID] = {
+      ModeSelect.attributes.SupportedModes,
+      ModeSelect.attributes.CurrentMode,
+    },
   },
   subscribed_events = {
     [capabilities.button.ID] = {
@@ -333,6 +358,9 @@ local matter_driver_template = {
       [capabilities.valve.commands.close.NAME] = capability_handlers.handle_valve_close,
       [capabilities.valve.commands.open.NAME] = capability_handlers.handle_valve_open,
     },
+    [capabilities.mode.ID] = {
+      [capabilities.mode.commands.setMode.NAME] = capability_handlers.handle_set_mode,
+    },
   },
   supported_capabilities = {
     capabilities.audioMute,
@@ -354,6 +382,7 @@ local matter_driver_template = {
     capabilities.imageControl,
     capabilities.level,
     capabilities.localMediaStorage,
+    capabilities.mode,
     capabilities.mechanicalPanTiltZoom,
     capabilities.motionSensor,
     capabilities.nightVision,
