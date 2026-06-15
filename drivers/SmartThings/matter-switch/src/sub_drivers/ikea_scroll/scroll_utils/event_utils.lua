@@ -63,7 +63,7 @@ function IkeaScrollEventUtils.aggregate_scroll_amount_for_info_blocks(device, in
   local presses_in_current_chain = 0
   for _, ib in ipairs(info_blocks) do
     if ib.info_block.event_id == clusters.Switch.events.MultiPressOngoing.ID then
-      presses_in_current_chain = presses_in_current_chain + (ib.info_block.data.elements and ib.info_block.data.elements.current_number_of_presses_counted.value or 0)
+      presses_in_current_chain = ib.info_block.data.elements and ib.info_block.data.elements.current_number_of_presses_counted.value or 0
     elseif ib.info_block.event_id == clusters.Switch.events.MultiPressComplete.ID then
       total_presses = total_presses + (ib.info_block.data.elements and ib.info_block.data.elements.total_number_of_presses_counted.value or 0)
       presses_in_current_chain = 0

@@ -30,6 +30,7 @@ function IkeaScrollEventHandlers.multi_press_ongoing_handler(driver, device, ib,
     local cur_num_presses_counted = ib.data.elements and ib.data.elements.current_number_of_presses_counted.value or 0
     local cur_multi_press_count = cur_num_presses_counted
     if #response.info_blocks > 1 then
+      -- note: keep in mind that response blocks with mutliple info blocks are not supported by unit tests today.
       if event_utils.is_last_valid_info_block(ib.event_id, cur_num_presses_counted, response.info_blocks) then
         local aggregated_presses = event_utils.aggregate_scroll_amount_for_info_blocks(device, response.info_blocks) or {}
         cur_num_presses_counted = aggregated_presses.total_presses or 0
@@ -51,6 +52,7 @@ function IkeaScrollEventHandlers.multi_press_complete_handler(driver, device, ib
   else
     local total_num_presses_counted = ib.data.elements and ib.data.elements.total_number_of_presses_counted.value or 0
     if #response.info_blocks > 1 then
+      -- note: keep in mind that response blocks with mutliple info blocks are not supported by unit tests today.
       if event_utils.is_last_valid_info_block(ib.event_id, total_num_presses_counted, response.info_blocks) then
         local aggregated_presses = event_utils.aggregate_scroll_amount_for_info_blocks(device, response.info_blocks) or {}
         total_num_presses_counted = aggregated_presses.total_presses or 0
