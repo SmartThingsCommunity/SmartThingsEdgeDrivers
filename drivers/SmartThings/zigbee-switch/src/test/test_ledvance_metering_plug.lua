@@ -37,6 +37,7 @@ local mock_device_eu_em_t = test.mock_device.build_test_zigbee_device(
 zigbee_test_utils.prepare_zigbee_env_info()
 
 local function test_init()
+  test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
   test.mock_device.add_test_device(mock_device_eu_em_t)
 end
