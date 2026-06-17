@@ -226,6 +226,11 @@ matterManufacturer:
     vendorId: 0x1396
     productId: 0x1215
     deviceProfileName: light-color-level
+  - id: "5014/4158"
+    deviceLabel: Linkind Smart Ceiling Fan
+    vendorId: 0x1396
+    productId: 0x103E
+    deviceProfileName: fan-modular
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
@@ -542,6 +547,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/86"
+    deviceLabel: Cync Smart Shop Light
+    vendorId: 0x1339
+    productId: 0x0056
+    deviceProfileName: light-color-level
 #Govee
   - id: "4999/24740"
     deviceLabel: Govee Square Ceiling Light (12 inch)
@@ -4149,6 +4159,11 @@ matterManufacturer:
     vendorId: 0x1392
     productId: 0x010D
     deviceProfileName: plug-binary
+  - id: "5010/262"
+    deviceLabel: Mini Smart Wi-Fi Plug Energy Monitoring Matter
+    vendorId: 0x1392
+    productId: 0x0106
+    deviceProfileName: plug-power-energy-powerConsumption
 
 
 matterGeneric:
