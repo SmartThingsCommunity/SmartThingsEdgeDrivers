@@ -1,35 +1,9 @@
 -- Copyright © 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local st_utils = require "st.utils"
 local clusters = require "st.matter.clusters"
-local scroll_fields = require "sub_drivers.ikea_scroll.scroll_utils.fields"
 
 local IkeaScrollEventUtils = {}
-
-
-function IkeaScrollEventUtils.requeue_clear_scroll_state(device)
-  -- cancel any previously queued clear state actions to prevent unintended clears
-  if device:get_field(scroll_fields.CLEAR_STATE_TIMER) then
-    device.thread:cancel_timer(device:get_field(scroll_fields.CLEAR_STATE_TIMER))
-  end
-  local new_timer = device.thread:call_with_delay(scroll_fields.CLEAR_STATE_DELAY_S, function()
-    device:set_field(scroll_fields.GLOBAL_ROTATE_AMOUNT_STATE, 0)
-  end)
-  device:set_field(scroll_fields.CLEAR_STATE_TIMER, new_timer)
-end
-
-function IkeaScrollEventUtils.is_valid_scroll_amount(device, scroll_amount)
-  local global_rotate_amount_state = device:get_field(scroll_fields.GLOBAL_ROTATE_AMOUNT_STATE) or 0
-  local is_rotate_amount_state_at_bounds = (scroll_amount < 0 and global_rotate_amount_state <= -100) or (scroll_amount > 0 and global_rotate_amount_state >= 100)
-  if is_rotate_amount_state_at_bounds then
-    return false
-  end
-
-  device:set_field(scroll_fields.GLOBAL_ROTATE_AMOUNT_STATE, st_utils.clamp_value(global_rotate_amount_state + scroll_amount, -100, 100))
-  IkeaScrollEventUtils.requeue_clear_scroll_state(device)
-  return true
-end
 
 -- inspect all info blocks to find the last one that is not an InitialPress event. We will
 -- only try to emit a rotateAmount event if the current info block being handled is that last one.
