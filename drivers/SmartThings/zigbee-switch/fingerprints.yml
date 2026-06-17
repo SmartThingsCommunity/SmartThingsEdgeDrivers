@@ -1075,6 +1075,11 @@ zigbeeManufacturer:
     manufacturer:
     model: TERNCY-LS01
     deviceProfileName: basic-switch
+  - id: Third Reality/3RPL01084Z
+    deviceLabel: ThirdReality Multi-Function Smart Presence Sensor R3
+    manufacturer: Third Reality, Inc
+    model: 3RPL01084Z
+    deviceProfileName: thirdreality-presence-color-night-light
   - id: Third Reality/3RSS009Z
     deviceLabel: ThirdReality Switch
     manufacturer: Third Reality, Inc
