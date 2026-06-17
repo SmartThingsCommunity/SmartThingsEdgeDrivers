@@ -17,7 +17,7 @@ local ledvance_metering_plug = {
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = require("ledvance-metering-plug.can_handle")
+  can_handle = require("zigbee-switch-power.ledvance-metering-plug.can_handle")
 }
 
 return ledvance_metering_plug

@@ -1,0 +1,50 @@
+-- Copyright © 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+local clusters = require "st.matter.clusters"
+
+local IkeaScrollEventUtils = {}
+
+-- inspect all info blocks to find the last one that is not an InitialPress event. We will
+-- only try to emit a rotateAmount event if the current info block being handled is that last one.
+function IkeaScrollEventUtils.is_last_valid_info_block(cur_info_block_event_id, cur_info_block_value, info_blocks)
+  local last_valid_emission_idx = #info_blocks
+  -- Ignore all InitialPress events in a multi-response block
+  while (last_valid_emission_idx > 1) and (info_blocks[last_valid_emission_idx].info_block.event_id == clusters.Switch.events.InitialPress.ID) do
+    last_valid_emission_idx = last_valid_emission_idx - 1
+  end
+
+  -- Because the info block does not include the unique_key Matter defined event number, this
+  -- logic is a best guess at matching the current info block to the last valid info block.
+  local emission_ib = info_blocks[last_valid_emission_idx].info_block
+  if emission_ib.event_id ~= cur_info_block_event_id then
+    return false
+  elseif emission_ib.event_id == clusters.Switch.events.MultiPressComplete.ID then
+    local last_valid_ib_value = emission_ib.data.elements and emission_ib.data.elements.total_number_of_presses_counted.value or 0
+    return last_valid_ib_value == cur_info_block_value
+  elseif emission_ib.event_id == clusters.Switch.events.MultiPressOngoing.ID then
+    local last_valid_ib_value = emission_ib.data.elements and emission_ib.data.elements.current_number_of_presses_counted.value or 0
+    return last_valid_ib_value == cur_info_block_value
+  elseif last_valid_emission_idx == 1 then -- aka, all ib's are InitialPress
+    return true
+  end
+
+  return false
+end
+
+function IkeaScrollEventUtils.aggregate_scroll_amount_for_info_blocks(device, info_blocks)
+  local total_presses = 0
+  local presses_in_current_chain = 0
+  for _, ib in ipairs(info_blocks) do
+    if ib.info_block.event_id == clusters.Switch.events.MultiPressOngoing.ID then
+      presses_in_current_chain = ib.info_block.data.elements and ib.info_block.data.elements.current_number_of_presses_counted.value or 0
+    elseif ib.info_block.event_id == clusters.Switch.events.MultiPressComplete.ID then
+      total_presses = total_presses + (ib.info_block.data.elements and ib.info_block.data.elements.total_number_of_presses_counted.value or 0)
+      presses_in_current_chain = 0
+    end
+  end
+  total_presses = total_presses + presses_in_current_chain -- aggregate any presses to the total from the current chain
+  return { total_presses = total_presses, presses_in_current_chain = presses_in_current_chain }
+end
+
+return IkeaScrollEventUtils
