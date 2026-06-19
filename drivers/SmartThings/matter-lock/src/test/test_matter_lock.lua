@@ -383,10 +383,10 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     )
-end,
-{
-   min_api_version = 17
-}
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
