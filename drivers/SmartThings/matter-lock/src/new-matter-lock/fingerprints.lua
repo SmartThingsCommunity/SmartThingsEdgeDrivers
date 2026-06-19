@@ -8,7 +8,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2804}, -- AQARA, U400
   {0x115f, 0x286A}, -- AQARA, U200 US
   {0x115f, 0x2805}, -- Aqara Smart Lock J200 Set
-  {0x115f, 0x280e}, -- AQARA Smart Gate Lock U500
+  {0x115F, 0x280E}, -- Aqara Smart Lock U500
   {0x115f, 0x280f}, -- AQARA Smart Rim Lock U500
   {0x115f, 0x2810}, -- AQARA Smart Glass Door Lock U500
   {0x147F, 0x0001}, -- U-tec
