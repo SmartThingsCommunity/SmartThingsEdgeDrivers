@@ -47,6 +47,7 @@ local lock_utils = {
   ALIRO_READER_CONFIG_UPDATED = "aliroReaderConfigUpdated",
   LATEST_DOOR_LOCK_FEATURE_MAP = "latestDoorLockFeatureMap",
   LOCK_CODES_COPY_REQUIRED = "lockCodesCopyRequired",
+  LOCK_CODES_FOR_MIGRATION = "lockCodesForMigration",
 }
 local capabilities = require "st.capabilities"
 local json = require "st.json"

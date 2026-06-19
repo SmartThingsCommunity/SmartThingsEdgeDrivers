@@ -17,33 +17,6 @@ local subscribed_attributes = {
   [capabilities.lock.ID] = {
     DoorLock.attributes.LockState
   },
-  [capabilities.remoteControlStatus.ID] = {
-    DoorLock.attributes.OperatingMode
-  },
-  [capabilities.lockUsers.ID] = {
-    DoorLock.attributes.NumberOfTotalUsersSupported
-  },
-  [capabilities.lockCredentials.ID] = {
-    DoorLock.attributes.NumberOfPINUsersSupported,
-    DoorLock.attributes.MaxPINCodeLength,
-    DoorLock.attributes.MinPINCodeLength,
-    DoorLock.attributes.RequirePINforRemoteOperation
-  },
-  [capabilities.lockSchedules.ID] = {
-    DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser,
-    DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser
-  },
-  [capabilities.lockAliro.ID] = {
-    DoorLock.attributes.AliroReaderVerificationKey,
-    DoorLock.attributes.AliroReaderGroupIdentifier,
-    DoorLock.attributes.AliroReaderGroupSubIdentifier,
-    DoorLock.attributes.AliroExpeditedTransactionSupportedProtocolVersions,
-    DoorLock.attributes.AliroGroupResolvingKey,
-    DoorLock.attributes.AliroSupportedBLEUWBProtocolVersions,
-    DoorLock.attributes.AliroBLEAdvertisingVersion,
-    DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported,
-    DoorLock.attributes.NumberOfAliroEndpointKeysSupported,
-  },
   [capabilities.battery.ID] = {
     PowerSource.attributes.BatPercentRemaining
   },
@@ -110,7 +83,13 @@ local function lock_state_handler(driver, device, ib, response)
   }
 
   if ib.data.value ~= nil then
-    device:emit_event(LOCK_STATE[ib.data.value])
+    local event = LOCK_STATE[ib.data.value]
+    if event ~= nil then
+      device:emit_event(event)
+    else
+      device.log.warn(string.format("Received unknown lock state value (%s), emitting unknown", ib.data.value))
+      device:emit_event(attr.unknown())
+    end
   else
     device:emit_event(LOCK_STATE[LockState.NOT_FULLY_LOCKED])
   end
@@ -565,7 +544,27 @@ local function handle_name_slot(driver, device, command)
   end
 end
 
+local function json_to_table(input)
+  local result = {}
+  for key, value in string.gmatch(input, '"(.-)"%s*:%s*"(.-)"') do
+    table.insert(result, {key, value})
+  end
+  return result
+end
+
+local function store_lock_codes(device)
+  local lockCodes = device:get_latest_state(
+    "main",
+    capabilities.lockCodes.ID,
+    capabilities.lockCodes.lockCodes.NAME,
+    {}
+  )
+  lockCodes = json_to_table(lockCodes)
+  device:set_field(lock_utils.LOCK_CODES_FOR_MIGRATION, lockCodes, {persist = true})
+end
+
 local function handle_migrate(driver, device, command)
+  store_lock_codes(device)
   device:set_field(lock_utils.LOCK_CODES_COPY_REQUIRED, true, {persist = true})
   device:emit_event(capabilities.lockCodes.migrated(true))
   driver:inject_capability_command(device, {
