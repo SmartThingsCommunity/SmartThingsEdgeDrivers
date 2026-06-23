@@ -121,4 +121,5 @@ function AirQualitySensorUtils.deep_equals(a, b, opts, seen)
   return AirQualitySensorUtils.deep_equals(mt_a, mt_b, opts, seen)
 end
 
+
 return AirQualitySensorUtils
