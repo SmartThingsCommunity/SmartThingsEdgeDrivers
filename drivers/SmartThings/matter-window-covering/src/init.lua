@@ -20,6 +20,8 @@ local battery_support = {
 local REVERSE_POLARITY = "__reverse_polarity"
 local PRESET_LEVEL_KEY = "__preset_level_key"
 local DEFAULT_PRESET_LEVEL = 50
+local POSITION_READ_TIMER = "__position_read_timer"
+local POSITION_READ_DELAY = 2 -- seconds to wait before reading position after stop
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -192,6 +194,14 @@ local current_pos_handler = function(attribute)
     if ib.data.value == nil then
       return
     end
+
+    -- A position report arrived, so cancel any pending position-read timer
+    local pending_timer = device:get_field(POSITION_READ_TIMER)
+    if pending_timer ~= nil then
+      device.thread:cancel_timer(pending_timer)
+      device:set_field(POSITION_READ_TIMER, nil)
+    end
+
     local windowShade = capabilities.windowShade.windowShade
     local position = 100 - math.floor(ib.data.value / 100)
     local reverse = device:get_field(REVERSE_POLARITY)
@@ -244,6 +254,55 @@ local current_pos_handler = function(attribute)
   end
 end
 
+local function endpoint_supports_window_covering_feature(device, endpoint_id, feature)
+  local eps = device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = feature}) or {}
+  for _, ep in ipairs(eps) do
+    if ep == endpoint_id then return true end
+  end
+  return false
+end
+
+-- Read current position attributes for the given endpoint, based on supported features.
+local function read_current_window_covering_position(device, endpoint_id)
+  local read_req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  local has_read = false
+
+  if endpoint_supports_window_covering_feature(
+      device, endpoint_id, clusters.WindowCovering.types.Feature.LIFT) then
+    read_req:merge(
+      clusters.WindowCovering.attributes.CurrentPositionLiftPercent100ths:read(device, endpoint_id)
+    )
+    has_read = true
+  end
+
+  if endpoint_supports_window_covering_feature(
+      device, endpoint_id, clusters.WindowCovering.types.Feature.TILT) then
+    read_req:merge(
+      clusters.WindowCovering.attributes.CurrentPositionTiltPercent100ths:read(device, endpoint_id)
+    )
+    has_read = true
+  end
+
+  if has_read then device:send(read_req) end
+end
+
+-- Schedule a position read after POSITION_READ_DELAY seconds. If a spontaneous
+-- position report arrives before the timer fires, the timer is cancelled in
+-- current_pos_handler and no read is sent. If the timer fires, it means no
+-- position report arrived and the device may be stuck in opening/closing state,
+-- so we read the current position to resolve the final open/closed/partially_open state.
+local function schedule_position_read(device, endpoint_id)
+  local pending_timer = device:get_field(POSITION_READ_TIMER)
+  if pending_timer ~= nil then
+    device.thread:cancel_timer(pending_timer)
+  end
+  local timer = device.thread:call_with_delay(POSITION_READ_DELAY, function()
+    device:set_field(POSITION_READ_TIMER, nil)
+    read_current_window_covering_position(device, endpoint_id)
+  end)
+  device:set_field(POSITION_READ_TIMER, timer)
+end
+
 -- checks the current position of the shade
 local function current_status_handler(driver, device, ib, response)
   local windowShade = capabilities.windowShade.windowShade
@@ -253,7 +312,9 @@ local function current_status_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closing() or windowShade.opening())
   elseif state == 2 then -- closing
     device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.opening() or windowShade.closing())
-  elseif state ~= 0 then -- unknown
+  elseif state == 0 then -- not moving; schedule a read to resolve final state if no position report arrives
+    schedule_position_read(device, ib.endpoint_id)
+  else -- unknown
     device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
   end
 end
