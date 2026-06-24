@@ -7,6 +7,7 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
 local clusters = require "st.matter.clusters"
+local im = require "st.matter.interaction_model"
 
 local version = require "version"
 if version.api < 16 then
@@ -16,6 +17,15 @@ end
 local WindowCovering = clusters.WindowCovering
 
 test.disable_startup_messages()
+
+-- Build the expected read request for both lift and tilt position attributes.
+-- This is sent by current_status_handler whenever OperationalStatus == 0.
+local function build_position_read_request(device, endpoint_id)
+  local req = im.InteractionRequest(im.InteractionRequest.RequestType.READ, {})
+  req:merge(WindowCovering.attributes.CurrentPositionLiftPercent100ths:read(device, endpoint_id))
+  req:merge(WindowCovering.attributes.CurrentPositionTiltPercent100ths:read(device, endpoint_id))
+  return req
+end
 
 local mock_device = test.mock_device.build_test_matter_device(
   {
@@ -176,12 +186,19 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.closed()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- position report arrived before status; no timer to cancel when status fires;
+    -- timer fires after 2s and re-reads position (redundant but harmless for well-behaved devices)
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
   end,
   {
      min_api_version = 17
@@ -209,12 +226,19 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.closed()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- position report arrived before status; no timer to cancel when status fires;
+    -- timer fires after 2s and re-reads position (redundant but harmless for well-behaved devices)
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
   end,
   {
      min_api_version = 17
@@ -224,12 +248,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering OperationalStatus state closed before lift position 0", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -257,12 +288,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering OperationalStatus state closed before tilt position 0", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -308,12 +346,19 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.open()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- position report arrived before status; no timer to cancel when status fires;
+    -- timer fires after 2s and re-reads position (redundant but harmless for well-behaved devices)
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
   end,
   {
      min_api_version = 17
@@ -341,12 +386,19 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.open()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- position report arrived before status; no timer to cancel when status fires;
+    -- timer fires after 2s and re-reads position (redundant but harmless for well-behaved devices)
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
   end,
   {
      min_api_version = 17
@@ -356,12 +408,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering OperationalStatus state open before lift position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShadeLevel.shadeLevel(100)
@@ -389,12 +448,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering OperationalStatus state open before tilt position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main", capabilities.windowShadeTiltLevel.shadeTiltLevel(100)
@@ -440,12 +506,19 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- position report arrived before status; no timer to cancel when status fires;
+    -- timer fires after 2s and re-reads position (redundant but harmless for well-behaved devices)
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
   end,
   {
      min_api_version = 17
@@ -473,12 +546,19 @@ test.register_coroutine_test(
         "main", capabilities.windowShade.windowShade.partially_open()
       )
     )
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- position report arrived before status; no timer to cancel when status fires;
+    -- timer fires after 2s and re-reads position (redundant but harmless for well-behaved devices)
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
   end,
   {
      min_api_version = 17
@@ -488,12 +568,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering OperationalStatus partially open before lift position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -521,12 +608,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering OperationalStatus partially open before tilt position event", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -548,6 +642,94 @@ test.register_coroutine_test(
   end,
   {
      min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "OperationalStatus stops without position report: timer fires and reads position (the bug fix)", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    -- Device starts closing
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 2),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.closing()
+      )
+    )
+    test.wait_for_events()
+    -- OperationalStatus returns to 0 but no position report arrives; schedule the timer
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+    test.wait_for_events()
+    -- After 2 seconds, no position report arrived so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+  end,
+  {
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "OperationalStatus stops and position report arrives before timer: no redundant read", function()
+    test.socket.capability:__set_channel_ordering("relaxed")
+    -- Device starts opening
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 1),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.opening()
+      )
+    )
+    test.wait_for_events()
+    -- OperationalStatus returns to 0, timer scheduled
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
+      }
+    )
+    test.wait_for_events()
+    -- Position report arrives before timer fires, cancels timer
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, 0
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(100)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.open()
+      )
+    )
+    test.wait_for_events()
+    -- Timer fires but shade is already "open" and timer was cancelled; no read sent
+    test.mock_time.advance_time(2)
+  end,
+  {
+    min_api_version = 17
   }
 )
 
@@ -826,6 +1008,7 @@ test.register_coroutine_test("OperationalStatus report contains current position
     mock_device, 10, ((100 - 25) *100)
   )
   table.insert(report.info_blocks, WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0).info_blocks[1])
+  test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
   test.socket.matter:__queue_receive({ mock_device.id, report})
   test.socket.capability:__expect_send(
     mock_device:generate_test_message(
@@ -837,6 +1020,12 @@ test.register_coroutine_test("OperationalStatus report contains current position
       "main", capabilities.windowShade.windowShade.partially_open()
     )
   )
+  -- position handler ran before status handler (no timer to cancel);
+  -- timer fires after 2s and re-reads position (redundant but harmless for well-behaved devices)
+  test.socket.matter:__expect_send(
+    {mock_device.id, build_position_read_request(mock_device, 10)}
+  )
+  test.mock_time.advance_time(2)
 end,
 {
    min_api_version = 17
@@ -928,12 +1117,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering shade level adjusted by greater than 2%; status reflects Closing followed by Partially Open", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
@@ -1040,12 +1236,19 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "WindowCovering shade level adjusted by less than or equal to 2%; status reflects Closing followed by Partially Open", function()
     test.socket.capability:__set_channel_ordering("relaxed")
+    test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
         WindowCovering.attributes.OperationalStatus:build_test_report_data(mock_device, 10, 0),
       }
     )
+    -- timer fires after 2s with no position report to cancel it, so driver reads position
+    test.socket.matter:__expect_send(
+      {mock_device.id, build_position_read_request(mock_device, 10)}
+    )
+    test.mock_time.advance_time(2)
+    test.wait_for_events()
     test.socket.matter:__queue_receive(
       {
         mock_device.id,
