@@ -4148,6 +4148,11 @@ matterManufacturer:
     vendorId: 0x100B
     productId: 0x0002
     deviceProfileName: matter-bridge
+  - id: "4107/3"
+    deviceLabel: Hue Bridge Pro
+    vendorId: 0x100B
+    productId: 0x0003
+    deviceProfileName: matter-bridge
   - id: "Switchbot/hub2"
     deviceLabel: Matter Bridge
     vendorId: 0x1397
