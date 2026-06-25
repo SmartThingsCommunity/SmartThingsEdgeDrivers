@@ -612,7 +612,7 @@ test.register_coroutine_test(
       mock_device_periodic:generate_test_message("main", capabilities.powerConsumptionReport.powerConsumption({
         start = "1970-01-01T00:15:01Z",
         ["end"] = "1970-01-01T00:48:20Z",
-        deltaEnergy = -4.0,
+        deltaEnergy = 19.0,
         energy = 19.0
       }))
     )

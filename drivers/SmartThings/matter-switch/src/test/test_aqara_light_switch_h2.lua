@@ -7,7 +7,6 @@ local capabilities = require "st.capabilities"
 local utils = require "st.utils"
 local dkjson = require "dkjson"
 local clusters = require "st.matter.clusters"
-local button_attr = capabilities.button.button
 local version = require "version"
 
 if version.api < 11 then
@@ -147,16 +146,9 @@ local cumulative_report_val_39 = {
 
 local function configure_buttons()
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("main", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button2", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button3", button_attr.pushed({state_change = false})))
-
   test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", capabilities.button.supportedButtonValues({"pushed"}, {visibility = {displayed = false}})))
-  test.socket.capability:__expect_send(aqara_mock_device:generate_test_message("button4", button_attr.pushed({state_change = false})))
 end
 
 local function test_init()

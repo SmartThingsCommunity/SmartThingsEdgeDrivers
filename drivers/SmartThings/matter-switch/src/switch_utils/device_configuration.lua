@@ -184,7 +184,6 @@ function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep
       if supportedButtonValues_event then
         device:emit_event_for_endpoint(ep, supportedButtonValues_event)
       end
-      device:emit_event_for_endpoint(ep, capabilities.button.button.pushed({state_change = false}))
     else
       device.log.info_with({hub_logs=true}, string.format("Component not found for generic switch endpoint %d. Skipping Supported Value configuration", ep))
     end
@@ -266,7 +265,7 @@ function DeviceConfiguration.match_profile(driver, device)
     updated_profile = SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, default_endpoint_id)
     local generic_profile = function(s) return string.find(updated_profile or "", s, 1, true) end
     if generic_profile("light-level") and #device:get_endpoints(clusters.OccupancySensing.ID) > 0 then
-      updated_profile = "light-level-motion"
+      updated_profile = switch_utils.get_product_override_field(device, "target_profile") or "light-level-motion"
     elseif switch_utils.check_switch_category_vendor_overrides(device) then
       -- check whether the overwrite should be over "plug" or "light" based on the current profile
       local overwrite_category = string.find(updated_profile, "plug") and "plug" or "light"

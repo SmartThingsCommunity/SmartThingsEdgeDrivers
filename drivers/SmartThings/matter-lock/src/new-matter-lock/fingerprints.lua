@@ -7,6 +7,10 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115f, 0x2807}, -- AQARA, U200 Lite
   {0x115f, 0x2804}, -- AQARA, U400
   {0x115f, 0x286A}, -- AQARA, U200 US
+  {0x115f, 0x2805}, -- Aqara Smart Lock J200 Set
+  {0x115f, 0x280e}, -- AQARA Smart Gate Lock U500
+  {0x115f, 0x280f}, -- AQARA Smart Rim Lock U500
+  {0x115f, 0x2810}, -- AQARA Smart Glass Door Lock U500
   {0x147F, 0x0001}, -- U-tec
   {0x147F, 0x0007}, -- ULTRALOQ Bolt Pro Smart Matter Door Lock
   {0x147F, 0x0008}, -- Ultraloq, Bolt Smart Matter Door Lock
@@ -35,7 +39,9 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1421, 0x0081}, -- Kwikset Aura Reach
   {0x1236, 0xa538}, -- Schlage Sense Pro
   {0x1236, 0x3800}, -- Schlage
-  {0x1236, 0xA738} -- Schlage
+  {0x1236, 0xA738}, -- Schlage
+  {0x152C, 0x9500}, -- Dreame NAVO Smart Lock A10
+  {0x152C, 0x9501} -- Dreame NAVO Smart Lock E10
 }
 
 return NEW_MATTER_LOCK_PRODUCTS

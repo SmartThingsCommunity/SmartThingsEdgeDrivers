@@ -1,0 +1,36 @@
+name: aqara-bath-heater
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: switchLevel
+        version: 1
+      - id: colorTemperature
+        version: 1
+      - id: thermostatMode
+        version: 1
+      - id: thermostatHeatingSetpoint
+        version: 1
+      - id: fanOscillationMode
+        version: 1
+      - id: fanMode
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Thermostat
+preferences:
+  - preferenceId: stse.nightLightMode
+    explicit: true
+  - preferenceId: stse.nightLightStartTime
+    explicit: true
+  - preferenceId: stse.nightLightEndTime
+    explicit: true
+  - preferenceId: stse.muteBeep
+    explicit: true
+  - preferenceId: stse.thermostatCtrl
+    explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Bath_Heater

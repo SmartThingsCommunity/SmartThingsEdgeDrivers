@@ -185,13 +185,63 @@ matterManufacturer:
     deviceLabel: Linkind Smart Ceiling Light
     vendorId: 0x1396
     productId: 0x10B1
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
+  - id: "5014/4164"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1044
+    deviceProfileName: light-color-level
+  - id: "5014/4118"
+    deviceLabel: Linkind Smart Filament Bulb
+    vendorId: 0x1396
+    productId: 0x1016
+    deviceProfileName: light-color-level
+  - id: "5014/4116"
+    deviceLabel: Linkind Smart Light Bulb
+    vendorId: 0x1396
+    productId: 0x1014
+    deviceProfileName: light-color-level
+  - id: "5014/4165"
+    deviceLabel: Linkind Smart Downlight
+    vendorId: 0x1396
+    productId: 0x1045
+    deviceProfileName: light-color-level
+  - id: "5014/4578"
+    deviceLabel: Linkind Light Stick T19
+    vendorId: 0x1396
+    productId: 0x11E2
+    deviceProfileName: light-color-level
+  - id: "5014/4274"
+    deviceLabel: Linkind Smart Ceiling Light
+    vendorId: 0x1396
+    productId: 0x10B2
+    deviceProfileName: light-color-level
+  - id: "5014/4642"
+    deviceLabel: Linkind Smart Permanent Outdoor Lights
+    vendorId: 0x1396
+    productId: 0x1222
+    deviceProfileName: light-color-level
+  - id: "5014/4629"
+    deviceLabel: Smart Outdoor String Lights
+    vendorId: 0x1396
+    productId: 0x1215
+    deviceProfileName: light-color-level
+  - id: "5014/4158"
+    deviceLabel: Linkind Smart Ceiling Fan
+    vendorId: 0x1396
+    productId: 0x103E
+    deviceProfileName: fan-modular
 #Bosch Smart Home
   - id: "4617/12310"
     deviceLabel: Plug Compact [M]
     vendorId: 0x1209
     productId: 0x3016
     deviceProfileName: plug-power-energy-powerConsumption
+  - id: 4617/12307
+    deviceLabel: "Motion Detector II [M]"
+    vendorId: 0x1209
+    productId: 0x3013
+    deviceProfileName:  light-level-battery-illuminance-motion-temperature
 #Chengdu
   - id: "5218/8197"
     deviceLabel: Magic Cube DS001
@@ -502,6 +552,16 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0016
     deviceProfileName: light-color-level-2000K-7000K
+  - id: "4921/86"
+    deviceLabel: Cync Smart Shop Light
+    vendorId: 0x1339
+    productId: 0x0056
+    deviceProfileName: light-color-level
+  - id: "4921/85"
+    deviceLabel: Dual Socket Smart Plug
+    vendorId: 0x1339
+    productId: 0x0055
+    deviceProfileName: plug-binary
 #Govee
   - id: "4999/24740"
     deviceLabel: Govee Square Ceiling Light (12 inch)
@@ -674,7 +734,7 @@ matterManufacturer:
     productId: 0x61B9
     deviceProfileName: light-color-level
   - id: "4999/24742"
-    deviceLabel: Govee Ceiling Light Pro (15 inch)
+    deviceLabel: Govee Ceiling Light Pro
     vendorId: 0x1387
     productId: 0x60A6
     deviceProfileName: light-color-level
@@ -812,6 +872,26 @@ matterManufacturer:
     deviceLabel: Govee Table Lamp Classic
     vendorId: 0x1387
     productId: 0x1741
+    deviceProfileName: light-color-level
+  - id: "4999/5808"
+    deviceLabel: Govee Floor Lamp 3
+    vendorId: 0x1387
+    productId: 0x16B0
+    deviceProfileName: light-color-level
+  - id: "4999/5824"
+    deviceLabel: Govee Floor Lamp 3 Lite
+    vendorId: 0x1387
+    productId: 0x16C0
+    deviceProfileName: light-color-level
+  - id: "4999/4720"
+    deviceLabel: Govee Ceiling Light Ultra (21inch)
+    vendorId: 0x1387
+    productId: 0x1270
+    deviceProfileName: light-color-level
+  - id: "4999/24755"
+    deviceLabel: Govee Uplighter Floor Lamp with Nebula Effect
+    vendorId: 0x1387
+    productId: 0x60B3
     deviceProfileName: light-color-level
 # Hager
   - id: "4741/8"
@@ -1276,172 +1356,172 @@ matterManufacturer:
     deviceLabel: LIFX Supercolor (A19)
     vendorId: 0x1423
     productId: 0x00A3
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/118"
     deviceLabel: LIFX Lightstrip
     vendorId: 0x1423
     productId: 0x0076
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/221"
     deviceLabel: LIFX Spot
     vendorId: 0x1423
     productId: 0x00DD
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/144"
     deviceLabel: LIFX String
     vendorId: 0x1423
     productId: 0x0090
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/216"
     deviceLabel: LIFX Candle Color (B10)
     vendorId: 0x1423
     productId: 0x00D8
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/225"
     deviceLabel: LIFX PAR38
     vendorId: 0x1423
     productId: 0x00E1
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/186"
     deviceLabel: LIFX Candle Color
     vendorId: 0x1423
     productId: 0x00BA
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/202"
     deviceLabel: LIFX Ceiling 13x26
     vendorId: 0x1423
     productId: 0x00CA
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/143"
     deviceLabel: LIFX String
     vendorId: 0x1423
     productId: 0x008F
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/166"
     deviceLabel: LIFX Supercolour (BR30)
     vendorId: 0x1423
     productId: 0x00A6
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/167"
     deviceLabel: LIFX Downlight
     vendorId: 0x1423
     productId: 0x00A7
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/207"
     deviceLabel: LIFX Everyday Lightstrip
     vendorId: 0x1423
     productId: 0x00CF
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/222"
     deviceLabel: LIFX Path (Round)
     vendorId: 0x1423
     productId: 0x00DE
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/203"
     deviceLabel: LIFX String
     vendorId: 0x1423
     productId: 0x00CB
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/218"
     deviceLabel: LIFX Tube
     vendorId: 0x1423
     productId: 0x00DA
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/214"
     deviceLabel: LIFX Permanent Outdoor
     vendorId: 0x1423
     productId: 0x00D6
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/117"
     deviceLabel: LIFX Lightstrip
     vendorId: 0x1423
     productId: 0x0075
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/223"
     deviceLabel: LIFX Downlight (6 Retro Downlight)
     vendorId: 0x1423
     productId: 0x00DF
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/224"
     deviceLabel: LIFX Downlight (90mm Downlight)
     vendorId: 0x1423
     productId: 0x00E0
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/204"
     deviceLabel: LIFX String
     vendorId: 0x1423
     productId: 0x00CC
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/206"
     deviceLabel: LIFX Neon
     vendorId: 0x1423
     productId: 0x00CE
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/164"
     deviceLabel: LIFX Supercolor (BR30)
     vendorId: 0x1423
     productId: 0x00A4
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/120"
     deviceLabel: LIFX Beam
     vendorId: 0x1423
     productId: 0x0078
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/208"
     deviceLabel: LIFX Everyday Lightstrip
     vendorId: 0x1423
     productId: 0x00D0
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/165"
     deviceLabel: LIFX Supercolour (A19)
     vendorId: 0x1423
     productId: 0x00A5
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/142"
     deviceLabel: LIFX Neon
     vendorId: 0x1423
     productId: 0x008E
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/141"
     deviceLabel: LIFX Neon
     vendorId: 0x1423
     productId: 0x008D
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/177"
     deviceLabel: LIFX Ceiling
     vendorId: 0x1423
     productId: 0x00B1
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/170"
     deviceLabel: LIFX Supercolour (A21)
     vendorId: 0x1423
     productId: 0x00AA
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/205"
     deviceLabel: LIFX Neon
     vendorId: 0x1423
     productId: 0x00CD
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/265"
     deviceLabel: Ceiling 13
     vendorId: 0x1423
     productId: 0x0109
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/266"
     deviceLabel: LIFX Ceiling 13
     vendorId: 0x1423
     productId: 0x010A
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/267"
     deviceLabel: LIFX Mirror
     vendorId: 0x1423
     productId: 0x010B
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
   - id: "5155/268"
     deviceLabel: LIFX Mirror
     vendorId: 0x1423
     productId: 0x010C
-    deviceProfileName: light-level-colorTemperature
+    deviceProfileName: light-color-level
 
 #LG
   - id: "4142/8784"
@@ -2010,6 +2090,11 @@ matterManufacturer:
     vendorId: 0x1189
     productId: 0x0892
     deviceProfileName: switch-binary
+  - id: "4489/4097"
+    deviceLabel: OSRAM PLANON SLIM
+    vendorId: 0x1189
+    productId: 0x1001
+    deviceProfileName: light-color-level
 #Shelly
   - id: "5264/1"
     deviceLabel: Shelly Plug S MTR Gen3
@@ -4078,6 +4163,23 @@ matterManufacturer:
     vendorId: 0x1344
     productId: 0x041E
     deviceProfileName: matter-bridge
+#Tapo
+  - id: "5010/269"
+    deviceLabel: Tapo Smart Power Strip
+    vendorId: 0x1392
+    productId: 0x010D
+    deviceProfileName: plug-binary
+  - id: "5010/262"
+    deviceLabel: Mini Smart Wi-Fi Plug Energy Monitoring Matter
+    vendorId: 0x1392
+    productId: 0x0106
+    deviceProfileName: plug-power-energy-powerConsumption
+#GIANT LIGHTING
+  - id: "5707/1"
+    deviceLabel: Floor Lamp
+    vendorId: 0x164B
+    productId: 0x0001
+    deviceProfileName: light-color-level
 
 
 matterGeneric:

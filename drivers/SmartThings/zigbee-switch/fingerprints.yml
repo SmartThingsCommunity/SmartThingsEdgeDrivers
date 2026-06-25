@@ -1735,6 +1735,11 @@ zigbeeManufacturer:
     manufacturer: LEDVANCE
     model: PLUG COMPACT EU EM T
     deviceProfileName: switch-power-energy
+  - id: "LEDVANCE/PLUG EU EM T"
+    deviceLabel: SMART ZIGBEE PLUG EU EM T
+    manufacturer: LEDVANCE
+    model: PLUG EU EM T
+    deviceProfileName: switch-power-energy    
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -2404,6 +2409,11 @@ zigbeeManufacturer:
     manufacturer: LAISIAO
     model: yuba
     deviceProfileName: switch-smart-bath-heater-laisiao
+  - id: "LAISIAO/DG60GCM-04-2904W"
+    deviceLabel: Laisiao Bathroom Heater
+    manufacturer: LAISIAO
+    model: DG60GCM-04-2904W
+    deviceProfileName: switch-smart-bath-heater-laisiao
   # NodOn
   - id: "NodOn/SIN-4-1-20"
     deviceLabel: Zigbee Multifunction Relay Switch
@@ -2441,6 +2451,12 @@ zigbeeManufacturer:
     manufacturer: JNL
     model: Y-K002-001
     deviceProfileName: basic-switch
+  #FIRSTLED
+  - id: "FIRSTLED/M4S4BAC"
+    deviceLabel: Mirror Series 4x4 1
+    manufacturer: FIRSTLED
+    model: M4S4BAC
+    deviceProfileName: switch-light-restore-wireless
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

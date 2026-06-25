@@ -137,7 +137,7 @@ end
 function CapabilityHandlers.handle_audio_notification(driver, device, cmd)
   local ip = device:get_field("ip")
   local mute_status = command.getMute(ip)
-  if mute_status.muted ~= "off" then
+  if mute_status and mute_status.muted ~= nil and mute_status.muted ~= "off" then
      --unmute before playig notification
      command.unmute(ip)
   end
