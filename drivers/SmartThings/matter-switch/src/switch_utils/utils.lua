@@ -431,7 +431,7 @@ function utils.set_fields_for_electrical_sensor_endpoint(device, electrical_sens
     table.sort(associated_endpoint_ids)
     local primary_associated_ep_id = associated_endpoint_ids[1]
     -- map the required electrical tags for this electrical sensor EP with the first associated EP ID, used later during profling.
-    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags)
+    utils.set_field_for_endpoint(device, fields.ELECTRICAL_TAGS, primary_associated_ep_id, tags, {persist = true})
     utils.set_field_for_endpoint(device, fields.ASSIGNED_CHILD_KEY, electrical_sensor_ep.endpoint_id, string.format("%d", primary_associated_ep_id), { persist = true })
     return true
   end
