@@ -4174,6 +4174,12 @@ matterManufacturer:
     vendorId: 0x1392
     productId: 0x0106
     deviceProfileName: plug-power-energy-powerConsumption
+#GIANT LIGHTING
+  - id: "5707/1"
+    deviceLabel: Floor Lamp
+    vendorId: 0x164B
+    productId: 0x0001
+    deviceProfileName: light-color-level
 
 
 matterGeneric:
