@@ -244,4 +244,13 @@ function ThermostatUtils.report_power_consumption_to_st_energy(device, latest_to
   }))
 end
 
+function ThermostatUtils.get_product_override_field(device, override_key)
+  if device.manufacturer_info
+  and fields.vendor_overrides[device.manufacturer_info.vendor_id]
+  and fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id]
+  then
+    return fields.vendor_overrides[device.manufacturer_info.vendor_id][device.manufacturer_info.product_id][override_key]
+  end
+end
+
 return ThermostatUtils
