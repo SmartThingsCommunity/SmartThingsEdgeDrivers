@@ -172,6 +172,12 @@ matterManufacturer:
     vendorId: 0x152C
     productId: 0x9501
     deviceProfileName: lock
+  #SOLITY
+  - id: "5425/32"
+    deviceLabel: SOLITY Matter Lock
+    vendorId: 0x1531
+    productId: 0x0020
+    deviceProfileName: lock-modular
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
