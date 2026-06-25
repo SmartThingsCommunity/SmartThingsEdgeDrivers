@@ -557,6 +557,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0056
     deviceProfileName: light-color-level
+  - id: "4921/85"
+    deviceLabel: Dual Socket Smart Plug
+    vendorId: 0x1339
+    productId: 0x0055
+    deviceProfileName: plug-binary
 #Govee
   - id: "4999/24740"
     deviceLabel: Govee Square Ceiling Light (12 inch)
