@@ -44,3 +44,8 @@ zigbeeManufacturer:
     manufacturer: _TZE204_h2rctifa
     model: TS0601
     deviceProfileName: basic-switch
+  - id: _TZE284_fziifcxj/TS0601
+    deviceLabel: Tuya Thermostat
+    manufacturer: _TZE284_fziifcxj
+    model: TS0601
+    deviceProfileName: thermostat
