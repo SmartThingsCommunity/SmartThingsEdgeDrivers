@@ -53,6 +53,10 @@ local capabilities = require "st.capabilities"
 local json = require "st.json"
 local utils = require "st.utils"
 
+lock_utils.MIN_EPOCH_S = 0
+lock_utils.MAX_EPOCH_S = 0xffffffff
+lock_utils.THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
+
 lock_utils.get_lock_codes = function(device)
   local lc = device:get_field(lock_utils.LOCK_CODES)
   return lc ~= nil and lc or {}
@@ -169,6 +173,34 @@ function lock_utils.is_busy_state_set(device)
     return false
   else
     return true
+  end
+end
+
+-- This type represents an offset, in seconds, from 0 hours, 0 minutes, 0 seconds, on the 1st of January, 2000 UTC
+function lock_utils.iso8601_to_epoch(iso_str)
+  local pattern = "^(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)"
+  local year, month, day, hour, min, sec = iso_str:match(pattern)
+  if not year then
+      return nil
+  end
+  local epoch_s = os.time({
+      year = tonumber(year),
+      month = tonumber(month),
+      day = tonumber(day),
+      hour = tonumber(hour),
+      min = tonumber(min),
+      sec = tonumber(sec),
+  })
+
+  -- The os.time() is based on 1970. Thirty years must be subtracted for calculations from 2000.
+  epoch_s = epoch_s - lock_utils.THIRTY_YEARS_S
+
+  if epoch_s < lock_utils.MIN_EPOCH_S then
+    return lock_utils.MIN_EPOCH_S
+  elseif epoch_s > lock_utils.MAX_EPOCH_S then
+    return lock_utils.MAX_EPOCH_S
+  else
+    return epoch_s
   end
 end
 
