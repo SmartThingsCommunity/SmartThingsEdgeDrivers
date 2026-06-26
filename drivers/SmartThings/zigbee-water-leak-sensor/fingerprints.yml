@@ -119,3 +119,8 @@ zigbeeManufacturer:
     manufacturer: MultIR
     model: MIR-WA100
     deviceProfileName: water-battery-no-fw-update
+  - id: Appartme/TS0207
+    deviceLabel: Appartme Flood Sensor
+    manufacturer: _TZ3000_dvagjie2
+    model: TS0207
+    deviceProfileName: water-battery
