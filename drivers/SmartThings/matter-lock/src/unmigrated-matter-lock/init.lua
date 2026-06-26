@@ -545,6 +545,7 @@ local function handle_name_slot(driver, device, command)
 end
 
 local function json_to_table(input)
+  if #input == 0 then return end
   local result = {}
   for key, value in string.gmatch(input, '"(.-)"%s*:%s*"(.-)"') do
     table.insert(result, {key, value})

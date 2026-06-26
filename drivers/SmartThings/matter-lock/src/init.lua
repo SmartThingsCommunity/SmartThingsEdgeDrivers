@@ -20,9 +20,6 @@ local INITIAL_CREDENTIAL_INDEX = 1
 local ALL_INDEX = 0xFFFE
 -- maximum as defined by the Matter specification
 local MAX_USER_NAME_LENGTH = 10
-local MIN_EPOCH_S = 0
-local MAX_EPOCH_S = 0xffffffff
-local THIRTY_YEARS_S = 946684800 -- 1970-01-01T00:00:00 ~ 2000-01-01T00:00:00
 
 local RESPONSE_STATUS_MAP = {
   [DoorLock.types.DlStatus.SUCCESS] = "success",
@@ -1411,7 +1408,6 @@ local function get_user_response_handler(driver, device, ib, response)
     capabilities.lockUsers.ID,
     capabilities.lockUsers.totalUsersSupported.NAME
   ) or 10
-
   -- Found available user index
   if status == nil or status == DoorLock.types.UserStatusEnum.AVAILABLE then
     local userName = device:get_field(lock_utils.USER_NAME)
@@ -1765,8 +1761,8 @@ local function set_pin_response_handler(driver, device, ib, response)
           device, ep,
           scheduleIdx,
           userIdx,
-          MIN_EPOCH_S,
-          MAX_EPOCH_S
+          lock_utils.MIN_EPOCH_S,
+          lock_utils.MAX_EPOCH_S
         )
       )
     else
@@ -2366,34 +2362,6 @@ local function clear_week_day_schedule_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
--- This type represents an offset, in seconds, from 0 hours, 0 minutes, 0 seconds, on the 1st of January, 2000 UTC
-local function iso8601_to_epoch(iso_str)
-  local pattern = "^(%d+)%-(%d+)%-(%d+)T(%d+):(%d+):(%d+)"
-  local year, month, day, hour, min, sec = iso_str:match(pattern)
-  if not year then
-      return nil
-  end
-  local epoch_s = os.time({
-      year = tonumber(year),
-      month = tonumber(month),
-      day = tonumber(day),
-      hour = tonumber(hour),
-      min = tonumber(min),
-      sec = tonumber(sec),
-  })
-
-  -- The os.time() is based on 1970. Thirty years must be subtracted for calculations from 2000.
-  epoch_s = epoch_s - THIRTY_YEARS_S
-
-  if epoch_s < MIN_EPOCH_S then
-    return MIN_EPOCH_S
-  elseif epoch_s > MAX_EPOCH_S then
-    return MAX_EPOCH_S
-  else
-    return epoch_s
-  end
-end
-
 ---------------------------
 -- Set Year Day Schedule --
 ---------------------------
@@ -2431,8 +2399,8 @@ local function handle_set_year_day_schedule(driver, device, command)
       device, ep,
       scheduleIdx,
       userIdx,
-      iso8601_to_epoch(localStartTime),
-      iso8601_to_epoch(localEndTime)
+      lock_utils.iso8601_to_epoch(localStartTime),
+      lock_utils.iso8601_to_epoch(localEndTime)
     )
   )
 end
@@ -2535,8 +2503,8 @@ local function handle_clear_year_day_schedule(driver, device, command)
       device, ep,
       scheduleIdx,
       userIdx,
-      MIN_EPOCH_S,
-      MAX_EPOCH_S
+      lock_utils.MIN_EPOCH_S,
+      lock_utils.MAX_EPOCH_S
     )
   )
 end
