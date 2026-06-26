@@ -147,7 +147,109 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Handle thermostatMode setThermostatMode",
+    "Handle thermostatMode setThermostatMode (auto)",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          {
+            capability = "thermostatMode",
+            component = "main",
+            command = "setThermostatMode",
+            args = {"auto"}
+          }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_send_tuya_command(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x00",
+            0x00
+          )
+        }
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle thermostatMode setThermostatMode (off)",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          {
+            capability = "thermostatMode",
+            component = "main",
+            command = "setThermostatMode",
+            args = {"off"}
+          }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_send_tuya_command(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x01",
+            0x00
+          )
+        }
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle thermostatMode setThermostatMode (on)",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          {
+            capability = "thermostatMode",
+            component = "main",
+            command = "setThermostatMode",
+            args = {"on"}
+          }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_send_tuya_command(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x02",
+            0x00
+          )
+        }
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle thermostatMode setThermostatMode (comfort)",
     {
       {
         channel = "capability",
@@ -172,6 +274,74 @@ test.register_message_test(
             "\x02",
             tuya_utils.DP_TYPE_ENUM,
             "\x03",
+            0x00
+          )
+        }
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle thermostatMode setThermostatMode (eco)",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          {
+            capability = "thermostatMode",
+            component = "main",
+            command = "setThermostatMode",
+            args = {"eco"}
+          }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_send_tuya_command(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x04",
+            0x00
+          )
+        }
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle thermostatMode setThermostatMode (antifreezing)",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          {
+            capability = "thermostatMode",
+            component = "main",
+            command = "setThermostatMode",
+            args = {"antifreezing"}
+          }
+        }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_send_tuya_command(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x05",
             0x00
           )
         }
@@ -210,7 +380,94 @@ test.register_message_test(
 )
 
 test.register_message_test(
-    "Handle tuya cluster message report (setThermostatMode)",
+    "Handle tuya cluster message report (setThermostatMode, auto)",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_test_attr_report(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x00",
+            0x01
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_simple_device:generate_test_message(
+          "main",
+          capabilities.thermostatMode.thermostatMode.auto()
+        )
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle tuya cluster message report (setThermostatMode, off)",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_test_attr_report(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x01",
+            0x01
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_simple_device:generate_test_message(
+          "main",
+          capabilities.thermostatMode.thermostatMode.off()
+        )
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle tuya cluster message report (setThermostatMode, on)",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_test_attr_report(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x02",
+            0x01
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_simple_device:generate_test_message(
+          "main",
+          capabilities.thermostatMode.thermostatMode.on()
+        )
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle tuya cluster message report (setThermostatMode, comfort)",
     {
       {
         channel = "zigbee",
@@ -232,6 +489,64 @@ test.register_message_test(
         message = mock_simple_device:generate_test_message(
           "main",
           capabilities.thermostatMode.thermostatMode.comfort()
+        )
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle tuya cluster message report (setThermostatMode, eco)",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_test_attr_report(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x04",
+            0x01
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_simple_device:generate_test_message(
+          "main",
+          capabilities.thermostatMode.thermostatMode.eco()
+        )
+      }
+    },
+    {}
+)
+
+test.register_message_test(
+    "Handle tuya cluster message report (setThermostatMode, antifreezing)",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = {
+          mock_simple_device.id,
+          tuya_utils.build_test_attr_report(
+            mock_simple_device,
+            "\x02",
+            tuya_utils.DP_TYPE_ENUM,
+            "\x05",
+            0x01
+          )
+        }
+      },
+      {
+        channel = "capability",
+        direction = "send",
+        message = mock_simple_device:generate_test_message(
+          "main",
+          capabilities.thermostatMode.thermostatMode.antifreezing()
         )
       }
     },
