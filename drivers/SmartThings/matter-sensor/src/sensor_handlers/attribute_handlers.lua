@@ -90,6 +90,7 @@ function AttributeHandlers.soil_moisture_measurement_limits_handler(driver, devi
   local max_val = ib.data.elements and ib.data.elements.max_measured_value and ib.data.elements.max_measured_value.value
   if not (min_val and max_val) or (min_val >= max_val) or (min_val < sensor_utils.SOIL_MOISTURE_MIN) or (max_val > sensor_utils.SOIL_MOISTURE_MAX) then
     device.log.warn_with({hub_logs = true}, string.format("Device reported invalid soil moisture limits: min=%s, max=%s", min_val, max_val))
+    return
   end
   sensor_utils.set_field_for_endpoint(device, fields.SOIL_LIMIT_MIN, ib.endpoint_id, min_val)
   sensor_utils.set_field_for_endpoint(device, fields.SOIL_LIMIT_MAX, ib.endpoint_id, max_val)
