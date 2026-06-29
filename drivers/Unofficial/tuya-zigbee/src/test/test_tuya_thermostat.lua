@@ -90,7 +90,7 @@ test.register_coroutine_test(
         capabilities.thermostatMode.thermostatMode.auto()
       )
     )
-    
+
     test.socket.capability:__expect_send(
       mock_simple_device:generate_test_message(
         "main",
