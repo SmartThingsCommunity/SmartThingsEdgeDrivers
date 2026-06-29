@@ -106,6 +106,9 @@ function AttributeHandlers.current_saturation_handler(driver, device, ib, respon
 end
 
 function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, response)
+  if type(device.register_native_capability_attr_handler) == "function" then
+    device:register_native_capability_attr_handler("colorTemperature", "colorTemperature")
+  end
   local temp_in_mired = ib.data.value
   if temp_in_mired == nil then
     return
@@ -128,12 +131,12 @@ function AttributeHandlers.color_temperature_mireds_handler(driver, device, ib, 
   if device:get_field(fields.IS_PARENT_CHILD_DEVICE) == true then
     temp_device = switch_utils.find_child(device, ib.endpoint_id) or device
   end
-  local most_recent_temp = temp_device:get_field(fields.MOST_RECENT_TEMP)
+  local latest_requested_kelvin = temp_device:get_field(fields.LATEST_REQUESTED_KELVIN)
   -- this is to avoid rounding errors from the round-trip conversion of Kelvin to mireds
-  if most_recent_temp ~= nil and
-    most_recent_temp <= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
-    most_recent_temp >= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
-      temp = most_recent_temp
+  if latest_requested_kelvin and
+    latest_requested_kelvin <= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired - 1)) and
+    latest_requested_kelvin >= st_utils.round(fields.MIRED_KELVIN_CONVERSION_CONSTANT/(temp_in_mired + 1)) then
+      temp = latest_requested_kelvin
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.colorTemperature.colorTemperature(temp))
 end
@@ -548,6 +551,81 @@ function AttributeHandlers.percent_current_handler(driver, device, ib, response)
     return
   end
   device:emit_event_for_endpoint(ib.endpoint_id, capabilities.fanSpeedPercent.percent(ib.data.value))
+end
+
+
+-- [[ OPERATIONAL STATE CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.operational_state_accepted_command_list_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil then return end
+  local accepted_command_list = {}
+  for _, accepted_command in ipairs(ib.data.elements) do
+    local accepted_command_id = accepted_command.value
+    if fields.operational_state_command_map[accepted_command_id] ~= nil then
+      table.insert(accepted_command_list, fields.operational_state_command_map[accepted_command_id])
+    end
+  end
+  local event = capabilities.operationalState.supportedCommands(accepted_command_list, {visibility = {displayed = false}})
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+function AttributeHandlers.operational_state_attr_handler(driver, device, ib, response)
+  if ib.data.value == clusters.OperationalState.types.OperationalStateEnum.STOPPED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.stopped())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.RUNNING then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.running())
+  elseif ib.data.value == clusters.OperationalState.types.OperationalStateEnum.PAUSED then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.paused())
+  end
+end
+
+function AttributeHandlers.operational_error_attr_handler(driver, device, ib, response)
+  if ib.data.elements == nil or ib.data.elements.error_state_id == nil or ib.data.elements.error_state_id.value == nil then return end
+  if version.api < 10 then
+    clusters.OperationalState.types.ErrorStateStruct:augment_type(ib.data)
+  end
+  local operationalError = ib.data.elements.error_state_id.value
+  if operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_START_OR_RESUME then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToStartOrResume())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.UNABLE_TO_COMPLETE_OPERATION then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.unableToCompleteOperation())
+  elseif operationalError == clusters.OperationalState.types.ErrorStateEnum.COMMAND_INVALID_IN_STATE then
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.operationalState.operationalState.commandInvalidInCurrentState())
+  end
+end
+
+
+-- [[ FLOW MEASUREMENT CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.flow_attr_handler(driver, device, ib, response)
+  local measured_value = ib.data.value
+  if measured_value ~= nil then
+    local flow = measured_value / 10.0
+    local unit = "m^3/h"
+    device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flow({value = flow, unit = unit}))
+  end
+end
+
+function AttributeHandlers.flow_attr_handler_factory(minOrMax)
+  return function(driver, device, ib, response)
+    if ib.data.value == nil then
+      return
+    end
+    local flow_bound = ib.data.value / 10.0
+    local unit = "m^3/h"
+    switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..minOrMax, ib.endpoint_id, flow_bound)
+    local min = switch_utils.get_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MIN, ib.endpoint_id)
+    local max = switch_utils.get_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MAX, ib.endpoint_id)
+    if min ~= nil and max ~= nil then
+      if min < max then
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.flowMeasurement.flowRange({ value = { minimum = min, maximum = max }, unit = unit }))
+        switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MIN, ib.endpoint_id, nil)
+        switch_utils.set_field_for_endpoint(device, fields.FLOW_BOUND_RECEIVED..fields.FLOW_MAX, ib.endpoint_id, nil)
+      else
+        device.log.warn_with({hub_logs = true}, string.format("Device reported a min flow measurement %d that is not lower than the reported max flow measurement %d", min, max))
+      end
+    end
+  end
 end
 
 return AttributeHandlers

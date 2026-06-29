@@ -156,13 +156,9 @@ local function ikea_scroll_subscribe()
 end
 
 local function expect_configure_buttons()
-  local button_attr = capabilities.button.button
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 3)})
-  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("main", button_attr.pushed({state_change = false})))
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 6)})
-  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group2", button_attr.pushed({state_change = false})))
   test.socket.matter:__expect_send({mock_ikea_scroll.id, clusters.Switch.attributes.MultiPressMax:read(mock_ikea_scroll, 9)})
-  test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group3", button_attr.pushed({state_change = false})))
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("main", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group2", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
   test.socket.capability:__expect_send(mock_ikea_scroll:generate_test_message("group3", capabilities.knob.supportedAttributes({"rotateAmount"}, {visibility = {displayed = false}})))
@@ -253,12 +249,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -273,7 +264,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
+        capabilities.knob.rotateAmount(12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -311,12 +302,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -331,7 +317,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
+        capabilities.knob.rotateAmount(12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -377,12 +363,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -397,7 +378,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
+        capabilities.knob.rotateAmount(-12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -435,12 +416,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -455,7 +431,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("main",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
+        capabilities.knob.rotateAmount(-12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -501,12 +477,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("group2",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -521,7 +492,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group2",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
+        capabilities.knob.rotateAmount(12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -557,12 +528,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("group2",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -577,7 +543,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group2",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
+        capabilities.knob.rotateAmount(-12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -613,12 +579,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("group3",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -633,7 +594,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group3",
-        capabilities.knob.rotateAmount(6, {state_change = true}))
+        capabilities.knob.rotateAmount(12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -669,12 +630,7 @@ test.register_message_test(
         )
       },
     },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_ikea_scroll:generate_test_message("group3",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
-    },
+    -- ignore InitialPress events during scroll
     {
       channel = "matter",
       direction = "receive",
@@ -689,7 +645,7 @@ test.register_message_test(
       channel = "capability",
       direction = "send",
       message = mock_ikea_scroll:generate_test_message("group3",
-        capabilities.knob.rotateAmount(-6, {state_change = true}))
+        capabilities.knob.rotateAmount(-12, {state_change = true}))
     },
     {
       channel = "matter",
@@ -779,6 +735,18 @@ test.register_message_test(
   {
      min_api_version = 17
   }
+)
+
+test.register_coroutine_test(
+  "Refresh necessary attributes",
+  function()
+    test.socket.capability:__queue_receive(
+      {mock_ikea_scroll.id, {capability = "refresh", component = "main", command = "refresh", args = {}}}
+    )
+    local read_request = clusters.PowerSource.attributes.BatPercentRemaining:read(mock_ikea_scroll, 0)
+    test.socket.matter:__expect_send({mock_ikea_scroll.id, read_request})
+    test.wait_for_events()
+  end
 )
 
 test.run_registered_tests()

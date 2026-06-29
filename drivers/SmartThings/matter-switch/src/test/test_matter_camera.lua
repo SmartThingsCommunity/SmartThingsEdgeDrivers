@@ -119,6 +119,45 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
+local mock_device_no_per_zone_sensitivity = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("camera.yml"),
+  manufacturer_info = {vendor_id = 0x0000, product_id = 0x0000},
+  matter_version = {hardware = 1, software = 1},
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" }
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = CAMERA_EP,
+      clusters = {
+        {
+          cluster_id = clusters.CameraAvStreamManagement.ID,
+          feature_map = clusters.CameraAvStreamManagement.types.Feature.VIDEO,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.ZoneManagement.ID,
+          feature_map = clusters.ZoneManagement.types.Feature.TWO_DIMENSIONAL_CARTESIAN_ZONE,
+          cluster_type = "SERVER"
+        },
+        {
+          cluster_id = clusters.PushAvStreamTransport.ID,
+          cluster_type = "SERVER"
+        }
+      },
+      device_types = {
+        {device_type_id = 0x0142, device_type_revision = 1} -- Camera
+      }
+    }
+  }
+})
+
 local subscribe_request
 local subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.AttributeList,
@@ -168,6 +207,27 @@ local function test_init()
 end
 
 test.set_test_init_function(test_init)
+
+
+local subscribe_request_no_per_zone_sensitivity
+local subscribed_attributes_no_per_zone_sensitivity = {
+  clusters.CameraAvStreamManagement.attributes.AttributeList,
+}
+
+local function test_init_no_per_zone_sensitivity()
+  test.mock_device.add_test_device(mock_device_no_per_zone_sensitivity)
+  test.socket.device_lifecycle:__queue_receive({ mock_device_no_per_zone_sensitivity.id, "added" })
+  test.socket.device_lifecycle:__queue_receive({ mock_device_no_per_zone_sensitivity.id, "init" })
+  subscribe_request_no_per_zone_sensitivity = subscribed_attributes_no_per_zone_sensitivity[1]:subscribe(mock_device_no_per_zone_sensitivity)
+  subscribe_request_no_per_zone_sensitivity:merge(cluster_base.subscribe(mock_device_no_per_zone_sensitivity, nil, camera_fields.CameraAVSMFeatureMapAttr.cluster, camera_fields.CameraAVSMFeatureMapAttr.ID))
+  subscribe_request_no_per_zone_sensitivity:merge(cluster_base.subscribe(mock_device_no_per_zone_sensitivity, nil, camera_fields.ZoneManagementFeatureMapAttr.cluster, camera_fields.ZoneManagementFeatureMapAttr.ID))
+  for i, attr in ipairs(subscribed_attributes_no_per_zone_sensitivity) do
+    if i > 1 then subscribe_request_no_per_zone_sensitivity:merge(attr:subscribe(mock_device_no_per_zone_sensitivity)) end
+  end
+  test.socket.matter:__expect_send({mock_device_no_per_zone_sensitivity.id, subscribe_request_no_per_zone_sensitivity})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_no_per_zone_sensitivity.id, "doConfigure" })
+  mock_device_no_per_zone_sensitivity:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
 
 local additional_subscribed_attributes = {
   clusters.CameraAvStreamManagement.attributes.HDRModeEnabled,
@@ -346,7 +406,83 @@ local function update_device_profile()
   end
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
-  test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
+end
+
+local additional_subscribed_attributes_no_per_zone_sensitivity = {
+  clusters.CameraAvStreamManagement.attributes.StatusLightBrightness,
+  clusters.CameraAvStreamManagement.attributes.StatusLightEnabled,
+  clusters.CameraAvStreamManagement.attributes.RateDistortionTradeOffPoints,
+  clusters.CameraAvStreamManagement.attributes.MaxEncodedPixelRate,
+  clusters.CameraAvStreamManagement.attributes.VideoSensorParams,
+  clusters.CameraAvStreamManagement.attributes.AllocatedVideoStreams,
+  clusters.CameraAvSettingsUserLevelManagement.attributes.DPTZStreams,
+  clusters.CameraAvStreamManagement.attributes.MinViewportResolution,
+  clusters.CameraAvStreamManagement.attributes.Viewport,
+  clusters.CameraAvStreamManagement.attributes.AttributeList,
+  clusters.ZoneManagement.attributes.MaxZones,
+  clusters.ZoneManagement.attributes.Zones,
+  clusters.ZoneManagement.attributes.Triggers,
+  clusters.ZoneManagement.attributes.SensitivityMax,
+  clusters.ZoneManagement.attributes.Sensitivity,
+  clusters.ZoneManagement.events.ZoneTriggered,
+  clusters.ZoneManagement.events.ZoneStopped,
+  clusters.OnOff.attributes.OnOff,
+}
+
+local function update_device_profile_no_per_zone_sensitivity()
+  local expected_metadata = {
+  optional_component_capabilities = {
+    {
+      "main",
+      {
+        "videoCapture2",
+        "cameraViewportSettings",
+        "videoStreamSettings",
+        "zoneManagement",
+      }
+    },
+     {
+      "statusLed",
+      {
+        "switch",
+        "mode"
+      }
+    }
+  },
+  profile = "camera"
+}
+
+  test.socket.matter:__queue_receive({
+    mock_device_no_per_zone_sensitivity.id,
+    clusters.CameraAvStreamManagement.attributes.AttributeList:build_test_report_data(mock_device_no_per_zone_sensitivity, CAMERA_EP, {
+      uint32(clusters.CameraAvStreamManagement.attributes.StatusLightEnabled.ID),
+      uint32(clusters.CameraAvStreamManagement.attributes.StatusLightBrightness.ID)
+    })
+  })
+  mock_device_no_per_zone_sensitivity:expect_metadata_update(expected_metadata)
+  test.wait_for_events()
+  local updated_device_profile = t_utils.get_profile_definition(
+    "camera.yml", {enabled_optional_capabilities = expected_metadata.optional_component_capabilities}
+  )
+  test.wait_for_events()
+  test.socket.device_lifecycle:__queue_receive(mock_device_no_per_zone_sensitivity:generate_info_changed({ profile = updated_device_profile }))
+
+  test.socket.capability:__expect_send(
+    mock_device_no_per_zone_sensitivity:generate_test_message("main", capabilities.zoneManagement.supportedFeatures(
+      {"triggerAugmentation"}
+    ))
+  )
+
+  test.socket.capability:__expect_send(
+    mock_device_no_per_zone_sensitivity:generate_test_message("main", capabilities.videoStreamSettings.supportedFeatures(
+      {"liveStreaming", "clipRecording", "perStreamViewports"}
+    ))
+  )
+
+  for _, attr in ipairs(additional_subscribed_attributes_no_per_zone_sensitivity) do
+    subscribe_request_no_per_zone_sensitivity:merge(attr:subscribe(mock_device_no_per_zone_sensitivity))
+  end
+  test.socket.matter:__expect_send({mock_device_no_per_zone_sensitivity.id, subscribe_request_no_per_zone_sensitivity})
 end
 
 -- Matter Handler UTs
@@ -1336,6 +1472,47 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
+  "Duplicate ZoneTriggered events should not duplicate triggeredZones state",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.events.ZoneTriggered:build_test_event_report(mock_device, CAMERA_EP, {
+        zone = 2,
+        reason = clusters.ZoneManagement.types.ZoneEventTriggeredReasonEnum.MOTION
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.triggeredZones({{zoneId = 2}}))
+    )
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.events.ZoneTriggered:build_test_event_report(mock_device, CAMERA_EP, {
+        zone = 2,
+        reason = clusters.ZoneManagement.types.ZoneEventTriggeredReasonEnum.MOTION
+      })
+    })
+
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.events.ZoneStopped:build_test_event_report(mock_device, CAMERA_EP, {
+        zone = 2,
+        reason = clusters.ZoneManagement.types.ZoneEventStoppedReasonEnum.ACTION_STOPPED
+      })
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.triggeredZones({}))
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
   "Button events should generate appropriate events",
   function()
     update_device_profile()
@@ -1872,7 +2049,7 @@ test.register_coroutine_test(
       test.socket.capability:__queue_receive({
         mock_device.id,
         { capability = "zoneManagement", component = "main", command = "newZone", args = {
-          i .. " zone", {{value = {x = 0, y = 0}}, {value = {x = 1920, y = 1080}} }, i, "blue"
+          i .. " zone", {{value = {x = 0, y = 0}}, {value = {x = 1920, y = 1080}} }, i, "#FFFFFF"
         }}
       })
       test.socket.matter:__expect_send({
@@ -1885,7 +2062,7 @@ test.register_coroutine_test(
                 clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 0, y = 0}),
                 clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 1920, y = 1080})
               },
-              color = "blue"
+              color = "#FFFFFF"
             }
           )
         )
@@ -2075,6 +2252,98 @@ test.register_coroutine_test(
     test.socket.matter:__expect_send({
       mock_device.id, clusters.ZoneManagement.server.commands.RemoveTrigger(mock_device, CAMERA_EP, 1)
     })
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Removing a zone with an existing trigger should send RemoveTrigger followed by RemoveZone",
+  function()
+    update_device_profile()
+    test.wait_for_events()
+
+    -- Create a zone
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "zoneManagement", component = "main", command = "newZone", args = {
+        "motion zone", {{value = {x = 0, y = 0}}, {value = {x = 1920, y = 1080}}}, "motion", "#FFFFFF"
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.CreateTwoDCartesianZone(mock_device, CAMERA_EP,
+        clusters.ZoneManagement.types.TwoDCartesianZoneStruct({
+          name = "motion zone",
+          use = clusters.ZoneManagement.types.ZoneUseEnum.MOTION,
+          vertices = {
+            clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 0, y = 0}),
+            clusters.ZoneManagement.types.TwoDCartesianVertexStruct({x = 1920, y = 1080})
+          },
+          color = "#FFFFFF"
+        })
+      )
+    })
+
+    -- Create a trigger
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "zoneManagement", component = "main", command = "createOrUpdateTrigger", args = {
+        1, 10, 3, 15, 3, 5
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.CreateOrUpdateTrigger(mock_device, CAMERA_EP, {
+        zone_id = 1,
+        initial_duration = 10,
+        augmentation_duration = 3,
+        max_duration = 15,
+        blind_duration = 3,
+        sensitivity = 5
+      })
+    })
+
+    -- Receive the Triggers attribute update from the device reflecting the new trigger
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.attributes.Triggers:build_test_report_data(
+        mock_device, CAMERA_EP, {
+          clusters.ZoneManagement.types.ZoneTriggerControlStruct({
+            zone_id = 1, initial_duration = 10, augmentation_duration = 3,
+            max_duration = 15, blind_duration = 3, sensitivity = 5
+          })
+        }
+      )
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.triggers({{
+        zoneId = 1, initialDuration = 10, augmentationDuration = 3,
+        maxDuration = 15, blindDuration = 3, sensitivity = 5
+      }}))
+    )
+    test.wait_for_events()
+
+    -- Receive removeZone command: since a trigger exists for zone 1, RemoveTrigger is sent first, then RemoveZone
+    test.socket.capability:__queue_receive({
+      mock_device.id,
+      { capability = "zoneManagement", component = "main", command = "removeZone", args = { 1 } }
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.RemoveTrigger(mock_device, CAMERA_EP, 1)
+    })
+    test.socket.matter:__expect_send({
+      mock_device.id, clusters.ZoneManagement.server.commands.RemoveZone(mock_device, CAMERA_EP, 1)
+    })
+    test.wait_for_events()
+
+    -- Receive the updated Zones attribute from the device with the zone removed
+    test.socket.matter:__queue_receive({
+      mock_device.id,
+      clusters.ZoneManagement.attributes.Zones:build_test_report_data(mock_device, CAMERA_EP, {})
+    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.zoneManagement.zones({value = {}}))
+    )
   end,
   {
      min_api_version = 17
@@ -2909,10 +3178,57 @@ test.register_coroutine_test(
     }
     mock_device:expect_metadata_update(updated_expected_metadata)
     test.socket.matter:__expect_send({mock_device.id, clusters.Switch.attributes.MultiPressMax:read(mock_device, DOORBELL_EP)})
-    test.socket.capability:__expect_send(mock_device:generate_test_message("doorbell", capabilities.button.button.pushed({state_change = false})))
   end,
   {
      min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Zone Management trigger reports should omit sensitivity when per-zone sensitivity is unsupported, even if provided by client",
+  function()
+    update_device_profile_no_per_zone_sensitivity()
+    test.wait_for_events()
+    -- Create a trigger with
+    test.socket.capability:__queue_receive({
+      mock_device_no_per_zone_sensitivity.id,
+      { capability = "zoneManagement", component = "main", command = "createOrUpdateTrigger", args = {
+        1, 10, 3, 15, 3, 5
+      }}
+    })
+    test.socket.matter:__expect_send({
+      mock_device_no_per_zone_sensitivity.id, clusters.ZoneManagement.server.commands.CreateOrUpdateTrigger(mock_device_no_per_zone_sensitivity, CAMERA_EP, {
+        zone_id = 1,
+        initial_duration = 10,
+        augmentation_duration = 3,
+        max_duration = 15,
+        blind_duration = 3
+      })
+    })
+  end,
+  {
+    test_init = test_init_no_per_zone_sensitivity,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Zone Management setSensitivity command should handle global sensitivity when per-zone sensitivity is unsupported",
+  function()
+    update_device_profile_no_per_zone_sensitivity()
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({
+      mock_device_no_per_zone_sensitivity.id,
+      { capability = "zoneManagement", component = "main", command = "setSensitivity", args = { 5 } }
+    })
+    test.socket.matter:__expect_send({
+      mock_device_no_per_zone_sensitivity.id,
+      clusters.ZoneManagement.attributes.Sensitivity:write(mock_device_no_per_zone_sensitivity, CAMERA_EP, 5)
+    })
+  end,
+  {
+    test_init = test_init_no_per_zone_sensitivity,
+    min_api_version = 17
   }
 )
 

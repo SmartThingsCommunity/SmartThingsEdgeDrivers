@@ -1735,6 +1735,11 @@ zigbeeManufacturer:
     manufacturer: LEDVANCE
     model: PLUG COMPACT EU EM T
     deviceProfileName: switch-power-energy
+  - id: "LEDVANCE/PLUG EU EM T"
+    deviceLabel: SMART ZIGBEE PLUG EU EM T
+    manufacturer: LEDVANCE
+    model: PLUG EU EM T
+    deviceProfileName: switch-power-energy    
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -2446,6 +2451,12 @@ zigbeeManufacturer:
     manufacturer: JNL
     model: Y-K002-001
     deviceProfileName: basic-switch
+  #FIRSTLED
+  - id: "FIRSTLED/M4S4BAC"
+    deviceLabel: Mirror Series 4x4 1
+    manufacturer: FIRSTLED
+    model: M4S4BAC
+    deviceProfileName: switch-light-restore-wireless
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

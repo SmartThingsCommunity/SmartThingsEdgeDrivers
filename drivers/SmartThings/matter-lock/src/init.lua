@@ -83,7 +83,13 @@ local function lock_state_handler(driver, device, ib, response)
   }
 
   if ib.data.value ~= nil then
-    device:emit_event(LOCK_STATE[ib.data.value])
+    local event = LOCK_STATE[ib.data.value]
+    if event ~= nil then
+      device:emit_event(event)
+    else
+      device.log.warn(string.format("Received unknown lock state value (%s), emitting unknown", ib.data.value))
+      device:emit_event(attr.unknown())
+    end
   else
     device:emit_event(LOCK_STATE[LockState.NOT_FULLY_LOCKED])
   end
@@ -714,6 +720,7 @@ local matter_lock_driver = {
     doConfigure = do_configure,
     infoChanged = info_changed,
   },
+  shared_device_thread_enabled = true,
 }
 
 -----------------------------------------------------------------------------------------------------------------------------

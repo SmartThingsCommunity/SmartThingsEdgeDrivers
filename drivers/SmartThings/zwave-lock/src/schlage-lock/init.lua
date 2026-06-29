@@ -1,16 +1,6 @@
--- Copyright 2022 SmartThings
---
--- Licensed under the Apache License, Version 2.0 (the "License");
--- you may not use this file except in compliance with the License.
--- You may obtain a copy of the License at
---
---     http://www.apache.org/licenses/LICENSE-2.0
---
--- Unless required by applicable law or agreed to in writing, software
--- distributed under the License is distributed on an "AS IS" BASIS,
--- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
--- See the License for the specific language governing permissions and
--- limitations under the License.
+-- Copyright 2022 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 
 local capabilities = require "st.capabilities"
 local cc = require "st.zwave.CommandClass"
@@ -27,14 +17,9 @@ local Association = (require "st.zwave.CommandClass.Association")({version=1})
 
 local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 
-local SCHLAGE_MFR = 0x003B
 local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 
 local DEFAULT_COMMANDS_DELAY = 4.2 -- seconds
-
-local function can_handle_schlage_lock(opts, self, device, cmd, ...)
-  return device.zwave_manufacturer_id == SCHLAGE_MFR
-end
 
 local function set_code_length(self, device, cmd)
   local length = cmd.args.length
@@ -187,7 +172,7 @@ local schlage_lock = {
     doConfigure = do_configure,
   },
   NAME = "Schlage Lock",
-  can_handle = can_handle_schlage_lock,
+  can_handle = require("schlage-lock.can_handle"),
 }
 
 return schlage_lock

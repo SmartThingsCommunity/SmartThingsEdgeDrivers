@@ -297,6 +297,7 @@ local matter_driver_template = {
     capabilities.windMode
   },
   sub_drivers = require("sub_drivers"),
+  shared_device_thread_enabled = true,
 }
 
 local matter_driver = MatterDriver("matter-appliance", matter_driver_template)

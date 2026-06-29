@@ -1,3 +1,6 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -10,7 +13,7 @@ local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
 
 local initializedStateWithGuide = capabilities["stse.initializedStateWithGuide"]
-local reverseRollerShadeDir = "stse.reverseRollerShadeDir"
+local reverseRollerShadeDir = capabilities["stse.reverseRollerShadeDir"]
 local shadeRotateState = capabilities["stse.shadeRotateState"]
 local setRotateStateCommandName = "setRotateState"
 
@@ -82,9 +85,9 @@ end
 
 local function device_info_changed(driver, device, event, args)
   if device.preferences ~= nil then
-    local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir]
+    local reverseRollerShadeDirPrefValue = device.preferences[reverseRollerShadeDir.ID]
     if reverseRollerShadeDirPrefValue ~= nil and
-        reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDir] then
+        reverseRollerShadeDirPrefValue ~= args.old_st_store.preferences[reverseRollerShadeDir.ID] then
       local raw_value = reverseRollerShadeDirPrefValue and aqara_utils.PREF_REVERSE_ON or aqara_utils.PREF_REVERSE_OFF
       device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
         aqara_utils.MFG_CODE, data_types.CharString, raw_value))
@@ -133,9 +136,7 @@ local aqara_roller_shade_handler = {
       }
     }
   },
-  can_handle = function(opts, driver, device, ...)
-    return device:get_model() == "lumi.curtain.aq2"
-  end
+  can_handle = require("aqara.roller-shade.can_handle"),
 }
 
 return aqara_roller_shade_handler

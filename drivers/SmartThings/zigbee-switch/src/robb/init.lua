@@ -32,7 +32,7 @@ local robb_dimmer_handler = {
     }
   },
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(do_init)
+    init = configurations.reconfig_wrapper(do_init)
   },
   can_handle = require("robb.can_handle"),
 }

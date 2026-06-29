@@ -80,12 +80,13 @@ local zigbee_switch_driver_template = {
   },
   current_config_version = 1,
   lifecycle_handlers = {
-    init = configurationMap.power_reconfig_wrapper(device_init),
+    init = configurationMap.reconfig_wrapper(device_init),
     added = lazy_handler("lifecycle_handlers.device_added"),
     infoChanged = lazy_handler("lifecycle_handlers.info_changed"),
     doConfigure = lazy_handler("lifecycle_handlers.do_configure"),
   },
   health_check = false,
+  shared_device_thread_enabled = true,
 }
 defaults.register_for_default_handlers(zigbee_switch_driver_template,
   zigbee_switch_driver_template.supported_capabilities,

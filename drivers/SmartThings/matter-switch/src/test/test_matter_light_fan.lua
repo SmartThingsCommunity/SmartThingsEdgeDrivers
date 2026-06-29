@@ -5,11 +5,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.generated.zap_clusters"
 local t_utils = require "integration_test.utils"
 local test = require "integration_test"
-local version = require "version"
-
-local TRANSITION_TIME = 0
-local OPTIONS_MASK = 0x01
-local HANDLE_COMMAND_IF_OFF = 0x01
 
 local mock_device_ep1 = 1
 local mock_device_ep2 = 2
@@ -127,9 +122,6 @@ local function test_init()
     if i > 1 then subscribe_request:merge(clus:subscribe(mock_device)) end
   end
 
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.matter:__expect_send({mock_device.id, subscribe_request}) -- since all fan capabilities are optional, nothing is initially subscribed to
-
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
 
@@ -174,98 +166,6 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive(mock_device_capabilities_disabled:generate_info_changed({}))
   end,
   { test_init = function() test.mock_device.add_test_device(mock_device_capabilities_disabled) end }
-)
-
-
-test.register_coroutine_test(
-  "Switch capability should send the appropriate commands", function()
-    test.socket.capability:__queue_receive(
-      {
-        mock_child.id,
-        { capability = "switch", component = "main", command = "on", args = { } }
-      }
-    )
-    if version.api >= 11 then
-      test.socket.devices:__expect_send(
-        {
-          "register_native_capability_cmd_handler",
-          { device_uuid = mock_child.id, capability_id = "switch", capability_cmd_id = "on" }
-        }
-      )
-    end
-    test.socket.matter:__expect_send(
-      {
-        mock_device.id,
-        clusters.OnOff.server.commands.On(mock_device, mock_device_ep1)
-      }
-    )
-    test.socket.matter:__queue_receive(
-      {
-        mock_device.id,
-        clusters.OnOff.attributes.OnOff:build_test_report_data(mock_device, mock_device_ep1, true)
-      }
-    )
-    test.socket.devices:__expect_send(
-      {
-        "register_native_capability_attr_handler",
-        { device_uuid = mock_device.id, capability_id = "switch", capability_attr_id = "switch" }
-      }
-    )
-    test.socket.capability:__expect_send(
-      mock_child:generate_test_message(
-        "main", capabilities.switch.switch.on()
-      )
-    )
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_message_test(
-  "Set color temperature should send the appropriate commands",
-  {
-    {
-      channel = "capability",
-      direction = "receive",
-      message = {
-        mock_child.id,
-        { capability = "colorTemperature", component = "main", command = "setColorTemperature", args = {1800} }
-      }
-    },
-    {
-      channel = "matter",
-      direction = "send",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature(mock_device, mock_device_ep1, 556, TRANSITION_TIME, OPTIONS_MASK, HANDLE_COMMAND_IF_OFF)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.server.commands.MoveToColorTemperature:build_test_command_response(mock_device, mock_device_ep1)
-      }
-    },
-    {
-      channel = "matter",
-      direction = "receive",
-      message = {
-        mock_device.id,
-        clusters.ColorControl.attributes.ColorTemperatureMireds:build_test_report_data(mock_device, mock_device_ep1, 556)
-      }
-    },
-    {
-      channel = "capability",
-      direction = "send",
-      message = mock_child:generate_test_message("main", capabilities.colorTemperature.colorTemperature(1800))
-    },
-  },
-  {
-     min_api_version = 17
-  }
 )
 
 local FanMode = clusters.FanControl.attributes.FanMode

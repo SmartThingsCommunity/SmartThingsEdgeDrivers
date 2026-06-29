@@ -52,7 +52,7 @@ local zigbee_dual_metering_switch = {
     }
   },
   lifecycle_handlers = {
-    init = configurations.power_reconfig_wrapper(device_init),
+    init = configurations.reconfig_wrapper(device_init),
     added = device_added
   },
   can_handle = require("zigbee-dual-metering-switch.can_handle"),

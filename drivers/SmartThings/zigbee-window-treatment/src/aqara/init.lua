@@ -1,3 +1,7 @@
+-- Copyright 2025 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
+
 local capabilities = require "st.capabilities"
 local clusters = require "st.zigbee.zcl.clusters"
 local cluster_base = require "st.zigbee.cluster_base"
@@ -27,21 +31,7 @@ local PREF_SOFT_TOUCH_ON = "\x00\x08\x00\x00\x00\x00\x00"
 
 local APPLICATION_VERSION = "application_version"
 
-local FINGERPRINTS = {
-  { mfr = "LUMI", model = "lumi.curtain" },
-  { mfr = "LUMI", model = "lumi.curtain.v1" },
-  { mfr = "LUMI", model = "lumi.curtain.aq2" },
-  { mfr = "LUMI", model = "lumi.curtain.agl001" }
-}
 
-local function is_aqara_products(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
 
 local function window_shade_level_cmd(driver, device, command)
   aqara_utils.shade_level_cmd(driver, device, command)
@@ -217,12 +207,8 @@ local aqara_window_treatment_handler = {
       }
     }
   },
-  sub_drivers = {
-    require("aqara.roller-shade"),
-    require("aqara.curtain-driver-e1"),
-    require("aqara.version")
-  },
-  can_handle = is_aqara_products
+  sub_drivers = require("aqara.sub_drivers"),
+  can_handle = require("aqara.can_handle"),
 }
 
 return aqara_window_treatment_handler
