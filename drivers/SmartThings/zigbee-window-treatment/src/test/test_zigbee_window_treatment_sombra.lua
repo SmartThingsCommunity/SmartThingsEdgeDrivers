@@ -116,6 +116,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.opening())
       )
+      test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
       test.wait_for_events()
       -- no further reports for the settle delay => partially open
       test.mock_time.advance_time(3)
@@ -160,6 +161,7 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closing())
       )
+      test.timer.__create_and_queue_test_time_advance_timer(3, "oneshot")
       test.wait_for_events()
       -- no further reports for the settle delay => partially open
       test.mock_time.advance_time(3)
