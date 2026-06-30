@@ -135,7 +135,7 @@ local preference_map = {
   },
   -- External switch wiring type (same attribute as stse.electricSwitchType, with an extra "disabled"
   -- option): rocker = maintained, rebound/button = momentary, disabled = external switch ignored.
-  ["switchType"] = {
+  ["stse.switchType"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
@@ -148,14 +148,14 @@ local preference_map = {
     mfg_code = MFG_CODE,
     data_type = data_types.Boolean,
   },
-  ["powerOffMemory"] = {
+  ["stse.powerOffMemory"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = POWER_OFF_MEMORY_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint8,
     value_map = { restore = 0x01, poweron = 0x00, poweroff = 0x02, reverse = 0x03 },
   },
-  ["pulseInterval"] = {
+  ["stse.pulseIntervalSetting"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = PULSE_INTERVAL_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
