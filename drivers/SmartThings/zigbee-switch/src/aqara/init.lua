@@ -140,7 +140,7 @@ local preference_map = {
     attribute_id = ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint8,
-    value_map = { rocker = 0x01, rebound = 0x02, disabled = 0x00 },
+    value_map = { rocker = 0x01, rebound = 0x02, nc = 0x00 },
   },
   ["stse.turnOffIndicatorLight"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
@@ -153,7 +153,7 @@ local preference_map = {
     attribute_id = POWER_OFF_MEMORY_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint8,
-    value_map = { restore = 0x01, poweron = 0x00, poweroff = 0x02, reverse = 0x03 },
+    value_map = { restore = 0x01, on = 0x00, off = 0x02, reverse = 0x03 },
   },
   ["stse.pulseIntervalSetting"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
