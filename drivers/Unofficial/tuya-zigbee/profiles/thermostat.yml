@@ -18,13 +18,6 @@ components:
         config:
           values:
             - key: "thermostatMode.value"
-              enabledValues:
-                - antifreezing
-                - auto
-                - comfort
-                - eco
-                - off
-                - on
       - id: battery
         version: 1
       - id: refresh
