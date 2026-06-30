@@ -1,0 +1,42 @@
+name: aqara-dual-relay-module-unified
+components:
+  - id: main
+    capabilities:
+      - id: switch
+        version: 1
+      - id: button
+        version: 1
+      - id: powerMeter
+        version: 1
+      - id: energyMeter
+        version: 1
+      - id: firmwareUpdate
+        version: 1
+      - id: refresh
+        version: 1
+    categories:
+      - name: Switch
+  - id: interlock
+    capabilities:
+      - id: mode
+        version: 1
+    categories:
+      - name: Switch
+  - id: devicemode
+    capabilities:
+      - id: mode
+        version: 1
+    categories:
+      - name: Switch
+preferences:
+  - preferenceId: stse.powerOffMemory
+    explicit: true
+  - preferenceId: stse.pulseIntervalSetting
+    explicit: true
+  - preferenceId: stse.switchType
+    explicit: true
+  - preferenceId: stse.changeToWirelessSwitch
+    explicit: true
+metadata:
+  mnmn: SolutionsEngineering
+  vid: SmartThings-smartthings-Aqara_Dual_Relay_Module_T2 
