@@ -53,7 +53,7 @@ local function increase_packet_id(pid)
 end
 
 local function do_refresh(driver, device)
-  print("do_refresh called")
+  device.log.info("do_refresh called")
 end
 
 local MODE_MAP = {
