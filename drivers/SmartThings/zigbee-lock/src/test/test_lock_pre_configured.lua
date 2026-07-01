@@ -137,26 +137,6 @@ test.register_coroutine_test(
   end
 )
 
-test.register_coroutine_test(
-  "updateUser (pre-configured): returns failure for a userIndex that does not exist",
-  function()
-    setup_state()
-
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = capabilities.lockUsers.ID, command = "updateUser", args = { 10, "Ghost", "guest" } },
-    })
-
-    test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main",
-        capabilities.lockUsers.commandResult(
-          { commandName = "updateUser", statusCode = "failure" },
-          { state_change = true, visibility = { displayed = false } }
-        ))
-    )
-    test.wait_for_events()
-  end
-)
 
 -- ============================================================================
 -- deleteUser with associated credential — exercises clear_pin_code_response

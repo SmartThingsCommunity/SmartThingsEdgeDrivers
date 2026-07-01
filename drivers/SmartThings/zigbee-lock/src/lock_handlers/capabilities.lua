@@ -42,18 +42,32 @@ function CapabilityHandlers.add_user(driver, device, command)
     userName  = command.args.userName,
     userType  = command.args.userType,
   })
-  local additional_info = status == consts.COMMAND_RESULT.SUCCESS and { userIndex = next_available_index } or nil
+  local additional_info = status == consts.COMMAND_RESULT.SUCCESS and { userIndex = next_available_index }
   lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.ADD, status, additional_info)
 end
 
 function CapabilityHandlers.update_user(driver, device, command)
-  local status = lock_utils.is_device_busy(device) and consts.COMMAND_RESULT.BUSY or
-    tables.update_entry(device, "users",
+  if lock_utils.is_device_busy(device) then
+    lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, consts.COMMAND_RESULT.BUSY)
+    return
+  end
+
+  local result_status
+  if not tables.find_entry(device, "users", command.args.userIndex) then
+    result_status = tables.add_entry(device, "users", {
+      userIndex = command.args.userIndex,
+      userName  = command.args.userName,
+      userType  = command.args.userType,
+    })
+  else
+    result_status = tables.update_entry(device, "users",
       command.args.userIndex,
       { userName = command.args.userName, userType = command.args.userType }
     )
-  local additional_info = status == consts.COMMAND_RESULT.SUCCESS and { userIndex = command.args.userIndex } or nil
-  lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, status, additional_info)
+  end
+
+  local additional_info = result_status == consts.COMMAND_RESULT.SUCCESS and { userIndex = command.args.userIndex }
+  lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.UPDATE, result_status, additional_info)
 end
 
 function CapabilityHandlers.delete_user(driver, device, command)
@@ -84,7 +98,7 @@ function CapabilityHandlers.delete_user(driver, device, command)
   if #associated_credentials == 0 then
     -- No associated credentials: delete the user entry directly and report the result
     local status = tables.delete_entry(device, "users", command.args.userIndex)
-    local additional_info = status == consts.COMMAND_RESULT.SUCCESS and { userIndex = command.args.userIndex } or nil
+    local additional_info = status == consts.COMMAND_RESULT.SUCCESS and { userIndex = command.args.userIndex }
     lock_utils.emit_command_result(device, capabilities.lockUsers, consts.LOCK_USERS.DELETE, status, additional_info)
   end
 end
@@ -117,7 +131,7 @@ function CapabilityHandlers.add_credential(driver, device, command)
   local user_index = command.args.userIndex == 0 and tables.next_index(device, "users") or command.args.userIndex
   local cred_index = command.args.userIndex == 0 and tables.next_index(device, "credentials") or command.args.userIndex
 
-  if #tables.get_state(device, "credentials") >= tables.get_max_entries(device, "credentials") then
+  if #(tables.get_state(device, "credentials") or {}) >= tables.get_max_entries(device, "credentials") then
     lock_utils.emit_command_result(device, capabilities.lockCredentials, consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.RESOURCE_EXHAUSTED)
     return
   end
