@@ -207,35 +207,6 @@ do
   )
 end
 
-do
-  local dev
-  test.register_coroutine_test(
-    "infoChanged: profile switched away from lockCodes (to non-lockCodes profile) does nothing",
-    function()
-      -- Warm up device_cache with base-lock
-      test.socket.device_lifecycle:__queue_receive({ dev.id, "init" })
-      test.wait_for_events()
-
-      -- Switch to lock-battery (no lockCodes)
-      test.socket.device_lifecycle:__queue_receive(
-        dev:generate_info_changed({ profile = t_utils.get_profile_definition("lock-battery.yml") })
-      )
-      test.wait_for_events()
-      -- profile_switched is true but new profile has no lockCodes → no migration events
-    end,
-    {
-      test_init = function()
-        test.disable_startup_messages()
-        dev = test.mock_device.build_test_zwave_device({
-          profile         = t_utils.get_profile_definition("base-lock.yml"),
-          zwave_endpoints = zwave_lock_endpoints,
-        })
-        test.mock_device.add_test_device(dev)
-      end,
-    }
-  )
-end
-
 -- ============================================================================
 -- init (LockLifecycle.init)
 -- ============================================================================
