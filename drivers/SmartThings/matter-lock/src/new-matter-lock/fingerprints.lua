@@ -12,6 +12,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x115F, 0x280F}, -- Aqara Smart Lock U500 Rim
   {0x115F, 0x2810}, -- Aqara Smart Lock U500 Glass Door
   {0x115F, 0x284A}, -- Aqara Smart Lock U600
+  {0x115F, 0x280D}, -- Aqara Smart Lock J200
   {0x147F, 0x0001}, -- U-tec
   {0x147F, 0x0007}, -- ULTRALOQ Bolt Pro Smart Matter Door Lock
   {0x147F, 0x0008}, -- Ultraloq, Bolt Smart Matter Door Lock

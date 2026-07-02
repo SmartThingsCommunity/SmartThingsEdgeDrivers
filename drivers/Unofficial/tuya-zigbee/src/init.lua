@@ -26,7 +26,8 @@ local unofficial_tuya_driver_template = {
     require("curtain"),
     require("motion-sensor"),
     require("smoke-detector"),
-    require("switch")
+    require("switch"),
+    require("thermostat")
   },
   health_check = false,
 }
