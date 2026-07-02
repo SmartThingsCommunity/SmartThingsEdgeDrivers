@@ -13,6 +13,11 @@ if version.api < 20 then
   clusters.ClosureDimension = require "embedded_clusters.ClosureDimension"
 end
 
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+  clusters.Global = require "embedded_clusters.Global"
+end
+
 -- ---------------------------------------------------------------------------
 -- Mock device: Covering type (windowShade / windowShadeLevel)
 -- ---------------------------------------------------------------------------
