@@ -45,9 +45,7 @@ local function test_init()
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
   local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
   subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
   subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   mock_device:expect_metadata_update({ profile = "base-lock-nobattery" })
@@ -910,4 +908,57 @@ test.register_coroutine_test(
   }
 )
 
+test.register_coroutine_test(
+  "Lock codes stored during migration",
+  function()
+    init_code_slot(1, "Code 1", mock_device)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.lockCodes(
+          json.encode({["1"] = "Code 1"}), {visibility = {displayed = false}}
+        )
+      )
+    )
+    test.wait_for_events()
+    init_code_slot(2, "Code 2", mock_device)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.lockCodes(
+          json.encode({["1"] = "Code 1", ["2"] = "Code 2"}), {visibility = {displayed = false}}
+        )
+      )
+    )
+    test.wait_for_events()
+    init_code_slot(3, "Code 3", mock_device)
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.lockCodes.lockCodes(
+          json.encode({["1"] = "Code 1", ["2"] = "Code 2", ["3"] = "Code 3"}),
+            {visibility = {displayed = false}}
+        )
+      )
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockCodes.ID,
+          command = "migrate",
+          args = {}
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true))
+    )
+    test.socket.matter:__expect_send({
+      mock_device.id,
+      clusters.PowerSource.attributes.AttributeList:read(mock_device)
+    })
+  end,
+  {
+    min_api_version = 17
+  }
+)
 test.run_registered_tests()
