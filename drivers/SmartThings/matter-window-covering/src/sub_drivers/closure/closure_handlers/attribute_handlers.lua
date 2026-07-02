@@ -67,7 +67,6 @@ function ClosureAttrHandlers.tag_list_handler(driver, device, ib, response)
   if version.api < 16 then
     clusters.Global.types.SemanticTagStruct:augment_type(ib.data)
   end
-  print("TagList attribute value: ", ib.data)
   for _, v in ipairs(ib.data.elements) do
     local tag = v.elements
     if tag and tag.namespace_id and tag.namespace_id.value == 0x44 then
