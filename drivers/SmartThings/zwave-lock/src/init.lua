@@ -1,175 +1,132 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local capabilities = require "st.capabilities"
---- @type st.zwave.CommandClass
-local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.Driver
 local ZwaveDriver = require "st.zwave.driver"
 --- @type st.zwave.defaults
 local defaults = require "st.zwave.defaults"
---- @type st.zwave.CommandClass.DoorLock
-local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+--- @type st.zwave.CommandClass
+local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.UserCode
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
---- @type st.zwave.CommandClass.Battery
-local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
---- @type st.zwave.CommandClass.Time
-local Time = (require "st.zwave.CommandClass.Time")({ version = 1 })
-local constants = require "st.zwave.constants"
-local utils = require "st.utils"
-local json = require "st.json"
+--- @type st.zwave.CommandClass.Notification
+local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 
-local SCAN_CODES_CHECK_INTERVAL = 30
-local MIGRATION_COMPLETE = "migrationComplete"
-local MIGRATION_RELOAD_SKIPPED = "migrationReloadSkipped"
+local capabilities = require "st.capabilities"
 
-local function periodic_codes_state_verification(driver, device)
-  local scan_codes_state = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.scanCodes.NAME)
-  if scan_codes_state == "Scanning" then
-    driver:inject_capability_command(device,
-            { capability = capabilities.lockCodes.ID,
-              command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-              args = {}
-            }
-    )
-    device.thread:call_with_delay(
-      SCAN_CODES_CHECK_INTERVAL,
-      function(d)
-        periodic_codes_state_verification(driver, device)
-      end
-    )
+local consts              = require "lock_utils.constants"
+local lock_utils          = require "lock_utils.utils"
+local table_utils         = require "lock_utils.tables"
+local zwave_handlers      = require "lock_handlers.zwave_responses"
+local capability_handlers = require "lock_handlers.capabilities"
+
+
+local LockLifecycle = {}
+
+function LockLifecycle.device_added(driver, device)
+  if device:supports_capability(capabilities.lockCodes) and device._provisioning_state == "TYPED" then
+    -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
+    -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
+    -- and should be migrated manually by the user.
+    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
   end
+  if device:supports_capability(capabilities.tamperAlert) then
+    device:emit_event(capabilities.tamperAlert.tamper.clear())
+  end
+  -- set initial state
+  driver:inject_capability_command(device, {
+    capability = capabilities.refresh.ID,
+    command = capabilities.refresh.commands.refresh.NAME,
+    args = {}
+  })
 end
 
-local function populate_state_from_data(device)
-  if device.data.lockCodes ~= nil and device:get_field(MIGRATION_COMPLETE) ~= true then
-    -- build the lockCodes table
-    local lockCodes = {}
-    local lc_data = json.decode(device.data.lockCodes)
-    for k, v in pairs(lc_data) do
-      lockCodes[k] = v
-    end
-    -- Populate the devices `lockCodes` field
-    device:set_field(constants.LOCK_CODES, utils.deep_copy(lockCodes), { persist = true })
-    -- Populate the devices state history cache
-    device.state_cache["main"] = device.state_cache["main"] or {}
-    device.state_cache["main"][capabilities.lockCodes.ID] = device.state_cache["main"][capabilities.lockCodes.ID] or {}
-    device.state_cache["main"][capabilities.lockCodes.ID][capabilities.lockCodes.lockCodes.NAME] = {value = json.encode(utils.deep_copy(lockCodes))}
+function LockLifecycle.init(driver, device)
+  -- Restore users/credentials capability state from the persistent store in case
+  -- the capability state cache was wiped since the last driver run.
+  table_utils.restore_from_persistent_store(device)
 
-    device:set_field(MIGRATION_COMPLETE, true, { persist = true })
+  local lock_pins_supported_by_profile = device:supports_capability(capabilities.lockCodes)
+  if lock_pins_supported_by_profile and device:get_field(consts.DRIVER_STATE.SLGA_MIGRATED) == true then
+    -- ensure lockCodes capability state is reflected correctly for already migrated devices
+    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
   end
-end
 
---- Builds up initial state for the device
----
---- @param self st.zwave.Driver
---- @param device st.zwave.Device
-local function added_handler(self, device)
-  populate_state_from_data(device)
-  if device.data.lockCodes == nil or device:get_field(MIGRATION_RELOAD_SKIPPED) == true then
-    if (device:supports_capability(capabilities.lockCodes)) then
-      self:inject_capability_command(device,
-          { capability = capabilities.lockCodes.ID,
-            command = capabilities.lockCodes.commands.reloadAllCodes.NAME,
-            args = {} })
-      device.thread:call_with_delay(
-          SCAN_CODES_CHECK_INTERVAL,
-          function(d)
-            periodic_codes_state_verification(self, device)
-          end
-      )
-    end
-  else
-    device:set_field(MIGRATION_RELOAD_SKIPPED, true, { persist = true })
-  end
-  device:send(DoorLock:OperationGet({}))
-  device:send(Battery:Get({}))
-  if (device:supports_capability(capabilities.tamperAlert)) then
+  if device:supports_capability(capabilities.tamperAlert) then
+    -- ensure our user/credential state is accurate to the current device state
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
 end
 
-local init_handler = function(driver, device, event)
-  populate_state_from_data(device)
-  -- temp fix before this can be changed from being persisted in memory
-  device:set_field(constants.CODE_STATE, nil, { persist = true })
-end
-
-local do_refresh = function(self, device)
-  device:send(DoorLock:OperationGet({}))
-  device:send(Battery:Get({}))
-end
-
---- @param driver st.zwave.Driver
---- @param device st.zwave.Device
---- @param cmd table
-local function update_codes(driver, device, cmd)
-  local delay = 0
-  -- args.codes is json
-  for name, code in pairs(cmd.args.codes) do
-    -- these seem to come in the format "code[slot#]: code"
-    local code_slot = tonumber(string.gsub(name, "code", ""), 10)
-    if (code_slot ~= nil) then
-      if (code ~= nil and (code ~= "0" and code ~= "")) then
-        -- code changed
-        device.thread:call_with_delay(delay, function ()
-          device:send(UserCode:Set({
-            user_identifier = code_slot,
-            user_code = code,
-            user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}))
-        end)
-        delay = delay + 2.2
-      else
-        -- code deleted
-        device.thread:call_with_delay(delay, function ()
-          device:send(UserCode:Set({user_identifier = code_slot, user_id_status = UserCode.user_id_status.AVAILABLE}))
-        end)
-        delay = delay + 2.2
-        device.thread:call_with_delay(delay, function ()
-          device:send(UserCode:Get({user_identifier = code_slot}))
-        end)
-        delay = delay + 2.2
-      end
+function LockLifecycle.info_changed(driver, device, event, args)
+  local profile_switched = device.profile.id ~= args.old_st_store.profile.id
+  if profile_switched and device:supports_capability(capabilities.lockCodes) then
+    -- ensure all slga migration steps are run, and that the latest device state is synced to the driver.
+    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+    if device:supports_capability(capabilities.lockCredentials) then
+      device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
     end
+    -- ensure all requisite initial state is set
+    driver:inject_capability_command(device, {
+      capability = capabilities.refresh.ID,
+      command = capabilities.refresh.commands.refresh.NAME,
+      args = {}
+    })
+    -- ensure our user/credential state is accurate to the current device state
+    device.thread:call_with_delay(2, function() lock_utils.sync_device_state(device) end)
   end
 end
 
-local function time_get_handler(driver, device, cmd)
-  local time = os.date("*t")
-  device:send_to_component(
-    Time:Report({
-      hour_local_time = time.hour,
-      minute_local_time = time.min,
-      second_local_time = time.sec
-    }),
-    device:endpoint_to_component(cmd.src_channel)
-  )
-end
-
 local driver_template = {
-  supported_capabilities = {
-    capabilities.lock,
-    capabilities.lockCodes,
-    capabilities.battery,
-    capabilities.tamperAlert
-  },
   lifecycle_handlers = {
-    added = added_handler,
-    init = init_handler,
-  },
-  capability_handlers = {
-    [capabilities.lockCodes.ID] = {
-      [capabilities.lockCodes.commands.updateCodes.NAME] = update_codes
-    },
-    [capabilities.refresh.ID] = {
-      [capabilities.refresh.commands.refresh.NAME] = do_refresh
-    }
+    added = LockLifecycle.device_added,
+    init = LockLifecycle.init,
+    infoChanged = LockLifecycle.info_changed,
+    driverSwitched = LockLifecycle.driver_switched,
   },
   zwave_handlers = {
     [cc.TIME] = {
-      [Time.GET] = time_get_handler -- used by DanaLock
+      [0x01] = zwave_handlers.time_get_handler -- used by DanaLock
+    },
+    [cc.NOTIFICATION] = {
+      [Notification.REPORT] = zwave_handlers.notification_report
+    },
+    [cc.USER_CODE] = {
+      [UserCode.REPORT] = zwave_handlers.user_code_report,
+      [UserCode.USERS_NUMBER_REPORT] = zwave_handlers.users_number_report,
     }
+  },
+  capability_handlers = {
+    [capabilities.lock.ID] = {
+      [capabilities.lock.commands.lock.NAME] = capability_handlers.lock,
+      [capabilities.lock.commands.unlock.NAME] = capability_handlers.unlock,
+    },
+    [capabilities.lockUsers.ID] = {
+      [capabilities.lockUsers.commands.addUser.NAME] = capability_handlers.add_user,
+      [capabilities.lockUsers.commands.updateUser.NAME] = capability_handlers.update_user,
+      [capabilities.lockUsers.commands.deleteUser.NAME] = capability_handlers.delete_user,
+      [capabilities.lockUsers.commands.deleteAllUsers.NAME] = capability_handlers.delete_all_users,
+    },
+    [capabilities.lockCredentials.ID] = {
+      [capabilities.lockCredentials.commands.addCredential.NAME] = capability_handlers.add_credential,
+      [capabilities.lockCredentials.commands.updateCredential.NAME] = capability_handlers.update_credential,
+      [capabilities.lockCredentials.commands.deleteCredential.NAME] = capability_handlers.delete_credential,
+      [capabilities.lockCredentials.commands.deleteAllCredentials.NAME] = capability_handlers.delete_all_credentials,
+    },
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = capability_handlers.refresh,
+    },
+  },
+  supported_capabilities = {
+    capabilities.lock,
+    capabilities.lockCodes,
+    capabilities.lockUsers,
+    capabilities.lockCredentials,
+    capabilities.battery,
+    capabilities.tamperAlert,
   },
   sub_drivers = require("sub_drivers"),
   shared_device_thread_enabled = true,
