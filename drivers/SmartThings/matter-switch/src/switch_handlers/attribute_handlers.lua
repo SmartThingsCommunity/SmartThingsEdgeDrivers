@@ -246,7 +246,7 @@ end
 -- [[ OCCUPANCY CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.occupancy_handler(driver, device, ib, response)
-  device:emit_event_for_endpoint(ib.endpoint_id, ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+  device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
 end
 
 
