@@ -11,11 +11,11 @@ local version = require "version"
 if version.api < 20 then
   clusters.ClosureControl = require "embedded_clusters.ClosureControl"
   clusters.ClosureDimension = require "embedded_clusters.ClosureDimension"
+  clusters.Global = require "embedded_clusters.Global"
 end
 
 if version.api < 16 then
   clusters.Descriptor = require "embedded_clusters.Descriptor"
-  clusters.Global = require "embedded_clusters.Global"
 end
 
 -- ---------------------------------------------------------------------------
