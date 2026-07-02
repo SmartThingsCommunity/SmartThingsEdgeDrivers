@@ -1,0 +1,48 @@
+{
+  "id": "7ffd59e5-ecdf-4846-84c0-08110b6aa60f",
+  "name": "XET50.v4",
+  "metadata": {
+    "vid": "9c95e626-4420-372e-a5d6-d4405143a785",
+    "mnmn": "Nexmosphere"
+  },
+  "migrationStatus": "NOT_MIGRATED",
+  "status": "DEVELOPMENT",
+  "preferences": [],
+  "components": [
+    {
+      "label": "main",
+      "id": "main",
+      "capabilities": [
+        {
+          "id": "temperatureMeasurement",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "relativeHumidityMeasurement",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        },
+        {
+          "id": "refresh",
+          "version": 1,
+          "optional": false,
+          "ephemeral": false
+        }
+      ],
+      "categories": [
+        {
+          "name": "TempHumiditySensor",
+          "categoryType": "manufacturer"
+        }
+      ],
+      "optional": false
+    }
+  ],
+  "owner": {
+    "ownerType": "USER",
+    "ownerId": "f15ba00b-eb6e-6aec-8074-2c7a20433f5e"
+  }
+}
