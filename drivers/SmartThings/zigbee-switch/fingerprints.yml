@@ -2451,6 +2451,17 @@ zigbeeManufacturer:
     manufacturer: JNL
     model: Y-K002-001
     deviceProfileName: basic-switch
+  #FIRSTLED
+  - id: "FIRSTLED/M4S4BAC"
+    deviceLabel: Mirror Series 4x4 1
+    manufacturer: FIRSTLED
+    model: M4S4BAC
+    deviceProfileName: switch-light-restore-wireless
+  - id: "ManDai Technology/DC2DC12MiV1"
+    deviceLabel: Easy-Fit Driver
+    manufacturer: ManDai Technology
+    model: DC2DC12MiV1
+    deviceProfileName: light-color-temp-time-restore
 zigbeeGeneric:
   - id: "genericSwitch"
     deviceLabel: Zigbee Switch

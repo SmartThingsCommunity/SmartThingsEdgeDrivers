@@ -25,6 +25,25 @@ matterManufacturer:
     vendorId: 0x115F
     productId: 0x2804
     deviceProfileName: lock
+  - id: "4447/10255"
+    deviceLabel: Aqara Smart Lock U500 Rim
+    vendorId: 0x115F
+    productId: 0x280F
+    deviceProfileName: lock-modular
+  - id: "4447/10256"
+    deviceLabel: Aqara Smart Lock U500 Glass Door
+    vendorId: 0x115F
+    productId: 0x2810
+    deviceProfileName: lock-modular
+  - id: "4447/10314"
+    deviceLabel: Aqara Smart Lock U600
+    vendorId: 0x115F
+    productId: 0x284A
+  - id: "4447/10253"
+    deviceLabel: Aqara Smart Lock J200
+    vendorId: 0x115F
+    productId: 0x280D
+    deviceProfileName: lock-modular
   #Eufy
   - id: "5427/1"
     deviceLabel: eufy Smart Lock E31
