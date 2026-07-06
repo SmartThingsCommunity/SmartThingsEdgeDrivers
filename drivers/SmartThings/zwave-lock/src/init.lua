@@ -62,9 +62,17 @@ function LockLifecycle.init(driver, device)
   end
 end
 
+function LockLifecycle.driver_switched(driver, device)
+  if device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME) == true then
+    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+  end
+  device:try_update_metadata({ provisioning_state = "PROVISIONED" })
+end
+
 local driver_template = {
   lifecycle_handlers = {
     added = LockLifecycle.device_added,
+    driver_switched = LockLifecycle.driver_switched,
     init = LockLifecycle.init,
   },
   zwave_handlers = {
