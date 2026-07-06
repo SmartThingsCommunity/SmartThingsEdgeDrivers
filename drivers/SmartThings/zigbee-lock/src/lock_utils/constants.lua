@@ -13,6 +13,7 @@ lock_constants.DRIVER_STATE = {
 lock_constants.SYNC = {
   CODES_FROM_LOCK = "syncCodesFromLock",
   CODE_INDEX = "syncCodeIndex",
+  CONSECUTIVE_UNOCCUPIED_CODES = "consecutiveUnoccupiedCodes",
 }
 
 lock_constants.COMMAND_RESULT = {

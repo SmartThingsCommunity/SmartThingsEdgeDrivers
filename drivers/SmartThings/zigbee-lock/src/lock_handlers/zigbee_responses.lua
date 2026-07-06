@@ -169,8 +169,16 @@ function ZigbeeHandlers.get_pin_code_response(driver, device, zb_rx)
         credentialType = consts.CRED_TYPE_PIN,
         credentialName = "Guest " .. user_id,
       })
+      -- reset the consecutive unoccupied codes counter since we found an occupied code
+      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
+    else
+      local consecutive_unoccupied_codes = (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1
+      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, consecutive_unoccupied_codes)
     end
-    if user_id >= tables.get_max_entries(device, "credentials") then
+
+    if user_id >= tables.get_max_entries(device, "credentials") or
+     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
+      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
       device:set_field(consts.SYNC.CODE_INDEX, nil)
       lock_utils.clear_busy_state(device)
     else
