@@ -3,7 +3,7 @@
 
 local capabilities = require "st.capabilities"
 
-local function is_unmigrated_matter_lock_products(opts, driver, device)
+local function is_unmigrated_matter_lock_product(opts, driver, device)
   local device_lib = require "st.device"
   if device.network_type ~= device_lib.NETWORK_TYPE_MATTER then
     return false
