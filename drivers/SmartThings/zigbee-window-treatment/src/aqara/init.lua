@@ -8,6 +8,7 @@ local cluster_base = require "st.zigbee.cluster_base"
 local data_types = require "st.zigbee.data_types"
 local aqara_utils = require "aqara/aqara_utils"
 local window_treatment_utils = require "window_treatment_utils"
+local utils = require "st.utils"
 
 local Basic = clusters.Basic
 local WindowCovering = clusters.WindowCovering
@@ -24,6 +25,9 @@ local INIT_STATE_INIT = "init"
 local INIT_STATE_OPEN = "open"
 local INIT_STATE_CLOSE = "close"
 local INIT_STATE_REVERSE = "reverse"
+local LATEST_TARGET_LEVEL = "latest_target_level"
+local TARGET_LEVEL_TIME_OUT = "_target_level_timeout"
+local TARGET_LEVEL_TIME_OUT_SECONDS = 30
 
 local PREF_INITIALIZE = "\x00\x01\x00\x00\x00\x00\x00"
 local PREF_SOFT_TOUCH_OFF = "\x00\x08\x00\x00\x00\x01\x00"
@@ -37,6 +41,51 @@ local function window_shade_level_cmd(driver, device, command)
   aqara_utils.shade_level_cmd(driver, device, command)
 end
 
+local function window_shade_step_level_cmd(driver, device, command)
+  -- Support both args.stepSize (named) and args[1] (array) formats
+  local step = command.args.stepSize or command.args[1]
+
+  -- Priority: use target_level if exists, otherwise use latest state
+  -- Note: current_level is the UI display value (already inverted)
+  local latest_target_level = device:get_field(LATEST_TARGET_LEVEL)
+  local current_level = latest_target_level or
+    device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+
+  -- Calculate UI target_level (user's expected percentage)
+  local ui_target_level = current_level + step
+  if ui_target_level > 100 then
+    ui_target_level = 100
+  elseif ui_target_level < 0 then
+    ui_target_level = 0
+  end
+  ui_target_level = utils.round(ui_target_level)
+
+  -- Invert and send to device: device_value = 100 - UI value
+  local device_target_level = 100 - ui_target_level
+
+  -- Set target_level for tracking (store UI value)
+  device:set_field(LATEST_TARGET_LEVEL, ui_target_level)
+
+  -- Cancel previous timeout timer if exists
+  local old_timer = device:get_field(TARGET_LEVEL_TIME_OUT)
+  if old_timer ~= nil then
+    device.thread:cancel_timer(old_timer)
+  end
+
+  -- Set 30 second timeout timer to ensure target_level is cleared
+  local timer = device.thread:call_with_delay(TARGET_LEVEL_TIME_OUT_SECONDS, function(d)
+    device:set_field(LATEST_TARGET_LEVEL, nil)
+    device:set_field(TARGET_LEVEL_TIME_OUT, nil)
+  end)
+  device:set_field(TARGET_LEVEL_TIME_OUT, timer)
+
+  -- Don't emit to cloud, let device reports drive UI
+  -- device:emit_event(capabilities.windowShadeLevel.shadeLevel(ui_target_level))
+
+  -- Send inverted value to device
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, device_target_level))
+end
+
 local function set_initialized_state_handler(driver, device, command)
   -- update ui
   device:emit_event(deviceInitialization.initializedState.initializing())
@@ -46,27 +95,60 @@ local function set_initialized_state_handler(driver, device, command)
   device:send(cluster_base.write_manufacturer_specific_attribute(device, Basic.ID, aqara_utils.PREF_ATTRIBUTE_ID,
     aqara_utils.MFG_CODE, data_types.CharString, PREF_INITIALIZE))
 
-  -- open/close command
+  -- open/close command (invert percentage: 100=closed, 0=open)
   device.thread:call_with_delay(3, function(d)
     local lastLevel = device:get_latest_state("main", capabilities.windowShadeLevel.ID,
       capabilities.windowShadeLevel.shadeLevel.NAME) or 0
     if lastLevel > 0 then
       device:set_field(INIT_STATE, INIT_STATE_CLOSE)
-      device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
+      device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
     else
       device:set_field(INIT_STATE, INIT_STATE_OPEN)
-      device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 100))
+      device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, 0))
     end
   end)
 end
 
 local function shade_level_report_legacy_handler(driver, device, value, zb_rx)
+  local reported_level = value.value
+  local latest_target_level = device:get_field(LATEST_TARGET_LEVEL)
+
+  if latest_target_level then
+    -- Active step control
+    if utils.round(reported_level) == utils.round(latest_target_level) then
+      -- Device reached target position, clear target marker and timeout timer
+      device:set_field(LATEST_TARGET_LEVEL, nil)
+      local timer = device:get_field(TARGET_LEVEL_TIME_OUT)
+      if timer ~= nil then
+        device.thread:cancel_timer(timer)
+        device:set_field(TARGET_LEVEL_TIME_OUT, nil)
+      end
+    end
+    -- Always emit to update UI with actual device position
+  end
+
   -- for version 34
   aqara_utils.emit_shade_level_event(device, value)
   aqara_utils.emit_shade_event(device, value)
 end
 
 local function shade_level_report_handler(driver, device, value, zb_rx)
+  local reported_level = value.value
+  local latest_target_level = device:get_field(LATEST_TARGET_LEVEL)
+
+  if latest_target_level then
+    -- Active step control
+    if utils.round(reported_level) == utils.round(latest_target_level) then
+      -- Device reached target position, clear target marker and timeout timer
+      device:set_field(LATEST_TARGET_LEVEL, nil)
+      local timer = device:get_field(TARGET_LEVEL_TIME_OUT)
+      if timer ~= nil then
+        device.thread:cancel_timer(timer)
+        device:set_field(TARGET_LEVEL_TIME_OUT, nil)
+      end
+    end
+    -- Always emit to update UI with actual device position
+  end
   aqara_utils.emit_shade_level_event(device, value)
   aqara_utils.emit_shade_event(device, value)
 end
@@ -81,12 +163,12 @@ local function shade_state_report_handler(driver, device, value, zb_rx)
     if init_state_value == INIT_STATE_OPEN then
       device:set_field(INIT_STATE, INIT_STATE_REVERSE)
       device.thread:call_with_delay(2, function(d)
-        device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 0))
+        device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 100))
       end)
     elseif init_state_value == INIT_STATE_CLOSE then
       device:set_field(INIT_STATE, INIT_STATE_REVERSE)
       device.thread:call_with_delay(2, function(d)
-        device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 100))
+        device:send_to_component("main", WindowCovering.server.commands.GoToLiftPercentage(device, 0))
       end)
     elseif init_state_value == INIT_STATE_REVERSE then
       device:set_field(INIT_STATE, "")
@@ -190,6 +272,9 @@ local aqara_window_treatment_handler = {
     },
     [capabilities.refresh.ID] = {
       [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    },
+    [capabilities.statelessWindowShadeLevelStep.ID] = {
+      [capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME] = window_shade_step_level_cmd
     }
   },
   zigbee_handlers = {

@@ -143,7 +143,7 @@ test.register_coroutine_test(
         PREF_SOFT_TOUCH_ON) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -178,7 +178,7 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -193,14 +193,14 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -215,14 +215,14 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -244,7 +244,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -263,7 +263,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -282,7 +282,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -301,7 +301,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -348,7 +348,7 @@ test.register_coroutine_test(
       deviceInitialization.initializedState.initialized()))
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -380,7 +380,7 @@ test.register_coroutine_test(
         PREF_SOFT_TOUCH_OFF) })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -404,7 +404,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -427,14 +427,14 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -457,14 +457,14 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -494,7 +494,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -514,7 +514,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -540,11 +540,11 @@ test.register_coroutine_test(
     test.mock_time.advance_time(2)
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -572,11 +572,11 @@ test.register_coroutine_test(
 
     test.socket.zigbee:__expect_send({
       mock_device.id,
-      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -609,7 +609,7 @@ test.register_coroutine_test(
     })
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -631,7 +631,7 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
@@ -653,10 +653,114 @@ test.register_coroutine_test(
     )
   end,
   {
-     min_api_version = 17
+     min_api_version = 19
   }
 )
 
 
+
+test.register_coroutine_test(
+  "WindowShade stepLevel cmd handler - step up", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 90)
+    })
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepLevel cmd handler - step down", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -20 }},
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+    })
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepLevel cmd handler - continuous step with target tracking", function()
+    -- First step up by 10
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 90)
+    })
+    test.wait_for_events()
+    
+    -- Second step up by 10
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 80)
+    })
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepLevel - step up to maximum (100)", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 100 }},
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+    })
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepLevel - step down to minimum (0)", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -100 }},
+      }
+    )
+    test.socket.zigbee:__expect_send({
+      mock_device.id,
+      WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+    })
+  end,
+  {
+     min_api_version = 19
+  }
+)
 
 test.run_registered_tests()

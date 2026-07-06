@@ -31,11 +31,14 @@ local function shade_level_cmd(driver, device, command)
   end
   level = utils.round(level)
 
-  -- update ui to the new level
+  -- Invert percentage: 100-level, so user's 100% means closed, 0% means open
+  local inverted_level = 100 - level
+
+  -- update ui to the new level (display original user-set value, keep consistent during adjustment)
   device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
 
-  -- send
-  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
+  -- send (send inverted value to device)
+  device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, inverted_level))
 end
 
 local function emit_shade_event_by_state(device, value)
@@ -54,10 +57,12 @@ end
 
 local function emit_shade_event(device, value)
   local level = value.value
-  if level >= 100 then
-    device:emit_event(capabilities.windowShade.windowShade.open())
-  elseif level == 0 then
+  -- Device value meaning: 0=physically closed, 100=physically open
+  -- UI display is inverted: device 0 -> UI 100 (closed), device 100 -> UI 0 (open)
+  if level == 0 then
     device:emit_event(capabilities.windowShade.windowShade.closed())
+  elseif level >= 100 then
+    device:emit_event(capabilities.windowShade.windowShade.open())
   else
     device:emit_event(capabilities.windowShade.windowShade.partially_open())
   end
@@ -82,8 +87,11 @@ local function emit_shade_level_event(device, value)
   end
   level = utils.round(level)
 
-  -- update level ui
-  device:emit_event(capabilities.windowShadeLevel.shadeLevel(level))
+  -- Invert percentage: 100-level, invert device-reported value for UI display
+  local inverted_level = 100 - level
+
+  -- update level ui (display inverted value)
+  device:emit_event(capabilities.windowShadeLevel.shadeLevel(inverted_level))
 end
 
 aqara_utils.PRIVATE_CLUSTER_ID = PRIVATE_CLUSTER_ID
