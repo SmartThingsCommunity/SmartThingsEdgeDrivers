@@ -84,11 +84,19 @@ function LockLifecycle.info_changed(driver, device, event, args)
   end
 end
 
+function LockLifecycle.driver_switched(driver, device)
+  if device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.migrated.NAME) == true then
+    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+  end
+  device:try_update_metadata({ provisioning_state = "PROVISIONED" })
+end
+
 local zigbee_lock_driver = {
   lifecycle_handlers = {
     added = LockLifecycle.device_added,
     init = LockLifecycle.init,
     doConfigure = LockLifecycle.do_configure,
+    driver_switched = LockLifecycle.driver_switched,
     infoChanged = LockLifecycle.info_changed,
   },
   zigbee_handlers = {
