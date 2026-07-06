@@ -62,32 +62,10 @@ function LockLifecycle.init(driver, device)
   end
 end
 
-function LockLifecycle.info_changed(driver, device, event, args)
-  local profile_switched = device.profile.id ~= args.old_st_store.profile.id
-  if profile_switched and device:supports_capability(capabilities.lockCodes) then
-    -- ensure all slga migration steps are run, and that the latest device state is synced to the driver.
-    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
-    if device:supports_capability(capabilities.lockCredentials) then
-      device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
-    end
-    -- ensure all requisite initial state is set
-    driver:inject_capability_command(device, {
-      capability = capabilities.refresh.ID,
-      command = capabilities.refresh.commands.refresh.NAME,
-      args = {}
-    })
-    -- ensure our user/credential state is accurate to the current device state
-    device.thread:call_with_delay(2, function() lock_utils.sync_device_state(device) end)
-  end
-end
-
 local driver_template = {
   lifecycle_handlers = {
     added = LockLifecycle.device_added,
     init = LockLifecycle.init,
-    infoChanged = LockLifecycle.info_changed,
-    driverSwitched = LockLifecycle.driver_switched,
   },
   zwave_handlers = {
     [cc.TIME] = {
