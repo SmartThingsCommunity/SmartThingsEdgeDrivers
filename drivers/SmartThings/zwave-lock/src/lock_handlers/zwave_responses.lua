@@ -30,14 +30,49 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
   -- cached values from capability command
   local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
 
-  if (user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
-      user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE) then
-        -- Code slot is now occupied: add or update credential and associated user
-      if command_in_progress ~= consts.SYNC.CODES_FROM_LOCK then
-        lock_utils.set_credential_report_helper(device, credential_index)
-      end
-  elseif user_id_status == UserCode.user_id_status.AVAILABLE then
-    local command_in_progress = device:get_field(consts.DRIVER_STATE.COMMAND_IN_PROGRESS)
+  -- Determine boolean states of user code slot
+  local user_code_occupied = user_id_status == UserCode.user_id_status.ENABLED_GRANT_ACCESS or
+    (user_id_status == UserCode.user_id_status.STATUS_NOT_AVAILABLE and cmd.args.user_code)
+  local user_code_available = user_id_status == UserCode.user_id_status.AVAILABLE
+
+  if command_in_progress == consts.SYNC.CODES_FROM_LOCK then
+    if user_code_occupied then
+      -- If an entry already exists at this index, this will be a no-op.
+      tables.add_entry(device, "users", {
+        userIndex = credential_index,
+        userName = "Guest " .. credential_index,
+        userType = "guest",
+      })
+      tables.add_entry(device, "credentials", {
+        userIndex = credential_index,
+        credentialIndex = credential_index,
+        credentialType = consts.CRED_TYPE_PIN,
+        credentialName = "Guest " .. credential_index,
+      })
+      -- reset the consecutive unoccupied codes counter since we found an occupied code
+      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, 0)
+    elseif user_code_available then
+      local consecutive_unoccupied_codes = (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) + 1
+      device:set_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES, consecutive_unoccupied_codes)
+    end
+
+    -- Sync: continue to next code or finish
+    if credential_index >= tables.get_max_entries(device, "credentials") or
+     (device:get_field(consts.SYNC.CONSECUTIVE_UNOCCUPIED_CODES) or 0) > 5 then
+      -- stop if we hit the max number of codes supported by the lock, or if we have received 5 consecutive unoccupied codes.
+      device:set_field(consts.SYNC.CODE_INDEX, nil)
+      lock_utils.clear_busy_state(device)
+    else
+      local synced_code_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
+      device:set_field(consts.SYNC.CODE_INDEX, synced_code_index)
+      lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = synced_code_index })
+      device:send(UserCode:Get({user_identifier = synced_code_index}))
+    end
+    return
+  elseif user_code_occupied then
+      -- Code slot is now occupied: add or update credential and associated user
+      lock_utils.set_credential_report_helper(device, credential_index)
+  elseif user_code_available then
     if command_in_progress == consts.LOCK_CREDENTIALS.ADD then
       lock_utils.emit_command_result(device, capabilities.lockCredentials,
         consts.LOCK_CREDENTIALS.ADD, consts.COMMAND_RESULT.FAILURE)
@@ -45,21 +80,6 @@ function ZwaveHandlers.user_code_report(driver, device, cmd)
     elseif command_in_progress == consts.LOCK_CREDENTIALS.DELETE or tables.find_entry(device, "credentials", credential_index) then
       lock_utils.delete_credential_report_helper(device, credential_index)
     end
-  end
-
-  -- Sync: continue to next code or finish
-  if credential_index == device:get_field(consts.SYNC.CODE_INDEX) then
-    local last_slot = tables.get_max_entries(device, "credentials")
-    if credential_index >= last_slot then
-      device:set_field(consts.SYNC.CODE_INDEX, nil)
-      lock_utils.clear_busy_state(device)
-    else
-      local next_index = device:get_field(consts.SYNC.CODE_INDEX) + 1
-      device:set_field(consts.SYNC.CODE_INDEX, next_index)
-      lock_utils.set_busy_state(device, consts.SYNC.CODES_FROM_LOCK, { checkingCode = next_index })
-      device:send(UserCode:Get({user_identifier = next_index}))
-    end
-    return -- don't emit command result during sync
   end
 end
 

@@ -79,7 +79,21 @@ test.register_coroutine_test(
       }),
     })
 
-    -- No table entries added during sync for ENABLED slots;
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 1, userName = "Guest 1", userType = "guest" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 1, credentialIndex = 1, credentialType = "pin", credentialName = "Guest 1" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+
     -- driver requests the next code slot.
     test.socket.zwave:__expect_send(
       UserCode:Get({ user_identifier = 2 }):build_test_tx(mock_device.id)
@@ -105,7 +119,20 @@ test.register_coroutine_test(
       }),
     })
 
-    -- No next-slot request; sync is complete
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          { { userIndex = 20, userName = "Guest 20", userType = "guest" } },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          { { userIndex = 20, credentialIndex = 20, credentialType = "pin", credentialName = "Guest 20" } },
+          { visibility = { displayed = false } }
+        ))
+    )
     test.wait_for_events()
 
     assert(mock_device:get_field(constants.SYNC.CODE_INDEX) == nil,
