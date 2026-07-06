@@ -421,9 +421,6 @@ local function driver_switched(driver, device)
 end
 
 -- Matter Handler
-----------------
--- Lock State --
-----------------
 local function lock_state_handler(driver, device, ib, response)
   local LockState = DoorLock.attributes.LockState
   local attr = capabilities.lock.lock
@@ -446,9 +443,6 @@ local function lock_state_handler(driver, device, ib, response)
   end)
 end
 
----------------------
--- Operating Modes --
----------------------
 local function operating_modes_handler(driver, device, ib, response)
   local status = capabilities.remoteControlStatus.remoteControlEnabled
   local op_type = DoorLock.types.OperatingModeEnum
@@ -474,37 +468,22 @@ local function operating_modes_handler(driver, device, ib, response)
   end
 end
 
--------------------------------------
--- Number Of Total Users Supported --
--------------------------------------
 local function total_users_supported_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockUsers.totalUsersSupported(ib.data.value, {visibility = {displayed = false}}))
 end
 
-----------------------------------
--- Number Of PIN Users Supported --
-----------------------------------
 local function pin_users_supported_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCredentials.pinUsersSupported(ib.data.value, {visibility = {displayed = false}}))
 end
 
--------------------------
--- Min PIN Code Length --
--------------------------
 local function min_pin_code_len_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCredentials.minPinCodeLen(ib.data.value, {visibility = {displayed = false}}))
 end
 
--------------------------
--- Max PIN Code Length --
--------------------------
 local function max_pin_code_len_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockCredentials.maxPinCodeLen(ib.data.value, {visibility = {displayed = false}}))
 end
 
---------------------------------------
--- Require PIN For Remote Operation --
---------------------------------------
 local function set_cota_credential(device, credential_index)
   local eps = device:get_endpoints(DoorLock.ID)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
@@ -579,23 +558,14 @@ local function require_remote_pin_handler(driver, device, ib, response)
   end
 end
 
------------------------------------------------------
--- Number Of Week Day Schedules Supported Per User --
------------------------------------------------------
 local function max_week_schedule_of_user_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockSchedules.weekDaySchedulesPerUser(ib.data.value, {visibility = {displayed = false}}))
 end
 
------------------------------------------------------
--- Number Of Year Day Schedules Supported Per User --
------------------------------------------------------
 local function max_year_schedule_of_user_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockSchedules.yearDaySchedulesPerUser(ib.data.value, {visibility = {displayed = false}}))
 end
 
------------------------------------
--- Aliro Reader Verification Key --
------------------------------------
 local function aliro_reader_verification_key_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.lockAliro.readerVerificationKey(
@@ -605,9 +575,6 @@ local function aliro_reader_verification_key_handler(driver, device, ib, respons
   end
 end
 
------------------------------------
--- Aliro Reader Group Identifier --
------------------------------------
 local function aliro_reader_group_id_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.lockAliro.readerGroupIdentifier(
@@ -617,9 +584,6 @@ local function aliro_reader_group_id_handler(driver, device, ib, response)
   end
 end
 
--------------------------------------------------------------
--- Aliro Expedited Transaction Supported Protocol Versions --
--------------------------------------------------------------
 local function aliro_group_resolving_key_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.lockAliro.groupResolvingKey(
@@ -629,9 +593,6 @@ local function aliro_group_resolving_key_handler(driver, device, ib, response)
   end
 end
 
--------------------------------
--- Aliro Group Resolving Key --
--------------------------------
 local function aliro_protocol_versions_handler(driver, device, ib, response)
   if ib.data.elements == nil then
     return
@@ -644,9 +605,6 @@ local function aliro_protocol_versions_handler(driver, device, ib, response)
   device:emit_event(capabilities.lockAliro.expeditedTransactionProtocolVersions(protocol_versions, {visibility = {displayed = false}}))
 end
 
------------------------------------------------
--- Aliro Supported BLE UWB Protocol Versions --
------------------------------------------------
 local function aliro_supported_ble_uwb_protocol_versions_handler(driver, device, ib, response)
   if ib.data.elements == nil then
     return
@@ -659,36 +617,24 @@ local function aliro_supported_ble_uwb_protocol_versions_handler(driver, device,
   device:emit_event(capabilities.lockAliro.bleUWBProtocolVersions(protocol_versions, {visibility = {displayed = false}}))
 end
 
------------------------------------
--- Aliro BLE Advertising Version --
------------------------------------
 local function aliro_ble_advertising_version_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.lockAliro.bleAdvertisingVersion(string.format("%s", ib.data.value), {visibility = {displayed = false}}))
   end
 end
 
-------------------------------------------------------
--- Number Of Aliro Credential Issuer Keys Supported --
-------------------------------------------------------
 local function max_aliro_credential_issuer_key_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.lockAliro.maxCredentialIssuerKeys(ib.data.value, {visibility = {displayed = false}}))
   end
 end
 
----------------------------------------------
--- Number Of Aliro Endpoint Keys Supported --
----------------------------------------------
 local function max_aliro_endpoint_key_handler(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.lockAliro.maxEndpointKeys(ib.data.value, {visibility = {displayed = false}}))
   end
 end
 
-------------------------------
--- Feature Map of Door Lock --
-------------------------------
 local function door_lock_feature_map_handler(driver, device, ib, response)
   if ib.data.value == nil then return end
   local feature_map = lock_utils.get_field_for_endpoint(device, lock_utils.LATEST_DOOR_LOCK_FEATURE_MAP, ib.endpoint_id) or nil
@@ -698,9 +644,6 @@ local function door_lock_feature_map_handler(driver, device, ib, response)
   end
 end
 
----------------------------------
--- Power Source Attribute List --
----------------------------------
 local function handle_power_source_attribute_list(driver, device, ib, response)
   local latest_battery_support = device:get_field(profiling_data.BATTERY_SUPPORT)
   for _, attr in ipairs(ib.data.elements or {}) do
@@ -720,18 +663,12 @@ local function handle_power_source_attribute_list(driver, device, ib, response)
   end
 end
 
--------------------------------
--- Battery Percent Remaining --
--------------------------------
 local function handle_battery_percent_remaining(driver, device, ib, response)
   if ib.data.value ~= nil then
     device:emit_event(capabilities.battery.battery(math.floor(ib.data.value / 2.0 + 0.5)))
   end
 end
 
---------------------------
--- Battery Charge Level --
---------------------------
 local function handle_battery_charge_level(driver, device, ib, response)
   if ib.data.value == PowerSource.types.BatChargeLevelEnum.OK then
     device:emit_event(capabilities.batteryLevel.battery.normal())
@@ -743,9 +680,6 @@ local function handle_battery_charge_level(driver, device, ib, response)
 end
 
 -- Capability Handler
------------------
--- Lock/Unlock --
------------------
 local function handle_lock(driver, device, command)
   local ep = device:component_to_endpoint(command.component)
   local cota_cred = device:get_field(lock_utils.COTA_CRED)
@@ -794,9 +728,6 @@ local function handle_unlatch(driver, device, command)
   end
 end
 
-----------------
--- User Table --
-----------------
 local function add_user_to_table(device, userIdx, userName, userType)
   -- Get latest user table
   local user_table = utils.deep_copy(device:get_latest_state(
@@ -862,9 +793,6 @@ local function delete_user_from_table(device, userIdx)
   device:emit_event(capabilities.lockUsers.users(user_table, {visibility = {displayed = false}}))
 end
 
-----------------------
--- Credential Table --
-----------------------
 local function has_credentials(device, userIdx)
   -- Get latest credential table
   local cred_table = utils.deep_copy(device:get_latest_state(
@@ -967,9 +895,6 @@ local function delete_credential_from_table_as_user(device, userIdx)
   device:emit_event(capabilities.lockCredentials.credentials(new_cred_table, {visibility = {displayed = false}}))
 end
 
------------------------------
--- Week Day Schedule Table --
------------------------------
 local function add_week_schedule_to_table(device, userIdx, scheduleIdx, schedule)
   -- Get latest week day schedule table
   local week_schedule_table = utils.deep_copy(device:get_latest_state(
@@ -1101,9 +1026,6 @@ local function delete_week_schedule_from_table_as_user(device, userIdx)
   device:emit_event(capabilities.lockSchedules.weekDaySchedules(new_week_schedule_table, {visibility = {displayed = false}}))
 end
 
------------------------------
--- Year Day Schedule Table --
------------------------------
 local function add_year_schedule_to_table(device, userIdx, scheduleIdx, sTime, eTime)
   -- Get latest year day schedule table
   local year_schedule_table = utils.deep_copy(device:get_latest_state(
@@ -1223,9 +1145,6 @@ local function delete_year_schedule_from_table_as_user(device, userIdx)
   device:emit_event(capabilities.lockSchedules.yearDaySchedules(new_year_schedule_table, {visibility = {displayed = false}}))
 end
 
-----------------------------
--- Aliro Credential Table --
-----------------------------
 local function add_aliro_to_table(device, userIdx, keyIdx, keyType, keyId)
   -- Get latest aliro table
   local aliro_table = utils.deep_copy(device:get_latest_state(
@@ -1293,9 +1212,6 @@ local function delete_aliro_from_table_as_user(device, userIdx)
   device:emit_event(capabilities.lockAliro.credentials(new_aliro_table, {visibility = {displayed = false}}))
 end
 
---------------
--- Add User --
---------------
 local function handle_add_user(driver, device, command)
   -- Get parameters
   local cmdName = "addUser"
@@ -1325,9 +1241,6 @@ local function handle_add_user(driver, device, command)
   device:send(DoorLock.server.commands.GetUser(device, ep, INITIAL_CREDENTIAL_INDEX))
 end
 
------------------
--- Update User --
------------------
 local function handle_update_user(driver, device, command)
   -- Get parameters
   local cmdName = "updateUser"
@@ -1374,9 +1287,6 @@ local function handle_update_user(driver, device, command)
   )
 end
 
------------------------
--- Get User Response --
------------------------
 local function get_user_response_handler(driver, device, ib, response)
   local elements = ib.info_block.data.elements
   local userIdx = elements.user_index.value
@@ -1450,9 +1360,6 @@ local function get_user_response_handler(driver, device, ib, response)
   end
 end
 
------------------------
--- Set User Response --
------------------------
 local function set_user_response_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
@@ -1491,9 +1398,6 @@ local function set_user_response_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
------------------
--- Delete User --
------------------
 local function handle_delete_user(driver, device, command)
   -- Get parameters
   local cmdName = "deleteUser"
@@ -1520,9 +1424,6 @@ local function handle_delete_user(driver, device, command)
   device:send(DoorLock.server.commands.ClearUser(device, ep, userIdx))
 end
 
-----------------------
--- Delete All Users --
-----------------------
 local function handle_delete_all_users(driver, device, command)
   -- Get parameters
   local cmdName = "deleteAllUsers"
@@ -1548,9 +1449,6 @@ local function handle_delete_all_users(driver, device, command)
   device:send(DoorLock.server.commands.ClearUser(device, ep, ALL_INDEX))
 end
 
--------------------------
--- Clear User Response --
--------------------------
 local function clear_user_response_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
@@ -1601,9 +1499,6 @@ local function clear_user_response_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
---------------------
--- Add Credential --
---------------------
 local function handle_add_credential(driver, device, command)
   -- Get parameters
   local cmdName = "addCredential"
@@ -1658,9 +1553,6 @@ local function handle_add_credential(driver, device, command)
   )
 end
 
------------------------
--- Update Credential --
------------------------
 local function handle_update_credential(driver, device, command)
   -- Get parameters
   local cmdName = "updateCredential"
@@ -1705,9 +1597,6 @@ local function handle_update_credential(driver, device, command)
   )
 end
 
----------------------------------
--- Set Pin Credential Response --
----------------------------------
 local function set_pin_response_handler(driver, device, ib, response)
   if ib.status ~= im.InteractionResponse.Status.SUCCESS then
     device.log.error("Failed to set credential for device")
@@ -1842,9 +1731,6 @@ local function set_pin_response_handler(driver, device, ib, response)
   end
 end
 
------------------------------------
--- Set Aliro Credential Response --
------------------------------------
 local function set_issuer_key_response_handler(driver, device, ib, response)
   local cmdName = "setIssuerKey"
   local userIdx = device:get_field(lock_utils.USER_INDEX)
@@ -2054,9 +1940,6 @@ local function set_credential_response_handler(driver, device, ib, response)
   end
 end
 
------------------------
--- Delete Credential --
------------------------
 local function handle_delete_credential(driver, device, command)
   -- Get parameters
   local cmdName = "deleteCredential"
@@ -2087,9 +1970,6 @@ local function handle_delete_credential(driver, device, command)
   device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
 end
 
-----------------------------
--- Delete All Credentials --
-----------------------------
 local function handle_delete_all_credentials(driver, device, command)
   -- Get parameters
   local cmdName = "deleteAllCredentials"
@@ -2119,9 +1999,6 @@ local function handle_delete_all_credentials(driver, device, command)
   device:send(DoorLock.server.commands.ClearCredential(device, ep, credential))
 end
 
--------------------------------
--- Clear Credential Response --
--------------------------------
 local function clear_credential_response_handler(driver, device, ib, response)
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
   if cmdName ~= "deleteCredential" and cmdName ~= "clearEndpointKey" and
@@ -2191,9 +2068,6 @@ local function clear_credential_response_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
----------------------------
--- Set Week Day Schedule --
----------------------------
 local function handle_set_week_day_schedule(driver, device, command)
   -- Get parameters
   local cmdName = "setWeekDaySchedule"
@@ -2249,9 +2123,6 @@ local function handle_set_week_day_schedule(driver, device, command)
   )
 end
 
-------------------------------------
--- Set Week Day Schedule Response --
-------------------------------------
 local function set_week_day_schedule_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
@@ -2296,9 +2167,6 @@ local function set_week_day_schedule_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
------------------------------
--- Clear Week Day Schedule --
------------------------------
 local function handle_clear_week_day_schedule(driver, device, command)
   -- Get parameters
   local cmdName = "clearWeekDaySchedules"
@@ -2327,9 +2195,6 @@ local function handle_clear_week_day_schedule(driver, device, command)
   device:send(DoorLock.server.commands.ClearWeekDaySchedule(device, ep, scheduleIdx, userIdx))
 end
 
-------------------------------------
--- Clear Week Day Schedule Response --
-------------------------------------
 local function clear_week_day_schedule_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
@@ -2362,9 +2227,6 @@ local function clear_week_day_schedule_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
----------------------------
--- Set Year Day Schedule --
----------------------------
 local function handle_set_year_day_schedule(driver, device, command)
   -- Get parameters
   local cmdName = "setYearDaySchedule"
@@ -2405,9 +2267,6 @@ local function handle_set_year_day_schedule(driver, device, command)
   )
 end
 
-------------------------------------
--- Set Year Day Schedule Response --
-------------------------------------
 local function set_year_day_schedule_handler(driver, device, ib, response)
   -- Get result
   local cmdName = device:get_field(lock_utils.COMMAND_NAME)
@@ -2468,9 +2327,6 @@ local function set_year_day_schedule_handler(driver, device, ib, response)
   device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
 end
 
------------------------------
--- Clear Year Day Schedule --
------------------------------
 local function handle_clear_year_day_schedule(driver, device, command)
   -- Get parameters
   local cmdName = "clearYearDaySchedules"
@@ -2509,9 +2365,6 @@ local function handle_clear_year_day_schedule(driver, device, command)
   )
 end
 
-----------------
--- Lock Alarm --
-----------------
 local function alarm_event_handler(driver, device, ib, response)
   local DlAlarmCode = DoorLock.types.DlAlarmCode
   local alarm_code = ib.data.elements.alarm_code
@@ -2528,9 +2381,6 @@ local function alarm_event_handler(driver, device, ib, response)
   end
 end
 
---------------------
--- Lock Operation --
---------------------
 local function lock_op_event_handler(driver, device, ib, response)
   local opType = ib.data.elements.lock_operation_type
   local opSource = ib.data.elements.operation_source
@@ -3041,8 +2891,5 @@ local matter_lock_driver = {
   sub_drivers = require("sub_drivers"),
 }
 
------------------------------------------------------------------------------------------------------------------------------
--- Driver Initialization
------------------------------------------------------------------------------------------------------------------------------
 local matter_driver = MatterDriver("matter-lock", matter_lock_driver)
 matter_driver:run()
