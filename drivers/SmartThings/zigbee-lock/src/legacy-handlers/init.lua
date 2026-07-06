@@ -399,7 +399,7 @@ local migrate = function(driver, device, command)
   device:emit_event(LockCredentials.maxPinCodeLen(cached_max_code_len, { visibility = { displayed = false } }))
 
   -- migrate total codes supported
-  local cached_max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME, 0)
+  local cached_max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME, 20)
   device:emit_event(LockCredentials.pinUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
   device:emit_event(LockUsers.totalUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
 
