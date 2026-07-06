@@ -1,49 +1,51 @@
+-- Copyright © 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local data_types = require "st.matter.data_types"
 local StructureABC = require "st.matter.data_types.base_defs.StructureABC"
+local SemanticTagStruct = {}
+local new_mt = StructureABC.new_mt({NAME = "SemanticTagStruct", ID = data_types.name_to_id_map["Structure"]})
 
-local OverallCurrentStateStruct = {}
-local new_mt = StructureABC.new_mt({NAME = "OverallCurrentStateStruct", ID = data_types.name_to_id_map["Structure"]})
-
-OverallCurrentStateStruct.field_defs = {
+SemanticTagStruct.field_defs = {
   {
-    name = "position",
+    name = "mfg_code",
     field_id = 0,
     is_nullable = true,
-    is_optional = true,
-    data_type = require "embedded_clusters.ClosureControl.types.CurrentPositionEnum",
+    is_optional = false,
+    data_type = require "st.matter.data_types.Uint16",
   },
   {
-    name = "latch",
+    name = "namespace_id",
     field_id = 1,
-    is_nullable = true,
-    is_optional = true,
-    data_type = require "st.matter.data_types.Boolean",
+    is_nullable = false,
+    is_optional = false,
+    data_type = require "st.matter.data_types.Uint8",
   },
   {
-    name = "speed",
+    name = "tag",
     field_id = 2,
     is_nullable = false,
-    is_optional = true,
-    data_type = require "embedded_clusters.Global.types.ThreeLevelAutoEnum",
+    is_optional = false,
+    data_type = require "st.matter.data_types.Uint8",
   },
   {
-    name = "secure_state",
+    name = "label",
     field_id = 3,
     is_nullable = true,
-    is_optional = false,
-    data_type = require "st.matter.data_types.Boolean",
+    is_optional = true,
+    data_type = require "st.matter.data_types.UTF8String1",
   },
 }
 
-OverallCurrentStateStruct.init = function(cls, tbl)
+SemanticTagStruct.init = function(cls, tbl)
     local o = {}
     o.elements = {}
     o.num_elements = 0
     setmetatable(o, new_mt)
-    for idx, field_def in ipairs(cls.field_defs) do
+    for _idx, field_def in ipairs(cls.field_defs) do -- Note: _idx is 1 when field_id is 0
       if (not field_def.is_optional and not field_def.is_nullable) and not tbl[field_def.name] then
         error("Missing non optional or non_nullable field: " .. field_def.name)
-      else
+      elseif not (field_def.is_optional and tbl[field_def.name] == nil) then
         o.elements[field_def.name] = data_types.validate_or_build_type(tbl[field_def.name], field_def.data_type, field_def.name)
         o.elements[field_def.name].field_id = field_def.field_id
         o.num_elements = o.num_elements + 1
@@ -52,14 +54,14 @@ OverallCurrentStateStruct.init = function(cls, tbl)
     return o
 end
 
-OverallCurrentStateStruct.serialize = function(self, buf, include_control, tag)
+SemanticTagStruct.serialize = function(self, buf, include_control, tag)
   return data_types['Structure'].serialize(self.elements, buf, include_control, tag)
 end
 
-new_mt.__call = OverallCurrentStateStruct.init
-new_mt.__index.serialize = OverallCurrentStateStruct.serialize
+new_mt.__call = SemanticTagStruct.init
+new_mt.__index.serialize = SemanticTagStruct.serialize
 
-OverallCurrentStateStruct.augment_type = function(self, val)
+SemanticTagStruct.augment_type = function(self, val)
   local elems = {}
   local num_elements = 0
   for _, v in pairs(val.elements) do
@@ -70,7 +72,7 @@ OverallCurrentStateStruct.augment_type = function(self, val)
         elems[field_def.name] = data_types.validate_or_build_type(v, data_types.Null, field_def.field_name)
         num_elements = num_elements + 1
       elseif field_def.field_id == v.field_id and not
-        (field_def.is_optional and v.value == nil) then
+        (field_def.is_optional and v.value == nil and v.elements == nil) then
         elems[field_def.name] = data_types.validate_or_build_type(v, field_def.data_type, field_def.field_name)
         num_elements = num_elements + 1
         if field_def.element_type ~= nil then
@@ -86,6 +88,7 @@ OverallCurrentStateStruct.augment_type = function(self, val)
   setmetatable(val, new_mt)
 end
 
-setmetatable(OverallCurrentStateStruct, new_mt)
+setmetatable(SemanticTagStruct, new_mt)
 
-return OverallCurrentStateStruct
+return SemanticTagStruct
+
