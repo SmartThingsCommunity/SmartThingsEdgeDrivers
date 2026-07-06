@@ -1,5 +1,6 @@
--- Copyright 2025 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 
 local function is_unmigrated_matter_lock_products(opts, driver, device)
