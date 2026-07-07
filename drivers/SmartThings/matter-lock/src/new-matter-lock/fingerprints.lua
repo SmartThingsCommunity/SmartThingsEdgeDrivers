@@ -2,7 +2,6 @@
 -- Licensed under the Apache License, Version 2.0
 
 local NEW_MATTER_LOCK_PRODUCTS = {
-  {0x164C, 0x0001}, -- Thorbolt, Smart Lock
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
   {0x115f, 0x2807}, -- AQARA, U200 Lite
@@ -44,6 +43,7 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1236, 0xa538}, -- Schlage Sense Pro
   {0x1236, 0x3800}, -- Schlage
   {0x1236, 0xA738}, -- Schlage
+  {0x164C, 0x0001}, -- Thorbolt, Smart Lock
   {0x152C, 0x9500}, -- Dreame NAVO Smart Lock A10
   {0x152C, 0x9501} -- Dreame NAVO Smart Lock E10
 }
