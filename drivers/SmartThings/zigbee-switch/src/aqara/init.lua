@@ -133,8 +133,8 @@ local preference_map = {
     data_type = data_types.Uint8,
     value_map = { rocker = 0x01, rebound = 0x02 },
   },
-  -- External switch wiring type (same attribute as stse.electricSwitchType, with an extra "disabled"
-  -- option): rocker = maintained, rebound/button = momentary, disabled = external switch ignored.
+  -- External switch wiring type (same attribute as stse.electricSwitchType, with an extra "nc"
+  -- option): rocker = maintained, rebound/button = momentary, nc = external switch ignored (normally closed).
   ["stse.switchType"] = {
     cluster_id = PRIVATE_CLUSTER_ID,
     attribute_id = ELECTRIC_SWITCH_TYPE_ATTRIBUTE_ID,

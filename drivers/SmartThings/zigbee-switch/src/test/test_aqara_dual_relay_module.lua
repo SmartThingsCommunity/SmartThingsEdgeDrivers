@@ -210,7 +210,7 @@ test.register_coroutine_test(
   "preference powerOffMemory is written on infochanged",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
-      preferences = { ["powerOffMemory"] = "poweron" }
+      preferences = { ["stse.powerOffMemory"] = "on" }
     }))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
@@ -225,7 +225,7 @@ test.register_coroutine_test(
   "preference pulseInterval is written on infochanged",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
-      preferences = { ["pulseInterval"] = 500 }
+      preferences = { ["stse.pulseIntervalSetting"] = 500 }
     }))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,
@@ -237,10 +237,10 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "preference switchType (disabled) is written on infochanged",
+  "preference switchType (nc) is written on infochanged",
   function()
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({
-      preferences = { ["switchType"] = "disabled" }
+      preferences = { ["stse.switchType"] = "nc" }
     }))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID,

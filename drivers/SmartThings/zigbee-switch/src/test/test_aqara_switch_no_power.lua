@@ -135,7 +135,7 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
       mock_base_device:expect_device_create({
         type = "EDGE_CHILD",
-        label = "Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker) 2",
+        label = "Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker) 1",
         profile = "aqara-switch-child",
         parent_device_id = mock_base_device.id,
         parent_assigned_child_key = "02"

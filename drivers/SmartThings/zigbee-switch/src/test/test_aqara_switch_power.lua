@@ -75,14 +75,14 @@ test.register_coroutine_test(
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 3 },
     { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" })))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" })))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
     { visibility = { displayed = false } })))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.powerMeter.power({ value = 0.0, unit = "W" })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.energyMeter.energy({ value = 0.0, unit = "Wh" })))
 
   end,
   {
