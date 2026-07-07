@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         version:
-          [ 59, 60, dev]
+          [ 59, 60, 61, dev]
 
     runs-on: ubuntu-latest
     steps:
