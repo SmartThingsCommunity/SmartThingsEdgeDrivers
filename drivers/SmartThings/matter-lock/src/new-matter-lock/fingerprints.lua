@@ -2,6 +2,7 @@
 -- Licensed under the Apache License, Version 2.0
 
 local NEW_MATTER_LOCK_PRODUCTS = {
+  {0x164C, 0x0001}, -- Thorbolt, Smart Lock
   {0x115f, 0x2802}, -- AQARA, U200
   {0x115f, 0x2801}, -- AQARA, U300
   {0x115f, 0x2807}, -- AQARA, U200 Lite
