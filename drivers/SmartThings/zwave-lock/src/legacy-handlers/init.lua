@@ -70,29 +70,33 @@ local function migrate(driver, device, cmd)
     table.insert(lock_users, {userIndex = index, userType = "guest", userName = code_name})
     table.insert(lock_credentials, {userIndex = index, credentialIndex = tonumber(code_slot), credentialType = "pin"})
   end
+  device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
+  device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
 
   local code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  local min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME, 4)
-  local max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME, 10)
-  local max_codes    = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME, 8)
-  if (code_length ~= nil) then
-    max_code_len = code_length
-    min_code_len = code_length
+  if code_length then
+    device:emit_event(capabilities.lockCredentials.minPinCodeLen(code_length, { visibility = { displayed = false } }))
+    device:emit_event(capabilities.lockCredentials.maxPinCodeLen(code_length, { visibility = { displayed = false } }))
   end
 
-  device:emit_event(capabilities.lockCredentials.minPinCodeLen(min_code_len, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockCredentials.maxPinCodeLen(max_code_len, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockCredentials.credentials(lock_credentials, { visibility = { displayed = false } }))
+  local max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
+  if max_codes then
+    device:emit_event(capabilities.lockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
+    device:emit_event(capabilities.lockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
+  else
+    print("code length is nil, requesting from device")
+    -- if we don't have a code length, request it from the device
+    device:send(UserCode:UsersNumberGet({}))
+  end
+
   device:emit_event(capabilities.lockCredentials.supportedCredentials({"pin"}, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
-  device:emit_event(capabilities.lockUsers.users(lock_users, { visibility = { displayed = false } }))
   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
   local consts = require("lock_utils.constants")
+
   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migrated state to the datastore
 end
 
-local using_old_capabilities = {
+local legacy_capabilities = {
   supported_capabilities = {
     capabilities.lock,
     capabilities.lockCodes,
@@ -127,4 +131,4 @@ local using_old_capabilities = {
   NAME = "legacy-handlers"
 }
 
-return using_old_capabilities
+return legacy_capabilities
