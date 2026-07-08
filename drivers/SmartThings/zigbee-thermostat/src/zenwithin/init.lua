@@ -70,7 +70,7 @@ end
 
 local setpoint_limit_handler = function(limit_type)
   return function(driver, device, limit)
-    device:set_field(limit_type, limit.value, {persist = true})
+    device:set_field(limit_type, limit.value / 100.0, {persist = true})
   end
 end
 
@@ -122,8 +122,8 @@ local set_cooling_setpoint = function(driver, device, command)
     value = utils.f_to_c(value)
   end
   value = utils.clamp_value(value,
-    device:get_field(MIN_HEAT_LIMIT) or DEFAULT_MIN_SETPOINT,
-    device:get_field(MAX_HEAT_LIMIT) or DEFAULT_MAX_SETPOINT)
+    device:get_field(MIN_COOL_LIMIT) or DEFAULT_MIN_SETPOINT,
+    device:get_field(MAX_COOL_LIMIT) or DEFAULT_MAX_SETPOINT)
   device:set_field(COOLING_SETPOINT, value)
   local current_mode = device:get_latest_state("main", ThermostatMode.ID, ModeAttribute.NAME)
   if current_mode == ModeAttribute.cool.NAME or current_mode == ModeAttribute.auto.NAME then

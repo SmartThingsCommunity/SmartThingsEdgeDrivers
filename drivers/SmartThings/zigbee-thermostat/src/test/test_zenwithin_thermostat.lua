@@ -523,4 +523,365 @@ test.register_coroutine_test(
     }
 )
 
+test.register_message_test(
+    "MinHeatSetpointLimit report stores device field",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MinHeatSetpointLimit:build_test_attr_report(mock_device, 500) }
+      }
+    },
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_message_test(
+    "MaxHeatSetpointLimit report stores device field",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MaxHeatSetpointLimit:build_test_attr_report(mock_device, 3500) }
+      }
+    },
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_message_test(
+    "MinCoolSetpointLimit report stores device field",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MinCoolSetpointLimit:build_test_attr_report(mock_device, 1600) }
+      }
+    },
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_message_test(
+    "MaxCoolSetpointLimit report stores device field",
+    {
+      {
+        channel = "zigbee",
+        direction = "receive",
+        message = { mock_device.id, Thermostat.attributes.MaxCoolSetpointLimit:build_test_attr_report(mock_device, 3200) }
+      }
+    },
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "Heating setpoint is clamped to MinHeatSetpointLimit",
+    function()
+      -- Receive MinHeatSetpointLimit = 18.0 C (1800 centidegrees)
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MinHeatSetpointLimit:build_test_attr_report(mock_device, 1800)
+      })
+      test.wait_for_events()
+
+      -- Put device in heat mode so the setpoint is applied immediately
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x04) -- HEAT
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat())
+      )
+      test.wait_for_events()
+
+      -- Try to set heating setpoint below the stored min (16 C < 18 C); expect it clamped to 18 C
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 16 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 1800) -- clamped to 18.0 C
+      })
+      test.mock_time.advance_time(2)
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "Heating setpoint is clamped to MaxHeatSetpointLimit",
+    function()
+      -- Receive MaxHeatSetpointLimit = 30.0 C (3000 centidegrees)
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MaxHeatSetpointLimit:build_test_attr_report(mock_device, 3000)
+      })
+      test.wait_for_events()
+
+      -- Put device in heat mode
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x04) -- HEAT
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat())
+      )
+      test.wait_for_events()
+
+      -- Try to set heating setpoint above the stored max (35 C > 30 C); expect it clamped to 30 C
+      test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatHeatingSetpoint", component = "main", command = "setHeatingSetpoint", args = { 35 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedHeatingSetpoint:write(mock_device, 3000) -- clamped to 30.0 C
+      })
+      test.mock_time.advance_time(2)
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "Cooling setpoint is clamped to MinCoolSetpointLimit",
+    function()
+      -- Receive MinCoolSetpointLimit = 18.0 C (1800 centidegrees)
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MinCoolSetpointLimit:build_test_attr_report(mock_device, 1800)
+      })
+      test.wait_for_events()
+
+      -- Put device in cool mode so the setpoint is applied immediately
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x03) -- COOL
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool())
+      )
+      test.wait_for_events()
+
+      -- Try to set cooling setpoint below the stored min (16 C < 18 C); expect it clamped to 18 C
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 16 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 1800) -- clamped to 18.0 C
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "Cooling setpoint is clamped to MaxCoolSetpointLimit",
+    function()
+      -- Receive MaxCoolSetpointLimit = 30.0 C (3000 centidegrees)
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MaxCoolSetpointLimit:build_test_attr_report(mock_device, 3000)
+      })
+      test.wait_for_events()
+
+      -- Put device in cool mode
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x03) -- COOL
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool())
+      )
+      test.wait_for_events()
+
+      -- Try to set cooling setpoint above the stored max (35 C > 30 C); expect it clamped to 30 C
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 35 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 3000) -- clamped to 30.0 C
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+-- Integration test: full set_cooling_setpoint clamping path
+--
+-- Exercises every branch in set_cooling_setpoint that involves get_field / default:
+--
+--  Phase 1 – no limit fields present yet → clamp uses DEFAULT_MIN (4.0) / DEFAULT_MAX (37.5)
+--            A value already inside the defaults passes through unchanged.
+--            A value above DEFAULT_MAX is clamped down to 37.5 C.
+--
+--  Phase 2 – device reports MinCoolSetpointLimit (20.0 C) and MaxCoolSetpointLimit (28.0 C)
+--            stored via setpoint_limit_handler → get_field now returns real device limits.
+--            A value inside those limits passes through unchanged.
+--            A value below MinCoolSetpointLimit is clamped up to 20.0 C.
+--            A value above MaxCoolSetpointLimit is clamped down to 28.0 C.
+--
+--  Phase 3 – device switches to heat mode.
+--            setCoolingSetpoint is rejected: driver defers with 10s backstop,
+--            then re-emits the last known cooling setpoint without writing to the device.
+test.register_coroutine_test(
+    "set_cooling_setpoint: default clamp, then device-reported limit clamp, then heat-mode rejection",
+    function()
+      -- ── Phase 1: no limit fields – defaults apply ─────────────────────────────
+
+      -- Put device in cool mode so setpoints are applied immediately throughout phase 1 & 2
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x03) -- COOL
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.cool())
+      )
+      test.wait_for_events()
+
+      -- 1a. Value within defaults (25 C): written as-is
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 25 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2500)
+      })
+      test.wait_for_events()
+
+      -- Establish the device's reported current cooling setpoint state (needed later for re-emit)
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device, 2500)
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 25.0, unit = "C" }))
+      )
+      test.wait_for_events()
+
+      -- 1b. Value above DEFAULT_MAX (38 C > 37.5 C): clamped to 37.5 C → written as 3750
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 38 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 3750)
+      })
+      test.wait_for_events()
+
+      -- ── Phase 2: device reports real limits; get_field overrides defaults ──────
+
+      -- Device sends MinCoolSetpointLimit = 20.0 C and MaxCoolSetpointLimit = 28.0 C
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MinCoolSetpointLimit:build_test_attr_report(mock_device, 2000)
+      })
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MaxCoolSetpointLimit:build_test_attr_report(mock_device, 2800)
+      })
+      test.wait_for_events()
+
+      -- 2a. Value inside device limits (24 C): written as-is
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 24 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2400)
+      })
+      test.wait_for_events()
+
+      -- 2b. Value below device MinCoolSetpointLimit (18 C < 20 C): clamped to 20.0 C
+      --     (18 is above DEFAULT_MIN of 4.0, proving the device field is used, not the default)
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 18 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2000)
+      })
+      test.wait_for_events()
+
+      -- 2c. Value above device MaxCoolSetpointLimit (30 C > 28 C): clamped to 28.0 C
+      --     (30 is below DEFAULT_MAX of 37.5, proving the device field is used, not the default)
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 30 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:write(mock_device, 2800)
+      })
+      test.wait_for_events()
+
+      -- ── Phase 3: device switches to heat mode; setCoolingSetpoint is deferred ──
+
+      -- Re-establish a known current cooling setpoint for the re-emit assertion
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.OccupiedCoolingSetpoint:build_test_attr_report(mock_device, 2400)
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 24.0, unit = "C" }))
+      )
+      test.wait_for_events()
+
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.SystemMode:build_test_attr_report(mock_device, 0x04) -- HEAT
+      })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatMode.thermostatMode.heat())
+      )
+      test.wait_for_events()
+
+      -- 3. setCoolingSetpoint while in heat mode: driver stores the field (clamped to 24 C by
+      --    device limits), then takes the else-branch and arms the 10s backstop timer.
+      --    After the timer fires, update_device_setpoint detects heat mode, discards the pending
+      --    cooling value, and re-emits the last reported cooling setpoint (24.0 C) unchanged.
+      test.timer.__create_and_queue_test_time_advance_timer(10, "oneshot")
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "thermostatCoolingSetpoint", component = "main", command = "setCoolingSetpoint", args = { 24 } }
+      })
+      test.wait_for_events()
+
+      test.mock_time.advance_time(10)
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message("main", capabilities.thermostatCoolingSetpoint.coolingSetpoint({ value = 24.0, unit = "C" }))
+      )
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
 test.run_registered_tests()
