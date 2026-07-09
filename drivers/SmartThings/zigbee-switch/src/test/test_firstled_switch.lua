@@ -195,7 +195,7 @@ test.register_coroutine_test("infoChanged - backlight 0", function()
   })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
@@ -206,7 +206,7 @@ test.register_coroutine_test("infoChanged - backlight 1", function()
   })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
@@ -217,7 +217,7 @@ test.register_coroutine_test("infoChanged - backlight 2", function()
   })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
@@ -228,18 +228,18 @@ test.register_coroutine_test("infoChanged - powerOnStatus 0", function()
   })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
-test.register_coroutine_test("infoChanged - powerOnStatus", function()
+test.register_coroutine_test("infoChanged - powerOnStatus 1", function()
   test.socket.device_lifecycle:__queue_receive(mock_parent:generate_info_changed({ preferences = { powerOnStatus = "1" }}))
   test.socket.zigbee:__expect_send({ mock_parent.id,
     cluster_base.write_manufacturer_specific_attribute(mock_parent, PRIVATE_CLUSTER_ID, 0x0001, MFG_CODE, data_types.Uint8, 1)
   })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
@@ -250,7 +250,7 @@ test.register_coroutine_test("infoChanged - powerOnStatus 2", function()
   })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
@@ -262,7 +262,7 @@ test.register_coroutine_test("infoChanged - stse.changeToWirelessSwitch true", f
   mock_parent:expect_metadata_update({ profile = "switch-button-light-restore-wireless" })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
@@ -274,7 +274,7 @@ test.register_coroutine_test("infoChanged - stse.changeToWirelessSwitch false", 
   mock_parent:expect_metadata_update({ profile = "switch-light-restore-wireless" })
   end,
   {
-    min_api_version = 19
+    min_api_version = 20
   }
 )
 
@@ -287,7 +287,7 @@ local function test_child_changeToWirelessSwitch_true(ep, name)
     mock_children[ep]:expect_metadata_update({ profile = "switch-button-wireless" })
     end,
     {
-      min_api_version = 19
+      min_api_version = 20
     }
   )
 end
@@ -301,7 +301,7 @@ local function test_child_changeToWirelessSwitch_false(ep, name)
     mock_children[ep]:expect_metadata_update({ profile = "switch-wireless" })
     end,
     {
-      min_api_version = 19
+      min_api_version = 20
     }
   )
 end

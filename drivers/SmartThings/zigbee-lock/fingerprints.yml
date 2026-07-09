@@ -10,6 +10,26 @@ zigbeeManufacturer:
     manufacturer: GELUBU
     model: G30
     deviceProfileName: lock-battery
+  - id: "GELUBU/R60"
+    deviceLabel: GELUBU Door Lock R60
+    manufacturer: GELUBU
+    model: R60
+    deviceProfileName: lock-battery
+  - id: "GELUBU/R50"
+    deviceLabel: GELUBU Door Lock R50
+    manufacturer: GELUBU
+    model: R50
+    deviceProfileName: lock-battery
+  - id: "GELUBU/P90"
+    deviceLabel: GELUBU Door Lock P90
+    manufacturer: GELUBU
+    model: P90
+    deviceProfileName: lock-battery
+  - id: "GELUBU/R71"
+    deviceLabel: GELUBU Door Lock R71
+    manufacturer: GELUBU
+    model: R71
+    deviceProfileName: lock-battery
   # YALE
   - id: "Yale YRD220/240"
     deviceLabel: "Yale Door Lock"

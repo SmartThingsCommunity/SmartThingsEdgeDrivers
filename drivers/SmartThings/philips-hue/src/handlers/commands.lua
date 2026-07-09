@@ -54,13 +54,14 @@ end
 ---@param err string? Error message returned from the Hue API call, if any
 ---@param action_desc string Description of the action being performed, for logging purposes
 local function log_command_response_errors(response, err, action_desc)
-  if not response or (response.errors and #response.errors == 0) then
-    if err ~= nil then
-      log.error_with({ hub_logs = true }, "Error performing " .. action_desc .. ": " .. err)
-    elseif response and #response.errors > 0 then
-      for _, error in ipairs(response.errors) do
-        log.error_with({ hub_logs = true }, "Error returned in Hue response for " .. action_desc .. ": " .. error.description)
-      end
+  if err ~= nil then
+    log.error_with({ hub_logs = true }, "Error performing " .. action_desc .. ": " .. err)
+  end
+
+  if response and response.errors and #response.errors > 0 then
+    for _, error in ipairs(response.errors) do
+      log.error_with({ hub_logs = true },
+        "Error returned in Hue response for " .. action_desc .. ": " .. error.description)
     end
   end
 end
