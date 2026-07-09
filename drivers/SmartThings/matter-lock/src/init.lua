@@ -258,6 +258,7 @@ local function match_profile_modular(driver, device)
 
   table.insert(enabled_optional_component_capability_pairs, {"main", main_component_capabilities})
   if modular_profile_name == "lock-modular-embedded-unlatch" -- the embedded config that may be needed is not checked by an optional capability comparison
+    or device:supports_capability(capabilities.lockCodes) -- always re-profile a device using the legacy code storage methods
     or lock_utils.optional_capabilities_list_changed(enabled_optional_component_capability_pairs, device.profile.components) then
     device:try_update_metadata({profile = modular_profile_name, optional_component_capabilities = enabled_optional_component_capability_pairs})
   end
@@ -2441,7 +2442,13 @@ end
 local function handle_refresh(driver, device, command)
   if device:get_field(lock_utils.LOCK_CODES_COPY_REQUIRED) == true then
     device:set_field(profiling_data.BATTERY_SUPPORT, nil, {persist=true})
-    device:send(clusters.PowerSource.attributes.AttributeList:read(device))
+    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
+    else
+      -- update subscription to ensure AttributeList is received
+      device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
+      device:subscribe()
+    end
     match_profile(driver, device, true)
   else
     device:send(DoorLock.attributes.LockState:read(device))

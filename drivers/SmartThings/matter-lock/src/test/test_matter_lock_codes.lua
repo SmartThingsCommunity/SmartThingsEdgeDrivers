@@ -908,6 +908,14 @@ test.register_coroutine_test(
   }
 )
 
+local enabled_optional_component_capability_pairs = {{
+  "main",
+  {
+    capabilities.lockUsers.ID,
+    capabilities.lockCredentials.ID,
+  }
+}}
+
 test.register_coroutine_test(
   "Lock codes stored during migration",
   function()
@@ -952,10 +960,14 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true))
     )
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.PowerSource.attributes.AttributeList:read(mock_device)
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
+    mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = enabled_optional_component_capability_pairs })
+
   end,
   {
     min_api_version = 17

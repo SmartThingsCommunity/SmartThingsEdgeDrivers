@@ -6,27 +6,10 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 local clusters = require "st.matter.clusters"
 local DoorLock = clusters.DoorLock
-local cluster_base = require "st.matter.cluster_base"
 local lock_utils = require "lock_utils"
 
-local enabled_optional_component_capability_pairs = {{
-    "main",
-    {
-      capabilities.lockUsers.ID,
-      capabilities.lockCredentials.ID,
-      capabilities.lockSchedules.ID
-    }
-  }}
-
-local profiling_data = {
-    BATTERY_SUPPORT = "__BATTERY_SUPPORT",
-}
-
 local mock_device = test.mock_device.build_test_matter_device({
-  profile = t_utils.get_profile_definition(
-    "lock-modular.yml",
-    {enabled_optional_capabilities = enabled_optional_component_capability_pairs}
-  ),
+  profile = t_utils.get_profile_definition("base-lock.yml"),
   manufacturer_info = {
     vendor_id = 0x135D,
     product_id = 0x00C1,
@@ -48,7 +31,7 @@ local mock_device = test.mock_device.build_test_matter_device({
           cluster_id = DoorLock.ID,
           cluster_type = "SERVER",
           cluster_revision = 1,
-          feature_map = 0x0591, -- PIN & WDSCH & USR & COTA & YDSCH
+          feature_map = 0x0101, -- PIN & USR
         }
       },
       device_types = {
@@ -58,7 +41,14 @@ local mock_device = test.mock_device.build_test_matter_device({
   }
 })
 
-local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
+local function test_init()
+  test.disable_startup_messages()
+  test.mock_device.add_test_device(mock_device)
+  -- mock_device:set_field(lock_utils.LOCK_CODES_FOR_MIGRATION, { {1, "ST Remote Operation Code"}, {2, "Guest1"}, {3, "Guest2"} }, {persist=true})
+end
+
+test.set_test_init_function(test_init)
+
 local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
 subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
 subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
@@ -66,52 +56,51 @@ subscribe_request:merge(DoorLock.attributes.NumberOfPINUsersSupported:subscribe(
 subscribe_request:merge(DoorLock.attributes.MaxPINCodeLength:subscribe(mock_device))
 subscribe_request:merge(DoorLock.attributes.MinPINCodeLength:subscribe(mock_device))
 subscribe_request:merge(DoorLock.attributes.RequirePINforRemoteOperation:subscribe(mock_device))
-subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device))
-subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device))
-subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
 subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
 subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
 subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
 
-local function test_init()
-  test.disable_startup_messages()
-  test.mock_device.add_test_device(mock_device)
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
-  )
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
-  test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
-  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
-  )
-  test.socket.capability:__expect_send(
-    mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
-  )
-  mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-end
-
-test.set_test_init_function(test_init)
+local enabled_optional_component_capability_pairs = {{
+  "main",
+  {
+    capabilities.lockUsers.ID,
+    capabilities.lockCredentials.ID,
+  }
+}}
 
 test.register_coroutine_test(
   "Migration completed and User and Credential values restored",
   function()
-    mock_device:set_field(lock_utils.LOCK_CODES_COPY_REQUIRED, true, {persist = true})
-    mock_device:set_field(profiling_data.BATTERY_SUPPORT, nil, {persist=true})
-    mock_device:set_field(lock_utils.LOCK_CODES_FOR_MIGRATION, { {1, "ST Remote Operation Code"}, {2, "Guest1"}, {3, "Guest2"} }, {persist=true})
+    test.wait_for_events()
     test.socket.capability:__queue_receive(
       {
         mock_device.id,
-        {capability = capabilities.refresh.ID, command = "refresh", args = {}}
+        {capability = capabilities.lockCodes.ID, command = "migrate", args = {}}
       }
     )
-    test.socket.matter:__expect_send({
-      mock_device.id,
-      clusters.PowerSource.attributes.AttributeList:read(mock_device)
-    })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true))
+    )
+    -- at this point, refresh is injected in migration.
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lock.supportedLockCommands({"lock", "unlock"}, {visibility = {displayed = false}}))
+    )
+    mock_device:expect_metadata_update({ profile = "lock-modular", optional_component_capabilities = enabled_optional_component_capability_pairs })
+
+
     test.wait_for_events()
-    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = t_utils.get_profile_definition("lock.yml")}))
+    -- assume this was set prior
+    mock_device:set_field(lock_utils.LOCK_CODES_FOR_MIGRATION, { {1, "ST Remote Operation Code"}, {2, "Guest1"}, {3, "Guest2"} }, {persist=true})
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed(
+      {profile = {id = "00000000-1111-2222-3333-000000000010", components = { main = {capabilities={
+        ["lock"]= {id="lock", version=1}, ["lockAlarm"] = {id="lockAlarm", version=1}, ["remoteControlStatus"] = {id="remoteControlStatus", version=1},
+        ["lockUsers"] = {id="lockUsers", version=1}, ["lockCredentials"] = {id="lockCredentials", version=1}, ["firmwareUpdate"] = {id="firmwareUpdate", version=1},
+        ["refresh"] = {id="refresh", version=1}}}}}}
+    ))
     test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
