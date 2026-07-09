@@ -73,7 +73,7 @@ local lock_without_codes = {
       }
     }
   },
-  can_handle = require("lock-without-codes.can_handle"),
+  can_handle = require("legacy-handlers.lock-without-codes.can_handle")
 }
 
 return lock_without_codes
