@@ -12,6 +12,30 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
+local FIXTURE_DER_B64 =
+  "MHcCAQEEIHlEZiE0cRiQ+Jp+RAGQ/Rq8miEBQXfRQNeSlyNR0Cv1oAoGCCqGSM49AwEH" ..
+  "oUQDQgAEeBuCTahXpt/rGLvVnOxjTlbmNYdKQF3vlHZYMK/LtISNUXJsJ1BfBX9nGgwY" ..
+  "WlJ775K5woV3zzMW7X4dVV5C7Q=="
+local EXPECTED_PRIV_HEX = "7944662134711890f89a7e440190fd1abc9a21014177d140d792972351d02bf5"
+local EXPECTED_PUB_HEX  = "04781b824da857a6dfeb18bbd59cec634e56e635874a405def94765830afcbb48" ..
+                           "48d51726c27505f057f671a0c185a527bef92b9c28577cf3316ed7e1d555e42ed"
+local EXPECTED_GROUP_ID_HEX  = "64c8cce93255c4478d7aa05d83f3eaa2"
+
+local base64 = require "base64"
+local function default_generate_self_signed_cert(_opts)
+  local der = base64.decode(FIXTURE_DER_B64)
+  return {
+    cert_pem = "-----BEGIN CERTIFICATE-----\nfake\n-----END CERTIFICATE-----",
+    key_pem  = "-----BEGIN EC PRIVATE KEY-----\nfake\n-----END EC PRIVATE KEY-----",
+    cert_der = der,
+    key_der  = der,
+  }
+end
+local security_stub = {
+  generate_self_signed_cert = default_generate_self_signed_cert,
+}
+package.loaded["st.security"] = security_stub
+
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
@@ -19,6 +43,14 @@ local clusters = require "st.matter.clusters"
 local cluster_base = require "st.matter.cluster_base"
 local DoorLock = clusters.DoorLock
 local OctetString1 = require "st.matter.data_types.OctetString1"
+local lock_utils = require "lock_utils"
+lock_utils.create_group_id_resolving_key = function()
+  return EXPECTED_GROUP_ID_HEX
+end
+
+local key_id = "vTNt0oPoHvIvwGMHa3AuXE3ZcY+Oocv5KZ+R0yveEag="
+local endpoint_key = "041a748a78566aaee985d9141730fa72bd83bf34e7b93072a0ca7b56a79b6debac9493eded05a65701b5148517bd49a6c91c78ed6811543491eff1d257280ed809"
+local request_id = "1f3acdf6-8930-45f7-ae3d-f0b47851c3e2"
 
 local enabled_optional_component_capability_pairs = {{
   "main",
@@ -65,6 +97,25 @@ local mock_device = test.mock_device.build_test_matter_device({
 })
 
 local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
+local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
+subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.AliroReaderVerificationKey:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.AliroReaderGroupIdentifier:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.AliroReaderGroupSubIdentifier:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.AliroExpeditedTransactionSupportedProtocolVersions:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.AliroGroupResolvingKey:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.AliroSupportedBLEUWBProtocolVersions:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.AliroBLEAdvertisingVersion:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported:subscribe(mock_device))
+subscribe_request:merge(DoorLock.attributes.NumberOfAliroEndpointKeysSupported:subscribe(mock_device))
+subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
+subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
+subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
+
 local function test_init()
   test.disable_startup_messages()
   test.mock_device.add_test_device(mock_device)
@@ -73,26 +124,7 @@ local function test_init()
     mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
   )
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
-  local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device)
-  subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.NumberOfTotalUsersSupported:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.NumberOfWeekDaySchedulesSupportedPerUser:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.NumberOfYearDaySchedulesSupportedPerUser:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.AliroReaderVerificationKey:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.AliroReaderGroupIdentifier:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.AliroReaderGroupSubIdentifier:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.AliroExpeditedTransactionSupportedProtocolVersions:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.AliroGroupResolvingKey:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.AliroSupportedBLEUWBProtocolVersions:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.AliroBLEAdvertisingVersion:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.NumberOfAliroCredentialIssuerKeysSupported:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.attributes.NumberOfAliroEndpointKeysSupported:subscribe(mock_device))
-  subscribe_request:merge(cluster_base.subscribe(mock_device, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
-  subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device))
-  subscribe_request:merge(DoorLock.events.LockUserChange:subscribe(mock_device))
   test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
-
   test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
   test.socket.capability:__expect_send(
     mock_device:generate_test_message("main", capabilities.lock.supportedLockValues({"locked", "unlocked", "not fully locked"}, {visibility = {displayed = false}}))
@@ -113,17 +145,15 @@ test.register_coroutine_test(
         mock_device.id,
         DoorLock.attributes.AliroReaderVerificationKey:build_test_report_data(
           mock_device, 1,
-          "\x04\xA9\xCB\xE4\x18\xEB\x09\x66\x16\x43\xE2\xA4\xA8\x46\xB8\xED\xFE\x27\x86\x98\x30\x2E\x9F\xB4\x3E\x9B\xFF\xD3\xE3\x10\xCC\x2C\x2C\x7F\xF4\x02\xE0\x6E\x40\xEA\x3C\xE1\x29\x43\x52\x73\x36\x68\x3F\xC5\xB1\xCB\x0C\x6A\x7C\x3F\x0B\x5A\xFF\x78\x35\xDF\x21\xC6\x24"
+          lock_utils.hex_string_to_octet_string(EXPECTED_PUB_HEX)
         ),
       }
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockAliro.readerVerificationKey(
-          "04a9cbe418eb09661643e2a4a846b8edfe278698302e9fb43e9bffd3e310cc2c2c7ff402e06e40ea3ce12943527336683fc5b1cb0c6a7c3f0b5aff7835df21c624",
-          {visibility = {displayed = false}})
-        )
+        capabilities.lockAliro.readerVerificationKey(EXPECTED_PUB_HEX, {visibility = {displayed = false}})
+      )
     )
   end
 )
@@ -136,17 +166,15 @@ test.register_coroutine_test(
         mock_device.id,
         DoorLock.attributes.AliroReaderGroupIdentifier:build_test_report_data(
           mock_device, 1,
-          "\xE2\x4F\x1B\x20\x5B\xA9\x23\xB3\x2C\xD1\x3D\xC0\x09\xE9\x93\xA8"
+          lock_utils.hex_string_to_octet_string(EXPECTED_GROUP_ID_HEX)
         ),
       }
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockAliro.readerGroupIdentifier(
-          "e24f1b205ba923b32cd13dc009e993a8",
-          {visibility = {displayed = false}})
-        )
+        capabilities.lockAliro.readerGroupIdentifier(EXPECTED_GROUP_ID_HEX, {visibility = {displayed = false}})
+      )
     )
   end
 )
@@ -228,17 +256,15 @@ test.register_coroutine_test(
         mock_device.id,
         DoorLock.attributes.AliroGroupResolvingKey:build_test_report_data(
           mock_device, 1,
-          "\xE2\x4F\x1B\x20\x5B\xA9\x23\xB3\x2C\xD1\x3D\xC0\x09\xE9\x93\xA8"
+          lock_utils.hex_string_to_octet_string(EXPECTED_GROUP_ID_HEX)
         ),
       }
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message(
         "main",
-        capabilities.lockAliro.groupResolvingKey(
-          "e24f1b205ba923b32cd13dc009e993a8",
-          {visibility = {displayed = false}})
-        )
+        capabilities.lockAliro.groupResolvingKey(EXPECTED_GROUP_ID_HEX, {visibility = {displayed = false}})
+      )
     )
   end
 )
@@ -321,9 +347,9 @@ test.register_coroutine_test(
           capability = capabilities.lockAliro.ID,
           command = "setReaderConfig",
           args = {
-            "1a748a78566aaee985d9141730fa72bd83bf34e7b93072a0ca7b56a79b6debac",
-            "041a748a78566aaee985d9141730fa72bd83bf34e7b93072a0ca7b56a79b6debac9493eded05a65701b5148517bd49a6c91c78ed6811543491eff1d257280ed809",
-            "e24f1b205ba923b32cd13dc009e993a8",
+            EXPECTED_PRIV_HEX,
+            EXPECTED_PUB_HEX,
+            EXPECTED_GROUP_ID_HEX,
             nil
           }
         },
@@ -334,9 +360,9 @@ test.register_coroutine_test(
         mock_device.id,
         DoorLock.server.commands.SetAliroReaderConfig(
           mock_device, 1, -- endpoint
-          "\x1A\x74\x8A\x78\x56\x6A\xAE\xE9\x85\xD9\x14\x17\x30\xFA\x72\xBD\x83\xBF\x34\xE7\xB9\x30\x72\xA0\xCA\x7B\x56\xA7\x9B\x6D\xEB\xAC",
-          "\x04\x1A\x74\x8A\x78\x56\x6A\xAE\xE9\x85\xD9\x14\x17\x30\xFA\x72\xBD\x83\xBF\x34\xE7\xB9\x30\x72\xA0\xCA\x7B\x56\xA7\x9B\x6D\xEB\xAC\x94\x93\xED\xED\x05\xA6\x57\x01\xB5\x14\x85\x17\xBD\x49\xA6\xC9\x1C\x78\xED\x68\x11\x54\x34\x91\xEF\xF1\xD2\x57\x28\x0E\xD8\x09",
-          "\xE2\x4F\x1B\x20\x5B\xA9\x23\xB3\x2C\xD1\x3D\xC0\x09\xE9\x93\xA8",
+          lock_utils.hex_string_to_octet_string(EXPECTED_PRIV_HEX),
+          lock_utils.hex_string_to_octet_string(EXPECTED_PUB_HEX),
+          lock_utils.hex_string_to_octet_string(EXPECTED_GROUP_ID_HEX),
           nil
         ),
       }
@@ -373,11 +399,11 @@ test.register_coroutine_test(
           capability = capabilities.lockAliro.ID,
           command = "setEndpointKey",
           args = {
-            0,
-            "vTNt0oPoHvIvwGMHa3AuXE3ZcY+Oocv5KZ+R0yveEag=",
+            0, -- user index
+            key_id,
             "nonEvictableEndpointKey",
-            "041a748a78566aaee985d9141730fa72bd83bf34e7b93072a0ca7b56a79b6debac9493eded05a65701b5148517bd49a6c91c78ed6811543491eff1d257280ed809",
-            "1f3acdf6-8930-45f7-ae3d-f0b47851c3e2"
+            endpoint_key,
+            request_id
           }
         },
       }
@@ -394,7 +420,7 @@ test.register_coroutine_test(
               credential_index = 1
             }
           ), -- credential
-          "\x04\x1A\x74\x8A\x78\x56\x6A\xAE\xE9\x85\xD9\x14\x17\x30\xFA\x72\xBD\x83\xBF\x34\xE7\xB9\x30\x72\xA0\xCA\x7B\x56\xA7\x9B\x6D\xEB\xAC\x94\x93\xED\xED\x05\xA6\x57\x01\xB5\x14\x85\x17\xBD\x49\xA6\xC9\x1C\x78\xED\x68\x11\x54\x34\x91\xEF\xF1\xD2\x57\x28\x0E\xD8\x09", -- credential_data
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
           nil, -- user_index
           nil, -- user_status
           DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
@@ -427,7 +453,7 @@ test.register_coroutine_test(
         "main",
         capabilities.lockAliro.credentials(
           {{
-            keyId="vTNt0oPoHvIvwGMHa3AuXE3ZcY+Oocv5KZ+R0yveEag=",
+            keyId=key_id,
             keyIndex=1,
             keyType="nonEvictableEndpointKey",
             userIndex=1
@@ -442,8 +468,8 @@ test.register_coroutine_test(
         capabilities.lockAliro.commandResult(
           {
             commandName="setEndpointKey",
-            keyId="vTNt0oPoHvIvwGMHa3AuXE3ZcY+Oocv5KZ+R0yveEag=",
-            requestId="1f3acdf6-8930-45f7-ae3d-f0b47851c3e2",
+            keyId=key_id,
+            requestId=request_id,
             statusCode="success",
             userIndex=1
           },
@@ -458,7 +484,7 @@ test.register_coroutine_test(
         {
           capability = capabilities.lockAliro.ID,
           command = "clearEndpointKey",
-          args = {1, "vTNt0oPoHvIvwGMHa3AuXE3ZcY+Oocv5KZ+R0yveEag=", "nonEvictableEndpointKey"}
+          args = {1, key_id, "nonEvictableEndpointKey"}
         },
       }
     )
@@ -512,7 +538,7 @@ test.register_coroutine_test(
         capabilities.lockAliro.commandResult(
           {
             commandName="clearEndpointKey",
-            keyId="vTNt0oPoHvIvwGMHa3AuXE3ZcY+Oocv5KZ+R0yveEag=",
+            keyId=key_id,
             statusCode="success",
             userIndex=1
           },
@@ -521,6 +547,261 @@ test.register_coroutine_test(
       )
     )
   end
+)
+
+test.register_coroutine_test(
+  "Handle Set Endpoint Key command received from SmartThings and busy status",
+  function()
+    lock_utils.is_busy_state_set(mock_device)
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setEndpointKey",
+          args = {
+            0, -- user index
+            key_id,
+            "nonEvictableEndpointKey",
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAliro.commandResult(
+          {
+            commandName="setEndpointKey",
+            keyId=key_id,
+            requestId=request_id,
+            statusCode="busy"
+          },
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle Set Endpoint Key command received from SmartThings and user_index is occupied",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setEndpointKey",
+          args = {
+            0, -- user index
+            key_id,
+            "nonEvictableEndpointKey",
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY,
+              credential_index = 1
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.OCCUPIED, -- status
+          1, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY,
+              credential_index = 2
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle Set Endpoint Key command received from SmartThings and user_index is occupied and next_credential_index is nil",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setEndpointKey",
+          args = {
+            0, -- user index
+            key_id,
+            "nonEvictableEndpointKey",
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY,
+              credential_index = 1
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.OCCUPIED, -- status
+          1, -- user_index
+          nil -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAliro.commandResult(
+          {
+            commandName="setEndpointKey",
+            keyId=key_id,
+            requestId=request_id,
+            statusCode="resourceExhausted"
+          },
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle Set Endpoint Key command received from SmartThings and user_index is failure",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setEndpointKey",
+          args = {
+            0, -- user index
+            key_id,
+            "nonEvictableEndpointKey",
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_NON_EVICTABLE_ENDPOINT_KEY,
+              credential_index = 1
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.FAILURE, -- status
+          1, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAliro.commandResult(
+          {
+            commandName="setEndpointKey",
+            keyId=key_id,
+            requestId=request_id,
+            statusCode="failure"
+          },
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -534,8 +815,8 @@ test.register_coroutine_test(
           command = "setIssuerKey",
           args = {
             0,
-            "041a748a78566aaee985d9141730fa72bd83bf34e7b93072a0ca7b56a79b6debac9493eded05a65701b5148517bd49a6c91c78ed6811543491eff1d257280ed809",
-            "1f3acdf6-8930-45f7-ae3d-f0b47851c3e2"
+            endpoint_key,
+            request_id
           }
         },
       }
@@ -552,7 +833,7 @@ test.register_coroutine_test(
               credential_index = 1
             }
           ), -- credential
-          "\x04\x1A\x74\x8A\x78\x56\x6A\xAE\xE9\x85\xD9\x14\x17\x30\xFA\x72\xBD\x83\xBF\x34\xE7\xB9\x30\x72\xA0\xCA\x7B\x56\xA7\x9B\x6D\xEB\xAC\x94\x93\xED\xED\x05\xA6\x57\x01\xB5\x14\x85\x17\xBD\x49\xA6\xC9\x1C\x78\xED\x68\x11\x54\x34\x91\xEF\xF1\xD2\x57\x28\x0E\xD8\x09", -- credential_data
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
           nil, -- user_index
           nil, -- user_status
           DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
@@ -599,7 +880,7 @@ test.register_coroutine_test(
         capabilities.lockAliro.commandResult(
           {
             commandName="setIssuerKey",
-            requestId="1f3acdf6-8930-45f7-ae3d-f0b47851c3e2",
+            requestId=request_id,
             statusCode="success",
             userIndex=1
           },
@@ -614,7 +895,7 @@ test.register_coroutine_test(
         {
           capability = capabilities.lockAliro.ID,
           command = "clearIssuerKey",
-          args = {1, "1f3acdf6-8930-45f7-ae3d-f0b47851c3e2"}
+          args = {1, request_id}
         },
       }
     )
@@ -668,13 +949,313 @@ test.register_coroutine_test(
         capabilities.lockAliro.commandResult(
           {
             commandName="clearIssuerKey",
-            requestId="1f3acdf6-8930-45f7-ae3d-f0b47851c3e2",
+            requestId=request_id,
             statusCode="success",
             userIndex=1
           },
           {state_change=true, visibility={displayed=false}}
         )
       )
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Set Issuer Key command received from SmartThings and busy status",
+  function()
+    lock_utils.is_busy_state_set(mock_device)
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setIssuerKey",
+          args = {
+            0,
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAliro.commandResult(
+          {
+            commandName="setIssuerKey",
+            requestId=request_id,
+            statusCode="busy"
+          },
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle Set Issuer Key command received from SmartThings and user_index is occupied",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setIssuerKey",
+          args = {
+            0,
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
+              credential_index = 1
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.OCCUPIED, -- status
+          1, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
+              credential_index = 2
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle Set Issuer Key command received from SmartThings and user_index is occupied and next_credential_index is nil",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setIssuerKey",
+          args = {
+            0,
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
+              credential_index = 1
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.OCCUPIED, -- status
+          1, -- user_index
+          nil -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAliro.commandResult(
+          {
+            commandName="setIssuerKey",
+            requestId=request_id,
+            statusCode="resourceExhausted"
+          },
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle Set Issuer Key command received from SmartThings and user_index is failure",
+  function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {
+          capability = capabilities.lockAliro.ID,
+          command = "setIssuerKey",
+          args = {
+            0,
+            endpoint_key,
+            request_id
+          }
+        },
+      }
+    )
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetCredential(
+          mock_device, 1, -- endpoint
+          DoorLock.types.DataOperationTypeEnum.ADD, -- operation_type
+          DoorLock.types.CredentialStruct(
+            {
+              credential_type = DoorLock.types.CredentialTypeEnum.ALIRO_CREDENTIAL_ISSUER_KEY,
+              credential_index = 1
+            }
+          ), -- credential
+          lock_utils.hex_string_to_octet_string(endpoint_key), -- credential_data
+          nil, -- user_index
+          nil, -- user_status
+          DoorLock.types.DlUserType.UNRESTRICTED_USER -- user_type
+        ),
+      }
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        DoorLock.client.commands.SetCredentialResponse:build_test_command_response(
+          mock_device, 1,
+          DoorLock.types.DlStatus.FAILURE, -- status
+          1, -- user_index
+          2 -- next_credential_index
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAliro.commandResult(
+          {
+            commandName="setIssuerKey",
+            requestId=request_id,
+            statusCode="failure"
+          },
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+  end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "set_reader_config should send SetAliroReaderConfig command on device init",
+  function()
+    mock_device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, nil, {persist = true})
+    mock_device:set_field(lock_utils.BUSY_STATE, false, {persist = true})
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = t_utils.get_profile_definition("lock.yml")}))
+    test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+    test.socket.matter:__expect_send(
+      {
+        mock_device.id,
+        DoorLock.server.commands.SetAliroReaderConfig(
+          mock_device, 1,
+          lock_utils.hex_string_to_octet_string(EXPECTED_PRIV_HEX),
+          lock_utils.hex_string_to_octet_string(EXPECTED_PUB_HEX),
+          lock_utils.hex_string_to_octet_string(EXPECTED_GROUP_ID_HEX),
+          nil
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
+    )
+  end
+)
+
+test.register_coroutine_test(
+  "Set Reader Config command sets busy state in command result when busy",
+  function()
+    mock_device:set_field(lock_utils.ALIRO_READER_CONFIG_UPDATED, nil, {persist = true})
+    lock_utils.is_busy_state_set(mock_device)
+    test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ profile = t_utils.get_profile_definition("lock.yml")}))
+    test.socket["matter"]:__expect_send({mock_device.id, subscribe_request})
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockAliro.commandResult(
+          {
+            commandName="setReaderConfig",
+            statusCode="busy"
+          },
+          {state_change=true, visibility={displayed=false}}
+        )
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockAlarm.supportedAlarmValues({"unableToLockTheDoor"}, {visibility = {displayed = false}}))
     )
   end
 )
