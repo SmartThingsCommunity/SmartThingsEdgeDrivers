@@ -2441,13 +2441,13 @@ end
 
 local function handle_refresh(driver, device, command)
   if device:get_field(lock_utils.LOCK_CODES_COPY_REQUIRED) == true then
-    device:set_field(profiling_data.BATTERY_SUPPORT, nil, {persist=true})
-    if #device:get_endpoints(clusters.PowerSource.ID, {feature_bitmap = clusters.PowerSource.types.PowerSourceFeature.BATTERY}) == 0 then
-      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
+    -- ensure battery state remains as it was before the profile migration
+    if device:supports_capability(capabilities.battery) then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_PERCENTAGE, {persist = true})
+    elseif device:supports_capability(capabilities.batteryLevel) then
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.BATTERY_LEVEL, {persist = true})
     else
-      -- update subscription to ensure AttributeList is received
-      device:add_subscribed_attribute(clusters.PowerSource.attributes.AttributeList)
-      device:subscribe()
+      device:set_field(profiling_data.BATTERY_SUPPORT, battery_support.NO_BATTERY, {persist = true})
     end
     match_profile(driver, device, true)
   else

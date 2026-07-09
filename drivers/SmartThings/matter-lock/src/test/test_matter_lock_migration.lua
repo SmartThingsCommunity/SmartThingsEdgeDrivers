@@ -65,6 +65,7 @@ local enabled_optional_component_capability_pairs = {{
   {
     capabilities.lockUsers.ID,
     capabilities.lockCredentials.ID,
+    capabilities.battery.ID,
   }
 }}
 
