@@ -15,7 +15,7 @@ local LockCodes                 = capabilities.lockCodes
 local UserStatusEnum            = LockCluster.types.DrlkUserStatus
 local UserTypeEnum              = LockCluster.types.DrlkUserType
 
-local lock_utils = (require "lock_utils")
+local lock_utils = (require "legacy-handlers.legacy_lock_utils")
 
 local reload_all_codes = function(driver, device, command)
   -- starts at first user code index then iterates through all lock codes as they come in
@@ -142,8 +142,7 @@ local yale_door_lock_driver = {
       [LockCodes.commands.setCode.NAME] = set_code
     }
   },
-  sub_drivers = require("yale.sub_drivers"),
-  can_handle = require("yale.can_handle"),
+  can_handle = require("legacy-handlers.yale.can_handle")
 }
 
 return yale_door_lock_driver

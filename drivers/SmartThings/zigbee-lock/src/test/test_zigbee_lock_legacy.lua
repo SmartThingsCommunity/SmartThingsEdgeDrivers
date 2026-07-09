@@ -18,6 +18,7 @@ local DoorLockUserStatus = DoorLock.types.DrlkUserStatus
 local DoorLockUserType = DoorLock.types.DrlkUserType
 local ProgrammingEventCode = DoorLock.types.ProgramEventCode
 
+local consts = require "lock_utils.constants"
 local json = require "dkjson"
 
 local mock_device = test.mock_device.build_test_zigbee_device(
@@ -25,7 +26,8 @@ local mock_device = test.mock_device.build_test_zigbee_device(
 )
 zigbee_test_utils.prepare_zigbee_env_info()
 local function test_init()
-  test.mock_device.add_test_device(mock_device)end
+  test.mock_device.add_test_device(mock_device)
+end
 
 test.set_test_init_function(test_init)
 
@@ -42,6 +44,8 @@ end
 test.register_coroutine_test(
     "Configure should configure all necessary attributes and begin reading codes",
     function()
+      mock_device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, false, { persist = true })
+      test.wait_for_events()
       test.timer.__create_and_queue_test_time_advance_timer(2, "oneshot")
       test.wait_for_events()
 
