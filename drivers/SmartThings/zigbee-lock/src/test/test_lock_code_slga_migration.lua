@@ -8,6 +8,8 @@ local t_utils = require "integration_test.utils"
 
 local clusters = require "st.zigbee.zcl.clusters"
 local DoorLock = clusters.DoorLock
+local PowerConfiguration = clusters.PowerConfiguration
+local Alarm = clusters.Alarms
 local capabilities = require "st.capabilities"
 local constants = require "lock_utils.constants"
 
@@ -63,6 +65,9 @@ test.register_coroutine_test(
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockUsers.users({{userIndex=1, userName="Zach", userType="guest"}, {userIndex=5, userName="Steven", userType="guest"}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCredentials.credentials({{credentialIndex=1, credentialType="pin", userIndex=1, credentialName="Zach"}, {credentialIndex=5, credentialType="pin", userIndex=5, credentialName="Steven"}}, { visibility = { displayed = false } })))
       test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+      test.socket.zigbee:__expect_send({ mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, DoorLock.attributes.LockState:read(mock_device) })
+      test.socket.zigbee:__expect_send({ mock_device.id, Alarm.attributes.AlarmCount:read(mock_device) })
       test.wait_for_events()
       assert(mock_device:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == true, "SLGA_MIGRATED field should be set to true after migration")
     end

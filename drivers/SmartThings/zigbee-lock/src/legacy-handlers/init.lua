@@ -388,20 +388,21 @@ local migrate = function(driver, device, command)
   device:emit_event(LockCredentials.supportedCredentials({ post_migration_consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
 
   -- migrate max/min credential length
-  local cached_code_length  = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.codeLength.NAME)
-  local cached_min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME, 4)
-  local cached_max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME, 8)
-  if cached_code_length then
-    cached_max_code_len = cached_code_length
-    cached_min_code_len = cached_code_length
+  local cached_min_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.minCodeLength.NAME)
+  local cached_max_code_len = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodeLength.NAME)
+  if cached_min_code_len then
+    device:emit_event(LockCredentials.minPinCodeLen(cached_min_code_len, { visibility = { displayed = false } }))
   end
-  device:emit_event(LockCredentials.minPinCodeLen(cached_min_code_len, { visibility = { displayed = false } }))
-  device:emit_event(LockCredentials.maxPinCodeLen(cached_max_code_len, { visibility = { displayed = false } }))
+  if cached_max_code_len then
+    device:emit_event(LockCredentials.maxPinCodeLen(cached_max_code_len, { visibility = { displayed = false } }))
+  end
 
   -- migrate total codes supported
-  local cached_max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME, 20)
-  device:emit_event(LockCredentials.pinUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
-  device:emit_event(LockUsers.totalUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
+  local cached_max_codes = device:get_latest_state("main", capabilities.lockCodes.ID, capabilities.lockCodes.maxCodes.NAME)
+  if cached_max_codes then
+    device:emit_event(LockCredentials.pinUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
+    device:emit_event(LockUsers.totalUsersSupported(cached_max_codes, { visibility = { displayed = false } }))
+  end
 
   -- migrate stored lock codes slots and user names
   local users, credentials = {}, {}
@@ -428,6 +429,13 @@ local migrate = function(driver, device, command)
   -- set and persist the migration complete flag and emit migrated event. Legacy subdriver will not be used again after this.
   device:emit_event(LockCodes.migrated(true, { visibility = { displayed = false } }))
   device:set_field(post_migration_consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
+
+  -- try to refresh all unstored state
+  driver:inject_capability_command(device, {
+    capability = capabilities.refresh.ID,
+    command = capabilities.refresh.commands.refresh.NAME,
+    args = {}
+  })
 end
 
 local legacy_capabilities_driver = {
