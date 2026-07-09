@@ -44,7 +44,8 @@ local NEW_MATTER_LOCK_PRODUCTS = {
   {0x1236, 0x3800}, -- Schlage
   {0x1236, 0xA738}, -- Schlage
   {0x152C, 0x9500}, -- Dreame NAVO Smart Lock A10
-  {0x152C, 0x9501} -- Dreame NAVO Smart Lock E10
+  {0x152C, 0x9501}, -- Dreame NAVO Smart Lock E10
+  {0x1531, 0x0020} -- SOLITY Matter Lock
 }
 
 return NEW_MATTER_LOCK_PRODUCTS
