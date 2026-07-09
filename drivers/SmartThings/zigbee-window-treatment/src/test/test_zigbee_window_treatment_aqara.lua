@@ -193,7 +193,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
@@ -215,7 +215,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      mock_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
     test.socket.capability:__expect_send(
       mock_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
@@ -427,7 +427,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
+      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
     )
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.closed())
@@ -457,7 +457,7 @@ test.register_coroutine_test(
       }
     )
     test.socket.capability:__expect_send(
-      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(100))
+      mock_version_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(0))
     )
     test.socket.capability:__expect_send(
       mock_version_device:generate_test_message("main", capabilities.windowShade.windowShade.open())
