@@ -52,6 +52,10 @@ SensorFields.BOOLEAN_CAP_EVENT_MAP = {
 SensorFields.vendor_overrides = {
   [0x115F] = { -- AQARA_MANUFACTURER_ID
     [0x2009] = { is_aqara_fp400 = true }
+  },
+  [0x120B] = { -- Heiman
+      [0x1006] = {target_profile = "smoke-heiman"},
+      [0x1003] = {target_profile = "smoke-heiman"},
   }
 }
 
