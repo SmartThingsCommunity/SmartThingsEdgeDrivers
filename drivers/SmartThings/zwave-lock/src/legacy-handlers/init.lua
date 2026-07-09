@@ -84,7 +84,6 @@ local function migrate(driver, device, cmd)
     device:emit_event(capabilities.lockCredentials.pinUsersSupported(max_codes, { visibility = { displayed = false } }))
     device:emit_event(capabilities.lockUsers.totalUsersSupported(max_codes, { visibility = { displayed = false } }))
   else
-    print("code length is nil, requesting from device")
     -- if we don't have a code length, request it from the device
     device:send(UserCode:UsersNumberGet({}))
   end
