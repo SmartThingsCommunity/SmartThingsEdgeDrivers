@@ -756,7 +756,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Ikea Scroll low sensitivity (factor 0.5) scales rotateAmount correctly on main",
   function()
-    mock_ikea_scroll.st_store.preferences = {knobSensitivityGroup1 = 1} -- factor 0.5
+    test.socket.device_lifecycle():__queue_receive(mock_ikea_scroll:generate_info_changed({ preferences = { knobSensitivityGroup1 = "0" } }))
+    test.wait_for_events()
 
     test.socket.matter:__queue_receive({
       mock_ikea_scroll.id,
@@ -803,7 +804,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Ikea Scroll high sensitivity (factor 2.0) scales rotateAmount correctly on main",
   function()
-    mock_ikea_scroll.st_store.preferences = {knobSensitivityGroup1 = 3} -- factor 2.0
+    test.socket.device_lifecycle():__queue_receive(mock_ikea_scroll:generate_info_changed({ preferences = { knobSensitivityGroup1 = "2" } }))
+    test.wait_for_events()
 
     test.socket.matter:__queue_receive({
       mock_ikea_scroll.id,
@@ -850,7 +852,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Ikea Scroll high sensitivity (factor 2.0) scales rotateAmount correctly on group2",
   function()
-    mock_ikea_scroll.st_store.preferences = {knobSensitivityGroup2 = 3} -- factor 2.0
+    test.socket.device_lifecycle():__queue_receive(mock_ikea_scroll:generate_info_changed({ preferences = { knobSensitivityGroup2 = "2" } }))
+    test.wait_for_events()
 
     test.socket.matter:__queue_receive({
       mock_ikea_scroll.id,
@@ -897,7 +900,8 @@ test.register_coroutine_test(
 test.register_coroutine_test(
   "Ikea Scroll low sensitivity (factor 0.5) scales rotateAmount correctly on group3",
   function()
-    mock_ikea_scroll.st_store.preferences = {knobSensitivityGroup3 = 1} -- factor 0.5
+    test.socket.device_lifecycle():__queue_receive(mock_ikea_scroll:generate_info_changed({ preferences = { knobSensitivityGroup3 = "0" } }))
+    test.wait_for_events()
 
     test.socket.matter:__queue_receive({
       mock_ikea_scroll.id,

@@ -34,7 +34,11 @@ IkeaScrollFields.CLEAR_STATE_TIMER = "__clear_state_timer"
 IkeaScrollFields.CLEAR_STATE_DELAY_S = 8
 
 -- Amounts by which to multiply the scroll amount based on user preference for sensitivity
-IkeaScrollFields.KNOB_SENSITIVITY_FACTORS = {0.5, 1.0, 2.0}
+IkeaScrollFields.KNOB_SENSITIVITY_PREFERENCE_FACTORS = {
+  ["0"] = 0.5, -- Low
+  ["1"] = 1.0, -- Medium
+  ["2"] = 2.0  -- High
+}
 
 -- Required Events for the ENDPOINTS_PUSH.
 IkeaScrollFields.switch_press_subscribed_events = {
