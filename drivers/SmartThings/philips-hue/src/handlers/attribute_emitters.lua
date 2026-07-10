@@ -158,8 +158,8 @@ local function _emit_light_events_inner(light_device, light_repr)
   end
 end
 
--- A sufficiently small color temp command can round to the same value in mireks that the device has, so the bridge may not respond to it.
--- To avoid any odd in-app behaviors from the app interface, we should emit_event the kelvin value immediately in this case
+-- A sufficiently small color temp command can transform to the same value (in mireks) that a device already has, so the bridge
+-- may not respond to said command. To avoid any odd behaviors in this case, we should emit a kelvin value change event immediately
 function AttributeEmitters.emit_color_temp_when_mirek_unchanged(device, clamped_kelvin, mirek)
   local current_color_temp = device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME)
   if current_color_temp then
