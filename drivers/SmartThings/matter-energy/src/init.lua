@@ -474,7 +474,7 @@ local function report_power_consumption_to_st_energy(device, component, latest_t
 
   -- Calculate the energy delta between reports
   local energy_delta_wh = 0.0
-  local previous_imported_report = device:get_latest_state("main", capabilities.powerConsumptionReport.ID,
+  local previous_imported_report = device:get_latest_state(component.id, capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME)
   if previous_imported_report and previous_imported_report.energy then
     energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
