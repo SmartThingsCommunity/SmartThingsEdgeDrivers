@@ -194,7 +194,7 @@ matterManufacturer:
     deviceProfileName: lock
   #Lockly
   - id: "5212/2"
-    deviceLabel: Lockly Smart Look
+    deviceLabel: Lockly Smart Lock
     vendorId: 0x145C
     productId: 0x0002
     deviceProfileName: lock-battery
