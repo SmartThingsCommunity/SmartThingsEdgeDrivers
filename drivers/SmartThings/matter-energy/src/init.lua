@@ -327,7 +327,7 @@ local function evse_supply_state_handler(driver, device, ib, response)
   local evse_supply_state = ib.data.value
 
   local latest_evse_state = device:get_latest_state(
-    device:endpoint_to_component(ib.endopint_id),
+    device:endpoint_to_component(ib.endpoint_id),
     capabilities.evseState.ID,
     capabilities.evseState.state.NAME
   )
