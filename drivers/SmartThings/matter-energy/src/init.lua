@@ -461,7 +461,7 @@ local function device_energy_mgmt_mode_attr_handler(driver, device, ib, response
   end
 end
 
-local function report_power_consumption_to_st_energy(device, component, latest_total_imported_energy_wh)
+local function report_power_consumption_to_st_energy(device, component, latest_total_energy_wh)
   local current_time = os.time()
 
   local last_report_timestamp_field = component.id == "exportedEnergy" and LAST_EXPORTED_REPORT_TIMESTAMP or LAST_IMPORTED_REPORT_TIMESTAMP
@@ -477,7 +477,7 @@ local function report_power_consumption_to_st_energy(device, component, latest_t
   local previous_imported_report = device:get_latest_state(component.id, capabilities.powerConsumptionReport.ID,
     capabilities.powerConsumptionReport.powerConsumption.NAME)
   if previous_imported_report and previous_imported_report.energy then
-    energy_delta_wh = math.max(latest_total_imported_energy_wh - previous_imported_report.energy, 0.0)
+    energy_delta_wh = math.max(latest_total_energy_wh - previous_imported_report.energy, 0.0)
   end
 
   -- Report the energy consumed during the time interval. The unit of these values should be 'Wh'
@@ -485,7 +485,7 @@ local function report_power_consumption_to_st_energy(device, component, latest_t
     start = epoch_to_iso8601(last_time),
     ["end"] = epoch_to_iso8601(current_time - 1),
     deltaEnergy = energy_delta_wh,
-    energy = latest_total_imported_energy_wh
+    energy = latest_total_energy_wh
   }))
 end
 
