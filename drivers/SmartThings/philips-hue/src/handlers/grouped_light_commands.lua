@@ -4,6 +4,7 @@ local Consts = require "consts"
 local Fields = require "fields"
 local HueColorUtils = require "utils.cie_utils"
 local grouped_utils = require "utils.grouped_utils"
+local attribute_emitters = require "handlers.attribute_emitters"
 local utils = require "utils"
 
 
@@ -165,7 +166,6 @@ end
 ---@param args table
 ---@param aux table auxiliary data needed for the command that the devices all had in common
 local function do_color_temp_action(driver, bridge_device, group, args, aux)
-  local capabilities = require "st.capabilities"
   local kelvin = args.args.temperature
 
   local grouped_light_id = group.grouped_light_rid
@@ -187,14 +187,7 @@ local function do_color_temp_action(driver, bridge_device, group, args, aux)
   local mirek = math.floor(utils.kelvin_to_mirek(clamped_kelvin))
 
   for _, device in ipairs(group.devices) do
-    local current_color_temp = device:get_latest_state("main", capabilities.colorTemperature.ID, capabilities.colorTemperature.colorTemperature.NAME)
-    if current_color_temp then
-      local current_mirek = math.floor(utils.kelvin_to_mirek(current_color_temp))
-      if current_mirek == mirek then
-        log.debug(string.format("Color temp change from %dK to %dK results in same mirek value (%d), emitting event directly", current_color_temp, clamped_kelvin, mirek))
-        device:emit_event(capabilities.colorTemperature.colorTemperature(clamped_kelvin))
-      end
-    end
+    attribute_emitters.emit_color_temp_when_mirek_unchanged(device, clamped_kelvin, mirek)
   end
 
   local resp, err = hue_api:set_grouped_light_color_temp(grouped_light_id, mirek)
