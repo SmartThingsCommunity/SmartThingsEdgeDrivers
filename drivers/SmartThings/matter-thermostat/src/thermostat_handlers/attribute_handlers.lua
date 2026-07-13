@@ -494,23 +494,15 @@ end
 
 function AttributeHandlers.concentration_measured_value_factory(capability_name, attribute, target_unit)
   return function(driver, device, ib, response)
-    local reporting_unit = device:get_field(capability_name.."_unit")
+    if not ib.data.value then return end
+    local reporting_unit = device:get_field(capability_name.."_unit") or fields.unit_default[capability_name]
+    local converted_value = thermostat_utils.convert_value_to_unit(ib.data.value, reporting_unit, target_unit, capability_name)
 
-    if not reporting_unit then
-      reporting_unit = fields.unit_default[capability_name]
-      device:set_field(capability_name.."_unit", reporting_unit, {persist = true})
-    end
-
-    local value = nil
-    if reporting_unit then
-      value = thermostat_utils.unit_conversion(ib.data.value, reporting_unit, target_unit, capability_name)
-    end
-
-    if value then
-      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = value, unit = fields.unit_strings[target_unit]}))
+    if converted_value then
+      device:emit_event_for_endpoint(ib.endpoint_id, attribute({value = converted_value, unit = fields.unit_strings[target_unit]}))
       -- handle case where device profile supports both fineDustLevel and dustLevel
       if capability_name == capabilities.fineDustSensor.NAME and device:supports_capability(capabilities.dustSensor) then
-        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = value, unit = fields.unit_strings[target_unit]}))
+        device:emit_event_for_endpoint(ib.endpoint_id, capabilities.dustSensor.fineDustLevel({value = converted_value, unit = fields.unit_strings[target_unit]}))
       end
     end
   end
