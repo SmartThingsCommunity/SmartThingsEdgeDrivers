@@ -154,7 +154,7 @@ local vimar_handler = {
   lifecycle_handlers = {
     init = device_init
   },
-  can_handle = require("vimar.can_handle"),
+  can_handle = require("inverted-lift.vimar.can_handle"),
 }
 
 return vimar_handler

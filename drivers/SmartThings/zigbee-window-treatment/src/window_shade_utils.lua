@@ -1,6 +1,7 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local st_utils = require "st.utils"
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 
@@ -8,6 +9,14 @@ local utils = {}
 
 utils.PRESET_LEVEL = 50
 utils.PRESET_LEVEL_KEY = "_presetLevel"
+
+-- When the curtain is moving, LATEST_TARGET_LEVEL is used to store the latest
+-- target position value, which will be cleared when the curtain status is updated.
+local LATEST_TARGET_LEVEL = "_latestTargetLevel"
+-- Timeout for the stateless step to accumulate
+local TARGET_LEVEL_TIME_OUT_SECONDS = 3
+-- Field name for the timer that clears the target position after timeout
+local TARGET_LEVEL_TIME_OUT = "_targetLevelTimeOut"
 
 utils.get_preset_level = function(device, component)
   local level = device:get_latest_state(component, "windowShadePreset", "position") or
@@ -29,6 +38,39 @@ end
 utils.set_preset_position_cmd = function(driver, device, command)
   device:emit_component_event({id = command.component}, capabilities.windowShadePreset.position(command.args.position))
   device:set_field(utils.PRESET_LEVEL_KEY, command.args.position, {persist = true})
+end
+
+-- Step shade level handler for statelessWindowShadeLevelStep capability
+utils.step_shade_level_handler = function(invert_shade_level)
+  return function(driver, device, command)
+    local step = command.args.stepSize or 0
+    if step == 0 then return
+    elseif invert_shade_level then step = -step end -- invert step's direction if invert_shade_level is true
+
+    -- Step from the latest target level if it exists, or from the current shade level
+    local latest_target_level = device:get_field(LATEST_TARGET_LEVEL) or
+      device:get_latest_state("main", capabilities.windowShadeLevel.ID, capabilities.windowShadeLevel.shadeLevel.NAME, 0)
+    local new_target_level = st_utils.clamp_value(latest_target_level + step, 0, 100)
+
+    -- Cancel any previous timer and set a 3 second timeout timer to ensure target_level is cleared
+    -- This is to prevent the stateless step from accumulating indefinitely, while ensuring that a single
+    -- "scroll" action can accumulate multiple steps within a short time frame
+    if device:get_field(TARGET_LEVEL_TIME_OUT) then
+      device.thread:cancel_timer(device:get_field(TARGET_LEVEL_TIME_OUT))
+    end
+    local timer = device.thread:call_with_delay(TARGET_LEVEL_TIME_OUT_SECONDS, function(d)
+      device:set_field(LATEST_TARGET_LEVEL, nil)
+    end)
+    device:set_field(TARGET_LEVEL_TIME_OUT, timer)
+    device:set_field(LATEST_TARGET_LEVEL, new_target_level)
+
+    driver:inject_capability_command(device, {
+      capability = capabilities.windowShadeLevel.ID,
+      component = command.component,
+      command = capabilities.windowShadeLevel.commands.setShadeLevel.NAME,
+      named_args = { shadeLevel = new_target_level }
+    })
+  end
 end
 
 return utils

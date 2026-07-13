@@ -109,7 +109,7 @@ local somfy_handler = {
       }
     }
   },
-  can_handle = require("somfy.can_handle"),
+  can_handle = require("inverted-lift.somfy.can_handle"),
 }
 
 return somfy_handler

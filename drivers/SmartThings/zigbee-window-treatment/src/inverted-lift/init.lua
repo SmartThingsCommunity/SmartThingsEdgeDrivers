@@ -56,21 +56,21 @@ local function current_position_attr_handler(driver, device, value, zb_rx)
   end
 end
 
-local function set_shade_level(device, value, command)
+local function set_shade_level_helper(device, value, command)
   local level = 100 - value
   device:send_to_component(command.component, WindowCovering.server.commands.GoToLiftPercentage(device, level))
 end
 
-local function window_shade_level_cmd(driver, device, command)
-  set_shade_level(device, command.args.shadeLevel, command)
+local function set_shade_level_handler(driver, device, command)
+  set_shade_level_helper(device, command.args.shadeLevel, command)
 end
 
-local function window_shade_preset_cmd(driver, device, command)
+local function preset_position_handler(driver, device, command)
   local level = window_shade_utils.get_preset_level(device, command.component)
-  set_shade_level(device, level, command)
+  set_shade_level_helper(device, level, command)
 end
 
-local ikea_window_treatment = {
+local inverted_window_treatment = {
   NAME = "inverted lift percentage",
   zigbee_handlers = {
     attr = {
@@ -80,14 +80,19 @@ local ikea_window_treatment = {
     }
   },
   capability_handlers = {
+    [capabilities.statelessWindowShadeLevelStep.ID] = {
+      [capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME] =
+        window_shade_utils.step_shade_level_handler(true) -- invert_shade_level is true for devices under this subdriver
+    },
     [capabilities.windowShadeLevel.ID] = {
-      [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = window_shade_level_cmd
+      [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = set_shade_level_handler
     },
     [capabilities.windowShadePreset.ID] = {
-      [capabilities.windowShadePreset.commands.presetPosition.NAME] = window_shade_preset_cmd
-    }
+      [capabilities.windowShadePreset.commands.presetPosition.NAME] = preset_position_handler
+    },
   },
-  can_handle = require("invert-lift-percentage.can_handle"),
+  can_handle = require("inverted-lift.can_handle"),
+  sub_drivers = require("inverted-lift.sub_drivers")
 }
 
-return ikea_window_treatment
+return inverted_window_treatment

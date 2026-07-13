@@ -138,7 +138,7 @@ local yoolax_window_shade = {
       }
     },
   },
-  can_handle = require("yoolax.can_handle"),
+  can_handle = require("inverted-lift.yoolax.can_handle"),
 }
 
 return yoolax_window_shade

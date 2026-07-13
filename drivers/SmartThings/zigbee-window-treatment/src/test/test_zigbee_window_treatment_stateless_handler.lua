@@ -417,6 +417,9 @@ test.register_coroutine_test(
       aqara_device.id,
       { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 } }
     })
+    test.socket.capability:__expect_send(
+      aqara_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(60))
+    )
     test.socket.zigbee:__expect_send({
       aqara_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(aqara_device, 60)
@@ -431,6 +434,9 @@ test.register_coroutine_test(
       aqara_device.id,
       { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 } }
     })
+    test.socket.capability:__expect_send(
+      aqara_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(70))
+    )
     test.socket.zigbee:__expect_send({
       aqara_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(aqara_device, 70)
@@ -445,6 +451,9 @@ test.register_coroutine_test(
       aqara_device.id,
       { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -20 } }
     })
+    test.socket.capability:__expect_send(
+      aqara_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(50))
+    )
     test.socket.zigbee:__expect_send({
       aqara_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(aqara_device, 50)
@@ -459,6 +468,9 @@ test.register_coroutine_test(
       aqara_device.id,
       { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 15 } }
     })
+    test.socket.capability:__expect_send(
+      aqara_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(65))
+    )
     test.socket.zigbee:__expect_send({
       aqara_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(aqara_device, 65)
@@ -473,6 +485,9 @@ test.register_coroutine_test(
       aqara_device.id,
       { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -5 } }
     })
+    test.socket.capability:__expect_send(
+      aqara_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(60))
+    )
     test.socket.zigbee:__expect_send({
       aqara_device.id,
       WindowCovering.server.commands.GoToLiftPercentage(aqara_device, 60)

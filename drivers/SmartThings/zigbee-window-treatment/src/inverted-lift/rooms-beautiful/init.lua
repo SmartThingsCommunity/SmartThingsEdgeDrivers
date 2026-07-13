@@ -108,7 +108,7 @@ local rooms_beautiful_handler = {
     init = battery_defaults.build_linear_voltage_init(2.5, 3.0),
     infoChanged = info_changed
   },
-  can_handle = require("rooms-beautiful.can_handle"),
+  can_handle = require("inverted-lift.rooms-beautiful.can_handle"),
 }
 
 return rooms_beautiful_handler
