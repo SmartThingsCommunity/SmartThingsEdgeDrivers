@@ -25,6 +25,8 @@ local TUYA_CLUSTER = 0xEF00
 local DP_TYPE_VALUE = "\x02"
 local DP_TYPE_ENUM = "\x04"
 
+local SeqNum = 0
+
 -------- Send Command Function for Tuya Zigbee device -------------
 -- ZigbeeMessageTx:
 --    Uint16: 0x0000
@@ -43,14 +45,6 @@ local DP_TYPE_ENUM = "\x04"
 --        ReadAttribute:
 --            AttributeId: 0x0000
 
--- Get next sequence number for Tuya commands (per-device storage to avoid counter conflicts)
-local function get_next_tuya_seq_num(device)
-  local seq = device:get_field("tuya_seq_num") or 0
-  seq = (seq + 1) % 65536
-  device:set_field("tuya_seq_num", seq)
-  return seq
-end
-
 local function SendCommand(device, DpId, Type, Value)
   local addrh = Messages.AddressHeader(
     ZigbeeConstants.HUB.ADDR, 					-- Source Address
@@ -63,7 +57,8 @@ local function SendCommand(device, DpId, Type, Value)
   local zclh = ZigbeeZcl.ZclHeader({cmd = data_types.ZCLCommandId(0x00)})
   zclh.frame_ctrl:set_cluster_specific()	-- sets this frame control field to be cluster specific
   -- Make a payload body
-  local strSeqNum = string.pack(">I2", get_next_tuya_seq_num(device))  -- Pack the Sequence number to 2 bytes unsigned integer type with big endian.
+  SeqNum = (SeqNum + 1) % 65536
+  local strSeqNum = string.pack(">I2", SeqNum)  -- Pack the Sequence number to 2 bytes unsigned integer type with big endian.
   local LenOfValue = string.pack(">I2",string.len(Value))  -- Pack length of Value to 2 bytes unsigned integer type wiht big endian.
   local PayloadBody = generic_body.GenericBody(strSeqNum .. DpId .. Type .. LenOfValue .. Value)
   local MsgBody = ZigbeeZcl.ZclMessageBody({zcl_header = zclh, zcl_body = PayloadBody})
