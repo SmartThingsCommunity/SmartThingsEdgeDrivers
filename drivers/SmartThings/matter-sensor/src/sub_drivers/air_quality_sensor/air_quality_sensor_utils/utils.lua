@@ -1,6 +1,7 @@
 -- Copyright 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local log = require "log"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local embedded_cluster_utils = require "sensor_utils.embedded_cluster_utils"
@@ -75,6 +76,18 @@ function AirQualitySensorUtils.set_supported_health_concern_values(device)
       device:emit_event_for_endpoint(cluster_ep_ids[1], supported_values_setter(supported_values, { visibility = { displayed = false }}))
     end
   end
+end
+
+function AirQualitySensorUtils.convert_value_to_unit(value, from_unit, to_unit, capability_name)
+  local conversion_function = fields.unit_conversion[from_unit] and fields.unit_conversion[from_unit][to_unit]
+  if not conversion_function then
+    log.info_with( {hub_logs = true} , string.format("Unsupported unit conversion from %s to %s", fields.unit_strings[from_unit], fields.unit_strings[to_unit]))
+    return
+  elseif type(value) ~= "number" then
+    log.info_with( {hub_logs = true} , string.format("unit conversion value (%s) is not a number", value))
+    return
+  end
+  return conversion_function(value, fields.molecular_weights[capability_name])
 end
 
 --- Deeply compare two values.
