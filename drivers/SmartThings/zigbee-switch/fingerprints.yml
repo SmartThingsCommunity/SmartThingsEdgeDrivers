@@ -2457,6 +2457,10 @@ zigbeeManufacturer:
     manufacturer: FIRSTLED
     model: M4S4BAC
     deviceProfileName: switch-light-restore-wireless
+  - id: "FIRSTLED/M1S1BAC"
+    deviceLabel: Mirror Series 1x1 1
+    manufacturer: FIRSTLED
+    model: M1S1BAC
   - id: "FIRSTLED/M2S2BAC"
     deviceLabel: Mirror Series 2x2 1
     manufacturer: FIRSTLED
