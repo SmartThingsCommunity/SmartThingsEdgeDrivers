@@ -240,4 +240,17 @@ function ZwaveHandlers.time_get_handler(driver, device, cmd)
   )
 end
 
+function ZwaveHandlers.date_get_handler(driver, device, cmd)
+  local Time = (require "st.zwave.CommandClass.Time")({ version = 1 })
+  local time = os.date("*t")
+  device:send_to_component(
+    Time:DateReport({
+      year = time.year,
+      month = time.month,
+      day = time.day
+    }),
+    device:endpoint_to_component(cmd.src_channel)
+  )
+end
+
 return ZwaveHandlers
