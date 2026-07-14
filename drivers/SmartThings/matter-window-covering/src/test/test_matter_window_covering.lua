@@ -8,6 +8,11 @@ local t_utils = require "integration_test.utils"
 local uint32 = require "st.matter.data_types.Uint32"
 local clusters = require "st.matter.clusters"
 
+local version = require "version"
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
+
 local WindowCovering = clusters.WindowCovering
 
 test.disable_startup_messages()

@@ -162,6 +162,82 @@ local mock_device_user_pin_schedule_unlatch = test.mock_device.build_test_matter
   }
 })
 
+local mock_device_battery = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("lock-battery.yml"),
+  manufacturer_info = {
+    vendor_id = 0x147F,
+    product_id = 0x0001,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {
+          cluster_id = DoorLock.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0x0,
+        },
+        {
+          cluster_id = clusters.PowerSource.ID,
+          cluster_type = "SERVER",
+          feature_map = 10
+        },
+      },
+      device_types = {
+        { device_type_id = 0x000A, device_type_revision = 1 } -- Door Lock
+      }
+    }
+  }
+})
+
+local mock_device_battery_level = test.mock_device.build_test_matter_device({
+  profile = t_utils.get_profile_definition("lock-batteryLevel.yml"),
+  manufacturer_info = {
+    vendor_id = 0x147F,
+    product_id = 0x0001,
+  },
+  endpoints = {
+    {
+      endpoint_id = 0,
+      clusters = {
+        { cluster_id = clusters.Basic.ID, cluster_type = "SERVER" },
+      },
+      device_types = {
+        { device_type_id = 0x0016, device_type_revision = 1 } -- RootNode
+      }
+    },
+    {
+      endpoint_id = 1,
+      clusters = {
+        {
+          cluster_id = DoorLock.ID,
+          cluster_type = "SERVER",
+          cluster_revision = 1,
+          feature_map = 0x0,
+        },
+        {
+          cluster_id = clusters.PowerSource.ID,
+          cluster_type = "SERVER",
+          feature_map = 10
+        },
+      },
+      device_types = {
+        { device_type_id = 0x000A, device_type_revision = 1 } -- Door Lock
+      }
+    }
+  }
+})
+
 local DoorLockFeatureMapAttr = {ID = 0xFFFC, cluster = DoorLock.ID}
 local function test_init()
   test.disable_startup_messages()
@@ -271,6 +347,56 @@ local function test_init_user_pin_schedule_unlatch()
   test.socket.matter:__expect_send({mock_device_user_pin_schedule_unlatch.id, subscribe_request})
   test.socket.device_lifecycle:__queue_receive({ mock_device_user_pin_schedule_unlatch.id, "doConfigure" })
   mock_device_user_pin_schedule_unlatch:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_battery()
+  test.disable_startup_messages()
+  -- subscribe request
+  local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_battery)
+  subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_battery))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_battery, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_battery))
+  subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_battery))
+  subscribe_request:merge(clusters.PowerSource.attributes.BatPercentRemaining:subscribe(mock_device_battery))
+  subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_battery))
+
+  -- add test device, handle initial subscribe
+  test.mock_device.add_test_device(mock_device_battery)
+  test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
+  -- actual onboarding flow
+  test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device_battery:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+  )
+  test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "init" })
+  test.socket.matter:__expect_send({mock_device_battery.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_battery.id, "doConfigure" })
+  mock_device_battery:expect_metadata_update({ provisioning_state = "PROVISIONED" })
+end
+
+local function test_init_battery_level()
+  test.disable_startup_messages()
+  -- subscribe request
+  local subscribe_request = DoorLock.attributes.LockState:subscribe(mock_device_battery_level)
+  subscribe_request:merge(DoorLock.attributes.OperatingMode:subscribe(mock_device_battery_level))
+  subscribe_request:merge(cluster_base.subscribe(mock_device_battery_level, nil, DoorLockFeatureMapAttr.cluster, DoorLockFeatureMapAttr.ID))
+  subscribe_request:merge(DoorLock.events.LockOperation:subscribe(mock_device_battery_level))
+  subscribe_request:merge(DoorLock.events.DoorLockAlarm:subscribe(mock_device_battery_level))
+  subscribe_request:merge(clusters.PowerSource.attributes.BatChargeLevel:subscribe(mock_device_battery_level))
+  subscribe_request:merge(clusters.PowerSource.attributes.AttributeList:subscribe(mock_device_battery_level))
+
+  -- add test device, handle initial subscribe
+  test.mock_device.add_test_device(mock_device_battery_level)
+  test.socket.matter:__expect_send({mock_device_battery_level.id, subscribe_request})
+  -- actual onboarding flow
+  test.socket.device_lifecycle:__queue_receive({ mock_device_battery_level.id, "added" })
+  test.socket.capability:__expect_send(
+    mock_device_battery_level:generate_test_message("main", capabilities.lockAlarm.alarm.clear({state_change = true}))
+  )
+  test.socket.device_lifecycle:__queue_receive({ mock_device_battery_level.id, "init" })
+  test.socket.matter:__expect_send({mock_device_battery_level.id, subscribe_request})
+  test.socket.device_lifecycle:__queue_receive({ mock_device_battery_level.id, "doConfigure" })
+  mock_device_battery_level:expect_metadata_update({ provisioning_state = "PROVISIONED" })
 end
 
 test.set_test_init_function(test_init)
@@ -652,6 +778,70 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_user_pin_schedule_unlatch,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle received BatPercentRemaining from device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery.id,
+        clusters.PowerSource.attributes.BatPercentRemaining:build_test_report_data(
+          mock_device_battery, 1, 150
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery:generate_test_message("main", capabilities.battery.battery(math.floor(150 / 2.0 + 0.5)))
+    )
+  end,
+  {
+    test_init = test_init_battery,
+    min_api_version = 17
+  }
+)
+
+test.register_coroutine_test(
+  "Handle received BatChargeLevel from device.",
+  function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery_level.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(
+          mock_device_battery_level, 1, clusters.PowerSource.types.BatChargeLevelEnum.OK
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery_level:generate_test_message("main", capabilities.batteryLevel.battery.normal())
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery_level.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(
+          mock_device_battery_level, 1, clusters.PowerSource.types.BatChargeLevelEnum.CRITICAL
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery_level:generate_test_message("main", capabilities.batteryLevel.battery.critical())
+    )
+    test.socket.matter:__queue_receive(
+      {
+        mock_device_battery_level.id,
+        clusters.PowerSource.attributes.BatChargeLevel:build_test_report_data(
+          mock_device_battery_level, 1, clusters.PowerSource.types.BatChargeLevelEnum.WARNING
+        )
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device_battery_level:generate_test_message("main", capabilities.batteryLevel.battery.warning())
+    )
+  end,
+  {
+    test_init = test_init_battery_level,
     min_api_version = 17
   }
 )
