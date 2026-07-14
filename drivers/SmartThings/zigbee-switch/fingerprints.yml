@@ -2461,6 +2461,14 @@ zigbeeManufacturer:
     deviceLabel: Dynamic Lite Series 1x1 1
     manufacturer: FIRSTLED
     model: DL1S1BAC
+  - id: "FIRSTLED/M1S1BAC"
+    deviceLabel: Mirror Series 1x1 1
+    manufacturer: FIRSTLED
+    model: M1S1BAC
+  - id: "FIRSTLED/M2S2BAC"
+    deviceLabel: Mirror Series 2x2 1
+    manufacturer: FIRSTLED
+    model: M2S2BAC
     deviceProfileName: switch-light-restore-wireless
   - id: "ManDai Technology/DC2DC12MiV1"
     deviceLabel: Easy-Fit Driver
