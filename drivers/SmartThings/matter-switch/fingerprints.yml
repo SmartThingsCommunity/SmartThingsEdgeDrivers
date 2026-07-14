@@ -269,6 +269,11 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1388
     deviceProfileName: 12-button-keyboard
+  - id: "5127/4248"
+    deviceLabel: Smart Garage Door Opener
+    vendorId: 0x1407
+    productId: 0x1098
+    deviceProfileName: garage-door-battery
 
 #Edishine
   - id: "5458/3328"
