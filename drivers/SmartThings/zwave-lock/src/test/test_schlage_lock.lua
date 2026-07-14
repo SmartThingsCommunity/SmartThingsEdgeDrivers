@@ -1,18 +1,21 @@
--- Copyright 2022 SmartThings, Inc.
+-- Copyright 2026 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
-
 
 local test = require "integration_test"
 local capabilities = require "st.capabilities"
 local zw = require "st.zwave"
-local json = require "dkjson"
 local zw_test_utils = require "integration_test.zwave_test_utils"
 local t_utils = require "integration_test.utils"
+local lock_utils = require "lock_utils.constants".DRIVER_STATE
 
 local UserCode = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
 local Configuration = (require "st.zwave.CommandClass.Configuration")({ version = 2 })
 local Association = (require "st.zwave.CommandClass.Association")({ version = 1 })
 local Basic = (require "st.zwave.CommandClass.Basic")({ version = 1 })
+local Battery = (require "st.zwave.CommandClass.Battery")({ version = 1 })
+local DoorLock = (require "st.zwave.CommandClass.DoorLock")({ version = 1 })
+
+test.disable_startup_messages()
 
 local SCHLAGE_MANUFACTURER_ID = 0x003B
 local SCHLAGE_PRODUCT_TYPE = 0x0002
@@ -33,10 +36,11 @@ local zwave_lock_endpoints = {
 local mock_device = test.mock_device.build_test_zwave_device(
   {
     profile = t_utils.get_profile_definition("base-lock.yml"),
+    _provisioning_state = "TYPED",
     zwave_endpoints = zwave_lock_endpoints,
     zwave_manufacturer_id = SCHLAGE_MANUFACTURER_ID,
     zwave_product_type = SCHLAGE_PRODUCT_TYPE,
-    zwave_product_id = SCHLAGE_PRODUCT_ID
+    zwave_product_id = SCHLAGE_PRODUCT_ID,
   }
 )
 
@@ -45,13 +49,32 @@ local SCHLAGE_LOCK_CODE_LENGTH_PARAM = {number = 16, size = 1}
 local function test_init()
   test.mock_device.add_test_device(mock_device)
 end
+
 test.set_test_init_function(test_init)
+
+local function added()
+  test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
+  test.socket.capability:__expect_send( mock_device:generate_test_message("main", capabilities.lockCodes.migrated(true,  { visibility = { displayed = false } })))
+
+  test.socket.zwave:__expect_send(
+    DoorLock:OperationGet({}):build_test_tx(mock_device.id)
+  )
+  test.socket.zwave:__expect_send(
+    Battery:Get({}):build_test_tx(mock_device.id)
+  )
+  test.socket.zwave:__expect_send(
+    UserCode:UsersNumberGet({}):build_test_tx(mock_device.id)
+  )
+  test.wait_for_events()
+  assert(mock_device:get_field(lock_utils.SLGA_MIGRATED) == true, "Device should be marked as migrated")
+end
 
 test.register_coroutine_test(
   "Setting a user code should result in the named code changed event firing",
   function()
+    added()
     test.timer.__create_and_queue_test_time_advance_timer(4.2, "oneshot")
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "1234", "test" } } })
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCredentials.ID, command = "addCredential", args = { 0, "guest", "pin", "1234"} } })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
         mock_device,
@@ -69,41 +92,29 @@ test.register_coroutine_test(
     test.wait_for_events()
     test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({user_identifier = 1, user_id_status = UserCode.user_id_status.STATUS_NOT_AVAILABLE, user_code="0000\n\r"}) })
     test.socket.capability:__set_channel_ordering("relaxed")
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-            capabilities.lockCodes.lockCodes(json.encode({["1"] = "test"}), { visibility = { displayed = false } })
-    ))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-            capabilities.lockCodes.codeChanged("1 set", { data = { codeName = "test"}, state_change = true }))
-    )
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-test.register_coroutine_test(
-  "Setting a code length should be handled",
-  function()
-    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCodeLength", args = { 6 } } })
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_device,
-        Configuration:Set({
-          parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number,
-          configuration_value = 6,
-          size = SCHLAGE_LOCK_CODE_LENGTH_PARAM.size
-        })
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+          "main",
+          capabilities.lockCredentials.credentials({{ userIndex = 1, credentialIndex = 1, credentialType = "pin" }},
+          { visibility = { displayed = false } })
+        )
       )
-    )
-  end,
-  {
-     min_api_version = 17
-  }
+      test.socket.capability:__expect_send(
+        mock_device:generate_test_message(
+          "main",
+          capabilities.lockCredentials.commandResult(
+            { commandName = "addCredential", statusCode = "success", credentialIndex = 1, userIndex = 1},
+            { state_change = true, visibility = { displayed = false } }
+          )
+        )
+      )
+  end
 )
 
 test.register_coroutine_test(
   "Configuration report should be handled",
   function()
+    added()
     test.socket.zwave:__queue_receive({
       mock_device.id,
       Configuration:Report({
@@ -112,17 +123,18 @@ test.register_coroutine_test(
       })
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockCodes.codeLength(6))
+      mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(6))
     )
-  end,
-  {
-     min_api_version = 17
-  }
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(6))
+    )
+  end
 )
 
 test.register_coroutine_test(
   "Configuration report indicating code deletion should be handled",
   function()
+    added()
     test.socket.zwave:__queue_receive({
       mock_device.id,
       Configuration:Report({
@@ -131,8 +143,12 @@ test.register_coroutine_test(
       })
     })
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockCodes.codeLength(6))
+      mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(6))
     )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(6))
+    )
+    test.wait_for_events()
     test.socket.zwave:__queue_receive({
       mock_device.id,
       Configuration:Report({
@@ -140,21 +156,34 @@ test.register_coroutine_test(
         configuration_value = 4
       })
     })
+    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({}), {visibility = {displayed = false}}))
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({},
+        { visibility = { displayed = false } })
+      )
     )
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockCodes.codeLength(4))
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({},
+        { visibility = { displayed = false } })
+      )
     )
-  end,
-  {
-     min_api_version = 17
-  }
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.minPinCodeLen(4))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main", capabilities.lockCredentials.maxPinCodeLen(4))
+    )
+  end
 )
 
 test.register_coroutine_test(
   "User code report indicating master code is available should indicate code deletion",
-  function ()
+  function()
+    added()
     test.socket.zwave:__queue_receive({
       mock_device.id,
       UserCode:Report({
@@ -162,55 +191,28 @@ test.register_coroutine_test(
         user_id_status = UserCode.user_id_status.AVAILABLE
       })
     })
+    test.socket.capability:__set_channel_ordering("relaxed")
     test.socket.capability:__expect_send(
-      mock_device:generate_test_message("main", capabilities.lockCodes.lockCodes(json.encode({}), {visibility = {displayed = false}}))
-    )
-  end,
-  {
-     min_api_version = 17
-  }
-)
-
-local expect_reload_all_codes_messages = function()
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main",
-          capabilities.lockCodes.lockCodes(json.encode({} ), { visibility = { displayed = false } })
-  ))
-  test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-    mock_device,
-    UserCode:UsersNumberGet({})
-  ))
-  test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.scanCodes("Scanning", { visibility = { displayed = false } })))
-  test.socket.zwave:__expect_send(zw_test_utils.zwave_test_build_send_command(
-    mock_device,
-    UserCode:Get({ user_identifier = 1 })
-  ))
-end
-
-test.register_coroutine_test(
-  "Reload all codes should complete as expected",
-  function ()
-    test.socket.capability:__queue_receive({
-      mock_device.id,
-      { capability = capabilities.lockCodes.ID, command = "reloadAllCodes", args = {}, component = "main"}
-    })
-    expect_reload_all_codes_messages()
-    test.socket.zwave:__expect_send(
-      zw_test_utils.zwave_test_build_send_command(
-        mock_device,
-        Configuration:Get({
-          parameter_number = SCHLAGE_LOCK_CODE_LENGTH_PARAM.number
-        })
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockUsers.users({},
+        { visibility = { displayed = false } })
       )
     )
-  end,
-  {
-     min_api_version = 17
-  }
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main",
+        capabilities.lockCredentials.credentials({},
+        { visibility = { displayed = false } })
+      )
+    )
+  end
 )
 
 test.register_coroutine_test(
   "Device should send appropriate configuration messages",
   function()
+    added()
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "doConfigure" })
     test.socket.zwave:__expect_send(
       zw_test_utils.zwave_test_build_send_command(
@@ -230,15 +232,13 @@ test.register_coroutine_test(
       )
     )
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-  end,
-  {
-     min_api_version = 17
-  }
+  end
 )
 
 test.register_coroutine_test(
   "Basic Sets should result in an Association remove",
-  function ()
+  function()
+    added()
     test.socket.zwave:__queue_receive({
       mock_device.id,
       Basic:Set({
@@ -257,10 +257,7 @@ test.register_coroutine_test(
         })
       )
     )
-  end,
-  {
-     min_api_version = 17
-  }
+  end
 )
 
 test.run_registered_tests()

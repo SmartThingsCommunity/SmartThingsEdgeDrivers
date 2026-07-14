@@ -15,5 +15,6 @@ local sub_drivers = {
    lazy_load_if_possible("vimar"),
    lazy_load_if_possible("resideo_korea"),
    lazy_load_if_possible("aqara"),
+   lazy_load_if_possible("wallhero"),
 }
 return sub_drivers
