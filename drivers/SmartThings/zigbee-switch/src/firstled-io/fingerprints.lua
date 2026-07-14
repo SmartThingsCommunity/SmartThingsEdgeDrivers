@@ -7,4 +7,5 @@
 return {
   { mfr = "FIRSTLED", model = "M4S4BAC", children = 4, buttons = 4, child_profile = "switch-wireless" },
   { mfr = "FIRSTLED", model = "M1S1BAC", children = 1, buttons = 1, child_profile = "switch-wireless" }
+  { mfr = "FIRSTLED", model = "M2S2BAC", children = 2, buttons = 2, child_profile = "switch-wireless" }
 }
