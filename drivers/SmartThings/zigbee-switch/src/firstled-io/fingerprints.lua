@@ -6,5 +6,8 @@
 --The driver supports a series of device combinations, such as 4+4, 3+3, 2+2, 4+0, etc., of switch and button type products.
 return {
   { mfr = "FIRSTLED", model = "M4S4BAC", children = 4, buttons = 4, child_profile = "switch-wireless" },
-  { mfr = "FIRSTLED", model = "DL2S2BAC", children = 2, buttons = 2, child_profile = "switch-wireless" }
+  { mfr = "FIRSTLED", model = "DL2S2BAC", children = 2, buttons = 2, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "DL1S1BAC", children = 1, buttons = 1, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "M1S1BAC", children = 1, buttons = 1, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "M2S2BAC", children = 2, buttons = 2, child_profile = "switch-wireless" }
 }
