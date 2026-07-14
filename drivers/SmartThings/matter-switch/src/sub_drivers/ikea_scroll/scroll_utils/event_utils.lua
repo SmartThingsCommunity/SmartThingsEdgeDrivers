@@ -73,4 +73,18 @@ function IkeaScrollEventUtils.aggregate_scroll_amount_for_info_blocks(device, in
   return { total_presses = total_presses, presses_in_current_chain = presses_in_current_chain }
 end
 
+function IkeaScrollEventUtils.rotate_amount_scaling_helper(device, endpoint_id, scroll_amount)
+  local scale_factor = 1.0 -- the default scale factor is 1.0, i.e none
+  local component = device:endpoint_to_component(endpoint_id)
+  if component == "main" then
+    scale_factor = scroll_fields.KNOB_SENSITIVITY_PREFERENCE_FACTORS[device.preferences.knobSensitivityGroup1] or 1.0
+  elseif component == "group2" then
+    scale_factor = scroll_fields.KNOB_SENSITIVITY_PREFERENCE_FACTORS[device.preferences.knobSensitivityGroup2] or 1.0
+  elseif component == "group3" then
+    scale_factor = scroll_fields.KNOB_SENSITIVITY_PREFERENCE_FACTORS[device.preferences.knobSensitivityGroup3] or 1.0
+  end
+  local scaled_scroll_amount = st_utils.clamp_value(math.floor(scroll_amount * scale_factor), -100, 100)
+  return scaled_scroll_amount
+end
+
 return IkeaScrollEventUtils
