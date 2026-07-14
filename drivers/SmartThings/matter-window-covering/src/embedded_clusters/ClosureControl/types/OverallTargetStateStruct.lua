@@ -24,7 +24,7 @@ OverallTargetStateStruct.field_defs = {
     field_id = 2,
     is_nullable = false,
     is_optional = true,
-    data_type = require "st.matter.generated.zap_clusters.Global.types.ThreeLevelAutoEnum",
+    data_type = require "embedded_clusters.Global.types.ThreeLevelAutoEnum",
   },
 }
 
