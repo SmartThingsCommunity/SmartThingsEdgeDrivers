@@ -2457,6 +2457,11 @@ zigbeeManufacturer:
     manufacturer: FIRSTLED
     model: M4S4BAC
     deviceProfileName: switch-light-restore-wireless
+  - id: "FIRSTLED/M2S2BAC"
+    deviceLabel: Mirror Series 2x2 1
+    manufacturer: FIRSTLED
+    model: M2S2BAC
+    deviceProfileName: switch-light-restore-wireless
   - id: "ManDai Technology/DC2DC12MiV1"
     deviceLabel: Easy-Fit Driver
     manufacturer: ManDai Technology
