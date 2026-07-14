@@ -197,7 +197,7 @@ matterManufacturer:
     deviceLabel: Lockly Smart Lock
     vendorId: 0x145C
     productId: 0x0002
-    deviceProfileName: lock-battery
+    deviceProfileName: lock-modular
 matterGeneric:
   - id: "matter/door-lock"
     deviceLabel: Matter Door Lock
