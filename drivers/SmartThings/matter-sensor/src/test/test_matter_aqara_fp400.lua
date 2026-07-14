@@ -206,13 +206,13 @@ test.register_message_test(
   },
   {
     test_init = function ()
-    local subscribe_request = do_subscribe(mock_device)
-    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
-    test.mock_device.add_test_device(mock_device)
-    -- we can assume this will be set elsewhere-- see other tests.
-    mock_device:set_field("__COMPONENT_TO_ENDPOINT_MAP",
-      { sensor1 = 3, sensor3 = 5 }, { persist = true }
-    )
+      local subscribe_request = do_subscribe(mock_device)
+      test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+      test.mock_device.add_test_device(mock_device)
+      -- we can assume this will be set elsewhere-- see other tests.
+      mock_device:set_field("__COMPONENT_TO_ENDPOINT_MAP",
+        { sensor1 = 3, sensor3 = 5 }, { persist = true }
+      )
     end
   }
 )
