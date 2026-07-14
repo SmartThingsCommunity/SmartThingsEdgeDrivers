@@ -2457,6 +2457,10 @@ zigbeeManufacturer:
     manufacturer: FIRSTLED
     model: M4S4BAC
     deviceProfileName: switch-light-restore-wireless
+  - id: "FIRSTLED/DL3S3BAC"
+    deviceLabel: Dynamic Lite Series 3x3 1
+    manufacturer: FIRSTLED
+    model: DL3S3BAC
   - id: "FIRSTLED/DL2S2BAC"
     deviceLabel: Dynamic Lite Series 2x2 1
     manufacturer: FIRSTLED
