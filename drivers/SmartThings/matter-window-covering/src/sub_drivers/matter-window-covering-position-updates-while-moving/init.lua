@@ -119,7 +119,7 @@ local matter_window_covering_position_updates_while_moving_handler = {
   },
   capability_handlers = {
   },
-  can_handle = require("matter-window-covering-position-updates-while-moving.can_handle"),
+  can_handle = require("sub_drivers.matter-window-covering-position-updates-while-moving.can_handle"),
   shared_device_thread_enabled = true,
 }
 

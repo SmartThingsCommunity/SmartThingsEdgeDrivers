@@ -13,12 +13,13 @@ if version.api < 20 then
 end
 
 local fields = require "sub_drivers.closure.closure_utils.fields"
+local embedded_cluster_utils = require "sub_drivers.closure.closure_utils.embedded_cluster_utils"
 
 local utils = {}
 
 function utils.find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
-  local eps = device:get_endpoints(cluster)
+  local eps = embedded_cluster_utils.get_endpoints(device, cluster)
   table.sort(eps)
   for _, v in ipairs(eps) do
     if v ~= 0 then -- 0 is the Matter RootNode endpoint
@@ -33,7 +34,7 @@ function utils.find_default_endpoint(device, cluster)
 end
 
 function utils.get_closure_dimension_eps(device)
-  local eps = device:get_endpoints(clusters.ClosureDimension.ID) or {}
+  local eps = embedded_cluster_utils.get_endpoints(device, clusters.ClosureDimension.ID) or {}
   table.sort(eps)
   local result = {}
   for _, ep in ipairs(eps) do
