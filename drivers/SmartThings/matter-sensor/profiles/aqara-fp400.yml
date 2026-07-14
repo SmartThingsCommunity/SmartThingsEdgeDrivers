@@ -54,6 +54,11 @@ components:
     optional: true
   categories:
   - name: PresenceSensor
+- id: sensor7
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
   categories:
   - name: PresenceSensor
 - id: sensor8
