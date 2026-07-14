@@ -9,9 +9,8 @@ local Association = (require "st.zwave.CommandClass.Association")({version=2})
 local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local access_control_event = Notification.event.access_control
 
-local LockDefaults = require "st.zwave.defaults.lock"
-local LockCodesDefaults = require "st.zwave.defaults.lockCodes"
 local TamperDefaults = require "st.zwave.defaults.tamperAlert"
+local zwave_handlers = require "lock_handlers.zwave_responses"
 
 local TAMPER_CLEAR_DELAY = 10
 
@@ -39,8 +38,9 @@ local function notification_report_handler(self, device, cmd)
   if event ~= nil then
     device:emit_event(event)
   else
-    LockDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
-    LockCodesDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
+    zwave_handlers.door_operation_event_handler(self, device, cmd)
+    zwave_handlers.code_event_handler(self, device, cmd)
+
     TamperDefaults.zwave_handlers[cc.NOTIFICATION][Notification.REPORT](self, device, cmd)
     device.thread:call_with_delay(
       TAMPER_CLEAR_DELAY,
