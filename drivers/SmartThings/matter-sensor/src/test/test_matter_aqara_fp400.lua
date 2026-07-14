@@ -2,9 +2,11 @@
 -- Licensed under the Apache License, Version 2.0
 
 local test = require "integration_test"
+local st_utils = require "st.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local t_utils = require "integration_test.utils"
+local sensor_utils = require "sensor_utils.utils"
 
 local matter_endpoints = {
   {
@@ -70,14 +72,14 @@ local mock_device = test.mock_device.build_test_matter_device({
   endpoints = matter_endpoints
 })
 
-local function subscribe_on_init(dev)
+local function do_subscribe(dev)
   local subscribe_request = clusters.OccupancySensing.attributes.Occupancy:subscribe(dev)
   subscribe_request:merge(clusters.IlluminanceMeasurement.attributes.MeasuredValue:subscribe(dev))
   return subscribe_request
 end
 
 local function test_init()
-  local subscribe_request = subscribe_on_init(mock_device)
+  local subscribe_request = do_subscribe(mock_device)
   test.socket.matter:__expect_send({mock_device.id, subscribe_request})
   test.mock_device.add_test_device(mock_device)
 end
@@ -91,6 +93,10 @@ test.register_coroutine_test(
     mock_device:expect_metadata_update({ profile = "aqara-fp400", optional_component_capabilities = enabled_optional_component_capability_pairs })
     mock_device:expect_metadata_update({ provisioning_state = "PROVISIONED" })
     test.wait_for_events()
+    assert(sensor_utils.deep_equals(st_utils.deep_copy(mock_device:get_field("__COMPONENT_TO_ENDPOINT_MAP")), {
+      sensor1 = 3,
+      sensor3 = 5
+    }), "Component to endpoint map should be set correctly on doConfigure")
   end,
   {
     min_api_version = 17
@@ -199,7 +205,15 @@ test.register_message_test(
     },
   },
   {
-     min_api_version = 17
+    test_init = function ()
+    local subscribe_request = do_subscribe(mock_device)
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
+    test.mock_device.add_test_device(mock_device)
+    -- we can assume this will be set elsewhere-- see other tests.
+    mock_device:set_field("__COMPONENT_TO_ENDPOINT_MAP",
+      { sensor1 = 3, sensor3 = 5 }, { persist = true }
+    )
+    end
   }
 )
 
@@ -246,9 +260,16 @@ test.register_coroutine_test(
     }
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ endpoints = incremented_matter_endpoints }))
     mock_device:expect_metadata_update({ profile = "aqara-fp400", optional_component_capabilities = incremented_enabled_optional_component_capability_pairs })
+    local subscribe_request = do_subscribe(mock_device)
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     -- Ensure profile has not changed
     test.wait_for_events()
     assert(mock_device.profile.id == current_profile_id, "Profile should not change on infoChanged")
+    assert(sensor_utils.deep_equals(st_utils.deep_copy(mock_device:get_field("__COMPONENT_TO_ENDPOINT_MAP")), {
+      sensor1 = 3,
+      sensor3 = 5,
+      sensor2 = 4
+    }), "Component to endpoint map should be set correctly on doConfigure")
   end,
   {
     min_api_version = 17
@@ -267,9 +288,15 @@ test.register_coroutine_test(
     }
     test.socket.device_lifecycle:__queue_receive(mock_device:generate_info_changed({ endpoints = decremented_matter_endpoints }))
     mock_device:expect_metadata_update({ profile = "aqara-fp400", optional_component_capabilities = decremented_enabled_optional_component_capability_pairs })
+    local subscribe_request = do_subscribe(mock_device)
+    test.socket.matter:__expect_send({mock_device.id, subscribe_request})
     -- Ensure profile has not changed
     test.wait_for_events()
     assert(mock_device.profile.id == current_profile_id, "Profile should not change on infoChanged")
+    assert(sensor_utils.deep_equals(st_utils.deep_copy(mock_device:get_field("__COMPONENT_TO_ENDPOINT_MAP")), {
+      sensor3 = 5,
+      sensor2 = 4
+    }), "Component to endpoint map should be set correctly on doConfigure")
   end,
   {
     min_api_version = 17
