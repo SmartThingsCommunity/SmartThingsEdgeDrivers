@@ -77,7 +77,8 @@ local driver_template = {
   },
   zwave_handlers = {
     [cc.TIME] = {
-      [0x01] = zwave_handlers.time_get_handler -- used by DanaLock
+      [0x01] = zwave_handlers.time_get_handler, -- used by DanaLock
+      [0x03] = zwave_handlers.date_get_handler
     },
     [cc.NOTIFICATION] = {
       [Notification.REPORT] = zwave_handlers.notification_report
