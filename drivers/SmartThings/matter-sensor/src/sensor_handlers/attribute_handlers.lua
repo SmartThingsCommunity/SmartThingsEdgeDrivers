@@ -177,9 +177,9 @@ end
 
 function AttributeHandlers.occupancy_measured_value_handler(driver, device, ib, response)
   if device:supports_capability(capabilities.motionSensor) then
-    device:emit_event(ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
+    device:emit_event_for_endpoint(ib.endpoint_id, ib.data.value == 0x01 and capabilities.motionSensor.motion.active() or capabilities.motionSensor.motion.inactive())
   else
-    device:emit_event(ib.data.value == 0x01 and capabilities.presenceSensor.presence("present") or capabilities.presenceSensor.presence("not present"))
+    device:emit_event_for_endpoint(ib.endpoint_id, ib.data.value == 0x01 and capabilities.presenceSensor.presence("present") or capabilities.presenceSensor.presence("not present"))
   end
 end
 

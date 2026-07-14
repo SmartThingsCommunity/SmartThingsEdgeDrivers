@@ -12,3 +12,54 @@ components:
     version: 1
   categories:
   - name: PresenceSensor
+- id: sensor1
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
+  categories:
+  - name: PresenceSensor
+- id: sensor2
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
+  categories:
+  - name: PresenceSensor
+- id: sensor3
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
+  categories:
+  - name: PresenceSensor
+- id: sensor4
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
+  categories:
+  - name: PresenceSensor
+- id: sensor5
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
+  categories:
+  - name: PresenceSensor
+- id: sensor6
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
+  categories:
+  - name: PresenceSensor
+  categories:
+  - name: PresenceSensor
+- id: sensor8
+  capabilities:
+  - id: presenceSensor
+    version: 1
+    optional: true
+  categories:
+  - name: PresenceSensor
