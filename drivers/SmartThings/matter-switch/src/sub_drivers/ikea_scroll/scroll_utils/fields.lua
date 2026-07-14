@@ -33,6 +33,13 @@ IkeaScrollFields.CLEAR_STATE_TIMER = "__clear_state_timer"
 -- Delay in seconds to wait before clearing the global rotate amount state after the last scroll event
 IkeaScrollFields.CLEAR_STATE_DELAY_S = 8
 
+-- Amounts by which to multiply the scroll amount based on user preference for sensitivity
+IkeaScrollFields.KNOB_SENSITIVITY_PREFERENCE_FACTORS = {
+  ["0"] = 0.5, -- Low
+  ["1"] = 1.0, -- Medium
+  ["2"] = 2.0  -- High
+}
+
 -- Required Events for the ENDPOINTS_PUSH.
 IkeaScrollFields.switch_press_subscribed_events = {
   clusters.Switch.events.InitialPress.ID,
