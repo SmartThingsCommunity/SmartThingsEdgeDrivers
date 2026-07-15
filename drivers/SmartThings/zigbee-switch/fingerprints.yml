@@ -2457,6 +2457,11 @@ zigbeeManufacturer:
     manufacturer: FIRSTLED
     model: M4S4BAC
     deviceProfileName: switch-light-restore-wireless
+  - id: "FIRSTLED/MX3S2BAC"
+    deviceLabel: Matrix X Series 3x2 1
+    manufacturer: FIRSTLED
+    model: MX3S2BAC
+    deviceProfileName: switch-light-restore-wireless
   - id: "FIRSTLED/MX2S2BAC"
     deviceLabel: Matrix X Series 2x2 1
     manufacturer: FIRSTLED
