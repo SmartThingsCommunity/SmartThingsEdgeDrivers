@@ -7,4 +7,12 @@
 return {
   { mfr = "FIRSTLED", model = "M4S4BAC", children = 4, buttons = 4, child_profile = "switch-wireless" },
   { mfr = "FIRSTLED", model = "P1S1BAC", children = 1, buttons = 1, child_profile = "switch-wireless" }
+  { mfr = "FIRSTLED", model = "G2S2BAC", children = 2, buttons = 2, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "G1S1BAC", children = 1, buttons = 1, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "DL4S4BAC", children = 4, buttons = 4, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "DL3S3BAC", children = 3, buttons = 3, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "DL2S2BAC", children = 2, buttons = 2, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "DL1S1BAC", children = 1, buttons = 1, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "M1S1BAC", children = 1, buttons = 1, child_profile = "switch-wireless" },
+  { mfr = "FIRSTLED", model = "M2S2BAC", children = 2, buttons = 2, child_profile = "switch-wireless" }
 }
