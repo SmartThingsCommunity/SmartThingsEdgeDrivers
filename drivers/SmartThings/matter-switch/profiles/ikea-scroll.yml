@@ -33,13 +33,6 @@ components:
         version: 1
     categories:
     - name: Button
-preferences:
-  - preferenceId: knobSensitivityGroup1
-    explicit: true
-  - preferenceId: knobSensitivityGroup2
-    explicit: true
-  - preferenceId: knobSensitivityGroup3
-    explicit: true
 metadata:
   mnmn: SmartThingsEdge
   vid: ikea-scroll
