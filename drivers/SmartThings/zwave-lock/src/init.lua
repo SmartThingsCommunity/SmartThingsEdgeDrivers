@@ -24,13 +24,6 @@ local capability_handlers = require "lock_handlers.capabilities"
 local LockLifecycle = {}
 
 function LockLifecycle.device_added(driver, device)
-  if device:supports_capability(capabilities.lockCodes) and device._provisioning_state == "TYPED" then
-    -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
-    -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
-    -- and should be migrated manually by the user.
-    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
-  end
   if device:supports_capability(capabilities.tamperAlert) then
     device:emit_event(capabilities.tamperAlert.tamper.clear())
   end
@@ -40,8 +33,6 @@ function LockLifecycle.device_added(driver, device)
     command = capabilities.refresh.commands.refresh.NAME,
     args = {}
   })
-  -- ensure our user/credential state is accurate to the current device state
-  device.thread:call_with_delay(5, function() lock_utils.sync_device_state(device) end)
 end
 
 function LockLifecycle.init(driver, device)
