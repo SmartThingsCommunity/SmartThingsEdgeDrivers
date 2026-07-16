@@ -13,6 +13,12 @@ if version.api < 13 then
   clusters.Global = require "embedded_clusters.Global"
 end
 
+-- The SOIL_MOISTURE MeasurementTypeEnum variant was added to the Global MeasurementTypeEnum
+-- def in lua libs in api version 21 as a part of the fix for Shared and Global types.
+if version.api < 21 then
+  clusters.Global.types.MeasurementTypeEnum = require "embedded_clusters.Global.types.MeasurementTypeEnum"
+end
+
 local AttributeHandlers = {}
 
 
@@ -84,8 +90,10 @@ function AttributeHandlers.soil_moisture_measured_value_handler(driver, device, 
 end
 
 function AttributeHandlers.soil_moisture_measurement_limits_handler(driver, device, ib, response)
-  local MeasurementAccuracyStruct = require "embedded_clusters.Global.types.MeasurementAccuracyStruct"
-  MeasurementAccuracyStruct:augment_type(ib.data)
+  if version.api < 13 then
+    local MeasurementAccuracyStruct = require "embedded_clusters.Global.types.MeasurementAccuracyStruct"
+    MeasurementAccuracyStruct:augment_type(ib.data)
+  end
   local min_val = ib.data.elements and ib.data.elements.min_measured_value and ib.data.elements.min_measured_value.value
   local max_val = ib.data.elements and ib.data.elements.max_measured_value and ib.data.elements.max_measured_value.value
   if not (min_val and max_val) or (min_val >= max_val) or (min_val < sensor_utils.SOIL_MOISTURE_MIN) or (max_val > sensor_utils.SOIL_MOISTURE_MAX) then
