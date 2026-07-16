@@ -269,6 +269,11 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1388
     deviceProfileName: 12-button-keyboard
+  - id: "5127/4248"
+    deviceLabel: Smart Garage Door Opener
+    vendorId: 0x1407
+    productId: 0x1098
+    deviceProfileName: garage-door-battery
 
 #Edishine
   - id: "5458/3328"
@@ -904,6 +909,26 @@ matterManufacturer:
     vendorId: 0x1285
     productId: 0x0009
     deviceProfileName: 4-button-batteryLevel
+  - id: "4741/5"
+    deviceLabel: Hager Switch 1G
+    vendorId: 0x1285
+    productId: 0x0005
+    deviceProfileName: matter-bridge
+  - id: "4741/6"
+    deviceLabel: Hager Switch 2G
+    vendorId: 0x1285
+    productId: 0x0006
+    deviceProfileName: matter-bridge
+  - id: "4741/7"
+    deviceLabel: Hager PIR 1.1M
+    vendorId: 0x1285
+    productId: 0x0007
+    deviceProfileName: matter-bridge
+  - id: "4741/10"
+    deviceLabel: Hager PIR 2.2M
+    vendorId: 0x1285
+    productId: 0x000A
+    deviceProfileName: matter-bridge
 # HAOJAI
   - id: "5530/4113"
     deviceLabel: HAOJAI Smart Switch 3-key

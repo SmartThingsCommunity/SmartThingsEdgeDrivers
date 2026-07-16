@@ -10,7 +10,9 @@ local cluster_base = require "st.zigbee.cluster_base"
 local PowerConfiguration = clusters.PowerConfiguration
 local DoorLock = clusters.DoorLock
 local Lock = capabilities.lock
-local lock_utils = require "lock_utils"
+local consts = require "lock_utils.constants"
+local tables = require "lock_utils.tables"
+local socket = require "cosock.socket"
 
 local SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND = 0x1F
 local SAMSUNG_SDS_MFR_CODE = 0x0003
@@ -54,7 +56,8 @@ local function emit_event_if_latest_state_missing(device, component, capability,
 end
 
 local device_added = function(self, device)
-  lock_utils.populate_state_from_data(device)
+  device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- set migrated for all Samsung SDS devices. They do not require any legacy functionality.
+
   emit_event_if_latest_state_missing(device, "main", capabilities.lock, capabilities.lock.lock.NAME, capabilities.lock.lock.unlocked())
   device:emit_event(capabilities.battery.battery(100))
 end
@@ -68,10 +71,86 @@ end
 local battery_init = battery_defaults.build_linear_voltage_init(4.0, 6.0)
 
 local device_init = function(driver, device, event)
+  device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- set migrated for all Samsung SDS devices. They do not require any legacy functionality.
   battery_init(driver, device, event)
   device:remove_monitored_attribute(clusters.PowerConfiguration.ID, clusters.PowerConfiguration.attributes.BatteryVoltage.ID)
   device:remove_configured_attribute(clusters.PowerConfiguration.ID, clusters.PowerConfiguration.attributes.BatteryVoltage.ID)
-  lock_utils.populate_state_from_data(device)
+end
+
+local operating_event_notification = function(driver, device, zb_rx)
+  local op_event_code = tonumber(zb_rx.body.zcl_body.operation_event_code.value)
+  local op_event_source = tonumber(zb_rx.body.zcl_body.operation_event_source.value)
+
+  -- get lock event or return
+  local OpEventCode = clusters.DoorLock.types.OperationEventCode
+  local OP_EVENT_CODE_CAPABILITY_MAP = {
+    [OpEventCode.LOCK]            = capabilities.lock.lock.locked(),
+    [OpEventCode.UNLOCK]          = capabilities.lock.lock.unlocked(),
+    [OpEventCode.ONE_TOUCH_LOCK]  = capabilities.lock.lock.locked(),
+    [OpEventCode.KEY_LOCK]        = capabilities.lock.lock.locked(),
+    [OpEventCode.KEY_UNLOCK]      = capabilities.lock.lock.unlocked(),
+    [OpEventCode.AUTO_LOCK]       = capabilities.lock.lock.locked(),
+    [OpEventCode.MANUAL_LOCK]     = capabilities.lock.lock.locked(),
+    [OpEventCode.MANUAL_UNLOCK]   = capabilities.lock.lock.unlocked(),
+    [OpEventCode.SCHEDULE_LOCK]   = capabilities.lock.lock.locked(),
+    [OpEventCode.SCHEDULE_UNLOCK] = capabilities.lock.lock.unlocked()
+  }
+  local lock_event = OP_EVENT_CODE_CAPABILITY_MAP[op_event_code]
+  if not lock_event then return end
+  lock_event.data = {}
+
+  -- get method of lock event
+  local OpEventSource = clusters.DoorLock.types.DrlkOperationEventSource
+  local OP_EVENT_SOURCE_CAPABILITY_MAP = {
+    [OpEventSource.KEYPAD] = "keypad",
+    [OpEventSource.RF]     = "command",
+    [OpEventSource.MANUAL] = "manual",
+    [OpEventSource.RFID]   = "rfid",
+    -- These last two sources are not found in the spec, but they were in
+    -- the legacy driver and appear to be related to the Samsung SDS
+    [4] = "fingerprint",
+    [5] = "bluetooth",
+  }
+  if (op_event_source ~= OpEventSource.KEYPAD and (
+    op_event_code == OpEventCode.AUTO_LOCK or
+    op_event_code == OpEventCode.SCHEDULE_LOCK or
+    op_event_code == OpEventCode.SCHEDULE_UNLOCK
+  )) then
+    lock_event.data.method = "auto"
+  else
+    lock_event.data.method = OP_EVENT_SOURCE_CAPABILITY_MAP[op_event_source] or "manual"
+  end
+
+  -- get stored lockUsers data if applicable
+  if op_event_source == OpEventSource.KEYPAD and device:supports_capability(capabilities.lockUsers) then
+    local user_id = tonumber(zb_rx.body.zcl_body.user_id.value)
+    local associated_user = tables.find_entry(device, "users", user_id)
+    if associated_user then
+      lock_event.data.userIndex = user_id .. ""
+      lock_event.data.userName = associated_user.userName
+      lock_event.data.userType = associated_user.userType
+    else
+      lock_event.data.userIndex = user_id .. ""
+      lock_event.data.userName = "Guest " .. user_id -- default
+    end
+  end
+
+  -- if this is an event corresponding to a recently-received attribute report, we
+  -- want to set our delay timer for future lock attribute report events
+  local endpoint_id = zb_rx.address_header.src_endpoint.value
+  if lock_event.value.value == device:get_latest_state(
+    device:get_component_id_for_endpoint(endpoint_id),
+    capabilities.lock.ID,
+    capabilities.lock.lock.ID
+  ) then
+    local preceding_event_time = device:get_field(consts.DELAY_LOCK_EVENT) or 0
+    local time_diff = socket.gettime() - preceding_event_time
+    if time_diff < consts.MAX_DELAY then
+      device:set_field(consts.DELAY_LOCK_EVENT, time_diff)
+    end
+  end
+
+  device:emit_event_for_endpoint(endpoint_id, lock_event)
 end
 
 local samsung_sds_driver = {
@@ -79,7 +158,8 @@ local samsung_sds_driver = {
   zigbee_handlers = {
     cluster = {
       [DoorLock.ID] = {
-        [SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND] = mfg_lock_door_handler
+        [SAMSUNG_SDS_MFR_SPECIFIC_UNLOCK_COMMAND] = mfg_lock_door_handler,
+        [clusters.DoorLock.client.commands.OperatingEventNotification.ID] = operating_event_notification,
       }
     },
     attr = {
