@@ -7,10 +7,15 @@ local t_utils = require "integration_test.utils"
 local test = require "integration_test"
 local version = require "version"
 
-clusters.Global = require "embedded_clusters.Global"
+if version.api < 13 then
+  clusters.Global = require "embedded_clusters.Global"
+end
 
 if version.api < 21 then
   clusters.SoilMeasurement = require "embedded_clusters.SoilMeasurement"
+  -- The SOIL_MOISTURE MeasurementTypeEnum variant was added to the Global MeasurementTypeEnum
+  -- def in lua libs in api version 21.
+  clusters.Global.types.MeasurementTypeEnum = require "embedded_clusters.Global.types.MeasurementTypeEnum"
 end
 
 local mock_device = test.mock_device.build_test_matter_device({
@@ -157,6 +162,9 @@ test.register_coroutine_test(
 )
 
 local function build_soil_moisture_limits(min_value, max_value)
+  if version.api < 21 then
+    clusters.Global.types.MeasurementTypeEnum = require "embedded_clusters.Global.types.MeasurementTypeEnum"
+  end
   return clusters.Global.types.MeasurementAccuracyStruct({
     measurement_type = clusters.Global.types.MeasurementTypeEnum.SOIL_MOISTURE,
     measured = true,
