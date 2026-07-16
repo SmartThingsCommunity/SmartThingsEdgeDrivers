@@ -235,4 +235,12 @@ ThermostatFields.conversion_tables = {
   },
 }
 
+ThermostatFields.vendor_overrides = {
+  [0x1356] = { -- LENNOX_MANUFACTURER_ID
+    [0x0001] = { setpoint_step = 0.5 }, -- This device requires a setpoint step of 0.5
+    [0x0002] = { setpoint_step = 0.5 }, -- This device requires a setpoint step of 0.5
+    [0x0003] = { setpoint_step = 0.5 }, -- This device requires a setpoint step of 0.5
+  }
+}
+
 return ThermostatFields
