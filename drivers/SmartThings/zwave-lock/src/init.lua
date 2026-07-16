@@ -15,7 +15,6 @@ local Notification = (require "st.zwave.CommandClass.Notification")({version=3})
 local capabilities = require "st.capabilities"
 
 local consts              = require "lock_utils.constants"
-local lock_utils          = require "lock_utils.utils"
 local table_utils         = require "lock_utils.tables"
 local zwave_handlers      = require "lock_handlers.zwave_responses"
 local capability_handlers = require "lock_handlers.capabilities"
