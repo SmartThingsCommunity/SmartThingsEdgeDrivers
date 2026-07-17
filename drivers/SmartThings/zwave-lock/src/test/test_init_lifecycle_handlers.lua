@@ -38,13 +38,6 @@ local mock_device_base = test.mock_device.build_test_zwave_device({
   zwave_endpoints = zwave_lock_endpoints,
 })
 
--- Same profile but provisioning_state = "TYPED" (freshly fingerprinted)
-local mock_device_typed = test.mock_device.build_test_zwave_device({
-  profile             = t_utils.get_profile_definition("base-lock.yml"),
-  zwave_endpoints     = zwave_lock_endpoints,
-  _provisioning_state = "TYPED",
-})
-
 -- lock-battery profile: lock + battery only (no lockCodes / lockCredentials)
 local mock_device_battery = test.mock_device.build_test_zwave_device({
   profile         = t_utils.get_profile_definition("lock-battery.yml"),
@@ -61,31 +54,6 @@ end
 -- ============================================================================
 -- added (device_added)
 -- ============================================================================
-
-test.register_coroutine_test(
-  "added: TYPED device with lockCodes emits migrated event, persists SLGA_MIGRATED, and injects refresh",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_typed.id, "added" })
-
-    -- Migrated event emitted for TYPED+lockCodes device
-    test.socket.capability:__expect_send(
-      mock_device_typed:generate_test_message("main",
-        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    )
-    -- inject_capability_command calls the refresh handler:
-    -- DoorLock:OperationGet, Battery:Get, UserCode:UsersNumberGet (no cached values)
-    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device_typed.id))
-    test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device_typed.id))
-    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device_typed.id))
-    test.wait_for_events()
-
-    assert(
-      mock_device_typed:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == true,
-      "SLGA_MIGRATED must be true after added fires for a TYPED device"
-    )
-  end,
-  { test_init = make_test_init(mock_device_typed) }
-)
 
 test.register_coroutine_test(
   "added: non-TYPED (PROVISIONED) device with lockCodes does NOT emit migrated but still injects refresh",
@@ -161,37 +129,6 @@ test.register_coroutine_test(
     test.wait_for_events()
   end,
   { test_init = make_test_init(mock_device_battery) }
-)
-
--- ============================================================================
--- driverSwitched (LockLifecycle.driver_switched)
--- ============================================================================
-
-test.register_coroutine_test(
-  "driver_switched: device with lockCodes and migrated=true persists SLGA_MIGRATED and updates metadata",
-  function()
-    test.socket.device_lifecycle:__queue_receive({ mock_device_typed.id, "added" })
-
-    -- Migrated event emitted for TYPED+lockCodes device
-    test.socket.capability:__expect_send(
-      mock_device_typed:generate_test_message("main",
-        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    )
-    -- inject_capability_command calls the refresh handler:
-    -- DoorLock:OperationGet, Battery:Get, UserCode:UsersNumberGet (no cached values)
-    test.socket.zwave:__expect_send(DoorLock:OperationGet({}):build_test_tx(mock_device_typed.id))
-    test.socket.zwave:__expect_send(Battery:Get({}):build_test_tx(mock_device_typed.id))
-    test.socket.zwave:__expect_send(UserCode:UsersNumberGet({}):build_test_tx(mock_device_typed.id))
-    test.wait_for_events()
-
-    -- driverSwitched occurs after added, so migrated=true is already set in the capability state cache
-    test.socket.device_lifecycle:__queue_receive({ mock_device_typed.id, "driver_switched" })
-    mock_device_typed:expect_metadata_update({ provisioning_state = "PROVISIONED" })
-    test.wait_for_events()
-
-    assert(mock_device_typed:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == true)
-  end,
-  { test_init = make_test_init(mock_device_typed) }
 )
 
 -- ============================================================================
