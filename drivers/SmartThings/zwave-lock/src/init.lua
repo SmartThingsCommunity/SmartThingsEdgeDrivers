@@ -34,6 +34,28 @@ function LockLifecycle.device_added(driver, device)
   })
 end
 
+local function revert_migration(driver, device)
+  local json = require "st.json"
+
+  local latest_users = table_utils.get_state(device, "users") or {}
+  print("Latest users: ", #latest_users)
+  local lock_codes = {}
+  for _, user in ipairs(latest_users) do
+    lock_codes[string.format("%s", user.userIndex)] = user.userName or ("Code " .. user.userIndex)
+  end
+  device:emit_event(capabilities.lockCodes.lockCodes(json.encode(lock_codes), { visibility = { displayed = false } }))
+  local lock_codes_key = "_lock_codes"
+  device:set_field(lock_codes_key, lock_codes, { persist = true })
+
+  local max_code_length = device:get_latest_state("main", capabilities.lockCredentials.ID, capabilities.lockCredentials.maxPinCodeLen.NAME)
+  if max_code_length then
+    device:emit_event(capabilities.lockCodes.codeLength(max_code_length, { visibility = { displayed = false } }))
+  end
+
+  device:emit_event(capabilities.lockCodes.migrated(false, { visibility = { displayed = false } }))
+  device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, nil, { persist = true }) -- persist the un-migrated state to the datastore
+end
+
 function LockLifecycle.init(driver, device)
   -- Restore users/credentials capability state from the persistent store in case
   -- the capability state cache was wiped since the last driver run.
@@ -41,9 +63,7 @@ function LockLifecycle.init(driver, device)
 
   local lock_pins_supported_by_profile = device:supports_capability(capabilities.lockCodes)
   if lock_pins_supported_by_profile and device:get_field(consts.DRIVER_STATE.SLGA_MIGRATED) == true then
-    -- ensure lockCodes capability state is reflected correctly for already migrated devices
-    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    device:emit_event(capabilities.lockCredentials.supportedCredentials({ consts.CRED_TYPE_PIN }, { visibility = { displayed = false } }))
+    revert_migration(driver, device)
   end
 
   if device:supports_capability(capabilities.tamperAlert) then
