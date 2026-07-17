@@ -8,6 +8,7 @@ local test              = require "integration_test"
 local t_utils           = require "integration_test.utils"
 local capabilities      = require "st.capabilities"
 local zw                = require "st.zwave"
+local st_utils          = require "st.utils"
 local table_utils       = require "lock_utils.tables"
 local constants         = require "lock_utils.constants"
 local UserCode          = (require "st.zwave.CommandClass.UserCode")({ version = 1 })
@@ -700,6 +701,94 @@ test.register_coroutine_test(
     }) == constants.COMMAND_RESULT.SUCCESS)
     test.wait_for_events()
   end
+)
+
+-- ============================================================================
+-- revert Migration on init
+-- ============================================================================
+
+test.register_coroutine_test(
+  "Revert Migration on init, after added",
+  function()
+    seed_users({
+      { userIndex = 1, userName = "Alice", userType = "guest" },
+      { userIndex = 2, userName = "Bob",   userType = "guest" },
+      { userIndex = 5, userName = "Charlie", userType = "guest" },
+    })
+    seed_credentials({
+      { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
+      { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
+      { userIndex = 5, credentialIndex = 5, credentialType = "pin" },
+    })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.socket.capability:__set_channel_ordering("relaxed")
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 2, userName = "Bob",  userType = "guest" },
+            { userIndex = 5, userName = "Charlie", userType = "guest" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          {
+            { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
+            { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
+            { userIndex = 5, credentialIndex = 5, credentialType = "pin" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+
+    -- Reversion of Migration should be handled for the device on initialization
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({
+          ["1"] = "Alice", ["2"] = "Bob", ["5"] = "Charlie"
+        }), { visibility = { displayed = false } })
+      )
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCodes.migrated(false, { visibility = { displayed = false } })
+      )
+    )
+    test.wait_for_events()
+    assert(mock_device:get_field(constants.SLGA_MIGRATED) == nil, "Device should not be marked as migrated")
+    local stored_codes = st_utils.deep_copy(mock_device:get_field("_lock_codes"))
+    assert(stored_codes["1"] == "Alice")
+    assert(stored_codes["2"] == "Bob")
+    assert(stored_codes["5"] == "Charlie")
+
+    test.wait_for_events()
+
+    -- ensure codeChanged now triggers correctly after setting a new code
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 3, "1234", "test" } } })
+    test.socket.zwave:__expect_send(UserCode:Set({user_identifier = 3, user_code = "1234", user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}):build_test_tx(mock_device.id) )
+    test.wait_for_events()
+    test.socket.zwave:__queue_receive({mock_device.id, UserCode:Report({user_identifier = 3, user_id_status = UserCode.user_id_status.ENABLED_GRANT_ACCESS}) })
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({
+          ["1"] = "Alice", ["2"] = "Bob", ["3"] = "test", ["5"] = "Charlie"
+        }), { visibility = { displayed = false } })
+      )
+    )
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockCodes.codeChanged("3 set", { data = { codeName = "test"}, state_change = true  }))
+    )
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()
