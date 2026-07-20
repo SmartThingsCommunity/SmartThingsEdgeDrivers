@@ -523,57 +523,61 @@ test.register_coroutine_test(
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "MinHeatSetpointLimit report stores device field",
-    {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, Thermostat.attributes.MinHeatSetpointLimit:build_test_attr_report(mock_device, 500) }
-      }
-    },
+    function ()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MinHeatSetpointLimit:build_test_attr_report(mock_device, 500)
+      })
+      test.wait_for_events()
+      assert(mock_device:get_field("minHeatSetpoint") == 500, "minHeatSetpoint field not stored correctly")
+    end,
     {
        min_api_version = 17
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "MaxHeatSetpointLimit report stores device field",
-    {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, Thermostat.attributes.MaxHeatSetpointLimit:build_test_attr_report(mock_device, 3500) }
-      }
-    },
+    function ()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MaxHeatSetpointLimit:build_test_attr_report(mock_device, 3500)
+      })
+      test.wait_for_events()
+      assert(mock_device:get_field("maxHeatSetpoint") == 3500, "maxHeatSetpoint field not stored correctly")
+    end,
     {
        min_api_version = 17
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "MinCoolSetpointLimit report stores device field",
-    {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, Thermostat.attributes.MinCoolSetpointLimit:build_test_attr_report(mock_device, 1600) }
-      }
-    },
+    function ()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MinCoolSetpointLimit:build_test_attr_report(mock_device, 1600)
+      })
+      test.wait_for_events()
+      assert(mock_device:get_field("minCoolSetpoint") == 1600, "minCoolSetpoint field not stored correctly")
+    end,
     {
        min_api_version = 17
     }
 )
 
-test.register_message_test(
+test.register_coroutine_test(
     "MaxCoolSetpointLimit report stores device field",
-    {
-      {
-        channel = "zigbee",
-        direction = "receive",
-        message = { mock_device.id, Thermostat.attributes.MaxCoolSetpointLimit:build_test_attr_report(mock_device, 3200) }
-      }
-    },
+    function ()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        Thermostat.attributes.MaxCoolSetpointLimit:build_test_attr_report(mock_device, 3200)
+      })
+      test.wait_for_events()
+      assert(mock_device:get_field("maxCoolSetpoint") == 3200, "maxCoolSetpoint field not stored correctly")
+    end,
     {
        min_api_version = 17
     }
