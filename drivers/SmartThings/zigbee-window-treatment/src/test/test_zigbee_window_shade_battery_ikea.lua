@@ -10,6 +10,7 @@ local capabilities = require "st.capabilities"
 local t_utils = require "integration_test.utils"
 
 local WindowCovering = clusters.WindowCovering
+local PowerConfiguration = clusters.PowerConfiguration
 
 local mock_device = test.mock_device.build_test_zigbee_device(
   { profile = t_utils.get_profile_definition("window-treatment-battery.yml"),
@@ -350,6 +351,35 @@ test.register_coroutine_test(
     )
     test.wait_for_events()
   end,
+  {
+     min_api_version = 17
+  }
+)
+
+test.register_message_test(
+  "Battery percentage reports should not be halved for IKEA devices",
+  {
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 100) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.battery.battery(100))
+    },
+    {
+      channel = "zigbee",
+      direction = "receive",
+      message = { mock_device.id, PowerConfiguration.attributes.BatteryPercentageRemaining:build_test_attr_report(mock_device, 55) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_device:generate_test_message("main", capabilities.battery.battery(55))
+    }
+  },
   {
      min_api_version = 17
   }
