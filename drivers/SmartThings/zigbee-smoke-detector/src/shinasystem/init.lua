@@ -4,7 +4,6 @@
 
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local IASZone = zcl_clusters.IASZone
-local capabilities = require "st.capabilities"
 
 local CONFIGURATIONS = {
   {
