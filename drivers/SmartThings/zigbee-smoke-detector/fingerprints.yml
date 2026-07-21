@@ -59,3 +59,8 @@ zigbeeManufacturer:
     manufacturer: MultIR
     model: MIR-SM200
     deviceProfileName: smoke-battery-tamper-no-fw-update
+  - id: ShinaSystem/FAM-300Z
+    deviceLabel: SiHAS Smoke Detector
+    manufacturer: ShinaSystem
+    model: FAM-300Z
+    deviceProfileName: smoke-battery
