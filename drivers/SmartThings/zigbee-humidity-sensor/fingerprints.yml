@@ -6,6 +6,7 @@ zigbeeManufacturer:
     deviceProfileName: humidity-temp-battery-aqara
   - id: "eZEX/E282-KR0B0Z1-HA"
     deviceLabel: eZEX Multipurpose Sensor
+    manufacturer: eZEX
     model: E282-KR0B0Z1-HA
     deviceProfileName: humidity-temperature
   - id: "PLAID SYSTEMS/PS-SPRZMS-01"

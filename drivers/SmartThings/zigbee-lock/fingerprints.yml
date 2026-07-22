@@ -152,7 +152,7 @@ zigbeeManufacturer:
     deviceProfileName: lock-battery
   - id: C2O/E261-KR0B0Z0-HA
     deviceLabel: C2O Door Lock
-    manufacturer:
+    manufacturer: C2O
     model: E261-KR0B0Z0-HA
     deviceProfileName: lock-battery
   # TOTEM

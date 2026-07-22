@@ -164,43 +164,53 @@ zigbeeManufacturer:
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
+    manufacturer: Vimar
     model: "On_Off_Switch_v1.0"
     deviceProfileName: on-off-bulb-no-firmware-update
   - id: "Vimar/03981-smart-actuator-module"
     deviceLabel: Vimar Smart Actuator Module
+    manufacturer: Vimar
     model: "On_Off_Switch_Module_v1.0"
     deviceProfileName: basic-switch-no-firmware-update
   - id: "Vimar/xx595-smart-dimmer-switch"
     deviceLabel: Vimar Smart Dimmer Switch
+    manufacturer: Vimar
     model: "DimmerSwitch_v1.0"
     deviceProfileName: on-off-level-no-firmware-update
   - id: "Vimar/xx593-smart-actuator-power"
     deviceLabel: Vimar Smart Actuator with Power Metering
+    manufacturer: Vimar
     model: "Mains_Power_Outlet_v1.0"
     deviceProfileName: switch-power-smartplug-no-firmware-update
   # EZEX
   - id: "eZEX/E220-KR2N0Z0-HA"
     deviceLabel: eZEX Switch 1
+    manufacturer: eZEX
     model: "E220-KR2N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR3N0Z0-HA"
     deviceLabel: eZEX Switch 1
+    manufacturer: eZEX
     model: "E220-KR3N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR4N0Z0-HA"
     deviceLabel: eZEX Switch 1
+    manufacturer: eZEX
     model: "E220-KR4N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR5N0Z0-HA"
     deviceLabel: eZEX Switch 1
+    manufacturer: eZEX
     model: "E220-KR5N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR6N0Z0-HA"
     deviceLabel: eZEX Switch 1
+    manufacturer: eZEX
     model: "E220-KR6N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E240-KR116Z-HA"
     deviceLabel: eZEX Switch
+    manufacturer: eZEX
     model: "E240-KR116Z-HA"
     deviceProfileName: switch-power-energy
   #ORVIBO
@@ -1072,7 +1082,7 @@ zigbeeManufacturer:
     deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch
-    manufacturer:
+    manufacturer: TERNCY
     model: TERNCY-LS01
     deviceProfileName: basic-switch
   - id: Third Reality/3RSS009Z
@@ -1739,7 +1749,7 @@ zigbeeManufacturer:
     deviceLabel: SMART ZIGBEE PLUG EU EM T
     manufacturer: LEDVANCE
     model: PLUG EU EM T
-    deviceProfileName: switch-power-energy    
+    deviceProfileName: switch-power-energy
   - id: "OSRAM/LIGHTIFY Edge-lit flushmount"
     deviceLabel: SYLVANIA Light
     manufacturer: OSRAM
@@ -1857,7 +1867,7 @@ zigbeeManufacturer:
     deviceProfileName: switch-power
   - id: eZEX/E210-KR210Z1-HA
     deviceLabel: eZEX Switch
-    manufacturer:
+    manufacturer: eZEX
     model: E210-KR210Z1-HA
     deviceProfileName: switch-power
   - id: "Jasco Products/45853"
@@ -1882,7 +1892,7 @@ zigbeeManufacturer:
     deviceProfileName: switch-power-smartplug
   - id: "Philio/PAN18-v1.0.7"
     deviceLabel: Philio Outlet
-    manufacturer:
+    manufacturer: Philio
     model: PAN18-v1.0.7
     deviceProfileName: switch-power-smartplug
   - id: SALUS/SX885ZB
@@ -2110,11 +2120,6 @@ zigbeeManufacturer:
     manufacturer: OSRAM
     model: CLA60 RGBW OSRAM
     deviceProfileName: rgbw-bulb
-  - id: "OSRAM/Flex RGBW"
-    deviceLabel: OSRAM Light
-    manufacturer: OSRAM
-    model: Flex RGBW
-    deviceProfileName: rgbw-bulb
   - id: "OSRAM/Gardenpole RGBW-Lightify"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM
@@ -2225,11 +2230,6 @@ zigbeeManufacturer:
     manufacturer: IKEA of Sweden
     model: JORMLIEN door WS 40x80
     deviceProfileName: color-temp-bulb-2200K-4000K
-  - id: "OSRAM/Classic B40 TW - LIGHTIFY"
-    deviceLabel: OSRAM Light
-    manufacturer: OSRAM
-    model: Classic B40 TW - LIGHTIFY
-    deviceProfileName: color-temp-bulb
   - id: "OSRAM/CLA60 TW OSRAM"
     deviceLabel: OSRAM Light
     manufacturer: OSRAM

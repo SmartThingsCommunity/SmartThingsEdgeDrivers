@@ -959,7 +959,7 @@ zwaveManufacturer:
     manufacturerId: 0x0460
     productId: 0x0083
     productType: 0x0002
-    deviceProfileName: switch-binary 
+    deviceProfileName: switch-binary
   - id: 1120/2/132
     deviceLabel: Wave 1PM
     manufacturerId: 0x0460
