@@ -7,6 +7,7 @@ local version = require "version"
 local fields = require "switch_utils.fields"
 local switch_utils = require "switch_utils.utils"
 local embedded_cluster_utils = require "switch_utils.embedded_cluster_utils"
+local ModeSelect = require "embedded_clusters.ModeSelect"
 
 -- Include driver-side definitions when lua libs api version is < 11
 if version.api < 11 then
@@ -300,6 +301,43 @@ function DeviceConfiguration.match_profile(driver, device)
     -- All button endpoints found will be added as additional components in the profile containing the default_endpoint_id.
     ButtonDeviceConfiguration.update_button_component_map(device, default_endpoint_id, momentary_switch_ep_ids)
     ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
+  end
+  -- Add mode capability if ModeSelect cluster is present
+  local mode_select_eps = device:get_endpoints(ModeSelect.ID)
+  if #mode_select_eps > 0 then
+    if not updated_profile then
+      updated_profile = "mode-only"
+    elseif string.find(updated_profile or "", "switch%-binary") then
+      updated_profile = "switch-binary-mode"
+    else
+      optional_component_capabilities = optional_component_capabilities or {}
+      -- Check if main component already has mode in optional capabilities
+      local has_mode = false
+      for _, comp in ipairs(optional_component_capabilities) do
+        if comp[1] == "main" then
+          for _, cap in ipairs(comp[2]) do
+            if cap == capabilities.mode.ID then
+              has_mode = true
+              break
+            end
+          end
+        end
+      end
+      if not has_mode then
+        -- Find existing main entry or create new one
+        local found_main = false
+        for _, comp in ipairs(optional_component_capabilities) do
+          if comp[1] == "main" then
+            table.insert(comp[2], capabilities.mode.ID)
+            found_main = true
+            break
+          end
+        end
+        if not found_main then
+          table.insert(optional_component_capabilities, {"main", {capabilities.mode.ID}})
+        end
+      end
+    end
   end
 
   device:try_update_metadata({ profile = updated_profile, optional_component_capabilities = optional_component_capabilities })
