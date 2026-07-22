@@ -9,6 +9,7 @@ local im = require "st.matter.interaction_model"
 local log = require "log"
 local clusters = require "st.matter.clusters"
 local MatterDriver = require "st.matter.driver"
+local utils = require "st.utils"
 
 local CURRENT_LIFT = "__current_lift"
 local CURRENT_TILT = "__current_tilt"
@@ -20,6 +21,11 @@ local battery_support = {
 local REVERSE_POLARITY = "__reverse_polarity"
 local PRESET_LEVEL_KEY = "__preset_level_key"
 local DEFAULT_PRESET_LEVEL = 50
+local LATEST_TARGET_LEVEL = "_latest_target_level"
+local TARGET_LEVEL_TIME_OUT = "_target_level_timeout"
+local TARGET_LEVEL_TIME_OUT_SECONDS = 15
+
+local TARGET_REACH_TOLERANCE = 1
 
 local function find_default_endpoint(device, cluster)
   local res = device.MATTER_DEFAULT_ENDPOINT
@@ -175,15 +181,44 @@ local function handle_shade_level(driver, device, cmd)
   device:send(req)
 end
 
+local function handle_step_shade_level(driver, device, cmd)
+  local step = cmd.args.stepSize
+
+  local current_level = device:get_field(LATEST_TARGET_LEVEL) or
+    device:get_latest_state("main", capabilities.windowShadeLevel.ID,
+      capabilities.windowShadeLevel.shadeLevel.NAME) or 0
+
+  local target_level = utils.clamp_value(current_level + step, 0, 100)
+
+  device:set_field(LATEST_TARGET_LEVEL, target_level)
+
+  local old_timer = device:get_field(TARGET_LEVEL_TIME_OUT)
+  if old_timer ~= nil then
+    device.thread:cancel_timer(old_timer)
+  end
+
+  -- Set 15 second timeout timer to ensure target_level is cleared
+  local timer = device.thread:call_with_delay(TARGET_LEVEL_TIME_OUT_SECONDS, function(d)
+    device:set_field(LATEST_TARGET_LEVEL, nil)
+  end)
+  device:set_field(TARGET_LEVEL_TIME_OUT, timer)
+
+  driver:inject_capability_command(device, {
+    capability = capabilities.windowShadeLevel.ID,
+    component = cmd.component,
+    command = capabilities.windowShadeLevel.commands.setShadeLevel.NAME,
+    named_args = { shadeLevel = target_level }
+  })
+end
+
 -- move to shade tilt level between 0-100
 local function handle_shade_tilt_level(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
   local tilt_percentage_value = 100 - cmd.args.level
   local hundredths_tilt_percentage = tilt_percentage_value * 100
-  local req = clusters.WindowCovering.server.commands.GoToTiltPercentage(
+  device:send(clusters.WindowCovering.server.commands.GoToTiltPercentage(
     device, endpoint_id, hundredths_tilt_percentage
-  )
-  device:send(req)
+  ))
 end
 
 -- current lift/tilt percentage, changed to 100ths percent
@@ -194,6 +229,22 @@ local current_pos_handler = function(attribute)
     end
     local windowShade = capabilities.windowShade.windowShade
     local position = 100 - math.floor(ib.data.value / 100)
+
+    -- Step control logic
+    local target_level_field = device:get_field(LATEST_TARGET_LEVEL)
+    if target_level_field and attribute == capabilities.windowShadeLevel.shadeLevel then
+      -- Allow ±1 degree tolerance for reaching target
+      if math.abs(position - target_level_field) <= TARGET_REACH_TOLERANCE then
+        -- Device reached target position, clear target marker and timeout timer
+        device:set_field(LATEST_TARGET_LEVEL, nil)
+        local timer = device:get_field(TARGET_LEVEL_TIME_OUT)
+        if timer ~= nil then
+          device.thread:cancel_timer(timer)
+          device:set_field(TARGET_LEVEL_TIME_OUT, nil)
+        end
+      end
+    end
+
     local reverse = device:get_field(REVERSE_POLARITY)
     device:emit_event_for_endpoint(ib.endpoint_id, attribute(position))
 
@@ -253,6 +304,16 @@ local function current_status_handler(driver, device, ib, response)
     device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.closing() or windowShade.opening())
   elseif state == 2 then -- closing
     device:emit_event_for_endpoint(ib.endpoint_id, reverse and windowShade.opening() or windowShade.closing())
+  elseif state == 0 then -- stopped (idle)
+    -- Clear target_level when device stops moving
+    local target_level_field = device:get_field(LATEST_TARGET_LEVEL)
+    if target_level_field then
+      device:set_field(LATEST_TARGET_LEVEL, nil)
+      local timer = device:get_field(TARGET_LEVEL_TIME_OUT)
+      if timer ~= nil then
+        device.thread:cancel_timer(timer)
+      end
+    end
   elseif state ~= 0 then -- unknown
     device:emit_event_for_endpoint(ib.endpoint_id, windowShade.unknown())
   end
@@ -353,6 +414,9 @@ local matter_driver_template = {
     },
     [capabilities.windowShadeLevel.ID] = {
       [capabilities.windowShadeLevel.commands.setShadeLevel.NAME] = handle_shade_level,
+    },
+    [capabilities.statelessWindowShadeLevelStep.ID] = {
+      [capabilities.statelessWindowShadeLevelStep.commands.stepShadeLevel.NAME] = handle_step_shade_level
     },
     [capabilities.windowShadeTiltLevel.ID] = {
       [capabilities.windowShadeTiltLevel.commands.setShadeTiltLevel.NAME] = handle_shade_tilt_level,

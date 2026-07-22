@@ -337,4 +337,259 @@ test.register_coroutine_test(
     }
 )
 
+test.register_coroutine_test(
+    "statelessWindowShadeLevelStep stepShadeLevel - positive step",
+    function()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 50)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 50 } }
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+      })
+      test.wait_for_events()
+
+      mock_device:set_field("_latestTargetLevel", 50)
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 } }
+      })
+
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 60)
+      })
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "statelessWindowShadeLevelStep stepShadeLevel - negative step",
+    function()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 30)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 30 } }
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+      })
+      test.wait_for_events()
+
+      mock_device:set_field("_latestTargetLevel", 30)
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -20 } }
+      })
+
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10)
+      })
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "statelessWindowShadeLevelStep stepShadeLevel - accumulated steps with mixed directions",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 50)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 50 } }
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+      })
+      test.wait_for_events()
+
+      mock_device:set_field("_latestTargetLevel", 50)
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 60)
+      })
+      test.wait_for_events()
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -5 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 55)
+      })
+      test.wait_for_events()
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 15 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 70)
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "statelessWindowShadeLevelStep stepShadeLevel - clamped to 100",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 90)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 90 } }
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+      })
+      test.wait_for_events()
+
+      mock_device:set_field("_latestTargetLevel", 90)
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 50 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 100)
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "statelessWindowShadeLevelStep stepShadeLevel - clamped to 0",
+    function()
+      test.socket.zigbee:__set_channel_ordering("relaxed")
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 10)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 10 } }
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+      })
+      test.wait_for_events()
+
+      mock_device:set_field("_latestTargetLevel", 10)
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -50 } }
+      })
+      test.socket.zigbee:__expect_send({
+        mock_device.id,
+        clusters.WindowCovering.server.commands.GoToLiftPercentage(mock_device, 0)
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+test.register_coroutine_test(
+    "statelessWindowShadeLevelStep stepShadeLevel - zero stepSize",
+    function()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 50)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 50 } }
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+      })
+      test.wait_for_events()
+
+      mock_device:set_field("_latestTargetLevel", 50)
+
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 0 } }
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
+-- Test step_shade_level_handler with zero step
+test.register_coroutine_test(
+    "step_shade_level_handler returns early when stepSize is zero",
+    function()
+      test.socket.zigbee:__queue_receive({
+        mock_device.id,
+        clusters.WindowCovering.attributes.CurrentPositionLiftPercentage:build_test_attr_report(mock_device, 50)
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShadeLevel", component_id = "main", attribute_id = "shadeLevel", state = { value = 50 } }
+      })
+      test.socket.capability:__expect_send({
+        mock_device.id,
+        { capability_id = "windowShade", component_id = "main", attribute_id = "windowShade", state = { value = "opening" } }
+      })
+      test.wait_for_events()
+
+      mock_device:set_field("_latestTargetLevel", 50)
+
+      -- Send zero step - should return early without sending any command
+      test.socket.capability:__queue_receive({
+        mock_device.id,
+        { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 0 } }
+      })
+      test.wait_for_events()
+    end,
+    {
+       min_api_version = 17
+    }
+)
+
 test.run_registered_tests()
