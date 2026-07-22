@@ -1,0 +1,33 @@
+name: fireavert-appliance-shutoff-gas
+components:
+- id: main
+  label: "Appliance Control"
+  capabilities:
+  - id: refresh
+    version: 1
+  - id: soundDetection
+    version: 1
+    config:
+      values:
+        - key: supportedSoundTypes.value
+          enabledValues:
+            - noSound
+            - fireAlarm
+  - id: switch
+    version: 1
+  categories:
+    - name: SmokeDetector
+automation:
+  conditions:
+    - label: "Smoke Detection Status"
+      displayType: list
+      list:
+        alternatives:
+          - key: fireAlarm
+            value: Smoke Alarm Detected
+            type: active
+          - key: noSound
+            value: No Smoke Alarm Detected
+            type: inactive
+        value: soundDetection.value
+        valueType: string
