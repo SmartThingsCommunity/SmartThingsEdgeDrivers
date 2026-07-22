@@ -24,6 +24,9 @@ end
 
 local AttributeHandlers = {}
 
+function AttributeHandlers.TEST_HANDLER(driver, device, ib, response)
+  -- do nothing
+end
 
 -- [[ THERMOSTAT CLUSTER ATTRIBUTES ]] --
 

@@ -20,6 +20,10 @@ end
 
 local AttributeHandlers = {}
 
+function AttributeHandlers.TEST_HANDLER(driver, device, ib, response)
+  -- do nothing
+end
+
 -- [[ ON OFF CLUSTER ATTRIBUTES ]] --
 
 function AttributeHandlers.on_off_attr_handler(driver, device, ib, response)
