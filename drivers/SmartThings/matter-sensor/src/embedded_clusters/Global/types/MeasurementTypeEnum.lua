@@ -2,7 +2,7 @@ local data_types = require "st.matter.data_types"
 local UintABC = require "st.matter.data_types.base_defs.UintABC"
 
 local MeasurementTypeEnum = {}
-local new_mt = UintABC.new_mt({NAME = "MeasurementTypeEnum", ID = data_types.name_to_id_map["Uint8"]}, 1)
+local new_mt = UintABC.new_mt({NAME = "MeasurementTypeEnum", ID = data_types.name_to_id_map["Uint16"]}, 2)
 new_mt.__index.pretty_print = function(self)
   local name_lookup = {
     [self.UNSPECIFIED] = "UNSPECIFIED",
