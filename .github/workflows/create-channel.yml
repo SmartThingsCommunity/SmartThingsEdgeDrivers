@@ -5,9 +5,34 @@ on:
     types:
       - completed
 
+permissions:
+  checks: write
+
 jobs:
+  set-pending-status:
+    runs-on: ubuntu-latest
+    outputs:
+      check_run_id: ${{ steps.create-check.outputs.check_run_id }}
+    steps:
+      - name: Create in-progress check run
+        id: create-check
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const check = await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Create PR channel',
+              head_sha: '${{ github.event.workflow_run.head_sha }}',
+              status: 'in_progress',
+              started_at: new Date().toISOString(),
+            });
+            core.setOutput('check_run_id', String(check.data.id));
+
   download-artifacts:
     runs-on: ubuntu-latest
+    needs:
+      - set-pending-status
     outputs:
       drivers: ${{ steps.set-output.outputs.drivers }}
       pr_number: ${{ steps.pr_number.outputs.pr_number }}
@@ -194,3 +219,46 @@ jobs:
             ${{ needs.get-invite.outputs.invite-url }}
           edit-mode: replace
           issue-number: ${{ needs.download-artifacts.outputs.pr_number }}
+
+  report-status:
+    runs-on: ubuntu-latest
+    needs:
+      - set-pending-status
+      - download-artifacts
+      - get-channel
+      - assign-artifact
+      - get-invite
+      - comment-on-pr
+    if: always()
+    steps:
+      - name: Report success or failure as check run
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const needs = ${{ toJSON(needs) }};
+            const failed = Object.values(needs).some(j => j.result === 'failure' || j.result === 'cancelled');
+            const conclusion = failed ? 'failure' : 'success';
+            const title = failed ? 'Channel creation failed' : 'Channel created successfully';
+            const checkRunId = '${{ needs.set-pending-status.outputs.check_run_id }}';
+            if (checkRunId) {
+              await github.rest.checks.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                check_run_id: parseInt(checkRunId),
+                status: 'completed',
+                conclusion,
+                completed_at: new Date().toISOString(),
+                output: { title, summary: title },
+              });
+            } else {
+              await github.rest.checks.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'Create PR channel',
+                head_sha: '${{ github.event.workflow_run.head_sha }}',
+                status: 'completed',
+                conclusion,
+                completed_at: new Date().toISOString(),
+                output: { title, summary: title },
+              });
+            }
