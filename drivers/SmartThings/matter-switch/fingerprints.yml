@@ -2315,11 +2315,6 @@ matterManufacturer:
     vendorId: 0x100b
     productId: 0x21B3
     deviceProfileName: light-color-level-2200K-6500K
-  - id: "4107/8627"
-    deviceLabel: WiZ Downlight
-    vendorId: 0x100b
-    productId: 0x21B3
-    deviceProfileName: light-color-level-2200K-6500K
   - id: "4107/8796"
     deviceLabel: WiZ Downlight
     vendorId: 0x100b

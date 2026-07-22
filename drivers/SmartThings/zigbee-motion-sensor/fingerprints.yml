@@ -66,6 +66,7 @@ zigbeeManufacturer:
     deviceProfileName: motion-humidity-temp-battery
   - id: "eZEX/E280-KR0A0Z0-HA"
     deviceLabel: eZEX Motion Sensor
+    manufacturer: eZEX
     model: E280-KR0A0Z0-HA
     deviceProfileName: motion
   - id: "ikea/motion"
