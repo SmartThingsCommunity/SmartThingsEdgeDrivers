@@ -1227,4 +1227,232 @@ test.register_coroutine_test(
   }
 )
 
+-- stepShadeLevel tests
+
+test.register_coroutine_test(
+  "WindowShade stepShadeLevel cmd handler - step up", function()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 9000)}
+    )
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepShadeLevel cmd handler - step down", function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, 5000
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -20 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 7000)}
+    )
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepShadeLevel cmd handler - continuous step with target tracking", function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, 7000
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(30)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 6000)}
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 5000)}
+    )
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepShadeLevel - target reached clears target marker", function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, 5000
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(50)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 4000)}
+    )
+    test.wait_for_events()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, 4000
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(60)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepShadeLevel - step up to maximum (100)", function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, 500
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(95)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 0)}
+    )
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
+test.register_coroutine_test(
+  "WindowShade stepShadeLevel - step down to minimum (0)", function()
+    test.socket.matter:__queue_receive(
+      {
+        mock_device.id,
+        WindowCovering.attributes.CurrentPositionLiftPercent100ths:build_test_report_data(
+          mock_device, 10, 9500
+        ),
+      }
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShadeLevel.shadeLevel(5)
+      )
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message(
+        "main", capabilities.windowShade.windowShade.partially_open()
+      )
+    )
+    test.wait_for_events()
+    test.socket.capability:__queue_receive(
+      {
+        mock_device.id,
+        {capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -10 }},
+      }
+    )
+    test.socket.matter:__expect_send(
+      {mock_device.id, WindowCovering.server.commands.GoToLiftPercentage(mock_device, 10, 10000)}
+    )
+  end,
+  {
+     min_api_version = 19
+  }
+)
+
 test.run_registered_tests()
