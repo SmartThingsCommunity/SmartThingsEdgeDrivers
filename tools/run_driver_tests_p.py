@@ -29,8 +29,8 @@ def per_driver_task(driver_dir):
   else:
     failure_output = None
   if driver_dir.name in CHANGED_DRIVERS:
-    with driver_dir.parent.parent.parent.joinpath("tools/coverage_output").joinpath(driver_dir.name+"_coverage.xml") as outfile:
-      subprocess.run("luacov-cobertura -o {} -c {}".format(outfile, LUACOV_CONFIG), shell=True)
+    outfile = driver_dir.parent.parent.parent.joinpath("tools/coverage_output").joinpath(driver_dir.name+"_coverage.xml")
+    subprocess.run("luacov-cobertura -o {} -c {}".format(outfile, LUACOV_CONFIG), shell=True)
   return failure_output
 
 def run_test(test_file):
