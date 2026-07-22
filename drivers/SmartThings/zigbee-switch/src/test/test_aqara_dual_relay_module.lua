@@ -14,7 +14,6 @@ local ElectricalMeasurement = clusters.ElectricalMeasurement
 local SimpleMetering = clusters.SimpleMetering
 
 local PRIVATE_CLUSTER_ID = 0xFCC0
-local PRIVATE_ATTRIBUTE_ID = 0x0009
 local MFG_CODE = 0x115F
 local INTERLOCK_ATTRIBUTE_ID = 0x02D0
 local DEVICE_MODE_ATTRIBUTE_ID = 0x0289
