@@ -41,7 +41,6 @@ end
 local initial_events_map = {
   [capabilities.soundDetection.ID] = capabilities.soundDetection.soundDetected.noSound(),
   [capabilities.applianceUtilization.ID] = capabilities.applianceUtilization.status.notInUse(),
-  [capabilities.remoteControlStatus.ID] = capabilities.remoteControlStatus.remoteControlEnabled("false"),
   [capabilities.switch.ID] = capabilities.switch.switch.off()
 }
 
@@ -65,11 +64,28 @@ end
 
 local function device_init(self, device)
   print("Device init: Z-Wave Appliance Safety Shutoff")
-  -- TODO: What to do on device initalization
   -- Get binary switch information, Report should handle asynchronously
   device:send(SwitchBinary:Get({}))
-  -- if (device:supports_capability(capabilities.powerMeter)) then
-  --   device:send(Notification:Get({notification_type = Notification.notification_type.power_management}))
+  -- Get current state of the notifications
+  -- Smoke Alarm (supported by all devices)
+  device:send(Notification:Get({
+    v1_alarm_type = 0,
+    notification_type = Notification.notification_type.SMOKE,
+    event = Notification.event.smoke.DETECTED
+  }))
+  -- Gas unit doesn't support appliance utilization.
+  -- If supported, get state of appliance power.
+  if (device:supports_capability(capabilities.applianceUtilization)) then
+    device:send(Notification:Get({
+      v1_alarm_type = 0,
+      notification_type = Notification.notification_type.POWER_MANAGEMENT,
+      event = Notification.event.power_management.POWER_HAS_BEEN_APPLIED
+    }))
+  end
+end
+
+local function do_refresh(self, device)
+  device_init(self, device);
 end
 
 local function info_changed(self, device)
@@ -180,6 +196,9 @@ local driver_template = {
     infoChanged = info_changed
   },
   capability_handlers = {
+    [capabilities.refresh.ID] = {
+      [capabilities.refresh.commands.refresh.NAME] = do_refresh
+    },
     [capabilities.switch.ID] = {
       [capabilities.switch.commands.off.NAME] = st_switch_off_handler,
       [capabilities.switch.commands.on.NAME] = st_switch_on_handler

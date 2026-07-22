@@ -18,9 +18,6 @@ local cc = require "st.zwave.CommandClass"
 --- @type st.zwave.CommandClass.Notification
 local Notification = (require "st.zwave.CommandClass.Notification")({ version = 3 })
 
---- This is a notification type that is not available in SmartThings but does exist in the Z-Wave Specification (2025B +).
-local APPLIANCE_SAFETY_INTERLOCK_ENGAGED = 0x16
-
 local FIREAVERT_APPLIANCE_SHUTOFF_FINGERPRINTS = {
     { manufacturerId = 0x045D, productType = 0x0004, productId = 0x0601 }, -- FireAvert Appliance Shutoff - 120V
     { manufacturerId = 0x045D, productType = 0x0004, productId = 0x0602 }, -- FireAvert Appliance Shutoff - 240V 3 Prong
@@ -49,31 +46,28 @@ end
 local function notification_report_handler(self, device, cmd)
   local event = nil
   if cmd.args.notification_type == Notification.notification_type.SMOKE then
+    -- First, ensure that control is still valid
     if cmd.args.event == Notification.event.smoke.DETECTED then
       event = capabilities.soundDetection.soundDetected.fireAlarm()
     elseif cmd.args.event == Notification.event.smoke.STATE_IDLE then
       event = capabilities.soundDetection.soundDetected.noSound()
     end
-  elseif cmd.args.notification_type == Notification.notification_type.APPLIANCE then
-    if cmd.args.event == APPLIANCE_SAFETY_INTERLOCK_ENGAGED then
-      event = capabilities.remoteControlStatus.remoteControlEnabled("false")
-      print("Device cannot be remote controlled")
-    else
-      event = capabilities.remoteControlStatus.remoteControlEnabled("true")
-      print("Device can be remote controlled")
-    end
   elseif cmd.args.notification_type == Notification.notification_type.POWER_MANAGEMENT then
-    print("Power Notification: Notification payload: ", cmd.args.event_parameter)
     if (cmd.args.event == Notification.event.power_management.POWER_HAS_BEEN_APPLIED) then
       event = capabilities.applianceUtilization.status.inUse()
     elseif (cmd.args.event == Notification.event.power_management.STATE_IDLE) then
       event = capabilities.applianceUtilization.status.notInUse()
     end
   end
+  -- While the device supports other notifications, they are out of scope for WWST certification.
   if event ~= nil then 
-    print("notification event: %s", event)
+    print("Notification event: %s", event)
     device:emit_event(event) 
-    end
+  end
+  if status ~= nil then 
+    print("Notification status %s set", status)
+    device:emit_event(status) 
+  end
 end
 
 --- Configuration lifecycle event handler.

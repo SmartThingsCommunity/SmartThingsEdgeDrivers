@@ -3,6 +3,8 @@ components:
 - id: main
   label: "Appliance Information"
   capabilities:
+  - id: refresh
+    version: 1
   - id: soundDetection
     version: 1
     config:
@@ -14,8 +16,6 @@ components:
   - id: switch
     version: 1
   - id: applianceUtilization
-    version: 1
-  - id: remoteControlStatus
     version: 1
   categories:
     - name: SmokeDetector
@@ -45,16 +45,17 @@ deviceConfig:
           - key: notInUse
             value: "Appliance Powered Off"
             type: inactive
-    - component: main
-      capability: remoteControlStatus
-      version: 1
-      label: "Safety Control"
-      values:
-        - key: remoteControlStatus.value
-          alternatives:
-            - key: "true"
-              value: "Unlocked"
-              type: active
-            - key: "false"
-              value: "Device Locked"
-              type: inactive
+automation:
+  conditions:
+    - label: "Smoke Detection Status"
+      displayType: list
+      list:
+        alternatives:
+          - key: fireAlarm
+            value: Smoke Alarm Detected
+            type: active
+          - key: noSound
+            value: No Smoke Alarm Detected
+            type: inactive
+        value: soundDetection.value
+        valueType: string
