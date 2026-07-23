@@ -1,6 +1,7 @@
 zigbeeManufacturer:
   - id: "E240-KR080Z0-HA"
     deviceLabel: Energy Monitor
+    manufacturer: eZEX
     model: "E240-KR080Z0-HA"
     deviceProfileName: power-meter-consumption-report
   - id: "Develco/ZHEMI101"

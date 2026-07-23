@@ -66,6 +66,7 @@ zigbeeManufacturer:
     deviceProfileName: window-treatment-profile
   - id: "/E2B0-KR000Z0-HA"
     deviceLabel: eZEX Window Treatment
+    manufacturer: eZEX
     model: E2B0-KR000Z0-HA
     deviceProfileName: window-treatment-profile
   - id: "IKEA/KADRILJ"
