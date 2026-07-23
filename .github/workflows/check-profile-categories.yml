@@ -1,0 +1,48 @@
+name: Check profile categories
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'drivers/**/profiles/*.yml'
+
+jobs:
+  check-profile-categories:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Creates file "~/files.csv", among others
+      - id: file_changes
+        name: Gather file changes
+        uses: trilom/file-changes-action@1.2.4
+        with:
+          output: ','
+          fileOutput: ','
+
+      # For verification
+      - name: Show files changed
+        run: |
+          cat $HOME/files.csv
+
+      - name: Run python script
+        run: |
+          python ./.github/scripts/check_profile_categories.py
+
+      - name: Upload profile categories comment artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: profile_categories_comment
+          path: |
+            profile-categories-comment-body.md
+
+      - run: echo ${{ github.event.number }} > pr_number.txt
+
+      - name: Upload PR info
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr_number
+          path: |
+            pr_number.txt
