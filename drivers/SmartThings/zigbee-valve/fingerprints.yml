@@ -14,6 +14,26 @@ zigbeeManufacturer :
     manufacturer: Sinope Technologies
     model: VA4220ZB
     deviceProfileName: valve-battery-powerSource
+  - id : SONOFF/SWV-ZNU
+    deviceLabel : Zigbee Smart Water Valve
+    manufacturer: SONOFF
+    model: SWV-ZNU
+    deviceProfileName: valve-battery-powerSource
+  - id : SONOFF/SWV-ZFU
+    deviceLabel : Zigbee Smart Water Valve
+    manufacturer: SONOFF
+    model: SWV-ZFU
+    deviceProfileName: valve-battery-powerSource
+  - id : SONOFF/SWV-ZNE
+    deviceLabel : Zigbee Smart Water Valve
+    manufacturer: SONOFF
+    model: SWV-ZNE
+    deviceProfileName: valve-battery-powerSource
+  - id : SONOFF/SWV-ZFE
+    deviceLabel : Zigbee Smart Water Valve
+    manufacturer: SONOFF
+    model: SWV-ZFE
+    deviceProfileName: valve-battery-powerSource
   - id: WAXMAN/leakSMARTValve/v2.10
     deviceLabel: leakSMART Valve
     manufacturer: WAXMAN
