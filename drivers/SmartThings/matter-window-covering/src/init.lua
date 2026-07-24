@@ -287,22 +287,35 @@ local function handle_shade_level(driver, device, cmd)
 end
 
 local function handle_step_shade_level(driver, device, cmd)
-  local step = cmd.args.stepSize
-  local latest_lift_percentage = device:get_latest_state(
+  local step = cmd.args.stepSize or 0
+  local latest_lift = device:get_latest_state(
     "main",
     capabilities.windowShadeLevel.ID,
     capabilities.windowShadeLevel.shadeLevel.NAME,
     0
   )
-  local target_lift_percent = device:get_field(TARGET_LIFT_PERCENT.STATE) or latest_lift_percentage
-  local updated_target_lift = utils.clamp_value(target_lift_percent + step, 0, 100)
-  cache_data_with_timeout(device, updated_target_lift, TARGET_LIFT_PERCENT)
-  driver:inject_capability_command(device, {
-    capability = capabilities.windowShadeLevel.ID,
-    component = cmd.component,
-    command = capabilities.windowShadeLevel.commands.setShadeLevel.NAME,
-    named_args = { shadeLevel = updated_target_lift }
-  })
+  local target_lift = device:get_field(TARGET_LIFT_PERCENT.STATE) or latest_lift
+  local updated_target_lift = utils.clamp_value(target_lift + step, 0, 100)
+  if step == 0 or target_lift == updated_target_lift then
+    -- no change in targeting, exit handler
+    return
+  elseif (target_lift > latest_lift and step < 0) or (target_lift < latest_lift and step > 0) then
+    -- target direction altered, pause motion to reset cached state and targeting.
+    driver:inject_capability_command(device, {
+      capability = capabilities.windowShade.ID,
+      component = cmd.component,
+      command = capabilities.windowShade.commands.pause.NAME,
+      args = {}
+    })
+  else
+    -- standard motion adjustment
+    driver:inject_capability_command(device, {
+      capability = capabilities.windowShadeLevel.ID,
+      component = cmd.component,
+      command = capabilities.windowShadeLevel.commands.setShadeLevel.NAME,
+      named_args = { shadeLevel = updated_target_lift }
+    })
+  end
 end
 
 -- move to shade tilt level between 0-100
