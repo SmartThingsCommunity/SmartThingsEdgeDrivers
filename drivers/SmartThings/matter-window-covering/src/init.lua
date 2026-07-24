@@ -245,10 +245,10 @@ end
 
 local function handle_close(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  if device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) then
+  if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) > 0 then
     cache_data_with_timeout(device, device.preferences.reverse and 100 or 0, TARGET_LIFT_PERCENT)
   end
-  if device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) then
+  if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) > 0 then
     cache_data_with_timeout(device, device.preferences.reverse and 100 or 0, TARGET_TILT_PERCENT)
   end
   device:send(device.preferences.reverse and
@@ -259,10 +259,10 @@ end
 
 local function handle_open(driver, device, cmd)
   local endpoint_id = device:component_to_endpoint(cmd.component)
-  if device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) then
+  if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.LIFT}) > 0 then
     cache_data_with_timeout(device, device.preferences.reverse and 0 or 100, TARGET_LIFT_PERCENT)
   end
-  if device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) then
+  if #device:get_endpoints(clusters.WindowCovering.ID, {feature_bitmap = clusters.WindowCovering.types.Feature.TILT}) > 0 then
     cache_data_with_timeout(device, device.preferences.reverse and 0 or 100, TARGET_TILT_PERCENT)
   end
   device:send(device.preferences.reverse and
