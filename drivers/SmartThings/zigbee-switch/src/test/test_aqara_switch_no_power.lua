@@ -80,26 +80,31 @@ test.register_coroutine_test(
     -- The initial switch event should be send during the device's first time onboarding
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 2 },
-    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.button.numberOfButtons({ value = 2 },
+        { visibility = { displayed = false } })))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
-    { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.button.supportedButtonValues({ "pushed" },
+        { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.button.button.pushed({ state_change = false })))
     -- Avoid sending the initial switch event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 2 },
-    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.button.numberOfButtons({ value = 2 },
+        { visibility = { displayed = false } })))
     test.socket.zigbee:__expect_send({ mock_device.id,
       cluster_base.write_manufacturer_specific_attribute(mock_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
         data_types.Uint8, 1) })
-    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
-    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.button.supportedButtonValues({ "pushed" },
+        { visibility = { displayed = false } })))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -109,21 +114,26 @@ test.register_coroutine_test(
     -- The initial switch event should be send during the device's first time onboarding
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
-    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.numberOfButtons({ value = 1 },
-    { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
-    { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main",
+      capabilities.button.numberOfButtons({ value = 1 },
+        { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main",
+      capabilities.button.supportedButtonValues({ "pushed" },
+        { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main",
+      capabilities.button.button.pushed({ state_change = false })))
     -- Avoid sending the initial switch event after driver switch-over, as the switch-over event itself re-triggers the added lifecycle.
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
-    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.numberOfButtons({ value = 1 },
-    { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
-    { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main",
+      capabilities.button.numberOfButtons({ value = 1 },
+        { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_child:generate_test_message("main",
+      capabilities.button.supportedButtonValues({ "pushed" },
+        { visibility = { displayed = false } })))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -133,24 +143,28 @@ test.register_coroutine_test(
     -- The initial switch event should be send during the device's first time onboarding
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_base_device.id, "added" })
-      mock_base_device:expect_device_create({
-        type = "EDGE_CHILD",
-        label = "Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker) 2",
-        profile = "aqara-switch-child",
-        parent_device_id = mock_base_device.id,
-        parent_assigned_child_key = "02"
-      })
-    test.socket.capability:__expect_send(mock_base_device:generate_test_message("main", capabilities.button.numberOfButtons({ value = 2 },
-    { visibility = { displayed = false } })))
+    mock_base_device:expect_device_create({
+      type = "EDGE_CHILD",
+      label = "Aqara Smart Wall Switch H1 EU (No Neutral, Double Rocker) 2",
+      profile = "aqara-switch-child",
+      parent_device_id = mock_base_device.id,
+      parent_assigned_child_key = "02"
+    })
+    test.socket.capability:__expect_send(mock_base_device:generate_test_message("main",
+      capabilities.button.numberOfButtons({ value = 2 },
+        { visibility = { displayed = false } })))
     test.socket.zigbee:__expect_send({ mock_base_device.id,
-      cluster_base.write_manufacturer_specific_attribute(mock_base_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID, MFG_CODE,
+      cluster_base.write_manufacturer_specific_attribute(mock_base_device, PRIVATE_CLUSTER_ID, PRIVATE_ATTRIBUTE_ID,
+        MFG_CODE,
         data_types.Uint8, 1) })
-    test.socket.capability:__expect_send(mock_base_device:generate_test_message("main", capabilities.button.supportedButtonValues({ "pushed" },
-    { visibility = { displayed = false } })))
-    test.socket.capability:__expect_send(mock_base_device:generate_test_message("main", capabilities.button.button.pushed({ state_change = false })))
+    test.socket.capability:__expect_send(mock_base_device:generate_test_message("main",
+      capabilities.button.supportedButtonValues({ "pushed" },
+        { visibility = { displayed = false } })))
+    test.socket.capability:__expect_send(mock_base_device:generate_test_message("main",
+      capabilities.button.button.pushed({ state_change = false })))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -164,7 +178,7 @@ test.register_coroutine_test(
       OnOff.attributes.OnOff:read(mock_device) })
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -177,7 +191,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.on()))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -190,7 +204,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.on()))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -203,7 +217,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.switch.switch.off()))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -216,7 +230,7 @@ test.register_coroutine_test(
     test.socket.capability:__expect_send(mock_child:generate_test_message("main", capabilities.switch.switch.off()))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -230,7 +244,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device) })
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -244,7 +258,7 @@ test.register_coroutine_test(
       OnOff.server.commands.On(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -258,7 +272,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device) })
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -272,7 +286,7 @@ test.register_coroutine_test(
       OnOff.server.commands.Off(mock_device):to_endpoint(0x02) })
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -289,7 +303,7 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -306,7 +320,7 @@ test.register_coroutine_test(
       capabilities.button.button.pushed({ state_change = true })))
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -323,7 +337,7 @@ test.register_coroutine_test(
         RESTORE_POWER_STATE_ATTRIBUTE_ID, MFG_CODE, data_types.Boolean, true) })
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
@@ -338,7 +352,7 @@ test.register_coroutine_test(
         CHANGE_TO_WIRELESS_SWITCH_ATTRIBUTE_ID, MFG_CODE, data_types.Uint8, 0) })
   end,
   {
-     min_api_version = 17
+    min_api_version = 17
   }
 )
 
