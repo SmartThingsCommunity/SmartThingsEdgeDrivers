@@ -224,11 +224,14 @@ end
 
 -- capability handlers
 local function handle_preset(driver, device, cmd)
-  local lift_value = device:get_latest_state(
-    "main", capabilities.windowShadePreset.ID, capabilities.windowShadePreset.position.NAME
-  ) or DEFAULT_PRESET_LEVEL
-  local hundredths_lift_percent = (100 - lift_value) * 100
-  cache_data_with_timeout(device, lift_value, TARGET_LIFT_PERCENT)
+  local preset_target_percent = device:get_latest_state(
+    "main",
+    capabilities.windowShadePreset.ID,
+    capabilities.windowShadePreset.position.NAME,
+    DEFAULT_PRESET_LEVEL
+  )
+  cache_data_with_timeout(device, preset_target_percent, TARGET_LIFT_PERCENT)
+  local hundredths_lift_percent = (100 - preset_target_percent) * 100
   local endpoint_id = device:component_to_endpoint(cmd.component)
   device:send(clusters.WindowCovering.server.commands.GoToLiftPercentage(
     device, endpoint_id, hundredths_lift_percent
