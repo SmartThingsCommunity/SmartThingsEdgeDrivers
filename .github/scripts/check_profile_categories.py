@@ -1,4 +1,3 @@
-import csv
 import os
 import sys
 import yaml
@@ -8,59 +7,57 @@ cwd = os.getcwd()
 missing_category_profiles = []
 deleted_profiles = []
 
-with open(str(Path.home()) + '/files.csv', 'r') as csvfile:
-    csvreader = csv.reader(csvfile)
-    changed_files = next(csvreader)
+changed_files = os.environ.get('ALL_CHANGED_FILES', '').split()
 
-    for file in changed_files:
-        file_basename = os.path.basename(file)
-        file_directory = os.path.dirname(file)
+for file in changed_files:
+    file_basename = os.path.basename(file)
+    file_directory = os.path.dirname(file)
 
-        if '/profiles/' in file and file.endswith('.yml'):
-            print('\nCHECKING PROFILE:\n%s' % file)
+    if '/profiles/' in file and file.endswith('.yml'):
+        print('\nCHECKING PROFILE:\n%s' % file)
 
-            os.chdir(file_directory)
+        os.chdir(file_directory)
 
-            if not os.path.exists(file_basename):
-                print("Skipping %s - file was deleted" % file_basename)
-                deleted_profiles.append(file)
+        if not os.path.exists(file_basename):
+            print("Skipping %s - file was deleted" % file_basename)
+            deleted_profiles.append(file)
+            os.chdir(cwd)
+            continue
+
+        with open(file_basename) as fp:
+            try:
+                profile = yaml.safe_load(fp)
+            except yaml.YAMLError as e:
+                print("Error parsing %s: %s" % (file_basename, e))
                 os.chdir(cwd)
                 continue
 
-            with open(file_basename) as fp:
-                try:
-                    profile = yaml.safe_load(fp)
-                except yaml.YAMLError as e:
-                    print("Error parsing %s: %s" % (file_basename, e))
-                    os.chdir(cwd)
-                    continue
+        if not profile or 'components' not in profile:
+            print("Skipping %s - no components found" % file_basename)
+            os.chdir(cwd)
+            continue
 
-            if not profile or 'components' not in profile:
-                print("Skipping %s - no components found" % file_basename)
-                os.chdir(cwd)
-                continue
+        # Find the main component and verify it has a categories field
+        main_component = next(
+            (c for c in profile['components'] if c.get('id') == 'main'),
+            None
+        )
 
-            # Find the main component and verify it has a categories field
-            main_component = next(
-                (c for c in profile['components'] if c.get('id') == 'main'),
-                None
-            )
+        if main_component is None:
+            print("Warning: %s has no 'main' component" % file_basename)
+            os.chdir(cwd)
+            continue
 
-            if main_component is None:
-                print("Warning: %s has no 'main' component" % file_basename)
-                os.chdir(cwd)
-                continue
+        if not main_component.get('categories'):
+            print("MISSING CATEGORY: %s" % file)
+            missing_category_profiles.append(file)
+        else:
+            print("OK: %s has categories: %s" % (
+                file_basename,
+                [c['name'] for c in main_component['categories']]
+            ))
 
-            if not main_component.get('categories'):
-                print("MISSING CATEGORY: %s" % file)
-                missing_category_profiles.append(file)
-            else:
-                print("OK: %s has categories: %s" % (
-                    file_basename,
-                    [c['name'] for c in main_component['categories']]
-                ))
-
-        os.chdir(cwd)
+    os.chdir(cwd)
 
 with open("profile-categories-comment-body.md", "w") as f:
     if missing_category_profiles:
