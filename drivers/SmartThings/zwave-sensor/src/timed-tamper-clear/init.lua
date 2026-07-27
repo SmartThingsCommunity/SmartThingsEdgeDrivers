@@ -22,6 +22,13 @@ local function handle_tamper_event(driver, device, cmd)
     device.thread:cancel_timer(tamper_timer)
   end
   device:set_field(TAMPER_TIMER, device.thread:call_with_delay(TAMPER_CLEAR, function()
+    -- The device can be removed while this timer is still pending. Once a device is
+    -- deleted its metatable is swapped so that all field/method lookups return nil
+    -- (see Device:deleted() in st.device), so guard against that here to avoid
+    -- "attempt to call a nil value (method 'emit_event_for_endpoint')" errors.
+    if device.id == nil then
+      return
+    end
     device:emit_event_for_endpoint(cmd.src_channel, capabilities.tamperAlert.tamper.clear())
     device:set_field(TAMPER_TIMER, nil)
   end))

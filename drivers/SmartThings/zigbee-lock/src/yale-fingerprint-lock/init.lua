@@ -5,14 +5,16 @@
 local clusters = require "st.zigbee.zcl.clusters"
 local capabilities = require "st.capabilities"
 local LockCluster = clusters.DoorLock
-local LockCodes = capabilities.lockCodes
+local LockCredentials = capabilities.lockCredentials
+local LockUsers = capabilities.lockUsers
 
 local YALE_FINGERPRINT_MAX_CODES = 0x1E
 
 
 
 local handle_max_codes = function(driver, device, value)
-  device:emit_event(LockCodes.maxCodes(YALE_FINGERPRINT_MAX_CODES), { visibility = { displayed = false } })
+  device:emit_event(LockCredentials.pinUsersSupported(YALE_FINGERPRINT_MAX_CODES))
+  device:emit_event(LockUsers.totalUsersSupported(YALE_FINGERPRINT_MAX_CODES))
 end
 
 local yale_fingerprint_lock_driver = {
@@ -24,7 +26,7 @@ local yale_fingerprint_lock_driver = {
       }
     }
   },
-  can_handle = require("yale-fingerprint-lock.can_handle"),
+  can_handle = require("yale-fingerprint-lock.can_handle")
 }
 
 return yale_fingerprint_lock_driver

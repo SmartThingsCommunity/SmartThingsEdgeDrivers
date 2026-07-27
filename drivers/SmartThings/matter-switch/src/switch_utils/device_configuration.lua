@@ -156,7 +156,6 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
 
-
 function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})
   local msl_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_LONG_PRESS})
