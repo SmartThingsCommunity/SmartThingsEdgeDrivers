@@ -1,13 +1,12 @@
-name: Check for duplicate profiles
+name: Check profile categories
 on:
   pull_request:
     types: [opened, synchronize]
     paths:
       - 'drivers/**/profiles/*.yml'
-env:
-  LUA_PATH: /home/runner/work/lua_libs/?.lua;./?.lua;/home/runner/work/lua_libs/?/init.lua;./?/init.lua
+
 jobs:
-  find-duplicate-profiles:
+  check-profile-categories:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,18 +20,20 @@ jobs:
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         run: |
-          python ./.github/scripts/check_duplicates.py
+          python ./.github/scripts/check_profile_categories.py
 
-      - name: Upload duplicate profile comment artifact
+      - name: Upload profile categories comment artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: duplicate_profile_comment
+          name: profile_categories_comment
           path: |
-            profile-comment-body.md
+            profile-categories-comment-body.md
 
       - run: echo ${{ github.event.number }} > pr_number.txt
 
       - name: Upload PR info
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pr_number
