@@ -762,7 +762,7 @@ test.register_coroutine_test(
       )
     )
     test.wait_for_events()
-    assert(mock_device:get_field(constants.SLGA_MIGRATED) == nil, "Device should not be marked as migrated")
+    assert(mock_device:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == nil, "Device should not be marked as migrated")
     local stored_codes = st_utils.deep_copy(mock_device:get_field("_lock_codes"))
     assert(stored_codes["1"] == "Alice")
     assert(stored_codes["2"] == "Bob")
