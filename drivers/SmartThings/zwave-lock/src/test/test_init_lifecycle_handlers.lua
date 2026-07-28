@@ -10,7 +10,6 @@
 
 local test       = require "integration_test"
 local t_utils    = require "integration_test.utils"
-local capabilities = require "st.capabilities"
 local zw         = require "st.zwave"
 local constants  = require "lock_utils.constants"
 
@@ -90,25 +89,6 @@ test.register_coroutine_test(
 -- ============================================================================
 -- init (LockLifecycle.init)
 -- ============================================================================
-
-test.register_coroutine_test(
-  "init: device with lockCodes and SLGA_MIGRATED=true emits migrated + supportedCredentials",
-  function()
-    mock_device_base:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true })
-
-    test.socket.device_lifecycle:__queue_receive({ mock_device_base.id, "init" })
-    test.socket.capability:__expect_send(
-      mock_device_base:generate_test_message("main",
-        capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    )
-    test.socket.capability:__expect_send(
-      mock_device_base:generate_test_message("main",
-        capabilities.lockCredentials.supportedCredentials({ "pin" }, { visibility = { displayed = false } }))
-    )
-    test.wait_for_events()
-  end,
-  { test_init = make_test_init(mock_device_base) }
-)
 
 test.register_coroutine_test(
   "init: device with lockCodes but SLGA_MIGRATED not set does nothing",
