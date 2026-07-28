@@ -38,7 +38,6 @@ local function revert_migration(driver, device)
   local json = require "st.json"
 
   local latest_users = table_utils.get_state(device, "users") or {}
-  print("Latest users: ", #latest_users)
   local lock_codes = {}
   for _, user in ipairs(latest_users) do
     lock_codes[string.format("%s", user.userIndex)] = user.userName or ("Code " .. user.userIndex)
