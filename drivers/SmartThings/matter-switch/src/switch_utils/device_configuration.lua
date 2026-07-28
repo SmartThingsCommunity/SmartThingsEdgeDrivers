@@ -15,6 +15,11 @@ if version.api < 11 then
   clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local DeviceConfiguration = {}
 local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
