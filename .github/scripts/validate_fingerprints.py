@@ -47,7 +47,8 @@ MANUFACTURER_SECTIONS = {'matterManufacturer', 'zigbeeManufacturer', 'zwaveManuf
 # Z-Wave also needs productId OR productType (checked separately).
 REQUIRED_FIELDS = {
     'matterManufacturer': ['id', 'deviceLabel', 'vendorId', 'productId', 'deviceProfileName'],
-    'zigbeeManufacturer': ['id', 'deviceLabel', 'manufacturer', 'model', 'deviceProfileName'],
+    # manufacturer and model are checked together below: at least one must be present
+    'zigbeeManufacturer': ['id', 'deviceLabel', 'deviceProfileName'],
     'zwaveManufacturer':  ['id', 'deviceLabel', 'manufacturerId', 'deviceProfileName'],
 }
 
@@ -255,6 +256,18 @@ def check_structure(data, filepath):
                     errors.append(
                         f"{filepath}: [{section}] id={entry_id!r}: "
                         f"field '{field}' is empty"
+                    )
+
+            # ── Zigbee: manufacturer or model ─────────────────────────────────
+            if section == 'zigbeeManufacturer':
+                mfr = entry.get('manufacturer')
+                mdl = entry.get('model')
+                mfr_blank = mfr is None or (isinstance(mfr, str) and mfr.strip() == '')
+                mdl_blank = mdl is None or (isinstance(mdl, str) and mdl.strip() == '')
+                if mfr_blank and mdl_blank:
+                    errors.append(
+                        f"{filepath}: [{section}] id={entry_id!r}: "
+                        "at least one of 'manufacturer' or 'model' must be provided"
                     )
 
             # ── Z-Wave: productId or productType ──────────────────────────────

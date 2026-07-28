@@ -164,53 +164,43 @@ zigbeeManufacturer:
   # VIMAR
   - id: "Vimar/xx592-2-way-smart-switch"
     deviceLabel: Vimar 2-way Smart Switch
-    manufacturer: Vimar
     model: "On_Off_Switch_v1.0"
     deviceProfileName: on-off-bulb-no-firmware-update
   - id: "Vimar/03981-smart-actuator-module"
     deviceLabel: Vimar Smart Actuator Module
-    manufacturer: Vimar
     model: "On_Off_Switch_Module_v1.0"
     deviceProfileName: basic-switch-no-firmware-update
   - id: "Vimar/xx595-smart-dimmer-switch"
     deviceLabel: Vimar Smart Dimmer Switch
-    manufacturer: Vimar
     model: "DimmerSwitch_v1.0"
     deviceProfileName: on-off-level-no-firmware-update
   - id: "Vimar/xx593-smart-actuator-power"
     deviceLabel: Vimar Smart Actuator with Power Metering
-    manufacturer: Vimar
     model: "Mains_Power_Outlet_v1.0"
     deviceProfileName: switch-power-smartplug-no-firmware-update
   # EZEX
   - id: "eZEX/E220-KR2N0Z0-HA"
     deviceLabel: eZEX Switch 1
-    manufacturer: eZEX
     model: "E220-KR2N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR3N0Z0-HA"
     deviceLabel: eZEX Switch 1
-    manufacturer: eZEX
     model: "E220-KR3N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR4N0Z0-HA"
     deviceLabel: eZEX Switch 1
-    manufacturer: eZEX
     model: "E220-KR4N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR5N0Z0-HA"
     deviceLabel: eZEX Switch 1
-    manufacturer: eZEX
     model: "E220-KR5N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E220-KR6N0Z0-HA"
     deviceLabel: eZEX Switch 1
-    manufacturer: eZEX
     model: "E220-KR6N0Z0-HA"
     deviceProfileName: basic-switch
   - id: "eZEX/E240-KR116Z-HA"
     deviceLabel: eZEX Switch
-    manufacturer: eZEX
     model: "E240-KR116Z-HA"
     deviceProfileName: switch-power-energy
   #ORVIBO
@@ -1082,7 +1072,7 @@ zigbeeManufacturer:
     deviceProfileName: basic-switch
   - id: "/TERNCY-LS01"
     deviceLabel: Terncy Switch
-    manufacturer: TERNCY
+    manufacturer:
     model: TERNCY-LS01
     deviceProfileName: basic-switch
   - id: Third Reality/3RSS009Z
@@ -1867,7 +1857,7 @@ zigbeeManufacturer:
     deviceProfileName: switch-power
   - id: eZEX/E210-KR210Z1-HA
     deviceLabel: eZEX Switch
-    manufacturer: eZEX
+    manufacturer:
     model: E210-KR210Z1-HA
     deviceProfileName: switch-power
   - id: "Jasco Products/45853"
@@ -1892,7 +1882,7 @@ zigbeeManufacturer:
     deviceProfileName: switch-power-smartplug
   - id: "Philio/PAN18-v1.0.7"
     deviceLabel: Philio Outlet
-    manufacturer: Philio
+    manufacturer:
     model: PAN18-v1.0.7
     deviceProfileName: switch-power-smartplug
   - id: SALUS/SX885ZB
