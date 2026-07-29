@@ -231,27 +231,33 @@ test.register_coroutine_test(
         Battery:Get({})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Notification report STATE_IDLE event should be handled tamper alert state clear",
+  "Notification report STATE_IDLE event should be handled tamper alert state clear",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.HOME_SECURITY,
-          event = Notification.event.home_security.STATE_IDLE,
-          event_parameter = string.char(Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED)
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_water_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.STATE_IDLE,
+        event_parameter = string.char(Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED)
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_water_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -271,23 +277,29 @@ test.register_message_test(
       direction = "send",
       message = mock_water_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
 test.register_message_test(
-    "Battery report should be handled",
+  "Battery report should be handled",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x63 })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_water_sensor:generate_test_message("main", capabilities.battery.battery(99))
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x63 })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_water_sensor:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -306,6 +318,9 @@ test.register_message_test(
       direction = "send",
       message = mock_water_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -325,6 +340,9 @@ test.register_message_test(
       direction = "send",
       message = mock_water_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -347,45 +365,54 @@ test.register_message_test(
         Battery:Get({})
       )
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
 test.register_message_test(
-    "Notification report LEAK_DETECTED event should be handled water sensor state wet",
+  "Notification report LEAK_DETECTED event should be handled water sensor state wet",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.WATER,
-          event = Notification.event.water.LEAK_DETECTED,
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_water_sensor:generate_test_message("main", capabilities.waterSensor.water.wet())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.WATER,
+        event = Notification.event.water.LEAK_DETECTED,
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_water_sensor:generate_test_message("main", capabilities.waterSensor.water.wet())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Notification report STATE_IDLE event should be handled water sensor state dry",
+  "Notification report STATE_IDLE event should be handled water sensor state dry",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.WATER,
-          event = Notification.event.water.STATE_IDLE,
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_water_sensor:generate_test_message("main", capabilities.waterSensor.water.dry())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_water_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.WATER,
+        event = Notification.event.water.STATE_IDLE,
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_water_sensor:generate_test_message("main", capabilities.waterSensor.water.dry())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 for param_value, data in pairs(DEVICE_PROFILES) do
@@ -429,7 +456,10 @@ for param_value, data in pairs(DEVICE_PROFILES) do
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", default_cap)
       )
-    end
+    end,
+    {
+      min_api_version = 17
+    }
   )
 
   test.register_coroutine_test(
@@ -449,7 +479,10 @@ for param_value, data in pairs(DEVICE_PROFILES) do
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", default_cap)
       )
-    end
+    end,
+    {
+      min_api_version = 17
+    }
   )
 
   test.register_coroutine_test(
@@ -468,7 +501,10 @@ for param_value, data in pairs(DEVICE_PROFILES) do
       test.socket.capability:__expect_send(
         mock_device:generate_test_message("main", active_cap)
       )
-    end
+    end,
+    {
+      min_api_version = 17
+    }
   )
 end
 

@@ -53,6 +53,8 @@ local function can_handle_tamper_event(opts, driver, zw_device, cmd, ...)
       end
     end
   end
+
+  return true, require("timed-tamper-clear")
 end
 
 return can_handle_tamper_event

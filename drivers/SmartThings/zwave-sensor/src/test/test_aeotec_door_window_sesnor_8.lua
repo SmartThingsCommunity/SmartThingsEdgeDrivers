@@ -70,7 +70,10 @@ test.register_coroutine_test(
         Battery:Get({})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -81,61 +84,73 @@ test.register_coroutine_test(
     mock_sensor:set_field("three_axis_x", 0)
     mock_sensor:set_field("three_axis_y", 0)
     mock_sensor:set_field("three_axis_z", 0)
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Notification report STATE_IDLE event should be handled as tamperAlert clear",
+  "Notification report STATE_IDLE event should be handled as tamperAlert clear",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.HOME_SECURITY,
-          event = Notification.event.home_security.STATE_IDLE,
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.STATE_IDLE,
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.clear())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Notification report TAMPERING_PRODUCT_COVER_REMOVED event should be handled as tamperAlert detected",
+  "Notification report TAMPERING_PRODUCT_COVER_REMOVED event should be handled as tamperAlert detected",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.HOME_SECURITY,
-          event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED,
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.HOME_SECURITY,
+        event = Notification.event.home_security.TAMPERING_PRODUCT_COVER_REMOVED,
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.tamperAlert.tamper.detected())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Battery report should be handled",
+  "Battery report should be handled",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x63 })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.battery.battery(99))
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Battery:Report({ battery_level = 0x63 })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.battery.battery(99))
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -154,6 +169,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.battery())
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -173,6 +191,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.powerSource.powerSource.dc())
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -195,45 +216,54 @@ test.register_message_test(
         Battery:Get({})
       )
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
 test.register_message_test(
-    "Notification report WINDOW_DOOR_IS_OPEN event should be handled contact sensor state open",
+  "Notification report WINDOW_DOOR_IS_OPEN event should be handled contact sensor state open",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.ACCESS_CONTROL,
-          event = Notification.event.access_control.WINDOW_DOOR_IS_OPEN,
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = Notification.event.access_control.WINDOW_DOOR_IS_OPEN,
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.contactSensor.contact.open())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Notification report WINDOW_DOOR_IS_CLOSED event should be handled contact sensor state closed",
+  "Notification report WINDOW_DOOR_IS_CLOSED event should be handled contact sensor state closed",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.ACCESS_CONTROL,
-          event = Notification.event.access_control.WINDOW_DOOR_IS_CLOSED,
-        })) }
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.contactSensor.contact.closed())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.ACCESS_CONTROL,
+        event = Notification.event.access_control.WINDOW_DOOR_IS_CLOSED,
+      })) }
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.contactSensor.contact.closed())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
@@ -253,6 +283,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.temperatureMeasurement.temperature({ value = 21.5, unit = 'C' }))
     },
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -273,6 +306,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.relativeHumidityMeasurement.humidity({ value = 70, unit= '%' }))
     },
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -293,6 +329,9 @@ test.register_message_test(
       direction = "send",
       message = mock_sensor:generate_test_message("main", capabilities.dewPoint.dewpoint({value = 8, unit = "C"}))
     }
+  },
+  {
+    min_api_version = 17
   }
 )
 
@@ -312,7 +351,10 @@ test.register_coroutine_test(
         capabilities.threeAxis.threeAxis({value = {200, 0, 0}, unit = 'mG'})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -331,7 +373,10 @@ test.register_coroutine_test(
         capabilities.threeAxis.threeAxis({value = {0, 200, 0}, unit = 'mG'})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_coroutine_test(
@@ -350,45 +395,54 @@ test.register_coroutine_test(
         capabilities.threeAxis.threeAxis({value = {0, 0, 400}, unit = 'mG'})
       )
     )
-  end
+  end,
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Notification report type WEATHER_ALARM event STATE_IDLE should be handled mold healt concern state good",
+  "Notification report type WEATHER_ALARM event STATE_IDLE should be handled mold healt concern state good",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.WEATHER_ALARM,
-          event = Notification.event.weather_alarm.STATE_IDLE,
-        }))}
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.WEATHER_ALARM,
+        event = Notification.event.weather_alarm.STATE_IDLE,
+      }))}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.good())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.register_message_test(
-    "Notification report type WEATHER_ALARM event MOISTURE_ALARM should be handled mold healt concern state moderate",
+  "Notification report type WEATHER_ALARM event MOISTURE_ALARM should be handled mold healt concern state moderate",
+  {
     {
-      {
-        channel = "zwave",
-        direction = "receive",
-        message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
-          notification_type = Notification.notification_type.WEATHER_ALARM,
-          event = Notification.event.weather_alarm.MOISTURE_ALARM,
-        }))}
-      },
-      {
-        channel = "capability",
-        direction = "send",
-        message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.moderate())
-      }
+      channel = "zwave",
+      direction = "receive",
+      message = { mock_sensor.id, zw_test_utils.zwave_test_build_receive_command(Notification:Report({
+        notification_type = Notification.notification_type.WEATHER_ALARM,
+        event = Notification.event.weather_alarm.MOISTURE_ALARM,
+      }))}
+    },
+    {
+      channel = "capability",
+      direction = "send",
+      message = mock_sensor:generate_test_message("main", capabilities.moldHealthConcern.moldHealthConcern.moderate())
     }
+  },
+  {
+    min_api_version = 17
+  }
 )
 
 test.run_registered_tests()

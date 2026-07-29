@@ -56,7 +56,7 @@ preferences:
     preferenceType: integer
     definition:
       minimum: 0
-      maximum: 2678400
+      maximum: 65535
       default: 900
   - name: "parameter2"
     title: "2 Min. temperature change to report"
@@ -109,7 +109,7 @@ preferences:
     preferenceType: integer
     definition:
       minimum: 0
-      maximum: 2678400
+      maximum: 65535
       default: 43200
   - name: "parameter25"
     title: "25 Offset value for temperature"
