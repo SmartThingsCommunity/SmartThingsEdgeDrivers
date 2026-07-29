@@ -24,11 +24,42 @@ def getChangedDrivers() {
   return drivers
 }
 
+def get_region() {
+  def uri = new URI(env.JENKINS_URL)
+  def region = uri.host.endsWith('.cn') ? 'cn' : 'global'
+  return region
+}
+
+// Gate artifactory-credentials for prod nodes in cn due to a docker authentication error arising in that environment
+def getDockerCredentialId() {
+    def nodeLabel = params.NODE_LABEL ?: 'production'
+    def region = get_region()
+    if (nodeLabel == 'production' && region == 'cn') {
+      return 'artifactory-credentials'
+    }
+    else {
+      return 'artifactory'
+    }
+}
+// Gate RegistryUrl for prod nodes in cn due to a docker authentication error arising in that environment
+def getRegistryUrl() {
+  def nodeLabel = params.NODE_LABEL ?: 'production'
+  def region = get_region()
+  if (nodeLabel == 'production' && region == 'cn') {
+    return 'https://registry.artifactoryedge.streleng.cn'
+  } else {
+    // Default
+    return ''
+  }
+}
+
 pipeline {
   agent {
     docker {
       image 'python:3.10'
       label  "${params.NODE_LABEL ?: 'production'}"
+      registryUrl getRegistryUrl()
+      registryCredentialsId getDockerCredentialId()
       args '--entrypoint= -u 0:0'
     }
   }
