@@ -4,6 +4,8 @@ on:
     types: [opened, synchronize, labeled, unlabeled]
     paths:
       - 'drivers/**'
+      - 'tools/run_driver_tests.py'
+      - 'tools/run_driver_tests_p.py'
 
 jobs:
   # Two separate jobs for finding the right artifact to run tests with
@@ -91,11 +93,33 @@ jobs:
       - run: echo ${{ steps.changed-drivers.outputs.all_modified_files }}
       - name: Install Python requirements
         run: pip install -r tools/requirements.txt
+      - name: Fetch capability definitions
+        continue-on-error: true
+        run: |
+          python3 tools/fetch_capability_definitions.py \
+            --drivers-dir ${{ github.workspace }}/drivers \
+            --output-dir ${{ github.workspace }}/capability_json \
+            --failed-output-file ${{ github.workspace }}/capability_failures_comment.md
+        env:
+          CAPABILITY_PAT: ${{ secrets.CAPABILITY_DEFINITIONS_PAT }}
+      - name: Report capability download failures
+        if: hashFiles('capability_failures_comment.md') != '' && always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: ${{ github.workspace }}/capability_failures_comment.md
+          header: capability-download-failures
+      - name: Clear capability download failures comment
+        if: hashFiles('capability_failures_comment.md') == '' && always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: capability-download-failures
+          delete: true
       - name: Run the tests
         id: run-tests
         run: python tools/run_driver_tests_p.py ${{ steps.changed-drivers.outputs.all_modified_files }}
         env:
           LUA_PATH: ${{ steps.lua_path.outputs.lua_path }}
+          ST_CAPABILITY_JSON_DIR: ${{ github.workspace }}/capability_json
       - name: Upload test artifact
         if: always()
         uses: actions/upload-artifact@v4
