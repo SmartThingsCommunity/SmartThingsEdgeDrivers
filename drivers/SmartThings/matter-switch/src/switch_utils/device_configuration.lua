@@ -92,7 +92,9 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
-  if static_electrical_tags ~= nil then
+  if type(static_electrical_tags) == "string" then
+    -- if no associated profile is found for the device type and static electrical tags are available, use "plug-binary" as a fallback
+    generic_profile = generic_profile or "plug-binary"
     -- profiles like 'light-binary' and 'plug-binary' should drop the '-binary' and become 'light-power', 'plug-energy-powerConsumption', etc.
     generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
   end
