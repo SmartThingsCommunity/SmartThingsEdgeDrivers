@@ -42,8 +42,8 @@ components:
     version: 1
   - id: refresh
     version: 1
-categories:
-  - name: ContactSensor
+  categories:
+    - name: ContactSensor
 metadata:
   deviceType: ContactSensor
   ocfDeviceType: x.com.st.d.sensor.contact
