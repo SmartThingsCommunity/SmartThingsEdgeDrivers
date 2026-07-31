@@ -16,13 +16,14 @@ local capability_handlers = require "lock_handlers.capabilities"
 local LockLifecycle = {}
 
 function LockLifecycle.device_added(driver, device)
-  if device:supports_capability(capabilities.lockCodes) and device._provisioning_state == "TYPED" then
-    -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
-    -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
-    -- and should be migrated manually by the user.
-    device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
-    device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migration event in the datastore
-  end
+  -- Note: We should not auto-migrate for the time being
+  -- if device:supports_capability(capabilities.lockCodes) and device._provisioning_state == "TYPED" then
+  --   -- set the migrated field to true so new devices use lockCredentials/lockUsers from the start.
+  --   -- auto-migration is only run for typed devices, as provisioned devices have already been onboarded,
+  --   -- and should be migrated manually by the user.
+  --   device:emit_event(capabilities.lockCodes.migrated(true, { visibility = { displayed = false } }))
+  --   device:set_field(consts.DRIVER_STATE.SLGA_MIGRATED, true, { persist = true }) -- persist the migration event in the datastore
+  -- end
   -- set initial state
   driver:inject_capability_command(device, {
     capability = capabilities.refresh.ID,
