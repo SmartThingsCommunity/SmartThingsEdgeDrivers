@@ -628,4 +628,35 @@ function AttributeHandlers.flow_attr_handler_factory(minOrMax)
   end
 end
 
+
+-- [[ MODE SELECT CLUSTER ATTRIBUTES ]] --
+
+function AttributeHandlers.mode_select_supported_modes_handler(driver, device, ib, response)
+  local ModeSelect = require "embedded_clusters.ModeSelect"
+  local supportedModes = {}
+  local supportedModesWithIdx = {}
+  for _, mode in ipairs(ib.data.elements) do
+    ModeSelect.types.ModeOptionStruct:augment_type(mode)
+    table.insert(supportedModes, mode.elements.label.value)
+    table.insert(supportedModesWithIdx, {mode.elements.mode.value, mode.elements.label.value})
+  end
+  device:set_field(fields.MODE_SELECT_SUPPORTED_MODES, supportedModesWithIdx, { persist = true })
+  local event = capabilities.mode.supportedModes(supportedModes, { visibility = { displayed = false } })
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+  event = capabilities.mode.supportedArguments(supportedModes, { visibility = { displayed = false } })
+  device:emit_event_for_endpoint(ib.endpoint_id, event)
+end
+
+function AttributeHandlers.mode_select_current_mode_handler(driver, device, ib, response)
+  device.log.info(string.format("mode_select_current_mode_handler mode: %s", ib.data.value))
+  local supportedModesWithIdx = device:get_field(fields.MODE_SELECT_SUPPORTED_MODES) or {}
+  local currentMode = ib.data.value
+  for _, mode in ipairs(supportedModesWithIdx) do
+    if mode[1] == currentMode then
+      device:emit_event_for_endpoint(ib.endpoint_id, capabilities.mode.mode(mode[2]))
+      break
+    end
+  end
+end
+
 return AttributeHandlers
