@@ -651,4 +651,136 @@ test.register_coroutine_test(
   end
 )
 
+-- ============================================================================
+-- revert Migration on init
+-- ============================================================================
+
+local st_utils = require "st.utils"
+local json = require "st.json"
+
+-- Lightweight mock state so that table_utils functions work on mock_device
+-- before the driver has lazily initialised the wrapped device.  After the
+-- driver processes its first message (wrapped_init), MockDevice.__index
+-- delegates every field access to the real driver device, so the overrides
+-- below are only ever active during the pre-init seeding phase.
+local mock_latest_state = {}
+local function mock_state_key(component_id, capability_id, attribute_name)
+  return table.concat({ component_id, capability_id, attribute_name }, "|")
+end
+
+local function install_state_mocks()
+  mock_latest_state = {}
+
+  -- tables.lua calls device.log.{debug,warn,error} unconditionally.
+  rawset(mock_device, "log", {
+    debug = function() end,
+    info  = function() end,
+    warn  = function() end,
+    error = function() end,
+  })
+
+  -- get_state guards with device:supports_capability; always return true here.
+  rawset(mock_device, "supports_capability", function() return true end)
+
+  -- get_state / get_max_entries use device:get_latest_state to read
+  -- capability attribute values from the state cache.
+  rawset(mock_device, "get_latest_state",
+    function(_, component_id, capability_id, attribute_name, default_value)
+      local key = mock_state_key(component_id, capability_id, attribute_name)
+      local value = mock_latest_state[key]
+      if value == nil then return default_value end
+      return value
+    end
+  )
+
+  -- add_entry / delete_entry / update_entry all call device:emit_event.
+  -- Forward to the capability socket so __expect_send checks pass, and
+  -- keep mock_latest_state in sync so that successive get_state calls
+  -- within the same seeding loop see the growing list.
+  rawset(mock_device, "emit_event", function(_, event)
+    mock_latest_state[mock_state_key("main", event.capability.ID, event.attribute.NAME)] = event.value.value
+    local message = mock_device:generate_test_message("main", event)
+    test.socket.capability:send(message[1], json.encode(message[2]))
+  end)
+end
+
+test.register_coroutine_test(
+  "Revert Migration on init, after added",
+  function()
+    seed_users({
+      { userIndex = 1, userName = "Alice", userType = "guest" },
+      { userIndex = 2, userName = "Bob",   userType = "guest" },
+      { userIndex = 5, userName = "Charlie", userType = "guest" },
+    })
+    seed_credentials({
+      { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
+      { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
+      { userIndex = 5, credentialIndex = 5, credentialType = "pin" },
+    })
+
+    test.socket.device_lifecycle:__queue_receive({ mock_device.id, "init" })
+    test.socket.capability:__set_channel_ordering("relaxed")
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockUsers.users(
+          {
+            { userIndex = 1, userName = "Alice", userType = "guest" },
+            { userIndex = 2, userName = "Bob",  userType = "guest" },
+            { userIndex = 5, userName = "Charlie", userType = "guest" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCredentials.credentials(
+          {
+            { userIndex = 1, credentialIndex = 1, credentialType = "pin" },
+            { userIndex = 2, credentialIndex = 2, credentialType = "pin" },
+            { userIndex = 5, credentialIndex = 5, credentialType = "pin" },
+          },
+          { visibility = { displayed = false } }
+        ))
+    )
+
+    -- Reversion of Migration should be handled for the device on initialization
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCodes.lockCodes(json.encode({
+          ["1"] = "Alice", ["2"] = "Bob", ["5"] = "Charlie"
+        }), { visibility = { displayed = false } })
+      )
+    )
+
+    test.socket.capability:__expect_send(
+      mock_device:generate_test_message("main",
+        capabilities.lockCodes.migrated(false, { visibility = { displayed = false } })
+      )
+    )
+    test.wait_for_events()
+    assert(mock_device:get_field(constants.DRIVER_STATE.SLGA_MIGRATED) == nil, "Device should not be marked as migrated")
+    local stored_codes = st_utils.deep_copy(mock_device:get_field("lockCodes"))
+    assert(stored_codes["1"] == "Alice")
+    assert(stored_codes["2"] == "Bob")
+    assert(stored_codes["5"] == "Charlie")
+
+    -- ensure codeChanged now triggers correctly after altering a code
+    test.wait_for_events()
+    test.socket.capability:__queue_receive({ mock_device.id, { capability = capabilities.lockCodes.ID, command = "setCode", args = { 1, "", "foo"} } })
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main", capabilities.lockCodes.codeChanged("1 renamed", {state_change = true})))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.lockCodes.lockCodes(json.encode({["1"] = "foo", ["2"] = "Bob", ["5"] = "Charlie"}), { visibility = { displayed = false } })))
+  end,
+  {
+    test_init = function()
+      test.disable_startup_messages()
+      install_state_mocks()
+      mock_device:set_field(constants.DRIVER_STATE.SLGA_MIGRATED, true, {})
+      test.mock_device.add_test_device(mock_device)
+    end,
+    min_api_version = 17
+  }
+)
+
 test.run_registered_tests()
