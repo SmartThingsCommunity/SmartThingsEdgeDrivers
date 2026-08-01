@@ -1,19 +1,16 @@
---[[
-Description: SONOFF Water Valve sub-driver for zigbee-valve
-Version: 1.2
-Author: guoxin.yang
-Date: 2026-07-06
---]]
+-- Copyright 2026 SmartThings, Inc.
+-- Licensed under the Apache License, Version 2.0
+
 local capabilities = require "st.capabilities"
 local zcl_clusters = require "st.zigbee.zcl.clusters"
 local OnOff = zcl_clusters.OnOff
 local PowerConfiguration = zcl_clusters.PowerConfiguration
 local utils = require "st.utils"
 
--- 电池轮询间隔（秒）：SWV1C 是电池休眠设备，每 2 小时轮询一次
+-- Battery Polling Interval (seconds): SWV1C is a battery sleep device, polling every 2 hours
 local BATTERY_POLL_INTERVAL = 7200
 
--- SWV1C 设备指纹匹配表
+-- SWV1C Fingerprint list
 local FINGERPRINTS = {
   { mfr = "SONOFF", model = "SWV-ZFU" },
   { mfr = "SONOFF", model = "SWV-ZFE" },
@@ -21,12 +18,12 @@ local FINGERPRINTS = {
   { mfr = "SONOFF", model = "SWV-ZNE" }
 }
 
---- OnOff 属性上报处理器 → valve 能力点事件
---- 必须显式处理，因为子驱动定义了 capability_handlers 后，
---- 父驱动的默认 OnOff→valve 映射会被跳过（只剩 OnOff→switch）
---- @param driver table 驱动实例
---- @param device table 设备实例
---- @param value table Zigbee 属性值
+--- OnOff Property Reporting Handler → Valve Capability Point Event
+--- It must be handled explicitly because the child driver defines capability_handlers.
+--- The default OnOff→valve mapping from the parent driver will be skipped (only OnOff→switch remains)
+--- @param driver table Driver instance
+--- @param device table Device instance
+--- @param value table Zigbee attribute value
 local function onoff_attr_handler(driver, device, value)
   local is_on = value.value ~= false and value.value ~= 0
   if is_on then
@@ -36,21 +33,21 @@ local function onoff_attr_handler(driver, device, value)
   end
 end
 
---- 电池百分比属性处理器
---- Zigbee BatteryPercentageRemaining 范围 0-200（0%-100%），需除以 2
---- @param driver table 驱动实例
---- @param device table 设备实例
---- @param value table Zigbee 属性值
+--- Battery Percentage Attribute Handler
+--- Zigbee BatteryPercentageRemaining range 0-200 (0%-100%), needs to be divided by 2
+--- @param driver table Driver instance
+--- @param device table Device instance
+--- @param value table Zigbee attribute value
 local function battery_percentage_handler(driver, device, value)
   local raw = value.value
   local percent = utils.round(raw / 2)
   device:emit_event(capabilities.battery.battery(percent))
 end
 
---- 生命周期初始化处理函数
---- 通过周期性主动读取 BatteryPercentageRemaining 来保证电池数据可用
---- @param driver table 驱动实例
---- @param device table 设备实例
+--- Lifecycle initialization handler
+--- Ensures battery data is available by periodically actively reading BatteryPercentageRemaining
+--- @param driver table Driver instance
+--- @param device table Device instance
 local function device_init(driver, device)
   device.thread:call_on_schedule(
     BATTERY_POLL_INTERVAL,
@@ -60,29 +57,29 @@ local function device_init(driver, device)
   )
 end
 
---- valve.open 能力点处理器
---- @param driver table 驱动实例
---- @param device table 设备实例
---- @param command table 能力点命令
+--- valve.open ability handler
+--- @param driver table driver instance
+--- @param device table device instance
+--- @param command table ability command
 local function valve_open_handler(driver, device, command)
   device:send(OnOff.server.commands.On(device))
   device:send(OnOff.attributes.OnOff:read(device))
 end
 
---- valve.close 能力点处理器
---- @param driver table 驱动实例
---- @param device table 设备实例
---- @param command table 能力点命令
+--- valve.close capability handler
+--- @param driver table driver instance
+--- @param device table device instance
+--- @param command table capability command
 local function valve_close_handler(driver, device, command)
   device:send(OnOff.server.commands.Off(device))
   device:send(OnOff.attributes.OnOff:read(device))
 end
 
---- 设备匹配检查
---- @param opts table 选项
---- @param driver table 驱动实例
---- @param device table 设备实例
---- @return boolean 是否由此子驱动接管
+--- Device Matching Check
+--- @param opts table Options
+--- @param driver table Driver instance
+--- @param device table Device instance
+--- @return boolean Whether this sub-driver takes over
 local function is_sonoff_valve(opts, driver, device)
   for _, fingerprint in ipairs(FINGERPRINTS) do
     if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
@@ -105,11 +102,11 @@ local sonoff_valve_handler = {
   },
   zigbee_handlers = {
     attr = {
-      -- OnOff 属性上报 → valve 事件（弥补父驱动默认映射被跳过的缺陷）
+      -- OnOff property reporting → valve event (to compensate for the defect of the parent driver's default mapping being skipped)
       [OnOff.ID] = {
         [OnOff.attributes.OnOff.ID] = onoff_attr_handler
       },
-      -- 电池百分比属性上报 → battery 事件
+      -- Battery percentage attribute reporting → battery event
       [PowerConfiguration.ID] = {
         [PowerConfiguration.attributes.BatteryPercentageRemaining.ID] = battery_percentage_handler
       }

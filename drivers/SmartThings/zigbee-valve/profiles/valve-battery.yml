@@ -1,4 +1,4 @@
-name: sonoff-irrigation
+name: valve-battery
 components:
 - id: main
   capabilities:
