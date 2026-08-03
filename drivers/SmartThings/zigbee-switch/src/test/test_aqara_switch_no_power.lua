@@ -75,9 +75,11 @@ end
 test.set_test_init_function(test_init)
 
 test.register_coroutine_test(
-  "Lifecycle - added test",
+  "Lifecycle - added test : parent device",
   function()
-    -- The initial switch event should be send during the device's first time onboarding
+    -- The initial switch event should be send during the device's first time onboarding.
+    -- This profile has no powerMeter/energyMeter, so no meter initialization event may be sent:
+    -- any extra capability event would fail the strict channel assertions below.
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_device.id, "added" })
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
@@ -109,9 +111,10 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Lifecycle - added test",
+  "Lifecycle - added test : child device",
   function()
-    -- The initial switch event should be send during the device's first time onboarding
+    -- The initial switch event should be send during the device's first time onboarding.
+    -- The child profile has no powerMeter/energyMeter either, so no meter initialization event is sent.
     test.socket.zigbee:__set_channel_ordering("relaxed")
     test.socket.device_lifecycle:__queue_receive({ mock_child.id, "added" })
     test.socket.capability:__expect_send(mock_child:generate_test_message("main",
@@ -138,7 +141,7 @@ test.register_coroutine_test(
 )
 
 test.register_coroutine_test(
-  "Lifecycle - added test",
+  "Lifecycle - added test : child device creation",
   function()
     -- The initial switch event should be send during the device's first time onboarding
     test.socket.zigbee:__set_channel_ordering("relaxed")
