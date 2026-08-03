@@ -112,7 +112,7 @@ zigbeeManufacturer:
     model: lumi.switch.n0acn2
     deviceProfileName: aqara-switch-module
   - id: "Aqara/lumi.switch.acn047"
-    deviceLabel: Aqara Dual Relay Module T2 (With Neutral)
+    deviceLabel: Aqara Dual Relay Module T2 (With Neutral) 1
     manufacturer: Aqara
     model: lumi.switch.acn047
     deviceProfileName: aqara-dual-relay-module-unified

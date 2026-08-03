@@ -51,8 +51,7 @@ local function device_added(driver, device)
     if children_amount >= 2 then
       for i = 2, children_amount, 1 do
         if find_child(device, i) == nil then
-          -- child shares the parent's label (endpoint 1 is the parent, 2..n are children)
-          local name = string.format("%s", device.label)
+          local name = string.format("%s%d", string.sub(device.label, 0, -2), i)
           local child_profile = get_child_profile_name(device)
           local metadata = {
             type = "EDGE_CHILD",
