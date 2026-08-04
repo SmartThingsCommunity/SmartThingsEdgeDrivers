@@ -565,7 +565,7 @@ zwaveManufacturer:
     productId: 0xC001
     deviceProfileName: smartplug-binary
   - id: 0312/FF00/FF07
-    deviceLabel: Minoston Outlet
+    deviceLabel: Smart Plug
     manufacturerId: 0x0312
     productType: 0xFF00
     productId: 0xFF07
