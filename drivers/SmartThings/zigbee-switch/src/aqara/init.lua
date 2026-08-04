@@ -160,7 +160,7 @@ local preference_map = {
     attribute_id = PULSE_INTERVAL_ATTRIBUTE_ID,
     mfg_code = MFG_CODE,
     data_type = data_types.Uint16,
-    value_type = { "number" }, -- presence flag: coerce the preference value with tonumber() before writing
+    coerce_number = true,
   }
 }
 
@@ -295,7 +295,7 @@ local function device_info_changed(driver, device, event, args)
           value = attr.value_map[value]
         end
         -- numeric preferences (e.g. pulseInterval) are coerced to a Lua number before being written
-        if attr.value_type ~= nil then
+        if attr.coerce_number ~= nil and attr.coerce_number then
           value = tonumber(value)
         end
         device:send(cluster_base.write_manufacturer_specific_attribute(device, attr.cluster_id, attr.attribute_id, attr.mfg_code, attr.data_type, value))
