@@ -269,6 +269,11 @@ matterManufacturer:
     vendorId: 0x1407
     productId: 0x1388
     deviceProfileName: 12-button-keyboard
+  - id: "5127/4248"
+    deviceLabel: Smart Garage Door Opener
+    vendorId: 0x1407
+    productId: 0x1098
+    deviceProfileName: garage-door-battery
 
 #Edishine
   - id: "5458/3328"
@@ -557,6 +562,11 @@ matterManufacturer:
     vendorId: 0x1339
     productId: 0x0056
     deviceProfileName: light-color-level
+  - id: "4921/85"
+    deviceLabel: Dual Socket Smart Plug
+    vendorId: 0x1339
+    productId: 0x0055
+    deviceProfileName: plug-binary
 #Govee
   - id: "4999/24740"
     deviceLabel: Govee Square Ceiling Light (12 inch)
@@ -899,6 +909,26 @@ matterManufacturer:
     vendorId: 0x1285
     productId: 0x0009
     deviceProfileName: 4-button-batteryLevel
+  - id: "4741/5"
+    deviceLabel: Hager Switch 1G
+    vendorId: 0x1285
+    productId: 0x0005
+    deviceProfileName: matter-bridge
+  - id: "4741/6"
+    deviceLabel: Hager Switch 2G
+    vendorId: 0x1285
+    productId: 0x0006
+    deviceProfileName: matter-bridge
+  - id: "4741/7"
+    deviceLabel: Hager PIR 1.1M
+    vendorId: 0x1285
+    productId: 0x0007
+    deviceProfileName: matter-bridge
+  - id: "4741/10"
+    deviceLabel: Hager PIR 2.2M
+    vendorId: 0x1285
+    productId: 0x000A
+    deviceProfileName: matter-bridge
 # HAOJAI
   - id: "5530/4113"
     deviceLabel: HAOJAI Smart Switch 3-key
@@ -4169,6 +4199,17 @@ matterManufacturer:
     vendorId: 0x1392
     productId: 0x0106
     deviceProfileName: plug-power-energy-powerConsumption
+  - id: "5010/276"
+    deviceLabel: Smart WiFi Outdoor Plug
+    vendorId: 0x1392
+    productId: 0x0114
+    deviceProfileName: plug-energy-powerConsumption
+#GIANT LIGHTING
+  - id: "5707/1"
+    deviceLabel: Floor Lamp
+    vendorId: 0x164B
+    productId: 0x0001
+    deviceProfileName: light-color-level
 
 
 matterGeneric:

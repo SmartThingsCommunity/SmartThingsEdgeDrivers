@@ -244,4 +244,168 @@ test.register_message_test(
       }
     }
 )
+
+test.register_message_test(
+    "Handle Window Shade step level command - step up",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_simple_device.id, { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }, stepSize = 10 } }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        -- For _TZE284_nladmfvf, level is inverted: 100 - 10 = 90 (0x5A)
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x5a', 0) }
+      }
+    }
+)
+
+test.register_message_test(
+    "Handle Window Shade step level command - step down",
+    {
+      {
+        channel = "capability",
+        direction = "receive",
+        message = { mock_simple_device.id, { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -10 }, stepSize = -10 } }
+      },
+      {
+        channel = "zigbee",
+        direction = "send",
+        -- For _TZE284_nladmfvf, level is inverted: 100 - 0 = 100 (0x64), but clamped to 0 so 100 - 0 = 100
+        message = { mock_simple_device.id, tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x64', 0) }
+      }
+    }
+)
+
+test.register_coroutine_test(
+  "Handle Window Shade step level command - step up from current level",
+  function()
+    -- First, simulate a current shade level of 40
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      tuya_utils.build_test_attr_report(mock_simple_device, '\x03', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x28', 0x01)
+    })
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(40))
+    )
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShade.windowShade("partially open"))
+    )
+    test.wait_for_events()
+
+    -- Then send step command with stepSize 20, should result in level 60
+    -- For _TZE284_nladmfvf, level is inverted: 100 - 60 = 40 (0x28)
+    test.socket.capability:__queue_receive({
+      mock_simple_device.id,
+      { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 20 }, stepSize = 20 }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_simple_device.id,
+      tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x28', 0)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Window Shade step level command - step up clamped to 100",
+  function()
+    -- First, simulate a current shade level of 90
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      tuya_utils.build_test_attr_report(mock_simple_device, '\x03', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x5a', 0x01)
+    })
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(90))
+    )
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShade.windowShade("partially open"))
+    )
+    test.wait_for_events()
+
+    -- Then send step command with stepSize 20, should be clamped to 100
+    -- For _TZE284_nladmfvf, level is inverted: 100 - 100 = 0 (0x00)
+    test.socket.capability:__queue_receive({
+      mock_simple_device.id,
+      { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 20 }, stepSize = 20 }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_simple_device.id,
+      tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x00', 0)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Window Shade step level command - step down clamped to 0",
+  function()
+    -- First, simulate a current shade level of 10
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      tuya_utils.build_test_attr_report(mock_simple_device, '\x03', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x0a', 0x01)
+    })
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(10))
+    )
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShade.windowShade("partially open"))
+    )
+    test.wait_for_events()
+
+    -- Then send step command with stepSize -20, should be clamped to 0
+    -- For _TZE284_nladmfvf, level is inverted: 100 - 0 = 100 (0x64)
+    test.socket.capability:__queue_receive({
+      mock_simple_device.id,
+      { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { -20 }, stepSize = -20 }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_simple_device.id,
+      tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x64', 0)
+    })
+  end
+)
+
+test.register_coroutine_test(
+  "Handle Window Shade step level command - uses latest_target_level when available",
+  function()
+    -- First, simulate a current shade level of 40
+    test.socket.zigbee:__queue_receive({
+      mock_simple_device.id,
+      tuya_utils.build_test_attr_report(mock_simple_device, '\x03', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x28', 0x01)
+    })
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShadeLevel.shadeLevel(40))
+    )
+    test.socket.capability:__expect_send(
+      mock_simple_device:generate_test_message("main", capabilities.windowShade.windowShade("partially open"))
+    )
+    test.wait_for_events()
+
+    -- Send first step command to set latest_target_level to 50
+    -- For _TZE284_nladmfvf, level is inverted: 100 - 50 = 50 (0x32)
+    test.socket.capability:__queue_receive({
+      mock_simple_device.id,
+      { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }, stepSize = 10 }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_simple_device.id,
+      tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x32', 0)
+    })
+    test.wait_for_events()
+
+    -- Send second step command before timeout - should use latest_target_level (50) as base
+    -- Target = 50 + 10 = 60, For _TZE284_nladmfvf: 100 - 60 = 40 (0x28)
+    -- Packet ID is 1 because it was incremented after the first step command
+    test.socket.capability:__queue_receive({
+      mock_simple_device.id,
+      { capability = "statelessWindowShadeLevelStep", component = "main", command = "stepShadeLevel", args = { 10 }, stepSize = 10 }
+    })
+    test.socket.zigbee:__expect_send({
+      mock_simple_device.id,
+      tuya_utils.build_send_tuya_command(mock_simple_device, '\x02', tuya_utils.DP_TYPE_VALUE, '\x00\x00\x00\x28', 1)
+    })
+  end
+)
+
 test.run_registered_tests()

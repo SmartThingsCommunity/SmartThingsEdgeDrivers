@@ -5,11 +5,18 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local log = require "log"
 local version = require "version"
+local embedded_cluster_utils = require "sub_drivers.closure.closure_utils.embedded_cluster_utils"
 
 if version.api < 20 then
   clusters.ClosureControl = require "embedded_clusters.ClosureControl"
   clusters.ClosureDimension = require "embedded_clusters.ClosureDimension"
+  clusters.Global = require "embedded_clusters.Global"
 end
+
+if version.api < 16 then
+  clusters.Descriptor = require "embedded_clusters.Descriptor"
+end
+
 
 local fields = require "sub_drivers.closure.closure_utils.fields"
 local closure_utils = require "sub_drivers.closure.closure_utils.utils"
@@ -55,7 +62,7 @@ function ClosureLifecycleHandlers.device_added(driver, device)
 end
 
 function ClosureLifecycleHandlers.do_configure(driver, device)
-  if #device:get_endpoints(clusters.Descriptor.ID) == 0 then
+  if #embedded_cluster_utils.get_endpoints(device, clusters.Descriptor.ID) == 0 then
     log.warn(
       "Descriptor cluster not implemented on ClosureControl endpoint, " ..
       "cannot read TagList to determine closure type"

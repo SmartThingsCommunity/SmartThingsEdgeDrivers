@@ -619,6 +619,8 @@ test.register_coroutine_test(
       capabilities.fanMode.fanMode("medium")))
     test.socket.capability:__expect_send(mock_device:generate_test_message("main",
       capabilities.fanOscillationMode.fanOscillationMode("swing")))
+    test.socket.capability:__expect_send(mock_device:generate_test_message("main",
+      capabilities.colorTemperature.colorTemperatureRange({ value = {minimum = 2700, maximum = 6500} })))
   end
 )
 

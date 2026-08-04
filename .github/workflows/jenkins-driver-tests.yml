@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         version:
-          [ 59, 60, dev]
+          [ 59, 60, 61, dev]
 
     runs-on: ubuntu-latest
     steps:
@@ -40,6 +40,7 @@ jobs:
             -H "Authorization: Bearer ${JENKINS_WEBHOOK_TOKEN}" \
             -d "{\"status_url\": \"$STATUS_URL\",
               \"version\": ${{ matrix.version }},
-              \"commit\": ${{ github.event.pull_request.head.sha }} }" \
+              \"commit\": ${{ github.event.pull_request.head.sha }},
+              \"pr_id\": ${{ github.event.number }} }" \
             "${JENKINS_WEBHOOK_URL}"
           set -x

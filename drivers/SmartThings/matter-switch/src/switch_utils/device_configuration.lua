@@ -15,6 +15,11 @@ if version.api < 11 then
   clusters.ValveConfigurationAndControl = require "embedded_clusters.ValveConfigurationAndControl"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local DeviceConfiguration = {}
 local ChildConfiguration = {}
 local SwitchDeviceConfiguration = {}
@@ -87,7 +92,9 @@ function SwitchDeviceConfiguration.assign_profile_for_onoff_ep(device, server_on
   local generic_profile = fields.device_type_profile_map[primary_dt_id]
 
   local static_electrical_tags = switch_utils.get_field_for_endpoint(device, fields.ELECTRICAL_TAGS, server_onoff_ep_id)
-  if static_electrical_tags ~= nil then
+  if type(static_electrical_tags) == "string" then
+    -- if no associated profile is found for the device type and static electrical tags are available, use "plug-binary" as a fallback
+    generic_profile = generic_profile or "plug-binary"
     -- profiles like 'light-binary' and 'plug-binary' should drop the '-binary' and become 'light-power', 'plug-energy-powerConsumption', etc.
     generic_profile = string.gsub(generic_profile, "-binary", "") .. static_electrical_tags
   end
@@ -155,7 +162,6 @@ function ButtonDeviceConfiguration.update_button_component_map(device, default_e
   end
   device:set_field(fields.COMPONENT_TO_ENDPOINT_MAP, component_map, {persist = true})
 end
-
 
 function ButtonDeviceConfiguration.configure_buttons(device, momentary_switch_ep_ids)
   local msr_eps = device:get_endpoints(clusters.Switch.ID, {feature_bitmap=clusters.Switch.types.SwitchFeature.MOMENTARY_SWITCH_RELEASE})

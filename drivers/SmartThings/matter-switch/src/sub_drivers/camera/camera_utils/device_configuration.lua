@@ -259,8 +259,9 @@ function CameraDeviceConfiguration.match_profile(device)
           clus_has_feature(clusters.CameraAvSettingsUserLevelManagement.types.Feature.MECHANICAL_ZOOM) then
           table.insert(main_component_capabilities, capabilities.mechanicalPanTiltZoom.ID)
         end
-      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) then
-        table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
+      elseif ep_cluster.cluster_id == clusters.ZoneManagement.ID and has_server_cluster_type(ep_cluster) and
+        clusters.ZoneManagement.are_features_supported(clusters.ZoneManagement.types.Feature.USER_DEFINED, ep_cluster.feature_map) then
+          table.insert(main_component_capabilities, capabilities.zoneManagement.ID)
       elseif ep_cluster.cluster_id == clusters.OccupancySensing.ID and has_server_cluster_type(ep_cluster) then
         table.insert(main_component_capabilities, capabilities.motionSensor.ID)
       elseif ep_cluster.cluster_id == clusters.WebRTCTransportProvider.ID and has_server_cluster_type(ep_cluster) then

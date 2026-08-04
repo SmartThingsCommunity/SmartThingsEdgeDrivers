@@ -24,6 +24,22 @@ IkeaScrollFields.PER_SCROLL_EVENT_ROTATION = 6
 -- Field to track the latest number of presses handled during a single scroll event sequence
 IkeaScrollFields.LATEST_NUMBER_OF_PRESSES_HANDLED = "__latest_number_of_presses_handled"
 
+-- Field to track the global rotate amount state for the device to ensure no scroll events mapped outside of state bounds are emitted
+IkeaScrollFields.GLOBAL_ROTATE_AMOUNT_STATE = "__global_rotate_amount_state"
+
+-- Stores a timer object, which is required to cancel a timer early
+IkeaScrollFields.CLEAR_STATE_TIMER = "__clear_state_timer"
+
+-- Delay in seconds to wait before clearing the global rotate amount state after the last scroll event
+IkeaScrollFields.CLEAR_STATE_DELAY_S = 8
+
+-- Amounts by which to multiply the scroll amount based on user preference for sensitivity
+IkeaScrollFields.KNOB_SENSITIVITY_PREFERENCE_FACTORS = {
+  ["0"] = 0.5, -- Low
+  ["1"] = 1.0, -- Medium
+  ["2"] = 2.0  -- High
+}
+
 -- Required Events for the ENDPOINTS_PUSH.
 IkeaScrollFields.switch_press_subscribed_events = {
   clusters.Switch.events.InitialPress.ID,
