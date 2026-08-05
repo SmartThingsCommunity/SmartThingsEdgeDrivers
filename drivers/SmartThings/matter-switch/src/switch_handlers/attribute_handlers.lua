@@ -334,7 +334,7 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
     return
   end
 
-  device.log.debug_with({hub_logs=true}, string.format("Handling AvailableEndpoints response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements)))
+  device.log.debug_with({hub_logs=true}, string.format("Handling AvailableEndpoints response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements or {})))
   for i, set_ep_info in pairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
@@ -369,7 +369,7 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
     return
   end
 
-  device.log.debug_with({hub_logs=true}, string.format("Handling PartsList response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements)))
+  device.log.debug_with({hub_logs=true}, string.format("Handling PartsList response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements or {})))
   for i, tree_ep_info in pairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
