@@ -1,7 +1,6 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
-local st_utils = require "st.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local version = require "version"
