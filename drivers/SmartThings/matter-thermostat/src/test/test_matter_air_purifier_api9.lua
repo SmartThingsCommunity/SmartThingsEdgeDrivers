@@ -6,9 +6,6 @@ local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local SinglePrecisionFloat = require "st.matter.data_types.SinglePrecisionFloat"
 local t_utils = require "integration_test.utils"
-local version = require "version"
-
-version.api = 9
 
 -- include driver-side cluster definitions to test embedded clusters on lower api versions
 clusters.HepaFilterMonitoring = require "embedded_clusters.HepaFilterMonitoring"
@@ -432,7 +429,8 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_aqs,
-    
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -448,7 +446,8 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs,
-    
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -473,7 +472,8 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs_preconfigured,
-    
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -530,7 +530,8 @@ test.register_message_test(
     }
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -574,7 +575,8 @@ test.register_message_test(
     },
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -612,7 +614,8 @@ test.register_message_test(
     }
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -660,7 +663,8 @@ test.register_message_test(
     }
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -721,7 +725,8 @@ test.register_message_test(
     }
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -778,7 +783,8 @@ test.register_message_test(
     }
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -800,7 +806,8 @@ test.register_message_test(
     }
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -872,7 +879,8 @@ test.register_message_test(
     }
   },
   {
-     
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -890,7 +898,8 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs_preconfigured,
-    
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
@@ -916,7 +925,8 @@ test.register_coroutine_test(
   end,
   {
     test_init = test_init_ap_thermo_aqs_preconfigured,
-    
+    min_api_version = 9,
+    max_api_version = 10
   }
 )
 
