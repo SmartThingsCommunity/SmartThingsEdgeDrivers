@@ -18,6 +18,11 @@ if version.api < 11 then
   clusters.PowerTopology = require "embedded_clusters.PowerTopology"
 end
 
+-- Catch nil elements errors gracefully without receiving a coroutine error
+if version.api < 21 then
+  clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct = require "embedded_clusters.ElectricalEnergyMeasurement.types.EnergyMeasurementStruct"
+end
+
 local AttributeHandlers = {}
 
 -- [[ ON OFF CLUSTER ATTRIBUTES ]] --
