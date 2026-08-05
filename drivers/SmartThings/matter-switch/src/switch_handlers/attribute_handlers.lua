@@ -333,6 +333,8 @@ function AttributeHandlers.available_endpoints_handler(driver, device, ib, respo
     device.log.warn("Received an AvailableEndpoints response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with SET feature. Ignoring this response.")
     return
   end
+
+  device.log.debug_with({hub_logs=true}, string.format("Handling AvailableEndpoints response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements)))
   for i, set_ep_info in pairs(set_topology_eps or {}) do
     if ib.endpoint_id == set_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
@@ -366,6 +368,8 @@ function AttributeHandlers.parts_list_handler(driver, device, ib, response)
     device.log.warn("Received a PartsList response but no Electrical Sensor endpoints have been identified as supporting the Power Topology cluster with TREE feature. Ignoring this response.")
     return
   end
+
+  device.log.debug_with({hub_logs=true}, string.format("Handling PartsList response for endpoint %d with elements: %s", ib.endpoint_id, st_utils.stringify_table(ib.data.elements)))
   for i, tree_ep_info in pairs(tree_topology_eps or {}) do
     if ib.endpoint_id == tree_ep_info.endpoint_id then
       -- since EP response is being handled here, remove it from the ELECTRICAL_SENSOR_EPS table
