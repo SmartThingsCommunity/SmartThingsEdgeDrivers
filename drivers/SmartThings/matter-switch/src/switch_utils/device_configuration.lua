@@ -50,7 +50,6 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
           vendor_provided_label = label_and_name
         })
       else
-        device.log.info_with({hub_logs=true}, string.format("Updating child device for endpoint %d with profile %s and enabled capabilities %s", ep_id, child_profile, st_utils.stringify_table(optional_component_capabilities)))
         existing_child_device:try_update_metadata({
           profile = child_profile,
           optional_component_capabilities = optional_component_capabilities
