@@ -1,6 +1,7 @@
 -- Copyright © 2025 SmartThings, Inc.
 -- Licensed under the Apache License, Version 2.0
 
+local st_utils = require "st.utils"
 local capabilities = require "st.capabilities"
 local clusters = require "st.matter.clusters"
 local version = require "version"
@@ -39,6 +40,7 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
       local child_profile, optional_component_capabilities = assign_profile_fn(device, ep_id, true)
       local existing_child_device = device:get_field(fields.IS_PARENT_CHILD_DEVICE) and switch_utils.find_child(device, ep_id)
       if not existing_child_device then
+        device.log.info_with({hub_logs=true}, string.format("Creating child device for endpoint %d with profile %s", ep_id, child_profile))
         driver:try_create_device({
           type = "EDGE_CHILD",
           label = label_and_name,
@@ -48,6 +50,7 @@ function ChildConfiguration.create_or_update_child_devices(driver, device, serve
           vendor_provided_label = label_and_name
         })
       else
+        device.log.info_with({hub_logs=true}, string.format("Updating child device for endpoint %d with profile %s and enabled capabilities %s", ep_id, child_profile, st_utils.stringify_table(optional_component_capabilities)))
         existing_child_device:try_update_metadata({
           profile = child_profile,
           optional_component_capabilities = optional_component_capabilities
