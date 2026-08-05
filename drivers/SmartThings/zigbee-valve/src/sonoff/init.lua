@@ -10,14 +10,6 @@ local utils = require "st.utils"
 -- Battery Polling Interval (seconds): SWV1C is a battery sleep device, polling every 2 hours
 local BATTERY_POLL_INTERVAL = 7200
 
--- SWV1C Fingerprint list
-local FINGERPRINTS = {
-  { mfr = "SONOFF", model = "SWV-ZFU" },
-  { mfr = "SONOFF", model = "SWV-ZFE" },
-  { mfr = "SONOFF", model = "SWV-ZNU" },
-  { mfr = "SONOFF", model = "SWV-ZNE" }
-}
-
 --- OnOff Property Reporting Handler → Valve Capability Point Event
 --- It must be handled explicitly because the child driver defines capability_handlers.
 --- The default OnOff→valve mapping from the parent driver will be skipped (only OnOff→switch remains)
@@ -75,20 +67,6 @@ local function valve_close_handler(driver, device, command)
   device:send(OnOff.attributes.OnOff:read(device))
 end
 
---- Device Matching Check
---- @param opts table Options
---- @param driver table Driver instance
---- @param device table Device instance
---- @return boolean Whether this sub-driver takes over
-local function is_sonoff_valve(opts, driver, device)
-  for _, fingerprint in ipairs(FINGERPRINTS) do
-    if device:get_manufacturer() == fingerprint.mfr and device:get_model() == fingerprint.model then
-      return true
-    end
-  end
-  return false
-end
-
 local sonoff_valve_handler = {
   NAME = "SONOFF Water Valve Handler",
   lifecycle_handlers = {
@@ -112,7 +90,7 @@ local sonoff_valve_handler = {
       }
     }
   },
-  can_handle = is_sonoff_valve
+  can_handle = require "sonoff.can_handle",
 }
 
 return sonoff_valve_handler

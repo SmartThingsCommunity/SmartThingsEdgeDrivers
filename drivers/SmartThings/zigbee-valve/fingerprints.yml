@@ -43,19 +43,19 @@ zigbeeManufacturer :
     deviceLabel: SONOFF Water Valve
     manufacturer: SONOFF
     model: SWV-ZFE
-    deviceProfileName: sonoff-irrigation
+    deviceProfileName: valve-battery
   - id: SONOFF/SWV-ZFU
     deviceLabel: SONOFF Water Valve
     manufacturer: SONOFF
     model: SWV-ZFU
-    deviceProfileName: sonoff-irrigation
+    deviceProfileName: valve-battery
   - id: SONOFF/SWV-ZNE
     deviceLabel: SONOFF Water Valve
     manufacturer: SONOFF
     model: SWV-ZNE
-    deviceProfileName: sonoff-irrigation
+    deviceProfileName: valve-battery
   - id: SONOFF/SWV-ZNU
     deviceLabel: SONOFF Water Valve
     manufacturer: SONOFF
     model: SWV-ZNU
-    deviceProfileName: sonoff-irrigation
+    deviceProfileName: valve-battery
